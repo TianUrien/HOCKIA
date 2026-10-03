@@ -77,22 +77,44 @@ log_error() {
   echo -e "${RED}✗${NC} $1"
 }
 
+# verify_jwt for one function, read from the single source of truth:
+# `[functions.<name>] verify_jwt = true|false` in supabase/config.toml.
+# Prints "true", "false", or nothing when the function is not pinned.
+verify_jwt_for() {
+  awk -v fn="$1" '
+    /^\[functions\./ { in_fn = ($0 == "[functions." fn "]"); next }
+    /^\[/             { in_fn = 0 }
+    in_fn && /^[[:space:]]*verify_jwt[[:space:]]*=/ {
+      sub(/#.*/, ""); gsub(/[[:space:]]/, ""); split($0, kv, "="); print kv[2]; exit
+    }
+  ' supabase/config.toml
+}
+
 deploy_all_functions() {
   local function_dir
   local function_name
-  local config_file
+  local verify_jwt
 
   while IFS= read -r function_dir; do
     function_name=$(basename "$function_dir")
-    config_file="$function_dir/config.toml"
+    verify_jwt=$(verify_jwt_for "$function_name")
 
-    if [ -f "$config_file" ] && grep -q "verify_jwt = false" "$config_file"; then
-      log_info "Deploying $function_name with JWT verification disabled..."
-      supabase functions deploy "$function_name" --no-verify-jwt
-    else
-      log_info "Deploying $function_name..."
-      supabase functions deploy "$function_name"
-    fi
+    case "$verify_jwt" in
+      false)
+        log_info "Deploying $function_name with JWT verification disabled..."
+        supabase functions deploy "$function_name" --no-verify-jwt
+        ;;
+      true)
+        log_info "Deploying $function_name..."
+        supabase functions deploy "$function_name"
+        ;;
+      *)
+        # Unpinned functions deploy with the platform default of the day, which
+        # has flipped settings before. Refuse rather than guess.
+        log_error "$function_name has no [functions.$function_name] verify_jwt entry in supabase/config.toml"
+        return 1
+        ;;
+    esac
   done < <(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name "_shared" | sort)
 }
 

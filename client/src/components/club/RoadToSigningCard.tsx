@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react'
+import { Check, Minus } from 'lucide-react'
 import type { RoadStep } from '@/lib/signing'
 import { cn } from '@/lib/utils'
 
@@ -17,7 +17,14 @@ interface Props {
   trialBusy?: boolean
 }
 
-function Mark({ done, current }: { done: boolean; current: boolean }) {
+function Mark({ done, current, skipped = false }: { done: boolean; current: boolean; skipped?: boolean }) {
+  if (skipped) {
+    return (
+      <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-surface-grouped text-ink-3" aria-hidden="true">
+        <Minus className="h-3.5 w-3.5" strokeWidth={3} />
+      </span>
+    )
+  }
   if (done) {
     return (
       <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-positive text-white" aria-hidden="true">
@@ -43,7 +50,7 @@ export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }
           )
           const trialToggle = s.key === 'trial' && onToggleTrial
           return (
-            <li key={s.key} className="flex min-h-[50px] items-center gap-3 py-1" data-testid={`road-step-${s.key}`} data-done={s.done} data-current={s.current}>
+            <li key={s.key} className="flex min-h-[50px] items-center gap-3 py-1" data-testid={`road-step-${s.key}`} data-done={s.done} data-current={s.current} data-skipped={s.skipped ? 'true' : undefined}>
               {trialToggle ? (
                 <button
                   type="button"
@@ -60,12 +67,12 @@ export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }
                 </button>
               ) : (
                 <>
-                  <Mark done={s.done} current={s.current} />
+                  <Mark done={s.done} current={s.current} skipped={s.skipped} />
                   {label}
                 </>
               )}
               {s.key === 'talked' && !s.done && (
-                <button type="button" onClick={onMessage} className="shrink-0 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">Message</button>
+                <button type="button" onClick={onMessage} className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">Message</button>
               )}
             </li>
           )

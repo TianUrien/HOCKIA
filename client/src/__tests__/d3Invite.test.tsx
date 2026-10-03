@@ -160,21 +160,28 @@ beforeEach(() => {
 describe('row action (D3.1, DEV NOTE 394:98)', () => {
   it('Invite for an invitable player; Applied / Invited pills otherwise; nothing when not invitable', () => {
     const onInvite = vi.fn()
-    const { rerender } = render(<InviteAction pill={null} invitable name="Facundo Diaz" onInvite={onInvite} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Invite Facundo Diaz to apply' }))
+    const { rerender } = render(<InviteAction pill={null} invitable onInvite={onInvite} />)
+    const invite = screen.getByRole('button', { name: 'Invite to apply' })
+    expect(invite.textContent).toBe('Invite')
+    // Tonal, never Primary: the row action repeats, the screen keeps one Primary.
+    expect(invite.className).toContain('bg-hockia-soft')
+    expect(invite.className).toContain('text-hockia-primary')
+    expect(invite.className).not.toContain('bg-hockia-primary')
+    expect(invite.className).toContain('before:-inset-1') // 44 pt hit area on a 36 px button
+    fireEvent.click(invite)
     expect(onInvite).toHaveBeenCalled()
-    rerender(<InviteAction pill="applied" invitable name="Leandro" onInvite={onInvite} />)
+    rerender(<InviteAction pill="applied" invitable onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-applied').textContent).toBe('Applied')
-    rerender(<InviteAction pill="invited" invitable name="Leandro" onInvite={onInvite} />)
+    rerender(<InviteAction pill="invited" invitable onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-invited').textContent).toBe('Invited')
-    rerender(<InviteAction pill="passed" invitable name="Leandro" onInvite={onInvite} />)
+    rerender(<InviteAction pill="passed" invitable onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-passed').getAttribute('aria-label')).toBe('Passed on this role')
     expect(screen.queryByTestId('invite-button')).toBeNull()
-    rerender(<InviteAction pill={null} invitable={false} name="Too young" onInvite={onInvite} />)
+    rerender(<InviteAction pill={null} invitable={false} onInvite={onInvite} />)
     expect(screen.queryByTestId('invite-button')).toBeNull()
   })
   it('daily limit reached → Invite disabled, with the reason', () => {
-    render(<InviteAction pill={null} invitable name="Facundo" limitReason={inviteLimitReason(20)} onInvite={vi.fn()} />)
+    render(<InviteAction pill={null} invitable limitReason={inviteLimitReason(20)} onInvite={vi.fn()} />)
     const b = screen.getByTestId('invite-button') as HTMLButtonElement
     expect(b.disabled).toBe(true)
     expect(b.getAttribute('aria-label')).toContain('daily limit')

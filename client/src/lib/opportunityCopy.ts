@@ -9,7 +9,8 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
 } from 'lucide-react'
-import { format, differenceInCalendarDays } from 'date-fns'
+import { differenceInCalendarDays } from 'date-fns'
+import { dayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
@@ -75,24 +76,21 @@ export function formatDurationText(raw: string | null | undefined): string | nul
   return t
 }
 
-/** "Sep 16 · 3 months" / "Starts immediately". */
+/** "16 Sep · 3 months" / "Starts immediately" — dates read day first app-wide (lib/dayFirst). */
 export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now = new Date()): string {
   const parts: string[] = []
-  if (v.start_date) {
-    const d = new Date(v.start_date)
-    if (!Number.isNaN(d.getTime())) parts.push(format(d, d.getFullYear() === now.getFullYear() ? 'MMM d' : 'MMM d, yyyy'))
-  }
+  const start = dayFirst(v.start_date, { now })
+  if (start) parts.push(start)
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
   return parts.length ? parts.join(' · ') : 'Starts immediately'
 }
 
-/** Detail header: "Starts Sep 16, 2026 · 3 months". */
+/** Detail header: "Starts 16 Sep 2026 · 3 months" (the header always carries the year). */
 export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): string {
   const duration = formatDurationText(v.duration_text)
   if (!v.start_date) return duration ? `Starts immediately · ${duration}` : 'Starts immediately'
-  const d = new Date(v.start_date)
-  const when = Number.isNaN(d.getTime()) ? v.start_date : format(d, 'MMM d, yyyy')
+  const when = dayFirst(v.start_date, { year: 'always' }) ?? v.start_date
   return duration ? `Starts ${when} · ${duration}` : `Starts ${when}`
 }
 
@@ -108,38 +106,37 @@ export function rolePostedAt(v: Pick<Vacancy, 'created_at'>): string {
 
 /**
  * "Posted 3 days ago · No deadline — closes when filled". A CLOSED role never
- * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed Sep 26, 2026".
+ * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed 26 Sep 2026".
  */
 export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
   const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
   const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
   if (closed) {
-    const c = v.closed_at ? new Date(v.closed_at) : null
-    return `${posted} · ${c && !Number.isNaN(c.getTime()) ? `Closed ${format(c, 'MMM d, yyyy')}` : 'Closed'}`
+    const c = dayFirst(v.closed_at, { year: 'always' })
+    return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
   }
   return `${posted} · ${deadlineLine(v)}`
 }
 
 export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {
   if (!v.application_deadline) return 'No deadline — closes when filled'
-  const d = new Date(v.application_deadline)
-  return Number.isNaN(d.getTime()) ? 'Apply by ' + v.application_deadline : `Apply by ${format(d, 'MMM d, yyyy')}`
+  return `Apply by ${dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline}`
 }
 
 export interface BenefitTile { key: string; label: string; icon: LucideIcon; tileClass: string; detail: string }
 
 /** The nine package benefits (Figma Filters › Package), with the card tile tints. */
 export const BENEFIT_TILES: Record<string, BenefitTile> = {
-  housing: { key: 'housing', label: 'Housing', icon: Home, tileClass: 'bg-[#e5f1ff] text-[#1d4ed8]', detail: 'Provided by the club' },
-  flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Covered' },
-  job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Work arranged alongside hockey' },
-  insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-[#fee2e2] text-[#b91c1c]', detail: 'Covered by the club' },
+  housing: { key: 'housing', label: 'Housing', icon: Home, tileClass: 'bg-accent-blue-soft text-accent-blue-ink', detail: 'Provided by the club' },
+  flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Covered' },
+  job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Work arranged alongside hockey' },
+  insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-accent-red-soft text-status-danger-strong', detail: 'Covered by the club' },
   bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
-  visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Sponsorship arranged' },
+  visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Sponsorship arranged' },
   car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-[#e6f6f4] text-[#0f766e]', detail: 'Kit and stick provided' },
+  equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-accent-teal-soft-2 text-accent-teal', detail: 'Kit and stick provided' },
   meals: { key: 'meals', label: 'Meals', icon: Utensils, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Study alongside hockey' },
+  education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Study alongside hockey' },
 }
 
 export const PACKAGE_FILTER_KEYS = ['paid', 'housing', 'flights', 'job', 'insurance', 'bonuses', 'visa', 'car', 'equipment'] as const
@@ -150,7 +147,7 @@ export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = {
 }
 
 export const SPECIALIST_TILE = { icon: Target, tileClass: 'bg-hockia-soft text-hockia-primary' }
-export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-[#fdf1e4] text-[#b45309]' }
+export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-status-warning-soft text-status-warning' }
 
 /** "Paid" / "Development" / "Compensation not stated". */
 export function compensationText(v: Pick<Vacancy, 'compensation'>): string {
@@ -247,11 +244,10 @@ export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null 
   return fb.message.trim() || null
 }
 
-/** "Applied Sep 3, 2026" — the full date on a closed role's application block. */
+/** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */
 export function appliedOnLine(appliedAt: string | null | undefined): string | null {
-  if (!appliedAt) return null
-  const d = new Date(appliedAt)
-  return Number.isNaN(d.getTime()) ? null : `Applied ${format(d, 'MMM d, yyyy')}`
+  const d = dayFirst(appliedAt, { year: 'always' })
+  return d ? `Applied ${d}` : null
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
@@ -267,7 +263,7 @@ export function appliedLine(appliedAt: string | null, now = new Date()): string 
   if (days <= 0) return 'Applied today'
   if (days < 7) return `Applied ${days}d`
   if (days < 30) return `Applied ${Math.round(days / 7)}w`
-  return `Applied ${format(new Date(appliedAt), 'MMM d')}`
+  return `Applied ${dayFirst(appliedAt, { now })}`
 }
 
 /**

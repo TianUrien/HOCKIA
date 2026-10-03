@@ -212,15 +212,15 @@ function Thread({ messages, viewer }: { messages: ChatMessage[]; viewer: string 
 
 describe('4a · the club reads its own signing step in club-facing words', () => {
   it('rewrites only signing_marked for the sender; the player keeps the server line', () => {
-    expect(recruitingEventLine('signing_marked', signingMarked.content, { isMine: true, otherFirstName: 'Facundo' })).toBe('You marked Facundo as signed. Waiting for them to confirm.')
-    expect(recruitingEventLine('signing_marked', signingMarked.content, { isMine: true, otherFirstName: '' })).toBe('You marked the player as signed. Waiting for them to confirm.')
+    expect(recruitingEventLine('signing_marked', signingMarked.content, { isMine: true, otherFirstName: 'Facundo' })).toBe('You marked Facundo as signed for Men’s 1st player. Waiting for them to confirm.')
+    expect(recruitingEventLine('signing_marked', signingMarked.content, { isMine: true, otherFirstName: '' })).toBe('You marked the player as signed for Men’s 1st player. Waiting for them to confirm.')
     expect(recruitingEventLine('signing_marked', signingMarked.content, { isMine: false, otherFirstName: 'E2E' })).toBe(signingMarked.content)
     expect(recruitingEventLine('offer_withdrawn', 'E2E Test FC withdrew its offer for X.', { isMine: true, otherFirstName: 'Facundo' })).toBe('E2E Test FC withdrew its offer for X.')
   })
 
   it('in the thread: the club sees "You marked Facundo as signed…"', () => {
     inRouter(<Thread messages={[signingMarked]} viewer={CLUB} />)
-    expect(screen.getByTestId('recruiting-event-line').textContent).toBe('You marked Facundo as signed. Waiting for them to confirm.')
+    expect(screen.getByTestId('recruiting-event-line').textContent).toBe('You marked Facundo as signed for Men’s 1st player. Waiting for them to confirm.')
     expect(screen.queryByTestId('signing-prompt')).toBeNull()
   })
 })

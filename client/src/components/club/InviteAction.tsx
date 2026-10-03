@@ -7,11 +7,16 @@ import type { InvitePill } from '@/lib/invites'
  * do). Passed = the player passed on every open role (other roles stay invitable).
  * Not invitable (under 18, no date of birth, not open to play) → nothing.
  * Daily limit reached → Invite disabled, with the reason.
+ *
+ * Button / Tonal, Small (Figma 459:146; founder ruling 2026-10-02): the row
+ * action repeats on every row, so it is never the screen's one Primary. 36 px
+ * visually with a 44 pt hit area (the ::before hit-slop); the label stays
+ * "Invite" so it fits beside the icon buttons, the accessible name is
+ * "Invite to apply".
  */
-export function InviteAction({ pill, invitable, name, limitReason, onInvite, onApplied }: {
+export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied }: {
   pill: InvitePill | null
   invitable: boolean
-  name: string | null
   /** Set when the daily limit is reached: Invite is disabled and says why. */
   limitReason?: string | null
   onInvite: () => void
@@ -19,7 +24,7 @@ export function InviteAction({ pill, invitable, name, limitReason, onInvite, onA
 }) {
   if (pill === 'applied') {
     return onApplied
-      ? <button type="button" onClick={onApplied} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</button>
+      ? <button type="button" onClick={onApplied} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']" data-testid="invite-pill-applied">Applied</button>
       : <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</span>
   }
   if (pill === 'passed') {
@@ -35,8 +40,8 @@ export function InviteAction({ pill, invitable, name, limitReason, onInvite, onA
       onClick={onInvite}
       disabled={!!limitReason}
       title={limitReason ?? undefined}
-      aria-label={limitReason ? `Invite ${name ?? 'player'} — ${limitReason}` : `Invite ${name ?? 'player'} to apply`}
-      className="flex h-9 items-center rounded-full bg-hockia-primary px-4 text-[16px] font-semibold text-white disabled:opacity-40"
+      aria-label={limitReason ? `Invite to apply — ${limitReason}` : 'Invite to apply'}
+      className="relative flex h-9 items-center rounded-full bg-hockia-soft px-4 text-row font-semibold text-hockia-primary before:absolute before:-inset-1 before:content-[''] disabled:opacity-40"
       data-testid="invite-button"
     >
       Invite

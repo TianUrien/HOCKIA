@@ -2,6 +2,7 @@ import { positionLabel } from '@/lib/identity'
 import { genderPill } from '@/lib/opportunityCopy'
 import { buildPlayerKeyFacts, type LeagueInput, type PassportInput } from '@/lib/keyFacts'
 import { fitTarget, type FitState } from '@/lib/clubRecruiting'
+import { shortDayOf } from '@/lib/signing'
 
 /**
  * Find players + Shortlist (Figma 04 Club · D1.9 332:318 / D1.10 332:539;
@@ -248,11 +249,9 @@ export function shortlistForContext<L extends { id: string; name: string; is_def
   return lists.find((l) => l.is_default) ?? null
 }
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** "2 Oct" — day first, the one date format app-wide (lib/signing shortDayOf; QA 2 Oct). */
 export function monthDay(iso: string | null | undefined): string | null {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
+  return shortDayOf(iso)
 }
 
 /** Source line (DEV NOTE 332:749): applicants win when a player is both. */

@@ -1,13 +1,16 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Check, Share } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { SettingsRow, SettingsSwitch } from '@/components/settings/settingsUi'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useSigningData, useSigningActions, type SigningData } from '@/hooks/useSigning'
+import { clearProfileScrollCache } from '@/hooks/useProfileScrollData'
+import { qk } from '@/lib/queryKeys'
 import { getImageUrl } from '@/lib/imageUrl'
 import { inviteRoleLabel } from '@/lib/invites'
 import { publicProfileShareUrl } from '@/lib/profileShare'
@@ -48,6 +51,8 @@ export default function ConfirmSigningPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useNavigate()
   const me = useAuthStore((s) => s.profile)
+  const refreshProfile = useAuthStore((s) => s.refreshProfile)
+  const queryClient = useQueryClient()
   const addToast = useToastStore((s) => s.addToast)
   const { data, loading, refetch } = useSigningData(applicationId ?? null)
   const { confirmSigning, busy } = useSigningActions()
@@ -67,7 +72,7 @@ export default function ConfirmSigningPage() {
     return shell(
       <div className="mt-24 text-center" data-testid="signing-unavailable">
         <p className="text-[17px] font-semibold text-ink-1">This signing isn’t available.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-3 text-row font-semibold text-hockia-primary">My applications</button>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
       </div>,
     )
   }
@@ -99,7 +104,7 @@ export default function ConfirmSigningPage() {
           <span className="flex h-28 w-28 items-center justify-center rounded-full bg-positive-soft text-positive" aria-hidden="true">
             <Check className="h-12 w-12" strokeWidth={2.6} />
           </span>
-          <h1 className="mt-5 text-[28px] font-bold leading-[34px] tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
+          <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
           <p className="mt-2 text-[16px] leading-[23px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
             <Crest src={club.avatar_url} name={clubName} size={52} />
@@ -110,10 +115,10 @@ export default function ConfirmSigningPage() {
             </div>
           </div>
         </div>
-        <button type="button" onClick={() => void share()} className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1" data-testid="signing-share">
+        <button type="button" onClick={() => void share()} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1" data-testid="signing-share">
           <Share className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Share the news
         </button>
-        <button type="button" onClick={() => navigate('/dashboard/profile')} className="mt-2.5 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">
+        <button type="button" onClick={() => navigate('/dashboard/profile')} className="mt-2.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">
           Done
         </button>
       </div>,
@@ -127,7 +132,7 @@ export default function ConfirmSigningPage() {
       <div className="mt-24 text-center" data-testid="signing-not-waiting">
         <p className="text-[17px] font-semibold text-ink-1">{lapsed ? 'This signing request has expired.' : 'There’s no signing waiting for your confirmation.'}</p>
         <p className="mt-1 text-secondary text-ink-2">You can message the club if something isn’t right.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-3 text-row font-semibold text-hockia-primary">My applications</button>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
       </div>,
     )
   }
@@ -145,6 +150,14 @@ export default function ConfirmSigningPage() {
     if (res.ok) {
       setConfirmed(true)
       void refetch()
+      // The server added the career entry: drop every cached career read so
+      // the profile's "See all N", its preview rows and the Journey counts
+      // don't lag by one (QA 2 Oct: 8 entries, "See all 7").
+      if (me?.id) {
+        clearProfileScrollCache(me.id)
+        void queryClient.invalidateQueries({ queryKey: qk.journeyCounts(me.id) })
+        void refreshProfile?.()
+      }
     }
   }
 
@@ -152,7 +165,7 @@ export default function ConfirmSigningPage() {
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
         <Crest src={club.avatar_url} name={clubName} size={80} />
-        <h1 className="mt-5 text-[26px] font-bold leading-8 tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
+        <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
         <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
           {rows.filter(([, v]) => !!v).map(([k, v], i) => (
@@ -165,15 +178,16 @@ export default function ConfirmSigningPage() {
             </div>
           ))}
         </dl>
-        <div className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-line px-4 py-3 text-left">
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold leading-5 text-ink-1">{toggle.title}</p>
-            <p className="text-secondary leading-[17px] text-ink-2">{toggle.detail}</p>
-          </div>
-          <SettingsSwitch checked={hide} onChange={() => setHide((v) => !v)} label={toggle.title} />
+        {/* List item / Switch (Figma 472:186): the grouped row Settings uses, not a bespoke outlined card. */}
+        <div className="mt-4 w-full overflow-hidden rounded-card bg-surface-grouped text-left" data-testid="signing-hide-row">
+          <SettingsRow
+            title={toggle.title}
+            subtitle={toggle.detail}
+            trailing={<SettingsSwitch checked={hide} onChange={() => setHide((v) => !v)} label={toggle.title} />}
+          />
         </div>
       </div>
-      <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
+      <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
         {busy ? 'Confirming…' : 'Yes, I signed'}
       </button>
       <button type="button" onClick={() => navigate(-1)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1" data-testid="signing-not-yet">

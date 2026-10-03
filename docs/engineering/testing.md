@@ -11,7 +11,7 @@ and the test directories.
 | Unit | `client/src/__tests__/**` and co-located `*.test.ts(x)` | 225 files, about 2,300 cases | Vitest 4 + jsdom + Testing Library (`src/test/setup.ts` polyfills ResizeObserver, IntersectionObserver, matchMedia, scrollTo) | nothing external |
 | DB integration | `client/src/__tests__/db/*.test.ts` | 7 files: `rls`, `triggers`, `state-machines`, `attribution`, `club-members`, `retention`, `shortLinks` | Vitest with `vitest.db.config.ts` (serial, 30 s timeout) | staging Supabase + E2E accounts |
 | E2E | `client/e2e/*.spec.ts` | 36 spec files, 24 `@smoke`-tagged tests | Playwright 1.57, Chromium (WebKit optional with `PLAYWRIGHT_WEBKIT=1`) | staging Supabase + E2E accounts + dev server or `PLAYWRIGHT_BASE_URL` |
-| Edge function unit | `supabase/functions/_shared/*.test.ts` | 17 files, 162 `Deno.test` cases | `deno test --allow-env --allow-read .` | Deno 2 |
+| Edge function unit | `supabase/functions/_shared/*.test.ts` | 17 files, 165 `Deno.test` cases (two are structural: `webhook-auth.test.ts` reads the function sources, `function-config.test.ts` reads `supabase/config.toml`) | `deno test --allow-env --allow-read .` | Deno 2 |
 | SQL security probes | `supabase/tests/security/*.probe.sql` | 16 probes | Run by hand on staging via SQL; each rolls itself back | staging |
 
 Coverage thresholds (`vite.config.ts`): 27 % for lines, functions, branches
@@ -91,14 +91,17 @@ branches always complete.
 | Edge Function Tests | `deno test` in `supabase/functions/_shared` (includes the webhook-auth regression guard) | always |
 | Unit Tests | `npm run test:unit:coverage`; Codecov upload is best-effort | always |
 | Build | `npm run build` with placeholder env; initial-load gzip and raw budgets; per-chunk warning; growth-vs-base warning; uploads `client/dist` for 3 days | always |
-| Migration Validation | Links to staging. On non-main refs: strict `db push --dry-run --include-all`. On `main`: every migration file must already be applied to staging (staging may be ahead) | pushes and same-repo PRs |
-| DB Integration Tests | `npm run test:db` against staging | code changes on **push to main** or same-repo PRs; serialized in concurrency group `staging-db-tests` |
+| Migration Validation | `node scripts/check-migrations.mjs` (static: grants on new tables/views/functions + rollback file, migrations newer than 20260926100000). Then links to staging. On non-main refs: strict `db push --dry-run --include-all`. On `main`: every migration file must already be applied to staging (staging may be ahead) | pushes and same-repo PRs |
+| DB Integration Tests | `npm run test:db` against staging | code changes on **push to main or staging** or same-repo PRs; serialized in concurrency group `staging-db-tests` |
 | E2E Tests | Chromium install, `.env` from secrets, `npm run test:e2e:smoke`, Playwright report for 3 days | code changes on **push to main** or same-repo PRs; serialized in concurrency group `staging-e2e-tests`; needs Build |
 
-Note: a direct push to `staging` runs neither the DB integration tests nor the
-E2E smoke suite (they run on the PR to `main` and on the merge). Open a PR
-into `staging` when a change touches RLS, triggers or user flows and you want
-those suites before the branch deploys to the preview.
+Note: a direct push to `staging` runs the DB integration tests (since
+2026-10-02) but not the E2E smoke suite, which runs on the PR to `main` and
+on the merge. Open a PR into `staging` when a change touches user flows and
+you want the smoke suite before the branch deploys to the preview. The
+constant concurrency groups mean a staging push and a PR run queue behind one
+another; GitHub keeps one pending run per group, so a third arrival replaces
+the pending one (it is not lost: the newest commit is what runs).
 
 Manual workflows: `uptime.yml` (health ping + warm-up) and `synthetic.yml`
 (Playwright `@smoke` against production). Scheduled monitoring runs on the
@@ -133,7 +136,9 @@ Keep the `[QA]` fixtures on staging; several specs and probes depend on them.
 
 ## 7. Gaps (verified absence)
 
-- No automated check that a new migration has a rollback file or a probe.
+- No automated check that a security-relevant migration has a probe (the
+  rollback-file and grant checks exist since 2026-10-02:
+  `scripts/check-migrations.mjs`).
 - No load or performance tests (see capacity.md for the proposed plan).
 - No accessibility lint or axe run in CI (a manual WCAG pass was done in
   2026-07).

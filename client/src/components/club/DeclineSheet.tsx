@@ -85,7 +85,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
           ))}
         </div>
         {reason && (
-          <div className="flex flex-col gap-2 rounded-card bg-surface-grouped p-3.5">
+          <div className="flex flex-col gap-2 rounded-card bg-surface-grouped p-3.5 focus-within:ring-2 focus-within:ring-focus-ring">
             {showsAiDraft ? (
               <span className="flex items-center gap-1.5 text-caption font-semibold text-hockia-primary" data-testid="decline-note-ai">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> {drafting ? 'Drafting with Hockia AI…' : 'Drafted by Hockia AI · tap to edit'}
@@ -100,7 +100,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
               maxLength={MAX}
               aria-label={`Note to ${firstName}`}
               placeholder={drafting ? '' : `Write a short note to ${firstName}`}
-              className="w-full resize-none bg-transparent text-[15px] leading-[21px] text-ink-1 outline-none placeholder:text-ink-4"
+              className="w-full resize-none bg-transparent text-[15px] leading-[21px] text-ink-1 outline-none focus-visible:outline-none placeholder:text-ink-3"
             />
           </div>
         )}
@@ -109,11 +109,11 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
           type="button"
           disabled={!canSend}
           onClick={() => reason && onSend(reason, note.trim())}
-          className="flex h-[50px] w-full items-center justify-center rounded-full bg-[#e5484d] text-body font-semibold text-white disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-body font-semibold text-white active:bg-status-danger-strong disabled:opacity-40"
         >
           Decline and send
         </button>
-        <button type="button" onClick={onCancel} className="py-1 text-body font-semibold text-hockia-primary">Cancel</button>
+        <button type="button" onClick={onCancel} className="flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
       </div>
     </BottomSheet>
   )

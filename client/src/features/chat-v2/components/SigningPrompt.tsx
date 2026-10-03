@@ -13,7 +13,7 @@ export default function SigningPrompt({ applicationId }: { applicationId: string
     <div className="flex justify-center pt-1.5">
       <Link
         to={`/applications/${applicationId}/signing`}
-        className="rounded-full bg-hockia-primary px-4 py-2 text-secondary font-semibold text-white"
+        className="relative before:absolute before:-inset-1 before:content-[''] inline-flex h-9 items-center rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white"
         data-testid="signing-prompt"
       >
         Confirm signing

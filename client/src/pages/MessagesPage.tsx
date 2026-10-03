@@ -1215,6 +1215,7 @@ export default function MessagesPage() {
                 onBack={handleBackToList}
                 backLabel={backLabelFor(location.state as { returnTo?: unknown; from?: unknown; backLabel?: unknown } | null)}
                 anchor={(location.state as { anchor?: unknown } | null)?.anchor === 'offer' ? 'offer' : undefined}
+                anchorApplicationId={typeof (location.state as { anchorApplicationId?: unknown } | null)?.anchorApplicationId === 'string' ? (location.state as { anchorApplicationId: string }).anchorApplicationId : null}
                 topSlot={clubV2Chat && chatApplication ? <ChatApplicationCard app={chatApplication.app} expiryDays={chatApplication.expiryDays} /> : undefined}
                 emptyState={clubV2Chat && chatApplication ? <ApplicantChatEmpty {...APPLICANT_CHAT_EMPTY} /> : undefined}
                 hideReceipts={clubV2Chat}

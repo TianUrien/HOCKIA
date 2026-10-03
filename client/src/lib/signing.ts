@@ -302,6 +302,8 @@ export interface RoadStep {
   done: boolean
   /** The next step (purple ring, bold label). Trial is optional, so never the current step. */
   current: boolean
+  /** Offer only: the signing went ahead without one (grey dash, never a tick — mirrors the player's road). */
+  skipped?: boolean
 }
 
 export interface RoadInput {
@@ -333,10 +335,13 @@ function dayWord(iso: string | null | undefined, now: Date): string | null {
 export function roadSteps(i: RoadInput): RoadStep[] {
   const now = i.now ?? new Date()
   const s = i.status
-  const offerDone = s === 'accepted' || s === 'signed_pending_confirmation' || s === 'signed'
+  const pastOffer = s === 'accepted' || s === 'signed_pending_confirmation' || s === 'signed'
+  // Marked as signed straight from Shortlisted (DEV NOTE 391:36): no accepted offer → skipped, not done.
+  const offerSkipped = pastOffer && i.offer?.status !== 'accepted'
+  const offerDone = pastOffer && !offerSkipped
   const offerSent = s === 'offered'
   const signedDone = s === 'signed'
-  const offerDetail = offerDone
+  const offerDetail = pastOffer
     ? (i.offer?.status === 'accepted' ? `${i.firstName} accepted${i.offer.responded_at ? ` · ${shortDayOf(i.offer.responded_at, now)}` : ''}` : 'Skipped')
     : offerSent && i.offer
       ? `Sent · open until ${shortDay(i.offer.open_until, now)}`
@@ -350,10 +355,10 @@ export function roadSteps(i: RoadInput): RoadStep[] {
     { key: 'shortlisted', label: 'Shortlisted', detail: dayWord(i.shortlistedAt, now) ?? 'Done', done: true, current: false },
     { key: 'talked', label: 'Talked', detail: 'When you’ve both written', done: i.talked, current: false },
     { key: 'trial', label: 'Trial or video call', detail: 'Optional', done: i.trial, current: false },
-    { key: 'offer', label: 'Offer', detail: offerDetail, done: offerDone, current: false },
+    { key: 'offer', label: 'Offer', detail: offerDetail, done: offerDone, current: false, skipped: offerSkipped },
     { key: 'signed', label: 'Signed', detail: signedDetail, done: signedDone, current: false },
   ]
-  const next = steps.find((st) => !st.done && st.key !== 'trial' && st.key !== 'shortlisted')
+  const next = steps.find((st) => !st.done && !st.skipped && st.key !== 'trial' && st.key !== 'shortlisted')
   if (next) next.current = true
   return steps
 }
@@ -495,16 +500,80 @@ export function playerRoadSteps(status: string, offerMade: boolean | null = null
 
 // ── Server-posted step lines, read by the right viewer ──
 
+/** The server's signing_marked line: "<club> marked you as signed for <role>. Confirm it on Hockia…". */
+const SIGNING_MARKED_LINE = /^(.+?) marked you as signed for (.+?)\. Confirm it on Hockia/
+
 /**
  * The server writes each step line once, for the player ("<club> marked you
  * as signed for <role>. Confirm it on Hockia…"). The club reads its own step
- * in club-facing words; every other line is already neutral.
+ * in club-facing words, naming the role the server line carries; every
+ * other line is already neutral.
  */
 export function recruitingEventLine(event: string, content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
   if (event === 'signing_marked' && viewer.isMine) {
-    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed. Waiting for them to confirm.`
+    const role = SIGNING_MARKED_LINE.exec(content)?.[2]?.trim()
+    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed${role ? ` for ${role}` : ''}. Waiting for them to confirm.`
   }
   return content
+}
+
+/** The server's offer card fallback: "<club> sent you an offer|updated its offer for <role>, open until <day>. Open Hockia…". */
+const OFFER_LINE = /^(.+?) (sent you an offer|updated its offer) for (.+?), open until (.+?)\. Open Hockia/
+/** The server's invite card fallback: "<club> invited you to apply for <role>." (+ note, + how to answer). */
+const INVITE_LINE = /^(.+?) invited you to apply for (.+?)\.(?:\n|$)/
+
+/**
+ * Every line the recruiting server functions post into a thread
+ * (migration 20260928120000 + 20261003100000), by shape: the inbox list
+ * carries only the last message's text, no metadata.
+ */
+const RECRUITING_SYSTEM_LINES: RegExp[] = [
+  SIGNING_MARKED_LINE,
+  OFFER_LINE,
+  INVITE_LINE,
+  /^.+? applied for .+\.$/,
+  /^.+? passed on .+\.$/,
+  /^.+? withdrew (?:its offer|their application) for .+\.$/,
+  /^.+? (?:accepted|declined) the offer for .+\.$/,
+  /^.+? undid the signing for .+\.$/,
+  /^.+? confirmed the signing for .+\. Signed through Hockia\.$/,
+]
+
+export interface RecruitingPreview {
+  /** What the row shows. */
+  text: string
+  /** A server-posted recruiting line: shown without the "You:" / "<name>:" sender prefix. */
+  system: boolean
+}
+
+/**
+ * The inbox preview line under a chat (phone InboxMessages and desktop
+ * ConversationList). The server writes each recruiting line once, for the
+ * player, and posts it AS the club (sender = club), so a plain "You: <line>"
+ * preview reads to the club as if it had written a line addressed to itself
+ * (QA round 7: "You: E2E Test FC marked you as signed for … Confirm it on
+ * Hockia…"). The player-worded lines are recognised by their shape and
+ * reworded for the club (the viewer the line is "mine" for); every recruiting
+ * line is flagged `system` so the row drops the sender prefix. Everything
+ * else is shown as is.
+ */
+export function recruitingPreview(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): RecruitingPreview {
+  const system = RECRUITING_SYSTEM_LINES.some((re) => re.test(content))
+  if (!viewer.isMine) return { text: content, system }
+  if (SIGNING_MARKED_LINE.test(content)) return { text: recruitingEventLine('signing_marked', content, viewer), system: true }
+  const offer = OFFER_LINE.exec(content)
+  if (offer) {
+    const verb = offer[2] === 'updated its offer' ? 'updated your offer' : 'sent an offer'
+    return { text: `You ${verb} for ${offer[3].trim()}, open until ${offer[4].trim()}.`, system: true }
+  }
+  const invite = INVITE_LINE.exec(content)
+  if (invite) return { text: `You invited ${viewer.otherFirstName?.trim() || 'the player'} to apply for ${invite[2].trim()}.`, system: true }
+  return { text: content, system }
+}
+
+/** recruitingPreview's text only (round 7 callers). */
+export function recruitingPreviewLine(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
+  return recruitingPreview(content, viewer).text
 }
 
 // ── Server errors → what people read ──

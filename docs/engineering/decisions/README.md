@@ -12,6 +12,7 @@ the tree, and the consequences. Status is `accepted` unless noted.
 | [0004](0004-bundle-budgets.md) | Initial-load gzip budget 480 KB is a hard, never-raised limit; raw total 4,800 KB is a founder-approved backstop | `.github/workflows/ci.yml` job "Build", `client/vite.config.ts` |
 | [0005](0005-cloudflare-stream-signing-domain.md) | Signed Stream playback URLs are minted locally and served from the account's customer subdomain, never `videodelivery.net` | `_shared/stream-signing.ts`, commits `65d19677`, `f7535ea1` |
 | [0006](0006-public-repository-policy.md) | The repository is public; commit text is neutral and nothing sensitive is committed; CI enforces secret and dependency gates | `.gitleaks.toml`, `scripts/audit-check.mjs`, `ci.yml` artifact retention |
+| [0007](0007-no-agent-framework.md) | No primary agent workflow framework: `CLAUDE.md` + memory + `docs/engineering/` + lazily loaded copied skills + two local hooks; frameworks with always-on hooks, user-settings writes or telemetry are out | `.claude/skills/*/SKILL.md`, `scripts/hooks/`, `skills.md` sections 2-5, `hooks.md` |
 
 ## Writing a new ADR
 

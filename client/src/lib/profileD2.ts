@@ -5,6 +5,7 @@
  */
 import type { KeyFact, KeyFactAction } from '@/lib/keyFacts'
 import { daysLeftLabel, daysLeftToReply } from '@/lib/clubRecruiting'
+import { shortDayOf } from '@/lib/signing'
 
 const ACTION_LABEL: Record<KeyFactAction, string> = {
   add_position: 'Add position',
@@ -33,12 +34,8 @@ export interface AppliedLineInput {
   expiryDays: number
 }
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-function monthDay(iso: string | null): string | null {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null) => shortDayOf(iso)
 
 const STATUS_LINE: Record<string, string> = {
   shortlisted: 'Shortlisted',

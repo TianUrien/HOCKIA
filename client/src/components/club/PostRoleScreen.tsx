@@ -305,7 +305,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 placeholder={isPlayer ? 'Men’s 1st player' : 'Head coach, 1st team'}
                 aria-label="Title"
                 maxLength={TITLE_MAX}
-                className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
               />
             </Section>
             <Section
@@ -422,7 +422,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 aria-label="About the role"
                 // Grows with the text (an AI draft is several lines); 4–12 rows.
                 rows={Math.min(12, Math.max(4, draft.description.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 36)), 0)))}
-                className="w-full resize-none rounded-[12px] bg-surface-grouped px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                className="w-full resize-none rounded-[12px] bg-surface-grouped px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
               />
               <button type="button" onClick={() => void draftWithAI()} disabled={drafting} className="mt-2 flex h-9 items-center gap-1.5 text-secondary font-semibold text-hockia-primary disabled:opacity-50">
                 <Sparkles className="h-4 w-4" strokeWidth={2} />
@@ -450,7 +450,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       </div>
 
       <div className="shrink-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2.5">
-        {problem && <p role="alert" className="pb-2 text-center text-secondary text-[#dc2626]">{problem}</p>}
+        {problem && <p role="alert" className="pb-2 text-center text-secondary text-status-danger">{problem}</p>}
         <button type="button" onClick={next} disabled={!loaded || saving !== null} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white active:opacity-90 disabled:opacity-60">
           {step === 3
             ? (editing ? (saving === 'post' ? 'Saving…' : 'Save changes') : (saving === 'post' ? 'Posting…' : 'Post role'))
@@ -482,7 +482,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           <h2 className="text-[20px] font-bold text-ink-1">Discard changes?</h2>
           <p className="mt-1 text-row text-ink-2">The role stays as it was.</p>
           <div className="mt-4 flex flex-col gap-2.5">
-            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-[#dc2626]">Discard</button>
+            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
             <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
           </div>
         </div>
@@ -494,7 +494,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           <p className="mt-1 text-row text-ink-2">Keep what you’ve written and finish the role later from Opportunities.</p>
           <div className="mt-4 flex flex-col gap-2.5">
             <button type="button" onClick={() => { setConfirmCancel(false); void saveDraft() }} className="flex h-[50px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Save draft</button>
-            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-[#dc2626]">Discard</button>
+            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
             <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
           </div>
         </div>

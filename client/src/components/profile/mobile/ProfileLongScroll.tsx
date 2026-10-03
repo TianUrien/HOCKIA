@@ -17,7 +17,7 @@ import { SmoothImage } from '@/components/ui/SmoothImage'
 import { humanizeToken, identityLine } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { RELOCATION_LABEL } from '@/lib/candidateIntent'
-import { careerSpan, isCurrentEntry } from '@/lib/careerCopy'
+import { careerSpan, flagForCountryName, isCurrentEntry } from '@/lib/careerCopy'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { cn } from '@/lib/utils'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
@@ -150,11 +150,11 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
   )
 }
 
-export function CareerRow({ entry, last, flag }: { entry: ScrollCareerEntry; last: boolean; flag: string | null }) {
+export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: ScrollCareerEntry; last: boolean; /** Represented country (national team). */ flag: string | null; /** The entry's own country (location_country) — wins over the linked world club's. */ locationFlag?: string | null }) {
   const isNow = isCurrentEntry(entry)
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)
-  const metaFlag = entry.worldClub?.flag ?? flag
+  const metaFlag = locationFlag ?? entry.worldClub?.flag ?? flag
   const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
   const meta = [metaFlag, metaText].filter(Boolean).join(' ')
   const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? 'representative team' : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
@@ -311,7 +311,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           {careerCount === 0 && !data.loading && empty('Add your first club', onOpenCareer)}
           {data.career.length > 0 && (
             <div className="flex flex-col">
-              {data.career.map((entry, i) => <CareerRow key={entry.id} entry={entry} last={i === data.career.length - 1} flag={entry.representedCountryId ? countries.find((c) => c.id === entry.representedCountryId)?.flag_emoji ?? null : null} />)}
+              {data.career.map((entry, i) => <CareerRow key={entry.id} entry={entry} last={i === data.career.length - 1} flag={entry.representedCountryId ? countries.find((c) => c.id === entry.representedCountryId)?.flag_emoji ?? null : null} locationFlag={flagForCountryName(countries, entry.locationCountry)} />)}
             </div>
           )}
         </section>

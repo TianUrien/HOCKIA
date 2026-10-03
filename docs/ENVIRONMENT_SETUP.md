@@ -82,16 +82,19 @@ For CI/CD to run E2E tests against staging:
 |--------|-------------|
 | `STAGING_SUPABASE_URL` | `https://ivjkdaylalhsteyyclvl.supabase.co` |
 | `STAGING_SUPABASE_ANON_KEY` | Staging anon key |
-| `E2E_PLAYER_EMAIL` | `playrplayer93@gmail.com` |
+| `E2E_PLAYER_EMAIL` | Email of the player test account (`<player-test-mailbox>`) |
 | `E2E_PLAYER_PASSWORD` | Password for player test account |
-| `E2E_CLUB_EMAIL` | `clubplayr8@gmail.com` |
+| `E2E_CLUB_EMAIL` | Email of the club test account (`<club-test-mailbox>`) |
 | `E2E_CLUB_PASSWORD` | Password for club test account |
-| `E2E_COACH_EMAIL` | `coachplayr@gmail.com` |
+| `E2E_COACH_EMAIL` | Email of the coach test account (`<coach-test-mailbox>`) |
 | `E2E_COACH_PASSWORD` | Password for coach test account |
-| `E2E_BRAND_EMAIL` | `brandplayr@gmail.com` |
+| `E2E_BRAND_EMAIL` | Email of the brand test account (`<brand-test-mailbox>`) |
 | `E2E_BRAND_PASSWORD` | Password for brand test account |
-| `E2E_UMPIRE_EMAIL` | `umpirehockia93@gmail.com` |
+| `E2E_UMPIRE_EMAIL` | Email of the umpire test account (`<umpire-test-mailbox>`) |
 | `E2E_UMPIRE_PASSWORD` | Password for umpire test account |
+
+The mailbox addresses are not in the repository; they live only in the
+GitHub Actions secrets and in each developer's `client/.env.local`.
 
 ## Database Migration Workflow
 
@@ -163,11 +166,13 @@ Auto-injected by Supabase (don't set manually):
 
 These accounts must exist in **STAGING** database:
 
-| Email | Role | Password |
-|-------|------|----------|
-| `playrplayer93@gmail.com` | player | (set in env) |
-| `clubplayr8@gmail.com` | club | (set in env) |
-| `coachplayr@gmail.com` | coach | (set in env) |
+| Env var | Role | Password |
+|---------|------|----------|
+| `E2E_PLAYER_EMAIL` | player | `E2E_PLAYER_PASSWORD` |
+| `E2E_CLUB_EMAIL` | club | `E2E_CLUB_PASSWORD` |
+| `E2E_COACH_EMAIL` | coach | `E2E_COACH_PASSWORD` |
+| `E2E_BRAND_EMAIL` | brand | `E2E_BRAND_PASSWORD` |
+| `E2E_UMPIRE_EMAIL` | umpire | `E2E_UMPIRE_PASSWORD` |
 
 To create them, sign up manually on `https://hockia-staging.vercel.app` or run:
 ```bash

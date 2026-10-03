@@ -20,6 +20,22 @@ function getString(metadata: Metadata, key: string): string | null {
   return typeof value === 'string' ? value : null
 }
 
+/** The team words the client's generated headline starts with (lib/opportunityCopy genderPill). */
+const TEAM_PREFIX = /^(?:men[’']s|women[’']s|boys|girls|mixed)\s+/i
+
+/**
+ * A role posted without a typed title is stored under the client's generated
+ * headline — "<Team> <position>" ("Men's midfielder", "Women's head coach")
+ * or the bare position (client lib/postRole defaultTitle). Recognised by
+ * shape against the structured position so the push can name the position
+ * instead (founder: the position, not the generated headline).
+ */
+export function isGeneratedHeadline(title: string, humanPosition: string | null): boolean {
+  if (!humanPosition) return false
+  const rest = title.trim().replace(TEAM_PREFIX, '').trim().toLowerCase()
+  return rest === humanPosition.trim().toLowerCase()
+}
+
 export function buildPushPayload(
   kind: string,
   metadata: Metadata,
@@ -222,13 +238,20 @@ export function buildPushPayload(
       const titleParts = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/) : []
       const titleHead = titleParts.length >= 2 ? (titleParts[0]?.trim() || null) : null
       const position = humanPos ?? titleHead ?? 'the opportunity'
+      // Shortlisted names the role by its title (QA 2 Oct: "considered for
+      // Midfielder" named no role), falling back to the position. A role
+      // posted without a typed title is stored under its generated headline
+      // ("Men's midfielder" — client lib/postRole defaultTitle); the founder
+      // wants the bare position there (QA round 7 re-check, item 18).
+      const typedTitle = vacancyTitle && !isGeneratedHeadline(vacancyTitle, humanPos) ? vacancyTitle.trim() : null
+      const role = typedTitle || position
       // Human, player-facing copy — MIRRORS client config.ts applicationStatusCopy.
       let title: string
       let body: string
       switch (status) {
         case 'shortlisted':
           title = `${club} shortlisted you`
-          body = `You're being considered for ${position}.`
+          body = `You're being considered for ${role}.`
           break
         case 'maybe':
           title = `${club} replied to your application`
@@ -241,7 +264,7 @@ export function buildPushPayload(
         case 'filled':
           // Founder copy 2026-09-26; names the role by its title; mirrors client config.ts.
           title = `${club} filled the role`
-          body = `${vacancyTitle ?? humanPos ?? 'The role'} has been filled. Thanks for applying — new roles are open.`
+          body = `${typedTitle ?? humanPos ?? 'The role'} has been filled. Thanks for applying — new roles are open.`
           break
         default:
           title = `${club} updated your application`

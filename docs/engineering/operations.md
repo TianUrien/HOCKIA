@@ -25,10 +25,11 @@ production for E2E or writes.
 
 ## 2. Release runbook (as practised)
 
-The repository has three sources: `RELEASE_CHECKLIST.md` (2026-02, partially
-stale), `docs/ENVIRONMENT_SETUP.md`, and `scripts/promote-to-production.sh`.
-The sequence below is the one actually followed in 2026-09/10 (project
-memory) and reconciles them.
+This section is the release runbook. It reconciles the former
+`RELEASE_CHECKLIST.md` (2026-02, folded in here on 2026-10-02 and now a
+pointer), `docs/ENVIRONMENT_SETUP.md`, and
+`scripts/promote-to-production.sh` with the sequence actually followed in
+2026-09/10 (project memory).
 
 ### 2.1 Before merging
 
@@ -41,6 +42,19 @@ memory) and reconciles them.
    work; QA agent loop; `[QA]` fixtures kept).
 4. If an edge function changed: it is already deployed to staging and
    exercised there.
+5. No competing PR into `main` (`gh pr list --state open --base main`), or
+   coordinate the order.
+6. Review greps over the release's new migration files (each hit must be
+   intentional):
+   - seed or fixture data: `grep -ril 'INSERT INTO.*test\|is_test_account.*true\|seed' <files>`
+   - destructive statements: `grep -Ein 'DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM' <files>`
+   - policy changes: `grep -l 'security_invoker\|SECURITY DEFINER\|CREATE POLICY\|DROP POLICY' <files>`
+     (views must use `security_invoker = true`)
+   - staging identifiers in app code: `grep -r 'ivjkdaylalhsteyyclvl' client/src/` must be empty.
+7. Environment parity (once per quarter or when something changed): Vercel
+   production env vars present (security.md section 6), Supabase Auth
+   redirect URLs include `https://www.inhockia.com/**`, and the CSP in
+   `client/vercel.json` allows both Supabase projects.
 
 ### 2.2 Database
 
@@ -73,18 +87,50 @@ supabase functions deploy <name> --project-ref xtertgftujnebubxgqit [--no-verify
 ```
 
 `--no-verify-jwt` is required for functions that verify auth in-handler or
-receive third-party calls. The pinned list is `[functions.<name>]` in
-`supabase/config.toml` (today: `resend-webhook`, `video-webhook`,
-`video-playback-token`, `video-create-upload`, `video-delete`, `nl-search`,
-`application-action`, `age-gate` off; `notify-vacancy`,
-`notify-opportunity-renewal` on). Several other functions carry a
-per-function `config.toml` that the deploy scripts read (`admin-actions`,
-`admin-send-campaign`, `admin-send-test-email`, `delete-account`,
-`ga4-funnel`, `health`, `public-opportunities`, `sitemap`,
-`notify-feedback-submitted`). **Trap**: a plain `supabase functions deploy`
-resets an unpinned function to the platform default, which has 401'd
-legitimate traffic twice (nl-search, resend-webhook). After deploying,
-confirm with `supabase functions list` and a request from the app.
+receive third-party calls. **The single source of truth is
+`[functions.<name>] verify_jwt` in `supabase/config.toml`** (consolidated
+2026-10-02): every function folder has an entry, the per-function
+`supabase/functions/<name>/config.toml` files are gone, the deploy scripts
+read the root file and refuse an unpinned function, and
+`_shared/function-config.test.ts` fails CI when a folder has no entry. The
+CLI also reads the root entry on `functions deploy`; passing the flag as well
+is harmless and keeps the intent visible in shell history.
+
+Off (`--no-verify-jwt`, 10): `health`, `sitemap`, `nl-search`,
+`resend-webhook`, `video-create-upload`, `video-webhook`,
+`video-playback-token`, `application-action`, `age-gate`, `video-delete`.
+On (29): everything else, including `delete-account`, `admin-actions`,
+`admin-send-campaign`, `admin-send-test-email`, `ga4-funnel`,
+`public-opportunities` and `notify-feedback-submitted` (whose removed
+per-function files wrongly said `false`).
+
+**Rule**: `supabase/config.toml` must always mirror what is live on
+production (verified with the platform's function listing). When they
+differ, live is changed to match the file, and only after an explicit
+founder OK; never edit the file to paper over a drift you have not
+understood.
+
+**Trap**: before the consolidation a plain `supabase functions deploy`
+reset an unpinned function to the platform default, which 401'd legitimate
+traffic twice (nl-search, resend-webhook). After deploying, confirm the
+setting in the dashboard (Edge Functions -> function -> Details) and with a
+request from the app.
+
+#### 2.3.1 Follow-up to the 2026-10-02 consolidation
+
+The file was written from the live production values, so **no production
+redeploy** results from this change. The only action is a one-off
+**staging-only** redeploy to fix the single drift found (`admin-actions` was
+`false` on staging, `true` on production):
+
+```sh
+supabase functions deploy admin-actions --project-ref ivjkdaylalhsteyyclvl --use-api
+```
+
+No flag, so the gateway check comes on. Afterwards confirm with the
+function listing that staging `admin-actions` shows `verify_jwt = true` and
+that an admin action still works on the staging preview. Delete this
+subsection once done.
 
 Shared code lives in `_shared/`; deploying one function bundles the shared
 modules it imports, so a `_shared` change needs every dependent function
@@ -96,7 +142,14 @@ redeployed.
    promotes production automatically.
 2. Smoke on production: landing, sign-in as a test role, feed, opportunities,
    a message, a profile with media. `curl -sI https://www.inhockia.com`
-   returns 200; `/functions/v1/health` returns `healthy`.
+   returns 200; `/functions/v1/health` returns `healthy`. The full manual
+   flow, run on the staging preview before the merge and repeated in part
+   after it: landing loads without console errors; signup form validates;
+   player and club sign-in reach their dashboards; club posts a role (draft
+   then publish) and it appears in the feed; player applies with a note;
+   club sets and clears applicant tiers; a profile with highlights and
+   references renders; a message between two accounts arrives in real time;
+   the same at a 375 px viewport without overflow.
 3. Watch Supabase logs and Sentry for 15-30 minutes.
 4. Native: the SPA inside the store binaries does not change until a new build
    ships. Before any breaking server change, raise
@@ -108,7 +161,9 @@ redeployed.
 
 ### 2.5 After the release
 
-- Tag and sync branches so `origin/main..origin/staging` is empty.
+- Tag (`git tag -a v<YYYY.MM.DD> -m "Release: <summary>"`, push the tag,
+  publish a GitHub Release with the summary) and sync branches so
+  `origin/main..origin/staging` is empty.
 - Record rollback notes for any irreversible migration.
 - Update the docs changed by the release (this directory included).
 

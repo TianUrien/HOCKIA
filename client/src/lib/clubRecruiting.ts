@@ -56,21 +56,50 @@ export type AppStatus = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_r
  * chip. Since the D4 re-check (2026-10-02) clubs can read withdrawn
  * applications to their own roles, so they count here and in total; they
  * stay out of every "waiting" / live count (lib/clubInbox, useScouting).
+ * noReply / filled / withdrawn split `closed` by why, so copy never calls a
+ * withdrawn (or filled) application "closed without a reply" (QA 2 Oct).
  */
-export interface Pipeline { toReview: number; shortlisted: number; maybe: number; declined: number; closed: number; withdrawn: number; total: number }
+export interface Pipeline { toReview: number; shortlisted: number; maybe: number; declined: number; closed: number; noReply: number; filled: number; withdrawn: number; total: number }
 
 export function pipelineOf(statuses: AppStatus[]): Pipeline {
-  const p: Pipeline = { toReview: 0, shortlisted: 0, maybe: 0, declined: 0, closed: 0, withdrawn: 0, total: 0 }
+  const p: Pipeline = { toReview: 0, shortlisted: 0, maybe: 0, declined: 0, closed: 0, noReply: 0, filled: 0, withdrawn: 0, total: 0 }
   for (const s of statuses) {
     p.total += 1
     if (s === 'pending') p.toReview += 1
     else if (s === 'shortlisted') p.shortlisted += 1
     else if (s === 'maybe') p.maybe += 1
     else if (s === 'rejected') p.declined += 1
-    else if (s === 'no_response' || s === 'filled') p.closed += 1
+    else if (s === 'no_response') { p.closed += 1; p.noReply += 1 }
+    else if (s === 'filled') { p.closed += 1; p.filled += 1 }
     else if (s === 'withdrawn') { p.closed += 1; p.withdrawn += 1 }
   }
   return p
+}
+
+/**
+ * "1 withdrawn" / "2 closed without a reply after 14 days" / "2 closed without
+ * a reply after 14 days · 1 withdrawn": each closed application is named by
+ * why it closed. A role filled by someone else closes the rest ("1 closed
+ * when the role was filled"). Null when nothing has closed.
+ */
+export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdrawn'>, expiryDays = DEFAULT_EXPIRY_DAYS): string | null {
+  const parts: string[] = []
+  if (p.noReply > 0) parts.push(`${p.noReply} closed without a reply after ${expiryDays} days`)
+  if (p.filled > 0) parts.push(`${p.filled} closed when the role was filled`)
+  if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
+  return parts.length ? parts.join(' · ') : null
+}
+
+/**
+ * The tail of the To review note: "… closes after 14 days — 1 has closed
+ * without a reply on this role so far · 1 withdrawn". Only what has actually
+ * closed without a reply is counted as such.
+ */
+export function toReviewClosedNote(p: Pick<Pipeline, 'noReply' | 'withdrawn'>): string | null {
+  const parts: string[] = []
+  if (p.noReply > 0) parts.push(`${p.noReply} ${p.noReply === 1 ? 'has' : 'have'} closed without a reply on this role so far`)
+  if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
+  return parts.length ? parts.join(' · ') : null
 }
 
 /**

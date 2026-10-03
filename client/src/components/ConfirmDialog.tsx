@@ -85,11 +85,11 @@ export default function ConfirmDialog({
 
   const buttonColors =
     variant === 'danger'
-      ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+      ? 'bg-status-danger hover:bg-status-danger-strong focus:ring-status-danger'
       : 'bg-hockia-primary hover:bg-[#6B20D4] focus:ring-hockia-primary'
   const iconColors =
     variant === 'danger'
-      ? 'text-red-600 bg-red-50'
+      ? 'text-status-danger bg-status-danger-soft'
       : 'text-hockia-primary bg-hockia-primary/10'
 
   return (

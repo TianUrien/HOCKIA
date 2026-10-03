@@ -7,6 +7,7 @@
 import { Link } from 'react-router-dom'
 import { Store, ExternalLink, CheckCircle } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
+import { dayFirst } from '@/lib/dayFirst'
 import type { Brand } from '@/hooks/useBrands'
 
 interface BrandCardProps {
@@ -98,7 +99,8 @@ function formatActivity(dateString: string | undefined | null): string {
   if (seconds < 172800) return 'Active yesterday'
   if (seconds < 604800) return `Active ${Math.floor(seconds / 86400)}d ago`
 
-  return `Active ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  // "Active 3 Oct" — day first (lib/dayFirst).
+  return `Active ${dayFirst(date)}`
 }
 
 export default BrandCard

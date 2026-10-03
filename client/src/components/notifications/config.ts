@@ -51,6 +51,15 @@ const titleHeadPosition = (title: string | null): string | null => {
   const parts = title.split(/\s+[—–-]\s+/)
   return parts.length >= 2 ? (parts[0]?.trim() || null) : null
 }
+/** The team words the generated headline starts with (lib/opportunityCopy genderPill). */
+const TEAM_PREFIX = /^(?:men[’']s|women[’']s|boys|girls|mixed)\s+/i
+/** A role posted without a typed title is stored under its generated headline
+ *  ("Men's midfielder" — lib/postRole defaultTitle); the founder wants the bare
+ *  position there. MIRRORED in send-push/push-payload.ts isGeneratedHeadline. */
+export const isGeneratedHeadline = (title: string, humanPosition: string | null): boolean => {
+  if (!humanPosition) return false
+  return title.trim().replace(TEAM_PREFIX, '').trim().toLowerCase() === humanPosition.trim().toLowerCase()
+}
 
 /** Human, player-facing copy for an application status update. The raw enum
  *  status (shortlisted / maybe / rejected) was leaking into the UI as
@@ -63,13 +72,15 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
   const vacancyTitle = getMetadataString(notification, 'vacancy_title')
   // Prefer the structured position enum; the title split is a last resort and only
   // when the title actually has a "Position — Club" separator (else: neutral phrase).
-  const position =
-    humanizePosition(getMetadataString(notification, 'position')) ??
-    titleHeadPosition(vacancyTitle) ??
-    'the opportunity'
+  const humanPos = humanizePosition(getMetadataString(notification, 'position'))
+  const position = humanPos ?? titleHeadPosition(vacancyTitle) ?? 'the opportunity'
+  // The role is named by its typed title (QA 2 Oct: "considered for Midfielder"
+  // named no role); a generated headline yields the bare position (round 9).
+  const typedTitle = vacancyTitle && !isGeneratedHeadline(vacancyTitle, humanPos) ? vacancyTitle.trim() : null
+  const role = typedTitle || position
   switch (status) {
     case 'shortlisted':
-      return { title: `${club} shortlisted you`, body: `You're being considered for ${position}.` }
+      return { title: `${club} shortlisted you`, body: `You're being considered for ${role}.` }
     case 'maybe':
       return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
     case 'rejected':
@@ -77,7 +88,7 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
-      const role = vacancyTitle ?? humanizePosition(getMetadataString(notification, 'position')) ?? 'The role'
+      const role = typedTitle ?? humanPos ?? 'The role'
       return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying — new roles are open.` }
     }
     default:

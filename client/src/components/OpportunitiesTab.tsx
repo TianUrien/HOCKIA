@@ -20,6 +20,7 @@ import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch } from '@/lib/roleLifecycle'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { countWaitingApplicants } from '@/lib/roleWaiting'
+import { dayFirst } from '@/lib/dayFirst'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -703,11 +704,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     )
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'TBD'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
+  // "10 Oct 2026" — day first (lib/dayFirst).
+  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? 'TBD'
 
   if (isLoading) {
     return (

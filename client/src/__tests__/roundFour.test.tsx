@@ -373,7 +373,8 @@ describe('player bits', () => {
 describe('wording', () => {
   it('push mirrors the client: the role title names the filled role', () => {
     const src = read('../../../supabase/functions/send-push/push-payload.ts')
-    expect(src).toContain("body = `${vacancyTitle ?? humanPos ?? 'The role'} has been filled.")
+    // Round 9: a generated headline ("Men's midfielder") yields the bare position; a typed title still names the role.
+    expect(src).toContain("body = `${typedTitle ?? humanPos ?? 'The role'} has been filled.")
   })
   it('role-description-draft picks the league from the role team via leagueForTeam', () => {
     const src = read('../../../supabase/functions/role-description-draft/index.ts')

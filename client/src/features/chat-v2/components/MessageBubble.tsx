@@ -1,12 +1,13 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { format, isToday, isYesterday } from 'date-fns'
+import { clockTime, dayFirst } from '@/lib/dayFirst'
 
-/** "Today" · "Yesterday" · "Monday, Sep 12" — the day label above a group. */
+/** "Today" · "Yesterday" · "Monday, 12 Sep" — the day label above a group (day first, lib/dayFirst). */
 function dayLabel(d: Date): string {
   if (isToday(d)) return 'Today'
   if (isYesterday(d)) return 'Yesterday'
-  return format(d, 'EEEE, MMM d')
+  return `${format(d, 'EEEE')}, ${dayFirst(d)}`
 }
 import { AlertCircle, Ban, Check, CheckCheck, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
@@ -86,7 +87,8 @@ export function MessageBubble({
   hideReceipts = false,
   otherParticipantName = null
 }: MessageBubbleProps) {
-  const timestampLabel = format(new Date(message.sent_at), 'h:mm a')
+  // The one clock in the app (lib/dayFirst clockTime); the inbox list reads the same.
+  const timestampLabel = clockTime(message.sent_at)
 
   const isDeleted = Boolean(message.deleted_at)
   const isSharedPost = message.metadata?.type === 'shared_post'
@@ -217,7 +219,7 @@ export function MessageBubble({
       )}
       {showTimestamp && !showDayDivider && (
         <div className="py-2 text-center text-caption text-ink-3">
-          {format(new Date(message.sent_at), 'HH:mm')}
+          {timestampLabel}
         </div>
       )}
       {isUnreadMarker && (
@@ -241,15 +243,16 @@ export function MessageBubble({
       ) : invite ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div className="w-full sm:max-w-[70%]">
-            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-card bg-surface-grouped" />}>
               <InviteCard inviteId={invite.invite_id} opportunityId={invite.opportunity_id} isMine={isMine} fallbackText={message.content} />
             </Suspense>
           </div>
         </div>
       ) : offer ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
-          <div className="w-full sm:max-w-[70%]">
-            <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+          {/* data-offer-card: what "See the offer" scrolls to and rings — the card alone, never the day/time separator above it (QA round 7 re-check). */}
+          <div className="w-full sm:max-w-[70%]" data-offer-card="true">
+            <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-card bg-surface-grouped" />}>
               <OfferCard offerId={offer.offer_id} isMine={isMine} fallbackText={message.content} />
             </Suspense>
           </div>
