@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,13 +17,13 @@ vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: () => native.value },
 }))
 
-// The page renders LandingStats, which imports the Supabase client — and that
-// module THROWS at import when the env vars are absent. They are present
-// locally via .env.local and absent in the CI unit-test job, so leaving this
+// The page reads open roles through the Supabase client — and that module
+// THROWS at import when the env vars are absent. They are present locally
+// via .env.local and absent in the CI unit-test job, so leaving this
 // unmocked passes on a laptop and fails only in CI. Stub it: this file is
-// about the store badges, not the stats.
+// about the store badges, not the roles.
 vi.mock('@/lib/supabase', () => ({
-  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+  supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: { data: [] }, error: null }) } },
 }))
 
 // Keep the page cheap to mount — we're asserting one conditional block.
@@ -50,11 +50,14 @@ vi.mock('@/components/StoreBadges', () => ({
 async function renderLanding() {
   vi.resetModules()
   const { default: Landing } = await import('@/pages/Landing')
-  return render(
+  const view = render(
     <MemoryRouter>
       <Landing />
     </MemoryRouter>,
   )
+  // Flush the open-roles fetch so its state update lands inside act().
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+  return view
 }
 
 afterEach(() => {
@@ -63,25 +66,22 @@ afterEach(() => {
 })
 
 describe('Landing — store badges are web-only', () => {
-  it('SHOWS the badges and the download copy on the website', async () => {
+  it('SHOWS the badges on the website', async () => {
     native.value = false
     await renderLanding()
-    // Web A landing (2026-08-15): the badges are introduced by "Or get the app".
     expect(screen.getAllByTestId('store-badges').length).toBeGreaterThan(0)
-    expect(screen.getByText(/Or get the app/i)).toBeInTheDocument()
   })
 
-  it('HIDES the badges and the download copy inside the native app', async () => {
+  it('HIDES the badges inside the native app', async () => {
     native.value = true
     await renderLanding()
     expect(screen.queryByTestId('store-badges')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Or get the app/i)).not.toBeInTheDocument()
   })
 
   it('keeps BOTH primary CTAs in the app — only the download block is removed', async () => {
     native.value = true
     await renderLanding()
-    expect(screen.getAllByRole('link', { name: /explore hockia/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: /explore without an account/i }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: /create a profile/i }).length).toBeGreaterThan(0)
   })
 })
