@@ -100,7 +100,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
               maxLength={MAX}
               aria-label={`Note to ${firstName}`}
               placeholder={drafting ? '' : `Write a short note to ${firstName}`}
-              className="w-full resize-none bg-transparent text-[15px] leading-[21px] text-ink-1 outline-none placeholder:text-ink-3"
+              className="w-full resize-none bg-transparent text-[15px] leading-[21px] text-ink-1 outline-none focus-visible:outline-none placeholder:text-ink-3"
             />
           </div>
         )}

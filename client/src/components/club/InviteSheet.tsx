@@ -183,7 +183,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
                 maxLength={INVITE_NOTE_MAX}
                 aria-label={`Note to ${firstName}`}
                 placeholder={`Write a short note to ${firstName}`}
-                className="w-full resize-none bg-transparent text-[16px] leading-[22px] text-ink-1 outline-none placeholder:text-ink-3"
+                className="w-full resize-none bg-transparent text-[16px] leading-[22px] text-ink-1 outline-none focus-visible:outline-none placeholder:text-ink-3"
               />
             </div>
           </>
