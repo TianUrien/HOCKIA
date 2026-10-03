@@ -6,9 +6,11 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 ## 2026-10-03 · design agent
 
 - New screen D3.3b · Not interested — confirm (player) `496:1448`: neutral
-  bottom sheet (founder ruling) with Primary "Not interested" and Tertiary
-  "Keep invitation". Prototype: the card's "Not interested" opens it, "Keep
-  invitation" goes back.
+  bottom sheet (founder ruling) with Primary "Not interested" (busy label
+  "Sending…") and Tertiary "Cancel" (every sheet's way out is "Cancel"). Body
+  matches the round-8 copy: "<Club name> will see that you passed. You can
+  still message them." Prototype: the card's "Not interested" opens it,
+  "Cancel" goes back.
 - New component List item / Conversation `494:2377` (Dot: None, Warning ·
   Name, Date, Meta, Preview). D1.19 Inbox `353:502` rows now use it; photos,
   amber dots and the row link to D1.20 kept.
