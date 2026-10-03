@@ -11,6 +11,10 @@ import { logger } from '@/lib/logger'
  * confirmation surface, never a centred modal (ConfirmDialog stays for the
  * desktop v1 screens only).
  *
+ * `tone` is "danger" by default. "primary" is for a player saying no
+ * (Decline offer, Not interested): founder ruling 2026-10-02/03, a player's
+ * no is a normal choice and is never shown as destructive.
+ *
  * `onConfirm` may throw or reject: the sheet then stays open (the caller
  * has already toasted the reason) and nothing else happens.
  */
@@ -20,15 +24,16 @@ interface ConfirmSheetProps {
   onConfirm: () => void | Promise<void>
   title: string
   message: string
-  /** Label of the solid Danger button. */
+  /** Label of the solid confirm button. */
   confirmLabel: string
+  tone?: 'danger' | 'primary'
   cancelLabel?: string
   /** Label while the action runs; defaults to "Working…". */
   busyLabel?: string
   testId?: string
 }
 
-export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, cancelLabel = 'Cancel', busyLabel = 'Working…', testId }: ConfirmSheetProps) {
+export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, tone = 'danger', cancelLabel = 'Cancel', busyLabel = 'Working…', testId }: ConfirmSheetProps) {
   const [busy, setBusy] = useState(false)
 
   const confirm = async () => {
@@ -52,7 +57,7 @@ export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirm
           type="button"
           onClick={() => void confirm()}
           disabled={busy}
-          className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60"
+          className={`mt-5 flex h-12 w-full items-center justify-center rounded-full text-[16px] font-semibold text-white disabled:opacity-60 ${tone === 'primary' ? 'bg-hockia-primary active:opacity-90' : 'bg-status-danger active:bg-status-danger-strong'}`}
           data-testid={testId ? `${testId}-yes` : undefined}
         >
           {busy ? busyLabel : confirmLabel}

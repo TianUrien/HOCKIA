@@ -166,6 +166,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         title="Not interested in this role?"
         message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
         confirmLabel="Not interested"
+        tone="primary"
         busyLabel="Sending…"
         testId="invite-pass-confirm"
       />
