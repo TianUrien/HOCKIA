@@ -293,6 +293,12 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByLabelText('Position')).toBeInTheDocument()
     expect(screen.getByLabelText('Second position (optional)')).toBeInTheDocument()
 
+    // The Day/Month/Year picker is unchanged: years descend from a recent one
+    // (was pinned on the public sign-up path before the account-first flow).
+    const yearValues = Array.from((screen.getByLabelText('Year') as HTMLSelectElement).options).map((o) => Number(o.value)).filter((v) => v > 0)
+    expect(yearValues.length).toBeGreaterThanOrEqual(90)
+    expect(yearValues.every((v, i) => i === 0 || v < yearValues[i - 1])).toBe(true)
+
     await user.type(screen.getByLabelText('Full name'), 'Sam Rivers')
     await user.selectOptions(screen.getByLabelText('Day'), '1')
     await user.selectOptions(screen.getByLabelText('Month'), '1')
