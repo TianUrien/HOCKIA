@@ -9034,6 +9034,19 @@ export type Database = {
       }
       get_my_roles_health: { Args: never; Returns: Json }
       get_my_streak: { Args: never; Returns: Json }
+      get_my_week_viewers: {
+        Args: { p_days?: number }
+        Returns: {
+          avatar_url: string
+          country_id: number
+          full_name: string
+          is_hidden: boolean
+          role: string
+          username: string
+          viewed_at: string
+          viewer_id: string
+        }[]
+      }
       get_my_weekly_visibility: { Args: never; Returns: Json }
       get_notification_counts: {
         Args: never
