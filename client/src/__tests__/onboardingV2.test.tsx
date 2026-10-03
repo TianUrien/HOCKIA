@@ -251,9 +251,24 @@ describe('Choose your role (101:892)', () => {
     // No counts, scores or levels on any card.
     expect(screen.queryByText(/\d/)).not.toBeInTheDocument()
 
+    // Option card (460:40) with the 40 px icon tile: brand-soft at rest,
+    // white on the selected card, which gets the brand border + soft fill.
+    for (const role of ['player', 'coach', 'club', 'brand', 'umpire']) {
+      const tile = screen.getByTestId(`role-icon-${role}`)
+      expect(tile).toHaveClass('h-10', 'w-10', 'bg-hockia-soft', 'text-hockia-primary')
+      expect(tile.querySelector('svg')).not.toBeNull()
+    }
+    const playerCard = screen.getByRole('radio', { name: /^Player/ })
+    expect(playerCard).toHaveClass('bg-surface-muted')
+    expect(playerCard).not.toHaveClass('ring-hockia-primary')
+
     const cta = screen.getByRole('button', { name: 'Continue' })
     expect(cta).toBeDisabled()
-    await user.click(screen.getByRole('radio', { name: /^Player/ }))
+    await user.click(playerCard)
+    expect(playerCard).toHaveAttribute('aria-checked', 'true')
+    expect(playerCard).toHaveClass('bg-hockia-soft', 'ring-hockia-primary')
+    expect(screen.getByTestId('role-icon-player')).toHaveClass('bg-white')
+    expect(screen.getByTestId('role-icon-coach')).toHaveClass('bg-hockia-soft')
     expect(screen.getByRole('button', { name: 'Continue as a player' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Continue as a player' }))
 
