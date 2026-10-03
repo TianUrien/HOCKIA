@@ -4,7 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { SUPABASE_URL } from '@/lib/supabase'
 import Avatar from './Avatar'
 import { getInitials } from '@/lib/utils'
-import { recruitingPreviewLine } from '@/lib/signing'
+import { recruitingPreview } from '@/lib/signing'
 
 interface Conversation {
   id: string
@@ -83,6 +83,8 @@ export default function ConversationList({
           const isUnread = (conversation.unreadCount || 0) > 0
           const isSentByMe = conversation.lastMessage?.sender_id === currentUserId
           const otherParticipantLabel = conversation.otherParticipant?.full_name?.split(' ')[0] || conversation.otherParticipant?.username || 'Contact'
+          // Server-posted recruiting lines are reworded for the club and shown without a sender prefix (lib/signing).
+          const preview = conversation.lastMessage ? recruitingPreview(conversation.lastMessage.content, { isMine: isSentByMe, otherFirstName: otherParticipantLabel }) : null
           const buttonClasses = `w-full flex items-start gap-3 ${isCompact ? 'px-3 py-2.5' : 'px-4 py-3'} transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-purple-500 ${
             isSelected
               ? 'bg-gray-100'
@@ -149,12 +151,16 @@ export default function ConversationList({
                     )}
                   </div>
 
-                  {conversation.lastMessage && (
+                  {preview && (
                     <p className={`text-[13px] truncate ${isUnread ? 'text-gray-700 font-medium' : 'text-gray-500'}`}>
-                      <span className="text-gray-400">
-                        {isSentByMe ? 'You' : otherParticipantLabel}:
-                      </span>{' '}
-                      {truncateMessage(recruitingPreviewLine(conversation.lastMessage.content, { isMine: isSentByMe, otherFirstName: otherParticipantLabel }), 40)}
+                      {!preview.system && (
+                        <>
+                          <span className="text-gray-400">
+                            {isSentByMe ? 'You' : otherParticipantLabel}:
+                          </span>{' '}
+                        </>
+                      )}
+                      {truncateMessage(preview.text, 40)}
                     </p>
                   )}
                 </div>

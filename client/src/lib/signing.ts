@@ -517,15 +517,63 @@ export function recruitingEventLine(event: string, content: string, viewer: { is
   return content
 }
 
+/** The server's offer card fallback: "<club> sent you an offer|updated its offer for <role>, open until <day>. Open Hockia…". */
+const OFFER_LINE = /^(.+?) (sent you an offer|updated its offer) for (.+?), open until (.+?)\. Open Hockia/
+/** The server's invite card fallback: "<club> invited you to apply for <role>." (+ note, + how to answer). */
+const INVITE_LINE = /^(.+?) invited you to apply for (.+?)\.(?:\n|$)/
+
 /**
- * The inbox preview line under a chat: the conversation list carries only
- * the last message's text (no metadata), so the one player-worded step the
- * club must not read as written is recognised by its shape and reworded with
- * recruitingEventLine. Everything else is shown as is.
+ * Every line the recruiting server functions post into a thread
+ * (migration 20260928120000 + 20261003100000), by shape: the inbox list
+ * carries only the last message's text, no metadata.
  */
+const RECRUITING_SYSTEM_LINES: RegExp[] = [
+  SIGNING_MARKED_LINE,
+  OFFER_LINE,
+  INVITE_LINE,
+  /^.+? applied for .+\.$/,
+  /^.+? passed on .+\.$/,
+  /^.+? withdrew (?:its offer|their application) for .+\.$/,
+  /^.+? (?:accepted|declined) the offer for .+\.$/,
+  /^.+? undid the signing for .+\.$/,
+  /^.+? confirmed the signing for .+\. Signed through Hockia\.$/,
+]
+
+export interface RecruitingPreview {
+  /** What the row shows. */
+  text: string
+  /** A server-posted recruiting line: shown without the "You:" / "<name>:" sender prefix. */
+  system: boolean
+}
+
+/**
+ * The inbox preview line under a chat (phone InboxMessages and desktop
+ * ConversationList). The server writes each recruiting line once, for the
+ * player, and posts it AS the club (sender = club), so a plain "You: <line>"
+ * preview reads to the club as if it had written a line addressed to itself
+ * (QA round 7: "You: E2E Test FC marked you as signed for … Confirm it on
+ * Hockia…"). The player-worded lines are recognised by their shape and
+ * reworded for the club (the viewer the line is "mine" for); every recruiting
+ * line is flagged `system` so the row drops the sender prefix. Everything
+ * else is shown as is.
+ */
+export function recruitingPreview(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): RecruitingPreview {
+  const system = RECRUITING_SYSTEM_LINES.some((re) => re.test(content))
+  if (!viewer.isMine) return { text: content, system }
+  if (SIGNING_MARKED_LINE.test(content)) return { text: recruitingEventLine('signing_marked', content, viewer), system: true }
+  const offer = OFFER_LINE.exec(content)
+  if (offer) {
+    const verb = offer[2] === 'updated its offer' ? 'updated your offer' : 'sent an offer'
+    return { text: `You ${verb} for ${offer[3].trim()}, open until ${offer[4].trim()}.`, system: true }
+  }
+  const invite = INVITE_LINE.exec(content)
+  if (invite) return { text: `You invited ${viewer.otherFirstName?.trim() || 'the player'} to apply for ${invite[2].trim()}.`, system: true }
+  return { text: content, system }
+}
+
+/** recruitingPreview's text only (round 7 callers). */
 export function recruitingPreviewLine(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
-  if (viewer.isMine && SIGNING_MARKED_LINE.test(content)) return recruitingEventLine('signing_marked', content, viewer)
-  return content
+  return recruitingPreview(content, viewer).text
 }
 
 // ── Server errors → what people read ──

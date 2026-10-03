@@ -128,7 +128,8 @@ describe('3 · "You marked <name> as signed for <role>"', () => {
     expect(recruitingPreviewLine(line, { isMine: true, otherFirstName: 'Facundo' })).toBe('You marked Facundo as signed for Men’s 1st player. Waiting for them to confirm.')
     expect(recruitingPreviewLine(line, { isMine: false, otherFirstName: 'E2E' })).toBe(line)
     expect(recruitingPreviewLine('See you at training', { isMine: true, otherFirstName: 'Facundo' })).toBe('See you at training')
-    expect(src('components/ConversationList.tsx')).toContain('recruitingPreviewLine(conversation.lastMessage.content')
+    // Round 9: both lists read recruitingPreview (text + system flag) so the sender prefix is dropped too.
+    expect(src('components/ConversationList.tsx')).toContain('recruitingPreview(conversation.lastMessage.content')
   })
 })
 
