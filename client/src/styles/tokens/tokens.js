@@ -72,6 +72,16 @@ export const colors = {
     "instagram": "#e1306c",
     "linkedin": "#0a66c2",
     "facebook": "#1877f2"
+  },
+  "role": {
+    "player-bg": "#eff6ff",
+    "player-ink": "#2563eb",
+    "coach-bg": "#f0fdfa",
+    "coach-ink": "#0f766e",
+    "club-bg": "#fff7ed",
+    "club-ink": "#c2410c",
+    "brand-bg": "#fff1f2",
+    "brand-ink": "#be123c"
   }
 }
 
