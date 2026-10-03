@@ -52,7 +52,7 @@ export type PlayerPosition = (typeof PLAYER_POSITIONS)[number]
 
 export const PHOTO_HELPER = 'A real match photo gets more profile views.'
 export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about roles.'
-/** Under 18 (16–17): the switch is not offered and the copy promises nothing
+/** Under 18: the switch is not offered and the copy promises nothing
  *  about being suggested — suggestions are 18+ AND open, server-side. */
 export const OPEN_TO_PLAY_UNDER_18 = 'Open to play is for players 18 and over. Until then, clubs aren’t suggested your profile — you can still keep it up to date.'
 

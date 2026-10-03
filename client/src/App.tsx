@@ -11,6 +11,7 @@ import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
+import CookieConsent from '@/components/CookieConsent'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
@@ -391,6 +392,7 @@ function App() {
           <ToastContainer />
           <UploadIndicator />
           <InstallPrompt />
+          <CookieConsent />
           <PushPrompt />
           <NativeUpdatePrompt />
           <AppRatingPrompt />

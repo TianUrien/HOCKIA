@@ -15,7 +15,6 @@ import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
 import UpdatePrompt from './components/UpdatePrompt'
-import CookieConsent from './components/CookieConsent'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 import { initPostHog } from './lib/posthog'
@@ -293,8 +292,9 @@ export function RootApp() {
     <Sentry.ErrorBoundary fallback={<RootErrorFallback />}>
       <StrictMode>
         <QueryClientProvider client={queryClient}>
+          {/* The cookie banner lives inside App's router (next to
+              InstallPrompt) so it can stay off the auth and onboarding routes. */}
           <App />
-          <CookieConsent />
           {/* Last sibling: releases the native launch splash once the first
               frame is real (see components/LaunchSplashController). */}
           <LaunchSplashController />

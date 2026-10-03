@@ -179,6 +179,10 @@ describe('route order: account first, then role, then set-up', () => {
     const buttons = screen.getAllByRole('button')
     expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
+    // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
+    expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms')
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy-policy')
     expect(screen.queryByText(/join as/i)).not.toBeInTheDocument()
   })
 
@@ -314,7 +318,7 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(mocks.events).toContain('db:onboarding_step:wizard_step_completed:1')
   })
 
-  it('step 2 (adult): Open to play switch with the ruled line; Skip finishes onboarding without touching the fields', async () => {
+  it('step 2 (adult): Open to play switch with the ruled line; Skip finishes onboarding, saves only the Open to play ON default', async () => {
     const user = userEvent.setup()
     mocks.profile.current = playerProfile(years(25))
     const onFinished = vi.fn()
@@ -332,6 +336,18 @@ describe('Set up (114:537 / 114:608)', () => {
     await waitFor(() => expect(onFinished).toHaveBeenCalledTimes(1))
     expect(mocks.updates).toEqual([{ onboarding_completed: true }])
     expect(mocks.events).toContain('db:onboarding_step:wizard_step_skipped:2')
+    // Founder ruling 2026-10-03: Skip keeps the ON default for adults.
+    expect(mocks.events).toContain('set_open_to_play')
+  })
+
+  it('under 18: Skip saves nothing about Open to play', async () => {
+    const user = userEvent.setup()
+    mocks.profile.current = playerProfile(years(16))
+    const onFinished = vi.fn()
+    render(<MemoryRouter><PlayerSetupFlow onFinished={onFinished} /></MemoryRouter>)
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await waitFor(() => expect(onFinished).toHaveBeenCalledTimes(1))
+    expect(mocks.updates).toEqual([{ onboarding_completed: true }])
     expect(mocks.events).not.toContain('set_open_to_play')
   })
 

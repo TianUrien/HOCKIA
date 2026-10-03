@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 import { initPostHog } from '@/lib/posthog'
@@ -11,8 +12,20 @@ import { initPostHog } from '@/lib/posthog'
  * Hidden on native iOS/Android apps — no cookies are used in Capacitor
  * and showing this prompt triggers Apple's ATT requirements (Guideline 5.1.2).
  */
+/**
+ * Routes where the banner must NEVER render: auth and onboarding. Same bug
+ * class as the 2026-08-17 OAuth-return wall (the install card over /signup,
+ * this banner over the Terms gate): a stranger's first screens get no
+ * competing bottom strip (founder ruling 2026-10-03). The banner is only
+ * hidden here — consent is still asked on the first route after these, and
+ * previously granted consent still enables analytics on mount.
+ */
+const AUTH_FLOW_PREFIXES = ['/signup', '/signin', '/auth', '/verify-email', '/complete-profile', '/brands/onboarding', '/forgot-password', '/reset-password', '/email-action', '/juniors-waitlist']
+
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
+  // Mounted inside <BrowserRouter> (App.tsx, next to InstallPrompt).
+  const location = useLocation()
 
   useEffect(() => {
     // Native apps don't use cookies — skip consent prompt entirely
@@ -40,6 +53,7 @@ export default function CookieConsent() {
   }
 
   if (!visible) return null
+  if (AUTH_FLOW_PREFIXES.some((pre) => location.pathname === pre || location.pathname.startsWith(pre + '/'))) return null
 
   // Slim single-row bar. Previous version was a 158px tall card that
   // blanketed the bottom of the viewport — at z-9999 it intercepted

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
-import { AuthShell, FormError } from '@/components/auth/authUi'
+import { AuthShell, FormError, TermsLine } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/lib/auth'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
@@ -48,6 +48,9 @@ export default function SignUp() {
         <Button variant="secondary" block onClick={() => navigate(`/signup/email${search}`)}>
           Create with email
         </Button>
+        {/* Founder ruling 2026-10-03: the standard line sits under the actions
+            it governs, so the OAuth path sees it too. */}
+        <TermsLine className="pt-1" />
         <p className="pt-3 text-center text-row text-ink-2">
           Already a member?{' '}
           <Link to={`/signin${search}`} className="font-semibold text-hockia-primary">

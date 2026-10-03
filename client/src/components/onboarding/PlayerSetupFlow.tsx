@@ -39,11 +39,11 @@ import {
  * account server-side and AgeGate's goodbye screen takes over; the date is
  * immutable once set). Step 2 of 2, skippable: current club, league, base
  * location, passports (max 2), Open to play. Continue or Skip finish
- * onboarding (onboarding_completed); the caller does the refresh, analytics
- * and navigation.
+ * onboarding (onboarding_completed); Skip keeps the Open to play ON default
+ * for adults. The caller does the refresh, analytics and navigation.
  *
  * Suggestions to clubs need open_to_play AND 18+ server-side, so the switch
- * is only offered to adults; 16–17-year-olds see a line that promises nothing.
+ * is only offered to adults; under-18s see a line that promises nothing.
  *
  * Mounted by CompleteProfile for players who have not finished onboarding;
  * its auth / already-onboarded guards run first. Coaches, umpires, clubs and
@@ -296,9 +296,11 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       }
       const { error: updateError } = await supabase.from('profiles').update(patch).eq('id', user.id)
       if (updateError) throw updateError
-      if (mode === 'save' && adult && draft.openToPlay) {
-        // Through the RPC so availability_confirmed_at is stamped; refused
-        // outcomes (under_18, dob_required) are not errors for the set-up.
+      // Open to play: Continue saves the switch; Skip saves its ON default
+      // (founder ruling 2026-10-03) — adults only, through the RPC so
+      // availability_confirmed_at is stamped. Refused outcomes (under_18,
+      // dob_required) are not errors for the set-up. Under 18: nothing saved.
+      if (adult && (mode === 'skip' || draft.openToPlay)) {
         const result = await setOpenToPlay({ open: true })
         if (!result.ok) logger.debug('[PlayerSetup] open to play not saved', result.outcome)
       }
