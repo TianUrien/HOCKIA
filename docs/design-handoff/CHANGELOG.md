@@ -25,6 +25,8 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
   on Hockia.", "…coaches and teammates can write one.", the decline-sheet
   helper and footnote (`DeclineSheet.tsx`), the invite footer
   (`lib/invites.ts`), and "ask when their season ends".
+- Feed / Opportunity posted `504:593`: "EU passport required" line removed
+  (matches the shipped card; requirements live on the role page).
 
 ## 2026-10-03 · design agent
 
