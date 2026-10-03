@@ -132,7 +132,9 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
         </div>
       ) : (
         <>
-          <p className="mt-3 text-body font-semibold text-ink-1">{copy.question}</p>
+          {/* Figma Title M: 20/26 semibold (design review 2026-10-03; the shipped
+              web-title-3 token is the same 20/26/600 cut). */}
+          <p className="mt-3 text-web-title-3 text-ink-1" data-testid="check-in-question">{copy.question}</p>
           <p className="mt-1 text-secondary text-ink-2">
             {copy.rationale} {confirmedAgoLine(profile.availability_confirmed_at)}
           </p>
