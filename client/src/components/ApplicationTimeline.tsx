@@ -5,6 +5,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel, feedbackMessageKind } from '@/lib/applicationStatus'
 import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
+import { dayFirst } from '@/lib/dayFirst'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
@@ -71,8 +72,9 @@ function statusDotClass(status: string): string {
   }
 }
 
+/** "3 Oct 2026" — day first (lib/dayFirst). */
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return dayFirst(value, { year: 'always' }) ?? ''
 }
 
 // Response-deadline config (Task 3b): single-row, publicly readable, cached per

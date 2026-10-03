@@ -4,6 +4,7 @@ import { formatDurationText, genderPill } from '@/lib/opportunityCopy'
 import { isYouthGender, playerRoleGender } from '@/lib/youthRoles'
 import { humanizeToken } from '@/lib/identity'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
+import { dayFirst } from '@/lib/dayFirst'
 
 /**
  * Post a role (Figma 04 Club 330:318 → 330:431 → 330:596; DEV NOTEs
@@ -401,13 +402,10 @@ export function recruitingTarget(gender: RoleGender | null): 'Men' | 'Women' | '
   return null
 }
 
-/** "Sep 1" for the Start field (the year only when it isn't this year). */
+/** "1 Sep" for the Start field and the step-2 summary (day first, lib/dayFirst; the year only when it isn't this year). */
 export function startLabel(iso: string | null, now = new Date()): string | null {
   if (!iso) return null
-  const d = new Date(`${iso.slice(0, 10)}T12:00:00`)
-  if (Number.isNaN(d.getTime())) return null
-  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
-  return d.getFullYear() === now.getFullYear() ? `${month} ${d.getDate()}` : `${month} ${d.getDate()}, ${d.getFullYear()}`
+  return dayFirst(iso.slice(0, 10), { now })
 }
 
 /** Role posted's own route, so a refresh re-renders it from the saved role. */

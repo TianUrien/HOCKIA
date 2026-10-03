@@ -32,7 +32,12 @@ vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
 vi.mock('@/hooks/useClubInbox', () => ({ useClubInboxMeta: () => ({ data: undefined }) }))
 
 import { InboxMessages } from '@/components/inbox/InboxMessages'
-import { recruitingPreview, recruitingPreviewLine } from '@/lib/signing'
+import { recruitingPreview, recruitingPreviewLine, shortDayOf } from '@/lib/signing'
+import { clockTime, dayFirst } from '@/lib/dayFirst'
+import { formatActivityAge, formatInboxTime } from '@/lib/inboxTime'
+import { getTimeAgo } from '@/lib/utils'
+import { appliedLine, appliedOnLine, deadlineLine, postedLine, startsLine, whenLine } from '@/lib/opportunityCopy'
+import { startLabel } from '@/lib/postRole'
 
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
 
@@ -138,5 +143,82 @@ describe('1 · the inbox preview of a recruiting line reads for its viewer, with
     const inbox = src('components/inbox/InboxMessages.tsx')
     expect(inbox).toContain('recruitingPreview(row.last_message_content')
     expect(inbox).toContain("mine && !line.system ? 'You: ' : ''")
+  })
+})
+
+// ── 2 · Day-first dates through one helper; one clock ────────────────────────
+describe('2 · dayFirst is the one date helper outside the signing road', () => {
+  const now = new Date(2026, 9, 3, 12) // 3 Oct 2026, local
+
+  it('"3 Oct" this year, "3 Oct 2026" otherwise; year can be forced on or off', () => {
+    expect(dayFirst('2026-10-03', { now })).toBe('3 Oct')
+    expect(dayFirst('2027-01-15', { now })).toBe('15 Jan 2027')
+    expect(dayFirst('2026-10-03', { now, year: 'always' })).toBe('3 Oct 2026')
+    expect(dayFirst('2027-01-15', { now, year: 'never' })).toBe('15 Jan')
+    expect(dayFirst(new Date(2026, 6, 9), { now })).toBe('9 Jul')
+    expect(dayFirst(null)).toBeNull()
+    expect(dayFirst('not a date')).toBeNull()
+  })
+
+  it('a date-only string is a local calendar day (no timezone shift); a timestamp is local time', () => {
+    const d = dayFirst('2026-10-03', { now, year: 'always' })
+    expect(d).toBe('3 Oct 2026')
+    // Same calendar day as the road's own formatter for a timestamp.
+    const iso = '2026-10-03T10:04:00Z'
+    expect(dayFirst(iso, { now })).toBe(shortDayOf(iso, now))
+  })
+
+  it('the inbox list and the chat bubbles share the clock', () => {
+    const today = new Date(now)
+    today.setHours(10, 4, 0, 0)
+    expect(clockTime(today)).toMatch(/^10:04 [AP]M$/)
+    expect(formatInboxTime(today.toISOString(), now)).toBe(clockTime(today))
+    const bubble = src('features/chat-v2/components/MessageBubble.tsx')
+    expect(bubble).toContain('clockTime(message.sent_at)')
+    expect(bubble).not.toContain("'h:mm a'")
+    expect(bubble).not.toContain("'HH:mm'")
+    expect(src('lib/inboxTime.ts')).not.toContain("'HH:mm'")
+  })
+
+  it('inbox and activity rows read day first', () => {
+    expect(formatInboxTime('2026-06-12T09:00:00Z', now)).toBe('12 Jun')
+    expect(formatInboxTime('2025-09-25T09:00:00Z', now)).toBe('25 Sep 2025')
+    expect(formatActivityAge('2026-06-12T09:00:00Z', now)).toBe('12 Jun')
+    expect(formatActivityAge('2025-09-25T09:00:00Z', now)).toBe('25 Sep 2025')
+  })
+
+  it('role copy: Starts / Apply by / Closed / Applied / the Post-a-role start summary', () => {
+    expect(startsLine({ start_date: '2026-10-10', duration_text: null })).toBe('Starts 10 Oct 2026')
+    expect(deadlineLine({ application_deadline: '2026-10-03' })).toBe('Apply by 3 Oct 2026')
+    expect(postedLine({ created_at: '2026-09-30T12:00:00Z', application_deadline: null, closed_at: '2026-10-03T12:00:00Z' }, now, true)).toBe('Posted 3 days ago · Closed 3 Oct 2026')
+    expect(whenLine({ start_date: '2026-09-16', duration_text: '3' }, now)).toBe('16 Sep · 3 months')
+    expect(appliedOnLine('2026-09-03T12:00:00Z')).toBe('Applied 3 Sep 2026')
+    expect(appliedLine('2026-08-20T12:00:00Z', now)).toBe('Applied 20 Aug')
+    expect(startLabel('2026-10-10', now)).toBe('10 Oct')
+  })
+
+  it('"Posted" on the role card after a week reads day first (getTimeAgo compact)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(now)
+    try {
+      expect(getTimeAgo('2026-07-09T12:00:00Z', true)).toBe('9 Jul')
+      expect(getTimeAgo('2025-07-09T12:00:00Z', true)).toBe('9 Jul 2025')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('no month-first formatter remains on the in-scope surfaces', () => {
+    const monthFirst = /month: 'short', day: 'numeric'|month: 'long', day: 'numeric'|'MMM d|'MMMM d/
+    for (const p of [
+      'components/OpportunityDetailView.tsx', 'components/ApplicantCard.tsx', 'components/ApplicationTimeline.tsx',
+      'components/OpportunitiesTab.tsx', 'components/brands/BrandCard.tsx', 'components/UmpireAppointmentsSection.tsx',
+      'components/TrustedReferencesSection.tsx', 'lib/opportunityCopy.ts', 'lib/inboxTime.ts', 'lib/postRole.ts',
+      'features/chat-v2/components/MessageBubble.tsx',
+    ]) {
+      expect(src(p), p).not.toMatch(monthFirst)
+      expect(src(p), p).toContain('dayFirst')
+    }
+    expect(src('lib/utils.ts')).toContain('dayFirst(date, { now })')
   })
 })

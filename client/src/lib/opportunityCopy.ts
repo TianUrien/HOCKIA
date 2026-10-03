@@ -9,7 +9,8 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
 } from 'lucide-react'
-import { format, differenceInCalendarDays } from 'date-fns'
+import { differenceInCalendarDays } from 'date-fns'
+import { dayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
@@ -75,24 +76,21 @@ export function formatDurationText(raw: string | null | undefined): string | nul
   return t
 }
 
-/** "16 Sep · 3 months" / "Starts immediately" — dates read day first app-wide (lib/signing shortDayOf). */
+/** "16 Sep · 3 months" / "Starts immediately" — dates read day first app-wide (lib/dayFirst). */
 export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now = new Date()): string {
   const parts: string[] = []
-  if (v.start_date) {
-    const d = new Date(v.start_date)
-    if (!Number.isNaN(d.getTime())) parts.push(format(d, d.getFullYear() === now.getFullYear() ? 'd MMM' : 'd MMM yyyy'))
-  }
+  const start = dayFirst(v.start_date, { now })
+  if (start) parts.push(start)
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
   return parts.length ? parts.join(' · ') : 'Starts immediately'
 }
 
-/** Detail header: "Starts Sep 16, 2026 · 3 months". */
+/** Detail header: "Starts 16 Sep 2026 · 3 months" (the header always carries the year). */
 export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): string {
   const duration = formatDurationText(v.duration_text)
   if (!v.start_date) return duration ? `Starts immediately · ${duration}` : 'Starts immediately'
-  const d = new Date(v.start_date)
-  const when = Number.isNaN(d.getTime()) ? v.start_date : format(d, 'MMM d, yyyy')
+  const when = dayFirst(v.start_date, { year: 'always' }) ?? v.start_date
   return duration ? `Starts ${when} · ${duration}` : `Starts ${when}`
 }
 
@@ -108,22 +106,21 @@ export function rolePostedAt(v: Pick<Vacancy, 'created_at'>): string {
 
 /**
  * "Posted 3 days ago · No deadline — closes when filled". A CLOSED role never
- * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed Sep 26, 2026".
+ * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed 26 Sep 2026".
  */
 export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
   const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
   const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
   if (closed) {
-    const c = v.closed_at ? new Date(v.closed_at) : null
-    return `${posted} · ${c && !Number.isNaN(c.getTime()) ? `Closed ${format(c, 'MMM d, yyyy')}` : 'Closed'}`
+    const c = dayFirst(v.closed_at, { year: 'always' })
+    return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
   }
   return `${posted} · ${deadlineLine(v)}`
 }
 
 export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {
   if (!v.application_deadline) return 'No deadline — closes when filled'
-  const d = new Date(v.application_deadline)
-  return Number.isNaN(d.getTime()) ? 'Apply by ' + v.application_deadline : `Apply by ${format(d, 'MMM d, yyyy')}`
+  return `Apply by ${dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline}`
 }
 
 export interface BenefitTile { key: string; label: string; icon: LucideIcon; tileClass: string; detail: string }
@@ -249,9 +246,8 @@ export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null 
 
 /** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */
 export function appliedOnLine(appliedAt: string | null | undefined): string | null {
-  if (!appliedAt) return null
-  const d = new Date(appliedAt)
-  return Number.isNaN(d.getTime()) ? null : `Applied ${format(d, 'd MMM yyyy')}`
+  const d = dayFirst(appliedAt, { year: 'always' })
+  return d ? `Applied ${d}` : null
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
@@ -267,8 +263,7 @@ export function appliedLine(appliedAt: string | null, now = new Date()): string 
   if (days <= 0) return 'Applied today'
   if (days < 7) return `Applied ${days}d`
   if (days < 30) return `Applied ${Math.round(days / 7)}w`
-  const d = new Date(appliedAt)
-  return `Applied ${format(d, d.getFullYear() === now.getFullYear() ? 'd MMM' : 'd MMM yyyy')}`
+  return `Applied ${dayFirst(appliedAt, { now })}`
 }
 
 /**

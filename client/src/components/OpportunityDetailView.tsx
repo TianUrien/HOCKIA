@@ -17,6 +17,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
 import ApplicationTimeline from './ApplicationTimeline'
+import { dayFirst } from '@/lib/dayFirst'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -158,10 +159,8 @@ export default function VacancyDetailView({
     }
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Not specified'
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  }
+  // "9 Jul 2026" — day first with the year (lib/dayFirst): "Posted on …", "Apply by …".
+  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? 'Not specified'
 
   const formatShortDate = (dateString: string | null) => {
     if (!dateString) return null
