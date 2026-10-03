@@ -174,8 +174,9 @@ function PhoneCluster() {
   // The cluster is authored on a fixed canvas. Rather than a fixed box that
   // floats in dead space on a wide phone and overflows a narrow one, the
   // outer box takes its column's width and the canvas scales to fit it —
-  // proportionally identical everywhere, outer phones bleeding off the
-  // screen edges on mobile exactly as designed.
+  // proportionally identical everywhere. Mobile: the outer phones bleed off
+  // the screen edges (the hero clips at the viewport). Desktop: the frame
+  // clips the outer phones at the 507×611 stage, as in Figma.
   //
   // The scale is a NUMBER, so it is measured in JS: CSS can't derive a
   // unitless ratio from `100vw / 390px`. ResizeObserver keeps it right on
@@ -203,7 +204,7 @@ function PhoneCluster() {
   return (
     <div
       ref={outerRef}
-      className="relative mx-auto w-full max-w-[390px] shrink-0 lg:max-w-none"
+      className="relative mx-auto w-full max-w-[390px] shrink-0 lg:max-w-none lg:overflow-hidden"
       // The canvas is absolutely positioned, so the box has no intrinsic
       // height — set it explicitly (including at exactly scale 1).
       style={{ height: canvas.h * scale }}
