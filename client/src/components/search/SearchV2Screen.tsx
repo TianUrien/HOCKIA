@@ -134,10 +134,10 @@ export function SearchV2Screen() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              // Text field (Figma 472:243): muted fill at rest, white with the
-              // brand border on focus — that border is the focus state, so the
-              // global focus-visible outline is switched off here.
-              className="h-10 w-full rounded-[10px] border border-transparent bg-surface-muted pl-10 pr-10 text-body text-ink-1 placeholder:text-ink-3 outline-none transition-colors focus:border-hockia-primary focus:bg-white focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
+              // Search field (Figma 42:195): a filled grey field, radius 12, no
+              // border, in every state — the fill and the caret are the
+              // affordance, so the global focus-visible outline is off here.
+              className="h-10 w-full rounded-[12px] bg-surface-grouped pl-10 pr-10 text-body text-ink-1 placeholder:text-ink-3 outline-none focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
               data-testid="search-v2-input"
             />
             {query && (
