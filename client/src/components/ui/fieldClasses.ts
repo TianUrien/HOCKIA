@@ -20,9 +20,11 @@ export const fieldInputBase =
   'h-[50px] w-full rounded-[12px] bg-surface-muted text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary'
 export const fieldInput = `${fieldInputBase} px-3.5`
 
-/** Trailing chevron (ink-4) for a native `<select>`. Literal strings: the
- *  Tailwind scanner only picks up classes it can read verbatim. */
-const CHEVRON = `appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23aeaeb2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")] bg-[length:20px_20px] bg-no-repeat`
+/** Trailing chevron (ink-4) for a native `<select>`. The data URI has no
+ *  spaces (%20): the Tailwind scanner splits candidates on whitespace, so a
+ *  URL with literal spaces never becomes a class. */
+const CHEVRON =
+  "appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2720%27%20height=%2720%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23aeaeb2%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-no-repeat"
 
 /** Text field, Type: Select. */
 export const fieldSelect = `${fieldInput} ${CHEVRON} bg-[position:right_14px_center] pr-11`

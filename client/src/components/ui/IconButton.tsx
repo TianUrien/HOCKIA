@@ -14,18 +14,21 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Accessible name — icon buttons never carry visible text. */
   label: string
   variant?: IconButtonStyle
+  /** Icon colour: ink (default) or brand (nav-bar back chevron). Tonal is always brand. */
+  tone?: 'ink' | 'brand'
 }
 
 const STYLES: Record<IconButtonStyle, string> = {
-  ghost: 'h-11 w-11 text-ink-1 active:bg-surface-muted',
-  muted: "relative h-9 w-9 bg-surface-muted text-ink-1 before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
-  tonal: "relative h-9 w-9 bg-hockia-soft text-hockia-primary before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
+  ghost: 'h-11 w-11 active:bg-surface-muted',
+  muted: "relative h-9 w-9 bg-surface-muted before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
+  tonal: "relative h-9 w-9 bg-hockia-soft before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  { label, variant = 'ghost', className, children, type = 'button', ...rest },
+  { label, variant = 'ghost', tone = 'ink', className, children, type = 'button', ...rest },
   ref,
 ) {
+  const brand = variant === 'tonal' || tone === 'brand'
   return (
     <button
       ref={ref}
@@ -36,6 +39,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 disabled:opacity-40',
         STYLES[variant],
+        brand ? 'text-hockia-primary' : 'text-ink-1',
         className,
       )}
       {...rest}

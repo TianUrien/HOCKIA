@@ -114,7 +114,7 @@ function DateOfBirthPicker({
           {icon && <span className="text-gray-400">{icon}</span>}
           <span>
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && !isField && <span className="text-red-500 ml-1">*</span>}
           </span>
         </span>
       )}

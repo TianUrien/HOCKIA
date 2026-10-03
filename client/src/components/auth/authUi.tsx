@@ -34,7 +34,7 @@ export function AuthShell({ children, back, title, trailing, step, className }: 
         <div className="relative mx-auto flex h-11 w-full max-w-md items-center justify-between px-2">
           {back ? (
             // Nav bar back = Ghost icon button 44 (Figma 459:171) with the chevron.
-            <IconButton label={`Back to ${back.parent}`} onClick={back.onBack} className="text-hockia-primary">
+            <IconButton label={`Back to ${back.parent}`} tone="brand" onClick={back.onBack}>
               <ChevronLeft className="h-6 w-6" strokeWidth={2} />
             </IconButton>
           ) : (
