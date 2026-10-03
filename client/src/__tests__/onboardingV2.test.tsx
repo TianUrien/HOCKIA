@@ -210,8 +210,9 @@ describe('route order: account first, then role, then set-up', () => {
     expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]', 'placeholder:text-ink-3')
     expect(screen.getByText('Email')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
     expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-surface-muted', 'rounded-[12px]')
-    // One Primary Large (48) per screen.
+    // One Primary Large (48) per screen; Back = Ghost icon button 44.
     expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
+    expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
 
     await user.type(email, 'new@example.com')
     await user.type(screen.getByLabelText('Password'), 'longenough')

@@ -16,6 +16,7 @@ import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { fieldInput, fieldLabel, fieldLabelText } from '@/components/ui/fieldClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
@@ -223,7 +224,7 @@ export default function AuthScreen() {
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <label htmlFor="auth-password" className={fieldLabelText}>Password</label>
-                <Link to="/forgot-password" className="text-secondary font-semibold text-hockia-primary">Forgot password?</Link>
+                <Link to="/forgot-password" className={buttonClassName({ variant: 'link', size: 'small', className: '-mr-3.5' })}>Forgot password?</Link>
               </div>
               <div className="relative">
                 <input

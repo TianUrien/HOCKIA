@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { IconButton } from '@/components/ui/IconButton'
 
 /**
  * Pieces shared by the account-first auth and onboarding screens (Figma 04
@@ -32,14 +33,10 @@ export function AuthShell({ children, back, title, trailing, step, className }: 
       {(back || title || trailing) && (
         <div className="relative mx-auto flex h-11 w-full max-w-md items-center justify-between px-2">
           {back ? (
-            <button
-              type="button"
-              onClick={back.onBack}
-              aria-label={`Back to ${back.parent}`}
-              className="flex h-11 w-11 shrink-0 items-center justify-center text-hockia-primary"
-            >
+            // Nav bar back = Ghost icon button 44 (Figma 459:171) with the chevron.
+            <IconButton label={`Back to ${back.parent}`} onClick={back.onBack} className="text-hockia-primary">
               <ChevronLeft className="h-6 w-6" strokeWidth={2} />
-            </button>
+            </IconButton>
           ) : (
             <span className="w-11" />
           )}
