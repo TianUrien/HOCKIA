@@ -3,11 +3,16 @@ import { positionLabel } from '@/lib/identity'
 
 /**
  * "Open roles" teaser on the web landing (Figma "Web A v2"): the NEWEST
- * three open roles from the anon-readable `public_opportunities` view.
+ * three open roles from the `public_opportunities` view.
  *
- * Ordering is strictly `created_at desc` (founder ruling 2026-08-13): never
- * `published_at`, which the re-open trigger re-stamps so renewals would jump
- * the queue.
+ * The view is read through the `public-opportunities` edge function (the
+ * public API, service role), not with a browser select: the view is
+ * `security_invoker` and joins `profiles` columns that anon cannot read, so
+ * a direct anon select fails with "permission denied for table profiles".
+ * The function already applies the view's test-account and hidden-publisher
+ * fences and orders `created_at desc, id desc` — strictly creation order
+ * (founder ruling 2026-08-13: never `published_at`, which the re-open
+ * trigger re-stamps so renewals would jump the queue).
  */
 
 export interface OpenRoleCard {
@@ -17,23 +22,24 @@ export interface OpenRoleCard {
   meta: string
 }
 
-export type PublicOpportunityRow = {
-  id: string | null
-  title: string | null
-  position: string | null
-  organization_name: string | null
-  world_club_name: string | null
-  publisher_current_club: string | null
-  club_name: string | null
-  location_country: string | null
+/** The slice of the public API's opportunity object that the card uses. */
+export type PublicOpportunity = {
+  id?: string | null
+  title?: string | null
+  position?: string | null
+  location?: { country?: string | null } | null
+  club?: { name?: string | null } | null
 }
+
+/** The API substitutes this when the publisher has no name. Not a club. */
+const UNKNOWN_CLUB = 'Unknown Club'
 
 /**
  * Card title = the role's own title when the club typed one, else
  * "<Position> wanted". A title that is just the bare position label (the
  * post-role default when nothing was typed) counts as not typed.
  */
-export function openRoleTitle(row: Pick<PublicOpportunityRow, 'title' | 'position'>): string {
+export function openRoleTitle(row: Pick<PublicOpportunity, 'title' | 'position'>): string {
   const typed = row.title?.trim() ?? ''
   const pos = positionLabel(row.position)
   if (typed && typed.toLowerCase() !== pos?.toLowerCase()) return typed
@@ -41,17 +47,11 @@ export function openRoleTitle(row: Pick<PublicOpportunityRow, 'title' | 'positio
   return typed || 'Open role'
 }
 
-/** Same club-name precedence as the opportunity pages: the typed
- *  organisation, then the linked world club, then the publisher's club. */
-export function toOpenRoleCard(row: PublicOpportunityRow): OpenRoleCard | null {
+export function toOpenRoleCard(row: PublicOpportunity): OpenRoleCard | null {
   if (!row.id) return null
-  const org =
-    row.organization_name?.trim() ||
-    row.world_club_name?.trim() ||
-    row.publisher_current_club?.trim() ||
-    row.club_name?.trim() ||
-    ''
-  const country = row.location_country?.trim() ?? ''
+  const club = row.club?.name?.trim() ?? ''
+  const org = club === UNKNOWN_CLUB ? '' : club
+  const country = row.location?.country?.trim() ?? ''
   return {
     id: row.id,
     title: openRoleTitle(row),
@@ -62,13 +62,12 @@ export function toOpenRoleCard(row: PublicOpportunityRow): OpenRoleCard | null {
 export const OPEN_ROLES_LIMIT = 3
 
 export async function fetchNewestOpenRoles(): Promise<OpenRoleCard[]> {
-  const { data, error } = await supabase
-    .from('public_opportunities')
-    .select('id,title,position,organization_name,world_club_name,publisher_current_club,club_name,location_country')
-    .order('created_at', { ascending: false })
-    .limit(OPEN_ROLES_LIMIT)
+  const { data, error } = await supabase.functions.invoke<{ data?: PublicOpportunity[] }>(
+    `public-opportunities?limit=${OPEN_ROLES_LIMIT}`,
+    { method: 'GET' },
+  )
   if (error) throw error
-  return (data ?? []).flatMap((row) => {
+  return (data?.data ?? []).slice(0, OPEN_ROLES_LIMIT).flatMap((row) => {
     const card = toOpenRoleCard(row)
     return card ? [card] : []
   })

@@ -23,13 +23,7 @@ vi.mock('@capacitor/core', () => ({
 // unmocked passes on a laptop and fails only in CI. Stub it: this file is
 // about the store badges, not the roles.
 vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        order: () => ({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) }),
-      }),
-    }),
-  },
+  supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: { data: [] }, error: null }) } },
 }))
 
 // Keep the page cheap to mount — we're asserting one conditional block.

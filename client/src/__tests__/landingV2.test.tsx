@@ -13,15 +13,12 @@ import { openRoleTitle, toOpenRoleCard } from '@/lib/landingRoles'
 
 const h = vi.hoisted(() => ({
   native: { value: false },
-  limit: vi.fn(),
-  order: vi.fn(),
-  select: vi.fn(),
-  from: vi.fn(),
+  invoke: vi.fn(),
   rpc: vi.fn(),
 }))
 
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => h.native.value } }))
-vi.mock('@/lib/supabase', () => ({ supabase: { from: h.from, rpc: h.rpc } }))
+vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: h.invoke }, rpc: h.rpc } }))
 vi.mock('@/lib/auth', () => ({
   useAuthStore: (sel?: (s: unknown) => unknown) => {
     const state = { user: null, profile: null, profileStatus: 'missing', loading: false }
@@ -35,17 +32,15 @@ vi.mock('@/lib/analytics', () => ({ trackSignupCtaClick: vi.fn(), trackCtaClick:
 vi.mock('@/lib/nativeUi', () => ({ setStatusBarForBackground: vi.fn() }))
 vi.mock('@/components', () => ({ InAppBrowserWarning: () => null }))
 
+/** Public API shape (supabase/functions/_shared/public-api-types.ts). */
 const ROWS = [
-  { id: 'r1', title: 'Goalkeeper', position: 'goalkeeper', organization_name: null, world_club_name: 'Quilmes Atlético Club', publisher_current_club: null, club_name: 'Quilmes AC', location_country: 'Argentina' },
-  { id: 'r2', title: 'Head Coach wanted', position: 'head_coach', organization_name: 'KHCB', world_club_name: null, publisher_current_club: null, club_name: 'Someone', location_country: 'Spain' },
-  { id: 'r3', title: '', position: 'forward', organization_name: null, world_club_name: null, publisher_current_club: 'Puerto Belgrano HC', club_name: 'Someone', location_country: 'Argentina' },
+  { id: 'r1', title: 'Goalkeeper', position: 'goalkeeper', club: { name: 'Quilmes Atlético Club' }, location: { country: 'Argentina' } },
+  { id: 'r2', title: 'Head Coach wanted', position: 'head_coach', club: { name: 'KHCB' }, location: { country: 'Spain' } },
+  { id: 'r3', title: '', position: 'forward', club: { name: 'Puerto Belgrano HC' }, location: { country: 'Argentina' } },
 ]
 
 function arm(rows: unknown[] | null, error: Error | null = null) {
-  h.limit.mockResolvedValue({ data: rows, error })
-  h.order.mockReturnValue({ limit: h.limit })
-  h.select.mockReturnValue({ order: h.order })
-  h.from.mockReturnValue({ select: h.select })
+  h.invoke.mockResolvedValue({ data: rows === null ? null : { data: rows }, error })
 }
 
 async function renderLanding() {
@@ -117,7 +112,7 @@ describe('Landing v2 — open roles', () => {
   it('hides the whole section when there are no open roles', async () => {
     arm([])
     await renderLanding()
-    await waitFor(() => expect(h.limit).toHaveBeenCalled())
+    await waitFor(() => expect(h.invoke).toHaveBeenCalled())
     expect(screen.queryByText('Open roles')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Your next club could be anywhere.' })).not.toBeInTheDocument()
     expect(screen.queryByText('Clubs publish real roles. Apply in the app.')).not.toBeInTheDocument()
@@ -126,17 +121,16 @@ describe('Landing v2 — open roles', () => {
   it('hides the section when the read fails', async () => {
     arm(null, new Error('boom'))
     await renderLanding()
-    await waitFor(() => expect(h.limit).toHaveBeenCalled())
+    await waitFor(() => expect(h.invoke).toHaveBeenCalled())
     expect(screen.queryByText('Open roles')).not.toBeInTheDocument()
   })
 
-  it('shows the newest three from public_opportunities, each linking to its role page', async () => {
+  it('shows the newest three from the public-opportunities API, each linking to its role page', async () => {
     arm(ROWS)
     await renderLanding()
     expect(await screen.findByRole('heading', { name: 'Your next club could be anywhere.' })).toBeInTheDocument()
-    expect(h.from).toHaveBeenCalledWith('public_opportunities')
-    expect(h.order).toHaveBeenCalledWith('created_at', { ascending: false })
-    expect(h.limit).toHaveBeenCalledWith(3)
+    // The API reads public_opportunities as service role, ordered created_at desc.
+    expect(h.invoke).toHaveBeenCalledWith('public-opportunities?limit=3', { method: 'GET' })
 
     const list = screen.getByRole('list')
     const cards = within(list).getAllByRole('link')
@@ -179,9 +173,10 @@ describe('landingRoles helpers', () => {
     expect(openRoleTitle({ title: null, position: null })).toBe('Open role')
   })
 
-  it('meta: organisation, then world club, then publisher club; country appended', () => {
+  it('meta: "club · country"; the API\'s "Unknown Club" placeholder is dropped', () => {
     expect(toOpenRoleCard(ROWS[0])?.meta).toBe('Quilmes Atlético Club · Argentina')
-    expect(toOpenRoleCard({ ...ROWS[2], location_country: null })?.meta).toBe('Puerto Belgrano HC')
+    expect(toOpenRoleCard({ ...ROWS[2], location: null })?.meta).toBe('Puerto Belgrano HC')
+    expect(toOpenRoleCard({ ...ROWS[1], club: { name: 'Unknown Club' } })?.meta).toBe('Spain')
     expect(toOpenRoleCard({ ...ROWS[0], id: null })).toBeNull()
   })
 })
