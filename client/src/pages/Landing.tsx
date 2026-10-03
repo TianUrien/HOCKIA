@@ -43,8 +43,10 @@ const EXPLORE_PATH = '/community'
 /** Inside the iOS/Android app. Constant for the lifetime of the process. */
 const isNativeApp = Capacitor.isNativePlatform()
 
-/** Page container: 1200 max, 120 side margins fall out at 1440. */
-const CONTAINER = 'mx-auto w-full max-w-[1200px] px-5 md:px-6 lg:px-10'
+/** Page container: content 1200 wide at 120 side margins on a 1440 viewport.
+ *  max-w is the OUTER box (padding included): 1280 − 2×40 = 1200 of content,
+ *  centred → 120 each side. (The frame's "1200" is the content width.) */
+const CONTAINER = 'mx-auto w-full max-w-[1280px] px-5 md:px-6 lg:px-10'
 /** 768–1023 keeps the phone layout, centred at ~560. */
 const PHONE_COL = 'mx-auto w-full max-w-[560px] lg:mx-0 lg:max-w-none'
 
@@ -296,7 +298,7 @@ function OpenRolesSection() {
                   className="flex items-center gap-3 rounded-card border border-line bg-white p-4 transition-colors hover:border-ink-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 lg:p-6"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5 lg:gap-1">
-                    <span className="truncate text-web-headline text-ink-1 lg:text-web-title-3">{r.title}</span>
+                    <span className="truncate text-web-headline text-ink-1 lg:text-web-title-3" title={r.title}>{r.title}</span>
                     {r.meta && (
                       <span className="truncate text-web-footnote text-ink-3 lg:text-web-subhead">{r.meta}</span>
                     )}
@@ -413,7 +415,7 @@ export default function Landing() {
               </Reveal>
 
               <Reveal delay={60}>
-                <p className="text-web-body text-ink-2 lg:max-w-[460px] lg:text-web-lead">
+                <p className="text-web-body text-ink-2 lg:max-w-[520px] lg:text-web-lead">
                   Build your hockey profile, connect with clubs worldwide and find your next move.
                 </p>
               </Reveal>
@@ -480,7 +482,7 @@ export default function Landing() {
                 </div>
               )}
 
-              <p className="text-web-footnote text-ink-3 lg:text-web-subhead">
+              <p className="text-web-footnote text-ink-2 lg:text-web-subhead" data-testid="landing-member-line">
                 Already a member?{' '}
                 <Link to="/signin" className="text-web-subhead-strong text-hockia-primary hover:underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 rounded">
                   Log in

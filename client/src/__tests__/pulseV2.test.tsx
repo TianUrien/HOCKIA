@@ -259,6 +259,110 @@ describe('what happened — amber rule', () => {
   })
 })
 
+// ── what happened — row anatomy (Figma List item / Activity 531:469) ─────
+describe('what happened — rows', () => {
+  it('a line about a club: crest avatar 40 (Organisation shape), date under the text, ink-4 chevron, opens the Inbox thread', () => {
+    const lines = happenedLinesFromNotification(notification({
+      id: 'r1', kind: 'vacancy_application_status', metadata: { vacancy_title: 'Forward', club_name: 'Club B' },
+      actor: { id: 'club-1', fullName: 'Club B', role: 'club', username: 'club-b', avatarUrl: null, baseLocation: null },
+      createdAt: new Date(2026, 9, 3, 12).toISOString(),
+    }))
+    expect(lines[0]).toMatchObject({ text: 'Club B replied on Forward', path: '/messages?new=club-1', icon: 'bell' })
+    expect(lines[0].actor).toMatchObject({ id: 'club-1', name: 'Club B', role: 'club' })
+
+    render(<MemoryRouter><WhatHappened lines={lines} /></MemoryRouter>)
+    const row = screen.getByTestId('happened-row-link')
+    expect(row).toHaveAttribute('href', '/messages?new=club-1')
+    expect(row.className).toMatch(/py-3\.5/)
+    // Organisation shape: a rounded square (radius = size / 4) at 40.
+    const crest = row.querySelector('span[style]') as HTMLElement
+    expect(crest.style.width).toBe('40px')
+    expect(crest.style.borderRadius).toBe('10px')
+    expect(crest.textContent).toBe('CB')
+    expect(screen.getByTestId('happened-line')).toHaveTextContent('Club B replied on Forward')
+    expect(screen.getByTestId('happened-line').className).toMatch(/text-ink-1/)
+    expect(screen.getByTestId('happened-when')).toHaveTextContent('3 Oct')
+    expect(screen.getByTestId('happened-when').className).toMatch(/text-ink-3/)
+    const chevron = screen.getByTestId('happened-chevron')
+    expect(chevron.getAttribute('class')).toMatch(/text-ink-4/)
+    expect(screen.queryByTestId('happened-icon')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('happened-row-plain')).not.toBeInTheDocument()
+    expect(row.innerHTML).not.toMatch(AMBER)
+  })
+
+  it('a system line with no actor: brand-soft circle with a brand icon; an expired application opens Closed applications', () => {
+    const lines = happenedLinesFromNotification(notification({ metadata: { count: 2 } }))
+    expect(lines[0]).toMatchObject({ text: '2 applications expired with no reply', path: '/opportunities/applications?segment=closed', actor: null, icon: 'briefcase' })
+    render(<MemoryRouter><WhatHappened lines={lines} /></MemoryRouter>)
+    const icon = screen.getByTestId('happened-icon')
+    expect(icon.className).toMatch(/bg-hockia-soft/)
+    expect(icon.className).toMatch(/text-hockia-primary/)
+    expect(icon.className).toMatch(/rounded-full/)
+    expect(icon).toHaveAttribute('data-icon', 'briefcase')
+    expect(screen.getByTestId('happened-chevron')).toBeInTheDocument()
+  })
+
+  it('a line with no destination renders plain: no chevron, not a link', () => {
+    const lines = happenedLinesFromNotification(notification({
+      id: 'r2', kind: 'club_invitation_received',
+      actor: { id: null, fullName: 'Club C', role: 'club', username: null, avatarUrl: null, baseLocation: null },
+    }))
+    expect(lines[0].path).toBeNull()
+    render(<MemoryRouter><WhatHappened lines={lines} /></MemoryRouter>)
+    expect(screen.getByTestId('happened-row-plain')).toHaveTextContent('Club C invited you to join their squad')
+    expect(screen.queryByTestId('happened-row-link')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('happened-chevron')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
+
+  it('a person line is a circle avatar; an accepted friend request opens their profile', () => {
+    const lines = happenedLinesFromNotification(notification({
+      id: 'r3', kind: 'friend_request_accepted',
+      actor: { id: 'p-9', fullName: 'Dana Ortiz', role: 'coach', username: null, avatarUrl: null, baseLocation: null },
+    }))
+    expect(lines[0]).toMatchObject({ text: 'Dana Ortiz accepted your friend request', path: '/coaches/id/p-9' })
+    render(<MemoryRouter><WhatHappened lines={lines} /></MemoryRouter>)
+    expect(screen.getByTestId('happened-row-link')).toHaveAttribute('href', '/coaches/id/p-9')
+    expect(screen.queryByTestId('happened-icon')).not.toBeInTheDocument()
+    const wrap = screen.getByTestId('happened-row-link').querySelector('span[style]') as HTMLElement
+    expect(wrap.style.width).toBe('40px')
+    expect(wrap.style.borderRadius).toBe('')
+  })
+
+  it('a club reply without an actor id falls back to My applications; a posted role keeps its target', () => {
+    const reply = happenedLinesFromNotification(notification({ id: 'r4', kind: 'vacancy_application_status', metadata: { club_name: 'Club D' } }))
+    expect(reply[0]).toMatchObject({ text: 'Club D replied to your application', path: '/opportunities/applications' })
+    expect(reply[0].actor).toMatchObject({ name: 'Club D', role: 'club' })
+    const posted = happenedLinesFromNotification(notification({ id: 'r5', kind: 'opportunity_published', targetUrl: '/opportunities/o9', metadata: { opportunity_title: 'Keeper', club_name: 'Club E' } }))
+    expect(posted[0]).toMatchObject({ text: 'Club E posted Keeper', path: '/opportunities/o9', icon: 'briefcase' })
+  })
+})
+
+describe('what happened — repeats', () => {
+  it('shows an identical sentence once (newest) so one noisy actor cannot crowd out the club facts', () => {
+    const now = new Date()
+    const at = (h: number) => new Date(now.getTime() - h * 3600_000).toISOString()
+    const dana = { id: 'p-9', fullName: 'Dana Ortiz', role: 'coach', username: null, avatarUrl: null, baseLocation: null }
+    const list = [
+      ...Array.from({ length: 9 }, (_, i) => notification({ id: `f${i}`, kind: 'friend_request_accepted', actor: dana, createdAt: at(i) })),
+      notification({ id: 'club', kind: 'vacancy_application_status', metadata: { vacancy_title: 'Forward', club_name: 'Club B' }, createdAt: at(30) }),
+    ]
+    const lines = happenedTimeline(list, new Map(), { now })
+    expect(lines.map((l) => l.text)).toEqual(['Dana Ortiz accepted your friend request', 'Club B replied on Forward'])
+    expect(lines[0].key).toBe('f0')
+  })
+})
+
+describe('check-in question size', () => {
+  it('is Title M 20/26 semibold', () => {
+    render(<MemoryRouter><CheckInCard headline="No profile views yet this week" hasViews={false} viewers={[]} /></MemoryRouter>)
+    const q = screen.getByTestId('check-in-question')
+    expect(q).toHaveTextContent('Are you still open to play?')
+    expect(q.className).toMatch(/\btext-web-title-3\b/)
+    expect(q.className).not.toMatch(/\btext-body\b/)
+  })
+})
+
 // ── zero-views state of the whole screen ─────────────────────────────────
 describe('Your week screen — zero views', () => {
   it('shows the zero headline, tiles at 0, no viewers section, and keeps the check-in', () => {

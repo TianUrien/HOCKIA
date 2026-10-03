@@ -1,5 +1,6 @@
 import { differenceInCalendarDays } from 'date-fns'
 import { positionLabel } from '@/lib/identity'
+import { profilePath } from '@/lib/profileNavigation'
 import type { NotificationRecord } from '@/lib/api/notifications'
 
 /**
@@ -209,13 +210,33 @@ export function viewerLines(rows: readonly WeekViewerRow[]): ViewerLine[] {
 
 // ── What happened ─────────────────────────────────────────────────────────
 
+/** Who the line is about: the notification's actor (a club or a person). */
+export interface HappenedActor {
+  id: string | null
+  name: string
+  role: string | null
+  avatarUrl: string | null
+}
+
+/** Icon for a system line with no actor (Figma List item / Activity 531:469). */
+export type HappenedIcon = 'briefcase' | 'heart' | 'bell'
+
 export interface HappenedLine {
   key: string
   text: string
   at: string
   /** Always 'grey' for a player: nothing here needs the player to act (amber rule). */
   tone: 'grey'
+  /**
+   * Where the row opens, or null. A null path renders a plain row: no
+   * chevron and not tappable (design ruling 2026-10-03). Only destinations
+   * the notification's own data can reach are wired here.
+   */
   path: string | null
+  /** The club or person the line is about; null for a system event. */
+  actor: HappenedActor | null
+  /** Drawn instead of an avatar when `actor` is null. */
+  icon: HappenedIcon
 }
 
 /** Opportunity titles by id, for "Your application to X expired". */
@@ -230,57 +251,98 @@ function actorName(n: NotificationRecord): string | null {
   return n.actor?.fullName?.trim() || n.actor?.username?.trim() || null
 }
 
+function actorOf(n: NotificationRecord): HappenedActor | null {
+  const name = actorName(n)
+  if (!name && !n.actor?.id) return null
+  return { id: n.actor?.id ?? null, name: name ?? '', role: n.actor?.role ?? null, avatarUrl: n.actor?.avatarUrl ?? null }
+}
+
+/** The club's own profile when the notification names it, else null. */
+function clubPath(n: NotificationRecord): string | null {
+  return n.actor?.id ? `/clubs/id/${n.actor.id}` : null
+}
+
+const MY_APPLICATIONS = '/opportunities/applications'
+/** The Closed segment of My applications (MyApplicationsPage reads `segment`). */
+export const MY_APPLICATIONS_CLOSED = `${MY_APPLICATIONS}?segment=closed`
+
+/** The Inbox thread with a club: MessagesPage resolves `?new=<id>` to the existing conversation or opens one. */
+export function clubThreadPath(clubId: string | null | undefined): string | null {
+  return clubId ? `/messages?new=${clubId}` : null
+}
+
 /**
  * One neutral line per notification the player would care about this week.
- * Returns [] for kinds that are not a "what happened" fact (friend requests,
- * comments, likes, messages — those live in Inbox). Expired applications
- * are grey, never amber: the player cannot act on a club that went quiet.
+ * Returns [] for kinds that are not a "what happened" fact (friend requests
+ * received, comments, likes, messages — those live in Inbox). Expired
+ * applications are grey, never amber: the player cannot act on a club that
+ * went quiet.
+ *
+ * Destinations (design ruling 2026-10-03), each only when the row's data
+ * can reach it: a club's reply → that Inbox thread; an expired application →
+ * My applications, Closed; an accepted friend request → their profile; a
+ * club's invitation / squad → the club; a posted role → the role.
  */
 export function happenedLinesFromNotification(n: NotificationRecord, titles: OpportunityTitles = new Map()): HappenedLine[] {
-  const base = { at: n.createdAt, tone: 'grey' as const }
+  const actor = actorOf(n)
+  const base = { at: n.createdAt, tone: 'grey' as const, actor, icon: 'bell' as HappenedIcon }
   switch (n.kind) {
     case 'applications_expired': {
       const ids = Array.isArray(n.metadata?.opportunity_ids) ? (n.metadata.opportunity_ids as unknown[]).filter((x): x is string => typeof x === 'string') : []
       const named = ids.map((id) => titles.get(id)).filter((t): t is string => Boolean(t))
+      const system = { ...base, actor: null, icon: 'briefcase' as const, path: MY_APPLICATIONS_CLOSED }
       if (named.length > 0) {
-        return named.map((title, i) => ({ ...base, key: `${n.id}-${i}`, text: `Your application to ${title} expired with no reply`, path: '/opportunities/applications' }))
+        return named.map((title, i) => ({ ...system, key: `${n.id}-${i}`, text: `Your application to ${title} expired with no reply` }))
       }
       const c = typeof n.metadata?.count === 'number' ? n.metadata.count : 1
-      return [{ ...base, key: n.id, text: c === 1 ? 'An application expired with no reply' : `${c} applications expired with no reply`, path: '/opportunities/applications' }]
+      return [{ ...system, key: n.id, text: c === 1 ? 'An application expired with no reply' : `${c} applications expired with no reply` }]
     }
     case 'vacancy_application_status': {
-      const title = metaString(n, 'opportunity_title')
+      // The trigger writes `vacancy_title` (20260626150000); older rows may carry `opportunity_title`.
+      const title = metaString(n, 'vacancy_title') ?? metaString(n, 'opportunity_title')
       const club = metaString(n, 'club_name') ?? actorName(n)
       const who = club ?? 'A club'
-      return [{ ...base, key: n.id, text: title ? `${who} replied on ${title}` : `${who} replied to your application`, path: '/opportunities/applications' }]
+      const line = actor ?? (club ? { id: null, name: club, role: 'club', avatarUrl: null } : null)
+      return [{ ...base, actor: line, key: n.id, text: title ? `${who} replied on ${title}` : `${who} replied to your application`, path: clubThreadPath(n.actor?.id) ?? MY_APPLICATIONS }]
     }
     case 'recruiting_update': {
       const title = metaString(n, 'title')
-      return title ? [{ ...base, key: n.id, text: title, path: n.targetUrl ?? null }] : []
+      return title ? [{ ...base, icon: 'briefcase', key: n.id, text: title, path: n.targetUrl ?? null }] : []
     }
     case 'reference_request_accepted': {
       const who = actorName(n) ?? 'Someone'
       return [{ ...base, key: n.id, text: `${who} wrote you a reference`, path: '/dashboard/profile?tab=references' }]
     }
+    case 'friend_request_accepted': {
+      const who = actorName(n)
+      if (!who) return []
+      return [{ ...base, key: n.id, text: `${who} accepted your friend request`, path: profilePath(n.actor?.role, n.actor?.username, n.actor?.id) }]
+    }
     case 'club_invitation_received': {
       const who = actorName(n) ?? 'A club'
-      return [{ ...base, key: n.id, text: `${who} invited you to join their squad`, path: n.actor?.id ? `/clubs/id/${n.actor.id}` : null }]
+      return [{ ...base, key: n.id, text: `${who} invited you to join their squad`, path: clubPath(n) }]
     }
     case 'club_invitation_accepted': {
       const who = actorName(n) ?? 'A club'
-      return [{ ...base, key: n.id, text: `You joined ${who}`, path: n.actor?.id ? `/clubs/id/${n.actor.id}` : null }]
+      return [{ ...base, key: n.id, text: `You joined ${who}`, path: clubPath(n) }]
     }
     case 'opportunity_published': {
       const title = metaString(n, 'opportunity_title')
       const club = metaString(n, 'club_name') ?? actorName(n) ?? 'A club'
-      return title ? [{ ...base, key: n.id, text: `${club} posted ${title}`, path: n.targetUrl ?? '/opportunities' }] : []
+      const line = actor ?? (metaString(n, 'club_name') ? { id: null, name: club, role: 'club', avatarUrl: null } : null)
+      return title ? [{ ...base, actor: line, icon: 'briefcase', key: n.id, text: `${club} posted ${title}`, path: n.targetUrl ?? '/opportunities' }] : []
     }
     default:
       return []
   }
 }
 
-/** Newest first, only the last `days` days, at most `limit` lines. */
+/**
+ * Newest first, only the last `days` days, at most `limit` lines. The same
+ * sentence is shown once (its newest occurrence): a person who accepts,
+ * un-friends and re-accepts eight times is one fact, and must not push the
+ * week's club facts out of the list.
+ */
 export function happenedTimeline(
   notifications: readonly NotificationRecord[],
   titles: OpportunityTitles,
@@ -289,10 +351,12 @@ export function happenedTimeline(
   const now = opts.now ?? new Date()
   const days = opts.days ?? 7
   const since = now.getTime() - days * 86_400_000
+  const seen = new Set<string>()
   return notifications
     .filter((n) => !n.clearedAt && new Date(n.createdAt).getTime() >= since)
     .flatMap((n) => happenedLinesFromNotification(n, titles))
     .sort((a, b) => b.at.localeCompare(a.at))
+    .filter((l) => (seen.has(l.text) ? false : (seen.add(l.text), true)))
     .slice(0, opts.limit ?? 8)
 }
 
