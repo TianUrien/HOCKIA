@@ -21,6 +21,7 @@ export type ResponseKind =
   | 'clarifying_question'   // medium-confidence intent, ask user to disambiguate
   | 'canned_redirect'       // opportunity / product redirects (Phase 0)
   | 'opportunity_results'   // open roles a player / coach can apply to
+  | 'cap_reached'           // daily question cap hit (nl-search, 2026-10-03): no LLM call, data empty
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null

@@ -9,6 +9,16 @@
  * POST /functions/v1/nl-search
  * Body: { query: string, history?: { role: 'user'|'assistant', content: string }[] }
  * Auth: Bearer token (authenticated users only)
+ *
+ * Response contract additions (2026-10-03, Hockia AI v2):
+ *   - `kind: 'cap_reached'` — HTTP 200, `data: []`, `ai_message` carries the
+ *     limit copy; sent before any LLM call once the member has asked
+ *     AI_DAILY_QUESTION_CAP questions since UTC midnight (ai_questions_today).
+ *   - `open_roles_total` on candidate role answers (opportunity_results /
+ *     no_results with opportunity_filters): the size of the open-role pool
+ *     the answer was drawn from, for the "From N open roles" caption.
+ *   - Every answered question writes one ai_usage_log row (see
+ *     _shared/aiUsage.ts); deploy with `--no-verify-jwt` (config.toml pins it).
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -37,6 +47,7 @@ import {
   type Viewer as CandidateViewer,
 } from '../_shared/opportunity-search.ts'
 import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
+import { AI_DAILY_QUESTION_CAP, aiQuestionCapReached, recordAiUsage } from '../_shared/aiUsage.ts'
 import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
@@ -103,12 +114,26 @@ interface DiscoveryEventParams {
 }
 
 /** Insert a discovery event row. Called via fireAndForget so it never blocks
- *  the response; swallows any insert error to stay analytics-only. */
+ *  the response; swallows any insert error to stay analytics-only.
+ *
+ *  Also writes the AI cost log (ai_usage_log, founder ruling 2026-10-03):
+ *  one row per answered question with the request's summed LLM tokens (parse +
+ *  synth + shortlist + no-results passes) priced per model. The daily cap
+ *  (ai_questions_today) counts these rows, so a question that needed no LLM
+ *  call (recovery short-circuit, canned redirect) still counts as asked. */
 async function logDiscoveryEvent(
   // deno-lint-ignore no-explicit-any
   client: any,
   params: DiscoveryEventParams
 ): Promise<void> {
+  await recordAiUsage(client, {
+    user_id: params.user_id,
+    function: 'nl-search',
+    provider: params.llm_provider,
+    input_tokens: params.prompt_tokens,
+    output_tokens: params.completion_tokens,
+    cached_tokens: params.cached_tokens,
+  })
   try {
     await client.from('discovery_events').insert({
       user_id: params.user_id,
@@ -1482,6 +1507,8 @@ async function handleCandidateOpportunitySearch(params: {
           : buildNoOpportunitiesMessage(criteria, askedLabel),
         opportunities: [],
         opportunity_filters: filterChips,
+        // Size of the pool the answer came from ("From N open roles").
+        open_roles_total: rows.length,
         suggested_actions: actions,
         cta: { label: 'Browse all opportunities', route: '/opportunities' },
       }, meta, 0)
@@ -1505,6 +1532,7 @@ async function handleCandidateOpportunitySearch(params: {
       ai_message: aiMessage,
       opportunities: shown,
       opportunity_filters: filterChips,
+      open_roles_total: rows.length,
       suggested_actions: [] as SuggestedAction[],
       cta: matched.length > shown.length ? { label: 'See all open roles', route: '/opportunities' } : null,
     }, meta, matched.length)
@@ -1845,6 +1873,35 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: false, error: 'Query too long (max 500 characters)' }),
         { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // ── Daily question cap (founder ruling 2026-10-03) ─────────────────
+    // 30 questions per member per UTC day, counted from ai_usage_log before
+    // any LLM call. A "Show more" continuation (offset > 0) pages an answer
+    // already given and is not a new question. The RPC failing never blocks
+    // anyone (fail-open, reported). Response contract: HTTP 200 with
+    // `kind: 'cap_reached'`; the client renders the limit card.
+    if (requestedOffset === 0) {
+      const cap = await aiQuestionCapReached(adminClient, user.id, AI_DAILY_QUESTION_CAP)
+      if (cap.error) {
+        captureException(new Error(`ai_questions_today failed: ${cap.error}`), {
+          functionName: 'nl-search', correlationId, extra: { phase: 'daily_cap' },
+        })
+      }
+      if (cap.reached) {
+        return new Response(JSON.stringify({
+          success: true,
+          data: [],
+          total: 0,
+          has_more: false,
+          parsed_filters: null,
+          summary: null,
+          applied: null,
+          kind: 'cap_reached' as ResponseKind,
+          ai_message: "You've reached today's limit — try again tomorrow.",
+          suggested_actions: [] as SuggestedAction[],
+        }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
+      }
     }
 
     // All prerequisites validated — record state so the catch block can
