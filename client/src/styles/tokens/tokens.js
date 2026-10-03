@@ -47,6 +47,7 @@ export const colors = {
     "pink": "#be185d",
     "pink-soft": "#fce7f3",
     "cyan": "#0891b2",
+    "cyan-ink": "#0e7490",
     "cyan-soft": "#e0f4f9",
     "gold": "#c9a227",
     "gold-ink": "#7a5f0b",
@@ -54,6 +55,7 @@ export const colors = {
     "gold-soft": "#fff8dc",
     "gold-soft-2": "#fbf4dc",
     "indigo": "#4f46e5",
+    "indigo-ink": "#4338ca",
     "indigo-soft": "#e8e7fd",
     "blue": "#0a7aff",
     "blue-ink": "#1d4ed8",
@@ -61,8 +63,10 @@ export const colors = {
     "blue-soft-2": "#dbeafe",
     "teal": "#0f766e",
     "teal-soft": "#e0f2f1",
+    "teal-soft-2": "#e6f6f4",
     "orange": "#ea580c",
-    "orange-soft": "#fdebdd"
+    "orange-soft": "#fdebdd",
+    "red-soft": "#fee2e2"
   },
   "social": {
     "instagram": "#e1306c",
