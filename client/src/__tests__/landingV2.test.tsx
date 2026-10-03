@@ -146,6 +146,36 @@ describe('Landing v2 — open roles', () => {
     expect(cards[2]).toHaveTextContent('Puerto Belgrano HC · Argentina')
     expect(screen.getByText('Clubs publish real roles. Apply in the app.')).toBeInTheDocument()
   })
+
+  it('truncates a long role title to one line and keeps the full text in a title attribute', async () => {
+    const long = 'QA TEST — Long Title Coach wanted for the whole of next season and beyond'
+    arm([{ ...ROWS[0], title: long }])
+    await renderLanding()
+    const title = await screen.findByText(long)
+    expect(title.className).toMatch(/\btruncate\b/)
+    expect(title).toHaveAttribute('title', long)
+  })
+})
+
+describe('Landing v2 — design review polish (2026-10-03)', () => {
+  it('"Already a member?" reads in ink-2 with the purple Log in link', async () => {
+    await renderLanding()
+    const line = screen.getByTestId('landing-member-line')
+    expect(line.className).toMatch(/\btext-ink-2\b/)
+    expect(line.className).not.toMatch(/\btext-ink-3\b/)
+    expect(within(line).getByRole('link', { name: 'Log in' }).className).toMatch(/text-hockia-primary/)
+  })
+
+  it('desktop container is 1280 outer / 40 padding (1200 of content at 1440) and the lead wraps at 520', async () => {
+    await renderLanding()
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const container = nav.firstElementChild as HTMLElement
+    expect(container.className).toMatch(/max-w-\[1280px\]/)
+    expect(container.className).toMatch(/lg:px-10/)
+    expect(container.className).not.toMatch(/max-w-\[1200px\]/)
+    const lead = screen.getByText('Build your hockey profile, connect with clubs worldwide and find your next move.')
+    expect(lead.className).toMatch(/lg:max-w-\[520px\]/)
+  })
 })
 
 describe('Landing v2 — store badges', () => {
