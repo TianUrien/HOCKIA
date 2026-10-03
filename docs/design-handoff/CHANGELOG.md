@@ -3,6 +3,28 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-03 (evening) · design agent
+
+- Player gaps, page "04 · Player — Live" (founder rulings via the code agent):
+  - Search v2 `42:195` on components: Search field, AI row on brand-soft,
+    new List item / Member result `521:387` (Avatar 48, RoleBadge), clubs
+    show location only, no green dot. New states: recent (empty query)
+    `522:1436`, no results `522:1558` ("No members match “zzqxwv”").
+  - Your week v2: zero-views state `523:1482` ("No profile views yet this
+    week" in grey, no viewer rail, tiles at 0, check-in stays). "What
+    happened" stays all grey.
+  - Hockia AI v2 states: first use `524:1494`, loading `524:1575`, no match
+    `524:1644`, can’t answer `524:1715`, error `524:1785` (neutral grey,
+    never amber).
+  - Onboarding copy as shipped (PR #184): Choose your role `101:892`
+    (role lines, Brand before Umpire, "You can’t change it later without
+    support."), First run `104:2096` terms line, Set up step 2 subtitle,
+    date-of-birth helper on step 1; age gate 18+ (also Settings and its
+    dev note).
+- New components: Role badge `518:7691` (RoleBadge colours) with tokens
+  `role/*` (player, coach, club, brand; coach ink aliases `accent/teal`);
+  List item / Member result `521:387`; Avatar Size 48.
+
 ## 2026-10-03 (later) · design agent
 
 - D1 · Profile & Network rebuilt with components (D1.11 `337:372`, D1.12

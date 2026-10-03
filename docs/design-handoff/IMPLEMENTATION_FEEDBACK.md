@@ -165,3 +165,8 @@ visible inconsistency or accessibility gap; **Low** = token / metric drift.
 ## Resolved from design (2026-10-03)
 
 - D1.18 Home, "Opportunity posted" card: the "EU passport required" line is removed from Figma. The card stays role · club · city, like the shipped `OpportunityPostedCard.tsx`; requirements live on the role page (amber rule: information is never amber).
+
+## Open from design (2026-10-03, evening)
+
+- Hockia AI soft error (`SoftErrorCard.tsx`) is amber (bg amber-50, amber icon and text). Under the amber rule an error is not something the viewer must act on soon; Figma `524:1785` draws it neutral (surface-muted, ink text, info icon) with recovery chips. Proposal: switch the card to neutral when Hockia AI v2 is built.
+- RoleBadge colours are raw hex in code; Figma now has matching `role/*` tokens (exported with the next token build).
