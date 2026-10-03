@@ -292,7 +292,7 @@ export function happenedTimeline(
   return notifications
     .filter((n) => !n.clearedAt && new Date(n.createdAt).getTime() >= since)
     .flatMap((n) => happenedLinesFromNotification(n, titles))
-    .sort((a, b) => (a.at < b.at ? 1 : -1))
+    .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, opts.limit ?? 8)
 }
 
@@ -301,6 +301,6 @@ export function referenceArrivedThisWeek<T extends { acceptedAt: string | null }
   const since = now.getTime() - days * 86_400_000
   const recent = refs
     .filter((r) => r.acceptedAt && new Date(r.acceptedAt).getTime() >= since)
-    .sort((a, b) => ((a.acceptedAt ?? '') < (b.acceptedAt ?? '') ? 1 : -1))
+    .sort((a, b) => (b.acceptedAt ?? '').localeCompare(a.acceptedAt ?? ''))
   return recent[0] ?? null
 }
