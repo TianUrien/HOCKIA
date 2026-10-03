@@ -7,7 +7,7 @@ tokens but the layout is still built from one-off frames.
 
 | Flow (Figma page) | Screens | Status | Baseline |
 |---|---|---|---|
-| D3 · Core — Invite to apply | D3.1–D3.4 (`393:2`, `393:178`, `393:351`, `393:452`) | Rebuilt | Archive · D3 baseline |
+| D3 · Core — Invite to apply | D3.1–D3.4 + D3.3b (`393:2`, `393:178`, `393:351`, `393:452`, `496:1448`) | Rebuilt | Archive · D3 baseline |
 | D1 · Club v2 — Recruiting | D1.1–D1.10 (`324:264`, `324:411`, `326:319`, `327:318`, `326:528`, `330:318`, `330:431`, `330:596`, `332:318`, `332:539`) | Rebuilt | Archive · D1 Recruiting baseline |
 | D1 · Club v2 — Profile | D1.11–D1.15 | Tokens only | — |
 | D1 · Club v2 — Network & tabs | D1.16–D1.23 | Tokens only | — |
@@ -25,3 +25,5 @@ tokens but the layout is still built from one-off frames.
   sheet confirms with a solid **Danger** "Decline and send".
 - D1.6–D1.8 (Post a role) use Field header + control + helper caption, a
   3-step progress bar and a sticky bottom bar with one Primary button.
+- D3.3b "Not interested" is neutral (founder ruling, like Decline offer):
+  grey text trigger on the card, purple Primary confirm in a bottom sheet.
