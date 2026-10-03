@@ -47,7 +47,7 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
   useLocation: () => ({ search: '', pathname: '/signin', hash: '' }),
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
+  Link: ({ children, to, className }: { children: React.ReactNode; to: string; className?: string }) => <a href={to} className={className}>{children}</a>,
 }))
 
 import AuthScreen from '@/pages/AuthScreen'
@@ -65,7 +65,14 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     expect(buttons[2]).toHaveTextContent(/continue with google/i)
     expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /forgot password/i })).toHaveAttribute('href', '/forgot-password')
+    const forgot = screen.getByRole('link', { name: /forgot password/i })
+    expect(forgot).toHaveAttribute('href', '/forgot-password')
+    // Button Link Small (459:146): brand text, 36 pt visual with a 44 pt hit area.
+    expect(forgot).toHaveClass('h-9', 'text-hockia-primary', 'font-semibold')
+    // One Primary Large (48).
+    expect(screen.getByRole('button', { name: /^log in$/i })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
+    // Back = Ghost icon button 44 with the chevron.
+    expect(screen.getByRole('button', { name: /back to start/i })).toHaveClass('h-11', 'w-11', 'rounded-full')
     expect(screen.getByRole('button', { name: /^log in$/i })).toBeInTheDocument()
     // Sign-up-only things never appear here.
     expect(screen.queryByText(/by continuing, you agree/i)).not.toBeInTheDocument()

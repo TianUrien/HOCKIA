@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { ChevronDown, Search, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel } from '@/components/ui/fieldClasses'
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
@@ -150,11 +151,11 @@ export default function CountrySelect({
   )
 
   return (
-    <div className={cn(isField ? 'space-y-1.5' : 'space-y-2', className)} ref={containerRef}>
+    <div className={cn(!isField && 'space-y-2', className)} ref={containerRef}>
       {label && (
         <label
           id={labelId}
-          className={isField ? 'block text-secondary font-semibold text-ink-2' : 'block text-sm font-medium text-gray-700'}
+          className={isField ? fieldLabel : 'block text-sm font-medium text-gray-700'}
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -176,16 +177,16 @@ export default function CountrySelect({
           className={cn(
             'w-full text-left flex items-center justify-between gap-2 transition-all duration-200',
             isField
-              ? 'h-[50px] rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+              ? `${fieldInputBase} px-3.5`
               : 'px-4 py-3 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
-            isField ? error && 'ring-2 ring-red-400' : error ? 'border-red-500' : 'border-gray-200',
+            isField ? error && fieldErrorRing : error ? 'border-red-500' : 'border-gray-200',
             !isField && !disabled && 'hover:border-gray-300'
           )}
         >
           <span className={cn(
             'flex-1 truncate inline-flex items-center gap-2',
-            selectedCountry ? 'text-gray-900' : 'text-gray-400'
+            selectedCountry ? (isField ? 'text-ink-1' : 'text-gray-900') : (isField ? 'text-ink-3' : 'text-gray-400')
           )}>
             {selectedCountry ? (
               <>
@@ -223,7 +224,8 @@ export default function CountrySelect({
             )}
             <ChevronDown
               className={cn(
-                'w-5 h-5 text-gray-400 transition-transform',
+                'w-5 h-5 transition-transform',
+                isField ? 'text-ink-4' : 'text-gray-400',
                 isOpen && 'rotate-180'
               )}
             />
@@ -335,7 +337,7 @@ export default function CountrySelect({
       </div>
 
       {error && (
-        <p id={errorId} className="text-sm text-red-500">
+        <p id={errorId} className={isField ? fieldErrorText : 'text-sm text-red-500'}>
           {error}
         </p>
       )}

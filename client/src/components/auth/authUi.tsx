@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { IconButton } from '@/components/ui/IconButton'
 
 /**
  * Pieces shared by the account-first auth and onboarding screens (Figma 04
@@ -10,10 +11,8 @@ import { cn } from '@/lib/utils'
  * full-height page with a 16 px gutter and safe-area padding; on wider screens
  * the same column sits centred at 448 px so desktop keeps working.
  */
-export const authInput =
-  'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
-export const authLabel = 'mb-1.5 block text-secondary font-semibold text-ink-2'
-export const authSelect = `${authInput} appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23aeaeb2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")] bg-[length:20px_20px] bg-[position:right_14px_center] bg-no-repeat pr-11`
+/* Field header + Text field classes live in `ui/fieldClasses.ts` (shared with
+   the pickers' 'field' appearance); this file exports components only. */
 
 interface AuthShellProps {
   children: ReactNode
@@ -34,14 +33,10 @@ export function AuthShell({ children, back, title, trailing, step, className }: 
       {(back || title || trailing) && (
         <div className="relative mx-auto flex h-11 w-full max-w-md items-center justify-between px-2">
           {back ? (
-            <button
-              type="button"
-              onClick={back.onBack}
-              aria-label={`Back to ${back.parent}`}
-              className="flex h-11 w-11 shrink-0 items-center justify-center text-hockia-primary"
-            >
+            // Nav bar back = Ghost icon button 44 (Figma 459:171) with the chevron.
+            <IconButton label={`Back to ${back.parent}`} tone="brand" onClick={back.onBack}>
               <ChevronLeft className="h-6 w-6" strokeWidth={2} />
-            </button>
+            </IconButton>
           ) : (
             <span className="w-11" />
           )}

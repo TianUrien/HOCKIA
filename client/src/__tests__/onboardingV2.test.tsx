@@ -178,6 +178,13 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.getByRole('heading', { name: 'Your game. Your network.' })).toBeInTheDocument()
     const buttons = screen.getAllByRole('button')
     expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
+    // Button / Social (535:8381): 48 tall, full width, radius 12; Apple on the
+    // inverse surface, Google white with the line border; label 16 semibold.
+    const [apple, google] = buttons
+    expect(apple).toHaveAttribute('data-provider', 'apple')
+    expect(apple).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-surface-inverse', 'text-white', 'text-[16px]', 'font-semibold')
+    expect(google).toHaveAttribute('data-provider', 'google')
+    expect(google).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-white', 'ring-line', 'text-[16px]', 'font-semibold')
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
     // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
@@ -197,7 +204,17 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('Email'), 'new@example.com')
+    // Field header (472:180) + Text field (472:243): 13 semibold ink-2 label;
+    // 50 tall, surface-muted, radius 12, 16 px value, ink-3 placeholder.
+    const email = screen.getByLabelText('Email')
+    expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]', 'placeholder:text-ink-3')
+    expect(screen.getByText('Email')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
+    expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-surface-muted', 'rounded-[12px]')
+    // One Primary Large (48) per screen; Back = Ghost icon button 44.
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
+    expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
+
+    await user.type(email, 'new@example.com')
     await user.type(screen.getByLabelText('Password'), 'longenough')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -234,9 +251,24 @@ describe('Choose your role (101:892)', () => {
     // No counts, scores or levels on any card.
     expect(screen.queryByText(/\d/)).not.toBeInTheDocument()
 
+    // Option card (460:40) with the 40 px icon tile: brand-soft at rest,
+    // white on the selected card, which gets the brand border + soft fill.
+    for (const role of ['player', 'coach', 'club', 'brand', 'umpire']) {
+      const tile = screen.getByTestId(`role-icon-${role}`)
+      expect(tile).toHaveClass('h-10', 'w-10', 'bg-hockia-soft', 'text-hockia-primary')
+      expect(tile.querySelector('svg')).not.toBeNull()
+    }
+    const playerCard = screen.getByRole('radio', { name: /^Player/ })
+    expect(playerCard).toHaveClass('bg-surface-muted')
+    expect(playerCard).not.toHaveClass('ring-hockia-primary')
+
     const cta = screen.getByRole('button', { name: 'Continue' })
     expect(cta).toBeDisabled()
-    await user.click(screen.getByRole('radio', { name: /^Player/ }))
+    await user.click(playerCard)
+    expect(playerCard).toHaveAttribute('aria-checked', 'true')
+    expect(playerCard).toHaveClass('bg-hockia-soft', 'ring-hockia-primary')
+    expect(screen.getByTestId('role-icon-player')).toHaveClass('bg-white')
+    expect(screen.getByTestId('role-icon-coach')).toHaveClass('bg-hockia-soft')
     expect(screen.getByRole('button', { name: 'Continue as a player' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Continue as a player' }))
 
@@ -297,6 +329,15 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByLabelText('Position')).toBeInTheDocument()
     expect(screen.getByLabelText('Second position (optional)')).toBeInTheDocument()
 
+    // Text field (472:243) on every field: input, Select (trailing chevron)
+    // and the compact day / month / year selects share the muted 50 px look.
+    expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]')
+    expect(screen.getByText('Full name')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
+    expect(screen.getByLabelText('Category')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none', 'pr-11')
+    expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none')
+    const dobGroup = screen.getByRole('group', { name: /date of birth/i })
+    expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
+
     // The Day/Month/Year picker is unchanged: years descend from a recent one
     // (was pinned on the public sign-up path before the account-first flow).
     const yearValues = Array.from((screen.getByLabelText('Year') as HTMLSelectElement).options).map((o) => Number(o.value)).filter((v) => v > 0)
@@ -331,6 +372,12 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByRole('button', { name: /add second/i })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Open to play' })).toBeChecked()
     expect(screen.getByText('Clubs can see you and message you about roles.')).toBeInTheDocument()
+    // List item / Switch (472:186), as Confirm signing uses: muted grouped
+    // card holding the SettingsRow with the green switch.
+    const row = screen.getByTestId('open-to-play-row')
+    expect(row).toHaveClass('rounded-card', 'bg-surface-muted')
+    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-positive')
+    expect(within(row).getByText('Open to play')).toHaveClass('text-body')
 
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     await waitFor(() => expect(onFinished).toHaveBeenCalledTimes(1))
@@ -368,6 +415,7 @@ describe('Set up (114:537 / 114:608)', () => {
     mocks.profile.current = playerProfile(years(16))
     render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(within(screen.getByTestId('open-to-play-row')).getByText(/18 and over/)).toBeInTheDocument()
     const line = screen.getByText(/18 and over/)
     expect(line).toHaveTextContent(/aren’t suggested/)
     expect(line.textContent).not.toMatch(/will be suggested|get suggested|can suggest/)
