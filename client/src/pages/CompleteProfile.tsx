@@ -1,8 +1,8 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, MapPin, Calendar, Building2, Camera, UserRound, Briefcase, Users, Store, Flag, X, ChevronRight, Check } from 'lucide-react'
+import { User, MapPin, Calendar, Building2, Camera, X, ChevronRight, Check } from 'lucide-react'
 import * as Sentry from '@sentry/react'
-import { Input, Button, CountrySelect, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
+import { Input, Button, CountrySelect, LocationAutocomplete, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
 import ClubClaimStep, { type ClubClaimResult } from '@/components/ClubClaimStep'
@@ -26,6 +26,7 @@ import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { showsClubSetup } from '@/lib/clubSetup'
+import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
 import {
   type PlayingCategory,
   type CoachUmpireCategory,
@@ -36,6 +37,8 @@ import {
 
 // Club set-up (Figma 04 Club D1.24): phone clubs only, in its own chunk.
 const ClubSetupFlow = lazy(() => import('@/components/club/ClubSetupFlow'))
+// Player set-up (Figma 04 Player 114:537 / 114:608): own chunk.
+const PlayerSetupFlow = lazy(() => import('@/components/onboarding/PlayerSetupFlow'))
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -68,10 +71,10 @@ export default function CompleteProfile() {
   // Club v2 is phone-only: phone clubs get the D1.24 set-up instead of the
   // classic form below; desktop and every other role keep today's flow.
   const isPhone = useMediaQuery('(max-width: 1023px)')
-  // Set once the club set-up has finished and is sending the club to
-  // Opportunities, so the already-onboarded redirect below doesn't race it
-  // to /dashboard/profile. Never set on any other path.
-  const clubSetupFinishedRef = useRef(false)
+  // Set once a set-up flow (club → Opportunities, player → profile) has
+  // finished and is navigating on, so the already-onboarded redirect below
+  // doesn't race it. Never set on any other path.
+  const setupFinishedRef = useRef(false)
   const { getCountryById } = useCountries()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -382,7 +385,7 @@ export default function CompleteProfile() {
     // data with whatever the form's pre-filled state happens to contain
     // (which has known gaps for some fields, see the prefill effect).
     if (profile?.onboarding_completed) {
-      if (clubSetupFinishedRef.current) return
+      if (setupFinishedRef.current) return
       logger.debug('[COMPLETE_PROFILE] User already onboarded, redirecting to dashboard')
       navigate('/dashboard/profile', { replace: true })
     }
@@ -1153,146 +1156,35 @@ export default function CompleteProfile() {
   }
 
   if (!userRole) {
-    // Show role selection for OAuth users who don't have a role yet
+    // Choose your role (Figma 101:892): every new account lands here — the
+    // account-first flow collects no role at sign-up (email or OAuth), so the
+    // profile row is created now, from the choice, via handleRoleSelection.
+    return <ChooseRoleScreen onSelect={handleRoleSelection} busy={creatingProfile} error={error || null} />
+  }
+
+  // Player set-up (Figma 114:537 / 114:608), two steps, step 2 skippable.
+  // The guards above (auth, brand, already-onboarded → dashboard) run first.
+  if (userRole === 'player' && !profile?.onboarding_completed) {
+    const finishPlayerSetup = async () => {
+      const current = useAuthStore.getState().profile ?? profile
+      localStorage.setItem('hockia-onboarding-completed', '1')
+      trackOnboardingComplete('player')
+      trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'player' })
+      submitSignupAttribution(user.id)
+      const wallAction = consumeWallIntent()
+      if (wallAction) trackDbEvent('registration_from_wall', 'profile', user.id, { action: wallAction, role: 'player' })
+      // Same race guard as the club set-up: the route gate must see
+      // onboarding_completed before the route change, and this page's
+      // already-onboarded redirect must not win the race.
+      setupFinishedRef.current = true
+      if (current) useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
+      navigate('/dashboard/profile', { replace: true })
+      void invalidateProfile({ userId: user.id, reason: 'player-setup-complete' })
+    }
     return (
-      <div className="min-h-screen relative flex items-start md:items-center justify-center p-4">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src="/hero-desktop.webp"
-            alt="Field Hockey"
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-black/70" />
-        </div>
-
-        <div className="relative z-10 w-full max-w-2xl">
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
-              <div className="flex items-center gap-3 mb-2">
-                <img
-                  src="/brand/wordmark/hockia-wordmark-white.svg"
-                  alt="HOCKIA"
-                  className="h-8"
-                />
-              </div>
-              <p className="text-white/90 text-sm">
-                Welcome to HOCKIA! Let's get you set up.
-              </p>
-            </div>
-
-            <div className="p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Role</h3>
-              <p className="text-gray-600 mb-6">How will you be using HOCKIA?</p>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {/* Player Option */}
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection('player')}
-                  disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
-                      <UserRound className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">I'm a Player</h4>
-                      <p className="text-sm text-gray-500">Build the profile that gets me found by clubs</p>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Coach Option */}
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection('coach')}
-                  disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
-                      <Briefcase className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">I'm a Coach</h4>
-                      <p className="text-sm text-gray-500">Find coaching opportunities — and recruit players if I also manage a team</p>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Club Option */}
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection('club')}
-                  disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
-                      <Users className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">I'm a Club</h4>
-                      <p className="text-sm text-gray-500">Recruiting players and coaches for my organization</p>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Brand Option */}
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection('brand')}
-                  disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
-                      <Store className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">I'm a Brand</h4>
-                      <p className="text-sm text-gray-500">Build my brand in the hockey community</p>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Umpire Option */}
-                <button
-                  type="button"
-                  onClick={() => handleRoleSelection('umpire')}
-                  disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center group-hover:bg-line transition-colors">
-                      <Flag className="w-6 h-6 text-ink-2" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">I'm an Umpire</h4>
-                      <p className="text-sm text-gray-500">Be recognized as an officiating professional in the hockey community</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              {creatingProfile && (
-                <div className="mt-6 text-center">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-hockia-primary mb-2"></div>
-                  <p className="text-sm text-gray-500">Setting up your profile...</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={<div className="min-h-screen bg-white" />}>
+        <PlayerSetupFlow onFinished={finishPlayerSetup} />
+      </Suspense>
     )
   }
 
@@ -1310,7 +1202,7 @@ export default function CompleteProfile() {
       // The route gate must see onboarding_completed before the route change,
       // and this page's already-onboarded redirect must not win the race to
       // /dashboard/profile. Then refetch for real.
-      clubSetupFinishedRef.current = true
+      setupFinishedRef.current = true
       useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
       navigate('/opportunities', { replace: true })
       void invalidateProfile({ userId: user.id, reason: 'club-setup-complete' })
@@ -1502,134 +1394,8 @@ export default function CompleteProfile() {
             )}
 
             <div className="space-y-4">
-              {/* Player Form — split across the 3 wizard steps. */}
-              {userRole === 'player' && (
-                <>
-                  {currentStep === 1 && (
-                    <>
-                      <Input
-                        label="Full Name"
-                        icon={<User className="w-5 h-5" />}
-                        placeholder="Enter your full name"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        required
-                      />
-
-                      <CountrySelect
-                        label="Nationality"
-                        value={formData.nationalityCountryId}
-                        onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                        placeholder="Select your nationality"
-                        showNationality
-                        required
-                      />
-
-                      <CountrySelect
-                        label="Second Nationality (Optional)"
-                        value={formData.nationality2CountryId}
-                        onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
-                        placeholder="Select second nationality"
-                        showNationality
-                      />
-                    </>
-                  )}
-
-                  {currentStep === 2 && (
-                    <>
-                      <LocationAutocomplete
-                        label="Base Location (City)"
-                        icon={<MapPin className="w-5 h-5" />}
-                        placeholder="Where are you currently based?"
-                        value={formData.city}
-                        onChange={handleLocationChange}
-                        onLocationSelect={handleLocationSelect}
-                        onLocationClear={handleLocationClear}
-                        isSelected={formData.locationSelected}
-                        required
-                      />
-
-                      <DateOfBirthPicker
-                        label="Date of Birth"
-                        required
-                        icon={<Calendar className="w-5 h-5" />}
-                        value={formData.dateOfBirth}
-                        onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
-                      />
-                    </>
-                  )}
-
-                  {currentStep === 3 && (
-                    <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Hockey Details</p>
-
-                      <div>
-                        <label id="playing-category-label" className="block text-sm font-medium text-gray-700 mb-2">
-                          Playing Category <span className="text-red-500">*</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-3">Which category do you currently play in?</p>
-                        <PlayingCategorySelector
-                          idPrefix="playing-category"
-                          value={formData.playingCategory || null}
-                          onChange={(next) => setFormData({ ...formData, playingCategory: next })}
-                        />
-                      </div>
-
-                      <WorldClubSearch
-                        value={formData.currentClub}
-                        onChange={(v) => setFormData({ ...formData, currentClub: v })}
-                        onClubSelect={(club) => setFormData({
-                          ...formData,
-                          currentClub: club.club_name,
-                          currentWorldClubId: club.id,
-                        })}
-                        onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
-                        selectedClubId={formData.currentWorldClubId}
-                        label="Current Club (Optional)"
-                        placeholder="e.g., Holcombe Hockey Club"
-                      />
-
-                      <div>
-                        <label htmlFor="position-select" className="block text-sm font-medium text-gray-700 mb-2">
-                          Position <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id="position-select"
-                          value={formData.position}
-                          onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
-                          required
-                        >
-                          <option value="">Select your position</option>
-                          <option value="goalkeeper">Goalkeeper</option>
-                          <option value="defender">Defender</option>
-                          <option value="midfielder">Midfielder</option>
-                          <option value="forward">Forward</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label htmlFor="secondary-position-select" className="block text-sm font-medium text-gray-700 mb-2">
-                          Second Position (Optional)
-                        </label>
-                        <select
-                          id="secondary-position-select"
-                          value={formData.secondaryPosition}
-                          onChange={(e) => setFormData({ ...formData, secondaryPosition: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
-                        >
-                          <option value="">No secondary position</option>
-                          {['goalkeeper', 'defender', 'midfielder', 'forward'].map((option) => (
-                            <option key={option} value={option} disabled={option === formData.position}>
-                              {option.charAt(0).toUpperCase() + option.slice(1)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
+              {/* Players use components/onboarding/PlayerSetupFlow (account-first
+                  onboarding, 2026-10-03); this form is coach / umpire / club only. */}
 
               {/* Coach Form — split across the 3 wizard steps. */}
               {userRole === 'coach' && (
