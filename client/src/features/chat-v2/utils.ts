@@ -30,3 +30,14 @@ export function findOfferAnchor<M extends { id: string; metadata?: unknown }>(me
   }
   return null
 }
+
+/**
+ * What the "See the offer" ring (and scroll) wraps: the offer card inside
+ * the message row (MessageBubble marks it `data-offer-card`), never the row
+ * itself — the row also holds the day/time separator above the first card
+ * (QA round 7 re-check: the ring wrapped the separator). A row without the
+ * mark (card still loading) rings as a whole.
+ */
+export function offerRingTarget(row: HTMLElement): HTMLElement {
+  return row.querySelector<HTMLElement>('[data-offer-card]') ?? row
+}

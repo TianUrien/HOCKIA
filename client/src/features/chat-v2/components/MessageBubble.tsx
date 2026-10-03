@@ -250,7 +250,8 @@ export function MessageBubble({
         </div>
       ) : offer ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
-          <div className="w-full sm:max-w-[70%]">
+          {/* data-offer-card: what "See the offer" scrolls to and rings — the card alone, never the day/time separator above it (QA round 7 re-check). */}
+          <div className="w-full sm:max-w-[70%]" data-offer-card="true">
             <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-card bg-surface-grouped" />}>
               <OfferCard offerId={offer.offer_id} isMine={isMine} fallbackText={message.content} />
             </Suspense>

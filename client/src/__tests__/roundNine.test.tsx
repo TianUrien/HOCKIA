@@ -38,6 +38,7 @@ import { formatActivityAge, formatInboxTime } from '@/lib/inboxTime'
 import { getTimeAgo } from '@/lib/utils'
 import { appliedLine, appliedOnLine, deadlineLine, postedLine, startsLine, whenLine } from '@/lib/opportunityCopy'
 import { startLabel } from '@/lib/postRole'
+import { offerRingTarget } from '@/features/chat-v2/utils'
 
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
 
@@ -220,5 +221,27 @@ describe('2 · dayFirst is the one date helper outside the signing road', () => 
       expect(src(p), p).toContain('dayFirst')
     }
     expect(src('lib/utils.ts')).toContain('dayFirst(date, { now })')
+  })
+})
+
+// ── 3 · "See the offer" rings the card, not the separator ────────────────────
+describe('3 · the highlight ring wraps the offer card only', () => {
+  it('offerRingTarget picks the card inside the message row; a row without one rings whole', () => {
+    const row = document.createElement('div')
+    row.setAttribute('data-message-id', 'm-1')
+    row.innerHTML = '<div class="py-3">Today</div><div class="py-2">10:04 AM</div><div class="flex"><div data-offer-card="true"><article>Offer</article></div></div>'
+    const card = row.querySelector('[data-offer-card]') as HTMLElement
+    expect(offerRingTarget(row)).toBe(card)
+    expect(card.textContent).toBe('Offer')
+    expect(card.contains(row.firstElementChild)).toBe(false)
+    const bare = document.createElement('div')
+    expect(offerRingTarget(bare)).toBe(bare)
+  })
+  it('MessageBubble marks the offer card and ChatWindowV2 rings through the helper', () => {
+    expect(src('features/chat-v2/components/MessageBubble.tsx')).toContain('data-offer-card="true"')
+    const win = src('features/chat-v2/ChatWindowV2.tsx')
+    expect(win).toContain('const node = offerRingTarget(row)')
+    expect(win).toContain('node.classList.add(...ANCHOR_HIGHLIGHT)')
+    expect(win).toContain("node.scrollIntoView({ block: 'center' })")
   })
 })
