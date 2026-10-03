@@ -8,6 +8,7 @@
 | 2026-10-02 | Avatar sizes follow code: 32 headers, 52 rows, 56 cards and sheets, 80 page crests; organisations are rounded squares on white | Design, matches EntityAvatar |
 | 2026-10-02 | Player row: Tonal "Invite" in a trailing column; text truncates to one line ("Invite to apply" is the accessible name) | Founder |
 | 2026-10-02 | Exception to the Destructive rule: declining an offer is a neutral choice — grey Secondary trigger, purple Primary confirm | Founder |
+| 2026-10-03 | Same exception for a player passing on an invitation ("Not interested", D3.3b): grey text trigger, purple Primary confirm in a bottom sheet, never Danger | Founder |
 | 2026-10-02 | Every Danger confirmation on the phone is a bottom sheet (no centred dialogs) | Founder |
 | 2026-10-02 | Chat cards use radius 16, no new token | Founder |
 | 2026-10-02 | Shared `ui/Button.tsx` at the start of D5: 7 styles × Large 48 / Small 36, loading, 44 pt hit area | Founder |

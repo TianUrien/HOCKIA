@@ -60,6 +60,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Skill item | `468:143` | Label | Specialist skills | — |
 | Timeline step | `480:198` | State: Done, Current, Upcoming, Skipped · Title, Detail, Show action | Road to signing (`lib/signing.ts` roadSteps): trial never Current; skipped offer = grey dash | `club/RoadToSigningCard.tsx` |
 | Checkbox row | `480:211` | Checked · Title, Description | Optional side effect in a confirm sheet (Close the role) | `club/MarkSignedSheet.tsx` |
+| List item / Conversation | `494:2377` | Dot: None, Warning · Name, Date, Meta, Preview | Inbox thread rows; amber dot only when the viewer owes a first reply | — |
 | Message / Offer card | `480:5154` | Eyebrow, Title, Start, Pay, Package, Open until, Footnote | Offer in a conversation; deadline amber only for the player in the last 5 days | `features/chat-v2/components/OfferCard.tsx` (keep height stable) |
 | Message / Invitation card | `465:2194` | Eyebrow, Title, When, Pay, Package, League, Message | Invitation in a conversation | `features/chat-v2/components/InviteCard.tsx` (keep height stable) |
 

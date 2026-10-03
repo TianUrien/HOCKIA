@@ -3,6 +3,16 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-03 · design agent
+
+- New screen D3.3b · Not interested — confirm (player) `496:1448`: neutral
+  bottom sheet (founder ruling) with Primary "Not interested" and Tertiary
+  "Keep invitation". Prototype: the card's "Not interested" opens it, "Keep
+  invitation" goes back.
+- New component List item / Conversation `494:2377` (Dot: None, Warning ·
+  Name, Date, Meta, Preview). D1.19 Inbox `353:502` rows now use it; photos,
+  amber dots and the row link to D1.20 kept.
+
 ## 2026-10-02 (evening) · design agent
 
 - Avatar `460:22`: sizes now match code (32, 52, 56, 80; was 32 / 48 / 72)
