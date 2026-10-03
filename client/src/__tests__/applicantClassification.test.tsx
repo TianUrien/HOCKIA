@@ -188,7 +188,8 @@ describe('ApplicantCard — tier pill dropdown', () => {
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
     expect(screen.getByText(/Midfielder/i)).toBeInTheDocument()
     expect(screen.getByText('London, UK')).toBeInTheDocument()
-    expect(screen.getByText(/Applied Feb 10, 2026/)).toBeInTheDocument()
+    // Round 9: day first (lib/dayFirst).
+    expect(screen.getByText(/Applied 10 Feb 2026/)).toBeInTheDocument()
     expect(screen.getByText('View Profile')).toBeInTheDocument()
   })
 })
