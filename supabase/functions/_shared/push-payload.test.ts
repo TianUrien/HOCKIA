@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
-import { buildPushPayload } from '../send-push/push-payload.ts'
+import { buildPushPayload, isGeneratedHeadline } from '../send-push/push-payload.ts'
 
 // The push body mirrors client/src/components/notifications/config.ts
 // (applicationStatusCopy). Keep both in sync.
@@ -56,4 +56,47 @@ Deno.test('the other application statuses keep the position wording', () => {
     position: 'midfielder',
   }, 'Dublin HC')
   assertEquals(filled.body, 'Senior men 1st XI midfielder has been filled. Thanks for applying — new roles are open.')
+})
+
+// Round 9 (QA re-check item 18): a role posted without a typed title is stored
+// under its generated headline ("Men's midfielder", client lib/postRole
+// defaultTitle). The founder wants the bare position in the push.
+Deno.test('a generated headline names the position, a typed title stays', () => {
+  const generated = buildPushPayload('vacancy_application_status', {
+    status: 'shortlisted',
+    club_name: 'Dublin HC',
+    vacancy_title: "Men's midfielder",
+    position: 'midfielder',
+    opportunity_id: 'opp-1',
+  }, 'Dublin HC')
+  assertEquals(generated.body, "You're being considered for Midfielder.")
+
+  const curlyApostrophe = buildPushPayload('vacancy_application_status', {
+    status: 'shortlisted',
+    club_name: 'Dublin HC',
+    vacancy_title: 'Women’s head coach',
+    position: 'head_coach',
+  }, 'Dublin HC')
+  assertEquals(curlyApostrophe.body, "You're being considered for Head Coach.")
+
+  const barePosition = buildPushPayload('vacancy_application_status', {
+    status: 'filled',
+    club_name: 'Dublin HC',
+    vacancy_title: 'Goalkeeper',
+    position: 'goalkeeper',
+  }, 'Dublin HC')
+  assertEquals(barePosition.body, 'Goalkeeper has been filled. Thanks for applying — new roles are open.')
+
+  const typed = buildPushPayload('vacancy_application_status', {
+    status: 'shortlisted',
+    club_name: 'Dublin HC',
+    vacancy_title: "Men's 1st XI midfielder",
+    position: 'midfielder',
+  }, 'Dublin HC')
+  assertEquals(typed.body, "You're being considered for Men's 1st XI midfielder.")
+
+  assertEquals(isGeneratedHeadline("Men's midfielder", 'Midfielder'), true)
+  assertEquals(isGeneratedHeadline('Mixed forward', 'Forward'), true)
+  assertEquals(isGeneratedHeadline("Men's midfielder", null), false)
+  assertEquals(isGeneratedHeadline('Senior midfielder', 'Midfielder'), false)
 })

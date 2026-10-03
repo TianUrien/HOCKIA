@@ -44,6 +44,8 @@ import { appliedLine, appliedOnLine, deadlineLine, postedLine, startsLine, whenL
 import { startLabel } from '@/lib/postRole'
 import { offerRingTarget } from '@/features/chat-v2/utils'
 import OwnApplicationRoad from '@/components/opportunities/OwnApplicationRoad'
+import { getNotificationConfig, isGeneratedHeadline } from '@/components/notifications/config'
+import type { NotificationRecord } from '@/lib/api/notifications'
 
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
 
@@ -281,5 +283,31 @@ describe('4 · Withdraw application responds to the first tap, also across a par
     expect(page).not.toContain('}, [id, user, profile, isCurrentUserTestAccount, isStaging])')
     expect(page).toContain('if (!applicationError) {')
     expect(page).toContain('if (error) return\n    setHasApplied(!!data)')
+  })
+})
+
+// ── 5 · a generated headline names the position (client mirror of send-push) ──
+describe('5 · notification copy: a role posted without a typed title names the position', () => {
+  const notification = (metadata: Record<string, unknown>): NotificationRecord => ({
+    id: 'n1', kind: 'vacancy_application_status', sourceEntityId: 's1', metadata, targetUrl: null,
+    createdAt: '2026-10-03T00:00:00Z', readAt: null, seenAt: null, clearedAt: null,
+    actor: { id: 'c1', fullName: 'E2E Test FC', role: 'club', username: 'e2e', avatarUrl: null, baseLocation: null },
+  } as NotificationRecord)
+  it('"Men’s midfielder" (lib/postRole defaultTitle) → Midfielder; a typed title stays', () => {
+    const generated = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s midfielder', position: 'midfielder' })
+    expect(getNotificationConfig(generated).getDescription?.(generated)).toBe("You're being considered for Midfielder.")
+    const filled = notification({ status: 'filled', club_name: 'E2E Test FC', vacancy_title: "Women's head coach", position: 'head_coach' })
+    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe('Head Coach has been filled. Thanks for applying — new roles are open.')
+    const typed = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s 1st XI midfielder', position: 'midfielder' })
+    expect(getNotificationConfig(typed).getDescription?.(typed)).toBe("You're being considered for Men’s 1st XI midfielder.")
+    expect(isGeneratedHeadline('Mixed forward', 'Forward')).toBe(true)
+    expect(isGeneratedHeadline('Senior midfielder', 'Midfielder')).toBe(false)
+    expect(isGeneratedHeadline("Men's midfielder", null)).toBe(false)
+  })
+  it('the edge function carries the same rule', () => {
+    const edge = readFileSync(resolve(__dirname, '../../../supabase/functions/send-push/push-payload.ts'), 'utf8')
+    expect(edge).toContain('export function isGeneratedHeadline(')
+    expect(edge).toContain('const role = typedTitle || position')
+    expect(edge).toContain("${typedTitle ?? humanPos ?? 'The role'} has been filled")
   })
 })
