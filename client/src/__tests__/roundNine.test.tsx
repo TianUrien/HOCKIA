@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
@@ -30,6 +30,10 @@ vi.mock('@/lib/auth', () => ({
 }))
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
 vi.mock('@/hooks/useClubInbox', () => ({ useClubInboxMeta: () => ({ data: undefined }) }))
+vi.mock('@/hooks/useSigning', () => ({
+  useSigningActions: () => ({ busy: false, withdrawApplication: vi.fn(async () => ({ ok: true })) }),
+  useOwnOfferMade: () => null,
+}))
 
 import { InboxMessages } from '@/components/inbox/InboxMessages'
 import { recruitingPreview, recruitingPreviewLine, shortDayOf } from '@/lib/signing'
@@ -39,6 +43,7 @@ import { getTimeAgo } from '@/lib/utils'
 import { appliedLine, appliedOnLine, deadlineLine, postedLine, startsLine, whenLine } from '@/lib/opportunityCopy'
 import { startLabel } from '@/lib/postRole'
 import { offerRingTarget } from '@/features/chat-v2/utils'
+import OwnApplicationRoad from '@/components/opportunities/OwnApplicationRoad'
 
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
 
@@ -243,5 +248,38 @@ describe('3 · the highlight ring wraps the offer card only', () => {
     expect(win).toContain('const node = offerRingTarget(row)')
     expect(win).toContain('node.classList.add(...ANCHOR_HIGHLIGHT)')
     expect(win).toContain("node.scrollIntoView({ block: 'center' })")
+  })
+})
+
+// ── 4 · Withdraw application opens on the first tap ──────────────────────────
+describe('4 · Withdraw application responds to the first tap, also across a parent re-render', () => {
+  it('one click opens the confirm sheet; a re-render with fresh props keeps it open', () => {
+    const onChanged = vi.fn()
+    const view = render(
+      <MemoryRouter>
+        <OwnApplicationRoad applicationId="app-1" status="shortlisted" onMessage={() => {}} onChanged={onChanged} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByTestId('withdraw-application-confirm')).toBeNull()
+    fireEvent.click(screen.getByTestId('withdraw-application'))
+    expect(screen.getByTestId('withdraw-application-confirm')).toBeTruthy()
+    // The page re-renders with new callback identities after a refetch: the sheet survives.
+    view.rerender(
+      <MemoryRouter>
+        <OwnApplicationRoad applicationId="app-1" status="shortlisted" onMessage={() => {}} onChanged={() => {}} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('withdraw-application-confirm')).toBeTruthy()
+    const road = src('components/opportunities/OwnApplicationRoad.tsx')
+    expect(road).toContain('[@media(hover:hover)]:hover:underline')
+    expect(road).not.toMatch(/withdraw-application"[^>]*disabled/)
+  })
+
+  it('the role page refetches on the viewer’s id and role, not on auth-store object identity, and keeps the application on a failed read', () => {
+    const page = src('pages/OpportunityDetailPage.tsx')
+    expect(page).toContain('}, [id, userId, viewerRole, isCurrentUserTestAccount, isStaging])')
+    expect(page).not.toContain('}, [id, user, profile, isCurrentUserTestAccount, isStaging])')
+    expect(page).toContain('if (!applicationError) {')
+    expect(page).toContain('if (error) return\n    setHasApplied(!!data)')
   })
 })

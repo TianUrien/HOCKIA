@@ -104,8 +104,12 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
       {withdrawable && (
         <button
           type="button"
+          // Opens on the first tap: the handler reads no state that a
+          // refetch flips, and the sheet is a sibling of this button (no lazy
+          // chunk, no null fallback). The hover rule only applies on devices
+          // that hover, so a touch never spends its first tap on :hover.
           onClick={() => setConfirming(true)}
-          className={cn('inline-flex min-h-11 items-center text-secondary font-semibold text-ink-2 underline-offset-2 hover:underline', steps ? 'mt-1' : '-my-2')}
+          className={cn('inline-flex min-h-11 items-center text-secondary font-semibold text-ink-2 underline-offset-2 [@media(hover:hover)]:hover:underline', steps ? 'mt-1' : '-my-2')}
           data-testid="withdraw-application"
         >
           Withdraw application

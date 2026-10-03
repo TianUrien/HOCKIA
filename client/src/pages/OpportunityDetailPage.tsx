@@ -37,6 +37,14 @@ export default function OpportunityDetailPage() {
     }
   }, [routerLocation.key, navigate])
   const isCurrentUserTestAccount = profile?.is_test_account ?? false
+  // Primitives for the fetch below: the auth store re-sets `user` / `profile`
+  // as NEW objects a few seconds after load (profile refresh, token refresh),
+  // which used to re-run the whole fetch and rebuild the page under the
+  // first tap on the role's controls (QA round 7 re-check: "Withdraw
+  // application" ignored the first tap ~5 s after load). Same id and role →
+  // nothing to refetch.
+  const userId = user?.id ?? null
+  const viewerRole = profile?.role ?? null
   // On staging the opportunities list shows test-account postings to
   // everyone (OpportunitiesPage skips the test filter when isStaging).
   // The detail route must match — otherwise a listed opportunity 404s
@@ -171,17 +179,20 @@ export default function OpportunityDetailPage() {
       }
 
       // Check if user has applied
-      if (user && (profile?.role === 'player' || profile?.role === 'coach')) {
-        const { data: applicationData } = await supabase
+      if (userId && (viewerRole === 'player' || viewerRole === 'coach')) {
+        const { data: applicationData, error: applicationError } = await supabase
           .from('opportunity_applications')
           .select('id, status')
           .eq('opportunity_id', id)
-          .eq('applicant_id', user.id)
+          .eq('applicant_id', userId)
           .maybeSingle()
 
-        setHasApplied(!!applicationData)
-        setApplicationStatus((applicationData as { status?: string } | null)?.status ?? null)
-        setApplicationId((applicationData as { id?: string } | null)?.id ?? null)
+        // A failed read keeps what the page already knows (see refreshApplicationStatus).
+        if (!applicationError) {
+          setHasApplied(!!applicationData)
+          setApplicationStatus((applicationData as { status?: string } | null)?.status ?? null)
+          setApplicationId((applicationData as { id?: string } | null)?.id ?? null)
+        }
       }
     } catch (error) {
       logger.error('Error fetching opportunity details:', error)
@@ -189,7 +200,7 @@ export default function OpportunityDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [id, user, profile, isCurrentUserTestAccount, isStaging])
+  }, [id, userId, viewerRole, isCurrentUserTestAccount, isStaging])
 
   useEffect(() => {
     if (!id) {
@@ -275,13 +286,16 @@ export default function OpportunityDetailPage() {
     // Allow both players and coaches to refresh their application status
     if (!id || !user || !['player', 'coach'].includes(profile?.role ?? '')) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('opportunity_applications')
       .select('id, status')
       .eq('opportunity_id', id)
       .eq('applicant_id', user.id)
       .maybeSingle()
 
+    // A failed read keeps what the page already knows: clearing the
+    // application here would unmount the applicant's road under a tap.
+    if (error) return
     setHasApplied(!!data)
     setApplicationStatus((data as { status?: string } | null)?.status ?? null)
     setApplicationId((data as { id?: string } | null)?.id ?? null)
