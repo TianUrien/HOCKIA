@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { openRoleTitle, toOpenRoleCard } from '@/lib/landingRoles'
@@ -51,11 +51,14 @@ function arm(rows: unknown[] | null, error: Error | null = null) {
 async function renderLanding() {
   vi.resetModules()
   const { default: Landing } = await import('@/pages/Landing')
-  return render(
+  const view = render(
     <MemoryRouter>
       <Landing />
     </MemoryRouter>,
   )
+  // Flush the open-roles fetch so its state update lands inside act().
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+  return view
 }
 
 beforeEach(() => arm([]))

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -56,11 +56,14 @@ vi.mock('@/components/StoreBadges', () => ({
 async function renderLanding() {
   vi.resetModules()
   const { default: Landing } = await import('@/pages/Landing')
-  return render(
+  const view = render(
     <MemoryRouter>
       <Landing />
     </MemoryRouter>,
   )
+  // Flush the open-roles fetch so its state update lands inside act().
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)) })
+  return view
 }
 
 afterEach(() => {
