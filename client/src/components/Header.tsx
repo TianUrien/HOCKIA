@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search } from 'lucide-react'
-import { openSearchOverlay } from '@/lib/searchOverlayBus'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
@@ -122,8 +121,11 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                   <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
                 </button>
               )}
+              {/* Search v2 (founder rulings 2026-10-03): the icon opens the
+                  /search screen on every page, not only where the Home
+                  overlay happens to be mounted. */}
               <button
-                onClick={() => openSearchOverlay()}
+                onClick={() => handleNavigate('/search')}
                 className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
                 aria-label="Search"
               >
