@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useClubInboxMeta } from '@/hooks/useClubInbox'
 import { clubInboxRoleLine, inboxWaitingNotice } from '@/lib/clubInbox'
+import { firstNameOf } from '@/lib/invites'
+import { recruitingPreview } from '@/lib/signing'
 
 interface ConversationRpcRow {
   conversation_id: string
@@ -161,7 +163,10 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             const unread = Number(row.unread_count ?? 0) > 0
             const name = row.other_participant_name ?? row.other_participant_username ?? 'HOCKIA member'
             const mine = row.last_message_sender_id === userId
-            const preview = row.last_message_content ? `${mine ? 'You: ' : ''}${row.last_message_content}` : 'Say hello'
+            // Recruiting lines the server posts as the club are reworded for
+            // the club and never carry the "You:" prefix (lib/signing).
+            const line = row.last_message_content ? recruitingPreview(row.last_message_content, { isMine: mine, otherFirstName: firstNameOf(row.other_participant_name, '') }) : null
+            const preview = line ? `${mine && !line.system ? 'You: ' : ''}${line.text}` : 'Say hello'
             const m = clubV2 ? meta?.get(row.conversation_id) : undefined
             const roleLine = m ? clubInboxRoleLine(row.other_participant_role, m.detail, m.applied) : identityLine(row.other_participant_role)
             return (

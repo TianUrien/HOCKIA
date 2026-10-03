@@ -128,7 +128,8 @@ describe('3 · "You marked <name> as signed for <role>"', () => {
     expect(recruitingPreviewLine(line, { isMine: true, otherFirstName: 'Facundo' })).toBe('You marked Facundo as signed for Men’s 1st player. Waiting for them to confirm.')
     expect(recruitingPreviewLine(line, { isMine: false, otherFirstName: 'E2E' })).toBe(line)
     expect(recruitingPreviewLine('See you at training', { isMine: true, otherFirstName: 'Facundo' })).toBe('See you at training')
-    expect(src('components/ConversationList.tsx')).toContain('recruitingPreviewLine(conversation.lastMessage.content')
+    // Round 9: both lists read recruitingPreview (text + system flag) so the sender prefix is dropped too.
+    expect(src('components/ConversationList.tsx')).toContain('recruitingPreview(conversation.lastMessage.content')
   })
 })
 
@@ -242,7 +243,9 @@ describe('11 · chat separators use the bubble’s clock format', () => {
   it('no 24-hour format left in MessageBubble', () => {
     const s = src('features/chat-v2/components/MessageBubble.tsx')
     expect(s).not.toContain("'HH:mm'")
-    expect(s.match(/'h:mm a'/g)?.length).toBe(2)
+    // Round 9: the two separators read the one clock helper (lib/dayFirst clockTime), shared with the inbox list.
+    expect(s).not.toContain("'h:mm a'")
+    expect(s.match(/timestampLabel/g)?.length).toBeGreaterThanOrEqual(2)
   })
 })
 

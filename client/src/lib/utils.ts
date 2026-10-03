@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx'
+import { dayFirst } from './dayFirst'
 
 /**
  * Utility function to merge class names
@@ -204,7 +205,8 @@ export function getTimeAgo(dateString: string, compact = false): string {
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    // Day first, like every date outside the signing road (lib/dayFirst).
+    return dayFirst(date, { now }) ?? ''
   }
 
   const minutes = Math.floor(seconds / 60)

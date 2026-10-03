@@ -88,8 +88,9 @@ describe('Post a role · copy and checks', () => {
   })
 
   it('labels the start date like the role card', () => {
-    expect(startLabel('2026-09-01', new Date('2026-06-01'))).toBe('Sep 1')
-    expect(startLabel('2027-01-15', new Date('2026-06-01'))).toBe('Jan 15, 2027')
+    // Round 9: day first (lib/dayFirst).
+    expect(startLabel('2026-09-01', new Date('2026-06-01'))).toBe('1 Sep')
+    expect(startLabel('2027-01-15', new Date('2026-06-01'))).toBe('15 Jan 2027')
     expect(defaultTitle({ type: 'player', position: 'forward', gender: 'Women' })).toBe('Women\'s forward')
   })
 })

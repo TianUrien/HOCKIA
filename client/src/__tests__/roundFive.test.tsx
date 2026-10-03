@@ -287,7 +287,8 @@ describe('closed role pages', () => {
     const now = new Date('2026-09-27T12:00:00Z')
     const v = { created_at: '2026-09-24T12:00:00Z', application_deadline: null, closed_at: '2026-09-26T12:00:00Z' }
     expect(postedLine(v, now)).toBe('Posted 3 days ago · No deadline — closes when filled')
-    expect(postedLine(v, now, true)).toMatch(/^Posted 3 days ago · Closed Sep 2[56], 2026$/)
+    // Round 9: day first (lib/dayFirst).
+    expect(postedLine(v, now, true)).toMatch(/^Posted 3 days ago · Closed 2[56] Sep 2026$/)
     expect(postedLine({ ...v, closed_at: null }, now, true)).toBe('Posted 3 days ago · Closed')
     const phone = read('../components/opportunities/OpportunityDetailMobile.tsx')
     expect(phone).toContain('!vacancy.compensation && !closed &&')

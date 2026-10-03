@@ -9,6 +9,7 @@ import { getInitials } from '@/lib/utils'
 import { positionLabel } from '@/lib/identity'
 import { logger } from '@/lib/logger'
 import { APPLICATION_STATUS_REASONS, applicationNote } from '@/lib/applicationStatus'
+import { dayFirst } from '@/lib/dayFirst'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -75,10 +76,8 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
   const currentTier = getCurrentTier(application.status)
   const note = applicationNote(application.metadata)
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
+  // "Applied 3 Oct 2026" — day first (lib/dayFirst).
+  const formatDate = (dateString: string) => dayFirst(dateString, { year: 'always' }) ?? ''
 
 
   const handleViewProfile = () => {

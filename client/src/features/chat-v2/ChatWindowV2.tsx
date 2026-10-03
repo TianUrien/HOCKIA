@@ -4,7 +4,7 @@ import { useChat } from '@/hooks/useChat'
 import { useSafeArea } from '@/hooks/useSafeArea'
 import { useChatScrollController } from '@/hooks/useChatScrollController'
 import { ChatWindowSkeleton } from '@/components/Skeleton'
-import { buildPublicProfilePath, ANCHOR_HIGHLIGHT_MS, findOfferAnchor } from './utils'
+import { buildPublicProfilePath, ANCHOR_HIGHLIGHT_MS, findOfferAnchor, offerRingTarget } from './utils'
 import { ChatHeader } from './components/ChatHeader'
 import { MessageList } from './components/MessageList'
 import { NewMessagesToast } from './components/NewMessagesToast'
@@ -194,11 +194,14 @@ export default function ChatWindowV2({
     let tries = 0
     let timer = 0
     const run = () => {
-      const node = scrollContainerRef.current?.querySelector<HTMLElement>(`[data-message-id="${target.id}"]`)
-      if (!node) {
+      const row = scrollContainerRef.current?.querySelector<HTMLElement>(`[data-message-id="${target.id}"]`)
+      if (!row) {
         if (tries++ < 10) timer = window.setTimeout(run, 50)
         return
       }
+      // The row also holds the day/time separator above the card; the ring
+      // (and the scroll) wrap the card alone (QA round 7 re-check).
+      const node = offerRingTarget(row)
       anchorDoneRef.current = conversation.id
       if (typeof node.scrollIntoView === 'function') node.scrollIntoView({ block: 'center' })
       if (anchorRingRef.current) {

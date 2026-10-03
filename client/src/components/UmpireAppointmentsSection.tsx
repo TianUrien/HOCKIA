@@ -34,6 +34,7 @@ import {
   type UmpireAppointmentInput,
 } from '@/hooks/useUmpireAppointments'
 import { deleteStorageObject } from '@/lib/storage'
+import { dayFirst } from '@/lib/dayFirst'
 import UmpireAppointmentEditor from './UmpireAppointmentEditor'
 
 const JOURNEY_BUCKET = 'journey'
@@ -97,11 +98,9 @@ const visualFor = (raw: string | null | undefined): EntryTypeVisual => {
   return ENTRY_TYPE_VISUALS.appointment
 }
 
+/** "3 Oct 2026" — day first (lib/dayFirst); a date-only value is read as a local calendar day. */
 function formatDate(value: string | null): string | null {
-  if (!value) return null
-  const d = new Date(value + 'T00:00:00Z')
-  if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  return dayFirst(value, { year: 'always' })
 }
 
 function formatDateRange(start: string | null, end: string | null): string | null {

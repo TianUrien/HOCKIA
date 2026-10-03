@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
-import { format } from 'date-fns'
 import { ShieldCheck, Plus, Clock3, Check, UserPlus, ArrowRight } from 'lucide-react'
+import { dayFirst } from '@/lib/dayFirst'
 import { logger } from '@/lib/logger'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
@@ -412,7 +412,7 @@ export default function TrustedReferencesSection({
                     {pending.createdAt && (
                       <span className="inline-flex items-center gap-1">
                         <Clock3 className="h-3 w-3" />
-                        {format(new Date(pending.createdAt), 'MMM d, yyyy')}
+                        {dayFirst(pending.createdAt, { year: 'always' })}
                       </span>
                     )}
                   </div>
