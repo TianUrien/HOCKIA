@@ -150,8 +150,10 @@ describe('Your week header copy', () => {
 // ── check-in ─────────────────────────────────────────────────────────────
 describe('check-in card', () => {
   it('"Yes, I’m open" calls confirm_availability and stamps the profile', async () => {
-    render(<MemoryRouter><CheckInCard /></MemoryRouter>)
+    render(<MemoryRouter><CheckInCard headline="No profile views yet this week" hasViews={false} viewers={[]} /></MemoryRouter>)
     expect(screen.getByText('Are you still open to play?')).toBeInTheDocument()
+    expect(screen.getByTestId('week-headline')).toHaveTextContent('No profile views yet this week')
+    expect(screen.queryByTestId('viewer-stack')).not.toBeInTheDocument()
     expect(screen.getByText(/You last confirmed 3 weeks ago\./)).toBeInTheDocument()
     fireEvent.click(screen.getByTestId('check-in-yes'))
     await waitFor(() => expect(screen.getByTestId('check-in-confirmed')).toBeInTheDocument())
@@ -160,7 +162,7 @@ describe('check-in card', () => {
   })
 
   it('"Not right now" turns Open to play off through the switch path, after a purple confirm', async () => {
-    render(<MemoryRouter><CheckInCard /></MemoryRouter>)
+    render(<MemoryRouter><CheckInCard headline="No profile views yet this week" hasViews={false} viewers={[]} /></MemoryRouter>)
     fireEvent.click(screen.getByTestId('check-in-not-now'))
     expect(screen.getByText('Turn off Open to play?')).toBeInTheDocument()
     const confirm = screen.getByTestId('check-in-off-yes')
@@ -177,8 +179,11 @@ describe('check-in card', () => {
     expect(checkInCopy('coach', { openToPlay: false, openToCoach: true, recruitsForTeam: false })?.question).toBe('Still open to coaching opportunities?')
     expect(checkInCopy('club', { openToPlay: false, openToCoach: false, recruitsForTeam: false })).toBeNull()
     authState.profile = player({ open_to_play: false })
-    const { container } = render(<MemoryRouter><CheckInCard /></MemoryRouter>)
-    expect(container.firstChild).toBeNull()
+    render(<MemoryRouter><CheckInCard headline="2 clubs looked at your profile this week" hasViews viewers={viewerLines(rows)} /></MemoryRouter>)
+    // The viewer line (with the avatar stack) stays; only the question goes.
+    expect(screen.getByTestId('check-in-viewers-only')).toBeInTheDocument()
+    expect(screen.getByTestId('viewer-stack')).toBeInTheDocument()
+    expect(screen.queryByTestId('check-in-yes')).not.toBeInTheDocument()
   })
 })
 
@@ -198,13 +203,21 @@ describe('who looked at you', () => {
     expect(lines.some((l) => l.name.includes('Player'))).toBe(false)
 
     render(<MemoryRouter><WhoLookedAtYou rows={rows} /></MemoryRouter>)
+    // Rail: cards without time stamps.
     expect(screen.getByText('Club Atlético')).toBeInTheDocument()
     expect(screen.getByText('Club · 🇦🇷')).toBeInTheDocument()
     expect(screen.getByText('Private')).toBeInTheDocument()
     expect(screen.getByText('Browsing hidden')).toBeInTheDocument()
     expect(screen.queryByText('Some Player')).not.toBeInTheDocument()
+    expect(screen.getAllByTestId('viewer-card')).toHaveLength(2)
+    expect(screen.getAllByTestId('viewer-card-hidden')).toHaveLength(1)
+    expect(screen.queryByTestId('who-looked-list')).not.toBeInTheDocument()
+    // See all: the full list with when they looked; still no player.
+    fireEvent.click(screen.getByTestId('who-looked-see-all'))
     expect(screen.getAllByTestId('viewer-row')).toHaveLength(2)
     expect(screen.getAllByTestId('viewer-row-hidden')).toHaveLength(1)
+    expect(screen.getAllByText('Private')).toHaveLength(2)
+    expect(screen.queryByText('Some Player')).not.toBeInTheDocument()
   })
 })
 
@@ -256,9 +269,12 @@ describe('Your week screen — zero views', () => {
     expect(screen.getByTestId('week-tile-roles-value')).toHaveTextContent('0')
     expect(screen.getByTestId('week-tile-replies-value')).toHaveTextContent('0')
     expect(screen.getByTestId('week-tile-roles-sub')).toHaveTextContent('None for midfielders')
+    expect(screen.getByTestId('week-tile-views-sub').className).not.toMatch(/positive/)
     expect(screen.queryByTestId('who-looked')).not.toBeInTheDocument()
     expect(screen.getByTestId('check-in-card')).toBeInTheDocument()
+    expect(screen.queryByTestId('viewer-stack')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Your week' })).toBeInTheDocument()
+    expect(screen.getByTestId('week-range')).toHaveTextContent(/^\d+(–\d+)? [A-Z][a-z]+/)
   })
 
   it('with views, names the recruiters and lists them', () => {
@@ -267,6 +283,9 @@ describe('Your week screen — zero views', () => {
     render(<MemoryRouter><YourWeekScreen /></MemoryRouter>)
     expect(screen.getByTestId('week-headline')).toHaveTextContent('3 clubs and 1 coach looked at your profile this week')
     expect(screen.getByTestId('week-tile-views-sub')).toHaveTextContent('4 more vs last week')
+    expect(screen.getByTestId('week-tile-views-sub').className).toMatch(/text-status-positive/)
+    expect(screen.getByTestId('viewer-stack')).toBeInTheDocument()
+    expect(screen.getByTestId('week-headline').className).toMatch(/text-hockia-primary/)
     expect(screen.getByTestId('week-tile-recruiters-value')).toHaveTextContent('4')
     expect(screen.getByTestId('week-tile-recruiters-sub')).toHaveTextContent('3 clubs · 1 coach')
     expect(screen.getByTestId('who-looked')).toBeInTheDocument()

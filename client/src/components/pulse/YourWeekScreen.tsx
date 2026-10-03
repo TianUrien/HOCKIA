@@ -17,6 +17,7 @@ import {
   newRolesLine,
   recruitersLine,
   referenceArrivedThisWeek,
+  viewerLines,
   viewersHeadline,
   viewsDeltaLine,
   weekRangeLabel,
@@ -30,12 +31,13 @@ import { WhatHappened } from './WhatHappened'
  * Your week v2 — the player Pulse screen (Figma New-Hockia 42:276; founder
  * rulings 2026-10-03). Phone-first; what the Home "Your week" card opens.
  *
- *  1. Header: the Monday–Sunday week and one line about who looked.
- *  2. Check-in: the availability confirmation (CheckInCard).
- *  3. Four tiles: profile views · recruiters · new roles · club reply —
+ *  1. "‹ Home", large title "Your week", the Monday–Sunday week under it.
+ *  2. Check-in card (lavender): the viewer line with avatars, then the
+ *     availability question (CheckInCard).
+ *  3. Four grey tiles: profile views · recruiters · new roles · club reply —
  *     the player's OWN numbers only.
- *  4. Who looked at you: clubs and coaches by name, anonymous browsers
- *     masked, players never listed.
+ *  4. Who looked at you: a rail of clubs and coaches by name, anonymous
+ *     browsers masked, players never listed; "See all" opens the full list.
  *  5. A first this week: the reference that arrived, with "Ask".
  *  6. What happened: the week's facts, every line neutral grey.
  *
@@ -50,10 +52,11 @@ export function YourWeekScreen() {
   const role = profile?.role ?? null
   const isTalent = role === 'player' || role === 'coach'
   const forRole = role === 'coach' ? 'coach' : 'player'
+  const position = role === 'coach' ? profile?.coach_specialization : profile?.position
 
   const vis = useWeeklyVisibility(isTalent, false)
   const viewers = useWeekViewers(isTalent)
-  const roles = useNewRolesThisWeek(isTalent, forRole, role === 'coach' ? profile?.coach_specialization : profile?.position)
+  const roles = useNewRolesThisWeek(isTalent, forRole, position)
   const apps = useMyApplications(isTalent)
   const allApps = useMyApplicationsAll()
   const refs = useTrustedReferences(profile?.id ?? '')
@@ -65,6 +68,7 @@ export function YourWeekScreen() {
   const clubs = byRole.club ?? 0
   const coaches = byRole.coach ?? 0
   const headline = viewersHeadline({ views, uniqueViewers: vis.visibility?.unique_viewers_7d ?? 0, clubs, coaches })
+  const viewerStack = useMemo(() => viewerLines(viewers.viewers), [viewers.viewers])
 
   const replies = useMemo(() => apps.applications.filter((a) => a.status !== 'pending'), [apps.applications])
 
@@ -78,28 +82,28 @@ export function YourWeekScreen() {
   const newReference = useMemo(() => referenceArrivedThisWeek(refs.acceptedReferences), [refs.acceptedReferences])
 
   const tiles: WeekTile[] = [
-    { id: 'views', value: views, label: views === 1 ? 'Profile view' : 'Profile views', sub: viewsDeltaLine(views, priorViews) },
+    { id: 'views', value: views, label: views === 1 ? 'Profile view' : 'Profile views', sub: viewsDeltaLine(views, priorViews), tone: views > priorViews ? 'positive' : 'grey' },
     { id: 'recruiters', value: clubs + coaches, label: clubs + coaches === 1 ? 'Recruiter' : 'Recruiters', sub: recruitersLine(clubs, coaches) },
-    { id: 'roles', value: roles.roles.total, label: roles.roles.total === 1 ? 'New role' : 'New roles', sub: newRolesLine(roles.roles.forPosition, role === 'coach' ? profile?.coach_specialization : profile?.position), to: '/opportunities' },
+    { id: 'roles', value: roles.roles.total, label: roles.roles.total === 1 ? 'New role' : 'New roles', sub: newRolesLine(roles.roles.forPosition, position), to: '/opportunities' },
     { id: 'replies', value: replies.length, label: replies.length === 1 ? 'Club reply' : 'Club replies', sub: clubReplyLine(replies.map((r) => r.club_name)), to: '/opportunities/applications' },
   ]
   const tilesLoading = vis.loading || roles.loading || apps.loading
 
   return (
     <div className="min-h-screen bg-white" data-testid="your-week-screen">
-      <DetailNavBar parent={backLabelFrom(location.state, 'Home')} title="Your week" fallbackPath="/home" />
+      <DetailNavBar parent={backLabelFrom(location.state, 'Home')} fallbackPath="/home" />
 
-      <div className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-8 pt-1">
-        <header className="px-1">
-          <p className="text-caption font-semibold uppercase tracking-[0.06em] text-ink-3" data-testid="week-range">{weekRangeLabel()}</p>
-          {vis.loading ? (
-            <span className="mt-1.5 block h-6 w-3/4 animate-pulse rounded-md bg-surface-grouped" />
-          ) : (
-            <h1 className="mt-1 text-title text-ink-1" data-testid="week-headline">{headline}</h1>
-          )}
+      <div className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-8">
+        <header className="px-1 pt-1">
+          <h1 className="text-large-title text-ink-1">Your week</h1>
+          <p className="mt-0.5 text-row text-ink-2" data-testid="week-range">{weekRangeLabel()}</p>
         </header>
 
-        <CheckInCard />
+        {vis.loading ? (
+          <div className="h-[196px] animate-pulse rounded-card bg-hockia-soft" />
+        ) : (
+          <CheckInCard headline={headline} hasViews={views > 0} viewers={viewerStack} />
+        )}
 
         <WeekTiles tiles={tiles} loading={tilesLoading} />
 
