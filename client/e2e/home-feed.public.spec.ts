@@ -10,7 +10,7 @@ test.describe('@smoke home feed public', () => {
     // instead — it's stable regardless of headline copy.
     await expect(
       page.getByText(/no activity yet/i)
-        .or(page.getByRole('link', { name: /explore hockia/i }).first())
+        .or(page.getByRole('link', { name: /explore (without an account|hockia)/i }).first())
         .or(page.locator('[data-testid="feed-container"]').first())
     ).toBeVisible({ timeout: 20000 })
   })
