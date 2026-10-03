@@ -3,6 +3,31 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-03 (later) · design agent
+
+- D1 · Profile & Network rebuilt with components (D1.11 `337:372`, D1.12
+  `337:588`, D1.13 `338:424`, D1.14 `338:495`, D1.15 `338:575`, D1.16
+  `352:450`, D1.17 `352:995`, D1.18 `352:1290`, D1.19 `353:502`, D1.20
+  `353:718`, D1.21 `353:809`, D1.22 `353:893`, D1.23 `355:528`); prototype
+  links kept. Baseline on "Archive · D1 Profile & Network baseline".
+- New components: List item / Conversation `494:2377`, Card / Member
+  `501:6648`, Card / Your week `505:3148`, and a Feed set (section `503:218`)
+  that mirrors `components/home`: Feed / Header `503:241` (Trailing More or
+  Badge), Feed / Interaction bar `503:274` (Post, Question), Feed / Action
+  `503:246` (Neutral, Primary) and one component per item type (User post,
+  Question, Video added, Media added, Opportunity posted, Open to play,
+  Reference received, Club responded, Member joined, Milestone, Role filled).
+- Extended: Avatar `460:22` Size 40 (feed, Avatar `md`); Icon button
+  `459:171` Style Glass (round button over cover photos); Status bar is now
+  the set "System / Status bar" `507:397` with Appearance Dark and Light.
+- Copy now matches the shipped strings and is gender-neutral on D1, D3 and
+  D4: "Marked available", "Can’t compare yet — Club: Old Lions has no league
+  on Hockia.", "…coaches and teammates can write one.", the decline-sheet
+  helper and footnote (`DeclineSheet.tsx`), the invite footer
+  (`lib/invites.ts`), and "ask when their season ends".
+- Feed / Opportunity posted `504:593`: "EU passport required" line removed
+  (matches the shipped card; requirements live on the role page).
+
 ## 2026-10-03 · design agent
 
 - New screen D3.3b · Not interested — confirm (player) `496:1448`: neutral

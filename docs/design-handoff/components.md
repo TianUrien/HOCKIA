@@ -10,7 +10,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Component | Node | Variants / properties | Usage | Code counterpart (to confirm) |
 |---|---|---|---|---|
 | Button | `459:146` | Style: Primary, Tonal, Secondary, Tertiary, Link, Destructive, Danger · Size: Large 48, Small 36 · State: Default, Hover, Pressed, Focus, Disabled, Loading · Label, Show icon, Icon | One Primary per screen, sheet or card. Tonal for actions repeated in rows. Secondary = equal-weight alternative. Tertiary = neutral low-emphasis text. Link = brand inline text. Destructive (soft) opens a negative action; Danger (solid) confirms it | — |
-| Icon button | `459:171` | Style: Muted 36, Tonal 36, Ghost 44 · State · Icon | Muted for secondary row actions, Tonal for a selected toggle, Ghost in nav bars | — |
+| Icon button | `459:171` | Style: Muted 36, Tonal 36, Ghost 44, Glass 36 · State · Icon | Muted for secondary row actions, Tonal for a selected toggle, Ghost in nav bars | — |
 | Chip | `459:184` | Selected · State · Label | Filters and single-choice options | — |
 | Segmented control | `470:122` (item `470:121`) | 2–4 segments, Selected per segment | Mutually exclusive options | `ui/SegmentedControl.tsx` |
 | Switch | `472:185` | On | iOS-style on/off | `SettingsSwitch` in `settings/settingsUi.tsx` |
@@ -40,7 +40,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Tab bar | `98:1118` | Active, Inbox unread | Primary navigation, red dot without numbers | `MobileBottomNav.tsx` |
 | Step progress | `472:159` | Current: 1–3 | Multi-step flows | — |
 | Role switcher | `466:5799` | Role | "Ranked for" role picker | — |
-| System / Status bar, Home indicator | `459:2063`, `459:2066` | — | Figma-only device chrome | — |
+| System / Status bar, Home indicator | `507:397`, `459:2066` | Appearance: Dark, Light | Figma-only device chrome | — |
 
 ## Lists and selection
 
@@ -53,7 +53,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Career | `468:133` | Team, Role, When, Achievement | Career entries | `profile/mobile/CareerScreen.tsx` |
 | Detail row | `467:128` | Label, Value, Show leading | Facts tables | — |
 | Section header | `467:135` | Title, Show action | Section headings with "See all" | — |
-| Avatar | `460:22` | Size: 32, 52, 56, 80 · Shape: Person, Organisation · Show new dot | People (circle) and clubs (rounded square on white) | `ui/EntityAvatar.tsx` |
+| Avatar | `460:22` | Size: 32, 40, 52, 56, 80 · Shape: Person, Organisation · Show new dot | People (circle) and clubs (rounded square on white) | `ui/EntityAvatar.tsx` |
 | Option card | `460:40` | Selected · Title, Detail | Single choice (role picker) | — |
 | Field header | `472:180` | Requirement: Must have, Nice to have, Always required, Optional, None | Form labels with the matching rule | — |
 | Video thumbnail | `468:132` | Type: Full match, Highlight | Video rails | — |
@@ -63,6 +63,18 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Conversation | `494:2377` | Dot: None, Warning · Name, Date, Meta, Preview | Inbox thread rows; amber dot only when the viewer owes a first reply | — |
 | Message / Offer card | `480:5154` | Eyebrow, Title, Start, Pay, Package, Open until, Footnote | Offer in a conversation; deadline amber only for the player in the last 5 days | `features/chat-v2/components/OfferCard.tsx` (keep height stable) |
 | Message / Invitation card | `465:2194` | Eyebrow, Title, When, Pay, Package, League, Message | Invitation in a conversation | `features/chat-v2/components/InviteCard.tsx` (keep height stable) |
+
+## Feed and cards
+
+| Component | Node | Variants / properties | Usage | Code counterpart |
+|---|---|---|---|---|
+| Feed / Header | `503:241` | Trailing: More, Badge · Headline, Meta, Badge icon | Author row of every feed item; avatar 40 | `home/FeedCard.tsx` `FeedCardHeader` |
+| Feed / Interaction bar | `503:274` | Type: Post, Question · Likes, Comments | Like, comment, share; Question adds Answer | `home/PostInteractionBar.tsx` |
+| Feed / Action | `503:246` | Style: Neutral, Primary · Label | Pill actions in a feed item | `FeedCardAction`, `FeedCardPrimaryAction` |
+| Feed / <type> (11) | section `503:218` | — | One per item type | `home/cards/*Card.tsx` |
+| Card / Your week | `505:3148` | Value 1–3, Label 1–3 | Home summary card | `home/YourWeekCard.tsx` |
+| Card / Member | `501:6648` | Name, Meta, Country, Show open to play, Show fit | Community grid card; fit is club-only | — |
+| List item / Conversation | `494:2377` | Dot: None, Warning · Name, Date, Meta, Preview | Inbox rows; amber dot only when a first reply is owed | — |
 
 ## Icons
 
