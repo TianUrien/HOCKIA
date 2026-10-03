@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Lock, Plus } from 'lucide-react'
-import { AuthShell, FormError, authInput, authLabel, authSelect } from '@/components/auth/authUi'
+import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
+import { fieldInput, fieldLabel, fieldReadOnly, fieldSelect } from '@/components/ui/fieldClasses'
 import CountrySelect from '@/components/CountrySelect'
 import DateOfBirthPicker from '@/components/DateOfBirthPicker'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
@@ -360,13 +361,13 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
           <div className="mt-6 space-y-4">
             <div>
-              <label htmlFor="setup-name" className={authLabel}>Full name</label>
+              <label htmlFor="setup-name" className={fieldLabel}>Full name</label>
               <input
                 id="setup-name"
                 type="text"
                 value={draft.fullName}
                 onChange={(e) => set({ fullName: e.target.value })}
-                className={authInput}
+                className={fieldInput}
                 autoComplete="name"
                 autoCapitalize="words"
                 maxLength={80}
@@ -376,8 +377,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
             {dobLocked ? (
               <div>
-                <span className={authLabel}>Date of birth</span>
-                <p className="flex h-[50px] items-center justify-between rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1">
+                <span className={fieldLabel}>Date of birth</span>
+                <p className={`${fieldReadOnly} justify-between`}>
                   {draft.dateOfBirth}
                   <Lock className="h-4 w-4 text-ink-4" aria-hidden="true" />
                 </p>
@@ -385,18 +386,18 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
               </div>
             ) : (
               <div>
-                <DateOfBirthPicker label="Date of birth" value={draft.dateOfBirth} onChange={(next) => set({ dateOfBirth: next })} required />
+                <DateOfBirthPicker appearance="field" label="Date of birth" value={draft.dateOfBirth} onChange={(next) => set({ dateOfBirth: next })} required />
                 <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile — only your age is.</p>
               </div>
             )}
 
             <div>
-              <label htmlFor="setup-category" className={authLabel}>Category</label>
+              <label htmlFor="setup-category" className={fieldLabel}>Category</label>
               <select
                 id="setup-category"
                 value={draft.playingCategory}
                 onChange={(e) => set({ playingCategory: e.target.value as PlayingCategory | '' })}
-                className={authSelect}
+                className={fieldSelect}
                 required
               >
                 <option value="">Choose a category</option>
@@ -405,12 +406,12 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
             </div>
 
             <div>
-              <label htmlFor="setup-position" className={authLabel}>Position</label>
+              <label htmlFor="setup-position" className={fieldLabel}>Position</label>
               <select
                 id="setup-position"
                 value={draft.position}
                 onChange={(e) => set({ position: e.target.value, secondaryPosition: draft.secondaryPosition === e.target.value ? '' : draft.secondaryPosition })}
-                className={authSelect}
+                className={fieldSelect}
                 required
               >
                 <option value="">Choose a position</option>
@@ -419,12 +420,12 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
             </div>
 
             <div>
-              <label htmlFor="setup-position-2" className={authLabel}>Second position (optional)</label>
+              <label htmlFor="setup-position-2" className={fieldLabel}>Second position (optional)</label>
               <select
                 id="setup-position-2"
                 value={draft.secondaryPosition}
                 onChange={(e) => set({ secondaryPosition: e.target.value })}
-                className={authSelect}
+                className={fieldSelect}
               >
                 <option value="">None</option>
                 {PLAYER_POSITIONS.filter((p) => p !== draft.position).map((p) => <option key={p} value={p}>{positionLabel(p)}</option>)}
@@ -484,6 +485,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           />
 
           <LocationAutocomplete
+            appearance="field"
             label="Base location"
             placeholder="City you’re based in"
             value={draft.location}

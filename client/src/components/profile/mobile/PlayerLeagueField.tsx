@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { leagueSideFor } from '@/lib/profileD2'
+import { fieldLabel, fieldReadOnly, fieldSelect } from '@/components/ui/fieldClasses'
 
 /**
  * League half of the player's "Club & league" editor (D2 "Add league").
@@ -24,8 +25,6 @@ interface PlayerLeagueFieldProps {
   /** Reports whether the linked club already carries a league (then `value` is ignored on save). */
   onClubLeague: (clubLeagueName: string | null) => void
 }
-
-const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
 
 export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCategory, value, onChange, onClubLeague }: PlayerLeagueFieldProps) {
   const [clubLeague, setClubLeague] = useState<string | null>(null)
@@ -77,12 +76,12 @@ export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCateg
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldClubId, fallbackCountryId, women])
 
-  if (loading) return <div className="h-[50px] animate-pulse rounded-[12px] bg-surface-grouped" />
+  if (loading) return <div className="h-[50px] animate-pulse rounded-[12px] bg-surface-muted" />
   if (clubLeague) {
     return (
       <div>
-        <span className="mb-1.5 block text-secondary font-semibold text-ink-2">League</span>
-        <p className="flex h-[50px] items-center rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1">{clubLeague}</p>
+        <span className={fieldLabel}>League</span>
+        <p className={fieldReadOnly}>{clubLeague}</p>
         <p className="mt-1.5 text-caption text-ink-3">From your club on Hockia.</p>
       </div>
     )
@@ -92,7 +91,7 @@ export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCateg
   }
   return (
     <div>
-      <label htmlFor="edit-own-league" className="mb-1.5 block text-secondary font-semibold text-ink-2">League (optional)</label>
+      <label htmlFor="edit-own-league" className={fieldLabel}>League (optional)</label>
       <select
         id="edit-own-league"
         value={value ?? ''}
@@ -100,7 +99,7 @@ export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCateg
           const id = e.target.value ? Number(e.target.value) : null
           onChange(id, id ? options.find((o) => o.id === id)?.name ?? null : null)
         }}
-        className={input}
+        className={fieldSelect}
       >
         <option value="">Not set</option>
         {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}

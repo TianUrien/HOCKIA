@@ -14,8 +14,9 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
-import { AuthShell, FormError, authInput, authLabel } from '@/components/auth/authUi'
+import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
+import { fieldInput, fieldLabel, fieldLabelText } from '@/components/ui/fieldClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
@@ -203,14 +204,14 @@ export default function AuthScreen() {
       <form onSubmit={passwordMode ? handlePasswordSignIn : handleSendMagicLink} noValidate className="flex flex-1 flex-col">
         <div className="space-y-4">
           <div>
-            <label htmlFor="auth-email" className={authLabel}>Email</label>
+            <label htmlFor="auth-email" className={fieldLabel}>Email</label>
             <input
               id="auth-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className={authInput}
+              className={fieldInput}
               autoComplete="email"
               inputMode="email"
               autoCapitalize="none"
@@ -221,7 +222,7 @@ export default function AuthScreen() {
           {passwordMode && (
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="auth-password" className="text-secondary font-semibold text-ink-2">Password</label>
+                <label htmlFor="auth-password" className={fieldLabelText}>Password</label>
                 <Link to="/forgot-password" className="text-secondary font-semibold text-hockia-primary">Forgot password?</Link>
               </div>
               <div className="relative">
@@ -230,7 +231,7 @@ export default function AuthScreen() {
                   type={shown ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`${authInput} pr-12`}
+                  className={`${fieldInput} pr-12`}
                   autoComplete="current-password"
                   required
                 />

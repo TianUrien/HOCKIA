@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import * as Sentry from '@sentry/react'
 import { Eye, EyeOff } from 'lucide-react'
-import { AuthShell, FormError, TermsLine, authInput, authLabel } from '@/components/auth/authUi'
+import { AuthShell, FormError, TermsLine } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
+import { fieldInput, fieldLabel } from '@/components/ui/fieldClasses'
 import { supabase } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { getAttributionSnapshot } from '@/lib/attribution'
@@ -114,14 +115,14 @@ export default function CreateWithEmail() {
       <form onSubmit={submit} noValidate className="flex flex-1 flex-col pt-4">
         <div className="space-y-4">
           <div>
-            <label htmlFor="signup-email" className={authLabel}>Email</label>
+            <label htmlFor="signup-email" className={fieldLabel}>Email</label>
             <input
               id="signup-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className={authInput}
+              className={fieldInput}
               autoComplete="email"
               inputMode="email"
               autoCapitalize="none"
@@ -130,14 +131,14 @@ export default function CreateWithEmail() {
             />
           </div>
           <div>
-            <label htmlFor="signup-password" className={authLabel}>Password</label>
+            <label htmlFor="signup-password" className={fieldLabel}>Password</label>
             <div className="relative">
               <input
                 id="signup-password"
                 type={shown ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`${authInput} pr-12`}
+                className={`${fieldInput} pr-12`}
                 autoComplete="new-password"
                 minLength={PASSWORD_MIN_LENGTH}
                 aria-describedby="signup-password-help"
