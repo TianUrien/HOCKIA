@@ -11,6 +11,7 @@ import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
+import CookieConsent from '@/components/CookieConsent'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
@@ -25,6 +26,7 @@ import NativeWelcome from '@/pages/NativeWelcome'
 import { IS_NATIVE } from '@/lib/isNative'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import SignUp from '@/pages/SignUp'
+import CreateWithEmail from '@/pages/CreateWithEmail'
 import AuthScreen from '@/pages/AuthScreen'
 import AuthCallback from '@/pages/AuthCallback'
 import VerifyEmail from '@/pages/VerifyEmail'
@@ -390,6 +392,7 @@ function App() {
           <ToastContainer />
           <UploadIndicator />
           <InstallPrompt />
+          <CookieConsent />
           <PushPrompt />
           <NativeUpdatePrompt />
           <AppRatingPrompt />
@@ -418,7 +421,8 @@ function App() {
                     for the lifetime of the process. */}
                 <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}>{IS_NATIVE ? <NativeWelcome /> : <Landing />}</ErrorBoundary>} />
                 <Route path="/signup" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SignUp /></ErrorBoundary>} />
-                <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen mode="signin" /></ErrorBoundary>} />
+                <Route path="/signup/email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CreateWithEmail /></ErrorBoundary>} />
+                <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen /></ErrorBoundary>} />
                 <Route path="/auth/callback" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthCallback /></ErrorBoundary>} />
                 <Route path="/verify-email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><VerifyEmail /></ErrorBoundary>} />
                 <Route path="/forgot-password" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ForgotPassword /></ErrorBoundary>} />

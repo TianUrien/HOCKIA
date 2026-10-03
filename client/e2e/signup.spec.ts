@@ -73,74 +73,53 @@ test.describe('Signup Flow', () => {
     await expect(page).toHaveURL(/\/signup/)
   })
 
-  test('player signup flow - role selection', async ({ page }) => {
+  // Account-first onboarding (2026-10-03): /signup is the First run screen
+  // (OAuth first, Create with email, Log in); the role is chosen only once
+  // the account exists, on /complete-profile.
+  test('first run offers Apple, Google, Create with email and Log in — no role cards', async ({ page }) => {
     await page.goto('/signup')
-
-    // Select player role - actual button text is "Join as Player"
-    await page.getByRole('button', { name: /join as player/i }).click()
-    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
-    await page.getByRole('button', { name: /sign up with email/i }).click()
-
-    // Email input should appear after role selection
-    await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
+    await dismissOverlays(page)
+    await expect(page.getByRole('heading', { name: 'Your game. Your network.' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('button', { name: /continue with apple/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /create with email/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /log in/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /join as/i })).toHaveCount(0)
   })
 
-  test('club signup flow - role selection', async ({ page }) => {
+  test('Create with email opens the email form without a role or date of birth', async ({ page }) => {
     await page.goto('/signup')
-
-    // Select club role - actual button text is "Join as Club"
-    await page.getByRole('button', { name: /join as club/i }).click()
-    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
-    await page.getByRole('button', { name: /sign up with email/i }).click()
-
-    // Email input should appear after role selection
-    await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
-  })
-
-  test('coach signup flow - role selection', async ({ page }) => {
-    await page.goto('/signup')
-
-    // Select coach role - actual button text is "Join as Coach"
-    await page.getByRole('button', { name: /join as coach/i }).click()
-    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
-    await page.getByRole('button', { name: /sign up with email/i }).click()
-
-    // Email input should appear after role selection
-    await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
+    await dismissOverlays(page)
+    await page.getByRole('button', { name: /create with email/i }).click()
+    await expect(page).toHaveURL(/\/signup\/email/)
+    await expect(page.getByPlaceholder(/you@example\.com/i)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(/at least 8 characters/i)).toBeVisible()
+    await expect(page.getByLabel('Day', { exact: true })).toHaveCount(0)
+    await expect(page.getByText(/join as/i)).toHaveCount(0)
   })
 
   test('validates email format on signup', async ({ page }) => {
-    await page.goto('/signup')
+    await page.goto('/signup/email')
     await dismissOverlays(page)
-    await page.getByRole('button', { name: /join as player/i }).click()
-    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
-    await page.getByRole('button', { name: /sign up with email/i }).click()
+    // Never create an account: the sign-up call is intercepted.
+    await page.route('**/auth/v1/signup**', (route) => route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ msg: 'Unable to validate email address: invalid format' }) }))
 
-    // Try invalid email
-    await page.getByPlaceholder(/enter your email/i).fill('invalid-email')
-    // Fill password to pass required check
-    await page.getByPlaceholder(/min\. 8 chars/i).fill('TestPass123!')
-    await page.getByRole('button', { name: /create account/i }).click()
+    await page.getByPlaceholder(/you@example\.com/i).fill('invalid-email')
+    await page.locator('#signup-password').fill('TestPass123!')
+    await page.getByRole('button', { name: /^continue$/i }).click()
 
-    // Should show validation error (either HTML5 or custom)
-    // The browser may show native validation, or the app may show an error
-    const emailInput = page.getByPlaceholder(/enter your email/i)
-    // Check if input is marked invalid (HTML5 validation)
+    // The input is marked invalid (HTML5 validity), whatever the server says.
+    const emailInput = page.getByPlaceholder(/you@example\.com/i)
     const isInvalid = await emailInput.evaluate((el: HTMLInputElement) => !el.validity.valid)
     expect(isInvalid).toBe(true)
   })
 
   test('signup form submits and shows feedback', async ({ page }) => {
-    await page.goto('/signup')
+    await page.goto('/signup/email')
     await dismissOverlays(page)
-    await page.getByRole('button', { name: /join as player/i }).click()
-    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
-    await page.getByRole('button', { name: /sign up with email/i }).click()
 
-    // Fill the form with valid-looking data but intercept the API call
-    // to avoid triggering actual Supabase emails
+    // Intercept the API call so no account is created and no email is sent.
     await page.route('**/auth/v1/signup**', async (route) => {
-      // Mock a successful signup response without actually creating a user
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -152,16 +131,13 @@ test.describe('Signup Flow', () => {
       })
     })
 
-    await page.getByPlaceholder(/enter your email/i).fill('test-signup@example.com')
-    await page.getByPlaceholder(/min\. 8 chars/i).fill('TestPassword123!')
+    await page.getByPlaceholder(/you@example\.com/i).fill('test-signup@example.com')
+    await page.locator('#signup-password').fill('TestPassword123!')
+    await page.getByRole('button', { name: /^continue$/i }).click()
 
-    await page.getByRole('button', { name: /create account/i }).click()
-
-    // Should show verification message (our mocked response triggers success flow)
-    // Use .first() since multiple elements may match the verification text
-    await expect(
-      page.getByText(/we've sent a verification/i)
-    ).toBeVisible({ timeout: 10000 })
+    // The mocked success lands on the verify-email screen.
+    await expect(page).toHaveURL(/\/verify-email/, { timeout: 10000 })
+    await expect(page.getByText(/we've sent a verification/i)).toBeVisible({ timeout: 10000 })
   })
 
   test('signup page is accessible', async ({ page }) => {

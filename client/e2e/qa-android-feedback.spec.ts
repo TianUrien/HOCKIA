@@ -34,48 +34,16 @@ const requireAuthFile = (relativePath: string): string => {
 }
 
 test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)', () => {
-  test('signup form renders three Day/Month/Year selects with fast-scroll descending years', async ({ page }) => {
-    // PUBLIC path: /signup → Join as Player → the age-gate DOB picker renders
-    // pre-account. (Vincent's original fix is pinned here now — Edit Profile
-    // no longer shows a picker once a DOB exists; see the locked test below.)
+  test('public sign-up asks no date of birth (account first); the picker lives in Set up step 1', async ({ page }) => {
+    // Account-first onboarding (2026-10-03): /signup → Create with email has
+    // email + password only. The Day/Month/Year picker (Vincent's fix) is
+    // asked after the account exists, in Set up "About you", and its
+    // descending-years behaviour is pinned by src/__tests__/onboardingV2.test.tsx.
     await page.goto('/signup')
-    await page.getByRole('button', { name: /join as player/i }).click()
-    // Sign-up now leads with OAuth and keeps the email form (which carries
-    // the DOB picker) behind one text link — hierarchy of intent, 2026-08-17.
-    // Open it the way a real email signup would; the picker itself is unchanged.
-    await page.getByRole('button', { name: /sign up with email/i }).click()
-
-    const daySelect = page.getByLabel('Day', { exact: true })
-    const monthSelect = page.getByLabel('Month', { exact: true })
-    const yearSelect = page.getByLabel('Year', { exact: true })
-    await expect(daySelect).toBeVisible({ timeout: 10_000 })
-    await expect(monthSelect).toBeVisible()
-    await expect(yearSelect).toBeVisible()
-
-    // Critical for Vincent's pain point: year list must descend from a recent
-    // year (current year - 4) so users scroll fast to an older birth year.
-    const yearValues = await yearSelect.evaluate((el) => {
-      const select = el as HTMLSelectElement
-      return Array.from(select.options)
-        .map((o) => o.value)
-        .filter((v) => /^\d+$/.test(v))
-        .map((v) => Number(v))
-    })
-    expect(yearValues.length).toBeGreaterThanOrEqual(90) // ~96 years (currentYear-4 down to -100)
-    for (let i = 1; i < yearValues.length; i++) {
-      expect(yearValues[i]).toBeLessThan(yearValues[i - 1])
-    }
-
-    // Selecting all three parts round-trips through internal state.
-    await yearSelect.selectOption('1985')
-    await monthSelect.selectOption('7')
-    await daySelect.selectOption('15')
-    await expect(yearSelect).toHaveValue('1985')
-    await expect(monthSelect).toHaveValue('7')
-    await expect(daySelect).toHaveValue('15')
-
-    // No legacy <input type="date"> DoB control (Vincent's complaint).
-    await expect(daySelect).toBeVisible()
+    await page.getByRole('button', { name: /create with email/i }).click()
+    await expect(page.getByPlaceholder(/you@example\.com/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByLabel('Day', { exact: true })).toHaveCount(0)
+    await expect(page.locator('input[type="date"]')).toHaveCount(0)
   })
 
   test('Edit Profile shows DOB LOCKED once set — no picker, support note instead', async ({ browser }) => {
@@ -106,8 +74,9 @@ test.describe('@smoke android-feedback — "My region isn\'t listed" CTA', () =>
     // Public flow — no auth needed.
     await page.goto('/signup')
 
-    // Pick Join as Club.
-    await page.getByRole('button', { name: /join as club/i }).click()
+    // Account first (2026-10-03): the role is chosen after the account exists,
+    // so the public path is First run → Create with email.
+    await page.getByRole('button', { name: /create with email/i }).click()
 
     // The signup screen continues with country pick. We need to authenticate
     // first to reach the club-claim step, but the claim step is also
