@@ -178,6 +178,13 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.getByRole('heading', { name: 'Your game. Your network.' })).toBeInTheDocument()
     const buttons = screen.getAllByRole('button')
     expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
+    // Button / Social (535:8381): 48 tall, full width, radius 12; Apple on the
+    // inverse surface, Google white with the line border; label 16 semibold.
+    const [apple, google] = buttons
+    expect(apple).toHaveAttribute('data-provider', 'apple')
+    expect(apple).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-surface-inverse', 'text-white', 'text-[16px]', 'font-semibold')
+    expect(google).toHaveAttribute('data-provider', 'google')
+    expect(google).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-white', 'ring-line', 'text-[16px]', 'font-semibold')
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
     // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
