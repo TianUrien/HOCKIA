@@ -20,7 +20,7 @@ test.describe('@discover player flows', () => {
 
       // Header should show the Hockia AI title
       await expect(page.getByRole('heading', { name: 'Hockia AI', level: 1 })).toBeVisible({ timeout: 10000 })
-      await expect(page.getByText('AI-powered search')).toBeVisible()
+      await expect(page.getByPlaceholder('Ask about clubs, players or roles')).toBeVisible()
 
       // Search textarea should be visible
       await expect(page.locator('textarea')).toBeVisible()
@@ -47,7 +47,7 @@ test.describe('@discover player flows', () => {
       // Should show a user message bubble (the query was submitted)
       // Wait for the typing indicator (3 dots) or a response
       await expect(
-        page.locator('.animate-bounce').first()
+        page.getByTestId('ai-searching').first()
           .or(page.getByText(/results|no profiles|found/i).first())
       ).toBeVisible({ timeout: 30000 })
     })
@@ -65,7 +65,7 @@ test.describe('@discover player flows', () => {
 
       // Should show loading indicator or results
       await expect(
-        page.locator('.animate-bounce').first()
+        page.getByTestId('ai-searching').first()
           .or(page.getByText(/results|no profiles|found/i).first())
       ).toBeVisible({ timeout: 30000 })
     })
@@ -83,7 +83,7 @@ test.describe('@discover player flows', () => {
 
       // Should show loading or results
       await expect(
-        page.locator('.animate-bounce').first()
+        page.getByTestId('ai-searching').first()
           .or(page.getByText(/results|no profiles|found/i).first())
       ).toBeVisible({ timeout: 30000 })
     })
@@ -206,7 +206,7 @@ test.describe('@discover player flows', () => {
       await textarea.press('Enter')
 
       // Should show error message with retry button
-      await expect(page.getByRole('button', { name: /retry/i })).toBeVisible({ timeout: 15000 })
+      await expect(page.getByRole('button', { name: /try again/i })).toBeVisible({ timeout: 15000 })
     })
   })
 

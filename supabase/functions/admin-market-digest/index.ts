@@ -132,6 +132,55 @@ function buildText(payload: any, recs: MarketRecommendation[]): string {
   return lines.join('\n')
 }
 
+/**
+ * AI spend alert (migration 20261003140000): check_ai_spend_alert() queues a
+ * row with payload.kind = 'ai_spend_alert' once per month when the month's
+ * Hockia AI spend passes the threshold. Same queue, same webhook, same
+ * recipient; only the email body differs.
+ */
+interface AiSpendAlertPayload {
+  kind: 'ai_spend_alert'
+  month: string
+  spend_usd: number
+  threshold_usd: number
+  questions: number
+}
+
+// deno-lint-ignore no-explicit-any
+function isAiSpendAlert(payload: any): payload is AiSpendAlertPayload {
+  return !!payload && payload.kind === 'ai_spend_alert'
+}
+
+function buildAiSpendAlertHtml(p: AiSpendAlertPayload): string {
+  return `
+  <div style="max-width:600px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:24px;">
+    <h1 style="font-size:20px;color:#111827;margin:0 0 4px;">Hockia AI spend alert</h1>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">Month ${p.month} (UTC)</p>
+    <p style="font-size:15px;color:#111827;margin:0 0 12px;">
+      Hockia AI has cost <strong>USD ${p.spend_usd.toFixed(2)}</strong> so far this month,
+      above the USD ${p.threshold_usd} alert threshold.
+    </p>
+    <p style="font-size:13px;color:#374151;margin:0 0 12px;">
+      ${p.questions} question${p.questions === 1 ? '' : 's'} answered this month. Costs are estimates from the
+      per-model price table in the nl-search function; check the provider bill for the invoice.
+    </p>
+    <p style="font-size:12px;color:#9ca3af;margin-top:28px;">
+      One alert per month. Threshold: app_settings key ai_spend_alert_usd (default 50).
+    </p>
+  </div>`
+}
+
+function buildAiSpendAlertText(p: AiSpendAlertPayload): string {
+  return [
+    'Hockia AI spend alert',
+    '',
+    `Month ${p.month} (UTC): USD ${p.spend_usd.toFixed(2)} spent, above the USD ${p.threshold_usd} threshold.`,
+    `${p.questions} question(s) answered this month. Costs are estimates; check the provider bill.`,
+    '',
+    'One alert per month. Threshold: app_settings key ai_spend_alert_usd (default 50).',
+  ].join('\n')
+}
+
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const logger = createLogger('ADMIN_MARKET_DIGEST', correlationId)
@@ -181,21 +230,41 @@ Deno.serve(async (req: Request) => {
     }
     const record = fresh as unknown as QueueRow
 
-    const recs = evaluateMarketRules(record.payload)
-    logger.info(`Evaluated rules: ${recs.length} recommendation(s)`)
+    let email: { subject: string; html: string; text: string; templateKey: string; digest: string }
+    if (isAiSpendAlert(record.payload)) {
+      const p = record.payload
+      logger.info(`AI spend alert for ${p.month}: USD ${p.spend_usd} > ${p.threshold_usd}`)
+      email = {
+        subject: `Hockia AI spend alert: USD ${p.spend_usd.toFixed(2)} in ${p.month}`,
+        html: buildAiSpendAlertHtml(p),
+        text: buildAiSpendAlertText(p),
+        templateKey: 'admin_ai_spend_alert',
+        digest: 'ai_spend_alert',
+      }
+    } else {
+      const recs = evaluateMarketRules(record.payload)
+      logger.info(`Evaluated rules: ${recs.length} recommendation(s)`)
+      email = {
+        subject: recs.length > 0
+          ? `Market digest: ${recs[0].title}`
+          : 'Market digest: no alerts this week',
+        html: buildHtml(record.payload, recs),
+        text: buildText(record.payload, recs),
+        templateKey: 'admin_market_digest',
+        digest: 'admin_market',
+      }
+    }
 
     const result = await sendTrackedEmail({
       supabase,
       resendApiKey,
       to: record.recipient,
-      subject: recs.length > 0
-        ? `Market digest: ${recs[0].title}`
-        : 'Market digest: no alerts this week',
-      html: buildHtml(record.payload, recs),
-      text: buildText(record.payload, recs),
-      templateKey: 'admin_market_digest',
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+      templateKey: email.templateKey,
       logger,
-      metadata: { digest: 'admin_market', queue_id: record.id },
+      metadata: { digest: email.digest, queue_id: record.id },
     })
 
     await supabase
