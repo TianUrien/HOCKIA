@@ -3,6 +3,34 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-04 (evening) · design agent
+
+- Component pass on the remaining "04 · Player — Live" screens (batches A–E):
+  - Inbox (Messages `100:278`, Requests `100:406` / accepted `115:1247`, Activity
+    `100:531`) and Chat `100:636`. Founder ruling: "Requests" shows a dot, no
+    number.
+  - Applications: My applications `101:353` / closed `115:1382`, Apply sheet
+    not eligible `43:274` / eligible `285:629`, Application sent `115:865`
+    (copy no longer mentions other applicants), Opportunity detail — applied
+    `218:556`. Application tones follow `lib/applicationStatus`.
+  - Social: Friends `101:460` / requested `115:1494` / public `250:581`, Member
+    preview `72:316` / request sent `115:904` / long name `221:556`, Community —
+    Players `115:1624`, Community — Filters `116:631`, Opportunities — Filters
+    `115:550`, Share `115:727`. "Wrote you a reference" is gold (trust = gold).
+  - Profile sub-pages: Edit profile `101:585`, Career own `145:581` / public
+    `245:694`, Career entry `145:671`, Manage media `145:758`, Gallery `136:558`,
+    Videos `153:581`, References `153:715`, Reference detail `165:581`/`165:636`,
+    Write a reference `152:962` (gender-neutral copy), Profile — request sent
+    `152:581`, Club profile (player view) `38:99`.
+  - Settings `45:404`, Notifications `254:753`, Privacy `254:1000`, Compose
+    `101:823` / question `272:648`, Post detail `115:454`.
+  - Older v2 frames replaced by the Refined baseline are labelled
+    "[Superseded → …]".
+- New components: List item / Request `548:550`, List item / Application
+  `551:647`, List item / Friend `555:4870`, List item / Career entry
+  `558:12773`, List item / Comment `567:569`; List item / Conversation gains
+  Dot=Unread `548:499`.
+
 ## 2026-10-04 (later) · design agent
 
 - Component pass on "Player · Refined baseline v1":
