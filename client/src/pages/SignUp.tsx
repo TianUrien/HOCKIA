@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { InAppBrowserWarning } from '@/components'
@@ -39,7 +40,15 @@ export default function SignUp() {
     <AuthShell>
       <InAppBrowserWarning context="signup" />
       <div className="flex flex-1 flex-col justify-end pb-6 pt-10">
-        <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto self-start" />
+        {/* On the web the wordmark is the way back to the landing page; in the
+            native app this screen is the start, so there is nothing to go back to. */}
+        {Capacitor.isNativePlatform() ? (
+          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto self-start" />
+        ) : (
+          <Link to="/" aria-label="HOCKIA home" className="self-start">
+            <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto" />
+          </Link>
+        )}
         <h1 className="mt-8 text-large-title text-ink-1">Your game. Your network.</h1>
       </div>
       <div className="space-y-3 pb-2">
