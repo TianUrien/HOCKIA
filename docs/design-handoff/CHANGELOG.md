@@ -3,6 +3,27 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-04 (later) · design agent
+
+- Component pass on "Player · Refined baseline v1":
+  - Home `313:632`: every feed item is a Feed component instance; Card /
+    Your week with player numbers (no purple accent for players); Ghost
+    search.
+  - Community `313:2304`: Header, Search field, Chips, Section header, Card /
+    Member (fit hidden — players never see fit; new Status text, e.g.
+    "Recruiting" on clubs).
+  - Opportunities `313:1417`: new Card / Role `541:9107` (Status: Open,
+    Applied) with six Package item slots; Search field, Segmented control,
+    Chips.
+  - Opportunity detail `313:2177`: Nav bar (share), club row = List item /
+    Role result, new List item / Benefit `543:629` (one per package type +
+    Note), Detail rows, Muted message button + Primary Apply.
+  - Profile `313:1016`: Glass buttons, Status bar Light, Buttons, Section
+    headers, new Card / Reference `544:3926`, List item / Career, Detail rows.
+- Package item `470:1660`: new types Skill, Requirement (neutral grey — never
+  amber) and Note.
+- List item / Activity `531:469`: Show chevron (only rows with a destination).
+
 ## 2026-10-04 · design agent
 
 - Component pass on "04 · Player — Live":

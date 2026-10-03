@@ -25,7 +25,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Callout | `460:23` | Text, Icon | One explanatory note per screen, at the end of the content | — |
 | Banner | `470:160` | Tone: Warning, Info, Positive · Title, Message, Show chevron | Tappable attention item at the top of a screen. Warning only when the viewer must act soon | — |
 | Stat | `470:167` | Emphasis · Value, Label | Pipeline counts (club only) | — |
-| Package item | `470:1660` | Type: Paid, Housing, Flights, Job, Insurance, Bonuses, Visa, Car, Equipment, Meals, Education · Label | Code order and colours (`lib/opportunityCopy.ts` BENEFIT_TILES) | — |
+| Package item | `470:1660` | Type: Paid, Housing, Flights, Job, Insurance, Bonuses, Visa, Car, Equipment, Meals, Education, Skill, Requirement, Note · Label | Code order and colours (`lib/opportunityCopy.ts` BENEFIT_TILES) | — |
 | Package option | `472:260` | Selected | Multi-select tile in forms | — |
 | Check item | `467:127` | State: Pass, Unknown, Fail · Title, Detail | Explainable checks (fit criteria, readiness) | — |
 
@@ -90,6 +90,14 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Member result | `521:387` | Name, Meta, Flag, Show flag | Search rows | `search/SearchV2Screen.tsx` |
 | Role badge | `518:7691` | Role: Player, Coach, Club, Brand, Umpire | Member role pill | `RoleBadge.tsx` |
 | Button / Social | `535:8381` | Provider: Apple, Google · Label | Sign in with Apple / Google | auth screens |
+
+## Player core (Opportunities, Profile)
+
+| Component | Node | Variants / properties | Usage | Code counterpart |
+|---|---|---|---|---|
+| Card / Role | `541:9107` | Status: Open, Applied · Club, Location, Posted, Position, Category, When, Deadline, Show deadline; six exposed Package items | Opportunities list | opportunities list card |
+| List item / Benefit | `543:629` | Type: Paid … Education, Note · Title, Detail | "What the club offers" on Opportunity detail | opportunity detail |
+| Card / Reference | `544:3926` | Author, Meta, Quote, Footer, Date | References on a profile (gold border) | profile references |
 
 ## Icons
 
