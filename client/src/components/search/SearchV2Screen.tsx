@@ -134,7 +134,10 @@ export function SearchV2Screen() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              className="h-10 w-full rounded-[10px] border border-transparent bg-surface-muted pl-10 pr-10 text-body text-ink-1 placeholder:text-ink-3 outline-none transition-colors focus:border-hockia-primary focus:bg-white [&::-webkit-search-cancel-button]:hidden"
+              // Text field (Figma 472:243): muted fill at rest, white with the
+              // brand border on focus — that border is the focus state, so the
+              // global focus-visible outline is switched off here.
+              className="h-10 w-full rounded-[10px] border border-transparent bg-surface-muted pl-10 pr-10 text-body text-ink-1 placeholder:text-ink-3 outline-none transition-colors focus:border-hockia-primary focus:bg-white focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
               data-testid="search-v2-input"
             />
             {query && (
@@ -168,7 +171,8 @@ export function SearchV2Screen() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-body font-semibold text-ink-1">{askAiLabel(query)}</span>
-            <span className="block truncate text-secondary text-ink-2">{SEARCH_SCOPE_LINE}</span>
+            {/* Caption size so the whole scope line fits beside the tile at 390px. */}
+            <span className="block truncate text-caption text-ink-2">{SEARCH_SCOPE_LINE}</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-4" strokeWidth={1.75} aria-hidden="true" />
         </button>

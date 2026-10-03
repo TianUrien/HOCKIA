@@ -24,7 +24,7 @@ const rpc = vi.fn(async () => ({
   },
   error: null,
 }))
-vi.mock('@/lib/supabase', () => ({ supabase: { rpc: (...args: unknown[]) => rpc(...args) } }))
+vi.mock('@/lib/supabase', () => ({ supabase: { rpc: (...args: unknown[]) => rpc(...(args as [])) } }))
 vi.mock('@/hooks/useMemberFlags', () => ({
   useMemberFlags: () => ({ 'p-1': { id: 1, code: 'IT', name: 'Italy', flag_emoji: '🇮🇹' } }),
 }))
