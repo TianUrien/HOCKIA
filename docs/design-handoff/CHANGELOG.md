@@ -3,6 +3,27 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-04 · design agent
+
+- Component pass on "04 · Player — Live":
+  - Your week `42:276` and zero-views `523:1482` now use new components
+    (section "Pulse" `531:410`): Card / Check-in `532:434` (Views: Some,
+    None), Card / Week tile `531:427` (Delta: Up, None), Card / Viewer
+    `531:445` (Hidden: False, True), Card / First this week `532:450`,
+    Card / Reference ask `532:461`, List item / Activity `531:469`
+    (Leading: Avatar, Icon; Icon swap). Nav bar + Section header. Check-in
+    question is Section Title 20/26.
+  - Hockia AI v2 `44:321` and its five states: Nav bar (title, More),
+    outgoing Message bubble for the question (solid brand), new List item /
+    Role result `534:2448`, Chip, Composer without attach.
+  - Onboarding (`104:2096`, `114:477`, `114:434`, `101:892`, `114:537`,
+    `114:608`): new Button / Social `535:8381` (Apple, Google; 48, radius
+    12), Field header + Text field (Input / Select), Primary Large buttons,
+    Link "Forgot password?", List item / Switch for Open to play, Option
+    card with the new optional icon tile for the role picker, Ghost back
+    buttons, System / Status bar.
+- Search frames: tab bar (Active Home) and " · " before the flag (code wins).
+
 ## 2026-10-03 (evening) · design agent
 
 - Player gaps, page "04 · Player — Live" (founder rulings via the code agent):

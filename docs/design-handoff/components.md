@@ -54,7 +54,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Detail row | `467:128` | Label, Value, Show leading | Facts tables | — |
 | Section header | `467:135` | Title, Show action | Section headings with "See all" | — |
 | Avatar | `460:22` | Size: 32, 40, 52, 56, 80 · Shape: Person, Organisation · Show new dot | People (circle) and clubs (rounded square on white) | `ui/EntityAvatar.tsx` |
-| Option card | `460:40` | Selected · Title, Detail | Single choice (role picker) | — |
+| Option card | `460:40` | Selected · Title, Detail, Show icon, Icon | Single choice (role picker) | — |
 | Field header | `472:180` | Requirement: Must have, Nice to have, Always required, Optional, None | Form labels with the matching rule | — |
 | Video thumbnail | `468:132` | Type: Full match, Highlight | Video rails | — |
 | Skill item | `468:143` | Label | Specialist skills | — |
@@ -75,6 +75,21 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Card / Your week | `505:3148` | Value 1–3, Label 1–3 | Home summary card | `home/YourWeekCard.tsx` |
 | Card / Member | `501:6648` | Name, Meta, Country, Show open to play, Show fit | Community grid card; fit is club-only | — |
 | List item / Conversation | `494:2377` | Dot: None, Warning · Name, Date, Meta, Preview | Inbox rows; amber dot only when a first reply is owed | — |
+
+## Player screens (Pulse, Hockia AI, onboarding)
+
+| Component | Node | Variants / properties | Usage | Code counterpart |
+|---|---|---|---|---|
+| Card / Check-in | `532:434` | Views: Some, None · Views line, Question, Detail | Top of Your week | `pulse/CheckInCard.tsx` |
+| Card / Week tile | `531:427` | Delta: Up, None · Value, Label, Detail | 2×2 numbers | `pulse/WeekTiles.tsx` |
+| Card / Viewer | `531:445` | Hidden: False, True · Name, Meta | Who looked at you rail | `pulse/WhoLookedAtYou.tsx` |
+| Card / First this week | `532:450` | Title, Detail, Body, Action | A first this week | — |
+| Card / Reference ask | `532:461` | Title, Detail, Action | New friend can write a reference | — |
+| List item / Activity | `531:469` | Leading: Avatar, Icon · Text, When, Icon | What happened (all grey) | `pulse/WhatHappened.tsx` |
+| List item / Role result | `534:2448` | Title, Meta | Roles inside a Hockia AI answer | discover result cards |
+| List item / Member result | `521:387` | Name, Meta, Flag, Show flag | Search rows | `search/SearchV2Screen.tsx` |
+| Role badge | `518:7691` | Role: Player, Coach, Club, Brand, Umpire | Member role pill | `RoleBadge.tsx` |
+| Button / Social | `535:8381` | Provider: Apple, Google · Label | Sign in with Apple / Google | auth screens |
 
 ## Icons
 
