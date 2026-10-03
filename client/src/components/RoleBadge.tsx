@@ -8,11 +8,14 @@ type RoleBadgeProps = {
   className?: string
 }
 
+// Figma "Hockia / Color" role/* tokens (tokens.js → tailwind `role` colours).
+// The rendered values are the ones the badge always had; roleBadge.test.tsx
+// pins them so a token re-export cannot silently recolour the badges.
 const roleStyles: Record<string, string> = {
-  player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0f766e]',
-  club: 'bg-[#FFF7ED] text-[#c2410c]',
-  brand: 'bg-[#FFF1F2] text-[#be123c]',
+  player: 'bg-role-player-bg text-role-player-ink',
+  coach: 'bg-role-coach-bg text-role-coach-ink',
+  club: 'bg-role-club-bg text-role-club-ink',
+  brand: 'bg-role-brand-bg text-role-brand-ink',
   umpire: 'bg-surface-muted text-ink-2', // ink (Foundations) — neutral like an umpire's kit, never amber
 }
 

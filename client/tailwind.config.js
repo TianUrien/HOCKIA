@@ -105,6 +105,9 @@ export default {
         // Additive Figma namespaces (new class names only; nothing existing moves):
         // brand-*, status-*, accent-*, social-*, focus-ring, overlay-scrim.
         brand: { DEFAULT: t.brand.primary, ...t.brand },
+        // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
+        // (player, coach, club, brand). Umpire has no pair: it stays neutral.
+        role: t.role,
         status: t.status,
         accent: t.accent,
         social: t.social,
