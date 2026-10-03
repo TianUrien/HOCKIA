@@ -337,7 +337,12 @@ export function happenedLinesFromNotification(n: NotificationRecord, titles: Opp
   }
 }
 
-/** Newest first, only the last `days` days, at most `limit` lines. */
+/**
+ * Newest first, only the last `days` days, at most `limit` lines. The same
+ * sentence is shown once (its newest occurrence): a person who accepts,
+ * un-friends and re-accepts eight times is one fact, and must not push the
+ * week's club facts out of the list.
+ */
 export function happenedTimeline(
   notifications: readonly NotificationRecord[],
   titles: OpportunityTitles,
@@ -346,10 +351,12 @@ export function happenedTimeline(
   const now = opts.now ?? new Date()
   const days = opts.days ?? 7
   const since = now.getTime() - days * 86_400_000
+  const seen = new Set<string>()
   return notifications
     .filter((n) => !n.clearedAt && new Date(n.createdAt).getTime() >= since)
     .flatMap((n) => happenedLinesFromNotification(n, titles))
     .sort((a, b) => b.at.localeCompare(a.at))
+    .filter((l) => (seen.has(l.text) ? false : (seen.add(l.text), true)))
     .slice(0, opts.limit ?? 8)
 }
 

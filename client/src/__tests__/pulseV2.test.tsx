@@ -338,6 +338,21 @@ describe('what happened — rows', () => {
   })
 })
 
+describe('what happened — repeats', () => {
+  it('shows an identical sentence once (newest) so one noisy actor cannot crowd out the club facts', () => {
+    const now = new Date()
+    const at = (h: number) => new Date(now.getTime() - h * 3600_000).toISOString()
+    const dana = { id: 'p-9', fullName: 'Dana Ortiz', role: 'coach', username: null, avatarUrl: null, baseLocation: null }
+    const list = [
+      ...Array.from({ length: 9 }, (_, i) => notification({ id: `f${i}`, kind: 'friend_request_accepted', actor: dana, createdAt: at(i) })),
+      notification({ id: 'club', kind: 'vacancy_application_status', metadata: { vacancy_title: 'Forward', club_name: 'Club B' }, createdAt: at(30) }),
+    ]
+    const lines = happenedTimeline(list, new Map(), { now })
+    expect(lines.map((l) => l.text)).toEqual(['Dana Ortiz accepted your friend request', 'Club B replied on Forward'])
+    expect(lines[0].key).toBe('f0')
+  })
+})
+
 describe('check-in question size', () => {
   it('is Title M 20/26 semibold', () => {
     render(<MemoryRouter><CheckInCard headline="No profile views yet this week" hasViews={false} viewers={[]} /></MemoryRouter>)
