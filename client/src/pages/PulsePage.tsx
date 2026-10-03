@@ -3,27 +3,52 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Header } from '@/components'
 import { PulseTab } from '@/components/home/pulse/PulseTab'
+import { YourWeekScreen } from '@/components/pulse/YourWeekScreen'
 import { PullToRefresh } from '@/components/PullToRefresh'
+import { useAuthStore } from '@/lib/auth'
+import { queryClient } from '@/lib/queryClient'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 
 /**
- * /pulse — "Your week on HOCKIA" (UI redesign 2026-09-19).
+ * /pulse — what the Home "Your week" card opens.
  *
- * Pulse used to be a tab on Home; it is now its own screen reached from the
- * "Your week" summary card at the top of the feed (and the old ?tab=pulse
- * links, which redirect here). The content is the same role-personalised
- * modules as before — hero, applications, opportunities for you, what's
- * happening, movement cards, profile completion.
+ * Players and coaches on a phone get "Your week v2" (Figma New-Hockia
+ * 42:276; founder rulings 2026-10-03): the calendar week, the availability
+ * check-in, four own-number tiles, who looked (clubs and coaches only), a
+ * reference that arrived and the week's neutral timeline.
+ *
+ * Desktop, and every other role on a phone, keep the existing Pulse — the
+ * role-personalised modules (hero, applications, opportunities for you,
+ * what's happening, movement cards, profile completion).
  */
+const PHONE = '(max-width: 1023px)'
+
 export default function PulsePage() {
   useScrollRestore()
-  useDocumentTitle('Pulse')
+  const role = useAuthStore((s) => s.profile?.role)
+  const isTalent = role === 'player' || role === 'coach'
+  const isPhone = useMediaQuery(PHONE)
+  const v2 = isTalent && isPhone
+  useDocumentTitle(v2 ? 'Your week' : 'Pulse')
   const navigate = useNavigate()
   // Pulse modules fetch via plain mount-effect hooks, not React Query —
-  // remounting them is how pull-to-refresh refreshes their numbers.
+  // remounting them is how pull-to-refresh refreshes their numbers. The v2
+  // screen mixes both, so it is remounted and its queries invalidated.
   const [refreshKey, setRefreshKey] = useState(0)
-  const handleRefresh = useCallback(async () => { setRefreshKey((k) => k + 1) }, [])
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['pulse'] })
+    setRefreshKey((k) => k + 1)
+  }, [])
+
+  if (v2) {
+    return (
+      <PullToRefresh onRefresh={handleRefresh}>
+        <YourWeekScreen key={refreshKey} />
+      </PullToRefresh>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F4F6]">

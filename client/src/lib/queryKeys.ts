@@ -89,4 +89,8 @@ export const qk = {
   workPermits: (playerId: string | null) => ['work-permits', playerId] as const,
   /** Whether the Open to play switch is offered to this profile (18+ players). */
   canToggleOpenToPlay: (profileId: string | null) => ['open-to-play', 'can-toggle', profileId] as const,
+  /** Club and coach viewers of the owner's profile this week (get_my_week_viewers). */
+  weekViewers: (userId: string | null) => ['pulse', 'week-viewers', userId] as const,
+  /** Open roles for the owner's role type posted in the last 7 days. */
+  newRolesThisWeek: (userId: string | null, forRole: string) => ['pulse', 'new-roles', userId, forRole] as const,
 }
