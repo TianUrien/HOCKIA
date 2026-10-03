@@ -15,13 +15,14 @@ test.describe('@smoke public', () => {
     await expect(page.getByRole('link', { name: /create (a|your) profile/i }).first()).toBeVisible({ timeout: 20000 })
   })
 
-  test('signup page loads and shows role selection', async ({ page }) => {
+  test('signup page loads and shows the first-run choices', async ({ page }) => {
     await page.goto('/signup')
 
-    await expect(page.getByRole('button', { name: /join as player/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as coach/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as club/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as brand/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('heading', { name: /your game\. your network\./i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /continue with apple/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /create with email/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('link', { name: /log in/i })).toBeVisible({ timeout: 20000 })
   })
 
   test('opportunities page loads (public/indexable)', async ({ page, opportunitiesPage }) => {
