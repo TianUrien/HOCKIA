@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -200,6 +200,21 @@ export default function OpportunitiesPage() {
   const showMyRoles = recruitingCoach && isPhone && coachView === 'mine'
   const myRoles = useClubRoles(recruitingCoach && isPhone ? profile?.id : null)
   const myOpenRoleCount = myRoles.open.filter((r) => r.status === 'open').length
+  // "Edit role" on a coach's applicants screen lands here with the role to
+  // edit: open the coach's own role form once their roles have loaded.
+  const routeLocation = useLocation()
+  const routeEditRoleId = (routeLocation.state as { editRoleId?: string } | null)?.editRoleId ?? null
+  const [pendingEditRoleId, setPendingEditRoleId] = useState<string | null>(routeEditRoleId)
+  // Taken once: drop it from the history entry so coming back doesn't reopen the form.
+  useEffect(() => {
+    if (routeEditRoleId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
+  }, [routeEditRoleId, navigate, routeLocation.pathname, routeLocation.search])
+  useEffect(() => {
+    if (!pendingEditRoleId || !showMyRoles || myRoles.loading) return
+    const hit = [...myRoles.open, ...myRoles.closed].find((r) => r.id === pendingEditRoleId)
+    if (hit) { setEditingRole(hit); setShowCreateModal(true) }
+    setPendingEditRoleId(null)
+  }, [pendingEditRoleId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
   const settings = useProfileWriter()
 
   // Modal preview state — opening an opportunity from the list shows

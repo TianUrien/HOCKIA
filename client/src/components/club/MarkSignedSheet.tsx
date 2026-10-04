@@ -40,7 +40,7 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
           <span className="-ml-3 rounded-full ring-2 ring-white"><EntityAvatar src={playerAvatar} name={playerName} role="player" size={56} /></span>
         </div>
         <h2 className="mt-3 text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">Mark {firstName} as signed?</h2>
-        <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{markSignedBody(firstName, publisherIsClub)}</p>
+        <p className="mt-2 text-[15px] leading-[21px] text-ink-2" data-testid="mark-signed-body">{markSignedBody(firstName, publisherIsClub, clubName)}</p>
 
         <button
           type="button"

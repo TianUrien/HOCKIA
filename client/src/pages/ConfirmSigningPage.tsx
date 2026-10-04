@@ -78,7 +78,12 @@ export default function ConfirmSigningPage() {
   }
 
   const { application, role, club, offer } = data
-  const clubName = role.organization_name?.trim() || club.full_name?.trim() || 'The club'
+  // A coach who recruits is never the club: the signing is with the role's
+  // organisation, else the club on the coach's profile (what confirm_signing
+  // writes on the career entry). The crest is a club account's only.
+  const coachPublisher = club.role === 'coach'
+  const clubName = role.organization_name?.trim() || (coachPublisher ? club.current_club?.trim() : club.full_name?.trim()) || 'The club'
+  const clubCrest = coachPublisher ? null : club.avatar_url
   const roleText = inviteRoleLabel(role)
   const start = offer?.start_date ?? role.start_date
   const signed = confirmed || application.status === 'signed'
@@ -107,7 +112,7 @@ export default function ConfirmSigningPage() {
           <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
           <p className="mt-2 text-[16px] leading-[23px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
-            <Crest src={club.avatar_url} name={clubName} size={52} />
+            <Crest src={clubCrest} name={clubName} size={52} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[16px] font-semibold text-ink-1">{clubName}</p>
               <p className="truncate text-[14px] text-ink-1">{roleText} · {seasonLabel(start)}</p>
@@ -164,7 +169,7 @@ export default function ConfirmSigningPage() {
   return shell(
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
-        <Crest src={club.avatar_url} name={clubName} size={80} />
+        <Crest src={clubCrest} name={clubName} size={80} />
         <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
         <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">

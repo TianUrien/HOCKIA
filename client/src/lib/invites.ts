@@ -92,6 +92,9 @@ export interface InviteRole {
   compensation: string | null
   benefits: string[] | null
   opportunity_type?: string | null
+  /** Who the role is for when a coach posted it (the invite note names it). */
+  world_club_id?: string | null
+  organization_name?: string | null
 }
 
 /** "Paid · Housing · Flights · Insurance · Job" — the role's offer, for the sheet's role card. */

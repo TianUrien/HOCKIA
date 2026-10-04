@@ -32,7 +32,7 @@ export interface RoadData {
   /** Others still waiting on this role (pending / shortlisted / maybe / offered / accepted). */
   waiting: number
   /** The role, for the offer defaults and the close-the-role line. */
-  role: { id: string; title: string; position: string | null; opportunity_type: string | null; status: string; start_date: string | null; duration_text: string | null; compensation: string | null; benefits: string[] | null; custom_benefits: string[] | null } | null
+  role: { id: string; title: string; position: string | null; opportunity_type: string | null; status: string; start_date: string | null; duration_text: string | null; compensation: string | null; benefits: string[] | null; custom_benefits: string[] | null; world_club_id?: string | null; organization_name?: string | null } | null
 }
 
 export function roadKey(applicationId: string) {
@@ -50,7 +50,7 @@ export function useApplicationRoad(opts: { applicationId: string; roleId: string
         db.from('opportunity_applications').select('trial, signed_at').eq('id', applicationId).maybeSingle(),
         db.from('opportunity_offers').select(OFFER_COLUMNS).eq('application_id', applicationId).order('version', { ascending: false }).limit(1),
         supabase.from('application_status_history').select('created_at').eq('application_id', applicationId).eq('new_status', 'shortlisted').order('created_at', { ascending: false }).limit(1),
-        db.from('opportunities').select('id, title, position, opportunity_type, status, start_date, duration_text, compensation, benefits, custom_benefits').eq('id', roleId).maybeSingle(),
+        db.from('opportunities').select('id, title, position, opportunity_type, status, start_date, duration_text, compensation, benefits, custom_benefits, world_club_id, organization_name').eq('id', roleId).maybeSingle(),
         supabase.from('opportunity_applications').select('id', { count: 'exact', head: true }).eq('opportunity_id', roleId).neq('id', applicationId)
           .in('status', ['pending', 'shortlisted', 'maybe', 'offered', 'accepted'] as never),
         supabase.from('conversations').select('id')
@@ -151,7 +151,7 @@ export function useOwnOfferMade(applicationId: string | null, enabled: boolean):
 export interface SigningData {
   application: { id: string; status: string; applicant_id: string; signing_requested_at: string | null; signed_at: string | null }
   role: { id: string; title: string; position: string | null; opportunity_type: string | null; organization_name: string | null; level_sought: string | null; gender: string | null; start_date: string | null; duration_text: string | null }
-  club: { id: string; full_name: string | null; avatar_url: string | null; role: string | null; mens_league_division: string | null; womens_league_division: string | null }
+  club: { id: string; full_name: string | null; avatar_url: string | null; role: string | null; current_club?: string | null; mens_league_division: string | null; womens_league_division: string | null }
   offer: Pick<OfferRow, 'start_date' | 'length'> | null
 }
 
@@ -177,7 +177,7 @@ export function useSigningData(applicationId: string | null) {
       if (!role) return null
       const r = role as SigningData['role'] & { club_id: string }
       const [{ data: club }, { data: offers }] = await Promise.all([
-        supabase.from('profiles').select('id, full_name, avatar_url, role, mens_league_division, womens_league_division').eq('id', r.club_id).maybeSingle(),
+        supabase.from('profiles').select('id, full_name, avatar_url, role, current_club, mens_league_division, womens_league_division').eq('id', r.club_id).maybeSingle(),
         db.from('opportunity_offers').select('start_date, length').eq('application_id', a.id).eq('status', 'accepted').order('version', { ascending: false }).limit(1),
       ])
       return {
