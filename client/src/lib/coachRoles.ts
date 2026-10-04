@@ -103,8 +103,9 @@ export interface PublisherOrganisation {
 
 /**
  * Who a role recruits for. A club account is its own organisation. A coach
- * never is: the role's (else the coach's) world club → the organisation typed
- * on the role → the club typed on the coach's profile. Never the coach's name.
+ * never is: the organisation typed on the role → the role's (else the coach's)
+ * world club → the club typed on the coach's profile, the same order the
+ * server uses (role_organisation). Never the coach's name.
  */
 export function publisherOrganisation(
   profile: (CoachModeProfile & { full_name?: string | null; avatar_url?: string | null; current_club?: string | null }) | null | undefined,
@@ -115,24 +116,31 @@ export function publisherOrganisation(
     return { name: profile?.full_name?.trim() || null, avatarUrl: profile?.avatar_url ?? null, isClub: profile?.role === 'club' }
   }
   const worldName = worldClub?.club_name?.trim() || null
+  const typedName = role?.organization_name?.trim() || null
   return {
-    name: worldName || role?.organization_name?.trim() || profile.current_club?.trim() || null,
-    avatarUrl: worldName ? worldClub?.avatar_url ?? null : null,
+    name: typedName || worldName || profile.current_club?.trim() || null,
+    avatarUrl: worldName && (!typedName || typedName === worldName) ? worldClub?.avatar_url ?? null : null,
     isClub: false,
   }
 }
 
 /**
- * confirm_signing names the career entry from the role's organisation, else
- * the club typed on the coach's profile, and falls back to the publisher's
- * own name. With neither, a coach's signing would record the coach as the
- * club — so the signing is not offered until one of them exists.
+ * A coach's signing is with the organisation the role recruits for, never the
+ * coach. With no organisation or linked club on the role and no club on the
+ * coach's profile the signing is not offered. The server enforces it too
+ * (mark_signed and confirm_signing refuse with club_missing).
  */
 export function coachSigningNeedsClub(
-  profile: (CoachModeProfile & { current_club?: string | null }) | null | undefined,
+  profile: (CoachModeProfile & { current_club?: string | null; current_world_club_id?: string | null }) | null | undefined,
   role: OrganisationRole | null | undefined,
 ): boolean {
-  return profile?.role === 'coach' && !role?.organization_name?.trim() && !profile.current_club?.trim()
+  return (
+    profile?.role === 'coach' &&
+    !role?.organization_name?.trim() &&
+    !role?.world_club_id &&
+    !profile.current_world_club_id &&
+    !profile.current_club?.trim()
+  )
 }
 
 export const COACH_SIGNING_NEEDS_CLUB_NOTE = 'Add your club to your profile to mark a signing.'

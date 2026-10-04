@@ -607,7 +607,14 @@ const PASS_THROUGH = [
   'This application is already closed',
   'A trial can be recorded for shortlisted applicants only',
   'A withdrawn application cannot be changed',
+  // A coach's role with no organisation (role_organisation, 20261004200000).
+  'Add your club to your profile to mark a signing',
+  'This signing can’t be confirmed yet',
+  'This signing can\'t be confirmed yet',
 ]
+
+/** What signingErrorMessage returns when confirm_signing refuses a role with no club named (club_missing). */
+export const SIGNING_CLUB_MISSING_MESSAGE = 'This signing can’t be confirmed yet.'
 
 export function signingErrorMessage(err: unknown, fallback: string): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''

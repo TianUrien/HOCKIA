@@ -10,9 +10,11 @@ import {
   roadMenu,
   roadSteps,
   roadWaitingLine,
+  SIGNING_CLUB_MISSING_MESSAGE,
   signingErrorMessage,
   withdrawBody,
 } from '@/lib/signing'
+import { COACH_SIGNING_NEEDS_CLUB_NOTE } from '@/lib/coachRoles'
 import { applicationStatusLabel, playerApplicationStatusBadge } from '@/lib/applicationStatus'
 import { METRIC_INFO } from '@/features/admin/lib/metricInfo'
 
@@ -130,6 +132,11 @@ describe('D4 server errors', () => {
     expect(signingErrorMessage({ message: 'This offer has expired' }, 'x')).toBe('This offer has expired.')
     expect(signingErrorMessage({ message: "A confirmed signing can't be withdrawn" }, 'x')).toBe('A confirmed signing can’t be withdrawn.')
     expect(signingErrorMessage({ message: 'permission denied for table x' }, 'Something went wrong')).toBe('Something went wrong')
+  })
+
+  it('names what to do when a coach’s role has no club (server refusal club_missing)', () => {
+    expect(signingErrorMessage({ message: 'Add your club to your profile to mark a signing', details: 'club_missing' }, 'x')).toBe(COACH_SIGNING_NEEDS_CLUB_NOTE)
+    expect(signingErrorMessage({ message: "This signing can't be confirmed yet", details: 'club_missing' }, 'x')).toBe(SIGNING_CLUB_MISSING_MESSAGE)
   })
 })
 
