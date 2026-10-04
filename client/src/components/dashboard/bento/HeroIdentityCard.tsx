@@ -300,9 +300,12 @@ export default function HeroIdentityCard({
                 {availabilityLabel}
               </button>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]">
+              // Coach (Figma D6.1 377:186): "Open to coach" from open_to_coach, in
+              // the Open to play slot and tone. "Recruiting" only when the
+              // coach recruits and is not open to coach.
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]" data-testid="hero-status-pill">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
-                {isRecruiterMode ? 'Recruiting' : availabilityLabel}
+                {isAvailable ? availabilityLabel : 'Recruiting'}
               </span>
             ))}
             {/* "Active today" — Settings › Privacy › show_last_active drives it (DEV NOTE). */}
