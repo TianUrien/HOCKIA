@@ -127,6 +127,10 @@ export default {
       fontSize: {
         'large-title': ['34px', { lineHeight: '41px', letterSpacing: '-0.015em', fontWeight: '700' }],
         title: ['22px', { lineHeight: '27px', fontWeight: '700' }],
+        // Page titles inside pushed phone screens (Figma Title XL) and big tile
+        // figures (Your week, Pulse week tiles).
+        'title-xl': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        figure: ['26px', { lineHeight: '31px', letterSpacing: '-0.01em', fontWeight: '600' }],
         body: ['17px', { lineHeight: '22px' }],
         row: ['15px', { lineHeight: '20px' }],
         secondary: ['13px', { lineHeight: '18px' }],

@@ -274,7 +274,7 @@ export default function ClubProfileScreen({
             </span>
           )}
         </div>
-        <h1 className="mt-2.5 text-[28px] font-bold leading-[34px] tracking-[-0.336px] text-ink-1">{profile.full_name}</h1>
+        <h1 className="mt-2.5 text-title-xl text-ink-1">{profile.full_name}</h1>
         {identityLine && <p className="mt-2.5 text-row text-ink-2" data-testid="club-identity-line">{identityLine}</p>}
 
         <div className="mt-3.5 flex items-stretch gap-2">

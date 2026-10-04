@@ -291,7 +291,7 @@ describe('closed role pages', () => {
     expect(postedLine(v, now, true)).toMatch(/^Posted 3 days ago · Closed 2[56] Sep 2026$/)
     expect(postedLine({ ...v, closed_at: null }, now, true)).toBe('Posted 3 days ago · Closed')
     const phone = read('../components/opportunities/OpportunityDetailMobile.tsx')
-    expect(phone).toContain('!vacancy.compensation && !closed &&')
+    expect(phone).toContain("!vacancy.compensation && !closed ? 'Ask the club when you apply'")
     expect(phone).toContain("{!closed && askRow('Apply by'")
   })
 })

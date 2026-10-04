@@ -190,7 +190,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
 
       <div className={cn('flex-1 overflow-y-auto', onboarding ? 'pb-40' : 'pb-28')}>
         <div className="px-5 pb-2 pt-1.5">
-          <h2 className="text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-ink-1">Find your club</h2>
+          <h2 className="text-title-xl text-ink-1">Find your club</h2>
           <p className="mt-1 text-[14px] leading-5 text-ink-2">{onboarding ? 'Step 2 of 2 · ' : ''}Linking puts your league next to your name and lets fit compare levels.</p>
         </div>
 

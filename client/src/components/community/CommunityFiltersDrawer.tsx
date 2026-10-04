@@ -46,7 +46,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       aria-pressed={active}
       className={cn(
         'flex h-9 items-center rounded-full px-3.5 text-row font-semibold transition-colors',
-        active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1',
+        active ? 'bg-brand-soft text-brand-primary' : 'bg-surface-grouped text-ink-1',
       )}
     >
       {children}

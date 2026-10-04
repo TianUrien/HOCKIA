@@ -161,7 +161,7 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
     <div className="min-h-screen bg-white lg:hidden" data-testid="club-league-screen">
       <DetailNavBar parent={parent} onBack={onBack} trailing={<button type="button" onClick={onBack} className="text-body font-semibold text-hockia-primary">Done</button>} />
       <div className="px-5 pb-2 pt-1.5">
-        <h1 className="text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-ink-1">Club &amp; league</h1>
+        <h1 className="text-title-xl text-ink-1">Club &amp; league</h1>
         <p className="mt-1 text-[14px] leading-5 text-ink-2">What players see next to your name, and what fit compares a player’s level against.</p>
       </div>
 
