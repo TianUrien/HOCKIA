@@ -16,6 +16,7 @@ import { sendSharedPostMessage } from '@/lib/sharePost'
 import { getShareOrigin } from '@/lib/profileShare'
 import { identityLine } from '@/lib/identity'
 import { logger } from '@/lib/logger'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { SharedPostMetadata } from '@/types/chat'
 
 interface ContactResult {
@@ -59,6 +60,8 @@ export function SharePostSheet({
   const [sentTo, setSentTo] = useState<Set<string>>(new Set())
 
   const isBrand = profile?.role === 'brand'
+  // Phone: the shared item reads as List item / Role result (Figma 115:727 — 48 leading, two lines).
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const url = `${getShareOrigin()}/post/${postId}`
   const shareText = content ? content.slice(0, 120) : `${authorName ?? 'A member'} on HOCKIA`
 
@@ -172,8 +175,8 @@ export function SharePostSheet({
         <h2 className="text-title text-ink-1">Share this post</h2>
 
         {/* What is being shared */}
-        <div className="flex items-center gap-3 rounded-card bg-surface-grouped px-3 py-2.5">
-          <EntityAvatar src={authorAvatar} name={authorName} role={authorRole} size={40} />
+        <div className={isPhone ? 'flex min-h-[64px] items-center gap-3 rounded-card bg-surface-grouped px-3 py-2' : 'flex items-center gap-3 rounded-card bg-surface-grouped px-3 py-2.5'} data-testid="share-item-row">
+          <EntityAvatar src={authorAvatar} name={authorName} role={authorRole} size={isPhone ? 48 : 40} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-row font-semibold text-ink-1">{authorName ?? 'HOCKIA member'}</p>
             <p className="truncate text-secondary text-ink-2">{content ? content : identityLine(authorRole)}</p>
