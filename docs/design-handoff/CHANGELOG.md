@@ -3,6 +3,19 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (D6 code review) · design agent
+
+- D6 coach code (PR #214) reviewed. D6.1 `377:186`:
+  - A club viewing a coach sees Shortlist (Primary, Star) + Message.
+  - The "Open to relocating" pill is removed (relocation lives in the Available key fact).
+- Accepted from code:
+  - My roles has an Open | Closed control and a "+" to post a role.
+  - Closed-role pills are grey.
+  - The empty-state line is "N coaching roles were posted on Hockia this year".
+  - The status pill reads "Recruiting" or "Open to coach".
+- Ruling applied: the per-card "Review" is Tonal (a repeated action) on both the coach My roles and the club Opportunities tab.
+- Club profile v2 as a player (`38:99`) matches. On it, Message should use the Secondary style.
+
 ## 2026-10-05 (round 2b review) · design agent
 
 - Player round 2b (code PR #213, batches C–E, 25 screens) reviewed from screenshots: approved, no blockers.
