@@ -17,6 +17,7 @@ import { shortDayOf } from '@/lib/signing'
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
 import { cn } from '@/lib/utils'
+import { Chip } from '@/components/ui/Chip'
 
 /**
  * Applicants of one role (Figma 04 Club · Applicants — club v2, 324:411;
@@ -125,9 +126,8 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
 
       <div className="flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Application status">
         {chips.map((c) => (
-          <button key={c.id} type="button" role="tab" aria-selected={chip === c.id} onClick={() => setChip(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', chip === c.id ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1')}>
-            {c.label}
-          </button>
+          // ui/Chip: selected = soft purple (Chip ruling 2026-10-04); tab semantics kept.
+          <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => setChip(c.id)} />
         ))}
       </div>
       <p className="px-5 pb-1 pt-3.5 text-secondary text-ink-2">{caption}</p>
