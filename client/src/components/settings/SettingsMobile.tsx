@@ -25,7 +25,6 @@ import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { qk } from '@/lib/queryKeys'
 import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
 import { CLUB_EDIT_PATH, CLUB_GROUP_FOOTER, CONTACT_EMAIL_INTRO, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
-import type { Profile } from '@/lib/supabase'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
