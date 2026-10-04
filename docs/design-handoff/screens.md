@@ -14,7 +14,7 @@ tokens but the layout is still built from one-off frames.
 | D2 · Core — 30-second profile | D2.1–D2.4 (`395:83`, `395:333`, `395:563`, `395:601`) | Rebuilt (matches shipped) | — |
 | D4 · Core — From yes to signed | D4.1–D4.6 (`390:3`, `390:249`, `390:557`, `390:647`, `390:936`, `390:980`) | Rebuilt | Archive · D4 baseline |
 | D5 · Core — Hockia suggests | D5.1–D5.2 (`398:83`, `398:291`) | Rebuilt | — |
-| D6 · Coach v2 | — | Tokens only | — |
+| D6 · Coach v2 | D6.1–D6.4 (`377:186`, `377:614`, `377:1430`, `377:1814`) | Rebuilt | — |
 | 04 · Player — Live | about 30 screens | Tokens only | — |
 
 ## Notes on the rebuilt flows

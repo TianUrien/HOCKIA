@@ -3,6 +3,25 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (later) · design agent
+
+- D6 · Coach v2 rebuilt on components. D6.1 `377:186` profile, as a club sees it:
+  - Light status bar and Glass cover buttons; "Open to coach" uses the Positive Tag.
+  - Add friend (Primary) and Message (Secondary) are Buttons.
+  - The coach key facts `419:108` use Card / Key fact `575:603`: Specialization, Coaches at, Available, Passport, Categories and Age. They sit 16 pt below the identity block.
+  - Section headers are components.
+- D6.2 `377:614` is the empty state for coaching roles:
+  - Header / Large title, Search field and the Segmented control Roles / Applied / My roles.
+  - Empty state "No coaching roles open right now".
+  - A List item / Switch for "Coaching role alerts".
+  - "Be ready" Menu rows (Trophy, Medal).
+  - Recently closed roles show a grey "No reply".
+- D6.3 `377:1430` is the recruiting coach's Home, built from Card / Your week (3 to review, 0 profile views, 1 open role) and 11 Feed component instances.
+- D6.4 `377:1814` is My roles:
+  - Warning Banner "3 applicants waiting for a reply".
+  - Pipeline Stats, one Primary "Review 3 applicants".
+  - Menu rows for Find players and Shortlist.
+
 ## 2026-10-05 · design agent
 
 - D2 · 30-second profile aligned to the shipped screens and rebuilt on
