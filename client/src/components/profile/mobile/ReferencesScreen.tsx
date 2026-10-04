@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { DetailRowItem } from '@/components/ui/DetailRowItem'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import AddReferenceModal, { type ReferenceFriendOption } from '@/components/AddReferenceModal'
 import WriteReferenceSheet from './WriteReferenceSheet'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -106,26 +108,24 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
         </div>
         <div className="px-5 pt-3">
           <button type="button" onClick={() => goToAuthor(author)} className="flex w-full items-center gap-3.5 text-left">
-            <span className={cn('inline-flex shrink-0 border border-gold-line p-[3px]', author?.role === 'club' || author?.role === 'brand' ? 'rounded-[14px]' : 'rounded-full')}>
-              <EntityAvatar src={authorAvatar(author, 'avatar-lg')} name={name} role={author?.role} size={64} />
-            </span>
+            <EntityAvatar src={authorAvatar(author, 'avatar-lg')} name={name} role={author?.role} size={56} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[20px] font-bold leading-6 text-ink-1">{name}</span>
-              <span className="block truncate text-[14px] text-ink-2">{authorLine(author, open.relationshipType)}</span>
+              <span className="block truncate text-row text-ink-2">{authorLine(author, open.relationshipType)}</span>
             </span>
           </button>
-          <button type="button" onClick={() => goToAuthor(author)} className="mt-4 flex h-[46px] w-full items-center justify-center rounded-full bg-surface-grouped text-row font-semibold text-ink-1">
+          <button type="button" onClick={() => goToAuthor(author)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-4' })} data-testid="reference-view-profile">
             View profile
           </button>
 
           <span className="mt-6 block h-7 font-serif text-[48px] italic leading-none text-gold-line" aria-hidden="true">“</span>
-          <p className="mt-2 whitespace-pre-line text-[20px] leading-[28px] text-ink-1">{open.endorsementText?.trim() || `${name} vouches for ${firstName ?? 'this member'}.`}</p>
+          <p className="mt-2 whitespace-pre-line text-[20px] leading-[28px] text-ink-1" data-testid="reference-detail-quote">{open.endorsementText?.trim() || `${name} vouches for ${firstName ?? 'this member'}.`}</p>
 
-          <dl className="mt-7 divide-y divide-line border-t border-line">
-            <div className="flex gap-3 py-3"><dt className="w-[110px] shrink-0 text-row text-ink-3">Relationship</dt><dd className="min-w-0 flex-1 text-row text-ink-1">{humanizeToken(open.relationshipType)}</dd></div>
-            <div className="flex gap-3 py-3"><dt className="w-[110px] shrink-0 text-row text-ink-3">Written</dt><dd className="min-w-0 flex-1 text-row text-ink-1">{[monthYear(open.acceptedAt), 'on Hockia'].filter(Boolean).join(' · ')}</dd></div>
-            <div className="flex gap-3 py-3"><dt className="w-[110px] shrink-0 text-row text-ink-3">Status</dt><dd className="flex min-w-0 flex-1 items-start gap-1 text-row font-semibold text-gold"><Check className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2.5} /> Verified · approved by {own ? 'you' : firstName ?? 'the member'}</dd></div>
-          </dl>
+          <div className="mt-7 divide-y divide-line" data-testid="reference-facts">
+            <DetailRowItem align="start" label="Relationship" value={humanizeToken(open.relationshipType)} />
+            <DetailRowItem align="start" label="Written" value={[monthYear(open.acceptedAt), 'on Hockia'].filter(Boolean).join(' · ')} />
+            <DetailRowItem align="start" tone="gold" label="Status" value={<span className="flex items-start gap-1"><Check className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden="true" /> Verified · approved by {own ? 'you' : firstName ?? 'the member'}</span>} />
+          </div>
         </div>
       </div>
     )
@@ -146,12 +146,12 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
         )}
 
         {canAsk && (
-          <button type="button" onClick={() => setAsking(true)} disabled={!refs.canAddMore} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-soft text-body font-semibold text-hockia-primary disabled:opacity-50">
+          <button type="button" onClick={() => setAsking(true)} disabled={!refs.canAddMore} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="references-ask">
             Ask for a reference
           </button>
         )}
         {!own && incoming.length > 0 && (
-          <button type="button" onClick={() => setWritingId(incoming[0].id)} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-soft text-body font-semibold text-hockia-primary">
+          <button type="button" onClick={() => setWritingId(incoming[0].id)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="references-write">
             Write a reference
           </button>
         )}
@@ -169,8 +169,8 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
                       <span className="block truncate text-row font-semibold text-ink-1">{who}</span>
                       <span className="block truncate text-secondary text-ink-2">{humanizeToken(r.relationshipType)}</span>
                     </span>
-                    <button type="button" onClick={() => void mine.respondToRequest({ referenceId: r.id, accept: false })} className="h-8 rounded-full px-2 text-secondary font-semibold text-ink-2">Decline</button>
-                    <button type="button" onClick={() => setWritingId(r.id)} className="h-8 rounded-full bg-hockia-primary px-3 text-secondary font-semibold text-white">Write</button>
+                    <button type="button" onClick={() => void mine.respondToRequest({ referenceId: r.id, accept: false })} className={buttonClassName({ variant: 'tertiary', size: 'small', radius: 'rounded-full', className: 'px-2' })}>Decline</button>
+                    <button type="button" onClick={() => setWritingId(r.id)} className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}>Write</button>
                   </li>
                 )
               })}
@@ -224,7 +224,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
                       <span className="block truncate text-row font-semibold text-ink-1">{who}</span>
                       <span className="block truncate text-secondary text-ink-2">{authorLine(r.profile, r.relationshipType)}</span>
                     </span>
-                    <button type="button" onClick={() => setWithdrawId(r.id)} disabled={refs.isMutating('withdraw', r.id)} className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2 disabled:opacity-60" aria-label={`Withdraw the request to ${who}`}>
+                    <button type="button" onClick={() => setWithdrawId(r.id)} disabled={refs.isMutating('withdraw', r.id)} className="relative flex h-9 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2 before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] disabled:opacity-60" aria-label={`Withdraw the request to ${who}`}>
                       <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Requested
                     </button>
                   </li>
