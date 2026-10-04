@@ -7,7 +7,7 @@
  */
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info, Check,
+  Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
 } from 'lucide-react'
 import { differenceInCalendarDays } from 'date-fns'
 import { dayFirst } from './dayFirst'
@@ -182,7 +182,7 @@ export type PackageItemType = 'benefit' | 'skill' | 'requirement' | 'note'
 export interface PackageItem { key: string; type: PackageItemType; label: string; icon: LucideIcon; tileClass: string }
 
 export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
-export const NOTE_TILE = { icon: Check, tileClass: 'bg-surface-subtle text-ink-2' }
+export const NOTE_TILE = { icon: Info, tileClass: 'bg-surface-muted text-ink-2' }
 export const PACKAGE_NOT_LISTED = 'Package not listed · ask the club'
 export const MAX_CARD_PACKAGE_ITEMS = 6
 

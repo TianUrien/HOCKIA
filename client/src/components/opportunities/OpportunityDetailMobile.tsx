@@ -244,7 +244,8 @@ export function OpportunityDetailMobile({
         <ul className="mt-1" data-testid="role-offers">
           {compensationKey === 'paid' && <BenefitItem icon={PAID_TILE.icon} tileClass={PAID_TILE.tileClass} title={PAID_TILE.label} detail={PAID_TILE.detail} type="benefit" />}
           {benefits.map((b) => <BenefitItem key={b.key} icon={b.icon} tileClass={b.tileClass} title={b.label} detail={b.detail} type="benefit" />)}
-          {customBenefits.map((b) => <BenefitItem key={b} icon={NOTE_TILE.icon} tileClass={NOTE_TILE.tileClass} title={b} type="note" />)}
+          {/* The club's own package items are real items: a check, not the Note's info icon. */}
+          {customBenefits.map((b) => <BenefitItem key={b} icon={Check} tileClass="bg-surface-muted text-ink-1" title={b} type="benefit" />)}
           {compensationKey !== 'paid' && (
             <BenefitItem
               icon={NOTE_TILE.icon}
