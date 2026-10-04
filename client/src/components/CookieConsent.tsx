@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 import { initPostHog } from '@/lib/posthog'
+import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
+import { COOKIE_BANNER_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
 
 /**
  * GDPR cookie consent banner.
@@ -26,6 +28,13 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
   // Mounted inside <BrowserRouter> (App.tsx, next to InstallPrompt).
   const location = useLocation()
+  // One overlay at a time (founder rulings 2026-10-04): the Terms gate comes
+  // first; this banner waits until it is accepted, then holds the slot the
+  // install and push cards wait on.
+  const termsOpen = useBottomPromptActive(TERMS_GATE_OVERLAY)
+  const onAuthRoute = matchesRoutePrefix(location.pathname, AUTH_FLOW_PREFIXES)
+  const shown = visible && !onAuthRoute && !termsOpen
+  useBottomPrompt(COOKIE_BANNER_OVERLAY, shown)
 
   useEffect(() => {
     // Native apps don't use cookies — skip consent prompt entirely
@@ -52,8 +61,7 @@ export default function CookieConsent() {
     setVisible(false)
   }
 
-  if (!visible) return null
-  if (AUTH_FLOW_PREFIXES.some((pre) => location.pathname === pre || location.pathname.startsWith(pre + '/'))) return null
+  if (!shown) return null
 
   // Slim single-row bar. Previous version was a 158px tall card that
   // blanketed the bottom of the viewport — at z-9999 it intercepted

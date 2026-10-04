@@ -10,7 +10,7 @@ import { useAuthStore } from '@/lib/auth'
  *  function's getUser() returns 401. Refreshing + retrying self-heals it instead
  *  of surfacing "I had trouble connecting". A genuinely dead session (refresh
  *  throws) falls through to the normal error path. */
-async function invokeNlSearch(body: Record<string, unknown>) {
+export async function invokeNlSearch(body: Record<string, unknown>) {
   let res = await supabase.functions.invoke('nl-search', { body })
   const status = (res.error as { context?: Response } | null)?.context?.status
   if (res.error && status === 401) {
@@ -116,6 +116,7 @@ export type ResponseKind =
   | 'canned_redirect'       // opportunity / product redirects
   | 'recommendation'        // Phase 5 — owner recruitment recommendations
   | 'opportunity_results'   // open roles a player / coach can apply to
+  | 'cap_reached'           // daily question cap hit — HTTP 200, no LLM call, data empty
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
@@ -135,6 +136,9 @@ export type SuggestedActionIntent =
   | { type: 'free_text'; query: string }
   | { type: 'retry' }
   | { type: 'clear' }
+  /** Client-only (Hockia AI v2): leave the chat for an in-app route. The
+   *  message components navigate; the store never does. */
+  | { type: 'navigate'; route: string }
 
 export interface SuggestedAction {
   label: string
@@ -200,6 +204,9 @@ export interface OpportunityResultItem {
   benefit_labels: string[]
   deadline: string | null
   navigate_to: string
+  /** League of the publishing club when known (not sent today; the row
+   *  falls back to location_label). */
+  league_label?: string | null
 }
 
 export interface DiscoverResponse {
@@ -231,6 +238,9 @@ export interface DiscoverResponse {
   opportunities?: OpportunityResultItem[]
   /** Candidate role search — human-readable labels of what was searched. */
   opportunity_filters?: string[]
+  /** Candidate role search — size of the open-role pool the answer came
+   *  from ("From N open roles"). Absent when unknown. */
+  open_roles_total?: number
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -260,6 +270,7 @@ export interface DiscoverChatMessage {
   /** Candidate role search — open roles + the searched-for labels. */
   opportunities?: OpportunityResultItem[]
   opportunity_filters?: string[]
+  open_roles_total?: number
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -412,6 +423,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 secondary_note: result.secondary_note,
                 opportunities: result.opportunities,
                 opportunity_filters: result.opportunity_filters,
+                open_roles_total: result.open_roles_total,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows
@@ -462,6 +474,11 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       }
       case 'clear':
         get().clearChat()
+        return
+      case 'navigate':
+        // Handled by the message components (they hold the router). Reaching
+        // the store means a chip was wired without a navigator — surface it.
+        logger.warn('[useDiscoverChat] navigate intent reached the store — chip will no-op', { route: intent.route })
         return
       default: {
         const exhaustive: never = intent

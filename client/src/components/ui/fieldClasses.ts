@@ -38,3 +38,8 @@ export const fieldReadOnly = 'flex h-[50px] w-full items-center rounded-[12px] b
 export const fieldErrorRing = 'ring-1 ring-inset ring-status-danger'
 /** Error line under a field. */
 export const fieldErrorText = 'mt-1.5 text-caption text-status-danger'
+
+/** Field header with a trailing requirement tag (Figma Field header,
+ *  Requirement: Optional — 12 caption, ink-3, right-aligned). */
+export const fieldLabelRow = `mb-1.5 flex items-center justify-between gap-2 ${fieldLabelText}`
+export const fieldOptionalTag = 'text-caption font-normal text-ink-3'

@@ -1,12 +1,11 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, MapPin, Calendar, Building2, Camera, X, ChevronRight, Check } from 'lucide-react'
+import { User, MapPin, Calendar, Building2, Camera, X, Check } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { Input, Button, CountrySelect, LocationAutocomplete, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
 import ClubClaimStep, { type ClubClaimResult } from '@/components/ClubClaimStep'
-import WorldClubSearch from '@/components/WorldClubSearch'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -19,14 +18,16 @@ import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
 import { trackDbEvent, consumeWallIntent } from '@/lib/trackDbEvent'
 import { getAttributionState, submitSignupAttribution } from '@/lib/attribution'
-import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { showsClubSetup } from '@/lib/clubSetup'
+import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
+import { legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft } from '@/lib/onboardingV2'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
+import { Button as UiButton } from '@/components/ui/Button'
 import {
   type PlayingCategory,
   type CoachUmpireCategory,
@@ -39,6 +40,8 @@ import {
 const ClubSetupFlow = lazy(() => import('@/components/club/ClubSetupFlow'))
 // Player set-up (Figma 04 Player 114:537 / 114:608): own chunk.
 const PlayerSetupFlow = lazy(() => import('@/components/onboarding/PlayerSetupFlow'))
+// Coach set-up (Figma New-Hockia D6.5 586:806 / D6.6 586:849): own chunk.
+const CoachSetupFlow = lazy(() => import('@/components/onboarding/CoachSetupFlow'))
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -112,7 +115,7 @@ export default function CompleteProfile() {
   // Club claim step state (for clubs only)
   const [showClubClaimStep, setShowClubClaimStep] = useState(true)
 
-  // Staged wizard state for player/coach flows — splits the single long form into
+  // Staged wizard state for the umpire flow — splits the single long form into
   // 3 progressive steps (identity → background → role details). Club and brand
   // keep their existing flows untouched.
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
@@ -125,6 +128,9 @@ export default function CompleteProfile() {
   // wizardDraftKey is computed AFTER userRole is derived (it depends on
   // both user.id and userRole, which need to be in scope first).
   const wizardDraftHydratedRef = useRef(false)
+  // Set on the commit that restores a draft, so persistence skips writing the
+  // not-yet-restored form over it in that same commit.
+  const wizardDraftSkipPersistRef = useRef(false)
 
   // Form data states
   const [formData, setFormData] = useState({
@@ -140,14 +146,9 @@ export default function CompleteProfile() {
     dateOfBirth: '',
     position: '',
     secondaryPosition: '',
-    // Phase 3 hockey categories. Player picks one (single-select); coach
-    // and umpire pick many (multi-select with optional [any] sentinel).
+    // Phase 3 hockey categories. Player picks one (single-select); umpires
+    // pick many (multi-select with optional [any] sentinel).
     playingCategory: '' as PlayingCategory | '',
-    coachingCategories: [] as CoachUmpireCategory[],
-    // Phase 1A.4 (v5 plan): coach dual-mode flag. Opt-in via the Step 3
-    // question "Do you also recruit for a team?" — drives the recruiter
-    // UX on CoachDashboard + AI Discovery example ordering. Default false.
-    coachRecruitsForTeam: false,
     umpiringCategories: [] as CoachUmpireCategory[],
     yearFounded: '',
     womensLeagueDivision: '',
@@ -158,13 +159,6 @@ export default function CompleteProfile() {
     clubHistory: '',
     currentClub: '',
     currentWorldClubId: null as string | null,
-    coachSpecialization: '' as CoachSpecialization | '',
-    coachSpecializationCustom: '',
-    // Coach professional bio. Optional but contributes 20pts to the coach
-    // profile-strength milestone, so collecting at onboarding makes the
-    // 100% celebration reachable in one pass instead of forcing the user
-    // to revisit their profile later.
-    coachBio: '',
     // Umpire-specific fields (free text for level + federation in v1; see
     // umpireLevels.ts / umpireFederations.ts for the datalist suggestions).
     umpireLevel: '',
@@ -202,14 +196,13 @@ export default function CompleteProfile() {
   // switching between accounts on the same browser doesn't see another
   // user's draft, and a user who switches role mid-flow doesn't see a
   // player draft on a coach mount. null when either is missing — effects
-  // gate on this and skip persistence until both resolve.
-  const wizardDraftKey = user?.id && userRole
-    ? `hockia-onboarding-draft:${userRole}:${user.id}`
-    : null
+  // gate on this and skip persistence until both resolve. (Players and
+  // coaches keep their own drafts in PlayerSetupFlow / CoachSetupFlow.)
+  const wizardDraftKey = user?.id && userRole ? legacyWizardDraftKey(userRole, user.id) : null
 
-  // Player, coach, and umpire get a 3-step wizard. Club keeps its existing
-  // claim→form two-step flow; brand is handled on a separate onboarding page.
-  const isWizardFlow = userRole === 'player' || userRole === 'coach' || userRole === 'umpire'
+  // Umpires get the 3-step wizard. Players and coaches have their own two-step
+  // set-up flows; club keeps its claim→form flow; brand has its own page.
+  const isWizardFlow = userRole === 'umpire'
 
   const stepLabels: Record<UserRole, Record<WizardStep, string>> = {
     player: {
@@ -217,11 +210,7 @@ export default function CompleteProfile() {
       2: 'Where you are based',
       3: 'Your game',
     },
-    coach: {
-      1: 'About you',
-      2: 'Where you are based',
-      3: 'Your coaching',
-    },
+    coach: { 1: '', 2: '', 3: '' },
     umpire: {
       1: 'About you',
       2: 'Where you are based',
@@ -448,14 +437,6 @@ export default function CompleteProfile() {
           if (isValidPlayingCategory(profile.playing_category)) {
             next.playingCategory = profile.playing_category
           }
-        } else if (profile.role === 'coach') {
-          next.coachSpecialization = (profile.coach_specialization ?? prev.coachSpecialization) as CoachSpecialization | ''
-          next.coachSpecializationCustom = profile.coach_specialization_custom ?? prev.coachSpecializationCustom
-          next.coachBio = profile.bio ?? prev.coachBio
-          next.coachRecruitsForTeam = profile.coach_recruits_for_team ?? prev.coachRecruitsForTeam
-          if (isValidCategoryArray(profile.coaching_categories)) {
-            next.coachingCategories = (profile.coaching_categories ?? []) as CoachUmpireCategory[]
-          }
         } else if (profile.role === 'umpire') {
           // Pre-fill ALL umpire-specific fields. Previously only
           // umpiring_categories was read back; a returning umpire would
@@ -495,52 +476,50 @@ export default function CompleteProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
 
-  // Wizard draft hydration: on mount (per user+role), if there's a saved
-  // draft from a prior interrupted session, restore the form fields AND
-  // the step the user was on. Runs ONCE — guarded by hydratedRef. Runs
-  // AFTER server-side prefill so the user's most-recent typed state wins
-  // over stale DB state (which might be from before they typed).
+  // Wizard draft hydration: once per mount (per user+role), restore the form
+  // fields AND the step from a saved draft. Waits for the profile so the
+  // server-side prefill (the effect above, same commit, declared first) runs
+  // BEFORE it and the user's most recent typed state wins. Without that wait
+  // a profile arriving after hydration overwrote the restored draft (e.g. an
+  // empty full_name), which read as "the coach form forgot everything".
   useEffect(() => {
-    if (!isWizardFlow || !wizardDraftKey || wizardDraftHydratedRef.current) return
+    if (!isWizardFlow || !wizardDraftKey || !profile || wizardDraftHydratedRef.current) return
     wizardDraftHydratedRef.current = true
     try {
       if (typeof window === 'undefined' || !window.localStorage) return
       const raw = window.localStorage.getItem(wizardDraftKey)
       if (!raw) return
-      const parsed = JSON.parse(raw) as { step?: number; formData?: Record<string, unknown>; savedAt?: string }
-      // Stale-draft guard: drop drafts older than 7 days. Prevents a
-      // draft from a different feature/version of the form from
-      // resurrecting after an app update.
-      if (parsed.savedAt) {
-        const ageDays = (Date.now() - Date.parse(parsed.savedAt)) / 86_400_000
-        if (Number.isFinite(ageDays) && ageDays > 7) {
-          window.localStorage.removeItem(wizardDraftKey)
-          return
-        }
+      const draft = parseWizardDraft(raw)
+      if (!draft) {
+        // Stale or unreadable (7-day guard): drop it.
+        window.localStorage.removeItem(wizardDraftKey)
+        return
       }
-      if (parsed.formData && typeof parsed.formData === 'object') {
-        setFormData(prev => ({ ...prev, ...(parsed.formData as Record<string, unknown>) }) as typeof prev)
+      wizardDraftSkipPersistRef.current = true
+      if (draft.formData) {
+        const restored = draft.formData
+        setFormData(prev => ({ ...prev, ...restored }) as typeof prev)
       }
-      if (parsed.step === 1 || parsed.step === 2 || parsed.step === 3) {
-        setCurrentStep(parsed.step as WizardStep)
-      }
+      if (draft.step) setCurrentStep(draft.step)
     } catch (err) {
       logger.warn('[COMPLETE_PROFILE] Failed to hydrate wizard draft', { error: err })
     }
-  }, [isWizardFlow, wizardDraftKey])
+  }, [isWizardFlow, wizardDraftKey, profile])
 
   // Wizard draft persistence: save form + step on every change, debounced
   // implicitly by React's batching. Skipped for non-wizard roles (club
   // already has its own draft mechanism via showClubClaimStep state, and
-  // brand has a separate persistKey-based BrandForm draft).
+  // brand has a separate persistKey-based BrandForm draft). Starts only after
+  // hydration so an empty first render never overwrites a saved draft.
   useEffect(() => {
     if (!isWizardFlow || !wizardDraftKey || !wizardDraftHydratedRef.current) return
+    if (wizardDraftSkipPersistRef.current) {
+      wizardDraftSkipPersistRef.current = false
+      return
+    }
     try {
       if (typeof window === 'undefined' || !window.localStorage) return
-      window.localStorage.setItem(
-        wizardDraftKey,
-        JSON.stringify({ step: currentStep, formData, savedAt: new Date().toISOString() }),
-      )
+      window.localStorage.setItem(wizardDraftKey, serializeWizardDraft(currentStep, formData))
     } catch {
       // Quota exceeded or storage blocked — silently no-op. The fallback
       // is the server-side prefill from `profiles` on next mount.
@@ -709,7 +688,7 @@ export default function CompleteProfile() {
   }, [currentStep, userRole, isWizardFlow, user?.id])
 
   const handleNext = () => {
-    if (userRole !== 'player' && userRole !== 'coach' && userRole !== 'umpire') return
+    if (userRole !== 'player' && userRole !== 'umpire') return
 
     // Flush any uncommitted language chip typing before validating so a user
     // who typed "English" into the input and clicked Continue doesn't get
@@ -762,15 +741,6 @@ export default function CompleteProfile() {
       if (!form.playingCategory) return 'Please select your playing category.'
       if (form.secondaryPosition && form.secondaryPosition === form.position) {
         return 'Primary and secondary positions must be different.'
-      }
-    } else if (userRole === 'coach') {
-      if (!form.fullName.trim()) return 'Full name is required.'
-      if (!form.city.trim()) return 'Base location is required.'
-      if (!form.nationalityCountryId) return 'Nationality is required.'
-      if (form.coachingCategories.length === 0) return 'Please select at least one coaching category.'
-      if (!form.coachSpecialization) return 'Please select your coaching specialization.'
-      if (form.coachSpecialization === 'other' && !form.coachSpecializationCustom.trim()) {
-        return 'Please enter your role title.'
       }
     } else if (userRole === 'umpire') {
       if (!form.fullName.trim()) return 'Full name is required.'
@@ -901,37 +871,6 @@ export default function CompleteProfile() {
           // player until they edit their settings — invisible damage.
           // Users can always toggle off later via the AvailabilityToggleStrip.
           open_to_play: true,
-        }
-      } else if (userRole === 'coach') {
-        const coachingCategories = formData.coachingCategories.length > 0 ? formData.coachingCategories : null
-        updateData = {
-          ...updateData,
-          nationality2_country_id: formData.nationality2CountryId,
-          position: formData.position || null,
-          // Phase 3: gender column is no longer authoritative for coaches.
-          // We don't try to derive a single value from a multi-select array.
-          // null gender during the 3a-3e gap means coaches signing up via the
-          // new UI won't auto-seed gender in Discovery — minor degradation.
-          gender: null,
-          coaching_categories: coachingCategories,
-          category_confirmation_needed: false,
-          current_club: formData.currentClub || null,
-          current_world_club_id: formData.currentWorldClubId,
-          coach_specialization: formData.coachSpecialization || null,
-          coach_specialization_custom: formData.coachSpecialization === 'other'
-            ? formData.coachSpecializationCustom.trim()
-            : null,
-          // Optional bio captured on step 3. Trim + nullify empties so the
-          // milestone scorer's `bio IS NOT NULL AND bio != ''` check
-          // correctly counts a populated bio.
-          bio: formData.coachBio.trim() || null,
-          // Same rationale as the player branch — default new coaches to
-          // open so they appear in availability-filtered Discovery results.
-          open_to_coach: true,
-          // Phase 1A.4 (v5 plan): coach dual-mode flag captured on step 3.
-          // Drives recruiter UX on CoachDashboard + DiscoverPage example
-          // ordering. Editable later in Settings.
-          coach_recruits_for_team: formData.coachRecruitsForTeam,
         }
       } else if (userRole === 'umpire') {
         // Use the flushed snapshot (see "Flush any uncommitted language chip
@@ -1082,7 +1021,7 @@ export default function CompleteProfile() {
       await pendingCleanup.flush()
 
       logger.debug('Auth store refreshed - profile now complete')
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       // Clear the wizard-draft persistence — the user finished, the
       // profile row is now authoritative. Without this, a returning user
       // who edits their profile elsewhere then somehow lands back on
@@ -1167,7 +1106,7 @@ export default function CompleteProfile() {
   if (userRole === 'player' && !profile?.onboarding_completed) {
     const finishPlayerSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('player')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'player' })
       submitSignupAttribution(user.id)
@@ -1188,12 +1127,37 @@ export default function CompleteProfile() {
     )
   }
 
+  // Coach set-up (Figma D6.5 / D6.6), two steps, step 2 skippable. Replaces
+  // the 3-step coach wizard; the guards above run first.
+  if (userRole === 'coach' && !profile?.onboarding_completed) {
+    const finishCoachSetup = async () => {
+      const current = useAuthStore.getState().profile ?? profile
+      markOnboardingCompletedOnDevice()
+      trackOnboardingComplete('coach')
+      trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'coach' })
+      // Identity stitching fallback (idempotent server-side; first write wins).
+      submitSignupAttribution(user.id)
+      const wallAction = consumeWallIntent()
+      if (wallAction) trackDbEvent('registration_from_wall', 'profile', user.id, { action: wallAction, role: 'coach' })
+      // Same race guard as the player / club set-ups.
+      setupFinishedRef.current = true
+      if (current) useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
+      navigate('/dashboard/profile', { replace: true })
+      void invalidateProfile({ userId: user.id, reason: 'coach-setup-complete' })
+    }
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-white" />}>
+        <CoachSetupFlow onFinished={finishCoachSetup} />
+      </Suspense>
+    )
+  }
+
   // Club set-up (D1.24) for phone clubs that haven't finished onboarding. The
   // guards above (auth, brand, already-onboarded → dashboard) run first.
   if (profile && showsClubSetup(userRole, isPhone, profile.onboarding_completed)) {
     const finishClubSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('club')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'club' })
       submitSignupAttribution(user.id)
@@ -1275,7 +1239,6 @@ export default function CompleteProfile() {
           <form onSubmit={handleSubmit} className="p-8 md:max-h-[80vh] md:overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
               {userRole === 'player' && 'Complete Player Profile'}
-              {userRole === 'coach' && 'Complete Coach Profile'}
               {userRole === 'umpire' && 'Complete Umpire Profile'}
               {userRole === 'club' && 'Complete Club Profile'}
             </h3>
@@ -1283,7 +1246,7 @@ export default function CompleteProfile() {
               {isWizardFlow ? `Step ${currentStep} of 3 — ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
             </p>
 
-            {/* Step indicator — player/coach only.
+            {/* Step indicator — umpire wizard only.
                 A11y: the visual circles + connectors are decorative; each step
                 is an <li> whose sr-only text announces its number, label, and
                 status so screen-reader users get the same information. The
@@ -1395,204 +1358,8 @@ export default function CompleteProfile() {
 
             <div className="space-y-4">
               {/* Players use components/onboarding/PlayerSetupFlow (account-first
-                  onboarding, 2026-10-03); this form is coach / umpire / club only. */}
-
-              {/* Coach Form — split across the 3 wizard steps. */}
-              {userRole === 'coach' && (
-                <>
-                  {currentStep === 1 && (
-                    <>
-                      <Input
-                        label="Full Name"
-                        icon={<User className="w-5 h-5" />}
-                        placeholder="Enter your full name"
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        required
-                      />
-
-                      <CountrySelect
-                        label="Nationality"
-                        value={formData.nationalityCountryId}
-                        onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                        placeholder="Select your nationality"
-                        showNationality
-                        required
-                      />
-
-                      <CountrySelect
-                        label="Secondary Nationality (Optional)"
-                        value={formData.nationality2CountryId}
-                        onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
-                        placeholder="Select secondary nationality"
-                        showNationality
-                      />
-                    </>
-                  )}
-
-                  {currentStep === 2 && (
-                    <>
-                      <LocationAutocomplete
-                        label="Base Location (City)"
-                        icon={<MapPin className="w-5 h-5" />}
-                        placeholder="Where are you currently based?"
-                        value={formData.city}
-                        onChange={handleLocationChange}
-                        onLocationSelect={handleLocationSelect}
-                        onLocationClear={handleLocationClear}
-                        isSelected={formData.locationSelected}
-                        required
-                      />
-
-                      <DateOfBirthPicker
-                        label="Date of Birth"
-                        required
-                        icon={<Calendar className="w-5 h-5" />}
-                        value={formData.dateOfBirth}
-                        onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
-                      />
-                    </>
-                  )}
-
-                  {currentStep === 3 && (
-                    <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Coaching Details</p>
-
-                      <div>
-                        <label id="coaching-categories-label" className="block text-sm font-medium text-gray-700 mb-2">
-                          Coaching Categories <span className="text-red-500">*</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-3">Which categories do you coach or want to work with?</p>
-                        <MultiCategorySelector
-                          idPrefix="coaching-categories"
-                          value={formData.coachingCategories.length > 0 ? formData.coachingCategories : null}
-                          onChange={(next) => setFormData({ ...formData, coachingCategories: next })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Specialization <span className="text-red-500">*</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-3">What best describes your professional role?</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {COACH_SPECIALIZATIONS.map((spec) => (
-                            <button
-                              key={spec.value}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, coachSpecialization: spec.value })}
-                              className={`p-3 rounded-lg border-2 text-left transition-all ${
-                                formData.coachSpecialization === spec.value
-                                  ? 'border-hockia-primary bg-purple-50'
-                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className={`text-sm font-medium ${
-                                  formData.coachSpecialization === spec.value ? 'text-hockia-primary' : 'text-gray-900'
-                                }`}>
-                                  {spec.label}
-                                </span>
-                                {formData.coachSpecialization === spec.value && (
-                                  <ChevronRight className="w-4 h-4 text-hockia-primary" />
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500 mt-0.5">{spec.description}</p>
-                            </button>
-                          ))}
-                        </div>
-                        {formData.coachSpecialization === 'other' && (
-                          <div className="mt-3">
-                            <Input
-                              label="Your Role Title"
-                              placeholder="e.g., Team Manager, Umpire Coach"
-                              value={formData.coachSpecializationCustom}
-                              onChange={(e) => setFormData({ ...formData, coachSpecializationCustom: e.target.value })}
-                              required
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <WorldClubSearch
-                        value={formData.currentClub}
-                        onChange={(v) => setFormData({ ...formData, currentClub: v })}
-                        onClubSelect={(club) => setFormData({
-                          ...formData,
-                          currentClub: club.club_name,
-                          currentWorldClubId: club.id,
-                        })}
-                        onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
-                        selectedClubId={formData.currentWorldClubId}
-                        label="Current Club (Optional)"
-                        placeholder="e.g., Holcombe Hockey Club"
-                      />
-
-                      {/* Coach professional bio. Optional but contributes to
-                          profile-strength scoring; collecting at onboarding
-                          makes the 100% milestone reachable in one pass. */}
-                      <div>
-                        <label htmlFor="coach-bio" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
-                          <span>About you <span className="text-gray-400 font-normal">(Optional)</span></span>
-                          <span className="text-xs font-normal text-gray-400">{formData.coachBio.length}/600</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-2">
-                          A short intro for clubs and players who view your profile. Coaching philosophy, experience, what you're known for.
-                        </p>
-                        <textarea
-                          id="coach-bio"
-                          value={formData.coachBio}
-                          onChange={(e) => setFormData({ ...formData, coachBio: e.target.value.slice(0, 600) })}
-                          placeholder="e.g., Former national team midfielder, now developing U18 talent at..."
-                          rows={4}
-                          maxLength={600}
-                          autoCapitalize="sentences"
-                          spellCheck
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent resize-none"
-                        />
-                      </div>
-
-                      {/* Phase 1A.4 (v5 plan): coach dual-mode opt-in question.
-                          Optional. Default = "Not right now" (treats coach as
-                          candidate-only). Saying yes opts into the recruiter
-                          UX on CoachDashboard + AI Discovery example ordering.
-                          Editable later in Settings. */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Do you also recruit players for a team? <span className="text-gray-400 font-normal">(Optional)</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-3">
-                          Many coaches scout players for their own teams. Saying yes unlocks recruiter shortcuts on your dashboard. You can change this anytime.
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, coachRecruitsForTeam: true })}
-                            className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                              formData.coachRecruitsForTeam
-                                ? 'border-hockia-primary bg-purple-50 text-hockia-primary'
-                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            Yes, I recruit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, coachRecruitsForTeam: false })}
-                            className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                              !formData.coachRecruitsForTeam
-                                ? 'border-hockia-primary bg-purple-50 text-hockia-primary'
-                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                            }`}
-                          >
-                            Not right now
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
+                  onboarding, 2026-10-03) and coaches components/onboarding/CoachSetupFlow;
+                  this form is umpire / club only. */}
 
               {/* Umpire Form — 3-step wizard. Steps 1–2 share the player/coach
                   identity + location inputs; Step 3 pivots to the credentials
@@ -1959,26 +1726,29 @@ export default function CompleteProfile() {
 
             <div className="flex gap-3 mt-6">
               {userRole === 'club' && (
-                <Button
-                  type="button"
+                <UiButton
+                  variant="secondary"
                   onClick={() => setShowClubClaimStep(true)}
                   disabled={loading}
-                  className="px-6 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  className="px-6"
                 >
                   Back
-                </Button>
+                </UiButton>
               )}
 
-              {/* Wizard Back button (player/coach, steps 2+) */}
+              {/* Wizard Back button (umpire, steps 2+) */}
               {isWizardFlow && currentStep > 1 && (
-                <Button
-                  type="button"
+                // Secondary (ui/Button): the legacy Button always carries
+                // btn-primary, so the white-outline classes on top gave dark
+                // text on the purple gradient (onboarding QA 2026-10-04).
+                <UiButton
+                  variant="secondary"
                   onClick={handleBack}
                   disabled={loading}
-                  className="px-6 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  className="px-6"
                 >
                   Back
-                </Button>
+                </UiButton>
               )}
 
               {/* Next (wizard flow, steps 1 and 2) */}

@@ -3,6 +3,73 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (night) · design agent
+
+- Coach set-up in the 2-step player style (replaces the 3-step CompleteProfile coach wizard):
+  - D6.5 `586:806` About you: name, date of birth, nationality, optional second nationality, base location.
+  - D6.6 `586:849` Your coaching: specialization, categories as Chips, optional current club, the recruit question as two Option cards, Open to coach switch, Skip.
+  - D6.6b `587:911` inline errors.
+  - Dev note `587:1030`.
+
+## 2026-10-05 (evening) · design agent
+
+- Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
+- New Tag / Meta `582:7949` (Neutral / Brand, with Label and Icon) for the club, position and specialist pills under a name. It replaces one-off frames on 04 Player (12), D2 (4) and D6 (2). Nine "Open to play" / "Women's" pills now use Tag (Positive / Brand).
+- New List item / Switch pair `583:608` (Push + Email switches). Settings › Notifications `254:753` uses it for the six "Tell me about" rows; Profile views is off on both.
+- Settings › Notifications: footer `584:7680` "Push and Email move together for now — each type has one setting." (as shipped). Code name for Tag / Meta: `ui/MetaPill.tsx`.
+- Profile v2 `152:1368`: Edit profile (Primary) and Public view (Secondary) are now Buttons, and the cover camera is a Glass icon button.
+- Still one-off, on purpose:
+  - Privacy radio rows `254:1170`/`254:1178`.
+  - The dark "View profile" button on the media viewers (`188:582`, `188:633`, `202:556`, `221:778`).
+  - The video rails on the profiles (Video thumbnail doesn't cover reels yet).
+
+## 2026-10-05 (later) · design agent
+
+- D6 · Coach v2 rebuilt on components. D6.1 `377:186` profile, as a club sees it:
+  - Light status bar and Glass cover buttons; "Open to coach" uses the Positive Tag.
+  - Add friend (Primary) and Message (Secondary) are Buttons.
+  - The coach key facts `419:108` use Card / Key fact `575:603`: Specialization, Coaches at, Available, Passport, Categories and Age. They sit 16 pt below the identity block.
+  - Section headers are components.
+- D6.2 `377:614` is the empty state for coaching roles:
+  - Header / Large title, Search field and the Segmented control Roles / Applied / My roles.
+  - Empty state "No coaching roles open right now".
+  - A List item / Switch for "Coaching role alerts".
+  - "Be ready" Menu rows (Trophy, Medal).
+  - Recently closed roles show a grey "No reply".
+- D6.3 `377:1430` is the recruiting coach's Home, built from Card / Your week (3 to review, 0 profile views, 1 open role) and 11 Feed component instances.
+- D6.4 `377:1814` is My roles:
+  - Warning Banner "3 applicants waiting for a reply".
+  - Pipeline Stats, one Primary "Review 3 applicants".
+  - Menu rows for Find players and Shortlist.
+
+## 2026-10-05 · design agent
+
+- D2 · 30-second profile aligned to the shipped screens and rebuilt on
+  components: D2.1 `395:83` and D2.2 `395:333` (new Card / Key fact `575:603`
+  = `KeyFactsGrid` cell; Glass cover buttons, Buttons, Check items, Fit badge,
+  Section headers, Video thumbnails, List item / Career, Skill items), D2.3
+  `395:563` and D2.4 `395:601` (Cancel/Save Nav bar = `CancelSaveBar`, Detail
+  rows, Link "+ Add …", List item / Switch, Check items, Callout consent).
+- D2.4 checklist: missing rows get their own "Add" link (separate 44 pt target, as
+  shipped); new frame D2.4b `578:424` for the no-date-of-birth state ("Add your
+  date of birth" card, Save disabled, shipped `DOB_REQUIRED_COPY`).
+- D2.4c `579:444` for the under-18 state ("Open to play" card with shipped
+  `UNDER_18_COPY`, no switch, Save disabled). Every D2.4 state now has a frame.
+- Copy: shipped visas hint ("…Add the country and, if it has one, when it
+  expires."); gender-neutral fit and references lines.
+- Founder ruling (2026-10-04): D5 reason lines are templates from profile
+  fields; AI only refines in D5.2 (replaces the September "AI-written" ruling).
+
+## 2026-10-04 (night) · design agent
+
+- D5 · Hockia suggests on components: D5.1 `398:83` (new Card / Suggestion
+  `572:559` with List item / Reason `572:558` Met / Missing; Fit badge; Muted
+  star = Shortlist; Tonal "Invite" — no longer five Primary buttons; Composer
+  "Ask Hockia…") and D5.2 `398:291` (Nav bar, outgoing Message bubble, List item
+  / Player Invite rows, Chips, Composer).
+- Reason templates and the AI answer are gender-neutral: "on the profile",
+  "relocation not stated", "on their profile".
+
 ## 2026-10-04 (evening) · design agent
 
 - Component pass on the remaining "04 · Player — Live" screens (batches A–E):

@@ -1,23 +1,21 @@
 import AssistantMessage from '@/components/discover/AssistantMessage'
+import { UserBubble } from '@/components/discover/UserBubble'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 
 interface DiscoverChatProps {
   messages: DiscoverChatMessage[]
 }
 
+/**
+ * The conversation (Figma 44:321): the member's question as a solid
+ * brand-primary bubble on the right (radius 16, small tail corner), every
+ * answer left-aligned with no avatar. No gradients anywhere.
+ */
 export default function DiscoverChat({ messages }: DiscoverChatProps) {
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {messages.map(msg => {
-        if (msg.role === 'user') {
-          return (
-            <div key={msg.id} className="flex justify-end">
-              <div className="max-w-[85%] sm:max-w-[75%] px-4 py-2.5 bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white rounded-2xl rounded-tr-md shadow-sm">
-                <p className="text-sm leading-relaxed">{msg.content}</p>
-              </div>
-            </div>
-          )
-        }
+        if (msg.role === 'user') return <UserBubble key={msg.id} text={msg.content} />
         return <AssistantMessage key={msg.id} msg={msg} />
       })}
     </div>

@@ -11,11 +11,11 @@ tokens but the layout is still built from one-off frames.
 | D1 · Club v2 — Recruiting | D1.1–D1.10 (`324:264`, `324:411`, `326:319`, `327:318`, `326:528`, `330:318`, `330:431`, `330:596`, `332:318`, `332:539`) | Rebuilt | Archive · D1 Recruiting baseline |
 | D1 · Club v2 — Profile | D1.11–D1.15 (`337:372`, `337:588`, `338:424`, `338:495`, `338:575`) | Rebuilt | Archive · D1 Profile & Network baseline |
 | D1 · Club v2 — Network & tabs | D1.16–D1.23 (`352:450`, `352:995`, `352:1290`, `353:502`, `353:718`, `353:809`, `353:893`, `355:528`) | Rebuilt | Archive · D1 Profile & Network baseline |
-| D2 · Core — 30-second profile | D2.1–D2.4 | Tokens only | — |
+| D2 · Core — 30-second profile | D2.1–D2.4 (`395:83`, `395:333`, `395:563`, `395:601`) | Rebuilt (matches shipped) | — |
 | D4 · Core — From yes to signed | D4.1–D4.6 (`390:3`, `390:249`, `390:557`, `390:647`, `390:936`, `390:980`) | Rebuilt | Archive · D4 baseline |
-| D5 · Core — Hockia suggests | — | Tokens only | — |
-| D6 · Coach v2 | — | Tokens only | — |
-| 04 · Player — Live | about 30 screens | Tokens only | — |
+| D5 · Core — Hockia suggests | D5.1–D5.2 (`398:83`, `398:291`) | Rebuilt | — |
+| D6 · Coach v2 | D6.1–D6.4 (`377:186`, `377:614`, `377:1430`, `377:1814`) + set-up D6.5–D6.6b (`586:806`, `586:849`, `587:911`) | Rebuilt | — |
+| 04 · Player — Live | about 75 screens (older v2 frames marked "[Superseded → …]") | On components (audited 2026-10-05); remaining one-offs listed in CHANGELOG | — |
 
 ## Notes on the rebuilt flows
 

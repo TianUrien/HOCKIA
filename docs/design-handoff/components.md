@@ -20,6 +20,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 
 | Component | Node | Variants / properties | Usage | Code counterpart |
 |---|---|---|---|---|
+| Tag / Meta | `582:7949` | Tone: Neutral, Brand · Label, Icon | Identity facts under a name: club (Shield), position (Target), specialist skill (Sparkle, Brand). Not tappable | `ui/MetaPill.tsx` (planned, tone neutral·brand, icon club·position·specialist) |
 | Tag | `459:2050` | Tone: Brand, Neutral, Positive, Warning, Gold · Label | New / Invited / audience labels (Brand), passive states (Neutral) | — |
 | Fit badge | `459:2043` | Fit: Strong, Possible | Club-only. Bar meter so meaning never relies on colour | `club/FitCard.tsx` (related) |
 | Callout | `460:23` | Text, Icon | One explanatory note per screen, at the end of the content | — |
@@ -49,6 +50,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Player | `460:1973` | Status: Invite, Applied, Saved, Scout · Name, Meta, Country, Evidence, Note, Show applied tag | Shortlist and Find players rows; actions in a trailing column, text truncates to one line (founder ruling) | — |
 | List item / Applicant | `460:2018` | Urgency: Default, Warning · Name, Meta, Country, Deadline, Show tag | Review queue; Warning at ≤ 5 days left | — |
 | List item / Menu | `470:168` | Label, Value, Icon | Rows inside a grouped card | — |
+| List item / Switch pair | `583:608` | Title, Description; two switches (Push, Email) | Settings › Notifications rows under a "Push · Email" header; transparent inside a grouped card. Both switches move together until per-channel flags exist (one `notify_<kind>` per type, founder ruling 2026-09-20) | Settings Notifications |
 | List item / Switch | `472:186` | Title, Description | Setting with a switch | `SettingsRow` + `SettingsSwitch` in `settings/settingsUi.tsx` (Settings, Confirm signing, Set up Open to play) |
 | List item / Career | `468:133` | Team, Role, When, Achievement | Career entries | `profile/mobile/CareerScreen.tsx` |
 | Detail row | `467:128` | Label, Value, Show leading | Facts tables | — |

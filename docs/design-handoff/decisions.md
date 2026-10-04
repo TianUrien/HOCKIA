@@ -4,6 +4,8 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-05 | Coach set-up: "Do you recruit players for a team?" is two option cards, required, nothing preselected (shipped: optional, default "Not right now"). `coach_recruits_for_team` stays boolean; unanswered is client-only | Founder |
+| 2026-10-04 | D5 Hockia suggests: reason lines are templates filled from profile fields (no free AI text); AI only filters and re-orders in the D5.2 refine chat. Replaces the September "AI-written reasons" ruling | Founder |
 | 2026-10-02 | Package tiles keep the shipped colours (Insurance red, Car purple, Visa cyan…); Figma adopts them and the code moves from raw hex to tokens | Founder |
 | 2026-10-02 | Avatar sizes follow code: 32 headers, 52 rows, 56 cards and sheets, 80 page crests; organisations are rounded squares on white | Design, matches EntityAvatar |
 | 2026-10-02 | Player row: Tonal "Invite" in a trailing column; text truncates to one line ("Invite to apply" is the accessible name) | Founder |
