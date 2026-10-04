@@ -11,7 +11,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 |---|---|---|---|---|
 | Button | `459:146` | Style: Primary, Tonal, Secondary, Tertiary, Link, Destructive, Danger · Size: Large 48, Small 36 · State: Default, Hover, Pressed, Focus, Disabled, Loading · Label, Show icon, Icon | One Primary per screen, sheet or card. Tonal for actions repeated in rows. Secondary = equal-weight alternative. Tertiary = neutral low-emphasis text. Link = brand inline text. Destructive (soft) opens a negative action; Danger (solid) confirms it | `ui/Button.tsx` (`ui/buttonClasses.ts` for link-shaped CTAs) |
 | Icon button | `459:171` | Style: Muted 36, Tonal 36, Ghost 44, Glass 36 · State · Icon | Muted for secondary row actions, Tonal for a selected toggle, Ghost in nav bars | `ui/IconButton.tsx` (ghost, muted, tonal; no glass yet) |
-| Chip | `459:184` | Selected · State · Label | Filters and single-choice options | — |
+| Chip | `459:184` | Selected · State · Label | Filters and single-choice options. Selected = brand/soft fill + brand/primary text | `ui/Chip.tsx` |
 | Segmented control | `470:122` (item `470:121`) | 2–4 segments, Selected per segment | Mutually exclusive options | `ui/SegmentedControl.tsx` |
 | Switch | `472:185` | On | iOS-style on/off | `SettingsSwitch` in `settings/settingsUi.tsx` |
 | Text field | `472:243` | Type: Input, Select, Text area · State: Default, Focus, Disabled · Value, Leading icon | Muted fill at rest, white with brand border on focus | `ui/fieldClasses.ts` (`fieldInput`, `fieldSelect`); the pickers' `appearance="field"` |

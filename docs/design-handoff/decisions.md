@@ -4,6 +4,8 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-05 | Selected Chip = soft purple (brand/soft fill, brand/primary text; pressed brand/soft-pressed). Replaces Figma's black and the code's solid purple, so the one Primary stays the only solid-purple shape | Founder |
+| 2026-10-05 | Two text styles join the scale to name existing one-offs: Title XL 28 Bold / 34 (screen titles, profile names) and Figure 26 Semibold / 31 (stat numbers). 24 pt sheet names use Title S (22) | Founder |
 | 2026-10-05 | Coach set-up: "Do you recruit players for a team?" is two option cards, required, nothing preselected (shipped: optional, default "Not right now"). `coach_recruits_for_team` stays boolean; unanswered is client-only | Founder |
 | 2026-10-04 | D5 Hockia suggests: reason lines are templates filled from profile fields (no free AI text); AI only filters and re-orders in the D5.2 refine chat. Replaces the September "AI-written reasons" ruling | Founder |
 | 2026-10-02 | Package tiles keep the shipped colours (Insurance red, Car purple, Visa cyan…); Figma adopts them and the code moves from raw hex to tokens | Founder |
