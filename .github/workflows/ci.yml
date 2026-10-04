@@ -297,16 +297,19 @@ jobs:
           # per-change growth warning below flags any single change that adds a lot.
           # Budget bumped 4600KB → 4800KB on 2026-09-27 (founder-approved) — Club v2
           # leaves 9+10 took raw to 4614KB. First-load gate (480KB) is unchanged.
+          # Budget bumped 4800KB → 4900KB on 2026-10-04 (founder-approved) — the
+          # player screens, coach set-up, Hockia suggests and the coach roles tab
+          # took raw to 4806KB. First-load gate (480KB) is unchanged (459KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 4812800 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4800KB ($(( TOTAL_KB * 100 / 4800 ))%)"
+          if [ "$TOTAL_JS" -gt 4915200 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4900KB ($(( TOTAL_KB * 100 / 4900 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 4.8MB
-          if [ "$TOTAL_JS" -gt 4915200 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4800KB"
+          # Secondary gate: raw total must stay under 4.9MB
+          if [ "$TOTAL_JS" -gt 5017600 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4900KB"
             exit 1
           fi
 
