@@ -3,6 +3,24 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 · design agent
+
+- D2 · 30-second profile aligned to the shipped screens and rebuilt on
+  components: D2.1 `395:83` and D2.2 `395:333` (new Card / Key fact `575:603`
+  = `KeyFactsGrid` cell; Glass cover buttons, Buttons, Check items, Fit badge,
+  Section headers, Video thumbnails, List item / Career, Skill items), D2.3
+  `395:563` and D2.4 `395:601` (Cancel/Save Nav bar = `CancelSaveBar`, Detail
+  rows, Link "+ Add …", List item / Switch, Check items, Callout consent).
+- D2.4 checklist: missing rows get their own "Add" link (separate 44 pt target, as
+  shipped); new frame D2.4b `578:424` for the no-date-of-birth state ("Add your
+  date of birth" card, Save disabled, shipped `DOB_REQUIRED_COPY`).
+- D2.4c `579:444` for the under-18 state ("Open to play" card with shipped
+  `UNDER_18_COPY`, no switch, Save disabled). Every D2.4 state now has a frame.
+- Copy: shipped visas hint ("…Add the country and, if it has one, when it
+  expires."); gender-neutral fit and references lines.
+- Founder ruling (2026-10-04): D5 reason lines are templates from profile
+  fields; AI only refines in D5.2 (replaces the September "AI-written" ruling).
+
 ## 2026-10-04 (night) · design agent
 
 - D5 · Hockia suggests on components: D5.1 `398:83` (new Card / Suggestion
