@@ -78,11 +78,14 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white lg:hidden" data-testid="suggest-refine-screen">
+    // Full screen above the tab bar, like Hockia AI (DiscoverPage): Figma D5.2 has no tab bar.
+    <div className="fixed inset-x-0 top-0 z-30 flex h-[100dvh] flex-col bg-white lg:hidden" data-testid="suggest-refine-screen">
+      <div className="shrink-0 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
       <DetailNavBar parent={REFINE_BACK} title={REFINE_TITLE} showParent fallbackPath={`/dashboard/opportunities/${roleId}/suggested`} />
+      </div>
       {limitReason && <InviteLimitNotice reason={limitReason} />}
 
-      <div className="flex-1 px-4 pb-28 pt-3">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
         <div className="flex flex-col gap-4">
           {turns.map((t, ti) => {
             const last = ti === turns.length - 1
@@ -155,7 +158,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
+      <div className="shrink-0 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
         <form className="flex items-end gap-2 px-4 py-2" onSubmit={(e) => { e.preventDefault(); send(input) }}>
           <label className="min-w-0 flex-1">
             <span className="sr-only">Ask Hockia AI</span>

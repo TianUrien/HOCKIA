@@ -54,7 +54,7 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-10 lg:hidden" data-testid="hockia-suggests-screen">
+    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="hockia-suggests-screen">
       <DetailNavBar parent={backLabel} fallbackPath={`/dashboard/opportunities/${roleId}/applicants`} />
       <div className="px-5 pb-3 pt-0.5">
         <h1 className="flex items-center gap-2 text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">

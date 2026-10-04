@@ -71,6 +71,8 @@ export default function MobileBottomNav() {
       /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname) ||
       // Edit club profile: back / Done, no tab bar (Figma 04 Club D1.27).
       location.pathname === '/dashboard/club/edit' ||
+      // D5.2 Hockia AI refine over a role's suggestions: full screen with its own composer (Figma 398:291).
+      /^\/dashboard\/opportunities\/[^/]+\/suggested\/ask$/.test(location.pathname) ||
       // D4.5 Confirm signing: full screen with its own Yes / Not yet (Figma 390:936).
       /^\/applications\/[^/]+\/signing$/.test(location.pathname)
     setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
