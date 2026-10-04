@@ -5,7 +5,8 @@
  *
  * Player: position · plays at (+ league) · available · passport (+ EU, + permit
  *         line for recruiters) · video · age.
- * Coach:  specialization · categories · current role · available · passport · age.
+ * Coach:  specialization · coaches at (+ current role) · available (+ relocation)
+ *         · passport (+ EU) · categories · age (Figma D6.1 377:186, DEV NOTE 378:306).
  *
  * Viewer modes:
  *  - 'owner'     gaps read "Not set" and carry the Add action that opens the
@@ -27,11 +28,12 @@ import { categoriesToDisplay } from '@/lib/hockeyCategories'
 import { coachSpecialtyLabel } from '@/lib/identity'
 import { AVAILABILITY_DURATION_LABELS, isAvailabilityDuration } from '@/lib/availabilityDuration'
 import { workPermitStatus, workPermitTypeLabel, type WorkPermitStatus } from '@/lib/workPermits'
+import { RELOCATION_LABEL } from '@/lib/candidateIntent'
 
 export type KeyFactsViewer = 'owner' | 'recruiter' | 'public'
 
 export type PlayerKeyFactId = 'position' | 'plays_at' | 'available' | 'passport' | 'video' | 'age'
-export type CoachKeyFactId = 'specialization' | 'categories' | 'current_role' | 'available' | 'passport' | 'age'
+export type CoachKeyFactId = 'specialization' | 'coaches_at' | 'available' | 'passport' | 'categories' | 'age'
 
 /** Owner-only Add actions; the UI maps each to its editor. */
 export type KeyFactAction =
@@ -44,7 +46,6 @@ export type KeyFactAction =
   | 'add_video'
   | 'add_specialization'
   | 'add_categories'
-  | 'add_current_role'
 
 export interface KeyFactLine {
   text: string
@@ -123,6 +124,8 @@ export interface CoachKeyFactsInput {
   openToCoach: boolean | null
   availableFrom: string | null
   availabilityDuration?: string | null
+  /** profiles.relocation_willingness (relocate | home_only | open_to_discuss). */
+  relocationWillingness?: string | null
   passports: PassportInput[]
   age: number | null
 }
@@ -135,6 +138,7 @@ export interface KeyFactsOptions {
 export const NOT_GIVEN = 'Not given'
 export const NOT_SET = 'Not set'
 export const SELF_REPORTED_LABEL = 'self-reported'
+export const ANY_CATEGORY_LABEL = 'Any category'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -381,44 +385,62 @@ export function buildCoachKeyFacts(input: CoachKeyFactsInput, options: KeyFactsO
       })
     : missingFact('specialization', 'Specialization', viewer, 'add_specialization')
 
-  const categoriesText = categoriesToDisplay(input.categories)
-  const categories = categoriesText
-    ? fact('categories', 'Categories', { value: categoriesText })
-    : missingFact('categories', 'Categories', viewer, 'add_categories')
+  // Categories: a coach with none picked coaches any category (the 'any'
+  // sentinel reads the same), so the tile is never a gap. The owner can still
+  // open the editor from it.
+  const categories = fact<CoachKeyFactId>('categories', 'Categories', {
+    value: categoriesToDisplay(input.categories) || ANY_CATEGORY_LABEL,
+    action: viewer === 'owner' && !(input.categories && input.categories.length > 0) ? 'add_categories' : null,
+  })
 
+  // Coaches at: the current (world) club, with the current role under it.
   const role = clean(input.currentRole)
   const club = clean(input.currentClubName)
-  const currentRole = role || club
-    ? fact('current_role', 'Current role', { value: role ?? club ?? '', detail: role && club ? club : null })
-    : missingFact('current_role', 'Current role', viewer, 'add_current_role')
+  const coachesAt = club
+    ? fact<CoachKeyFactId>('coaches_at', 'Coaches at', { value: club, detail: role ? `${role} · current role` : null })
+    : role
+      ? fact<CoachKeyFactId>('coaches_at', 'Coaches at', {
+          value: viewer === 'owner' ? NOT_SET : NOT_GIVEN,
+          missing: true,
+          detail: `${role} · current role`,
+          action: viewer === 'owner' ? 'add_club' : null,
+        })
+      : missingFact<CoachKeyFactId>('coaches_at', 'Coaches at', viewer, 'add_club')
 
+  // Available: the start date leads; the relocation answer sits under it.
   const avail = availabilityLines(input.availableFrom, input.availabilityDuration ?? null, viewer, today)
+  const relocation = clean(input.relocationWillingness)
+  const relocationLine = relocation ? RELOCATION_LABEL[relocation] ?? null : null
+  const day = formatDay(input.availableFrom)
+  const dateLine = day && input.availableFrom ? (isOnOrBeforeToday(input.availableFrom, today) ? 'Available now' : `From ${day}`) : null
   let available: KeyFact<CoachKeyFactId>
-  if (avail.value) {
+  if (dateLine) {
+    available = fact('available', 'Available', { value: dateLine, detail: relocationLine })
+  } else if (avail.value) {
     available = fact('available', 'Available', {
       value: avail.value,
-      detail: avail.detail,
-      detailMissing: avail.detailMissing,
+      detail: relocationLine ?? avail.detail,
+      detailMissing: relocationLine ? false : avail.detailMissing,
       action: avail.action,
     })
   } else if (input.openToCoach === true) {
     available = fact('available', 'Available', {
       value: 'Open to coach',
-      detail: viewer === 'owner' ? 'No start date' : 'Start date not given',
-      detailMissing: true,
+      detail: relocationLine ?? (viewer === 'owner' ? 'No start date' : 'Start date not given'),
+      detailMissing: !relocationLine,
       action: viewer === 'owner' ? 'add_date' : null,
     })
   } else {
-    available = missingFact('available', 'Available', viewer, 'add_availability')
+    available = { ...missingFact<CoachKeyFactId>('available', 'Available', viewer, 'add_availability'), detail: relocationLine }
   }
 
   return [
     specialization,
-    categories,
-    currentRole,
+    coachesAt,
     available,
     // Visas & permits are a player table; coaches show the passport line only.
     passportFact('passport', input.passports, undefined, viewer, today),
+    categories,
     ageFact('age', input.age, viewer),
   ]
 }

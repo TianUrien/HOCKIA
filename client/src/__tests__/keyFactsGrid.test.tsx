@@ -47,18 +47,18 @@ describe('PermitAttentionRow', () => {
 
 describe('KeyFactsGrid · coach', () => {
   const coach = { specialization: 'head_coach', categories: ['adult_women'], currentClubName: 'Old Lions', openToCoach: true, availableFrom: null, passports: [], age: 41 }
-  it('Current role shows the role with the club under it', () => {
+  it('Coaches at shows the club with the current role under it', () => {
     render(<KeyFactsGrid facts={buildCoachKeyFacts({ ...coach, currentRole: 'Head coach, U21 women' }, { viewer: 'public', today })} />)
-    const tile = screen.getByTestId('key-fact-current_role')
-    expect(tile.textContent).toContain('Head coach, U21 women')
+    const tile = screen.getByTestId('key-fact-coaches_at')
     expect(tile.textContent).toContain('Old Lions')
+    expect(tile.textContent).toContain('Head coach, U21 women · current role')
   })
-  it('no role → the club; nothing → "Not set" with Add for the owner', () => {
+  it('no role → the club alone; nothing → "Not set" with Add club for the owner', () => {
     const { unmount } = render(<KeyFactsGrid facts={buildCoachKeyFacts({ ...coach, currentRole: null }, { viewer: 'public', today })} />)
-    expect(screen.getByTestId('key-fact-current_role').textContent).toContain('Old Lions')
+    expect(screen.getByTestId('key-fact-coaches_at').textContent).toContain('Old Lions')
     unmount()
     render(<KeyFactsGrid facts={buildCoachKeyFacts({ ...coach, currentRole: null, currentClubName: null }, { viewer: 'owner', today })} onAction={vi.fn()} />)
-    expect(screen.getByTestId('key-fact-current_role').textContent).toContain('Not set')
-    expect(screen.getByText('Add current role')).toBeTruthy()
+    expect(screen.getByTestId('key-fact-coaches_at').textContent).toContain('Not set')
+    expect(screen.getByText('Add club')).toBeTruthy()
   })
 })

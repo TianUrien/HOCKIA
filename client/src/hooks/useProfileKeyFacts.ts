@@ -97,12 +97,13 @@ export function useProfileKeyFacts(opts: {
         specialization: profile.coach_specialization ?? null,
         specializationCustom: profile.coach_specialization_custom ?? null,
         categories: profile.coaching_categories ?? null,
-        // Falls back to the current club, then "Not given" / "Not set" (lib/keyFacts).
+        // "Coaches at": the current club, with the current role under it.
         currentRole: coachRole,
         currentClubName: profile.current_club ?? null,
         openToCoach: profile.open_to_coach ?? null,
         availableFrom: profile.available_from ?? null,
         availabilityDuration: profile.availability_duration ?? null,
+        relocationWillingness: (profile as { relocation_willingness?: string | null }).relocation_willingness ?? null,
         passports,
         age,
       }, { viewer })

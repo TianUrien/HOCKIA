@@ -17,7 +17,6 @@ const ACTION_LABEL: Record<KeyFactAction, string> = {
   add_video: 'Add video',
   add_specialization: 'Add specialization',
   add_categories: 'Add categories',
-  add_current_role: 'Add current role',
 }
 
 export function keyFactActionLabel(fact: KeyFact): string | null {
