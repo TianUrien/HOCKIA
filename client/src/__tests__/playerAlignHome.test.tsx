@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 const phone = { value: true }
+// CI's unit job has no Supabase env: never load the real client.
+vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn(), auth: { getSession: vi.fn() } } }))
 vi.mock('@/lib/auth', () => ({ useAuthStore: (sel?: (s: unknown) => unknown) => { const s = { profile: { id: 'p1', role: 'player' } }; return sel ? sel(s) : s } }))
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => phone.value }))
 vi.mock('@/hooks/useWeeklyVisibility', () => ({ useWeeklyVisibility: () => ({ loading: false, visibility: { views_7d: 12 } }) }))
