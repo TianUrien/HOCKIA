@@ -3,6 +3,19 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (late) · design agent
+
+- Whole-file QA pass on the live pages (03, 04, D1–D6):
+  - About 245 raw colours inside screens and components are now bound to tokens: overlays and play badges, glass buttons, scrims, hotspots, the link and grey text on First run, and the composer avatar. Every original opacity is kept.
+  - About 75 unstyled text layers now use the closest Hockia text style.
+- New text styles Hockia/Title XL (28 Bold / 34, −1%) and Hockia/Figure (26 Semibold / 31, −1%). They are applied to screen titles, profile names and the Your week / Week tile numbers. Three 24 pt sheet names move to Title S.
+- Known exceptions, on purpose:
+  - The Apple sign-in button stays black and the Google logo keeps its brand colours.
+  - The status-bar "9:41" is device chrome.
+  - Four 20 pt regular texts (compose placeholders, the large reference quote) and one 16 pt medium row label have no matching style.
+  - The lavender ring at `218:612` stays as it is.
+  - Docs-only labels and dev notes are not text-styled.
+
 ## 2026-10-05 (evening) · design agent
 
 - Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
