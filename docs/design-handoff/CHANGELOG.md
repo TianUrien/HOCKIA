@@ -3,6 +3,14 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (review) · design agent
+
+- D5 code review (PR #208 screenshots) against D5.1 `398:83` and D5.2 `398:291`: matches. Follow-ups for code:
+  - Team tag colour (founder ruling).
+  - Status filter pills on role detail follow the soft-purple Chip.
+  - Hide the composer when there are no suggestions.
+  - The send icon (code arrow-up vs Figma paper plane) is accepted as is.
+
 ## 2026-10-05 (late) · design agent
 
 - Whole-file QA pass on the live pages (03, 04, D1–D6):
