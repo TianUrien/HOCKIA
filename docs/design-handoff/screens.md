@@ -13,7 +13,7 @@ tokens but the layout is still built from one-off frames.
 | D1 · Club v2 — Network & tabs | D1.16–D1.23 (`352:450`, `352:995`, `352:1290`, `353:502`, `353:718`, `353:809`, `353:893`, `355:528`) | Rebuilt | Archive · D1 Profile & Network baseline |
 | D2 · Core — 30-second profile | D2.1–D2.4 | Tokens only | — |
 | D4 · Core — From yes to signed | D4.1–D4.6 (`390:3`, `390:249`, `390:557`, `390:647`, `390:936`, `390:980`) | Rebuilt | Archive · D4 baseline |
-| D5 · Core — Hockia suggests | — | Tokens only | — |
+| D5 · Core — Hockia suggests | D5.1–D5.2 (`398:83`, `398:291`) | Rebuilt | — |
 | D6 · Coach v2 | — | Tokens only | — |
 | 04 · Player — Live | about 30 screens | Tokens only | — |
 

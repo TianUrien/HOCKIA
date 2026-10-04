@@ -3,6 +3,16 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-04 (night) · design agent
+
+- D5 · Hockia suggests on components: D5.1 `398:83` (new Card / Suggestion
+  `572:559` with List item / Reason `572:558` Met / Missing; Fit badge; Muted
+  star = Shortlist; Tonal "Invite" — no longer five Primary buttons; Composer
+  "Ask Hockia…") and D5.2 `398:291` (Nav bar, outgoing Message bubble, List item
+  / Player Invite rows, Chips, Composer).
+- Reason templates and the AI answer are gender-neutral: "on the profile",
+  "relocation not stated", "on their profile".
+
 ## 2026-10-04 (later) · design agent
 
 - Component pass on "Player · Refined baseline v1":
