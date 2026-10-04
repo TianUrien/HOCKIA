@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Film, Lock, Plus, Trash2, Video, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Film, Lock, Trash2, Upload, Video, X } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import UploadVideoModal from '@/components/media/UploadVideoModal'
 import FullGameVideoFormModal from '@/components/FullGameVideoFormModal'
@@ -67,8 +68,8 @@ function Section({ title, action, onAction, secondary, onSecondary, children }: 
       <div className="flex items-center justify-between">
         <h2 className="text-body font-semibold text-ink-1">{title}</h2>
         <span className="flex items-center gap-4">
-          {secondary && <button type="button" onClick={onSecondary} className="text-row font-semibold text-ink-2">{secondary}</button>}
-          {action && <button type="button" onClick={onAction} className="text-row font-semibold text-hockia-primary">{action}</button>}
+          {secondary && <button type="button" onClick={onSecondary} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-ink-2">{secondary}</button>}
+          {action && <button type="button" onClick={onAction} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="media-section-link">{action}</button>}
         </span>
       </div>
       {children}
@@ -217,7 +218,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
             <Lock className="h-4 w-4 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
             <span className="flex-1 text-row text-ink-1">Who can watch</span>
             <span className="text-row text-ink-2">{fullMatchAudience}</span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />
           </button>
           {fullMatches.map((v) => <VideoCard key={v.id} video={v} onPlay={() => setPlaying(v)} onVisibility={() => setVisibilityFor(v)} onDelete={() => setPending({ kind: 'video', video: v })} />)}
           {fullGames.videos.map((l) => (
@@ -228,9 +229,10 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
             </div>
           ))}
           {!fullMatches.length && !fullGames.videos.length && !videos.loading && (
-            <button type="button" onClick={() => setFullMatchChoice(true)} className="flex items-center gap-3.5 rounded-card bg-hockia-soft p-4 text-left">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white"><Video className="h-5 w-5" strokeWidth={1.8} /></span>
-              <span className="min-w-0"><span className="block text-row font-semibold text-hockia-primary">Upload a full match</span><span className="block text-secondary leading-[18px] text-ink-2">60+ minutes, any quality. It is the first thing clubs ask for — and the one thing missing from your profile.</span></span>
+            // The one highlighted empty slot (Figma 145:758): dashed, brand soft.
+            <button type="button" onClick={() => setFullMatchChoice(true)} className="flex items-center gap-3.5 rounded-card border border-dashed border-brand-primary bg-brand-soft p-4 text-left" data-testid="media-full-match-empty">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white text-brand-primary"><Upload className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /></span>
+              <span className="min-w-0"><span className="block text-row font-semibold text-brand-primary">Upload a full match</span><span className="block text-secondary leading-[18px] text-ink-2">60+ minutes, any quality. It’s the first thing clubs ask for.</span></span>
             </button>
           )}
         </Section>
@@ -259,9 +261,11 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
               </div>
             ))}
             {!reordering && (
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={gallery.busy} aria-label="Add photos" className="flex aspect-square items-center justify-center rounded-[10px] bg-surface-grouped text-ink-2 disabled:opacity-60">
-                {gallery.busy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : <Plus className="h-6 w-6" strokeWidth={1.8} />}
-              </button>
+              <div className="flex aspect-square items-start">
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={gallery.busy} aria-label="Add photos" className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'px-2' })} data-testid="media-add-photo">
+                  {gallery.busy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : 'Add photo'}
+                </button>
+              </div>
             )}
           </div>
           {reordering && <p className="text-caption text-ink-3">Use the arrows to arrange; the first photo is your cover. Tap Done to save{stagedDeletes.size ? ` and remove ${stagedDeletes.size === 1 ? '1 photo' : `${stagedDeletes.size} photos`}` : ''}, or Cancel to keep everything as it was.</p>}
