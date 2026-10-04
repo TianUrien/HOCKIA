@@ -20,6 +20,8 @@ import { RELOCATION_LABEL } from '@/lib/candidateIntent'
 import { careerSpan, flagForCountryName, isCurrentEntry } from '@/lib/careerCopy'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { cn } from '@/lib/utils'
+import { dayFirst } from '@/lib/dayFirst'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import type { UserPostFeedItem } from '@/types/homeFeed'
 import { VideoLockBadge } from './VideoLockBadge'
@@ -81,9 +83,8 @@ function SectionHeader({ title, count, action, onAction }: { title: string; coun
         {typeof count === 'number' && <span className="font-semibold text-ink-3"> · {count}</span>}
       </h2>
       {action && (
-        <button type="button" onClick={onAction} className="flex items-center gap-0.5 text-row font-semibold text-hockia-primary">
+        <button type="button" onClick={onAction} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="section-header-action">
           {action}
-          {action.startsWith('See all') && <ChevronRight className="h-4 w-4" strokeWidth={2} />}
         </button>
       )}
     </div>
@@ -132,7 +133,7 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
   const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(' · ') : humanizeToken(reference.relationshipType)
   const avatar = p?.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null
   return (
-    <button type="button" onClick={onOpen} className="w-full rounded-card border border-gold-line bg-white p-3.5 text-left">
+    <button type="button" onClick={onOpen} className="w-full rounded-card border border-gold-line bg-white p-3.5 text-left" data-testid="reference-card">
       <div className="flex items-center gap-3">
         <EntityAvatar src={avatar} name={name} role={p?.role} size={40} />
         <div className="min-w-0 flex-1">
@@ -141,10 +142,10 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
       </div>
-      {reference.endorsementText && <p className="mt-2.5 line-clamp-3 text-row leading-[21px] text-ink-1">“{reference.endorsementText}”</p>}
+      {reference.endorsementText && <p className="mt-2.5 line-clamp-4 text-row leading-[21px] text-ink-1" data-testid="reference-quote">“{reference.endorsementText}”</p>}
       <div className="mt-2.5 flex items-center justify-between">
         <span className="flex items-center gap-1 text-caption font-semibold text-gold"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Verified · written on Hockia</span>
-        {reference.acceptedAt && <span className="text-caption text-ink-3">{monthYear(reference.acceptedAt)}</span>}
+        {reference.acceptedAt && <span className="text-caption text-ink-3">{dayFirst(reference.acceptedAt, { year: 'always' })}</span>}
       </div>
     </button>
   )
@@ -160,20 +161,16 @@ export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: S
   const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? 'representative team' : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
   const crest = entry.worldClub?.avatar_url ? getImageUrl(entry.worldClub.avatar_url, 'avatar-sm') ?? entry.worldClub.avatar_url : null
   return (
-    <div className="flex gap-3">
+    <div className={cn('flex gap-3', !last && 'pb-3')} data-testid="career-row" data-current={isNow || undefined}>
       <div className="flex w-10 shrink-0 flex-col items-center">
         {isRep && !crest ? (
           <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-hockia-soft text-hockia-primary"><Flag className="h-[18px] w-[18px]" strokeWidth={2} /></span>
         ) : (
           <EntityAvatar src={crest} name={entry.clubName} role="club" size={40} />
         )}
-        {!last && <span className="mt-1 w-px flex-1 bg-line" />}
       </div>
-      <div className={cn('min-w-0 flex-1', !last && 'pb-4')}>
-        <div className="flex items-center gap-2">
-          <p className="truncate text-row font-semibold text-ink-1">{entry.clubName}</p>
-          {isNow && <span className="shrink-0 rounded-full bg-positive-soft px-2 py-0.5 text-caption font-semibold text-positive">Now</span>}
-        </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-row font-semibold text-ink-1">{entry.clubName}</p>
         {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
         {meta && <p className="truncate text-secondary text-ink-3">{meta}</p>}
         {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
@@ -199,9 +196,9 @@ export function PostTile({ post, onOpen }: { post: UserPostFeedItem; onOpen: () 
 function FactRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null
   return (
-    <div className="flex items-start gap-3 py-2.5">
-      <span className="w-[92px] shrink-0 text-row text-ink-3">{label}</span>
-      <span className="min-w-0 flex-1 truncate text-row text-ink-1">{value}</span>
+    <div className="flex items-center justify-between gap-3 py-3" data-testid="detail-row">
+      <span className="shrink-0 text-row text-ink-2">{label}</span>
+      <span className="min-w-0 truncate text-right text-row font-semibold text-ink-1">{value}</span>
     </div>
   )
 }
@@ -342,8 +339,8 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
             : <p className="text-row leading-[21px] text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>)}
           {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
           {referenceCount > 2 && (
-            <button type="button" onClick={onOpenReferences} className="flex h-[46px] items-center justify-center gap-1 rounded-full bg-hockia-soft text-row font-semibold text-hockia-primary">
-              See all {referenceCount} references <ChevronRight className="h-4 w-4" strokeWidth={2} />
+            <button type="button" onClick={onOpenReferences} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="see-all-references">
+              See all {referenceCount} references
             </button>
           )}
         </section>
@@ -389,7 +386,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
         <section className="flex flex-col gap-2" data-testid="profile-about-section">
           <SectionHeader title="About" action={owner ? 'Edit' : null} onAction={onEdit} />
           {bio ? <p className="whitespace-pre-line text-row leading-[21px] text-ink-1">{bio}</p> : owner && empty('Write a short bio', onEdit)}
-          <div className="divide-y divide-line">
+          <div className="divide-y divide-line border-y border-line">
             <FactRow label="Category" value={category} />
             <FactRow label="Relocation" value={relocation} />
           </div>
