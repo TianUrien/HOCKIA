@@ -144,6 +144,7 @@ const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/Adm
 const AdminAIOpinions = lazyWithRetry(() => import('@/features/admin/pages/AdminAIOpinions').then(m => ({ default: m.AdminAIOpinions })))
 const AdminFeedback = lazyWithRetry(() => import('@/features/admin/pages/AdminFeedback').then(m => ({ default: m.AdminFeedback })))
 const AdminAppRatings = lazyWithRetry(() => import('@/features/admin/pages/AdminAppRatings').then(m => ({ default: m.AdminAppRatings })))
+const AdminSpamSignals = lazyWithRetry(() => import('@/features/admin/pages/AdminSpamSignals').then(m => ({ default: m.AdminSpamSignals })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
 const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
@@ -634,6 +635,7 @@ function App() {
                   <Route path="data-issues" element={<AdminDataIssues />} />
                   <Route path="directory" element={<AdminDirectory />} />
                   <Route path="reports" element={<AdminReports />} />
+                  <Route path="spam-signals" element={<AdminSpamSignals />} />
                   <Route path="audit-log" element={<AdminAuditLog />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>

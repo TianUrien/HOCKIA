@@ -10,6 +10,7 @@ import { MessageList } from './components/MessageList'
 import { NewMessagesToast } from './components/NewMessagesToast'
 import { Composer } from './components/Composer'
 import { EmptyState } from './components/EmptyState'
+import { RemovedAccountNotice } from './components/RemovedAccountNotice'
 import type { Conversation, ChatMessageEvent } from '@/types/chat'
 
 const NEW_MESSAGE_DISTANCE_THRESHOLD = 120
@@ -353,6 +354,11 @@ export default function ChatWindowV2({
         conversationId={conversation.id}
       />
       {topSlot}
+      <RemovedAccountNotice
+        participantId={conversation.otherParticipant?.id}
+        conversationId={conversation.id}
+        enabled={!conversation.isPending}
+      />
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div
           ref={scrollContainerRef}
