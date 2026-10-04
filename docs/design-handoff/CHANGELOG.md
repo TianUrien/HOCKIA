@@ -15,6 +15,15 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
   - Four 20 pt regular texts (compose placeholders, the large reference quote) and one 16 pt medium row label have no matching style.
   - The lavender ring at `218:612` stays as it is.
   - Docs-only labels and dev notes are not text-styled.
+- Chip `459:184`: the selected state is soft purple (brand/soft fill, brand/primary text; Pressed = brand/soft-pressed), per a founder ruling.
+
+## 2026-10-05 (night) · design agent
+
+- Coach set-up in the 2-step player style (replaces the 3-step CompleteProfile coach wizard):
+  - D6.5 `586:806` About you: name, date of birth, nationality, optional second nationality, base location.
+  - D6.6 `586:849` Your coaching: specialization, categories as Chips, optional current club, the recruit question as two Option cards, Open to coach switch, Skip.
+  - D6.6b `587:911` inline errors.
+  - Dev note `587:1030`.
 
 ## 2026-10-05 (evening) · design agent
 

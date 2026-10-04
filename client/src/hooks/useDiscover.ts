@@ -10,7 +10,7 @@ import { useAuthStore } from '@/lib/auth'
  *  function's getUser() returns 401. Refreshing + retrying self-heals it instead
  *  of surfacing "I had trouble connecting". A genuinely dead session (refresh
  *  throws) falls through to the normal error path. */
-async function invokeNlSearch(body: Record<string, unknown>) {
+export async function invokeNlSearch(body: Record<string, unknown>) {
   let res = await supabase.functions.invoke('nl-search', { body })
   const status = (res.error as { context?: Response } | null)?.context?.status
   if (res.error && status === 401) {

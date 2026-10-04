@@ -15,6 +15,16 @@
 
 import { renderFeatureKnowledge } from './hockia-features.ts'
 import { labelFor, labelForInline, scrubInternalValues } from './display-labels.ts'
+import {
+  REFINE_FALLBACK,
+  REFINE_SYSTEM_PROMPT,
+  REFINE_TOOL,
+  buildRefineUserMessage,
+  normalizeRefineResult,
+  type RefineCandidate,
+  type RefineResult,
+  type RefineRole,
+} from './role-suggestions-refine.ts'
 
 /**
  * Claude model ID for the 'claude' provider path. Env-driven so the model can
@@ -2126,5 +2136,111 @@ export async function answerPlatformHelp(ctx: PlatformHelpContext): Promise<{ re
     case 'claude':  return answerPlatformHelpWithClaude(ctx)
     case 'gemini':  return answerPlatformHelpWithGemini(ctx)
     default:        return answerPlatformHelpWithGemini(ctx)
+  }
+}
+
+// ── D5.2 · refine a role's suggestions (founder ruling 2026-10-04) ────────
+// Filters / re-orders ONLY the stored suggestions, using their public profile
+// facts (built in role-suggestions-refine.ts). Same provider dispatch as the
+// helpers above; `openai` falls through to Gemini.
+
+export interface RefineRoleSuggestionsContext {
+  question: string
+  role: RefineRole
+  candidates: RefineCandidate[]
+  history?: HistoryTurn[]
+}
+
+function refineHistoryMessages(history: HistoryTurn[] | undefined): { role: 'user' | 'assistant'; content: string }[] {
+  return (history ?? [])
+    .slice(-6)
+    .filter((t) => (t.role === 'user' || t.role === 'assistant') && typeof t.content === 'string' && t.content.trim())
+    .map((t) => ({ role: t.role, content: t.content.slice(0, 600) }))
+}
+
+async function refineWithGemini(ctx: RefineRoleSuggestionsContext): Promise<{ result: RefineResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
+  const contents = [
+    ...refineHistoryMessages(ctx.history).map((t) => ({ role: t.role === 'assistant' ? 'model' : 'user', parts: [{ text: t.content }] })),
+    { role: 'user', parts: [{ text: buildRefineUserMessage(ctx.question, ctx.role, ctx.candidates) }] },
+  ]
+  const { response, retryCount } = await retryableFetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: REFINE_SYSTEM_PROMPT }] },
+        contents,
+        tools: [{ function_declarations: [{ name: REFINE_TOOL.name, description: REFINE_TOOL.description, parameters: REFINE_TOOL.input_schema }] }],
+        tool_config: { function_calling_config: { mode: 'ANY' } },
+      }),
+    },
+    { timeoutMs: 9000, maxRetries: 0 }
+  )
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 503) throw new LLMRateLimitError()
+    throw new Error(`Gemini refine error (${response.status}): ${errorBody}`)
+  }
+  const data = await response.json()
+  const meta: LLMCallMeta = {
+    retry_count: retryCount,
+    usage: {
+      prompt_tokens: data.usageMetadata?.promptTokenCount ?? null,
+      completion_tokens: data.usageMetadata?.candidatesTokenCount ?? null,
+      cached_tokens: data.usageMetadata?.cachedContentTokenCount ?? null,
+    },
+  }
+  const args = data.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall)?.functionCall?.args
+  return { result: normalizeRefineResult(args, ctx.candidates, REFINE_FALLBACK), meta }
+}
+
+async function refineWithClaude(ctx: RefineRoleSuggestionsContext): Promise<{ result: RefineResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
+  const { response, retryCount } = await retryableFetch(
+    'https://api.anthropic.com/v1/messages',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 700,
+        system: [{ type: 'text', text: REFINE_SYSTEM_PROMPT }],
+        tools: [{ name: REFINE_TOOL.name, description: REFINE_TOOL.description, input_schema: REFINE_TOOL.input_schema }],
+        tool_choice: { type: 'tool', name: REFINE_TOOL.name },
+        messages: [
+          ...refineHistoryMessages(ctx.history),
+          { role: 'user', content: buildRefineUserMessage(ctx.question, ctx.role, ctx.candidates) },
+        ],
+      }),
+    },
+    { timeoutMs: 12000, maxRetries: 0 }
+  )
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 529) throw new LLMRateLimitError()
+    throw new Error(`Claude refine error (${response.status}): ${errorBody}`)
+  }
+  const data = await response.json()
+  const meta: LLMCallMeta = {
+    retry_count: retryCount,
+    usage: {
+      prompt_tokens: (data.usage?.input_tokens ?? 0) + (data.usage?.cache_creation_input_tokens ?? 0),
+      completion_tokens: data.usage?.output_tokens ?? null,
+      cached_tokens: data.usage?.cache_read_input_tokens ?? null,
+    },
+  }
+  const toolUse = data.content?.find((c: any) => c.type === 'tool_use' && c.name === REFINE_TOOL.name)
+  return { result: normalizeRefineResult(toolUse?.input, ctx.candidates, REFINE_FALLBACK), meta }
+}
+
+export async function refineRoleSuggestions(ctx: RefineRoleSuggestionsContext): Promise<{ result: RefineResult; meta: LLMCallMeta }> {
+  const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
+  switch (provider) {
+    case 'claude': return refineWithClaude(ctx)
+    default:       return refineWithGemini(ctx)
   }
 }

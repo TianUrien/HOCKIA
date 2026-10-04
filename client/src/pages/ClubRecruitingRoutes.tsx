@@ -14,6 +14,8 @@ const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen')
 const FindPlayersScreen = lazy(() => import('@/components/club/FindPlayersScreen'))
 const ShortlistScreen = lazy(() => import('@/components/club/ShortlistScreen'))
 const ClubEditScreen = lazy(() => import('@/components/club/ClubEditScreen'))
+const HockiaSuggestsScreen = lazy(() => import('@/components/club/HockiaSuggestsScreen'))
+const SuggestRefineScreen = lazy(() => import('@/components/club/SuggestRefineScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -105,6 +107,21 @@ export function ShortlistEntry() {
   if (!isRecruitingViewer(profile)) return <Navigate to="/home" replace />
   if (!isPhone) return <Navigate to="/dashboard/shortlists" replace />
   return <Screen><ShortlistScreen /></Screen>
+}
+
+/** D5 · Hockia suggests (Figma D5.1 398:83) and its refine chat (D5.2 398:291):
+ *  phones, for the role's publisher (a club or a coach who recruits). The
+ *  server answers only the publisher; everyone else is sent back to the role
+ *  (desktop) or Home (not a recruiter). Players never reach it. */
+export function HockiaSuggestsEntry({ refine = false }: { refine?: boolean }) {
+  const isPhone = useMediaQuery(PHONE)
+  const profile = useAuthStore((s) => s.profile)
+  const { opportunityId } = useParams<{ opportunityId: string }>()
+  if (!opportunityId) return <Navigate to="/opportunities" replace />
+  if (!profile) return <Blank />
+  if (!isRecruitingViewer(profile)) return <Navigate to="/home" replace />
+  if (!isPhone) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
+  return <Screen>{refine ? <SuggestRefineScreen key={opportunityId} roleId={opportunityId} /> : <HockiaSuggestsScreen key={opportunityId} roleId={opportunityId} />}</Screen>
 }
 
 /** Edit club profile (Figma 04 Club D1.27): phone clubs only. Desktop clubs
