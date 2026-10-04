@@ -3,6 +3,20 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (round 2b review) · design agent
+
+- Player round 2b (code PR #213, batches C–E, 25 screens) reviewed from screenshots: approved, no blockers.
+- Accepted from code:
+  - The media link says "Add", not "Replace".
+  - The relationship in Write a reference is a single selected Chip.
+  - Reference cards have two tap targets.
+  - On your own Friends list, "Wrote you a reference" is gold text; public lists use the gold pill.
+  - Edit profile keeps Contact & links and the Role lock row.
+  - In Settings, Open to play is a navigation row and Language has no chevron.
+  - Compose has separate Photo and Video buttons.
+  - "Friends" is a green pill on the profile hero and a disabled Secondary in the member preview.
+- Still to verify: Club profile v2 `38:99` and the profile "request sent" state.
+
 ## 2026-10-05 (round 2a review) · design agent
 
 - Player round 2a (code PR #212: Inbox, chat, applications, apply sheets, coach role header) reviewed from screenshots.
