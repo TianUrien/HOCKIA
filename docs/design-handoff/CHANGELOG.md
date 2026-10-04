@@ -3,6 +3,14 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (night) · design agent
+
+- Coach set-up in the 2-step player style (replaces the 3-step CompleteProfile coach wizard):
+  - D6.5 `586:806` About you: name, date of birth, nationality, optional second nationality, base location.
+  - D6.6 `586:849` Your coaching: specialization, categories as Chips, optional current club, the recruit question as two Option cards, Open to coach switch, Skip.
+  - D6.6b `587:911` inline errors.
+  - Dev note `587:1030`.
+
 ## 2026-10-05 (evening) · design agent
 
 - Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
