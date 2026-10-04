@@ -7,7 +7,7 @@
  */
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
+  Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info, Check,
 } from 'lucide-react'
 import { differenceInCalendarDays } from 'date-fns'
 import { dayFirst } from './dayFirst'
@@ -171,6 +171,45 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
     .filter((b, i, arr) => BENEFIT_TILES[b] && arr.indexOf(b) === i)
     .sort((a, b) => order.indexOf(a) - order.indexOf(b))
     .map((b) => BENEFIT_TILES[b])
+}
+
+/**
+ * Package item (Figma 470:1660) as the Card / Role (541:9107) shows it:
+ * Benefit (the package colours), Skill (soft brand), Requirement (neutral —
+ * information, never a call to act) and Note (subtle grey, a check).
+ */
+export type PackageItemType = 'benefit' | 'skill' | 'requirement' | 'note'
+export interface PackageItem { key: string; type: PackageItemType; label: string; icon: LucideIcon; tileClass: string }
+
+export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
+export const NOTE_TILE = { icon: Check, tileClass: 'bg-surface-subtle text-ink-2' }
+export const PACKAGE_NOT_LISTED = 'Package not listed · ask the club'
+export const MAX_CARD_PACKAGE_ITEMS = 6
+
+/**
+ * Up to six package items for a role card, in reading order: pay, benefits,
+ * wanted skills, then the EU passport requirement (kept even when the row is
+ * full). A role with nothing listed says so instead of showing an empty row.
+ */
+export function rolePackageItems(
+  v: Pick<Vacancy, 'compensation' | 'benefits' | 'eu_passport_required'> & { specialist_skills_wanted?: string[] | null },
+  max = MAX_CARD_PACKAGE_ITEMS,
+): PackageItem[] {
+  const items: PackageItem[] = []
+  const comp = (v.compensation ?? '').toLowerCase()
+  if (comp === 'paid') items.push({ key: 'paid', type: 'benefit', label: PAID_TILE.label, icon: PAID_TILE.icon, tileClass: PAID_TILE.tileClass })
+  else if (comp === 'either') items.push({ key: 'comp', type: 'note', label: 'Paid or unpaid', ...NOTE_TILE })
+  else if (comp) items.push({ key: 'comp', type: 'note', label: compensationText(v), ...NOTE_TILE })
+  for (const b of roleBenefits(v)) items.push({ key: b.key, type: 'benefit', label: b.label, icon: b.icon, tileClass: b.tileClass })
+  for (const s of (v.specialist_skills_wanted ?? []).slice(0, 2)) {
+    items.push({ key: `skill-${s}`, type: 'skill', label: humanizeToken(s) ?? s, icon: SPECIALIST_TILE.icon, tileClass: SPECIALIST_TILE.tileClass })
+  }
+  const requirement: PackageItem | null = v.eu_passport_required
+    ? { key: 'eu-passport', type: 'requirement', label: 'EU passport', icon: REQUIREMENT_TILE.icon, tileClass: REQUIREMENT_TILE.tileClass }
+    : null
+  if (items.length === 0 && !requirement) return [{ key: 'not-listed', type: 'note', label: PACKAGE_NOT_LISTED, ...NOTE_TILE }]
+  if (!requirement) return items.slice(0, max)
+  return [...items.slice(0, max - 1), requirement]
 }
 
 // No amber here: amber is only for a viewer who must act (founder ruling

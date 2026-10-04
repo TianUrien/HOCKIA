@@ -25,7 +25,8 @@ import { RoleCard } from '@/components/opportunities/RoleCard'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
 import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
-import { EMPTY_ROLE_FILTERS, applyRoleFilters, countActiveRoleFilters, type RoleFilters } from '@/lib/opportunityFilters'
+import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
+import { Chip } from '@/components/ui/Chip'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 
@@ -563,9 +564,9 @@ export default function OpportunitiesPage() {
                 </IconButton>
               }
             />
-            <div className="px-5 pb-2">
-              <button type="button" onClick={() => navigate('/search')} className="flex h-9 w-full items-center gap-2 rounded-[10px] bg-surface-grouped px-3 text-body text-ink-3">
-                <Search className="h-4 w-4" strokeWidth={2} /> Search clubs and roles
+            <div className="px-5 pb-3">
+              <button type="button" onClick={() => navigate('/search')} className="flex h-10 w-full items-center gap-2 rounded-[12px] bg-surface-muted px-3 text-body text-ink-3" data-testid="opportunities-search">
+                <Search className="h-[18px] w-[18px]" strokeWidth={2} /> Search roles and clubs
               </button>
             </div>
             {user && (profile?.role === 'player' || profile?.role === 'coach') && (
@@ -581,6 +582,12 @@ export default function OpportunitiesPage() {
                 />
               </div>
             )}
+            {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
+            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
+              {QUICK_CHIPS.map((c) => (
+                <Chip key={c.key} label={c.label} selected={isQuickChipOn(roleFilters, c.key)} onClick={() => setRoleFilters((f) => toggleQuickChip(f, c.key))} />
+              ))}
+            </div>
           </div>
           {/* Page Header (wide layout) */}
           <div className="mb-6 hidden items-start justify-between gap-4 lg:flex">
