@@ -7,6 +7,7 @@ import { useMyApplications } from '@/hooks/useMyApplications'
 import { useRolesHealth } from '@/hooks/useRolesHealth'
 import { useScopedMatches } from '@/hooks/useScopedMatches'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
 import { cn } from '@/lib/utils'
 import { clubWeekStats, type WeekStat } from '@/lib/clubInbox'
 
@@ -25,6 +26,12 @@ import { clubWeekStats, type WeekStat } from '@/lib/clubInbox'
  * (pending applications on the club's open roles, brand purple, opens
  * Opportunities) · profile views (last 7 days) · open roles. The title row
  * still opens Pulse; the role numbers open Opportunities.
+ *
+ * Coach v2 (Figma D6.3 377:1430; DEV NOTE 378:317–318): a coach who recruits
+ * for their team gets the club version on phones (same queries, owner = the
+ * coach; the role numbers open My roles) while their Pulse is on "recruit"
+ * (useCoachPulseMode, which defaults from coach_recruits_for_team). A coach
+ * who does not recruit always gets the player version.
  */
 type Stat = WeekStat
 
@@ -41,9 +48,13 @@ function talentStats(phone: boolean, c: { roles: Stat; views: Stat; replies: Sta
 
 export function YourWeekCard() {
   const role = useAuthStore((s) => s.profile?.role)
-  const isTalent = role === 'player' || role === 'coach'
-  const isClub = role === 'club'
+  const coachRecruits = useAuthStore((s) => s.profile?.role === 'coach' && (s.profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team === true)
+  const [coachMode] = useCoachPulseMode()
   const isPhone = useMediaQuery(PHONE)
+  // The recruiting coach's week is the club's week (phones only, like Club v2).
+  const coachClubWeek = coachRecruits && coachMode === 'recruit' && isPhone
+  const isTalent = (role === 'player' || role === 'coach') && !coachClubWeek
+  const isClub = role === 'club' || coachClubWeek
   const clubV2 = isClub && isPhone
 
   const vis = useWeeklyVisibility(true, false)
@@ -62,6 +73,8 @@ export function YourWeekCard() {
   const replies = apps.applications.filter((a) => a.status !== 'pending').length
   const stats: Stat[] = clubV2
     ? clubWeekStats({ toReview: roles.totals.pending, views, openRoles: roles.totals.openRoles })
+        // A coach's own roles live under My roles on Opportunities.
+        .map((st) => (coachClubWeek && st.to === '/opportunities' ? { ...st, to: '/opportunities?view=mine' } : st))
     : isTalent
     ? talentStats(isPhone, {
         roles: { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },

@@ -572,18 +572,20 @@ export default function CoachDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header mobileHidden={!readOnly} />
+      {/* Phone: no app header on a profile, own or public — the cover carries
+          back · share (visitor) or share · gear (owner), as on the player profile. */}
+      <Header mobileHidden />
 
-      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={viewAsClub} clubView={viewAsClub} />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone clubView={viewAsClub} />}
 
       {/* Own profile on phone: the hero cover carries Share + Settings (as for
           players), so there is no separate Profile title row above it. */}
-      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-0 lg:pt-24'} pb-12 space-y-5 md:space-y-6`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : 'pt-[max(env(safe-area-inset-top),1rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {readOnly && !isOwnProfile && (
           <button
             type="button"
             onClick={() => handleBack()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="hidden items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors lg:flex"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>

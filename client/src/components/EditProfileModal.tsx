@@ -1273,7 +1273,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       value={formData.coach_current_role}
                       onChange={(e) => setFormData({ ...formData, coach_current_role: e.target.value })}
                     />
-                    <p className="mt-1 text-xs text-gray-500">Shown on your profile under Current role. Leave it empty to show your club.</p>
+                    <p className="mt-1 text-xs text-gray-500">Shown on your profile under your club, in Coaches at.</p>
                   </div>
                 )}
 

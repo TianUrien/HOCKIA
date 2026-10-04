@@ -184,16 +184,23 @@ export function useAIOpinion(
           }
           throw error
         }
-        const payload = data as {
-          opinion_id: string | null
-          verdict_short: string
-          citations: AIOpinionCitation[]
-          cached: boolean
-          quota_remaining: number | null
+        const payload = (data ?? {}) as {
+          opinion_id?: string | null
+          verdict_short?: unknown
+          citations?: unknown
+          cached?: boolean
+          quota_remaining?: number | null
         }
+        // A 2xx without a verdict (empty body, {}, a proxy page) is not an
+        // opinion: fall into the neutral "Couldn't load" state instead of
+        // handing the panel a shape it cannot draw.
+        if (typeof payload.verdict_short !== 'string' || !payload.verdict_short.trim()) {
+          throw new Error('Malformed ai-opinion response')
+        }
+        const citations = Array.isArray(payload.citations) ? (payload.citations as AIOpinionCitation[]) : []
         setStatus({
           kind: 'ready',
-          data: { verdict_short: payload.verdict_short, citations: payload.citations },
+          data: { verdict_short: payload.verdict_short, citations },
           cached: Boolean(payload.cached),
           quotaRemaining: typeof payload.quota_remaining === 'number' ? payload.quota_remaining : null,
           opinionId: typeof payload.opinion_id === 'string' ? payload.opinion_id : null,

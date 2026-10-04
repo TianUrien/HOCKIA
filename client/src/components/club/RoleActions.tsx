@@ -36,9 +36,12 @@ interface Props {
   onChanged: () => void
   /** Icon colour/size tweaks for the host (card vs nav bar). */
   className?: string
+  /** Where "Edit role" goes. Default: the club's phone editor. A coach who
+   *  recruits edits in their own role form (Coach v2 · My roles). */
+  onEdit?: () => void
 }
 
-export function RoleActions({ role, onChanged, className }: Props) {
+export function RoleActions({ role, onChanged, className, onEdit }: Props) {
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const [sheet, setSheet] = useState<null | 'menu' | 'close'>(null)
@@ -122,7 +125,7 @@ export function RoleActions({ role, onChanged, className }: Props) {
                 <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? 'Find players for this role' : 'Find coaches for this role'}
               </button>
             )}
-            <button type="button" className={item} onClick={() => { setSheet(null); navigate(`/dashboard/opportunities/${role.id}/edit`) }}>
+            <button type="button" className={item} onClick={() => { setSheet(null); if (onEdit) onEdit(); else navigate(`/dashboard/opportunities/${role.id}/edit`) }}>
               <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Edit role
             </button>
             {isOpen && (
