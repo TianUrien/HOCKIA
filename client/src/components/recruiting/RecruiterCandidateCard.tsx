@@ -29,6 +29,7 @@ import { availabilityLabel } from '@/lib/availabilityLabel'
 import { openRolesLabel } from '@/hooks/useOpenRoleCounts'
 import { FitChip } from '@/components/club/FitChip'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
+import { useAuthStore } from '@/lib/auth'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -185,38 +186,16 @@ function locationLine(member: RecruiterCardMember): string | null {
   }
 }
 
-/** The neutral middle-zone substance line — the single most load-bearing fact,
- *  distinct from the location line above so the two never duplicate. */
-function substanceLine(member: RecruiterCardMember): string | null {
-  switch (member.role) {
-    case 'player':
-      return member.competition_name?.trim() || getPlayerLeagueName(member.current_world_club_id, member.playing_category)
-    case 'coach':
-      return coachSpecLabel(member)
-    case 'umpire':
-      return umpireLevelLabel(member)
-    case 'club':
-      return member.year_founded ? `Established ${member.year_founded}` : null
-    case 'brand': {
-      const parts: string[] = []
-      if (member.brand_ambassador_count && member.brand_ambassador_count > 0)
-        parts.push(`${member.brand_ambassador_count} ambassador${member.brand_ambassador_count === 1 ? '' : 's'}`)
-      if (member.brand_follower_count && member.brand_follower_count > 0)
-        parts.push(`${member.brand_follower_count} follower${member.brand_follower_count === 1 ? '' : 's'}`)
-      return parts.length ? parts.join(' · ') : null
-    }
-    default:
-      return null
-  }
-}
-
 /** Role-appropriate availability chip for the neutral middle zone. ONLY a
  *  positive, role-specific signal (green) when the member has explicitly opted
  *  in; nothing otherwise — never a "not looking" state. Single source of truth:
  *  availabilityLabel. */
 function availabilityChip(member: RecruiterCardMember): { label: string } | null {
-  // Concrete beats generic: a stale Recruiting toggle never outranks real roles.
-  const label = openRolesLabel(member.open_role_count) ?? availabilityLabel(member.role, member)
+  // Card / Member (Figma 501:6648): a club reads "Recruiting" when it has at
+  // least one open role — never a count (players never see counts). Other
+  // roles keep their own opt-in label ("Open to play", "Open to coach"…).
+  if (member.role === 'club') return (member.open_role_count ?? 0) > 0 ? { label: 'Recruiting' } : null
+  const label = (openRolesLabel(member.open_role_count) ? 'Recruiting' : null) ?? availabilityLabel(member.role, member)
   return label ? { label } : null
 }
 
@@ -275,7 +254,8 @@ function tileDetail(member: RecruiterCardMember): string {
       fact = umpireLevelLabel(member)
       break
     case 'club':
-      fact = member.competition_name?.trim() || substanceLine(member) || locationLine(member)
+      // The club's league on Hockia (its linked club's league), else where it is.
+      fact = member.competition_name?.trim() || getPlayerLeagueName(member.current_world_club_id, null) || locationLine(member)
       break
     case 'brand':
       fact = member.brand_category ? BRAND_CATEGORY_LABELS[member.brand_category] ?? null : null
@@ -293,7 +273,12 @@ function tileDetail(member: RecruiterCardMember): string {
  * In CONTEXT mode (a recruiter with an active scope) the pill is the verdict
  * chip and a "% match" line joins the text block. Tap → preview.
  */
-export default function RecruiterCandidateCard({ member, verdict, fitState = null, onPreview, opensProfile = false, priority = false }: RecruiterCandidateCardProps) {
+export default function RecruiterCandidateCard({ member, verdict: verdictProp, fitState: fitStateProp = null, onPreview, opensProfile = false, priority = false }: RecruiterCandidateCardProps) {
+  // Fit is club-only: a player viewer never gets a verdict, % or fit chip,
+  // whatever the caller passes (Figma Card / Member, "Show fit" off).
+  const viewerIsPlayer = useAuthStore((s) => s.profile?.role === 'player')
+  const verdict = viewerIsPlayer ? null : verdictProp
+  const fitState = viewerIsPlayer ? null : fitStateProp
   const name = member.full_name?.trim() || 'Unknown'
   const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
