@@ -14,6 +14,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useProfileWriter, type ProfileBoolColumn as BoolColumn } from '@/hooks/useProfileWriter'
 import { useFullMatchPrivacyNotice } from '@/hooks/useFullMatchPrivacyNotice'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { roleLabel } from '@/lib/identity'
@@ -90,11 +91,6 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
  */
 export type SettingsSection = 'hub' | 'notifications' | 'privacy' | 'blocked'
 
-type BoolColumn =
-  | 'open_to_play' | 'open_to_coach' | 'open_to_opportunities' | 'notify_push'
-  | 'notify_messages' | 'notify_applications' | 'notify_opportunities' | 'notify_friends' | 'notify_references' | 'notify_profile_views'
-  | 'browse_anonymously' | 'show_last_active' | 'contact_email_public'
-
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function longDate(iso: string | null | undefined): string | null {
   const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null
@@ -109,37 +105,6 @@ function dobFooter(isPlayer: boolean): string {
 }
 
 const PROVIDER: Record<string, string> = { google: 'Google', apple: 'Apple', email: 'email' }
-
-function useProfileWriter() {
-  const { user, profile, refreshProfile } = useAuthStore()
-  const addToast = useToastStore((s) => s.addToast)
-  // Optimistic overrides, dropped once the refreshed profile agrees.
-  const [pending, setPending] = useState<Partial<Record<string, unknown>>>({})
-  const [busy, setBusy] = useState<string | null>(null)
-
-  const read = <T,>(column: keyof Profile, fallback: T): T => (column in pending ? (pending[column as string] as T) : ((profile?.[column] as T | null | undefined) ?? fallback))
-
-  const write = async (patch: Partial<Record<keyof Profile, unknown>>, key: string) => {
-    if (!user) return false
-    setBusy(key)
-    setPending((p) => ({ ...p, ...patch }))
-    try {
-      const { error } = await supabase.from('profiles').update(patch as never).eq('id', user.id)
-      if (error) throw error
-      await refreshProfile()
-      return true
-    } catch (err) {
-      logger.error('[SettingsMobile] update failed', err)
-      addToast('Could not save that. Please try again.', 'error')
-      return false
-    } finally {
-      setPending((p) => { const next = { ...p }; for (const k of Object.keys(patch)) delete next[k]; return next })
-      setBusy(null)
-    }
-  }
-  const toggle = (column: BoolColumn, fallback: boolean) => write({ [column]: !read<boolean>(column, fallback) } as Partial<Record<keyof Profile, unknown>>, column)
-  return { read, write, toggle, busy }
-}
 
 function Screen({ parent, title, onBack, children }: { parent: string; title: string; onBack: () => void; children: React.ReactNode }) {
   return (
