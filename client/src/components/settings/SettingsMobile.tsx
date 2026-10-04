@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
 import { ContactEmailPublicRow, SettingsGroup, SettingsRow, SettingsSwitch, SheetActions } from './settingsUi'
@@ -240,8 +241,11 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         <SettingsRow title={signingOut ? 'Signing out…' : 'Sign out'} chevron={false} onClick={() => { setSigningOut(true); void signOut().finally(() => setSigningOut(false)) }} />
       </SettingsGroup>
 
-      <button type="button" onClick={() => setDeleting(true)} className="mx-auto mt-6 block py-2 text-row font-semibold text-red-600">Delete account</button>
-      <p className="pt-1 text-center text-caption text-ink-3">Hockia · Made for field hockey</p>
+      {/* Last and quiet: Destructive (soft) Small opens the confirmation. */}
+      <div className="mt-6 flex justify-center">
+        <button type="button" onClick={() => setDeleting(true)} className={buttonClassName({ variant: 'destructive', size: 'small', radius: 'rounded-full' })} data-testid="settings-delete-account">Delete account</button>
+      </div>
+      <p className="pt-3 text-center text-caption text-ink-3">Hockia · Made for field hockey</p>
 
       {isClub && contactEmail && (
         <ContactEmailSheet
