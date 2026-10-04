@@ -125,7 +125,7 @@ export function useInviteRoles(kind: 'player' | 'coach' = 'player', enabled = tr
     queryFn: async (): Promise<InviteRole[]> => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('id, title, position, gender, compensation, benefits, opportunity_type')
+        .select('id, title, position, gender, compensation, benefits, opportunity_type, world_club_id, organization_name')
         .eq('club_id', viewerId as string)
         .eq('status', 'open')
         .eq('opportunity_type', kind)

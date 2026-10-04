@@ -16,6 +16,7 @@ import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { shortDayOf } from '@/lib/signing'
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
+import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
 import { Chip } from '@/components/ui/Chip'
 
@@ -42,7 +43,12 @@ const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const clubId = useAuthStore((s) => s.profile?.id)
+  const owner = useAuthStore((s) => s.profile)
+  const clubId = owner?.id
+  // A coach who recruits owns these screens too: back is their My roles, and
+  // Edit role is their own role form there (the phone editor is the club's).
+  const home = recruiterRolesHome(owner)
+  const coachOwner = isRecruitingCoach(owner)
   const data = useRoleApplicants(roleId, clubId)
   const { countries } = useCountries()
   const [chip, setChip] = useState<Chip>('pending')
@@ -87,11 +93,18 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="applicants-screen">
       <DetailNavBar
-        parent="Opportunities"
-        fallbackPath="/opportunities"
-        onBack={() => navigate('/opportunities')}
+        parent={home.label}
+        fallbackPath={home.path}
+        onBack={() => navigate(home.path)}
         trailing={role && clubId && role.club_id === clubId && role.status !== 'draft'
-          ? <RoleActions role={role} onChanged={data.refresh} className="flex h-11 w-11 items-center justify-center rounded-full text-hockia-primary" />
+          ? (
+            <RoleActions
+              role={role}
+              onChanged={data.refresh}
+              onEdit={coachOwner ? () => navigate(home.path, { state: { editRoleId: role.id } }) : undefined}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-hockia-primary"
+            />
+          )
           : undefined}
       />
       {role && (

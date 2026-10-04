@@ -117,7 +117,11 @@ vi.mock('@/hooks/useInvites', () => ({
   useInviteCard: () => ({ data: inv.card, loading: false, refetch: vi.fn() }),
   useDeclineInvite: () => ({ decline: inv.decline, busy: false }),
 }))
-vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }) }))
+// useQuery: the sheet's organisation lookup (usePublisherOrganisation) — never enabled for a club account.
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }),
+  useQuery: () => ({ data: undefined, isLoading: false }),
+}))
 // D5 entry row on the role (its own suite: d5Suggests.test.tsx).
 vi.mock('@/hooks/useRoleSuggestions', () => ({ useRoleSuggestions: () => ({ data: null, suggestions: [], loading: false, error: false, refetch: () => undefined }) }))
 vi.mock('@/hooks/useRoleApplicants', () => ({

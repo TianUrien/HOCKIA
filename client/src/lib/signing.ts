@@ -435,10 +435,19 @@ export function hasTalked(messages: { sender_id: string; metadata?: unknown }[],
 // ── Mark as signed (D4.4) ──
 
 /** Sheet body; gender-neutral (Figma: "He’ll be asked to confirm…"). */
-export function markSignedBody(firstName: string, publisherIsClub: boolean): string {
-  return publisherIsClub
-    ? `${firstName} will be asked to confirm. Then they join your squad on Hockia and the signing goes on their career.`
+export function markSignedBody(firstName: string, publisherIsClub: boolean, organisation?: string | null): string {
+  if (publisherIsClub) return `${firstName} will be asked to confirm. Then they join your squad on Hockia and the signing goes on their career.`
+  // A coach who recruits: the signing is with the organisation the role is for.
+  const org = organisation?.trim()
+  return org
+    ? `${firstName} will be asked to confirm. Then the signing with ${org} goes on their career.`
     : `${firstName} will be asked to confirm. Then the signing goes on their career.`
+}
+
+/** The offer sheet's footnote: who the contract is with (a coach's offer names the organisation). */
+export function offerContractNote(publisherIsClub: boolean, organisation?: string | null): string {
+  const party = publisherIsClub ? 'your club' : organisation?.trim() || 'the club'
+  return `An offer on Hockia sets out what you’re offering. The contract itself is between ${party} and the player.`
 }
 
 /** The close-the-role toggle's line: the others still waiting get the kind note. */

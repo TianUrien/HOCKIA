@@ -8,6 +8,7 @@ import {
   OFFER_NOTE_MAX,
   addDays,
   offerDraftFromOffer,
+  offerContractNote,
   offerDraftFromRole,
   offerPackageLine,
   offerPayLine,
@@ -38,6 +39,9 @@ interface Props {
   role: OfferRole | null
   /** The live offer being edited, if any. */
   current: OfferRow | null
+  /** Who the offer is from: a club account, or the organisation a coach recruits for. */
+  publisherIsClub?: boolean
+  organisation?: string | null
   busy: boolean
   onClose: () => void
   onSend: (draft: OfferDraft) => void
@@ -60,7 +64,7 @@ function Row({ label, value, open, onToggle, children, testId }: { label: string
 
 const Divider = () => <div className="ml-3.5 h-[0.5px] bg-line" />
 
-export default function OfferSheet({ open, firstName, roleLabel, role, current, busy, onClose, onSend }: Props) {
+export default function OfferSheet({ open, firstName, roleLabel, role, current, publisherIsClub = true, organisation, busy, onClose, onSend }: Props) {
   const [draft, setDraft] = useState<OfferDraft | null>(null)
   const [field, setField] = useState<Field>(null)
 
@@ -135,7 +139,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           className="mt-3 w-full resize-none rounded-card border border-line px-3.5 py-3 text-[15px] text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
           data-testid="offer-note"
         />
-        <p className="mt-2 text-caption leading-4 text-ink-2">An offer on Hockia sets out what you’re offering. The contract itself is between your club and the player.</p>
+        <p className="mt-2 text-caption leading-4 text-ink-2" data-testid="offer-contract-note">{offerContractNote(publisherIsClub, organisation)}</p>
 
         <button
           type="button"
