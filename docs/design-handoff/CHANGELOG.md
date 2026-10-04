@@ -3,6 +3,17 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (round 1 review) · design agent
+
+- Player round 1 (code PR #211) reviewed from screenshots. Figma aligned to the accepted code choices:
+  - Own profile Secondary reads "View as club" `582:14981`.
+  - Your week label "roles for you" `539:2665`.
+  - Package item Note tile uses surface/muted `541:413`.
+- Card / Role `541:9107`:
+  - The team pill is soft purple (ruling).
+  - Founder ruling: no button on the card; Applied shows a Neutral "Applied" tag.
+- Not built yet (later): the Opportunities summary line and the "Newest" sort row on `313:1417`.
+
 ## 2026-10-05 (review) · design agent
 
 - D5 code review (PR #208 screenshots) against D5.1 `398:83` and D5.2 `398:291`: matches. Follow-ups for code:
