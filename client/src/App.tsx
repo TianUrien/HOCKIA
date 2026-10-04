@@ -93,6 +93,7 @@ const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes
 const ApplicantReviewEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantReviewEntry })))
 const PostRoleEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.PostRoleEntry })))
 const RolePostedEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.RolePostedEntry })))
+const HockiaSuggestsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.HockiaSuggestsEntry })))
 const FindPlayersEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.FindPlayersEntry })))
 const ShortlistEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ShortlistEntry })))
 const ClubEditEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ClubEditEntry })))
@@ -530,6 +531,8 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PostRoleEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/posted" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RolePostedEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/suggested" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/suggested/ask" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry refine /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 {/* Save / shortlists: clubs + recruiting coaches only. */}
                 <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
