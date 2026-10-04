@@ -71,10 +71,10 @@ export function OpportunityDetailMobile({
   // never a surprise two taps later.
   const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
   const lacksEuPassport = vacancy.eu_passport_required === true && !eligibility.eligible && /EU passport/i.test(eligibility.reason ?? '')
-  const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
+  // Player and coach roles alike (same as the list card, RoleCard): position
+  // or coaching specialisation as text + the soft-purple team Tag.
+  const pill = genderPill(vacancy.gender)
   const headline = roleHeadline(vacancy)
-  // Secondary line: position (or coaching role) + the team. A player role
-  // keeps its coloured team pill; a coach role reads "Head coach · Boys".
   const positionText = positionLabel(vacancy.position)
   const place = [vacancy.location_city, vacancy.location_country].map((s) => s?.trim()).filter(Boolean).join(', ')
   const clubLine = [identityLine(publisherRole ?? 'club'), countryFlag && place ? `${countryFlag} ${place}` : place, league].filter(Boolean).join(' · ')
@@ -175,12 +175,12 @@ export function OpportunityDetailMobile({
       <div className={closed ? 'opacity-60 grayscale' : undefined} data-testid={closed ? 'role-body-closed' : undefined}>
       <div className={`px-5 pb-1.5 ${closed ? 'pt-1.5' : 'pt-2.5'}`}>
         <h1 className="break-words text-title-xl text-ink-1" data-testid="role-title">{headline.title}</h1>
-        {pill ? (
-          <div className="mt-1 flex items-center gap-2">
-            {positionText && <span className="text-row font-semibold text-ink-2">{positionText}</span>}
-            <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`}>{pill.label}</span>
+        {(positionText || pill) && (
+          <div className="mt-1 flex flex-wrap items-center gap-2" data-testid="role-detail-meta">
+            {positionText && <span className="text-row font-semibold text-ink-2" data-testid="role-detail-position">{positionText}</span>}
+            {pill && <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`} data-testid="role-detail-team-tag">{pill.label}</span>}
           </div>
-        ) : headline.detail && <p className="mt-1 text-row font-semibold text-ink-2">{headline.detail}</p>}
+        )}
         <p className="mt-2 flex items-center gap-1.5 text-row text-ink-2">
           <Calendar className="h-4 w-4" strokeWidth={1.6} /> {startsLine(vacancy)}
         </p>
