@@ -10,6 +10,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const auth = { role: 'player' as string }
 vi.mock('@/lib/auth', () => ({ useAuthStore: (sel?: (s: unknown) => unknown) => { const s = { user: { id: 'v1' }, profile: { id: 'v1', role: auth.role } }; return sel ? sel(s) : s } }))
 vi.mock('@/components', () => ({ DualNationalityDisplay: ({ fallbackText }: { fallbackText?: string | null }) => <span>{fallbackText ?? ''}</span> }))
+// CI runs without env vars: never load the real Supabase client.
+vi.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ select: () => ({}) }), rpc: async () => ({ data: null, error: null }) } }))
+vi.mock('@/hooks/useOpenRoleCounts', () => ({ openRolesLabel: (n: number | null | undefined) => (n && n > 0 ? `${n} open roles` : null), useOpenRoleCounts: () => new Map() }))
 vi.mock('@/hooks/useWorldClubLogo', () => ({ getPlayerLeagueName: (id: string | null) => (id === 'wc-lazio' ? 'Serie A Elite' : null) }))
 
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
