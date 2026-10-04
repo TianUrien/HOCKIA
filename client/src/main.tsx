@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from '@sentry/react'
 import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
-import { registerSW } from 'virtual:pwa-register'
 import './globals.css'
 import App from './App.tsx'
 import LaunchSplashController from './components/LaunchSplashController'
@@ -14,116 +13,17 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
-import UpdatePrompt from './components/UpdatePrompt'
+import { registerServiceWorker } from './lib/swUpdate'
+import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 import { initPostHog } from './lib/posthog'
 
-// Create a container for the update prompt (outside main React tree)
-let updatePromptRoot: ReturnType<typeof createRoot> | null = null
-
-function showUpdatePrompt(updateSW: (reloadPage?: boolean) => Promise<void>) {
-  // Create container if it doesn't exist
-  let container = document.getElementById('update-prompt-root')
-  if (!container) {
-    container = document.createElement('div')
-    container.id = 'update-prompt-root'
-    document.body.appendChild(container)
-  }
-
-  // Render the update prompt
-  if (!updatePromptRoot) {
-    updatePromptRoot = createRoot(container)
-  }
-
-  updatePromptRoot.render(
-    <UpdatePrompt
-      onUpdate={async () => {
-        // Hide the prompt
-        updatePromptRoot?.unmount()
-        updatePromptRoot = null
-        container?.remove()
-        // Trigger the service worker update and reload
-        // The true parameter tells vite-plugin-pwa to reload the page
-        await updateSW(true)
-      }}
-    />
-  )
-}
-
-// Register Service Worker for PWA
-//
-// Update strategy (registerType: 'prompt'): a freshly deployed build
-// installs as a "waiting" service worker and does NOT take over until
-// it is applied. We apply it two ways:
-//   1. A banner ("A new version is available") for an immediate update.
-//   2. Auto-apply when the app is backgrounded — the reload runs while
-//      the app is hidden, so the user never sees it mid-session and the
-//      next launch is already on the latest build. Mobile users
-//      background the app constantly, so a stale version cannot persist
-//      across app switches even if the banner is missed.
-if ('serviceWorker' in navigator) {
-  let updatePending = false
-
-  const updateSW = registerSW({
-    immediate: true,
-    onRegisteredSW(swScriptUrl, registration) {
-      logger.debug('[PWA] Service Worker registered:', swScriptUrl)
-      if (registration) {
-        // Check for updates immediately on registration
-        registration.update().catch((err) => logger.error('[PWA] Update check failed:', err))
-
-        // Check for updates every 15 minutes, but only when tab is visible
-        let intervalId: ReturnType<typeof setInterval> | null = null
-
-        const startUpdateLoop = () => {
-          if (intervalId) return
-          intervalId = setInterval(() => {
-            logger.debug('[PWA] Checking for updates...')
-            registration.update().catch((err) => logger.error('[PWA] Update check failed:', err))
-          }, 15 * 60 * 1000)
-        }
-
-        const stopUpdateLoop = () => {
-          if (intervalId) {
-            clearInterval(intervalId)
-            intervalId = null
-          }
-        }
-
-        const handleVisibilityChange = () => {
-          if (document.hidden) {
-            stopUpdateLoop()
-            // App going to background with an update waiting — apply it
-            // now. The reload runs while the app is hidden, so it is
-            // invisible to the user and the next launch is already fresh.
-            if (updatePending) {
-              logger.info('[PWA] Applying pending update while backgrounded')
-              void updateSW(true)
-            }
-          } else {
-            // Check immediately when tab becomes visible, then resume loop
-            registration.update().catch((err) => logger.error('[PWA] Update check failed:', err))
-            startUpdateLoop()
-          }
-        }
-
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-        startUpdateLoop()
-      }
-    },
-    onOfflineReady() {
-      logger.info('[PWA] App is ready for offline use')
-    },
-    onNeedRefresh() {
-      logger.info('[PWA] New content available — banner shown; will auto-apply on background')
-      updatePending = true
-      showUpdatePrompt(updateSW)
-    },
-    onRegisterError(error) {
-      logger.error('[PWA] Service Worker registration failed:', error)
-    },
-  })
+// Register the service worker (production builds only; the dev server has no
+// /sw.js). Prompt-based updates — the page never reloads on its own on the
+// web: a new version waits until the user taps Reload. See lib/swUpdate.ts.
+if (import.meta.env.PROD) {
+  registerServiceWorker({ isNative: Capacitor.isNativePlatform(), showPrompt: showUpdatePrompt })
 }
 
 // Environment: staging is a production-MODE build (Vercel), so MODE can't
