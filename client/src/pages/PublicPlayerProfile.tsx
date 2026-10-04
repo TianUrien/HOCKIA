@@ -156,7 +156,17 @@ export default function PublicPlayerProfile() {
             const profileId = (data as unknown as { id: string }).id
             const { data: ages } = await supabase.rpc('get_profile_ages', { p_ids: [profileId] })
             const serverAge = ages?.find((a) => a.profile_id === profileId)?.age ?? null
-            return { ...(data as object), server_age: serverAge } as unknown as PublicProfile
+            // Coach status pill ("Recruiting" when the coach recruits and is
+            // not open to coach): coach_recruits_for_team is readable by
+            // signed-in members only — anon has no grant on the column, so it
+            // is read on its own and never joins the shared field list (one
+            // ungranted column would fail the whole anon select).
+            let recruits: boolean | null = null
+            if ((data as unknown as { role: string }).role === 'coach' && useAuthStore.getState().user) {
+              const { data: flag, error: flagError } = await supabase.from('profiles').select('coach_recruits_for_team').eq('id', profileId).maybeSingle()
+              if (!flagError) recruits = (flag as { coach_recruits_for_team: boolean | null } | null)?.coach_recruits_for_team ?? null
+            }
+            return { ...(data as object), server_age: serverAge, ...(recruits === null ? {} : { coach_recruits_for_team: recruits }) } as unknown as PublicProfile
           },
           PUBLIC_PROFILE_TTL,
         )
