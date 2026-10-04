@@ -14,6 +14,8 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 - D2.4 checklist: missing rows get their own "Add" link (separate 44 pt target, as
   shipped); new frame D2.4b `578:424` for the no-date-of-birth state ("Add your
   date of birth" card, Save disabled, shipped `DOB_REQUIRED_COPY`).
+- D2.4c `579:444` for the under-18 state ("Open to play" card with shipped
+  `UNDER_18_COPY`, no switch, Save disabled). Every D2.4 state now has a frame.
 - Copy: shipped visas hint ("…Add the country and, if it has one, when it
   expires."); gender-neutral fit and references lines.
 - Founder ruling (2026-10-04): D5 reason lines are templates from profile
