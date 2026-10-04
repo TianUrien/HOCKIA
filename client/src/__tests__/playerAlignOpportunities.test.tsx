@@ -19,30 +19,39 @@ const vac = (p: Partial<Vacancy> = {}) => ({
   eu_passport_required: false, specialist_skills_wanted: [], status: 'open', ...p,
 }) as unknown as Vacancy
 
-const card = (applied: boolean, p: Partial<Vacancy> = {}, handlers = { onOpen: vi.fn(), onApply: vi.fn() }) =>
-  render(<RoleCard vacancy={vac(p)} clubName="Hockey Team Bologna" clubLogo={null} publisherRole="club" countryFlag="🇮🇹" league="Serie A1" applied={applied} canApply {...handlers} />)
+const card = (applied: boolean, p: Partial<Vacancy> = {}, onOpen = vi.fn()) =>
+  render(<RoleCard vacancy={vac(p)} clubName="Hockey Team Bologna" clubLogo={null} publisherRole="club" countryFlag="🇮🇹" league="Serie A1" applied={applied} onOpen={onOpen} />)
 
 describe('Card / Role', () => {
-  it('Open: full-width Primary Apply that starts the apply flow', () => {
-    const h = { onOpen: vi.fn(), onApply: vi.fn() }
-    card(false, {}, h)
-    expect(screen.getByTestId('role-card')).toHaveAttribute('data-status', 'open')
-    const apply = screen.getByRole('button', { name: 'Apply' })
-    expect(apply.className).toContain('bg-hockia-primary')
-    expect(apply.className).toContain('w-full')
-    fireEvent.click(apply)
-    expect(h.onApply).toHaveBeenCalled()
+  it('has no button inside: the whole card is one tap target named by the role title', () => {
+    const onOpen = vi.fn()
+    card(false, {}, onOpen)
+    const buttons = screen.getAllByRole('button')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0]).toHaveAccessibleName('Forward at Hockey Team Bologna')
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+    expect(buttons[0].querySelector('a, button')).toBeNull()
+    fireEvent.click(buttons[0])
+    expect(onOpen).toHaveBeenCalled()
+    expect(screen.queryByTestId('applied-tag')).toBeNull()
   })
-  it('Applied: Tonal with a check that opens the applied detail', () => {
-    const h = { onOpen: vi.fn(), onApply: vi.fn() }
-    card(true, {}, h)
+  it('Applied: a neutral "Applied" tag right after the team tag, no Tonal button', () => {
+    card(true)
     expect(screen.getByTestId('role-card')).toHaveAttribute('data-status', 'applied')
-    const applied = screen.getByRole('button', { name: 'Applied' })
-    expect(applied.className).toContain('bg-hockia-soft')
-    expect(applied.querySelector('svg')?.getAttribute('class')).toContain('lucide-check')
-    fireEvent.click(applied)
-    expect(h.onOpen).toHaveBeenCalled()
-    expect(h.onApply).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /^Applied$/ })).toBeNull()
+    const tag = screen.getByTestId('applied-tag')
+    expect(tag).toHaveTextContent('Applied')
+    expect(tag.className).toContain('bg-surface-muted')
+    expect(tag.className).toContain('text-ink-2')
+    expect(tag.className).not.toMatch(/brand|hockia|amber/)
+    expect(screen.getByTestId('category-tag').nextElementSibling).toBe(tag)
+    expect(screen.getAllByRole('button')).toHaveLength(1)
+  })
+  it('coach roles get the position + soft-purple team tag too', () => {
+    card(false, { opportunity_type: 'coach', position: 'head_coach', gender: 'Men', title: 'Head coach wanted' } as Partial<Vacancy>)
+    expect(screen.getByTestId('category-tag')).toHaveTextContent("Men's")
+    expect(screen.getByTestId('category-tag').className).toContain('bg-brand-soft')
+    expect(screen.queryByText("Head coach · Men's")).toBeNull()
   })
   it('shows "flag city · league", a soft-purple category tag and an optional day-first Apply by', () => {
     card(false, { application_deadline: '2026-10-12' })
@@ -69,6 +78,12 @@ describe('rolePackageItems', () => {
   it('skills use the soft brand tile', () => {
     const [skill] = rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false, specialist_skills_wanted: ['drag_flicker'] })
     expect(skill).toMatchObject({ type: 'skill', label: 'Drag flicker', tileClass: 'bg-hockia-soft text-hockia-primary' })
+  })
+  it('notes use the Info icon on a surface-muted tile; real items keep their own icon', () => {
+    const [note] = rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false })
+    expect(note.tileClass).toContain('bg-surface-muted')
+    const { container } = render(<note.icon />)
+    expect(container.querySelector('svg')?.getAttribute('class')).toContain('lucide-info')
   })
   it('notes: "Paid or unpaid", and "Package not listed · ask the club" when nothing is listed', () => {
     expect(rolePackageItems({ compensation: 'either', benefits: [], eu_passport_required: false })[0]).toMatchObject({ type: 'note', label: 'Paid or unpaid' })

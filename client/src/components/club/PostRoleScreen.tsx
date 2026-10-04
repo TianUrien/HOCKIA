@@ -408,9 +408,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                   countryFlag={flag}
                   league={league ?? null}
                   applied={false}
-                  canApply
                   onOpen={() => undefined}
-                  onApply={() => undefined}
                 />
               </div>
             </div>

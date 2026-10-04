@@ -23,8 +23,6 @@ import { IconButton } from '@/components/ui/IconButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { RoleCard } from '@/components/opportunities/RoleCard'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
-import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
-import SignInPromptModal from '../components/SignInPromptModal'
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
 import { Chip } from '@/components/ui/Chip'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -190,8 +188,6 @@ export default function OpportunitiesPage() {
   // client-side on top of the open list; the wide layout keeps its dropdowns.
   const [roleFilters, setRoleFilters] = useState<RoleFilters>(EMPTY_ROLE_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [applyTarget, setApplyTarget] = useState<Vacancy | null>(null)
-  const [showJoin, setShowJoin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
@@ -517,10 +513,6 @@ export default function OpportunitiesPage() {
   const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
   const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
-  const canApplyTo = (v: Vacancy) =>
-    !user
-      ? true
-      : v.club_id !== user.id && ((profile?.role === 'player' && v.opportunity_type === 'player') || (profile?.role === 'coach' && v.opportunity_type === 'coach'))
   const leagueFor = (v: Vacancy) => {
     const wc = v.world_club_id ? worldClubsMap[v.world_club_id] : null
     const club = clubs[v.club_id]
@@ -858,9 +850,7 @@ export default function OpportunitiesPage() {
                       countryFlag={getFlagEmoji(vacancy.location_country)}
                       league={leagueFor(vacancy)}
                       applied={userApplications.includes(vacancy.id)}
-                      canApply={canApplyTo(vacancy)}
                       onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
-                      onApply={() => (user ? setApplyTarget(vacancy) : setShowJoin(true))}
                     />
                   )
                 })}
@@ -898,27 +888,6 @@ export default function OpportunitiesPage() {
         onApply={setRoleFilters}
         countFor={(draft) => applyRoleFilters(filteredOpportunities, draft, viewerIsEuEligible).length}
         passportHint={passportHint}
-      />
-
-      {applyTarget && (
-        <ApplyToOpportunityModal
-          isOpen
-          onClose={() => setApplyTarget(null)}
-          vacancy={applyTarget}
-          clubName={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.clubName : null) || clubs[applyTarget.club_id]?.full_name || null}
-          clubLogo={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.avatarUrl : null) || clubs[applyTarget.club_id]?.avatar_url || null}
-          publisherRole={clubs[applyTarget.club_id]?.role ?? null}
-          league={leagueFor(applyTarget)}
-          onSuccess={(vacancyId) => setUserApplications((prev) => (prev.includes(vacancyId) ? prev : [...prev, vacancyId]))}
-        />
-      )}
-
-      <SignInPromptModal
-        isOpen={showJoin}
-        onClose={() => setShowJoin(false)}
-        title="Sign in to apply"
-        message="Create a free HOCKIA profile — it is your application. Clubs see your career, videos and references."
-        action="apply"
       />
 
       {/* Create Opportunity — launched directly from the feed for clubs

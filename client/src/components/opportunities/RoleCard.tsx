@@ -1,7 +1,6 @@
-import { Calendar, Check, Clock } from 'lucide-react'
+import { Calendar, Clock } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { buttonClassName } from '@/components/ui/buttonClasses'
 import { formatActivityAge } from '@/lib/inboxTime'
 import { dayFirst } from '@/lib/dayFirst'
 import { genderPill, roleHeadline, rolePackageItems, whenLine } from '@/lib/opportunityCopy'
@@ -15,22 +14,23 @@ export interface RoleCardProps {
   publisherRole: string | null | undefined
   countryFlag: string | null
   league: string | null
+  /** The viewer already applied: a neutral "Applied" tag after the team tag. */
   applied: boolean
-  /** Whether this viewer may apply at all (players to player roles, coaches to coach roles). */
-  canApply: boolean
+  /** The whole card opens the role detail; Apply lives only in the detail bottom bar. */
   onOpen: () => void
-  onApply: () => void
 }
 
 /**
  * Card / Role (Figma 541:9107, Status Open | Applied): crest 48 · club ·
  * "flag city · league" · age, the role title, position + category tag,
- * "start · duration" (+ "Apply by <date>"), up to six Package items, then a
- * full-width Primary Apply — or Tonal Applied with a check, which opens the
- * applied detail. No level, no counts, no reply time.
+ * "start · duration" (+ "Apply by <date>"), up to six Package items. No
+ * button (founder ruling 2026-10-04): the whole card is one tap target that
+ * opens the role detail, where Apply lives. An applied role carries a neutral
+ * "Applied" tag after the team tag. No level, no counts, no reply time.
  */
-export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, canApply, onOpen, onApply }: RoleCardProps) {
-  const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
+export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, onOpen }: RoleCardProps) {
+  // Player and coach roles alike: position (or coaching role) + the team tag.
+  const pill = genderPill(vacancy.gender)
   // The club's title leads; position (or coaching role) + team sit under it.
   const headline = roleHeadline(vacancy)
   const positionText = positionLabel(vacancy.position)
@@ -41,7 +41,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
 
   return (
     <article className="rounded-card border border-line bg-white px-4 py-3.5" data-testid="role-card" data-status={applied ? 'applied' : 'open'}>
-      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`${headline.title} at ${clubName}`}>
+      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={applied ? `${headline.title} at ${clubName}, applied` : `${headline.title} at ${clubName}`} data-testid="role-card-open">
         <div className="flex items-center gap-3">
           <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={48} />
           <div className="min-w-0 flex-1">
@@ -55,12 +55,13 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
         </div>
 
         <h3 className="mt-3 line-clamp-2 break-words text-title text-ink-1">{headline.title}</h3>
-        {pill ? (
-          <div className="mt-1 flex items-center gap-2">
+        {(positionText || pill || applied) && (
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             {positionText && <span className="text-row font-semibold text-ink-2">{positionText}</span>}
-            <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`} data-testid="category-tag">{pill.label}</span>
+            {pill && <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`} data-testid="category-tag">{pill.label}</span>}
+            {applied && <span className="rounded-full bg-surface-muted px-2 py-0.5 text-secondary font-semibold text-ink-2" data-testid="applied-tag">Applied</span>}
           </div>
-        ) : headline.detail && <p className="mt-1 text-row font-semibold text-ink-2">{headline.detail}</p>}
+        )}
 
         <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-[14px] leading-[19px] text-ink-2">
           <Calendar className="h-[15px] w-[15px]" strokeWidth={1.6} />
@@ -78,19 +79,6 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
         </ul>
       </button>
 
-      {canApply && (
-        <div className="pt-4">
-          {applied ? (
-            <button type="button" onClick={onOpen} className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', block: true })}>
-              <Check className="h-4 w-4" strokeWidth={2.5} /> Applied
-            </button>
-          ) : (
-            <button type="button" onClick={onApply} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>
-              Apply
-            </button>
-          )}
-        </div>
-      )}
     </article>
   )
 }
