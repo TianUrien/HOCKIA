@@ -148,7 +148,8 @@ describe('Inbox › Messages rows', () => {
   })
 
   it('unread = a brand-purple dot, no number, never amber for the player', async () => {
-    conversations = [row({ unread_count: 7 })]
+    // A fixed, 7-free date: the row also prints the time, so "now" would make the no-number check flaky.
+    conversations = [row({ unread_count: 7, conversation_last_message_at: '2025-09-12T10:00:00Z', last_message_sent_at: '2025-09-12T10:00:00Z' })]
     render(withQuery(<InboxMessages onCompose={() => {}} />))
     const dot = await screen.findByTestId('inbox-unread-dot')
     expect(dot.className).toContain('bg-hockia-primary')

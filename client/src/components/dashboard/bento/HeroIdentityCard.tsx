@@ -463,7 +463,12 @@ export default function HeroIdentityCard({
           ) : isVisitorView && d2 ? (
             <>
               {/* Phone (Figma 313:1016): Add friend = Primary with plus, Message = Secondary with chat. */}
-              {friendButton && (friendship.isFriend || friendship.isOutgoingRequest ? (
+              {friendButton && (friendship.isOutgoingRequest ? (
+                // Request sent (Figma 152:581): Secondary, disabled, in place of Add friend.
+                <button type="button" disabled className={pillButton('secondary')} data-testid="hero-friend-requested">
+                  {friendButton.icon} {friendButton.label}
+                </button>
+              ) : friendship.isFriend ? (
                 <span className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full text-body font-semibold ${friendButton.cls}`}>
                   {friendButton.icon} {friendButton.label}
                 </span>

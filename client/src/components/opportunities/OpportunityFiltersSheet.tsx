@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { PACKAGE_FILTER_KEYS, PACKAGE_FILTER_LABELS, type PackageFilterKey } from '@/lib/opportunityCopy'
 import { EMPTY_ROLE_FILTERS, type RoleFilters } from '@/lib/opportunityFilters'
-import { cn } from '@/lib/utils'
+import { Chip } from '@/components/ui/Chip'
+import { SwitchCardRow } from '@/components/ui/SwitchCardRow'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 
 interface OpportunityFiltersSheetProps {
   open: boolean
@@ -29,25 +31,10 @@ const CATEGORIES = [
   { value: 'Mixed', label: 'Mixed' },
 ]
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'flex h-9 items-center rounded-full px-3.5 text-row font-semibold transition-colors',
-        active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1',
-      )}
-    >
-      {children}
-    </button>
-  )
-}
-
 /**
  * Filters sheet (Figma Opportunities — Filters): Type, Position, Category,
- * Package (nine benefits), and the passport toggle. Live count on the button.
+ * Package (nine benefits), and the passport toggle (List item / Switch). Every
+ * option is the shared Chip (selected = soft purple); live count on the button.
  */
 export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFor, passportHint }: OpportunityFiltersSheetProps) {
   const [draft, setDraft] = useState<RoleFilters>(value)
@@ -63,7 +50,7 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
       <div className="flex flex-col gap-[18px] px-5 pb-2 pt-1">
         <div className="flex items-center justify-between">
           <h2 className="text-title text-ink-1">Filters</h2>
-          <button type="button" onClick={() => setDraft(EMPTY_ROLE_FILTERS)} className="text-row font-semibold text-hockia-primary">
+          <button type="button" onClick={() => setDraft(EMPTY_ROLE_FILTERS)} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary">
             Reset
           </button>
         </div>
@@ -71,8 +58,8 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
         <section className="flex flex-col gap-2.5">
           <h3 className="text-row font-semibold text-ink-1">Type</h3>
           <div className="flex flex-wrap gap-2">
-            <Chip active={draft.type === 'player'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'player' ? 'all' : 'player' }))}>Player roles</Chip>
-            <Chip active={draft.type === 'coach'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'coach' ? 'all' : 'coach', position: '', gender: '' }))}>Coach roles</Chip>
+            <Chip label="Player roles" selected={draft.type === 'player'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'player' ? 'all' : 'player' }))} />
+            <Chip label="Coach roles" selected={draft.type === 'coach'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'coach' ? 'all' : 'coach', position: '', gender: '' }))} />
           </div>
         </section>
 
@@ -82,7 +69,7 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
               <h3 className="text-row font-semibold text-ink-1">Position</h3>
               <div className="flex flex-wrap gap-2">
                 {POSITIONS.map((p) => (
-                  <Chip key={p.value || 'any'} active={draft.position === p.value} onClick={() => setDraft((d) => ({ ...d, position: p.value }))}>{p.label}</Chip>
+                  <Chip key={p.value || 'any'} label={p.label} selected={draft.position === p.value} onClick={() => setDraft((d) => ({ ...d, position: p.value }))} />
                 ))}
               </div>
             </section>
@@ -90,7 +77,7 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
               <h3 className="text-row font-semibold text-ink-1">Category</h3>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => (
-                  <Chip key={c.value} active={draft.gender === c.value} onClick={() => setDraft((d) => ({ ...d, gender: d.gender === c.value ? '' : c.value }))}>{c.label}</Chip>
+                  <Chip key={c.value} label={c.label} selected={draft.gender === c.value} onClick={() => setDraft((d) => ({ ...d, gender: d.gender === c.value ? '' : c.value }))} />
                 ))}
               </div>
             </section>
@@ -101,34 +88,26 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
           <h3 className="text-row font-semibold text-ink-1">Package</h3>
           <div className="flex flex-wrap gap-2">
             {PACKAGE_FILTER_KEYS.map((key) => (
-              <Chip key={key} active={draft.package.includes(key)} onClick={() => togglePackage(key)}>{PACKAGE_FILTER_LABELS[key]}</Chip>
+              <Chip key={key} label={PACKAGE_FILTER_LABELS[key]} selected={draft.package.includes(key)} onClick={() => togglePackage(key)} />
             ))}
           </div>
         </section>
 
         {passportHint && (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={draft.eligibleOnly}
-            onClick={() => setDraft((d) => ({ ...d, eligibleOnly: !d.eligibleOnly }))}
-            className="flex items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-3 text-left"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-row font-semibold text-ink-1">Only roles my passports qualify for</span>
-              <span className="block truncate text-secondary text-ink-2">{passportHint}</span>
-            </span>
-            <span className={cn('flex h-7 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold', draft.eligibleOnly ? 'bg-positive-soft text-positive' : 'bg-white text-ink-2')}>
-              <span className={cn('h-1.5 w-1.5 rounded-full', draft.eligibleOnly ? 'bg-positive' : 'bg-ink-4')} />
-              {draft.eligibleOnly ? 'On' : 'Off'}
-            </span>
-          </button>
+          <SwitchCardRow
+            title="Only roles my passports qualify for"
+            description={passportHint}
+            checked={draft.eligibleOnly}
+            onChange={() => setDraft((d) => ({ ...d, eligibleOnly: !d.eligibleOnly }))}
+            testId="opportunity-filter-passports"
+          />
         )}
 
         <button
           type="button"
           onClick={() => { onApply(draft); onClose() }}
-          className="mt-1 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white"
+          className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-1' })}
+          data-testid="opportunity-filter-show"
         >
           {count === 1 ? 'Show 1 role' : `Show ${count} roles`}
         </button>

@@ -1,5 +1,6 @@
 import { useRef, useCallback } from 'react'
-import { ImagePlus, X, Loader2, Film, Play } from 'lucide-react'
+import { Camera, ImagePlus, X, Loader2, Film, Play } from 'lucide-react'
+import { IconButton } from '@/components/ui/IconButton'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 
 export interface UploadedMedia {
@@ -28,6 +29,9 @@ interface PostMediaUploaderProps {
    *  offering the button would produce a dead tile or a server error. Also
    *  false while the video_posts_enabled launch flag is off. */
   allowVideo?: boolean
+  /** Phone composer (Figma Compose): Muted icon buttons (36, 44 pt hit area)
+   *  and the plain "Photo or video" hint. The pickers and limits are the same. */
+  quiet?: boolean
 }
 
 function formatDuration(seconds: number): string {
@@ -89,6 +93,7 @@ export function PostMediaUploader({
   uploadProgress,
   maxItems = 5,
   allowVideo = true,
+  quiet = false,
 }: PostMediaUploaderProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -136,6 +141,23 @@ export function PostMediaUploader({
 
   // Empty state (Figma Compose bottom bar): two quiet round buttons and a
   // one-line hint — the limits are enforced on pick, not advertised up front.
+  if (media.length === 0 && !isUploading && quiet) {
+    return (
+      <div className="flex items-center gap-2" data-testid="composer-media-bar">
+        <IconButton variant="muted" label="Add photos" onClick={() => imageInputRef.current?.click()}>
+          <Camera className="h-[18px] w-[18px]" strokeWidth={1.8} />
+        </IconButton>
+        {allowVideo && (
+          <IconButton variant="muted" label="Add video" onClick={() => videoInputRef.current?.click()}>
+            <Film className="h-[18px] w-[18px]" strokeWidth={1.8} />
+          </IconButton>
+        )}
+        <p className="pl-1 text-secondary text-ink-2">{allowVideo ? 'Photo or video' : 'Photo'}</p>
+        {fileInputs}
+      </div>
+    )
+  }
+
   if (media.length === 0 && !isUploading) {
     return (
       <div className="flex items-center gap-2">

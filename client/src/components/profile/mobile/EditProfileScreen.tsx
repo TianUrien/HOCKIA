@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronRight, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { DetailRowItem } from '@/components/ui/DetailRowItem'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { fieldInput, fieldLabel, fieldSelect } from '@/components/ui/fieldClasses'
 import { CountrySelect, DateOfBirthPicker, LocationAutocomplete, PlayingCategorySelector } from '@/components'
 import CountryMultiSelect from '@/components/CountryMultiSelect'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
@@ -63,25 +65,17 @@ const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'O
 const monthYear = (iso: string | null | undefined) => { const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null; return m ? `${MONTH[Number(m[2]) - 1]} ${m[1]}` : null }
 const longDate = (iso: string | null | undefined) => { const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null; return m ? `${Number(m[3])} ${MONTH[Number(m[2]) - 1]} ${m[1]}` : null }
 
-const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
-const fieldLabel = 'mb-1.5 block text-secondary font-semibold text-ink-2'
+const input = fieldInput
 
+/** Detail row with a chevron (Figma 101:585): label left, value right. */
 function Row({ label, value, onClick, locked, placeholder = 'Add' }: { label: string; value: string | null; onClick?: () => void; locked?: boolean; placeholder?: string }) {
-  const body = (
-    <>
-      <span className="w-[116px] shrink-0 text-row text-ink-2">{label}</span>
-      <span className={`min-w-0 flex-1 truncate text-row ${value ? 'text-ink-1' : 'text-ink-3'}`}>{value ?? placeholder}</span>
-      {locked ? <Lock className="h-3.5 w-3.5 shrink-0 text-ink-4" strokeWidth={2} /> : onClick ? <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} /> : null}
-    </>
-  )
-  const cls = 'flex min-h-[44px] w-full items-center gap-3 py-3 text-left'
-  return onClick && !locked ? <button type="button" onClick={onClick} className={cls}>{body}</button> : <div className={cls}>{body}</div>
+  return <DetailRowItem label={label} value={value} placeholder={placeholder} onClick={onClick} locked={locked} />
 }
 
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className="mt-6">
-      <h2 className="pb-1 text-caption font-semibold uppercase tracking-[0.06em] text-ink-3">{label}</h2>
+      <h2 className="pb-1 text-caption font-semibold uppercase tracking-[0.06em] text-ink-2">{label}</h2>
       <div className="divide-y divide-line">{children}</div>
     </section>
   )
@@ -296,15 +290,15 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="edit-profile-screen">
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent="Profile" title="Edit profile" onBack={onDone} trailing={<button type="button" onClick={onDone} className="h-11 px-3 text-body font-semibold text-hockia-primary">Done</button>} />
+        <DetailNavBar parent="Profile" title="Edit profile" onBack={onDone} trailing={<button type="button" onClick={onDone} className="h-11 px-3 text-row font-semibold text-hockia-primary">Done</button>} />
       </div>
 
       <div className="px-5">
         <div className="flex items-center gap-4 pt-2">
-          <EntityAvatar src={p.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null} name={name} role={p.role} size={64} />
+          <EntityAvatar src={p.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null} name={name} role={p.role} size={56} />
           <div>
             <p className="text-row font-semibold text-ink-1">Profile photo</p>
-            <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="text-row text-hockia-primary disabled:opacity-60">{uploading ? 'Uploading…' : p.avatar_url ? 'Change photo' : 'Add a photo'}</button>
+            <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="-my-1 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary disabled:opacity-60" data-testid="edit-profile-change-photo">{uploading ? 'Uploading…' : p.avatar_url ? 'Change photo' : 'Add a photo'}</button>
           </div>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = '' }} />
         </div>
@@ -340,9 +334,9 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
             </>
           ) : (
             <>
-              <div className="flex min-h-[44px] items-center gap-3 py-2.5">
-                <span className="w-[116px] shrink-0 text-row text-ink-2">Open to play</span>
-                <span className="min-w-0 flex-1 text-row text-ink-1">{p.open_to_play ? 'On' : 'Off'}</span>
+              <div className="flex min-h-[48px] items-center gap-3 py-2.5">
+                <span className="shrink-0 text-row text-ink-2">Open to play</span>
+                <span className="min-w-0 flex-1 text-right text-row font-semibold text-ink-1">{p.open_to_play ? 'On' : 'Off'}</span>
                 <SettingsSwitch label="Open to play" checked={Boolean(p.open_to_play)} disabled={saving} onChange={() => void persist({ open_to_play: !p.open_to_play })} />
               </div>
               <Row label="Available from" value={available} onClick={() => setEditing('availability')} />
@@ -367,11 +361,11 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
               {editing === 'position' && (
                 <>
                   <div><label htmlFor="edit-position" className={fieldLabel}>Primary</label>
-                    <select id="edit-position" value={d<string>('position') ?? ''} onChange={(e) => set({ position: e.target.value })} className={input}>
+                    <select id="edit-position" value={d<string>('position') ?? ''} onChange={(e) => set({ position: e.target.value })} className={fieldSelect}>
                       <option value="">Choose a position</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
                     </select></div>
                   <div><label htmlFor="edit-position-2" className={fieldLabel}>Secondary (optional)</label>
-                    <select id="edit-position-2" value={d<string>('secondary_position') ?? ''} onChange={(e) => set({ secondary_position: e.target.value })} className={input}>
+                    <select id="edit-position-2" value={d<string>('secondary_position') ?? ''} onChange={(e) => set({ secondary_position: e.target.value })} className={fieldSelect}>
                       <option value="">None</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
                     </select></div>
                 </>
@@ -434,7 +428,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
               {editing === 'about' && (
                 <>
-                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" placeholder="A few lines about you and your hockey." />
+                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary" placeholder="A few lines about you and your hockey." />
                   {BIO_MAX - (d<string>('bio') ?? '').length <= 50 && <p className="text-right text-caption text-ink-3">{BIO_MAX - (d<string>('bio') ?? '').length}</p>}
                 </>
               )}
@@ -444,7 +438,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
                   <div><label htmlFor="edit-available-from" className={fieldLabel}>Available from</label>
                     <input id="edit-available-from" type="date" value={d<string>('available_from') ?? ''} onChange={(e) => set({ available_from: e.target.value })} className={input} /></div>
                   <div><label htmlFor="edit-duration" className={fieldLabel}>For how long</label>
-                    <select id="edit-duration" value={d<string>('availability_duration') ?? ''} onChange={(e) => set({ availability_duration: e.target.value })} className={input}>
+                    <select id="edit-duration" value={d<string>('availability_duration') ?? ''} onChange={(e) => set({ availability_duration: e.target.value })} className={fieldSelect}>
                       <option value="">Not set</option>{Object.entries(DURATION_LABEL).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
                     </select></div>
                 </>
@@ -476,7 +470,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
               {editing === 'links' && <SocialLinksInput value={d<SocialLinks>('social_links') ?? {}} onChange={(value) => set({ social_links: value })} />}
 
               {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
-              <button type="button" onClick={() => void save()} disabled={saving} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">{saving ? 'Saving…' : 'Save'}</button>
+              <button type="button" onClick={() => void save()} disabled={saving} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>{saving ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         )}

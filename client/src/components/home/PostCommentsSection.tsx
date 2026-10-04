@@ -7,6 +7,7 @@ import ReportUserModal from '@/components/ReportUserModal'
 import { getTimeAgo } from '@/lib/utils'
 import { checkContent } from '@/lib/contentFilter'
 import { identityLine } from '@/lib/identity'
+import { CommentListItem } from '@/components/ui/CommentListItem'
 import type { PostComment } from '@/types/homeFeed'
 
 interface PostCommentsSectionProps {
@@ -148,22 +149,15 @@ export function PostCommentsSection({
 
       <ul>
         {comments.map(comment => (
-          <li key={comment.id} className="flex gap-2.5 px-5 py-2">
-            <Avatar
-              src={comment.author_avatar}
-              initials={comment.author_name?.slice(0, 2) || '?'}
-              size="sm"
-              className="mt-0.5 flex-shrink-0"
-              role={comment.author_role}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-secondary text-ink-2">
-                <span className="text-row font-semibold text-ink-1">{comment.author_name || 'Member'}</span>
-                {' '}{identityLine(comment.author_role)}
-                {' · '}{getTimeAgo(comment.created_at, true)}
-              </p>
-              <p className="whitespace-pre-wrap text-row text-ink-1">{comment.content}</p>
-              {user && comment.author_id === user.id ? (
+          <CommentListItem
+            key={comment.id}
+            name={comment.author_name || 'Member'}
+            avatarUrl={comment.author_avatar}
+            role={comment.author_role}
+            meta={`${identityLine(comment.author_role)} · ${getTimeAgo(comment.created_at, true)}`}
+            text={comment.content}
+            actions={
+              user && comment.author_id === user.id ? (
                 <button
                   type="button"
                   onClick={() => handleDelete(comment.id)}
@@ -185,9 +179,9 @@ export function PostCommentsSection({
                   <Flag className="h-3 w-3" />
                   Report
                 </button>
-              ) : null}
-            </div>
-          </li>
+              ) : null
+            }
+          />
         ))}
       </ul>
 
@@ -204,13 +198,15 @@ export function PostCommentsSection({
 
       {user && (
         <div className="flex items-center gap-2 px-4 py-2.5">
-          <Avatar
-            src={profile?.avatar_url}
-            initials={profile?.full_name?.slice(0, 2) || '?'}
-            size="sm"
-            className="flex-shrink-0"
-            role={profile?.role}
-          />
+          {/* Figma Post detail: the phone composer is the field and Send only. */}
+          <span className="hidden flex-shrink-0 lg:block">
+            <Avatar
+              src={profile?.avatar_url}
+              initials={profile?.full_name?.slice(0, 2) || '?'}
+              size="sm"
+              role={profile?.role}
+            />
+          </span>
           <input
             ref={inputRef}
             type="text"

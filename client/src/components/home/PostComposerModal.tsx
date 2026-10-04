@@ -16,6 +16,9 @@ import { getDraft, saveDraft, clearDraft } from '@/lib/composerDraft'
 import { pickPlaceholder, type ComposerRole } from '@/lib/composerPlaceholders'
 import { Avatar, RoleBadge } from '@/components'
 import { PostMediaUploader, type UploadedMedia } from './PostMediaUploader'
+import { Chip } from '@/components/ui/Chip'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 
 interface PostComposerModalProps {
@@ -63,6 +66,8 @@ export function PostComposerModal({
   const { user, profile } = useAuthStore()
   const { createPost, createTransferPost, createSigningPost, updatePost } = useUserPosts()
   const isEdit = Boolean(editingPost)
+  // Phone = the Figma component pass (Compose 101:823 / 272:648); desktop keeps the earlier controls.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const dialogRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -876,6 +881,26 @@ export function PostComposerModal({
             <h2 id="post-composer-title" className="sr-only">
               {isEdit ? 'Edit post' : mode === 'transfer' ? (isClubRole ? 'Announce new signing' : 'Announce transfer') : kind === 'question' ? 'Ask a question' : 'Create post'}
             </h2>
+            {isPhone ? (
+              <>
+                {/* Figma Compose 101:823: Tertiary "Cancel", Primary Small "Post" / "Ask". */}
+                <button type="button" onClick={handleClose} className={buttonClassName({ variant: 'tertiary', size: 'small', radius: 'rounded-full', className: '-ml-3.5' })} aria-label="Cancel" data-testid="composer-cancel">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
+                  aria-label={isEdit ? 'Save changes' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Publish post'}
+                  className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full', className: 'px-4' })}
+                  data-testid="composer-submit"
+                >
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isEdit ? 'Save' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Post'}
+                </button>
+              </>
+            ) : (
+              <>
             <button type="button" onClick={handleClose} className="-ml-1 min-h-[44px] pr-3 text-body text-hockia-primary" aria-label="Cancel">
               Cancel
             </button>
@@ -889,6 +914,8 @@ export function PostComposerModal({
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isEdit ? 'Save' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Post'}
             </button>
+              </>
+            )}
           </div>
 
           {/* Content. Bottom padding uses max(env(safe-area-inset-bottom),
@@ -925,6 +952,23 @@ export function PostComposerModal({
                   ['question', 'Question'],
                 ] as const).map(([value, label]) => {
                   const active = mode === 'post' && kind === value
+                  if (isPhone) {
+                    // Post | Question = Chips (selected soft purple).
+                    return (
+                      <Chip
+                        key={value}
+                        label={label}
+                        selected={active}
+                        role="radio"
+                        aria-checked={active}
+                        aria-pressed={undefined}
+                        onClick={() => {
+                          setMode('post')
+                          setKind(value)
+                        }}
+                      />
+                    )
+                  }
                   return (
                     <button
                       key={value}
@@ -1304,6 +1348,7 @@ export function PostComposerModal({
               uploadProgress={uploadProgress}
               maxItems={5}
               allowVideo={mode !== 'transfer' && videoPostsEnabled}
+              quiet={isPhone}
             />
 
             {/* Submit — the nav pill is the primary control on the phone; this

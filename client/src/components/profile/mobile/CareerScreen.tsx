@@ -1,74 +1,24 @@
 import { useState } from 'react'
-import { Check, ChevronRight, Flag } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
-import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import CareerEntryScreen from './CareerEntryScreen'
-import { useCareerTimeline, type CareerHistoryRow, type CareerTimelineEntry } from '@/hooks/useCareerTimeline'
+import { CareerEntryItem } from './CareerEntryItem'
+import { useCareerTimeline, type CareerHistoryRow } from '@/hooks/useCareerTimeline'
 import { useCountries } from '@/hooks/useCountries'
-import { careerSpan, flagForCountryName } from '@/lib/careerCopy'
-import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
-import { getImageUrl } from '@/lib/imageUrl'
-import { humanizeToken } from '@/lib/identity'
-import { cn } from '@/lib/utils'
+import { flagForCountryName } from '@/lib/careerCopy'
 
 /**
  * Career — own / public (Figma 145:581 · 245:694): the complete timeline
  * the profile previews, with highlights. One screen, two modes: own rows
- * carry a chevron and open the entry, with Add an entry pinned at the
- * bottom; public rows are read-only and not tappable.
+ * carry a chevron and open the entry, with a Secondary "+ Add an entry"
+ * pinned at the bottom; public rows are read-only and not tappable. Rows are
+ * List item / Career entry (`CareerEntryItem`).
  */
 interface CareerScreenProps {
   profileId: string
   mode: 'own' | 'public'
   onBack: () => void
-}
-
-function Entry({ entry, last, flag, locationFlag = null, onOpen }: { entry: CareerTimelineEntry; last: boolean; flag: string | null; locationFlag?: string | null; onOpen?: () => void }) {
-  const isRep = entry.entryType === 'national_team'
-  const span = careerSpan(entry)
-  // The entry's own country first; the linked world club's can disagree with the club profile (QA 2 Oct).
-  const metaFlag = locationFlag ?? entry.clubFlag ?? flag
-  const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
-  const meta = [metaFlag, metaText].filter(Boolean).join(' ')
-  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? 'representative team' : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
-  const crest = entry.crestUrl ? getImageUrl(entry.crestUrl, 'avatar-sm') ?? entry.crestUrl : null
-  const body = (
-    <>
-      <div className="flex items-center gap-2">
-        <p className="min-w-0 flex-1 truncate text-row font-semibold text-ink-1">{entry.clubName}</p>
-        {onOpen && <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />}
-      </div>
-      {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
-      {meta && <p className="truncate text-secondary text-ink-3">{meta}</p>}
-      {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
-      {entry.highlights.length > 0 && (
-        <ul className="mt-1.5 space-y-1">
-          {entry.highlights.map((h) => (
-            <li key={h} className="flex items-start gap-2 text-secondary text-ink-1">
-              <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-positive" strokeWidth={2.5} /> <span className="min-w-0">{h}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  )
-  return (
-    <li className="flex gap-3">
-      <div className="flex w-10 shrink-0 flex-col items-center">
-        {isRep && !crest ? (
-          <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-hockia-soft text-hockia-primary"><Flag className="h-[18px] w-[18px]" strokeWidth={2} /></span>
-        ) : (
-          <EntityAvatar src={crest} name={entry.clubName} role="club" size={40} />
-        )}
-        {!last && <span className="mt-1 w-px flex-1 bg-line" />}
-      </div>
-      {onOpen ? (
-        <button type="button" onClick={onOpen} className={cn('min-w-0 flex-1 text-left', !last && 'pb-5')}>{body}</button>
-      ) : (
-        <div className={cn('min-w-0 flex-1', !last && 'pb-5')}>{body}</div>
-      )}
-    </li>
-  )
 }
 
 export default function CareerScreen({ profileId, mode, onBack }: CareerScreenProps) {
@@ -114,7 +64,7 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
           <>
             <ul>
               {entries.map((e, i) => (
-                <Entry
+                <CareerEntryItem
                   key={e.id}
                   entry={e}
                   last={i === entries.length - 1}
@@ -130,7 +80,9 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
       </div>
       {own && (
         <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-20 bg-gradient-to-t from-white via-white to-white/0 px-5 pb-3 pt-4 lg:hidden">
-          <button type="button" onClick={() => setEditing(null)} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Add an entry</button>
+          <button type="button" onClick={() => setEditing(null)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="career-add-entry">
+            <Plus className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Add an entry
+          </button>
         </div>
       )}
     </div>
