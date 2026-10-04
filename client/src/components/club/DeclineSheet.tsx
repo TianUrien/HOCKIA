@@ -78,7 +78,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
               role="radio"
               aria-checked={reason === r.code}
               onClick={() => { setReason(r.code); if (!edited) setNote('') }}
-              className={cn('rounded-full px-3.5 py-2 text-[14px] font-semibold', reason === r.code ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1')}
+              className={cn('rounded-full px-3.5 py-2 text-[14px] font-semibold', reason === r.code ? 'bg-brand-soft text-brand-primary' : 'bg-surface-grouped text-ink-1')}
             >
               {r.label}
             </button>

@@ -113,7 +113,7 @@ export default function ShortlistScreen() {
 
       <div className="flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Shortlist source">
         {chips.map((c) => (
-          <button key={c.id} type="button" role="tab" aria-selected={chip === c.id} onClick={() => setChip(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', chip === c.id ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1')}>
+          <button key={c.id} type="button" role="tab" aria-selected={chip === c.id} onClick={() => setChip(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', chip === c.id ? 'bg-brand-soft text-brand-primary' : 'bg-surface-grouped text-ink-1')}>
             {c.label}
           </button>
         ))}
