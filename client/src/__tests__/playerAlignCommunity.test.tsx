@@ -54,3 +54,16 @@ describe('status pill and club line', () => {
     expect(screen.getByText('Club · Rome, Italy')).toBeInTheDocument()
   })
 })
+
+describe('Community segments (phone)', () => {
+  it('the selected segment is soft purple on the phone (Chip ruling); desktop keeps ink', async () => {
+    Element.prototype.scrollIntoView = () => {}
+    const { MemoryRouter } = await import('react-router-dom')
+    const { CommunitySegments } = await import('@/components/community/CommunitySegments')
+    render(<MemoryRouter initialEntries={['/community']}><CommunitySegments activeTab="all" /></MemoryRouter>)
+    const sel = screen.getAllByRole('tab').find((t) => t.getAttribute('aria-selected') === 'true')!
+    expect(sel.className).toContain('bg-brand-soft')
+    expect(sel.className).toContain('text-brand-primary')
+    expect(sel.className).toContain('lg:bg-ink-1')
+  })
+})
