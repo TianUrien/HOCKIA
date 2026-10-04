@@ -295,7 +295,7 @@ export default function ClubProfileScreen({
                 </button>
               )}
               {authProfileRole !== 'brand' && (
-                <button type="button" onClick={onMessage} disabled={sendingMessage} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-row font-semibold text-ink-1 disabled:opacity-60">
+                <button type="button" onClick={onMessage} disabled={sendingMessage} className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-white text-row font-semibold text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted disabled:opacity-60" data-testid="club-message-button">
                   <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
                 </button>
               )}
