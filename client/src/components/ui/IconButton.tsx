@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 /**
  * Icon button (Figma 459:171). Ghost 44 is the nav-bar style (transparent,
  * 44 pt target) and the default; Muted 36 for secondary row actions; Tonal 36
- * for a selected toggle; Glass 36 over photos (white 18 % with a backdrop
+ * for a selected toggle; Glass 36 over photos (black 40 % with a backdrop
  * blur, white icon — profile cover). The 36 pt styles keep a 44 pt hit area
  * through the pseudo-element, like the small Button. `size="large"` makes the
  * Muted style 48 (the Message button beside a Large Primary in a bottom bar).
@@ -26,7 +26,7 @@ const STYLES: Record<IconButtonStyle, string> = {
   ghost: 'h-11 w-11 active:bg-surface-muted',
   muted: "relative h-9 w-9 bg-surface-muted before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
   tonal: "relative h-9 w-9 bg-hockia-soft before:absolute before:-inset-1 before:content-[''] active:bg-surface-muted-pressed",
-  glass: "relative h-9 w-9 bg-white/[0.18] backdrop-blur-md before:absolute before:-inset-1 before:content-[''] active:bg-white/30",
+  glass: "relative h-9 w-9 bg-black/40 backdrop-blur-md before:absolute before:-inset-1 before:content-[''] active:bg-black/55",
 }
 const MUTED_LARGE = 'h-12 w-12 bg-surface-muted active:bg-surface-muted-pressed'
 

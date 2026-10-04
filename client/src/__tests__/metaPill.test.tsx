@@ -44,10 +44,10 @@ describe('MetaPill', () => {
 })
 
 describe('IconButton glass / large muted', () => {
-  it('glass is white 18 % with blur and a white icon', () => {
+  it('glass is dark glass: black 40 % with blur and a white icon', () => {
     render(<IconButton variant="glass" label="Back">x</IconButton>)
     const b = screen.getByRole('button', { name: 'Back' })
-    expect(b.className).toContain('bg-white/[0.18]')
+    expect(b.className).toContain('bg-black/40')
     expect(b.className).toContain('backdrop-blur-md')
     expect(b.className).toContain('text-white')
   })

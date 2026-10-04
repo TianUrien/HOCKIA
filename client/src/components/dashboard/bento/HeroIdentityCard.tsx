@@ -205,7 +205,7 @@ export default function HeroIdentityCard({
   )
 
   const coverUrl = coverPhoto ? getImageUrl(coverPhoto, 'lightbox') ?? coverPhoto : null
-  // Phone profile over a cover photo: Glass icon buttons (white 18 %, blur,
+  // Phone profile over a cover photo: Glass icon buttons (black 40 %, blur,
   // white icon). Without a photo the cover is a pale gradient, where white
   // icons would vanish, so the solid white chips stay — as on desktop.
   const glass = d2 && Boolean(coverUrl)
@@ -261,7 +261,7 @@ export default function HeroIdentityCard({
                 <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
               </>
             )}
-            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.18] text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
+            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
       </div>
