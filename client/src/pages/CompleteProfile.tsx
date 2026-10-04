@@ -26,6 +26,7 @@ import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { showsClubSetup } from '@/lib/clubSetup'
+import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
 import {
   type PlayingCategory,
@@ -1082,7 +1083,7 @@ export default function CompleteProfile() {
       await pendingCleanup.flush()
 
       logger.debug('Auth store refreshed - profile now complete')
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       // Clear the wizard-draft persistence — the user finished, the
       // profile row is now authoritative. Without this, a returning user
       // who edits their profile elsewhere then somehow lands back on
@@ -1167,7 +1168,7 @@ export default function CompleteProfile() {
   if (userRole === 'player' && !profile?.onboarding_completed) {
     const finishPlayerSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('player')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'player' })
       submitSignupAttribution(user.id)
@@ -1193,7 +1194,7 @@ export default function CompleteProfile() {
   if (profile && showsClubSetup(userRole, isPhone, profile.onboarding_completed)) {
     const finishClubSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('club')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'club' })
       submitSignupAttribution(user.id)

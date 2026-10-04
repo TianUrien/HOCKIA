@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { detectPlatform } from '@/lib/detectPlatform'
-import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
+import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, hasPriorAppSession, matchesRoutePrefix, recordAppVisit } from '@/lib/overlaySequence'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -76,8 +77,23 @@ export default function InstallPrompt() {
   // the explicit, robust guard.
   const isNative = Capacitor.isNativePlatform()
 
+  // Never on the first app visit (founder rulings 2026-10-04): a member who
+  // has just finished onboarding gets the Terms gate and the cookie banner,
+  // not an install pitch on top. The session onboarding completed in counts as
+  // the first visit (lib/overlaySequence); the card waits for a later session.
+  const [priorSession] = useState(() => {
+    recordAppVisit()
+    return hasPriorAppSession()
+  })
+  // One overlay at a time: never while the Terms gate or cookie banner shows.
+  const termsOpen = useBottomPromptActive(TERMS_GATE_OVERLAY)
+  const cookieOpen = useBottomPromptActive(COOKIE_BANNER_OVERLAY)
+  const onAuthRoute = matchesRoutePrefix(location.pathname, AUTH_FLOW_PREFIXES)
+  const hasInstallOption = installState !== 'installed' && installState !== 'idle'
+  const shown = !isNative && !isDismissed && hasInstallOption && !onAuthRoute && priorSession && !termsOpen && !cookieOpen
+
   // Coordinate with the other bottom prompts so they never stack.
-  useBottomPrompt('install', !isNative && !isDismissed && installState !== 'installed' && installState !== 'idle')
+  useBottomPrompt(INSTALL_OVERLAY, shown)
 
   // Check localStorage for dismissal
   useEffect(() => {
@@ -114,14 +130,13 @@ export default function InstallPrompt() {
 
   // Signal visibility to other components (PushPrompt reads this)
   useEffect(() => {
-    const isVisible = !isNative && !isDismissed && installState !== 'installed' && installState !== 'idle'
-    if (isVisible) {
+    if (shown) {
       localStorage.setItem('pwa-install-visible', '1')
     } else {
       localStorage.removeItem('pwa-install-visible')
     }
     return () => localStorage.removeItem('pwa-install-visible')
-  }, [isNative, isDismissed, installState])
+  }, [shown])
 
   // Listen for the install prompt
   useEffect(() => {
@@ -170,7 +185,7 @@ export default function InstallPrompt() {
 
   // Never inside the native app; and not if dismissed, already installed, or no
   // install option.
-  if (isNative || isDismissed || installState === 'installed' || installState === 'idle') {
+  if (isNative || isDismissed || !hasInstallOption) {
     return null
   }
 
@@ -182,9 +197,12 @@ export default function InstallPrompt() {
   // mid-signup is not the audience for an install pitch; a member who has
   // finished onboarding is. Sitting inside <BrowserRouter>, so useLocation is
   // safe here.
-  if (AUTH_FLOW_PREFIXES.some((pre) => location.pathname === pre || location.pathname.startsWith(pre + '/'))) {
+  if (onAuthRoute) {
     return null
   }
+
+  // First app visit, or the Terms gate / cookie banner holds the slot.
+  if (!shown) return null
 
   // iOS Safari instructions
   if (installState === 'ios-safari') {
