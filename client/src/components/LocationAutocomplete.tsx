@@ -28,6 +28,10 @@ interface LocationAutocompleteProps {
    *  Field header label) used by the account-first set-up and the phone
    *  editors. Behaviour is identical in both appearances. */
   appearance?: 'default' | 'field'
+  /** 'overlay' (default) floats the suggestions over the content below.
+   *  'inline' puts them in the flow (pushing content down) so a scrolling or
+   *  overflow-clipped parent — a bottom sheet — can never cut them off. */
+  suggestionsPlacement?: 'overlay' | 'inline'
 }
 
 export default function LocationAutocomplete({
@@ -43,6 +47,7 @@ export default function LocationAutocomplete({
   disabled,
   icon,
   appearance = 'default',
+  suggestionsPlacement = 'overlay',
 }: LocationAutocompleteProps) {
   const isField = appearance === 'field'
   const inputId = useId()
@@ -266,8 +271,15 @@ export default function LocationAutocomplete({
 
       {/* Dropdown */}
       {showDropdown && predictions.length > 0 && (
-        <div className={cn('absolute z-50 mt-1 w-full overflow-hidden rounded-[12px] border bg-white shadow-lg', isField ? 'border-line' : 'border-gray-200')}>
-          <ul className="max-h-60 overflow-y-auto py-1" role="listbox">
+        <div
+          data-placement={suggestionsPlacement}
+          className={cn(
+            'mt-1 w-full overflow-hidden rounded-[12px] border bg-white',
+            suggestionsPlacement === 'inline' ? 'relative' : 'absolute z-50 shadow-lg',
+            isField ? 'border-line' : 'border-gray-200',
+          )}
+        >
+          <ul className={cn('overflow-y-auto overscroll-contain py-1', suggestionsPlacement === 'inline' ? 'max-h-[min(50dvh,20rem)]' : 'max-h-60')} role="listbox">
             {predictions.map((prediction, index) => (
               <li
                 key={prediction.placeId}
