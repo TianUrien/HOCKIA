@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { ChevronDown, Search, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel } from '@/components/ui/fieldClasses'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
@@ -24,6 +24,8 @@ interface CountrySelectProps {
    *  search is pinned at the top and the whole list scrolls in place — for a
    *  tall bottom sheet, where a floating list would open off-screen. */
   presentation?: 'dropdown' | 'list'
+  /** 'field' appearance only: trailing "Optional" tag in the Field header. */
+  optional?: boolean
 }
 
 /**
@@ -42,6 +44,7 @@ export default function CountrySelect({
   className,
   appearance = 'default',
   presentation = 'dropdown',
+  optional = false,
 }: CountrySelectProps) {
   const isField = appearance === 'field'
   const isList = presentation === 'list'
@@ -265,10 +268,11 @@ export default function CountrySelect({
       {label && (
         <label
           id={labelId}
-          className={isField ? fieldLabel : 'block text-sm font-medium text-gray-700'}
+          className={isField ? (optional ? fieldLabelRow : fieldLabel) : 'block text-sm font-medium text-gray-700'}
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
+          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
         </label>
       )}
 

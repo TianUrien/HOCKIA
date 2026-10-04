@@ -3,7 +3,7 @@ import { Building2, Check, ChevronDown, Globe2, Loader2, Plus, Search, X } from 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import StorageImage from './StorageImage'
-import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel } from '@/components/ui/fieldClasses'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import Flag from './Flag'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -47,6 +47,8 @@ interface WorldClubSearchProps {
   appearance?: 'default' | 'field'
   /** Crest of the linked club, shown in the 'field' appearance. */
   crestUrl?: string | null
+  /** 'field' appearance only: trailing "Optional" tag in the Field header. */
+  optional?: boolean
 }
 
 interface WorldCountryOption {
@@ -77,6 +79,7 @@ export default function WorldClubSearch({
   id: externalId,
   appearance = 'default',
   crestUrl = null,
+  optional = false,
 }: WorldClubSearchProps) {
   const generatedId = useId()
   const inputId = externalId || `world-club-search-${generatedId}`
@@ -306,9 +309,10 @@ export default function WorldClubSearch({
   return (
     <div ref={containerRef} className="relative">
       {label && (
-        <label htmlFor={inputId} className={isField ? fieldLabel : 'text-sm font-medium text-gray-700'}>
+        <label htmlFor={inputId} className={isField ? (optional ? fieldLabelRow : fieldLabel) : 'text-sm font-medium text-gray-700'}>
           {label}
           {required && <span className="text-red-500">*</span>}
+          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
         </label>
       )}
 
