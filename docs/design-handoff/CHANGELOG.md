@@ -3,6 +3,17 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (evening) · design agent
+
+- Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
+- New Tag / Meta `582:7949` (Neutral / Brand, with Label and Icon) for the club, position and specialist pills under a name. It replaces one-off frames on 04 Player (12), D2 (4) and D6 (2). Nine "Open to play" / "Women's" pills now use Tag (Positive / Brand).
+- New List item / Switch pair `583:608` (Push + Email switches). Settings › Notifications `254:753` uses it for the six "Tell me about" rows; Profile views is off on both.
+- Profile v2 `152:1368`: Edit profile (Primary) and Public view (Secondary) are now Buttons, and the cover camera is a Glass icon button.
+- Still one-off, on purpose:
+  - Privacy radio rows `254:1170`/`254:1178`.
+  - The dark "View profile" button on the media viewers (`188:582`, `188:633`, `202:556`, `221:778`).
+  - The video rails on the profiles (Video thumbnail doesn't cover reels yet).
+
 ## 2026-10-05 (later) · design agent
 
 - D6 · Coach v2 rebuilt on components. D6.1 `377:186` profile, as a club sees it:
