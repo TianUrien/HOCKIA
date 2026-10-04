@@ -327,13 +327,20 @@ BEGIN
        SET first_message_at = v_now, first_message_hash = v_hash, first_message_loose_key = v_loose
      WHERE id = v_log_id;
 
-    SELECT count(DISTINCT l.other_user_id),
-           count(DISTINCT l.other_user_id) FILTER (WHERE l.first_message_hash = v_hash)
-      INTO v_people, v_identical
+    SELECT count(DISTINCT l.other_user_id) INTO v_people
       FROM public.new_conversation_log l
      WHERE l.user_id = NEW.sender_id
        AND l.first_message_loose_key = v_loose
        AND l.first_message_at > v_now - interval '7 days';
+
+    -- Of those, the largest group that got exactly the same text.
+    SELECT coalesce(max(g.people), 0) INTO v_identical
+      FROM (SELECT count(DISTINCT l.other_user_id) AS people
+              FROM public.new_conversation_log l
+             WHERE l.user_id = NEW.sender_id
+               AND l.first_message_loose_key = v_loose
+               AND l.first_message_at > v_now - interval '7 days'
+             GROUP BY l.first_message_hash) g;
 
     IF v_people >= c_min_people THEN
       INSERT INTO public.spam_signals AS s (user_id, kind, signal_key, people_count, identical_count, sample_text, first_seen_at, last_seen_at)
