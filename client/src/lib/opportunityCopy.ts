@@ -237,7 +237,9 @@ export function applicationStatusPill(
   const L = APPLICATION_STATUS_LABELS
   switch (status) {
     case 'shortlisted': return { label: L.shortlisted, tone: 'positive' }
-    case 'maybe': return { label: L.maybe, tone: 'positive' }
+    // "Replied" is not an outcome and the player can't act on it: grey, like
+    // playerApplicationStatusBadge (lib/applicationStatus).
+    case 'maybe': return { label: L.maybe, tone: 'grey' }
     case 'rejected': return { label: L.rejected, tone: 'grey' }
     case 'withdrawn': return { label: L.withdrawn, tone: 'grey' }
     case 'no_response': return { label: L.no_response, tone: 'grey' }
@@ -297,6 +299,13 @@ export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
   positive: 'bg-positive-soft text-positive',
   grey: 'bg-surface-grouped text-ink-2',
   neutral: 'bg-hockia-soft text-hockia-primary',
+}
+
+/** Status as words, no pill (List item / Application, Figma 551:647). */
+export const APPLICATION_TONE_TEXT: Record<ApplicationTone, string> = {
+  positive: 'text-positive',
+  grey: 'text-ink-2',
+  neutral: 'text-hockia-primary',
 }
 
 /** "Applied 2d" — same rule as the feed: never "ago". */
