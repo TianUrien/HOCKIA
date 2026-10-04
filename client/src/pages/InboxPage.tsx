@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { SquarePen } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Header, NewMessageModal } from '@/components'
 import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { IconButton } from '@/components/ui/IconButton'
@@ -39,7 +39,9 @@ export default function InboxPage() {
   const requests = useFriendRequests()
   const { invitations: clubInvitations } = useMyClubInvitations()
   const clubInvite = useRespondToClubInvite()
-  // A red dot (never a number) on each segment holding something unread.
+  // A red dot (never a number) on each segment holding something unread —
+  // Requests included (founder ruling 2026-10-03: a dot when requests are
+  // pending, no count).
   const dots = useInboxSegmentDots()
 
   // Opening Inbox re-reads the shared friendship edges so the Requests dot
@@ -55,7 +57,7 @@ export default function InboxPage() {
 
   const newMessageButton = (
     <IconButton label="New message" onClick={() => setComposeOpen(true)}>
-      <SquarePen className="h-6 w-6" strokeWidth={1.8} />
+      <Pencil className="h-[22px] w-[22px]" strokeWidth={1.8} />
     </IconButton>
   )
 

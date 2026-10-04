@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'
 import { Check, Loader2, X } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ConversationSkeleton } from '@/components/Skeleton'
-import { identityLine } from '@/lib/identity'
+import { IconButton } from '@/components/ui/IconButton'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { identityLine, isOrganisationRole } from '@/lib/identity'
+import { useFriendsInCommon } from '@/hooks/useFriendsInCommon'
 import { formatActivityAge } from '@/lib/inboxTime'
 import { profilePath } from '@/lib/profileNavigation'
 import type { FriendRequest, FriendRequestAction } from '@/hooks/useFriendRequests'
@@ -24,10 +27,13 @@ interface InboxRequestsProps {
 type Resolved = 'accepted' | 'declined'
 
 /**
- * Inbox › Requests (Figma 100:406 / 115:1247). Received requests with a
- * purple Accept pill and a round Decline; after Accept the row becomes a
- * quiet confirmation instead of vanishing. Sent requests sit below as
- * "Waiting".
+ * Inbox › Requests (Figma 100:406 / 115:1247). Rows are List item / Request
+ * (548:550) in three states:
+ *   Incoming — avatar 52, name, "role · position", "N mutual friends",
+ *              Tonal Small "Accept" + Muted ✕ (a repeated row action is never the Primary).
+ *   Accepted — green check "Friends" and "You can now message and reference
+ *              each other". No modal, no toast: the row is the confirmation.
+ *   Sent     — grey "Waiting".
  */
 export function InboxRequests({
   incoming,
@@ -68,7 +74,9 @@ export function InboxRequests({
 
   return (
     <section aria-label="Requests">
-      <p className="px-5 pb-2 text-secondary text-ink-2">Friend requests and club invitations.</p>
+      <p className="px-5 pb-1 pt-1 text-secondary text-ink-2" data-testid="requests-explainer">
+        Friends can message you, see your full media and write you a reference.
+      </p>
 
       {/* Squad invitations sit at the top while pending, read or not (Figma D1
           DEV NOTE: the invitee accepts in Inbox › Requests). Accept or Decline
@@ -96,44 +104,42 @@ export function InboxRequests({
             const person = request.person
             const name = person?.full_name ?? person?.username ?? 'HOCKIA member'
             const to = person ? profilePath(person.role, person.username, person.id) : null
+            const state = outcome === 'accepted' ? 'accepted' : outcome === 'declined' ? 'declined' : 'incoming'
             return (
-              <li key={request.friendshipId} className="flex items-center gap-3 px-5 py-3">
-                <RowLink to={to} className="flex min-w-0 flex-1 items-center gap-3">
-                  <EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={48} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
-                    <span className="block truncate text-secondary text-ink-2">{identityLine(person?.role, person?.position)}</span>
-                    <span className="block text-secondary text-ink-3">
-                      {outcome === 'accepted' ? 'Now friends' : outcome === 'declined' ? 'Declined' : `Requested · ${formatActivityAge(request.createdAt)}`}
+              <RequestRow
+                key={request.friendshipId}
+                state={state}
+                to={to}
+                avatar={<EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={52} />}
+                name={name}
+                meta={identityLine(person?.role, person?.position)}
+                detail={
+                  state === 'accepted' ? 'You can now message and reference each other'
+                    : state === 'declined' ? 'Declined'
+                      : <MutualFriendsLine memberId={person?.id ?? null} role={person?.role ?? null} />
+                }
+                trailing={
+                  state === 'accepted' ? (
+                    <span className="flex shrink-0 items-center gap-1 text-row font-semibold text-positive" data-testid="request-friends">
+                      <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" /> Friends
                     </span>
-                  </span>
-                </RowLink>
-                {outcome === 'accepted' ? (
-                  <span className="flex h-[34px] items-center gap-1 rounded-full bg-positive-soft px-3 text-[14px] font-semibold text-positive">
-                    <Check className="h-4 w-4" strokeWidth={2.5} /> Friends
-                  </span>
-                ) : outcome === 'declined' ? null : (
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void act(request, 'accept')}
-                      className="flex h-[34px] items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
-                    >
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Accept'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void act(request, 'decline')}
-                      aria-label={`Decline ${name}`}
-                      className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-surface-grouped text-ink-1 disabled:opacity-60"
-                    >
-                      <X className="h-4 w-4" strokeWidth={2.25} />
-                    </button>
-                  </span>
-                )}
-              </li>
+                  ) : state === 'declined' ? null : (
+                    <span className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void act(request, 'accept')}
+                        className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
+                      >
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
+                      </button>
+                      <IconButton variant="muted" label={`Decline ${name}`} disabled={busy} onClick={() => void act(request, 'decline')}>
+                        <X className="h-[18px] w-[18px]" strokeWidth={2} />
+                      </IconButton>
+                    </span>
+                  )
+                }
+              />
             )
           })}
         </ul>
@@ -141,27 +147,22 @@ export function InboxRequests({
 
       {outgoing.length > 0 && (
         <>
-          <h2 className="px-5 pb-1 pt-4 text-title text-ink-1">Sent</h2>
+          <h2 className="px-5 pb-1 pt-5 text-title text-ink-1">Sent</h2>
           <ul>
             {outgoing.map((request) => {
               const person = request.person
               const name = person?.full_name ?? person?.username ?? 'HOCKIA member'
               const to = person ? profilePath(person.role, person.username, person.id) : null
               return (
-                <li key={request.friendshipId} className="flex items-center gap-3 px-5 py-3">
-                  <RowLink to={to} className="flex min-w-0 flex-1 items-center gap-3">
-                    <EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={48} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
-                      <span className="block truncate text-secondary text-ink-2">
-                        {identityLine(person?.role, person?.position)} · sent {formatActivityAge(request.createdAt)}
-                      </span>
-                    </span>
-                  </RowLink>
-                  <span className="flex h-[30px] items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2">
-                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Requested
-                  </span>
-                </li>
+                <RequestRow
+                  key={request.friendshipId}
+                  state="sent"
+                  to={to}
+                  avatar={<EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={52} />}
+                  name={name}
+                  meta={`${identityLine(person?.role, person?.position)} · sent ${formatActivityAge(request.createdAt)}`}
+                  trailing={<span className="shrink-0 text-secondary text-ink-3" data-testid="request-waiting">Waiting</span>}
+                />
               )
             })}
           </ul>
@@ -169,6 +170,51 @@ export function InboxRequests({
       )}
     </section>
   )
+}
+
+type RequestRowState = 'incoming' | 'accepted' | 'declined' | 'sent'
+
+/**
+ * List item / Request (Figma 548:550). The avatar and text open the profile;
+ * the trailing column holds the state (actions, "Friends", "Waiting"). The
+ * divider starts at the text.
+ */
+function RequestRow({ state, to, avatar, name, meta, detail, trailing, testId = 'request-row' }: {
+  state: RequestRowState
+  to: string | null
+  avatar: React.ReactNode
+  name: string
+  meta: React.ReactNode
+  detail?: React.ReactNode
+  trailing?: React.ReactNode
+  testId?: string
+}) {
+  return (
+    <li className="group flex items-center gap-3 pl-4" data-testid={testId} data-state={state}>
+      <RowLink to={to} className="shrink-0" ariaHidden>{avatar}</RowLink>
+      <div className="flex min-w-0 flex-1 items-center gap-3 border-b border-line py-3 pr-4 group-last:border-b-0">
+        <RowLink to={to} className="block min-w-0 flex-1">
+          <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{name}</span>
+          <span className="block truncate text-secondary text-ink-2">{meta}</span>
+          {detail ? <span className="block truncate text-secondary text-ink-3" data-testid="request-detail">{detail}</span> : null}
+        </RowLink>
+        {trailing}
+      </div>
+    </li>
+  )
+}
+
+/**
+ * "2 mutual friends" on an incoming request: the real intersection of the
+ * viewer's friends and the requester's (hooks/useFriendsInCommon — fenced
+ * reads, cached per pair). People only, like the member preview; nothing
+ * shows until the answer is in.
+ */
+function MutualFriendsLine({ memberId, role }: { memberId: string | null; role: string | null }) {
+  const person = Boolean(memberId) && !isOrganisationRole(role)
+  const { count, loading } = useFriendsInCommon(person ? memberId : null)
+  if (!person || loading) return null
+  return <>{count === 0 ? 'No mutual friends yet' : count === 1 ? '1 mutual friend' : `${count} mutual friends`}</>
 }
 
 function ClubInvitationRow({ invite, busy, respond }: {
@@ -179,42 +225,37 @@ function ClubInvitationRow({ invite, busy, respond }: {
   const name = invite.club.fullName ?? invite.club.username ?? 'A club'
   const to = profilePath('club', invite.club.username, invite.club.id)
   return (
-    <li className="flex items-center gap-3 px-5 py-3" data-testid="inbox-club-invitation">
-      <RowLink to={to} className="flex min-w-0 flex-1 items-center gap-3">
-        <EntityAvatar src={invite.club.avatarUrl} name={name} role="club" size={48} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
-          <span className="block text-secondary text-ink-2">Invited you to join their club</span>
-          <span className="block text-secondary text-ink-3">Club invitation · {formatActivityAge(invite.createdAt)}</span>
+    <RequestRow
+      state="incoming"
+      testId="inbox-club-invitation"
+      to={to}
+      avatar={<EntityAvatar src={invite.club.avatarUrl} name={name} role="club" size={52} />}
+      name={name}
+      meta="Invited you to join their club"
+      detail={`Club invitation · ${formatActivityAge(invite.createdAt)}`}
+      trailing={
+        <span className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void respond(invite.clubMemberId, 'accept')}
+            className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
+          </button>
+          <IconButton variant="muted" label={`Decline ${name}'s invitation`} disabled={busy} onClick={() => void respond(invite.clubMemberId, 'decline')}>
+            <X className="h-[18px] w-[18px]" strokeWidth={2} />
+          </IconButton>
         </span>
-      </RowLink>
-      <span className="flex shrink-0 items-center gap-1.5">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void respond(invite.clubMemberId, 'accept')}
-          className="flex h-[34px] items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Accept'}
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void respond(invite.clubMemberId, 'decline')}
-          aria-label={`Decline ${name}'s invitation`}
-          className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-surface-grouped text-ink-1 disabled:opacity-60"
-        >
-          <X className="h-4 w-4" strokeWidth={2.25} />
-        </button>
-      </span>
-    </li>
+      }
+    />
   )
 }
 
-function RowLink({ to, className, children }: { to: string | null; className: string; children: React.ReactNode }) {
+function RowLink({ to, className, children, ariaHidden = false }: { to: string | null; className: string; children: React.ReactNode; ariaHidden?: boolean }) {
   if (!to) return <div className={className}>{children}</div>
   return (
-    <Link to={to} className={className}>
+    <Link to={to} className={className} aria-hidden={ariaHidden || undefined} tabIndex={ariaHidden ? -1 : undefined}>
       {children}
     </Link>
   )

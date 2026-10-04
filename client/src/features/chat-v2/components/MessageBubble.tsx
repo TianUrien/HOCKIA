@@ -233,7 +233,7 @@ export function MessageBubble({
       {isDeleted ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div
-            className="inline-flex max-w-[75%] items-center gap-1.5 rounded-[18px] px-3.5 py-2 text-[13px] italic text-ink-3 ring-1 ring-line sm:max-w-[65%]"
+            className="inline-flex max-w-[75%] items-center gap-1.5 rounded-card px-3.5 py-2 text-[13px] italic text-ink-3 ring-1 ring-line sm:max-w-[65%] lg:rounded-[18px]"
             data-testid="message-deleted"
           >
             <Ban className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
@@ -363,12 +363,17 @@ export function MessageBubble({
           )}
 
           <div
+            data-testid="message-bubble"
+            data-mine={isMine ? 'true' : 'false'}
             className={cn(
-              'max-w-[78%] rounded-[18px] px-3.5 py-2.5 text-[15px] leading-5 sm:max-w-[65%]',
+              // Figma Chat 100:636: radius 16 on phones (decision 2026-10-02),
+              // incoming grey left, outgoing SOLID brand right — no gradient.
+              // Desktop keeps its 18.
+              'max-w-[78%] rounded-card px-3.5 py-2.5 text-[15px] leading-5 sm:max-w-[65%] lg:rounded-[18px]',
               isMine ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1',
               isMine
-                ? isGroupedWithPrevious ? 'rounded-tr-[6px]' : ''
-                : isGroupedWithPrevious ? 'rounded-tl-[6px]' : ''
+                ? isGroupedWithPrevious ? 'rounded-tr-[6px] lg:rounded-tr-[6px]' : ''
+                : isGroupedWithPrevious ? 'rounded-tl-[6px] lg:rounded-tl-[6px]' : ''
             )}
           >
             {isSharedPost && message.metadata?.type === 'shared_post' ? (

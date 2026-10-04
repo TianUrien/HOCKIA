@@ -6,17 +6,19 @@ import { useToastStore } from '@/lib/toast'
 import type { NotificationRecord } from '@/lib/api/notifications'
 import { getNotificationConfig, resolveNotificationRoute } from '@/components/notifications/config'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { ActivityIconCircle, ActivityRow } from '@/components/ui/ActivityRow'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { formatActivityAge } from '@/lib/inboxTime'
-import { identityLine } from '@/lib/identity'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { cn } from '@/lib/utils'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
 import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
 
 /**
  * Inbox › Activity (Figma 100:531): profile views, club replies, expired
- * applications, references — one list, newest first, purple dot while
- * unread. Same store the notifications drawer reads (profile_notifications),
+ * applications, references — one list, newest first. Rows are List item /
+ * Activity (ui/ActivityRow): avatar 40 (or a brand-soft icon circle for a
+ * system event), the sentence, the time under it, a chevron only when the
+ * row leads somewhere, and a purple dot while unread. Same store the notifications drawer reads (profile_notifications),
  * so nothing is fetched twice.
  */
 export function InboxActivity() {
@@ -66,7 +68,7 @@ export function InboxActivity() {
     <section aria-label="Activity">
       {unreadCount > 0 && (
         <div className="flex justify-end px-5 pb-1">
-          <button type="button" onClick={() => void markAllRead()} className="text-secondary font-medium text-ink-2">
+          <button type="button" onClick={() => void markAllRead()} className="flex h-9 items-center text-secondary font-semibold text-hockia-primary">
             Mark all as read
           </button>
         </div>
@@ -75,7 +77,7 @@ export function InboxActivity() {
         <p className="px-5 py-8 text-center text-row text-ink-2">Nothing new yet. Profile views, club replies and references land here.</p>
       ) : (
         <ul>
-          {rows.map((notification) => {
+          {rows.map((notification, index) => {
             const config = getNotificationConfig(notification)
             const unread = !notification.readAt
             const actor = notification.actor
@@ -95,51 +97,40 @@ export function InboxActivity() {
             }
             return (
               <li key={notification.id}>
-                <div
-                  role={route ? 'button' : undefined}
-                  tabIndex={route ? 0 : undefined}
-                  onClick={route ? () => open(notification) : undefined}
-                  onKeyDown={
-                    route
-                      ? (event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            open(notification)
-                          }
-                        }
-                      : undefined
+                <ActivityRow
+                  className={index === rows.length - 1 ? 'is-last' : undefined}
+                  leading={
+                    actor
+                      ? <EntityAvatar src={actor.avatarUrl} name={name} role={actor.role} size={40} />
+                      : <ActivityIconCircle icon={config.icon} />
                   }
-                  className={cn('flex items-start gap-3 px-5 py-3 text-left', route && 'cursor-pointer transition-colors active:bg-surface-muted')}
+                  text={config.getTitle(notification)}
+                  detail={description}
+                  when={formatActivityAge(notification.createdAt)}
+                  onOpen={route ? () => open(notification) : undefined}
+                  unread={unread}
                 >
-                  <EntityAvatar src={actor?.avatarUrl} name={name} role={actor?.role} size={44} />
-                  <span className="min-w-0 flex-1">
-                    <span className={cn('block text-row text-ink-1', unread ? 'font-semibold' : 'font-medium')}>{config.getTitle(notification)}</span>
-                    {actor?.role && <span className="block text-secondary text-ink-2">{identityLine(actor.role)}</span>}
-                    {description && <span className="block text-secondary text-ink-2">{description}</span>}
-                    <span className="block pt-0.5 text-secondary text-ink-3">{formatActivityAge(notification.createdAt)}</span>
-                    {(isFriendRequest || isClubInvite) && (
-                      <span className="mt-2 flex gap-1.5">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={(e) => { e.stopPropagation(); answer('accept') }}
-                          className="flex h-[34px] items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={(e) => { e.stopPropagation(); answer('decline') }}
-                          className="flex h-[34px] items-center rounded-full bg-surface-grouped px-3.5 text-[14px] font-semibold text-ink-1 disabled:opacity-60"
-                        >
-                          Decline
-                        </button>
-                      </span>
-                    )}
-                  </span>
-                  {unread && <span aria-label="Unread" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-hockia-primary" />}
-                </div>
+                  {(isFriendRequest || isClubInvite) && (
+                    <span className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={(e) => { e.stopPropagation(); answer('accept') }}
+                        className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full' })}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={(e) => { e.stopPropagation(); answer('decline') }}
+                        className={buttonClassName({ variant: 'secondary', size: 'small', radius: 'rounded-full' })}
+                      >
+                        Decline
+                      </button>
+                    </span>
+                  )}
+                </ActivityRow>
               </li>
             )
           })}
