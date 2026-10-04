@@ -3,6 +3,17 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (round 2a review) · design agent
+
+- Player round 2a (code PR #212: Inbox, chat, applications, apply sheets, coach role header) reviewed from screenshots.
+- List item / Request `548:550`: Accept is Tonal Small (a repeated row action), not Primary.
+- List item / Application `551:647`: gains a Position line (four lines as shipped). My applications `101:353` and `115:1382` use day-first dates.
+- Accepted from code:
+  - The chat composer has no camera.
+  - Time and read receipts sit inside the bubbles.
+  - No mutual-friends line for clubs or brands.
+  - "Replied" is grey.
+
 ## 2026-10-05 (round 1 review) · design agent
 
 - Player round 1 (code PR #211) reviewed from screenshots. Figma aligned to the accepted code choices:
