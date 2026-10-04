@@ -82,7 +82,7 @@ export function YourWeekCard() {
               {loading ? (
                 <div className="h-[31px] w-8 animate-pulse rounded-md bg-line" />
               ) : (
-                <div className={cn('text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums', s.accent && s.value > 0 ? 'text-hockia-primary' : 'text-ink-1')}>{s.value}</div>
+                <div className={cn('text-figure tabular-nums', s.accent && s.value > 0 ? 'text-hockia-primary' : 'text-ink-1')}>{s.value}</div>
               )}
               <div className="max-w-full truncate px-2 text-caption text-ink-2">{s.label}</div>
             </Link>
@@ -113,7 +113,7 @@ export function YourWeekCard() {
             {loading ? (
               <div className="h-[31px] w-8 animate-pulse rounded-md bg-line" />
             ) : (
-              <div className="text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums text-ink-1">{s.value}</div>
+              <div className="text-figure tabular-nums text-ink-1">{s.value}</div>
             )}
             <div className="max-w-full truncate px-2 text-caption text-ink-2">{s.label}</div>
           </div>

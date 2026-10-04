@@ -60,7 +60,7 @@ export function ApplicationSent({ clubName, clubLogo, publisherRole, onClose }: 
         <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-positive-soft text-positive">
           <Check className="h-10 w-10" strokeWidth={2.5} />
         </span>
-        <h1 className="text-[28px] font-bold leading-[34px] text-ink-1">Application sent</h1>
+        <h1 className="text-title-xl text-ink-1">Application sent</h1>
         <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={64} />
         <p className="text-row text-ink-2">
           {clubName} has your profile, career and highlights. Their answer arrives in your Inbox.

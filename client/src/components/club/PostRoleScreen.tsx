@@ -275,7 +275,7 @@ export default function PostRoleScreen({ draftId }: Props) {
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto pb-6">
         <div className="px-5 pt-4">
-          <h1 className="text-[28px] font-bold leading-[34px] tracking-[-0.3px] text-ink-1">{copy.title}</h1>
+          <h1 className="text-title-xl text-ink-1">{copy.title}</h1>
           <p className="mt-1 text-secondary text-ink-2">{copy.sub}</p>
         </div>
 

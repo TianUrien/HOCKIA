@@ -112,7 +112,7 @@ export default function SquadScreen({ profile, onBack, parent = 'Profile' }: Squ
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="squad-screen">
       <DetailNavBar parent={parent} onBack={onBack} />
       <div className="px-5 pt-1.5">
-        <h1 className="text-[28px] font-bold leading-[34px] text-ink-1">Squad</h1>
+        <h1 className="text-title-xl text-ink-1">Squad</h1>
         <p className="mt-1 text-[14px] leading-5 text-ink-2">Players and staff who wear your crest on their profile.</p>
       </div>
 

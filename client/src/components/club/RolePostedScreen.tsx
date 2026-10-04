@@ -143,7 +143,7 @@ export default function RolePostedScreen({ roleId }: Props) {
           <span className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-full bg-positive-soft text-positive" aria-hidden="true">
             <Check className="h-10 w-10" strokeWidth={2.4} />
           </span>
-          <h1 className="text-center text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-ink-1">{copy.title}</h1>
+          <h1 className="text-center text-title-xl text-ink-1">{copy.title}</h1>
           <EntityAvatar src={profile?.avatar_url ?? null} name={profile?.full_name ?? null} role="club" size={64} />
           <p className="text-center text-[15px] leading-[21px] text-ink-2">{copy.body}</p>
 
