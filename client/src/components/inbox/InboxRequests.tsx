@@ -30,7 +30,7 @@ type Resolved = 'accepted' | 'declined'
  * Inbox › Requests (Figma 100:406 / 115:1247). Rows are List item / Request
  * (548:550) in three states:
  *   Incoming — avatar 52, name, "role · position", "N mutual friends",
- *              Primary Small "Accept" + Muted ✕.
+ *              Tonal Small "Accept" + Muted ✕ (a repeated row action is never the Primary).
  *   Accepted — green check "Friends" and "You can now message and reference
  *              each other". No modal, no toast: the row is the confirmation.
  *   Sent     — grey "Waiting".
@@ -129,7 +129,7 @@ export function InboxRequests({
                         type="button"
                         disabled={busy}
                         onClick={() => void act(request, 'accept')}
-                        className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full' })}
+                        className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
                       >
                         {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
                       </button>
@@ -239,7 +239,7 @@ function ClubInvitationRow({ invite, busy, respond }: {
             type="button"
             disabled={busy}
             onClick={() => void respond(invite.clubMemberId, 'accept')}
-            className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full' })}
+            className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
           </button>

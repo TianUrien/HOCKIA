@@ -196,7 +196,7 @@ describe('Inbox › Requests rows (List item / Request)', () => {
     expect(within(rows[1]).getByTestId('request-detail')).toHaveTextContent('1 mutual friend')
     expect(within(rows[2]).getByTestId('request-detail')).toHaveTextContent('No mutual friends yet')
     const accept = within(rows[0]).getByRole('button', { name: 'Accept' })
-    expect(accept.className).toContain('bg-hockia-primary')
+    expect(accept.className).toContain('bg-hockia-soft')
     expect(accept.className).toContain('h-9')
     const decline = within(rows[0]).getByRole('button', { name: 'Decline Marcia LaPlante' })
     expect(decline).toHaveAttribute('data-variant', 'muted')
