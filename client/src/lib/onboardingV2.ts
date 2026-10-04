@@ -83,3 +83,53 @@ export function offersOpenToPlay(dob: string | null | undefined, today: Date = n
 export function setupDraftKey(userId: string): string {
   return `hockia-onboarding-v2:player:${userId}`
 }
+
+// ── Coach wizard draft (onboarding QA 2026-10-04) ───────────────────────
+
+/** Draft key for the coach set-up wizard; same shape as the player's. */
+export function coachDraftKey(userId: string): string {
+  return `hockia-onboarding-v2:coach:${userId}`
+}
+
+/** Key used by the 3-step wizard before the v2 keys (still read for coaches). */
+export function legacyWizardDraftKey(role: string, userId: string): string {
+  return `hockia-onboarding-draft:${role}:${userId}`
+}
+
+export type WizardDraftStep = 1 | 2 | 3
+
+export interface WizardDraft {
+  step: WizardDraftStep | null
+  formData: Record<string, unknown> | null
+}
+
+/** Drafts older than this are dropped (the form may have changed since). */
+export const WIZARD_DRAFT_MAX_AGE_DAYS = 7
+
+/**
+ * Parses a stored wizard draft. Null when missing, unreadable or stale; the
+ * caller removes stale drafts. Pure — no storage access.
+ */
+export function parseWizardDraft(raw: string | null, now: number = Date.now()): WizardDraft | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as { step?: unknown; formData?: unknown; savedAt?: unknown }
+    if (!parsed || typeof parsed !== 'object') return null
+    if (typeof parsed.savedAt === 'string') {
+      const ageDays = (now - Date.parse(parsed.savedAt)) / 86_400_000
+      if (Number.isFinite(ageDays) && ageDays > WIZARD_DRAFT_MAX_AGE_DAYS) return null
+    }
+    const step = parsed.step === 1 || parsed.step === 2 || parsed.step === 3 ? parsed.step : null
+    const formData = parsed.formData && typeof parsed.formData === 'object' && !Array.isArray(parsed.formData)
+      ? (parsed.formData as Record<string, unknown>)
+      : null
+    return { step, formData }
+  } catch {
+    return null
+  }
+}
+
+/** Serialises a wizard draft for storage. */
+export function serializeWizardDraft(step: WizardDraftStep, formData: Record<string, unknown>, now: number = Date.now()): string {
+  return JSON.stringify({ step, formData, savedAt: new Date(now).toISOString() })
+}

@@ -244,10 +244,13 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
         </button>
       </div>
 
-      <BottomSheet open={sheet === 'country'} onClose={() => setSheet(null)} ariaLabel="Country">
+      {/* Tall sheet (onboarding QA 2026-10-04): the picker used to be a
+          dropdown inside a ~144 px sheet, so its list opened below the screen
+          edge. Now the search is pinned and the list scrolls in the sheet. */}
+      <BottomSheet open={sheet === 'country'} onClose={() => setSheet(null)} ariaLabel="Country" className="h-[85dvh]">
         <div className="px-5 pb-6 pt-2">
-          <h2 className="mb-3 text-[20px] font-bold leading-[25px] text-ink-1">Country</h2>
-          <CountrySelect appearance="field" value={draft.countryId} onChange={(id) => { set({ countryId: id }); setSheet(null) }} />
+          <h2 className="mb-1 text-[20px] font-bold leading-[25px] text-ink-1">Country</h2>
+          <CountrySelect presentation="list" appearance="field" value={draft.countryId} onChange={(id) => { set({ countryId: id }); setSheet(null) }} />
         </div>
       </BottomSheet>
 
@@ -258,6 +261,9 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
             value={draft.location}
             isSelected={draft.locationSelected}
             placeholder="Where the club plays"
+            // In the flow, not floating: the sheet's scroll container clipped
+            // the floating list after the second result (QA 2026-10-04).
+            suggestionsPlacement="inline"
             onChange={(value) => set({ location: value, city: '', baseCountryId: null, locationSelected: false })}
             onLocationSelect={(loc: LocationSelection) => {
               // A picked city fills the country when it is still empty.

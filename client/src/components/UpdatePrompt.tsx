@@ -1,39 +1,55 @@
-import { RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { RefreshCw, X } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
 
 interface UpdatePromptProps {
-  onUpdate: () => void
+  /** Applies the waiting service worker; the page reloads once it controls. */
+  onReload: () => void
+  /** Called after the prompt is dismissed (it stays hidden for this page). */
+  onDismiss?: () => void
 }
 
 /**
- * UpdatePrompt - Shows when a new version of HOCKIA is available
- * 
- * Displays a non-intrusive banner at the top of the screen prompting
- * the user to refresh and get the latest version.
+ * "A new version of HOCKIA is ready" (onboarding QA 2026-10-04). Small neutral
+ * banner at the top; the page never reloads on its own — only the Reload tap
+ * applies the update (lib/swUpdate.ts). Dismiss hides it for this page; the
+ * next load shows it again while the new version is still waiting.
  */
-export default function UpdatePrompt({ onUpdate }: UpdatePromptProps) {
+export default function UpdatePrompt({ onReload, onDismiss }: UpdatePromptProps) {
+  const [hidden, setHidden] = useState(false)
+  const [reloading, setReloading] = useState(false)
+  if (hidden) return null
+
   return (
-    <div 
-      className="fixed top-0 left-0 right-0 z-[100] animate-slide-down"
-      role="alert"
-      aria-live="polite"
-    >
-      <div className="bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-              <RefreshCw className="w-4 h-4" />
-            </div>
-            <p className="text-sm font-medium truncate">
-              A new version of HOCKIA is available
-            </p>
-          </div>
-          <button
-            onClick={onUpdate}
-            className="flex-shrink-0 px-4 py-1.5 bg-white text-hockia-primary text-sm font-semibold rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-hockia-primary"
-          >
-            Refresh now
-          </button>
-        </div>
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-[14px] bg-white py-2 pl-3.5 pr-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-inset ring-line"
+      >
+        <RefreshCw className="h-4 w-4 shrink-0 text-ink-2" aria-hidden="true" />
+        <p className="min-w-0 flex-1 text-row font-medium text-ink-1">A new version of HOCKIA is ready</p>
+        <Button
+          variant="tonal"
+          size="small"
+          loading={reloading}
+          onClick={() => {
+            setReloading(true)
+            onReload()
+          }}
+        >
+          Reload
+        </Button>
+        <IconButton
+          label="Dismiss"
+          onClick={() => {
+            setHidden(true)
+            onDismiss?.()
+          }}
+        >
+          <X className="h-4 w-4 text-ink-3" aria-hidden="true" />
+        </IconButton>
       </div>
     </div>
   )

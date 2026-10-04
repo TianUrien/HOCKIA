@@ -26,7 +26,10 @@ import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { showsClubSetup } from '@/lib/clubSetup'
+import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
+import { coachDraftKey, legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft } from '@/lib/onboardingV2'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
+import { Button as UiButton } from '@/components/ui/Button'
 import {
   type PlayingCategory,
   type CoachUmpireCategory,
@@ -125,6 +128,9 @@ export default function CompleteProfile() {
   // wizardDraftKey is computed AFTER userRole is derived (it depends on
   // both user.id and userRole, which need to be in scope first).
   const wizardDraftHydratedRef = useRef(false)
+  // Set on the commit that restores a draft, so persistence skips writing the
+  // not-yet-restored form over it in that same commit.
+  const wizardDraftSkipPersistRef = useRef(false)
 
   // Form data states
   const [formData, setFormData] = useState({
@@ -203,9 +209,14 @@ export default function CompleteProfile() {
   // user's draft, and a user who switches role mid-flow doesn't see a
   // player draft on a coach mount. null when either is missing — effects
   // gate on this and skip persistence until both resolve.
+  //
+  // Coaches use the v2 key (same pattern as PlayerSetupFlow's
+  // `hockia-onboarding-v2:player:<uid>`, onboarding QA 2026-10-04); a draft
+  // under the older key is still read once and migrated.
   const wizardDraftKey = user?.id && userRole
-    ? `hockia-onboarding-draft:${userRole}:${user.id}`
+    ? (userRole === 'coach' ? coachDraftKey(user.id) : legacyWizardDraftKey(userRole, user.id))
     : null
+  const legacyCoachDraftKey = user?.id && userRole === 'coach' ? legacyWizardDraftKey('coach', user.id) : null
 
   // Player, coach, and umpire get a 3-step wizard. Club keeps its existing
   // claim→form two-step flow; brand is handled on a separate onboarding page.
@@ -495,52 +506,54 @@ export default function CompleteProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
 
-  // Wizard draft hydration: on mount (per user+role), if there's a saved
-  // draft from a prior interrupted session, restore the form fields AND
-  // the step the user was on. Runs ONCE — guarded by hydratedRef. Runs
-  // AFTER server-side prefill so the user's most-recent typed state wins
-  // over stale DB state (which might be from before they typed).
+  // Wizard draft hydration: once per mount (per user+role), restore the form
+  // fields AND the step from a saved draft. Waits for the profile so the
+  // server-side prefill (the effect above, same commit, declared first) runs
+  // BEFORE it and the user's most recent typed state wins. Without that wait
+  // a profile arriving after hydration overwrote the restored draft (e.g. an
+  // empty full_name), which read as "the coach form forgot everything".
   useEffect(() => {
-    if (!isWizardFlow || !wizardDraftKey || wizardDraftHydratedRef.current) return
+    if (!isWizardFlow || !wizardDraftKey || !profile || wizardDraftHydratedRef.current) return
     wizardDraftHydratedRef.current = true
     try {
       if (typeof window === 'undefined' || !window.localStorage) return
-      const raw = window.localStorage.getItem(wizardDraftKey)
+      let raw = window.localStorage.getItem(wizardDraftKey)
+      if (!raw && legacyCoachDraftKey) {
+        raw = window.localStorage.getItem(legacyCoachDraftKey)
+        window.localStorage.removeItem(legacyCoachDraftKey)
+      }
       if (!raw) return
-      const parsed = JSON.parse(raw) as { step?: number; formData?: Record<string, unknown>; savedAt?: string }
-      // Stale-draft guard: drop drafts older than 7 days. Prevents a
-      // draft from a different feature/version of the form from
-      // resurrecting after an app update.
-      if (parsed.savedAt) {
-        const ageDays = (Date.now() - Date.parse(parsed.savedAt)) / 86_400_000
-        if (Number.isFinite(ageDays) && ageDays > 7) {
-          window.localStorage.removeItem(wizardDraftKey)
-          return
-        }
+      const draft = parseWizardDraft(raw)
+      if (!draft) {
+        // Stale or unreadable (7-day guard): drop it.
+        window.localStorage.removeItem(wizardDraftKey)
+        return
       }
-      if (parsed.formData && typeof parsed.formData === 'object') {
-        setFormData(prev => ({ ...prev, ...(parsed.formData as Record<string, unknown>) }) as typeof prev)
+      wizardDraftSkipPersistRef.current = true
+      if (draft.formData) {
+        const restored = draft.formData
+        setFormData(prev => ({ ...prev, ...restored }) as typeof prev)
       }
-      if (parsed.step === 1 || parsed.step === 2 || parsed.step === 3) {
-        setCurrentStep(parsed.step as WizardStep)
-      }
+      if (draft.step) setCurrentStep(draft.step)
     } catch (err) {
       logger.warn('[COMPLETE_PROFILE] Failed to hydrate wizard draft', { error: err })
     }
-  }, [isWizardFlow, wizardDraftKey])
+  }, [isWizardFlow, wizardDraftKey, legacyCoachDraftKey, profile])
 
   // Wizard draft persistence: save form + step on every change, debounced
   // implicitly by React's batching. Skipped for non-wizard roles (club
   // already has its own draft mechanism via showClubClaimStep state, and
-  // brand has a separate persistKey-based BrandForm draft).
+  // brand has a separate persistKey-based BrandForm draft). Starts only after
+  // hydration so an empty first render never overwrites a saved draft.
   useEffect(() => {
     if (!isWizardFlow || !wizardDraftKey || !wizardDraftHydratedRef.current) return
+    if (wizardDraftSkipPersistRef.current) {
+      wizardDraftSkipPersistRef.current = false
+      return
+    }
     try {
       if (typeof window === 'undefined' || !window.localStorage) return
-      window.localStorage.setItem(
-        wizardDraftKey,
-        JSON.stringify({ step: currentStep, formData, savedAt: new Date().toISOString() }),
-      )
+      window.localStorage.setItem(wizardDraftKey, serializeWizardDraft(currentStep, formData))
     } catch {
       // Quota exceeded or storage blocked — silently no-op. The fallback
       // is the server-side prefill from `profiles` on next mount.
@@ -1082,13 +1095,15 @@ export default function CompleteProfile() {
       await pendingCleanup.flush()
 
       logger.debug('Auth store refreshed - profile now complete')
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       // Clear the wizard-draft persistence — the user finished, the
       // profile row is now authoritative. Without this, a returning user
       // who edits their profile elsewhere then somehow lands back on
       // /complete-profile would see stale draft data.
-      if (wizardDraftKey) {
-        try { localStorage.removeItem(wizardDraftKey) } catch { /* no-op */ }
+      for (const key of [wizardDraftKey, legacyCoachDraftKey]) {
+        if (key) {
+          try { localStorage.removeItem(key) } catch { /* no-op */ }
+        }
       }
       trackOnboardingComplete(userRole ?? 'unknown')
       trackDbEvent('onboarding_completed', 'profile', user?.id, { role: userRole })
@@ -1167,7 +1182,7 @@ export default function CompleteProfile() {
   if (userRole === 'player' && !profile?.onboarding_completed) {
     const finishPlayerSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('player')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'player' })
       submitSignupAttribution(user.id)
@@ -1193,7 +1208,7 @@ export default function CompleteProfile() {
   if (profile && showsClubSetup(userRole, isPhone, profile.onboarding_completed)) {
     const finishClubSetup = async () => {
       const current = useAuthStore.getState().profile ?? profile
-      localStorage.setItem('hockia-onboarding-completed', '1')
+      markOnboardingCompletedOnDevice()
       trackOnboardingComplete('club')
       trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'club' })
       submitSignupAttribution(user.id)
@@ -1959,26 +1974,29 @@ export default function CompleteProfile() {
 
             <div className="flex gap-3 mt-6">
               {userRole === 'club' && (
-                <Button
-                  type="button"
+                <UiButton
+                  variant="secondary"
                   onClick={() => setShowClubClaimStep(true)}
                   disabled={loading}
-                  className="px-6 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  className="px-6"
                 >
                   Back
-                </Button>
+                </UiButton>
               )}
 
               {/* Wizard Back button (player/coach, steps 2+) */}
               {isWizardFlow && currentStep > 1 && (
-                <Button
-                  type="button"
+                // Secondary (ui/Button): the legacy Button always carries
+                // btn-primary, so the white-outline classes on top gave dark
+                // text on the purple gradient (onboarding QA 2026-10-04).
+                <UiButton
+                  variant="secondary"
                   onClick={handleBack}
                   disabled={loading}
-                  className="px-6 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  className="px-6"
                 >
                   Back
-                </Button>
+                </UiButton>
               )}
 
               {/* Next (wizard flow, steps 1 and 2) */}
