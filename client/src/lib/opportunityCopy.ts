@@ -38,15 +38,18 @@ export function roleHeadline(v: { position: string | null; title: string | null;
 
 export interface GenderPill { label: string; className: string }
 
+/**
+ * Team / category tag. Founder ruling 2026-10-04: every category (Men's,
+ * Women's, Girls, Boys, Mixed) uses the one soft-purple Tag style — no pink /
+ * blue by gender.
+ */
+export const CATEGORY_TAG_CLASS = 'bg-brand-soft text-brand-primary'
+
+const CATEGORY_LABELS: Record<string, string> = { Women: "Women's", Men: "Men's", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed' }
+
 export function genderPill(gender: string | null | undefined): GenderPill | null {
-  switch (gender) {
-    case 'Women': return { label: "Women's", className: 'bg-[#fce7f3] text-[#be185d]' }
-    case 'Men': return { label: "Men's", className: 'bg-[#e0f2fe] text-[#0369a1]' }
-    case 'Girls': return { label: 'Girls', className: 'bg-[#fce7f3] text-[#be185d]' }
-    case 'Boys': return { label: 'Boys', className: 'bg-[#e0f2fe] text-[#0369a1]' }
-    case 'Mixed': return { label: 'Mixed', className: 'bg-surface-grouped text-ink-1' }
-    default: return null
-  }
+  const label = gender ? CATEGORY_LABELS[gender] : undefined
+  return label ? { label, className: CATEGORY_TAG_CLASS } : null
 }
 
 /**
