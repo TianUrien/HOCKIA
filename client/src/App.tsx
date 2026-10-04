@@ -11,6 +11,7 @@ import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
+import CookieConsent from '@/components/CookieConsent'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
@@ -25,6 +26,7 @@ import NativeWelcome from '@/pages/NativeWelcome'
 import { IS_NATIVE } from '@/lib/isNative'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import SignUp from '@/pages/SignUp'
+import CreateWithEmail from '@/pages/CreateWithEmail'
 import AuthScreen from '@/pages/AuthScreen'
 import AuthCallback from '@/pages/AuthCallback'
 import VerifyEmail from '@/pages/VerifyEmail'
@@ -91,6 +93,7 @@ const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes
 const ApplicantReviewEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantReviewEntry })))
 const PostRoleEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.PostRoleEntry })))
 const RolePostedEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.RolePostedEntry })))
+const HockiaSuggestsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.HockiaSuggestsEntry })))
 const FindPlayersEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.FindPlayersEntry })))
 const ShortlistEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ShortlistEntry })))
 const ClubEditEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ClubEditEntry })))
@@ -390,6 +393,7 @@ function App() {
           <ToastContainer />
           <UploadIndicator />
           <InstallPrompt />
+          <CookieConsent />
           <PushPrompt />
           <NativeUpdatePrompt />
           <AppRatingPrompt />
@@ -418,7 +422,8 @@ function App() {
                     for the lifetime of the process. */}
                 <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}>{IS_NATIVE ? <NativeWelcome /> : <Landing />}</ErrorBoundary>} />
                 <Route path="/signup" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SignUp /></ErrorBoundary>} />
-                <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen mode="signin" /></ErrorBoundary>} />
+                <Route path="/signup/email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CreateWithEmail /></ErrorBoundary>} />
+                <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen /></ErrorBoundary>} />
                 <Route path="/auth/callback" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthCallback /></ErrorBoundary>} />
                 <Route path="/verify-email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><VerifyEmail /></ErrorBoundary>} />
                 <Route path="/forgot-password" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ForgotPassword /></ErrorBoundary>} />
@@ -526,6 +531,8 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PostRoleEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/posted" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RolePostedEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/suggested" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/suggested/ask" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry refine /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 {/* Save / shortlists: clubs + recruiting coaches only. */}
                 <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />

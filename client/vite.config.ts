@@ -64,12 +64,19 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // autoUpdate (was 'prompt', 2026-07-29): with prompt and no prompt
-        // UI, returning visitors got a stale index.html once per deploy —
-        // the founder hit exactly this after the landing relaunch. autoUpdate
-        // activates the fresh SW immediately (skipWaiting+clientsClaim) so
-        // the next navigation serves current code, no reload popup.
-        registerType: 'autoUpdate',
+        // 'prompt' (onboarding QA 2026-10-04; was 'autoUpdate' since
+        // 2026-07-29). autoUpdate forced skipWaiting and its client reloaded
+        // the page the moment a new worker activated — users lost what they
+        // were typing mid-onboarding. Now a new build installs as a WAITING
+        // worker and src/lib/swUpdate.ts shows "A new version of HOCKIA is
+        // ready" with a Reload button; nothing reloads on its own. The
+        // 2026-07-29 stale-index problem (prompt mode with NO prompt UI) is
+        // covered: a worker still waiting from an earlier visit is reported on
+        // the next load, so the prompt reappears until it is applied.
+        registerType: 'prompt',
+        // Registration lives in src/lib/swUpdate.ts (workbox-window), not the
+        // plugin's virtual module, so no register script is injected.
+        injectRegister: false,
         includeAssets: ['favicon.ico', 'WhiteLogo.svg', 'HockiaLogoBlack.svg', 'apple-touch-icon.png'],
         manifest: false, // We use our own manifest.json
         workbox: {
@@ -169,9 +176,11 @@ export default defineConfig(({ mode }) => {
           // hard way 2026-07-29). The SW fetches it at install time.
           additionalManifestEntries: [{ url: '/app.html', revision: String(Date.now()) }],
           navigateFallbackDenylist: [/^\/api/, /^\/auth/],
-          // Ensure new service worker takes control immediately when activated
-          skipWaiting: false, // We handle this manually via prompt
-          clientsClaim: true, // Take control of all clients once activated
+          // A new worker WAITS until the user taps Reload (SKIP_WAITING
+          // message from src/lib/swUpdate.ts); once activated it claims the
+          // open clients so the reload lands on the new build.
+          skipWaiting: false,
+          clientsClaim: true,
         },
         devOptions: {
           enabled: false, // Enable in dev for testing: set to true

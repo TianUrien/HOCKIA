@@ -4,24 +4,26 @@ test.describe('@smoke public', () => {
   test('landing loads and shows both primary CTAs', async ({ page }) => {
     await page.goto('/')
 
-    // The landing leads with TWO actions — "Explore Hockia" (browse the public
-    // product with no account) and "Create a profile" (signup). Same markup on
-    // mobile and desktop. They are LINKS, not buttons — a conversion page's
-    // primary actions must support cmd/middle-click "open in new tab" and be
-    // crawlable. Matched loosely (/create a|your profile/) so a copy tweak
-    // doesn't fail the smoke — the 2026-08 Web A redesign changed "your" →
-    // "a" and this spec was the only red job in an otherwise green CI.
-    await expect(page.getByRole('link', { name: /explore hockia/i }).first()).toBeVisible({ timeout: 20000 })
+    // The landing leads with TWO actions — "Explore without an account"
+    // (browse the public product; "Explore Hockia" before Web A v2) and
+    // "Create a profile" (signup). Same markup on mobile and desktop. They
+    // are LINKS, not buttons — a conversion page's primary actions must
+    // support cmd/middle-click "open in new tab" and be crawlable. Matched
+    // loosely so a copy tweak doesn't fail the smoke — the 2026-08 Web A
+    // redesign changed "your" → "a" and this spec was the only red job in
+    // an otherwise green CI.
+    await expect(page.getByRole('link', { name: /explore (without an account|hockia)/i }).first()).toBeVisible({ timeout: 20000 })
     await expect(page.getByRole('link', { name: /create (a|your) profile/i }).first()).toBeVisible({ timeout: 20000 })
   })
 
-  test('signup page loads and shows role selection', async ({ page }) => {
+  test('signup page loads and shows the first-run choices', async ({ page }) => {
     await page.goto('/signup')
 
-    await expect(page.getByRole('button', { name: /join as player/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as coach/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as club/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /join as brand/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('heading', { name: /your game\. your network\./i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /continue with apple/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /create with email/i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('link', { name: /log in/i })).toBeVisible({ timeout: 20000 })
   })
 
   test('opportunities page loads (public/indexable)', async ({ page, opportunitiesPage }) => {

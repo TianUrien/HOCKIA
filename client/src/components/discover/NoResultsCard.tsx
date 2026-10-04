@@ -7,29 +7,18 @@ interface NoResultsCardProps {
   suggestedActions: SuggestedAction[]
   onAction: (action: SuggestedAction) => void
   /**
-   * Backend-provided message. The card prefers this verbatim when present
-   * (recovery short-circuit ships specific copy like "Since the women's
-   * clubs search didn't find anything…"). When absent or the legacy generic
-   * "I couldn't find any X matching that.", the card constructs cleaner
-   * copy from applied.role_summary.
+   * Backend-provided message. Preferred verbatim when present (the recovery
+   * short-circuit ships specific copy); the legacy terse "I couldn't find
+   * any X matching that." is replaced by calmer copy built from
+   * applied.role_summary.
    */
   fallbackMessage?: string
 }
 
 /**
- * Calm no-results state. Eliminates the "I couldn't find any clubs matching
- * that." dead-end from the screenshot:
- *
- *   - Top: tiny strip showing what was searched (entity + filters).
- *   - Body: explains what happened in plain language, frames the chips below
- *     as "let's try this instead" rather than a finality.
- *   - Chips: deterministic next-actions from the backend's suggested-actions
- *     catalog. Tapping one submits a new user query.
- *
- * Never renders without at least one chip — the contract is: zero dead-ends.
- * If the chip array is empty, we still ship the calm copy + a generic chip
- * row pointing at "Find opportunities" / "Browse Marketplace" so the user
- * always has a forward step.
+ * Calm no-results state for people / club searches (Figma 524:1644 for
+ * roles lives in OpportunityResultsResponse). Left-aligned text, the
+ * searched-for strip, then chips. Never renders without at least one chip.
  */
 export default function NoResultsCard({
   applied,
@@ -37,9 +26,6 @@ export default function NoResultsCard({
   onAction,
   fallbackMessage,
 }: NoResultsCardProps) {
-  // The legacy backend message — emitted by the original Phase 0 RPC path —
-  // is too curt for the calm card UI. When the backend sends ANY other
-  // string (recovery short-circuit, future updates) we prefer it verbatim.
   const summary = applied?.role_summary
   const isLegacyTerseMessage =
     !!fallbackMessage && /^I couldn't find any .+ matching that\.?$/i.test(fallbackMessage.trim())
@@ -51,17 +37,12 @@ export default function NoResultsCard({
       ? `I searched for ${summary} based on your profile, but I didn't find a strong match yet.`
       : "I didn't find a match yet."
 
-  // Subline is only shown when we constructed the headline ourselves; if
-  // the backend wrote bespoke copy (e.g. "Since the … search didn't find
-  // anything, here are the next angles to try:"), it already provides the
-  // call-to-action and a subline would feel redundant.
   const subline = useBackendMessage
     ? null
     : summary
       ? "Let's try a different angle — pick one below."
       : 'Pick one of these to keep going:'
 
-  // Safety net: if backend didn't ship chips, give the user something useful.
   const actions: SuggestedAction[] = suggestedActions.length > 0
     ? suggestedActions
     : [
@@ -70,13 +51,10 @@ export default function NoResultsCard({
       ]
 
   return (
-    <div className="bg-white border border-gray-200/80 rounded-2xl rounded-tl-md px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <div data-testid="ai-no-results">
       {applied && <AppliedSearchStrip applied={applied} />}
-      {/* Phase 4 audit P0-1: whitespace-pre-line preserves the \n\n
-          paragraph breaks from the no-results compose pass. Without it,
-          multi-paragraph diagnoses render as a wall of text. */}
-      <p className="text-[14px] text-gray-800 leading-[1.55] whitespace-pre-line">{headline}</p>
-      {subline && <p className="mt-1 text-[12px] text-gray-500 leading-relaxed whitespace-pre-line">{subline}</p>}
+      <p className="text-row text-ink-1 whitespace-pre-line">{headline}</p>
+      {subline && <p className="mt-1 text-secondary text-ink-2 whitespace-pre-line">{subline}</p>}
       <ActionChipRow actions={actions} onAction={onAction} />
     </div>
   )

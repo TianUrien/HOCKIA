@@ -87,16 +87,13 @@ export default function SearchResultsResponse({
 
   return (
     <>
-      <div
-        ref={containerRef}
-        className="bg-white border border-gray-200/80 rounded-2xl px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] scroll-mt-3"
-      >
-        <p className="text-[14px] text-gray-800 leading-[1.55] whitespace-pre-line">{message}</p>
+      <div ref={containerRef} className="scroll-mt-3">
+        <p className="text-row text-ink-1 whitespace-pre-line">{message}</p>
         {results.length > 0 && (
-          // Flat list — full-bleed within the bubble padding, rows divided
-          // by hairlines (no per-card boxes). The toggle / "Show more" are
-          // list rows too, so they sit flush with the result rows.
-          <div className="mt-3 -mx-4 border-t border-gray-100 divide-y divide-gray-100">
+          // Flat list inside a muted card (Figma answer card: radius 16),
+          // rows divided by hairlines. The toggle / "Show more" are list
+          // rows too, so they sit flush with the result rows.
+          <div className="mt-3 overflow-hidden rounded-[16px] bg-surface-muted divide-y divide-line">
             {visible.map(r => (
               <DiscoverResultCard key={r.id} result={r} />
             ))}
@@ -104,7 +101,7 @@ export default function SearchResultsResponse({
               <button
                 type="button"
                 onClick={toggle}
-                className="flex items-center gap-1 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40"
+                className="flex items-center gap-1 w-full justify-center min-h-[44px] px-4 py-2.5 text-secondary font-semibold text-hockia-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40"
               >
                 <ChevronDown
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
@@ -118,7 +115,7 @@ export default function SearchResultsResponse({
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="flex items-center gap-1.5 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-hockia-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40 disabled:opacity-60 disabled:cursor-default"
+                className="flex items-center gap-1.5 w-full justify-center min-h-[44px] px-4 py-2.5 text-secondary font-semibold text-ink-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40 disabled:opacity-60 disabled:cursor-default"
               >
                 {loadingMore ? (
                   <>

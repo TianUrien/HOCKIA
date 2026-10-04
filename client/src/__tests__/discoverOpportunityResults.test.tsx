@@ -1,7 +1,7 @@
 /**
- * Hockia AI — open roles for a player asking for roles. The card shows only
+ * Hockia AI — open roles for a player asking for roles. The rows show only
  * the role's own facts: no match language, applicant counts or raw enum
- * values, and the empty state always links to every open role.
+ * values, and the empty state always offers a way to every open role.
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -27,35 +27,48 @@ const role: OpportunityResultItem = {
 }
 
 describe('OpportunityResultsResponse', () => {
-  it('renders role facts with human labels and no match language', () => {
+  it('renders "Club · Position" and "League · package" rows with no match language', () => {
     const { container } = render(
       <MemoryRouter>
         <OpportunityResultsResponse
           message="I found 1 midfielder role in Europe you can apply to."
           opportunities={[role]}
-          filters={['Midfielder', 'Europe']}
+          openRolesTotal={24}
+          onAction={() => {}}
         />
       </MemoryRouter>,
     )
-    expect(screen.getByText('First-team midfielder')).toBeInTheDocument()
-    expect(screen.getByText('Amsterdam HC · Midfielder · Men\'s team')).toBeInTheDocument()
-    expect(screen.getByText('Housing')).toBeInTheDocument()
+    expect(screen.getByText('Amsterdam HC · Midfielder')).toBeInTheDocument()
+    expect(screen.getByText('Amsterdam, Netherlands · Housing, Flights')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
     const text = container.textContent ?? ''
     expect(text).not.toMatch(/match|applicant|_/i)
   })
 
-  it('empty state keeps the searched chips and a way to every open role', () => {
+  it('empty state keeps the answer, the pool line and a way to every open role', () => {
     render(
       <MemoryRouter>
         <OpportunityResultsResponse
           message="There are no midfielder roles in Europe you can apply to right now."
           opportunities={[]}
-          filters={['Midfielder', 'Europe']}
+          openRolesTotal={0}
+          cta={{ label: 'Browse all opportunities', route: '/opportunities' }}
+          onAction={() => {}}
         />
       </MemoryRouter>,
     )
-    expect(screen.getByText('Europe')).toBeInTheDocument()
+    expect(screen.getByText(/no midfielder roles in Europe/)).toBeInTheDocument()
+    expect(screen.getByText('From 0 open roles · updated today')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Browse all opportunities/ })).toBeInTheDocument()
+  })
+
+  it('omits the pool line when the total is unknown', () => {
+    render(
+      <MemoryRouter>
+        <OpportunityResultsResponse message="Here you go." opportunities={[role]} onAction={() => {}} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/open roles · updated today/)).not.toBeInTheDocument()
   })
 })
 

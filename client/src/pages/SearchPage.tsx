@@ -9,6 +9,8 @@ import { SearchClubResult } from '@/components/search/SearchClubResult'
 import { SearchBrandResult } from '@/components/search/SearchBrandResult'
 import { SearchOpportunityResult } from '@/components/search/SearchOpportunityResult'
 import { useSearch } from '@/hooks/useSearch'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { SearchV2Screen } from '@/components/search/SearchV2Screen'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackSearch } from '@/lib/analytics'
 import type { SearchResult } from '@/hooks/useSearch'
@@ -24,7 +26,17 @@ const TABS: { key: TabType; label: string }[] = [
   { key: 'opportunities', label: 'Opportunities' },
 ]
 
+/**
+ * /search: the phone (<1024px) gets Search v2 — one ranked list of members
+ * (Figma 42:195, founder rulings 2026-10-03); desktop keeps the v1 tabbed
+ * results below until it is redesigned.
+ */
 export default function SearchPage() {
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  return isPhone ? <SearchV2Screen /> : <DesktopSearchPage />
+}
+
+function DesktopSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
   const initialType = (searchParams.get('type') as TabType) || 'all'

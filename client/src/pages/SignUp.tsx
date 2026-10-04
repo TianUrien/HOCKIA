@@ -1,152 +1,72 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, User, Building2, Briefcase, Store, Flag } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { InAppBrowserWarning } from '@/components'
-import AuthScreen from './AuthScreen'
-
-type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
+import { OAuthButtons } from '@/components/auth/OAuthButtons'
+import { AuthShell, FormError, TermsLine } from '@/components/auth/authUi'
+import { Button } from '@/components/ui/Button'
+import { useAuthStore } from '@/lib/auth'
+import { isSafeRedirectPath } from '@/lib/safeRedirect'
 
 /**
- * SignUp — role selection, then hands off to AuthScreen (mode="signup").
+ * First run — OAuth first (Figma 04 Player 104:2096). Account-first
+ * onboarding (founder rulings 2026-10-03): the account is created BEFORE any
+ * role or profile question. Continue with Apple / Google round-trip through
+ * /auth/callback and land on "Choose your role"; "Create with email" goes to
+ * the email + password screen; members log in at /signin.
  *
- * Step 1 (this file): pick a role. Role is the only thing HOCKIA needs
- * before a new account exists — everything else (auth method, email,
- * profile data) is collected downstream.
- *
- * Step 2 (AuthScreen mode="signup"): OAuth + magic-link + password,
- * all sharing a single email field. Follows the 2026 research memo
- * (OAuth top, Apple HIG-first, progressive-disclosure password).
+ * No role is picked here any more — SignUp used to open with five role cards
+ * (that step now lives in components/onboarding/ChooseRoleScreen, shown once
+ * the account exists). Desktop renders the same centred column.
  */
-// Accent classes are spelled out explicitly so Tailwind's JIT purge keeps
-// them in the bundle. Dynamic `bg-[${color}]/10` template strings get
-// stripped because the scanner can't prove the full class name exists.
-const ROLE_CARDS: Array<{
-  role: UserRole
-  label: string
-  description: string
-  iconBg: string
-  iconText: string
-  Icon: typeof User
-}> = [
-  {
-    role: 'player',
-    label: 'Join as Player',
-    description: 'Build the profile that gets you found by clubs',
-    iconBg: 'bg-hockia-primary/10',
-    iconText: 'text-hockia-primary',
-    Icon: User,
-  },
-  {
-    role: 'coach',
-    label: 'Join as Coach',
-    description: 'Find coaching opportunities — and recruit players if you also manage a team',
-    iconBg: 'bg-hockia-secondary/10',
-    iconText: 'text-hockia-secondary',
-    Icon: Briefcase,
-  },
-  {
-    role: 'club',
-    label: 'Join as Club',
-    description: 'Recruit field hockey players with trust and context',
-    iconBg: 'bg-[#ec4899]/10',
-    iconText: 'text-[#ec4899]',
-    Icon: Building2,
-  },
-  {
-    role: 'brand',
-    label: 'Join as Brand',
-    description: 'Build your brand in the hockey community',
-    iconBg: 'bg-rose-600/10',
-    iconText: 'text-rose-600',
-    Icon: Store,
-  },
-  {
-    role: 'umpire',
-    label: 'Join as Umpire',
-    description: 'Be recognized as an officiating professional',
-    iconBg: 'bg-surface-muted',
-    iconText: 'text-ink-2',
-    Icon: Flag,
-  },
-]
-
 export default function SignUp() {
   const navigate = useNavigate()
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
+  const location = useLocation()
+  const { user, profile, loading: authLoading } = useAuthStore()
+  const [error, setError] = useState<string | null>(null)
 
-  // Once a role is selected, the AuthScreen takes over completely. No
-  // parallel password form to manage here — that logic lives inside
-  // AuthScreen along with OAuth, magic link, and progressive password
-  // disclosure (the whole point of the redesign).
-  if (selectedRole) {
-    return (
-      <AuthScreen
-        mode="signup"
-        role={selectedRole}
-        onBack={() => setSelectedRole(null)}
-      />
-    )
-  }
+  const nextParam = new URLSearchParams(location.search).get('next')
+  const next = nextParam && isSafeRedirectPath(nextParam) ? nextParam : null
+  const search = next ? `?next=${encodeURIComponent(next)}` : ''
+
+  // A signed-in visitor has nothing to do here: members go on to the app,
+  // accounts still in onboarding go back to it.
+  useEffect(() => {
+    if (authLoading || !user) return
+    navigate(profile?.onboarding_completed ? next ?? '/dashboard/profile' : '/complete-profile', { replace: true })
+  }, [authLoading, user, profile?.onboarding_completed, navigate, next])
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white flex flex-col">
+    <AuthShell>
       <InAppBrowserWarning context="signup" />
-
-      <header className="pt-5 px-5 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back</span>
-        </button>
-        <Link to="/" className="text-lg font-bold text-gray-900 tracking-tight">
-          HOCKIA
-        </Link>
-        <div className="w-16" aria-hidden="true" />
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-5 py-6">
-        <div className="w-full max-w-lg">
-          <div className="text-center mb-7">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Join HOCKIA</h1>
-            <p className="text-sm text-gray-600">Pick the role that fits you best to get started.</p>
-          </div>
-
-          <div className="space-y-3">
-            {ROLE_CARDS.map(({ role, label, description, iconBg, iconText, Icon }) => (
-              <button
-                key={role}
-                type="button"
-                onClick={() => setSelectedRole(role)}
-                className="w-full flex items-center gap-4 p-5 bg-white border border-gray-200 rounded-2xl hover:border-gray-300 hover:shadow-md transition-all text-left"
-              >
-                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}>
-                  <Icon className={`w-6 h-6 ${iconText}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-gray-900">{label}</div>
-                  <div className="text-sm text-gray-500 truncate">{description}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-7 pt-5 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link
-                to="/signin"
-                className="font-semibold text-hockia-primary hover:text-[#6B20D4] transition-colors"
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+      <div className="flex flex-1 flex-col justify-end pb-6 pt-10">
+        {/* On the web the wordmark is the way back to the landing page; in the
+            native app this screen is the start, so there is nothing to go back to. */}
+        {Capacitor.isNativePlatform() ? (
+          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto self-start" />
+        ) : (
+          <Link to="/" aria-label="HOCKIA home" className="self-start">
+            <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto" />
+          </Link>
+        )}
+        <h1 className="mt-8 text-large-title text-ink-1">Your game. Your network.</h1>
+      </div>
+      <div className="space-y-3 pb-2">
+        <FormError>{error}</FormError>
+        <OAuthButtons intent="signup" next={next} onError={setError} />
+        <Button variant="secondary" block onClick={() => navigate(`/signup/email${search}`)}>
+          Create with email
+        </Button>
+        {/* Founder ruling 2026-10-03: the standard line sits under the actions
+            it governs, so the OAuth path sees it too. */}
+        <TermsLine className="pt-1" />
+        <p className="pt-3 text-center text-row text-ink-2">
+          Already a member?{' '}
+          <Link to={`/signin${search}`} className="font-semibold text-hockia-primary">
+            Log in
+          </Link>
+        </p>
+      </div>
+    </AuthShell>
   )
 }

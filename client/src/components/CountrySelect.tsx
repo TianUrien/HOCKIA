@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { ChevronDown, Search, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
@@ -19,6 +20,12 @@ interface CountrySelectProps {
   /** 'field' = the Figma redesign form input (grey #F4F4F7 surface, radius 12,
    *  50px, no border). Behaviour is identical in both appearances. */
   appearance?: 'default' | 'field'
+  /** 'dropdown' (default) = trigger + floating list. 'list' = no trigger: the
+   *  search is pinned at the top and the whole list scrolls in place — for a
+   *  tall bottom sheet, where a floating list would open off-screen. */
+  presentation?: 'dropdown' | 'list'
+  /** 'field' appearance only: trailing "Optional" tag in the Field header. */
+  optional?: boolean
 }
 
 /**
@@ -36,8 +43,11 @@ export default function CountrySelect({
   showNationality = false,
   className,
   appearance = 'default',
+  presentation = 'dropdown',
+  optional = false,
 }: CountrySelectProps) {
   const isField = appearance === 'field'
+  const isList = presentation === 'list'
   const { countries, loading, getCountryById } = useCountries()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -107,7 +117,7 @@ export default function CountrySelect({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (!isOpen) {
+      if (!isOpen && !isList) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
           e.preventDefault()
           setIsOpen(true)
@@ -146,18 +156,123 @@ export default function CountrySelect({
           break
       }
     },
-    [isOpen, filteredCountries, highlightedIndex, handleSelect]
+    [isOpen, isList, filteredCountries, highlightedIndex, handleSelect]
   )
 
+  const searchBlock = (
+    <div className={cn('border-b border-gray-100', isList ? 'sticky top-0 z-10 bg-white py-2' : 'p-2')}>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          ref={inputRef}
+          type="search"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            setHighlightedIndex(0)
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search countries..."
+          className={cn(
+            'w-full pl-9 pr-4 py-2 text-sm',
+            'border border-gray-200 rounded-md',
+            'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent'
+          )}
+          autoComplete="off"
+          enterKeyHint="search"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={
+            highlightedIndex >= 0
+              ? `${generatedId}-option-${highlightedIndex}`
+              : undefined
+          }
+        />
+      </div>
+    </div>
+  )
+
+  const listBlock = loading ? (
+    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+      Loading countries...
+    </div>
+  ) : filteredCountries.length === 0 ? (
+    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+      No countries found
+    </div>
+  ) : (
+    <ul
+      ref={listboxRef}
+      id={listboxId}
+      role="listbox"
+      aria-labelledby={label ? labelId : undefined}
+      className={cn('py-1', !isList && 'flex-1 overflow-y-auto max-h-64')}
+    >
+      {filteredCountries.map((country, index) => (
+        <li
+          key={country.id}
+          id={`${generatedId}-option-${index}`}
+          role="option"
+          aria-selected={country.id === value}
+          onClick={() => handleSelect(country)}
+          className={cn(
+            'px-4 py-2 cursor-pointer flex items-center justify-between',
+            'transition-colors duration-100',
+            index === highlightedIndex && 'bg-gray-100',
+            country.id === value && 'bg-indigo-50',
+            index !== highlightedIndex &&
+              country.id !== value &&
+              'hover:bg-gray-50'
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <Flag
+              code={country.code}
+              countryName={country.name}
+              fallbackEmoji={country.flag_emoji}
+              size="lg"
+            />
+            <span className="text-sm text-gray-900">
+              {showNationality ? country.nationality_name : country.name}
+            </span>
+            {showNationality && country.name !== country.nationality_name && (
+              <span className="text-xs text-gray-400">
+                ({country.name})
+              </span>
+            )}
+          </span>
+          {country.id === value && (
+            <Check className="w-4 h-4 text-indigo-600" />
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+
+  // Tall-sheet presentation (club set-up country picker, onboarding QA
+  // 2026-10-04): search pinned, the list scrolls inside the sheet.
+  if (isList) {
+    return (
+      <div className={className}>
+        {searchBlock}
+        {listBlock}
+      </div>
+    )
+  }
+
   return (
-    <div className={cn(isField ? 'space-y-1.5' : 'space-y-2', className)} ref={containerRef}>
+    <div className={cn(!isField && 'space-y-2', className)} ref={containerRef}>
       {label && (
         <label
           id={labelId}
-          className={isField ? 'block text-secondary font-semibold text-ink-2' : 'block text-sm font-medium text-gray-700'}
+          className={isField ? (optional ? fieldLabelRow : fieldLabel) : 'block text-sm font-medium text-gray-700'}
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
+          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
         </label>
       )}
 
@@ -176,16 +291,16 @@ export default function CountrySelect({
           className={cn(
             'w-full text-left flex items-center justify-between gap-2 transition-all duration-200',
             isField
-              ? 'h-[50px] rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+              ? `${fieldInputBase} px-3.5`
               : 'px-4 py-3 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
-            isField ? error && 'ring-2 ring-red-400' : error ? 'border-red-500' : 'border-gray-200',
+            isField ? error && fieldErrorRing : error ? 'border-red-500' : 'border-gray-200',
             !isField && !disabled && 'hover:border-gray-300'
           )}
         >
           <span className={cn(
             'flex-1 truncate inline-flex items-center gap-2',
-            selectedCountry ? 'text-gray-900' : 'text-gray-400'
+            selectedCountry ? (isField ? 'text-ink-1' : 'text-gray-900') : (isField ? 'text-ink-3' : 'text-gray-400')
           )}>
             {selectedCountry ? (
               <>
@@ -223,7 +338,8 @@ export default function CountrySelect({
             )}
             <ChevronDown
               className={cn(
-                'w-5 h-5 text-gray-400 transition-transform',
+                'w-5 h-5 transition-transform',
+                isField ? 'text-ink-4' : 'text-gray-400',
                 isOpen && 'rotate-180'
               )}
             />
@@ -238,104 +354,14 @@ export default function CountrySelect({
               'max-h-80 overflow-hidden flex flex-col'
             )}
           >
-            {/* Search Input */}
-            <div className="p-2 border-b border-gray-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  ref={inputRef}
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    setHighlightedIndex(0)
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Search countries..."
-                  className={cn(
-                    'w-full pl-9 pr-4 py-2 text-sm',
-                    'border border-gray-200 rounded-md',
-                    'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent'
-                  )}
-                  autoComplete="off"
-                  enterKeyHint="search"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  aria-autocomplete="list"
-                  aria-controls={listboxId}
-                  aria-activedescendant={
-                    highlightedIndex >= 0
-                      ? `${generatedId}-option-${highlightedIndex}`
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Country List */}
-            {loading ? (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                Loading countries...
-              </div>
-            ) : filteredCountries.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                No countries found
-              </div>
-            ) : (
-              <ul
-                ref={listboxRef}
-                id={listboxId}
-                role="listbox"
-                aria-labelledby={label ? labelId : undefined}
-                className="flex-1 overflow-y-auto py-1 max-h-64"
-              >
-                {filteredCountries.map((country, index) => (
-                  <li
-                    key={country.id}
-                    id={`${generatedId}-option-${index}`}
-                    role="option"
-                    aria-selected={country.id === value}
-                    onClick={() => handleSelect(country)}
-                    className={cn(
-                      'px-4 py-2 cursor-pointer flex items-center justify-between',
-                      'transition-colors duration-100',
-                      index === highlightedIndex && 'bg-gray-100',
-                      country.id === value && 'bg-indigo-50',
-                      index !== highlightedIndex &&
-                        country.id !== value &&
-                        'hover:bg-gray-50'
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Flag
-                        code={country.code}
-                        countryName={country.name}
-                        fallbackEmoji={country.flag_emoji}
-                        size="lg"
-                      />
-                      <span className="text-sm text-gray-900">
-                        {showNationality ? country.nationality_name : country.name}
-                      </span>
-                      {showNationality && country.name !== country.nationality_name && (
-                        <span className="text-xs text-gray-400">
-                          ({country.name})
-                        </span>
-                      )}
-                    </span>
-                    {country.id === value && (
-                      <Check className="w-4 h-4 text-indigo-600" />
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+            {searchBlock}
+            {listBlock}
           </div>
         )}
       </div>
 
       {error && (
-        <p id={errorId} className="text-sm text-red-500">
+        <p id={errorId} className={isField ? fieldErrorText : 'text-sm text-red-500'}>
           {error}
         </p>
       )}

@@ -147,7 +147,8 @@ export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = {
 }
 
 export const SPECIALIST_TILE = { icon: Target, tileClass: 'bg-hockia-soft text-hockia-primary' }
-export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-status-warning-soft text-status-warning' }
+// Requirements are information, never a call to act, so the tile is neutral (amber rule).
+export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-surface-muted text-ink-2' }
 
 /** "Paid" / "Development" / "Compensation not stated". */
 export function compensationText(v: Pick<Vacancy, 'compensation'>): string {

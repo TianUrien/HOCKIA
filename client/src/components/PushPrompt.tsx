@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Bell, X } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useAuthStore } from '@/lib/auth'
 import { INLINE_PUSH_ASK, useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
+import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
 import {
   trackPushSubscribe,
   trackPushPromptShown,
@@ -11,31 +14,62 @@ import {
 const DISMISS_KEY = 'push-prompt-dismissed'
 const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000 // 3 days
 
+/**
+ * Routes where the push card must NEVER render (onboarding QA 2026-10-04):
+ * it sat over the buttons of a logged-out /signup and /signup/email because
+ * it was keyed to a per-device "onboarding completed" flag left behind by an
+ * earlier account. It is a member-only ask.
+ */
+const PUSH_PROMPT_HIDDEN_PREFIXES = [
+  '/signup',
+  '/signin',
+  '/auth',
+  '/verify-email',
+  '/complete-profile',
+  '/brands/onboarding',
+  '/forgot-password',
+  '/reset-password',
+] as const
+
+function dismissedRecently(): boolean {
+  try {
+    const dismissedAt = localStorage.getItem(DISMISS_KEY)
+    return Boolean(dismissedAt) && Date.now() - parseInt(dismissedAt as string, 10) < DISMISS_WINDOW_MS
+  } catch {
+    return false
+  }
+}
+
 export default function PushPrompt() {
   const push = usePushSubscription()
-  const [visible, setVisible] = useState(false)
+  const location = useLocation()
+  // Signed in AND onboarding complete, from the live session — never from the
+  // per-device localStorage flag, which survives sign-out.
+  const signedIn = useAuthStore((s) => Boolean(s.user))
+  const onboarded = useAuthStore((s) => s.profile?.onboarding_completed === true)
+  const [dismissed, setDismissed] = useState(dismissedRecently)
   const hasTrackedShow = useRef(false)
   // A screen asking in place (Role posted) wins; never show the same ask twice.
   const inlineAsk = useBottomPromptActive(INLINE_PUSH_ASK)
-  useBottomPrompt('push', visible && !inlineAsk)
+  // One overlay at a time: Terms → cookie banner → install card → this card.
+  const termsOpen = useBottomPromptActive(TERMS_GATE_OVERLAY)
+  const cookieOpen = useBottomPromptActive(COOKIE_BANNER_OVERLAY)
+  const installOpen = useBottomPromptActive(INSTALL_OVERLAY)
 
-  // Determine visibility
-  useEffect(() => {
-    // Push not supported or already subscribed
-    if (!push.isSupported || push.isSubscribed || push.permission === 'denied') return
+  const supported = push.isSupported && !push.isSubscribed && push.permission !== 'denied'
+  const onHiddenRoute = matchesRoutePrefix(location.pathname, PUSH_PROMPT_HIDDEN_PREFIXES)
+  const visible =
+    supported &&
+    signedIn &&
+    onboarded &&
+    !onHiddenRoute &&
+    !dismissed &&
+    !inlineAsk &&
+    !termsOpen &&
+    !cookieOpen &&
+    !installOpen
 
-    // Only show after onboarding is complete
-    if (!localStorage.getItem('hockia-onboarding-completed') && !localStorage.getItem('playr-onboarding-completed')) return
-
-    // Check 3-day dismiss window
-    const dismissedAt = localStorage.getItem(DISMISS_KEY)
-    if (dismissedAt && Date.now() - parseInt(dismissedAt, 10) < DISMISS_WINDOW_MS) return
-
-    // Don't stack with InstallPrompt
-    if (localStorage.getItem('pwa-install-visible') === '1') return
-
-    setVisible(true)
-  }, [push.isSupported, push.isSubscribed, push.permission])
+  useBottomPrompt('push', visible)
 
   // Track impression once
   useEffect(() => {
@@ -49,19 +83,19 @@ export default function PushPrompt() {
     try {
       await push.subscribe()
       trackPushSubscribe('prompt')
-      setVisible(false)
+      setDismissed(true)
     } catch {
       // Permission denied or error — prompt hides naturally
     }
   }
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, Date.now().toString())
+    try { localStorage.setItem(DISMISS_KEY, Date.now().toString()) } catch { /* storage blocked */ }
     trackPushPromptDismiss()
-    setVisible(false)
+    setDismissed(true)
   }
 
-  if (!visible || inlineAsk) return null
+  if (!visible) return null
 
   // Prerender snapshot (scripts/prerender-landing.mjs): overlays must
   // never be baked into the static landing HTML. Placed AFTER all hooks

@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { fieldErrorRing, fieldErrorText, fieldLabel, fieldSelectCompact } from '@/components/ui/fieldClasses'
 
 interface DateOfBirthPickerProps {
   label?: string
@@ -12,6 +13,10 @@ interface DateOfBirthPickerProps {
   maxYear?: number
   /** Inclusive. Defaults to current year - 100. */
   minYear?: number
+  /** 'field' = the Figma Text field look (Select variant, surface-muted,
+   *  radius 12, 50 tall) used by the account-first set-up. Behaviour is
+   *  identical in both appearances. */
+  appearance?: 'default' | 'field'
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -52,7 +57,9 @@ function DateOfBirthPicker({
   error,
   maxYear = new Date().getFullYear() - 4,
   minYear = new Date().getFullYear() - 100,
+  appearance = 'default',
 }: DateOfBirthPickerProps) {
+  const isField = appearance === 'field'
   const labelId = useId()
   const errorId = error ? `${labelId}-error` : undefined
 
@@ -91,21 +98,23 @@ function DateOfBirthPicker({
     onChange(serialize(merged))
   }
 
-  const selectClassName = cn(
-    'w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg',
-    'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
-    'transition-all duration-200 text-gray-700',
-    error && 'border-red-500 focus:ring-red-500',
-  )
+  const selectClassName = isField
+    ? cn(fieldSelectCompact, error && fieldErrorRing)
+    : cn(
+      'w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg',
+      'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
+      'transition-all duration-200 text-gray-700',
+      error && 'border-red-500 focus:ring-red-500',
+    )
 
   return (
-    <div className="space-y-2">
+    <div className={isField ? undefined : 'space-y-2'}>
       {label && (
-        <span id={labelId} className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <span id={labelId} className={isField ? cn(fieldLabel, 'flex items-center gap-2') : 'flex items-center gap-2 text-sm font-medium text-gray-700'}>
           {icon && <span className="text-gray-400">{icon}</span>}
           <span>
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && !isField && <span className="text-red-500 ml-1">*</span>}
           </span>
         </span>
       )}
@@ -146,7 +155,7 @@ function DateOfBirthPicker({
         </select>
       </div>
       {error && (
-        <p className="text-sm text-red-500" id={errorId}>{error}</p>
+        <p className={isField ? fieldErrorText : 'text-sm text-red-500'} id={errorId}>{error}</p>
       )}
     </div>
   )

@@ -105,6 +105,9 @@ export default {
         // Additive Figma namespaces (new class names only; nothing existing moves):
         // brand-*, status-*, accent-*, social-*, focus-ring, overlay-scrim.
         brand: { DEFAULT: t.brand.primary, ...t.brand },
+        // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
+        // (player, coach, club, brand). Umpire has no pair: it stays neutral.
+        role: t.role,
         status: t.status,
         accent: t.accent,
         social: t.social,
@@ -130,6 +133,21 @@ export default {
         caption: ['12px', { lineHeight: '16px' }],
         micro: ['11px', { lineHeight: '14px' }],
         tab: ['10px', { lineHeight: '12px', fontWeight: '500' }],
+        // Web landing scale (Figma Hockia-UI-UX "Web A v2", 111:1689 / 114:1743).
+        // Inter; size/line-height/weight per the handoff. Display styles carry a
+        // slight negative tracking; everything else is default tracking.
+        'web-display': ['64px', { lineHeight: '68px', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'web-display-m': ['38px', { lineHeight: '42px', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'web-h2': ['40px', { lineHeight: '46px', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'web-title-2': ['24px', { lineHeight: '30px', fontWeight: '600' }],
+        'web-title-3': ['20px', { lineHeight: '26px', fontWeight: '600' }],
+        'web-headline': ['17px', { lineHeight: '22px', fontWeight: '600' }],
+        'web-lead': ['19px', { lineHeight: '29px', fontWeight: '400' }],
+        'web-body': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'web-body-strong': ['16px', { lineHeight: '24px', fontWeight: '600' }],
+        'web-subhead': ['14px', { lineHeight: '20px', fontWeight: '500' }],
+        'web-subhead-strong': ['14px', { lineHeight: '20px', fontWeight: '600' }],
+        'web-footnote': ['13px', { lineHeight: '18px', fontWeight: '500' }],
       },
       // Figma "Hockia / Space & Radius" wins (founder ruling 2026-10-02):
       // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·

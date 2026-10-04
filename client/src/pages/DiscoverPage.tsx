@@ -1,130 +1,75 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft, Info } from 'lucide-react'
+import { lazy, Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ArrowUp, Flag, MoreHorizontal, Sparkles, Trash2 } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
+import { SearchingIndicator } from '@/components/discover/AssistantMessage'
+import { BottomSheet } from '@/components/ui/BottomSheet'
+import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { IconButton } from '@/components/ui/IconButton'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { greetingName } from '@/lib/profile'
+import {
+  BETA_NOTE,
+  COMPOSER_MAX_LENGTH,
+  COMPOSER_PLACEHOLDER,
+  HOCKIA_AI_TITLE,
+  TRY_ASKING_EYEBROW,
+  exampleQueriesFor,
+} from '@/lib/hockiaAi'
 
-/** Default examples for unauthenticated visits + the universal fallback set.
- *  Every role-specific example list also keeps a search prompt so the user
- *  immediately sees what the AI can do beyond self-reflection. */
-const DEFAULT_EXAMPLES = [
-  'Find U25 defenders with a EU passport and 2+ references',
-  'Show female defenders open to play',
-  'Find men goalkeepers from New Zealand',
-]
+const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
-/** Role-aware first-impression prompts. Each role gets a mix of:
- *  - one self-reflection prompt ("what should I improve")
- *  - one search prompt seeded by their context
- *  - one connection / next-action prompt
- *  This is the entry-point onto Phase 1 personalisation. */
-const ROLE_EXAMPLES: Record<string, string[]> = {
-  player: [
-    'What should I improve in my profile?',
-    'What clubs would suit me?',
-    'Who should I connect with?',
-  ],
-  // Coach examples are computed dynamically — see buildCoachExamples — so
-  // candidate-only coaches don't get recruiter prompts they can't act on.
-  // (This entry stays present so role-detection short-circuits to the
-  // dynamic path rather than DEFAULT_EXAMPLES.)
-  coach: [],
-  club: [
-    'What can I do next on HOCKIA?',
-    'Show me available defenders for my team',
-    'Show me coaches with head-coach experience',
-  ],
-  brand: [
-    'What\'s missing from my brand profile?',
-    'Players who could be ambassadors',
-    'How do I get more visibility on the Marketplace?',
-  ],
-  umpire: [
-    'What should I improve in my profile?',
-    'Show me umpires from my country',
-    'How can I get more visibility?',
-  ],
-}
-
-/** Per the Phase 1A.4 plan, coaches see different example prompts based on
- *  the `coach_recruits_for_team` flag. Candidate-only coaches (default) get
- *  a candidate-shaped set; recruiter-mode coaches get a recruiter-first set
- *  with the candidate-side prompt last. */
-function buildCoachExamples(coachRecruitsForTeam: boolean): string[] {
-  if (coachRecruitsForTeam) {
-    return [
-      'Players I could recommend for my staff',
-      'Show me clubs hiring head coaches',
-      'What should I add to my profile?',
-    ]
-  }
-  return [
-    'What should I add to my profile?',
-    'Show me clubs hiring head coaches',
-    'Who should I connect with?',
-  ]
-}
-
+/**
+ * Hockia AI (Figma "New-Hockia" 04 · Player — Live 44:321; states 524:1494
+ * first use, 524:1575 loading, 524:1644 no match, 524:1715 can't answer,
+ * 524:1785 error). Route stays /discover; phone-first, desktop keeps working
+ * with the same column centred (max-w-md).
+ *
+ * Header: centred title, back chevron, More (…) → bottom sheet with
+ * "Clear conversation" and "Report a problem" (existing feedback modal).
+ * The sparkle appears only in the first-use mark. No gradients anywhere.
+ * The composer has no attach button; purple round send, 44 pt targets.
+ */
 export default function DiscoverPage() {
-  useDocumentTitle('Hockia AI')
-  const navigate = useNavigate()
+  useDocumentTitle(HOCKIA_AI_TITLE)
   const [searchParams, setSearchParams] = useSearchParams()
   const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()
   const profile = useAuthStore(s => s.profile)
   const [input, setInput] = useState('')
-  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  // Phase 1A.4 (v5 plan): consume the ?q= seed once. Without the ref guard,
-  // Strict-Mode double-mount in dev would auto-send the same seeded query
-  // twice. Once consumed, we strip the param from the URL so refresh /
-  // back-nav doesn't re-trigger the seeded send.
+  // Consume the ?q= seed once (Search v2 "Ask Hockia AI about …" prefills
+  // it). Without the ref guard, Strict-Mode double-mount in dev would send
+  // the seeded query twice; once consumed the param is stripped so refresh /
+  // back-nav doesn't re-trigger the send.
   const seededQueryConsumedRef = useRef(false)
 
   const hasMessages = messages.length > 0
-  // When DiscoverPage mounts with a ?q= deep-link, we briefly need to
-  // suppress the empty-state UI between initial render and the seeded
-  // useEffect calling sendMessage. Without this, the user sees the
-  // "Try asking" examples for a frame and could click one — kicking off
-  // a second parallel chat with the wrong query. The flag flips off as
-  // soon as the seeded query is consumed (and messages start populating).
   const hasUnconsumedSeed = !!searchParams.get('q') && !seededQueryConsumedRef.current
   const isSeeding = hasUnconsumedSeed && !hasMessages
 
-  // Greeting + example set are derived from the auth-store profile. When the
-  // profile hasn't loaded yet we fall back to the generic example set so the
-  // empty state never blocks on a network round-trip; once the profile
-  // arrives the examples swap to the role-aware variant.
-  // Clubs: "Hi <club name>!"; people keep their first name.
+  // Clubs are greeted by name; people by first name (gender-neutral helper).
   const firstName = greetingName(profile)
-  const exampleQueries = useMemo(() => {
-    if (profile?.role === 'coach') {
-      return buildCoachExamples(profile.coach_recruits_for_team ?? false)
-    }
-    const examples = profile?.role ? ROLE_EXAMPLES[profile.role] : null
-    return examples && examples.length > 0 ? examples : DEFAULT_EXAMPLES
-  }, [profile?.role, profile?.coach_recruits_for_team])
+  const exampleQueries = useMemo(
+    () => exampleQueriesFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null),
+    [profile],
+  )
 
-  // Track visual viewport for mobile keyboard awareness.
-  // On iOS Safari, the keyboard changes visualViewport.height and may scroll
-  // the viewport (offsetTop). We listen to BOTH resize and scroll events and
-  // directly set the container's height + top so it always fills exactly the
-  // visible area above the keyboard.
+  // Fill exactly the visible area above the iOS keyboard: visualViewport
+  // changes height and offsetTop; both resize and scroll are listened to.
   useEffect(() => {
     const vv = window.visualViewport
     const el = containerRef.current
     if (!vv || !el) return
-
     const sync = () => {
       el.style.height = `${vv.height}px`
       el.style.top = `${vv.offsetTop}px`
     }
-
     sync()
     vv.addEventListener('resize', sync)
     vv.addEventListener('scroll', sync)
@@ -134,19 +79,6 @@ export default function DiscoverPage() {
     }
   }, [])
 
-  // Rotate placeholder text
-  useEffect(() => {
-    if (hasMessages) return
-    const interval = setInterval(() => {
-      setPlaceholderIndex(i => (i + 1) % exampleQueries.length)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [hasMessages, exampleQueries.length])
-
-  // Seeded query — when DiscoverPage is opened from a deep-link with `?q=…`
-  // (e.g. ClubDashboard's "Find candidates" CTA pre-seeded from the most
-  // recent vacancy), auto-send the query once and strip it from the URL.
-  // The ref guard prevents Strict-Mode double-mount from sending twice.
   useEffect(() => {
     if (seededQueryConsumedRef.current) return
     const q = searchParams.get('q')
@@ -158,12 +90,10 @@ export default function DiscoverPage() {
     setSearchParams(next, { replace: true })
   }, [searchParams, sendMessage, setSearchParams])
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Auto-resize textarea
   const resizeTextarea = useCallback(() => {
     const ta = textareaRef.current
     if (!ta) return
@@ -181,9 +111,7 @@ export default function DiscoverPage() {
     sendMessage(trimmed)
     setInput('')
     requestAnimationFrame(() => {
-      if (textareaRef.current) {
-        textareaRef.current.style.height = '44px'
-      }
+      if (textareaRef.current) textareaRef.current.style.height = '44px'
     })
   }, [input, isPending, sendMessage])
 
@@ -194,100 +122,63 @@ export default function DiscoverPage() {
     }
   }
 
-  const handleExampleClick = (example: string) => {
-    sendMessage(example)
-  }
-
   const handleFocus = useCallback(() => {
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 300)
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 300)
   }, [])
+
+  const canSend = input.trim().length > 0 && !isPending
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-x-0 top-0 flex flex-col bg-gray-50"
+      className="fixed inset-x-0 top-0 z-30 flex flex-col bg-white"
       style={{ height: '100dvh' }}
     >
-      {/* ── Chat header ──────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 min-h-14 px-3 border-b border-gray-200 bg-white flex-shrink-0 pt-[env(safe-area-inset-top)]">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          aria-label="Go back"
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors -ml-1"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-700" />
-        </button>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-hockia-primary to-hockia-secondary flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-white" />
+      {/* Nav bar: chevron · centred title · More */}
+      <div className="shrink-0 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto w-full max-w-md">
+          <DetailNavBar
+            parent="Home"
+            title={HOCKIA_AI_TITLE}
+            fallbackPath="/home"
+            alwaysVisible
+            trailing={
+              <IconButton label="More" onClick={() => setMoreOpen(true)} data-testid="ai-more">
+                <MoreHorizontal className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+              </IconButton>
+            }
+          />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Hockia AI</h1>
-            <span className="px-1.5 py-px rounded-full bg-hockia-primary/10 text-hockia-primary text-[9px] font-bold uppercase tracking-wide leading-tight">
-              Beta
-            </span>
-          </div>
-          <p className="text-[11px] text-gray-500 leading-tight">AI-powered search</p>
-        </div>
-        {hasMessages && (
-          <button
-            type="button"
-            onClick={clearChat}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-hockia-primary hover:bg-hockia-primary/5 rounded-full transition-colors"
-          >
-            <RotateCcw className="w-3 h-3" />
-            New
-          </button>
-        )}
-      </header>
+      </div>
 
-      {/* ── Scrollable chat area ─────────────────────────────────── */}
-      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="max-w-2xl mx-auto px-4 py-4">
+      {/* Conversation */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-md px-4 py-4">
           {isSeeding ? (
-            // Seeded query in flight — show a small loading state instead of
-            // the example buttons so a slow first-frame doesn't let the user
-            // click an unrelated example mid-seed.
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <Loader2 className="w-8 h-8 text-hockia-primary animate-spin mb-3" />
-              <p className="text-sm text-gray-500">Working on your question…</p>
-            </div>
+            <SearchingIndicator />
           ) : !hasMessages ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-hockia-primary to-hockia-secondary flex items-center justify-center mb-4 shadow-lg shadow-hockia-primary/20">
-                <Sparkles className="w-7 h-7 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                {firstName ? `Hi ${firstName}!` : 'Hockia AI'}
-              </h2>
-              {/* Beta signal — lightweight, honest, not alarming. */}
-              <div className="flex items-start gap-2 mb-8 max-w-xs px-3 py-2 rounded-xl bg-gray-100/80">
-                <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-px" aria-hidden="true" />
-                <p className="text-[11px] text-gray-500 leading-snug text-left">
-                  Hockia AI is in beta — it can help you explore HOCKIA, but
-                  answers may sometimes be incomplete or inaccurate.
-                </p>
-              </div>
-              <div className="w-full max-w-sm space-y-2">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center mb-2">
-                  Try asking
-                </p>
-                {exampleQueries.map(example => (
-                  <button
-                    type="button"
-                    key={example}
-                    data-testid="discover-example-query"
-                    onClick={() => handleExampleClick(example)}
-                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-hockia-primary hover:bg-hockia-primary/5 transition-colors"
-                  >
-                    <span className="text-gray-400 mr-1">&ldquo;</span>
-                    {example}
-                    <span className="text-gray-400 ml-1">&rdquo;</span>
-                  </button>
-                ))}
+            <div className="flex flex-col items-center pt-10" data-testid="ai-first-use">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft" aria-hidden="true">
+                <Sparkles className="h-7 w-7 text-hockia-primary" strokeWidth={1.75} />
+              </span>
+              <h2 className="mt-4 text-title text-ink-1">{firstName ? `Hi ${firstName}` : HOCKIA_AI_TITLE}</h2>
+              <p className="mt-2 max-w-xs text-center text-secondary text-ink-3">{BETA_NOTE}</p>
+              <div className="mt-8 w-full">
+                <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-ink-3">{TRY_ASKING_EYEBROW}</p>
+                <ul className="flex flex-col gap-2">
+                  {exampleQueries.map(example => (
+                    <li key={example}>
+                      <button
+                        type="button"
+                        data-testid="discover-example-query"
+                        onClick={() => sendMessage(example)}
+                        className="w-full rounded-[12px] border border-line bg-white px-4 py-3 text-left text-row text-ink-1 transition-colors active:bg-surface-muted"
+                      >
+                        &ldquo;{example}&rdquo;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           ) : (
@@ -297,40 +188,72 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      {/* ── Composer (fixed bottom) ──────────────────────────────── */}
-      <div className="border-t border-gray-200 bg-white flex-shrink-0 pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div className="relative flex items-end gap-2">
+      {/* Composer */}
+      <div className="shrink-0 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex w-full max-w-md items-end gap-2 px-4 py-2">
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">Ask Hockia AI</span>
             <textarea
               ref={textareaRef}
               value={input}
               onChange={e => {
-                if (e.target.value.length <= 500) setInput(e.target.value)
+                if (e.target.value.length <= COMPOSER_MAX_LENGTH) setInput(e.target.value)
               }}
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
-              placeholder={hasMessages ? 'Follow up or ask something new…' : exampleQueries[placeholderIndex]}
+              placeholder={COMPOSER_PLACEHOLDER}
               rows={1}
-              disabled={isPending}
-              className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary/50 focus:bg-white transition-all disabled:opacity-60 min-h-[44px] max-h-[120px]"
+              className="block max-h-[120px] min-h-[44px] w-full resize-none rounded-[22px] bg-surface-grouped px-4 py-[11px] text-row text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
               enterKeyHint="send"
               autoCapitalize="sentences"
+              data-testid="ai-composer"
             />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={isPending || input.trim().length < 1}
-              className="absolute right-2 bottom-1.5 w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white shadow-sm disabled:opacity-40 disabled:shadow-none hover:shadow-md transition-all"
-            >
-              {isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
-          </div>
+          </label>
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={!canSend}
+            aria-label="Send"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity disabled:opacity-40"
+            data-testid="ai-send"
+          >
+            <ArrowUp className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
+          </button>
         </div>
       </div>
+
+      <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} ariaLabel="More">
+        <ul className="px-2 pb-2 pt-1">
+          <li>
+            <button
+              type="button"
+              onClick={() => { clearChat(); setMoreOpen(false) }}
+              className="flex h-12 w-full items-center gap-3 rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
+              data-testid="ai-clear"
+            >
+              <Trash2 className="h-5 w-5 text-ink-2" strokeWidth={1.75} aria-hidden="true" />
+              Clear conversation
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => { setMoreOpen(false); setFeedbackOpen(true) }}
+              className="flex h-12 w-full items-center gap-3 rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
+              data-testid="ai-report"
+            >
+              <Flag className="h-5 w-5 text-ink-2" strokeWidth={1.75} aria-hidden="true" />
+              Report a problem
+            </button>
+          </li>
+        </ul>
+      </BottomSheet>
+
+      {feedbackOpen && (
+        <Suspense fallback={null}>
+          <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+        </Suspense>
+      )}
     </div>
   )
 }

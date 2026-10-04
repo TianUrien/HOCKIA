@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ChevronRight, Info } from 'lucide-react'
+import { ChevronRight, Info, Sparkles } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
@@ -9,6 +9,8 @@ import { RoleActions } from './RoleActions'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
+import { useRoleSuggestions } from '@/hooks/useRoleSuggestions'
+import { SUGGESTS_TITLE, suggestsEntryDetail } from '@/lib/roleSuggestions'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { shortDayOf } from '@/lib/signing'
@@ -44,6 +46,10 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const { countries } = useCountries()
   const [chip, setChip] = useState<Chip>('pending')
   const p = pipelineOf(data.applicants.map((a) => a.status))
+  // D5 entry (Figma D5.1 398:83): the publisher's open player roles only.
+  const suggestable = !!data.role && !!clubId && data.role.club_id === clubId && data.role.status === 'open' && data.role.opportunity_type === 'player'
+  const suggests = useRoleSuggestions(suggestable ? roleId : null)
+  const suggestsDetail = suggests.loading ? null : suggestsEntryDetail(suggests.data ? suggests.suggestions.length : 0)
 
   const list = useMemo(() => {
     const rows = data.applicants.filter((a) => applicantChipFor(a.status) === chip)
@@ -96,6 +102,24 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           <p className="text-[14px] leading-[19px] text-ink-2">
             {[role.title, appliedSinceLine(data.applicants, monthDay)].filter(Boolean).join(' · ')}
           </p>
+        </div>
+      )}
+
+      {suggestable && (
+        <div className="px-5 pb-3">
+          <button
+            type="button"
+            onClick={() => navigate(`/dashboard/opportunities/${roleId}/suggested`, { state: { from: location.pathname } })}
+            className="flex min-h-[52px] w-full items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-2.5 text-left"
+            data-testid="suggests-entry"
+          >
+            <Sparkles className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+              {SUGGESTS_TITLE}
+              {suggestsDetail && <span className="font-normal text-ink-2" data-testid="suggests-entry-detail"> · {suggestsDetail}</span>}
+            </span>
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />
+          </button>
         </div>
       )}
 

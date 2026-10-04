@@ -19,6 +19,8 @@ interface DetailNavBarProps {
   onBack?: () => void
   trailing?: ReactNode
   className?: string
+  /** Keep the bar on desktop too (full-screen surfaces such as Hockia AI). */
+  alwaysVisible?: boolean
 }
 
 /**
@@ -35,6 +37,7 @@ export function DetailNavBar({
   onBack,
   trailing,
   className,
+  alwaysVisible = false,
 }: DetailNavBarProps) {
   const navigate = useNavigate()
   const back =
@@ -45,7 +48,7 @@ export function DetailNavBar({
     })
 
   return (
-    <div className={cn('relative flex h-11 items-center justify-between px-2 lg:hidden', className)}>
+    <div className={cn('relative flex h-11 items-center justify-between px-2', !alwaysVisible && 'lg:hidden', className)}>
       <button
         type="button"
         onClick={back}

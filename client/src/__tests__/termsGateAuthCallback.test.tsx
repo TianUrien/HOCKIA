@@ -53,8 +53,19 @@ describe('TermsGate — never blocks the auth callback', () => {
     expect(mocks.rpc).not.toHaveBeenCalledWith('has_accepted_terms', expect.anything())
   })
 
-  it('/complete-profile: the gate is STILL required (modal shown, children hidden)', async () => {
+  // Account-first onboarding (2026-10-03): the first real screen after an
+  // OAuth return is "Choose your role" on /complete-profile and nothing may
+  // cover it. Onboarding has no user-generated content; the gate re-arms on
+  // the first route after it.
+  it('/complete-profile (Choose your role / Set up): no Terms modal over onboarding', async () => {
     renderAt('/complete-profile')
+    await waitFor(() => expect(screen.getByText('APP CONTENT')).toBeInTheDocument())
+    expect(screen.queryByText(/terms of use/i)).not.toBeInTheDocument()
+    expect(mocks.rpc).not.toHaveBeenCalledWith('has_accepted_terms', expect.anything())
+  })
+
+  it('/home: the gate is STILL required after onboarding (modal shown, children hidden)', async () => {
+    renderAt('/home')
     await waitFor(() => expect(screen.getByText(/terms of use/i)).toBeInTheDocument())
     expect(screen.queryByText('APP CONTENT')).not.toBeInTheDocument()
     expect(mocks.rpc).toHaveBeenCalledWith('has_accepted_terms', expect.anything())

@@ -344,6 +344,42 @@ export type Database = {
           },
         ]
       }
+      ai_usage_log: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          function: string
+          id: string
+          input_tokens: number | null
+          model: string | null
+          output_tokens: number | null
+          provider: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          function: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          function?: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_rating_prompt_state: {
         Row: {
           dismissed_count: number
@@ -8096,6 +8132,8 @@ export type Database = {
         Args: { p_profile_id: string; p_reason?: string; p_updates: Json }
         Returns: Json
       }
+      ai_questions_today: { Args: { p_user: string }; Returns: number }
+      ai_spend_month_usd: { Args: never; Returns: number }
       applicant_can_view_opportunity: {
         Args: { p_club_id: string; p_opportunity_id: string }
         Returns: boolean
@@ -8109,6 +8147,7 @@ export type Database = {
       attest_org_operator_adult: { Args: never; Returns: Json }
       block_user: { Args: { p_blocked_id: string }; Returns: undefined }
       can_toggle_open_to_play: { Args: { p_uid: string }; Returns: boolean }
+      check_ai_spend_alert: { Args: never; Returns: Json }
       check_application_rate_limit: {
         Args: { p_user_id: string }
         Returns: Json
@@ -9034,6 +9073,19 @@ export type Database = {
       }
       get_my_roles_health: { Args: never; Returns: Json }
       get_my_streak: { Args: never; Returns: Json }
+      get_my_week_viewers: {
+        Args: { p_days?: number }
+        Returns: {
+          avatar_url: string
+          country_id: number
+          full_name: string
+          is_hidden: boolean
+          role: string
+          username: string
+          viewed_at: string
+          viewer_id: string
+        }[]
+      }
       get_my_weekly_visibility: { Args: never; Returns: Json }
       get_notification_counts: {
         Args: never

@@ -165,3 +165,32 @@ visible inconsistency or accessibility gap; **Low** = token / metric drift.
 ## Resolved from design (2026-10-03)
 
 - D1.18 Home, "Opportunity posted" card: the "EU passport required" line is removed from Figma. The card stays role · club · city, like the shipped `OpportunityPostedCard.tsx`; requirements live on the role page (amber rule: information is never amber).
+
+## Open from design (2026-10-03, evening)
+
+- Hockia AI soft error (`SoftErrorCard.tsx`) is amber (bg amber-50, amber icon and text). Under the amber rule an error is not something the viewer must act on soon; Figma `524:1785` draws it neutral (surface-muted, ink text, info icon) with recovery chips. Proposal: switch the card to neutral when Hockia AI v2 is built.
+- RoleBadge colours are raw hex in code; Figma now has matching `role/*` tokens (exported with the next token build).
+
+## Design review — Pulse, Search, Landing v2 (2026-10-03)
+
+Compared against Figma (Pulse `42:276` / `523:1482`, Search `42:195` / `522:1436` / `522:1558`, landing `114:1743` / `111:1689`). Pulse and Search from the staging screenshots (390 px, 3×); landing measured live on localhost (computed styles at 1440 and 375).
+
+### Search v2 — matches
+Field, AI row, member rows (avatar 48, name, meta + flag, RoleBadge), club rows with location only, no green dot, no-results copy: all match.
+- Low · The tab bar shows under Search in code; the Figma frames have none (Search opens as a pushed screen). Pick one; Figma follows the code if the tab bar stays.
+- Low · Code puts " · " before the flag ("Manchester, UK · 🏴"); Figma uses a space. Either is fine — keep code.
+- Not verifiable · Recent searches (the staging user has none). Figma `522:1436` is the reference.
+
+### Pulse — mostly matches
+Header, check-in card (purple line / grey zero line, avatars), 2×2 tiles, "Who looked at you" rail and the zero-views state match. Figma now uses the shipped zero sub-lines ("Same as last week", "None yet").
+- Medium · "A first this week" (first reference card) and the "Teammates can write you a reference · Ask" card don't render in either screenshot. If that's only the test data, fine; if the sections aren't built yet, they are in the frame.
+- Medium · "What happened" rows: code shows date on the left and text only; Figma has a leading crest/avatar, the date under the text, and a chevron (rows are tappable). Suggest adding the leading avatar and chevron; keep it all grey.
+- Low · The check-in question is smaller in code (~18 px) than Figma (Title M 20–22 px).
+
+### Landing v2 — very close
+Type (64/68, 40/46, 19/29, 38/42, 24/30), weights, letter-spacing, colours, radius 16, button heights (48, nav 36), section paddings (96, 112/48, 48, 56/40), roles band colour and card borders all match.
+- Medium · Desktop content width: code content is 1120 wide starting at x 160; Figma is 1200 from x 120. My handoff was wrong here — `max-w-[1200px]` includes the padding. Use `max-w-[1280px] px-10` (content 1200 at 1440).
+- Low · Desktop lead wraps at 460 px; Figma 520 px.
+- Low · "Already a member?" is ink-3 in code; Figma ink-2 (`#5b5b6b`), "Log in" purple.
+- Check · A "Sentry Test" button floats bottom-right on localhost — make sure it's dev-only.
+- Role cards show staging QA titles (expected); long titles should truncate to one line in the card.

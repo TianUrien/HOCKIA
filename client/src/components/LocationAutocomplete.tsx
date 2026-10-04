@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useGooglePlaces, type PlacePrediction } from '@/hooks/useGooglePlaces'
 import { useCountries } from '@/hooks/useCountries'
 import Input from './Input'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel } from '@/components/ui/fieldClasses'
 
 export interface LocationSelection {
   displayName: string
@@ -23,6 +24,14 @@ interface LocationAutocompleteProps {
   error?: string
   disabled?: boolean
   icon?: ReactNode
+  /** 'field' = the Figma Text field look (surface-muted, radius 12, 50 tall,
+   *  Field header label) used by the account-first set-up and the phone
+   *  editors. Behaviour is identical in both appearances. */
+  appearance?: 'default' | 'field'
+  /** 'overlay' (default) floats the suggestions over the content below.
+   *  'inline' puts them in the flow (pushing content down) so a scrolling or
+   *  overflow-clipped parent — a bottom sheet — can never cut them off. */
+  suggestionsPlacement?: 'overlay' | 'inline'
 }
 
 export default function LocationAutocomplete({
@@ -37,7 +46,10 @@ export default function LocationAutocomplete({
   error,
   disabled,
   icon,
+  appearance = 'default',
+  suggestionsPlacement = 'overlay',
 }: LocationAutocompleteProps) {
+  const isField = appearance === 'field'
   const inputId = useId()
   const { isLoaded, loadError, getAutocompletePredictions, getPlaceDetails } = useGooglePlaces()
   const { countries, getCountryByCode } = useCountries()
@@ -157,7 +169,26 @@ export default function LocationAutocomplete({
     }
   }, [])
 
-  // Fallback to plain Input if Google Places is unavailable
+  // Fallback to a plain input if Google Places is unavailable
+  if (loadError && isField) {
+    return (
+      <div>
+        {label && <label className={fieldLabel} htmlFor={inputId}>{label}</label>}
+        <input
+          id={inputId}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+          autoComplete="off"
+          className={cn(fieldInputBase, 'px-3.5', error && fieldErrorRing)}
+        />
+        {error && <p className={fieldErrorText}>{error}</p>}
+      </div>
+    )
+  }
   if (loadError) {
     return (
       <Input
@@ -173,25 +204,26 @@ export default function LocationAutocomplete({
     )
   }
 
+  const iconSize = isField ? 'h-4 w-4' : 'w-5 h-5'
   const iconElement = isResolving || isSearching ? (
-    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+    <Loader2 className={cn(iconSize, 'animate-spin', isField ? 'text-ink-3' : 'text-gray-400')} />
   ) : isSelected ? (
-    <Check className="w-5 h-5 text-emerald-500" />
+    <Check className={cn(iconSize, isField ? 'text-positive' : 'text-emerald-500')} />
   ) : (
-    icon || <MapPin className="w-5 h-5" />
+    icon || <MapPin className={iconSize} />
   )
 
   return (
-    <div ref={containerRef} className="relative space-y-2">
+    <div ref={containerRef} className={cn('relative', !isField && 'space-y-2')}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700" htmlFor={inputId}>
+        <label className={isField ? fieldLabel : 'block text-sm font-medium text-gray-700'} htmlFor={inputId}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className={cn('pointer-events-none absolute top-1/2 -translate-y-1/2', isField ? 'left-3.5 text-ink-3' : 'left-3 text-gray-400')}>
           {iconElement}
         </div>
 
@@ -206,13 +238,15 @@ export default function LocationAutocomplete({
           disabled={disabled || !isLoaded}
           placeholder={isLoaded ? placeholder : 'Loading...'}
           autoComplete="off"
-          className={cn(
-            'w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg',
-            'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
-            'transition-all duration-200 placeholder:text-gray-400 pl-10',
-            isSelected && 'border-emerald-300 bg-emerald-50/30',
-            error && 'border-red-500 focus:ring-red-500',
-          )}
+          className={isField
+            ? cn(fieldInputBase, 'pl-10 pr-11', error && fieldErrorRing)
+            : cn(
+              'w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg',
+              'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
+              'transition-all duration-200 placeholder:text-gray-400 pl-10',
+              isSelected && 'border-emerald-300 bg-emerald-50/30',
+              error && 'border-red-500 focus:ring-red-500',
+            )}
         />
 
         {isSelected && (
@@ -223,7 +257,9 @@ export default function LocationAutocomplete({
               onLocationClear()
               inputRef.current?.focus()
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            className={isField
+              ? 'absolute right-0.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3'
+              : 'absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors'}
             aria-label="Clear location"
           >
             <X className="w-4 h-4" />
@@ -231,12 +267,19 @@ export default function LocationAutocomplete({
         )}
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className={isField ? fieldErrorText : 'text-sm text-red-500'}>{error}</p>}
 
       {/* Dropdown */}
       {showDropdown && predictions.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-          <ul className="max-h-60 overflow-y-auto py-1" role="listbox">
+        <div
+          data-placement={suggestionsPlacement}
+          className={cn(
+            'mt-1 w-full overflow-hidden rounded-[12px] border bg-white',
+            suggestionsPlacement === 'inline' ? 'relative' : 'absolute z-50 shadow-lg',
+            isField ? 'border-line' : 'border-gray-200',
+          )}
+        >
+          <ul className={cn('overflow-y-auto overscroll-contain py-1', suggestionsPlacement === 'inline' ? 'max-h-[min(50dvh,20rem)]' : 'max-h-60')} role="listbox">
             {predictions.map((prediction, index) => (
               <li
                 key={prediction.placeId}
@@ -244,7 +287,7 @@ export default function LocationAutocomplete({
                 aria-selected={index === highlightedIndex}
                 className={cn(
                   'px-3 py-2.5 cursor-pointer transition-colors',
-                  index === highlightedIndex ? 'bg-purple-50' : 'hover:bg-gray-50',
+                  index === highlightedIndex ? (isField ? 'bg-hockia-soft' : 'bg-purple-50') : 'hover:bg-gray-50',
                 )}
                 onClick={() => handleSelect(prediction)}
                 onMouseEnter={() => setHighlightedIndex(index)}

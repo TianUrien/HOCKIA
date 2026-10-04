@@ -3,8 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { TERMS_GATE_OVERLAY } from '@/lib/overlaySequence'
 
 const CURRENT_TERMS_VERSION = '1.0'
+
+/** Never gated: the transient auth callback and the onboarding screens (see effect). */
+const UNGATED_PREFIXES = ['/auth/callback', '/complete-profile', '/brands/onboarding']
 
 /**
  * Terms acceptance gate — shown once to authenticated users
@@ -35,10 +40,18 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Overlay sequencing (founder rulings 2026-10-04): while the gate is up — or
+  // still deciding for a signed-in user — the cookie banner, install card and
+  // push card wait. They read this through the bottom-prompt coordinator.
+  // `checking` covers the DB round-trip after sign-in, when `accepted` may
+  // still hold the logged-out `true` from mount.
+  const [checking, setChecking] = useState(false)
+  useBottomPrompt(TERMS_GATE_OVERLAY, Boolean(user) && (accepted !== true || checking))
 
   useEffect(() => {
     if (!user) {
       setAccepted(true) // Not logged in — don't gate public pages
+      setChecking(false)
       return
     }
     // /auth/callback is a TRANSIENT routing page — it exchanges the OAuth or
@@ -48,11 +61,17 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
     // underneath. Found in the pre-release QA of 2026-08-17: 2 of 8 Google
     // signups in the prior 14 days had a confirmed account, no profile, and
     // zero page views — they quit at exactly this wall (one came back two
-    // days later and hit it again). Let the callback finish; the gate then
-    // shows on /complete-profile, over a real screen with context, where
-    // acceptance is still required before anything else.
-    if (location.pathname.startsWith('/auth/callback')) {
+    // days later and hit it again). Let the callback finish.
+    //
+    // Account-first onboarding (founder rulings 2026-10-03): the first real
+    // screen after an OAuth return is now "Choose your role" on
+    // /complete-profile, and nothing may cover it. Onboarding has no
+    // user-generated content, so the gate (Apple 1.2: accept before UGC) is
+    // deferred to the first route after onboarding — still required there,
+    // before anything else.
+    if (UNGATED_PREFIXES.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'))) {
       setAccepted(true)
+      setChecking(false)
       return
     }
 
@@ -60,12 +79,14 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
     const localKey = `hockia-terms-${user.id}-${CURRENT_TERMS_VERSION}`
     if (localStorage.getItem(localKey) === 'accepted') {
       setAccepted(true)
+      setChecking(false)
       return
     }
 
+    setChecking(true)
     // Check database
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any).rpc('has_accepted_terms', { p_version: CURRENT_TERMS_VERSION })
+    ;(supabase as any).rpc('has_accepted_terms', { p_version: CURRENT_TERMS_VERSION })
       .then(({ data }: { data: boolean }) => {
         if (data) {
           localStorage.setItem(localKey, 'accepted')
@@ -75,6 +96,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
       .catch(() => {
         setAccepted(false) // Fail closed — require acceptance on DB errors
       })
+      .finally(() => setChecking(false))
   }, [user, location.pathname])
 
   const handleAccept = async () => {

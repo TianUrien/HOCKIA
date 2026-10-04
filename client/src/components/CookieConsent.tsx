@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 import { initPostHog } from '@/lib/posthog'
+import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
+import { COOKIE_BANNER_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
 
 /**
  * GDPR cookie consent banner.
@@ -11,8 +14,27 @@ import { initPostHog } from '@/lib/posthog'
  * Hidden on native iOS/Android apps — no cookies are used in Capacitor
  * and showing this prompt triggers Apple's ATT requirements (Guideline 5.1.2).
  */
+/**
+ * Routes where the banner must NEVER render: auth and onboarding. Same bug
+ * class as the 2026-08-17 OAuth-return wall (the install card over /signup,
+ * this banner over the Terms gate): a stranger's first screens get no
+ * competing bottom strip (founder ruling 2026-10-03). The banner is only
+ * hidden here — consent is still asked on the first route after these, and
+ * previously granted consent still enables analytics on mount.
+ */
+const AUTH_FLOW_PREFIXES = ['/signup', '/signin', '/auth', '/verify-email', '/complete-profile', '/brands/onboarding', '/forgot-password', '/reset-password', '/email-action', '/juniors-waitlist']
+
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
+  // Mounted inside <BrowserRouter> (App.tsx, next to InstallPrompt).
+  const location = useLocation()
+  // One overlay at a time (founder rulings 2026-10-04): the Terms gate comes
+  // first; this banner waits until it is accepted, then holds the slot the
+  // install and push cards wait on.
+  const termsOpen = useBottomPromptActive(TERMS_GATE_OVERLAY)
+  const onAuthRoute = matchesRoutePrefix(location.pathname, AUTH_FLOW_PREFIXES)
+  const shown = visible && !onAuthRoute && !termsOpen
+  useBottomPrompt(COOKIE_BANNER_OVERLAY, shown)
 
   useEffect(() => {
     // Native apps don't use cookies — skip consent prompt entirely
@@ -39,7 +61,7 @@ export default function CookieConsent() {
     setVisible(false)
   }
 
-  if (!visible) return null
+  if (!shown) return null
 
   // Slim single-row bar. Previous version was a 158px tall card that
   // blanketed the bottom of the viewport — at z-9999 it intercepted

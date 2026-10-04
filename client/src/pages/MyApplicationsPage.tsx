@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -26,7 +26,9 @@ export default function MyApplicationsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { rows, loading } = useMyApplicationsAll()
-  const [segment, setSegment] = useState<Segment>('active')
+  // `?segment=closed` lands on the Closed tab (the Pulse "expired with no reply" row).
+  const [searchParams] = useSearchParams()
+  const [segment, setSegment] = useState<Segment>(() => (searchParams.get('segment') === 'closed' ? 'closed' : 'active'))
 
   const active = useMemo(() => rows.filter((r) => r.active), [rows])
   const closed = useMemo(() => rows.filter((r) => !r.active), [rows])

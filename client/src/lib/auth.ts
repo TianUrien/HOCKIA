@@ -218,7 +218,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             data = await requestCache.dedupe(cacheKey, fetchOnce)
           }
         } else {
-          logger.error('[AUTH_STORE] Cannot create placeholder profile - missing metadata', { userId, hasUser: !!currentUser, roleMetadata, emailPresent: !!email })
+          // Expected for every new account since the account-first flow
+          // (2026-10-03): no role is known until "Choose your role" creates
+          // the row through create_profile_for_new_user.
+          logger.info('[AUTH_STORE] No placeholder profile yet - role not chosen', { userId, hasUser: !!currentUser, roleMetadata, emailPresent: !!email })
         }
       }
 
@@ -557,7 +560,8 @@ const ensureUserRoleMetadata = async (
   }
 
   if (options?.profileLoaded) {
-    logger.error('[AUTH_STORE] Unable to determine role metadata for user', { userId: user.id })
+    // A fresh account before "Choose your role" — expected, not an error.
+    logger.info('[AUTH_STORE] Role not chosen yet', { userId: user.id })
   }
   return null
 }

@@ -3,6 +3,7 @@ import { Building2, Check, ChevronDown, Globe2, Loader2, Plus, Search, X } from 
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import StorageImage from './StorageImage'
+import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import Flag from './Flag'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -46,6 +47,8 @@ interface WorldClubSearchProps {
   appearance?: 'default' | 'field'
   /** Crest of the linked club, shown in the 'field' appearance. */
   crestUrl?: string | null
+  /** 'field' appearance only: trailing "Optional" tag in the Field header. */
+  optional?: boolean
 }
 
 interface WorldCountryOption {
@@ -76,6 +79,7 @@ export default function WorldClubSearch({
   id: externalId,
   appearance = 'default',
   crestUrl = null,
+  optional = false,
 }: WorldClubSearchProps) {
   const generatedId = useId()
   const inputId = externalId || `world-club-search-${generatedId}`
@@ -305,9 +309,10 @@ export default function WorldClubSearch({
   return (
     <div ref={containerRef} className="relative">
       {label && (
-        <label htmlFor={inputId} className={isField ? 'mb-1.5 block text-secondary font-semibold text-ink-2' : 'text-sm font-medium text-gray-700'}>
+        <label htmlFor={inputId} className={isField ? (optional ? fieldLabelRow : fieldLabel) : 'text-sm font-medium text-gray-700'}>
           {label}
           {required && <span className="text-red-500">*</span>}
+          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
         </label>
       )}
 
@@ -318,11 +323,11 @@ export default function WorldClubSearch({
               {crestUrl ? <img src={crestUrl} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-4 w-4 text-ink-3" />}
             </span>
           ) : isSearching ? (
-            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            <Loader2 className={`h-4 w-4 animate-spin ${isField ? 'text-ink-3' : 'text-gray-400'}`} />
           ) : isLinked ? (
-            <Check className="h-4 w-4 text-emerald-500" />
+            <Check className={`h-4 w-4 ${isField ? 'text-positive' : 'text-emerald-500'}`} />
           ) : (
-            <Search className="h-4 w-4 text-gray-400" />
+            <Search className={`h-4 w-4 ${isField ? 'text-ink-3' : 'text-gray-400'}`} />
           )}
         </div>
 
@@ -342,7 +347,7 @@ export default function WorldClubSearch({
           autoCorrect="off"
           spellCheck={false}
           className={isField
-            ? `h-[50px] w-full rounded-[12px] bg-surface-grouped pr-11 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 [&::-webkit-search-cancel-button]:hidden ${isLinked ? 'pl-[50px]' : 'pl-10'} ${error ? 'ring-2 ring-red-400' : ''} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`
+            ? `${fieldInputBase} pr-11 [&::-webkit-search-cancel-button]:hidden ${isLinked ? 'pl-[50px]' : 'pl-10'} ${error ? fieldErrorRing : ''} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`
             : `w-full rounded-lg border py-2.5 pl-10 pr-10 focus:border-transparent focus:ring-2 focus:ring-indigo-500 ${
             error ? 'border-red-400' : isLinked ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-300'
           } ${disabled ? 'cursor-not-allowed bg-gray-50' : ''}`}
@@ -375,7 +380,7 @@ export default function WorldClubSearch({
         </div>
       </div>
 
-      {error && <p className={isField ? 'mt-1 text-caption text-red-600' : 'mt-1 text-sm text-red-600'}>{error}</p>}
+      {error && <p className={isField ? fieldErrorText : 'mt-1 text-sm text-red-600'}>{error}</p>}
 
       {/* Soft nudge: user typed a club name but didn't pick a suggestion or
           use "Add new". Profile saves but `current_world_club_id` stays null,

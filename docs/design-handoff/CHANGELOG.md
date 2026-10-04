@@ -3,6 +3,179 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (late) · design agent
+
+- Whole-file QA pass on the live pages (03, 04, D1–D6):
+  - About 245 raw colours inside screens and components are now bound to tokens: overlays and play badges, glass buttons, scrims, hotspots, the link and grey text on First run, and the composer avatar. Every original opacity is kept.
+  - About 75 unstyled text layers now use the closest Hockia text style.
+- New text styles Hockia/Title XL (28 Bold / 34, −1%) and Hockia/Figure (26 Semibold / 31, −1%). They are applied to screen titles, profile names and the Your week / Week tile numbers. Three 24 pt sheet names move to Title S.
+- Known exceptions, on purpose:
+  - The Apple sign-in button stays black and the Google logo keeps its brand colours.
+  - The status-bar "9:41" is device chrome.
+  - Four 20 pt regular texts (compose placeholders, the large reference quote) and one 16 pt medium row label have no matching style.
+  - The lavender ring at `218:612` stays as it is.
+  - Docs-only labels and dev notes are not text-styled.
+- Chip `459:184`: the selected state is soft purple (brand/soft fill, brand/primary text; Pressed = brand/soft-pressed), per a founder ruling.
+
+## 2026-10-05 (night) · design agent
+
+- Coach set-up in the 2-step player style (replaces the 3-step CompleteProfile coach wizard):
+  - D6.5 `586:806` About you: name, date of birth, nationality, optional second nationality, base location.
+  - D6.6 `586:849` Your coaching: specialization, categories as Chips, optional current club, the recruit question as two Option cards, Open to coach switch, Skip.
+  - D6.6b `587:911` inline errors.
+  - Dev note `587:1030`.
+
+## 2026-10-05 (evening) · design agent
+
+- Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
+- New Tag / Meta `582:7949` (Neutral / Brand, with Label and Icon) for the club, position and specialist pills under a name. It replaces one-off frames on 04 Player (12), D2 (4) and D6 (2). Nine "Open to play" / "Women's" pills now use Tag (Positive / Brand).
+- New List item / Switch pair `583:608` (Push + Email switches). Settings › Notifications `254:753` uses it for the six "Tell me about" rows; Profile views is off on both.
+- Settings › Notifications: footer `584:7680` "Push and Email move together for now — each type has one setting." (as shipped). Code name for Tag / Meta: `ui/MetaPill.tsx`.
+- Profile v2 `152:1368`: Edit profile (Primary) and Public view (Secondary) are now Buttons, and the cover camera is a Glass icon button.
+- Still one-off, on purpose:
+  - Privacy radio rows `254:1170`/`254:1178`.
+  - The dark "View profile" button on the media viewers (`188:582`, `188:633`, `202:556`, `221:778`).
+  - The video rails on the profiles (Video thumbnail doesn't cover reels yet).
+
+## 2026-10-05 (later) · design agent
+
+- D6 · Coach v2 rebuilt on components. D6.1 `377:186` profile, as a club sees it:
+  - Light status bar and Glass cover buttons; "Open to coach" uses the Positive Tag.
+  - Add friend (Primary) and Message (Secondary) are Buttons.
+  - The coach key facts `419:108` use Card / Key fact `575:603`: Specialization, Coaches at, Available, Passport, Categories and Age. They sit 16 pt below the identity block.
+  - Section headers are components.
+- D6.2 `377:614` is the empty state for coaching roles:
+  - Header / Large title, Search field and the Segmented control Roles / Applied / My roles.
+  - Empty state "No coaching roles open right now".
+  - A List item / Switch for "Coaching role alerts".
+  - "Be ready" Menu rows (Trophy, Medal).
+  - Recently closed roles show a grey "No reply".
+- D6.3 `377:1430` is the recruiting coach's Home, built from Card / Your week (3 to review, 0 profile views, 1 open role) and 11 Feed component instances.
+- D6.4 `377:1814` is My roles:
+  - Warning Banner "3 applicants waiting for a reply".
+  - Pipeline Stats, one Primary "Review 3 applicants".
+  - Menu rows for Find players and Shortlist.
+
+## 2026-10-05 · design agent
+
+- D2 · 30-second profile aligned to the shipped screens and rebuilt on
+  components: D2.1 `395:83` and D2.2 `395:333` (new Card / Key fact `575:603`
+  = `KeyFactsGrid` cell; Glass cover buttons, Buttons, Check items, Fit badge,
+  Section headers, Video thumbnails, List item / Career, Skill items), D2.3
+  `395:563` and D2.4 `395:601` (Cancel/Save Nav bar = `CancelSaveBar`, Detail
+  rows, Link "+ Add …", List item / Switch, Check items, Callout consent).
+- D2.4 checklist: missing rows get their own "Add" link (separate 44 pt target, as
+  shipped); new frame D2.4b `578:424` for the no-date-of-birth state ("Add your
+  date of birth" card, Save disabled, shipped `DOB_REQUIRED_COPY`).
+- D2.4c `579:444` for the under-18 state ("Open to play" card with shipped
+  `UNDER_18_COPY`, no switch, Save disabled). Every D2.4 state now has a frame.
+- Copy: shipped visas hint ("…Add the country and, if it has one, when it
+  expires."); gender-neutral fit and references lines.
+- Founder ruling (2026-10-04): D5 reason lines are templates from profile
+  fields; AI only refines in D5.2 (replaces the September "AI-written" ruling).
+
+## 2026-10-04 (night) · design agent
+
+- D5 · Hockia suggests on components: D5.1 `398:83` (new Card / Suggestion
+  `572:559` with List item / Reason `572:558` Met / Missing; Fit badge; Muted
+  star = Shortlist; Tonal "Invite" — no longer five Primary buttons; Composer
+  "Ask Hockia…") and D5.2 `398:291` (Nav bar, outgoing Message bubble, List item
+  / Player Invite rows, Chips, Composer).
+- Reason templates and the AI answer are gender-neutral: "on the profile",
+  "relocation not stated", "on their profile".
+
+## 2026-10-04 (evening) · design agent
+
+- Component pass on the remaining "04 · Player — Live" screens (batches A–E):
+  - Inbox (Messages `100:278`, Requests `100:406` / accepted `115:1247`, Activity
+    `100:531`) and Chat `100:636`. Founder ruling: "Requests" shows a dot, no
+    number.
+  - Applications: My applications `101:353` / closed `115:1382`, Apply sheet
+    not eligible `43:274` / eligible `285:629`, Application sent `115:865`
+    (copy no longer mentions other applicants), Opportunity detail — applied
+    `218:556`. Application tones follow `lib/applicationStatus`.
+  - Social: Friends `101:460` / requested `115:1494` / public `250:581`, Member
+    preview `72:316` / request sent `115:904` / long name `221:556`, Community —
+    Players `115:1624`, Community — Filters `116:631`, Opportunities — Filters
+    `115:550`, Share `115:727`. "Wrote you a reference" is gold (trust = gold).
+  - Profile sub-pages: Edit profile `101:585`, Career own `145:581` / public
+    `245:694`, Career entry `145:671`, Manage media `145:758`, Gallery `136:558`,
+    Videos `153:581`, References `153:715`, Reference detail `165:581`/`165:636`,
+    Write a reference `152:962` (gender-neutral copy), Profile — request sent
+    `152:581`, Club profile (player view) `38:99`.
+  - Settings `45:404`, Notifications `254:753`, Privacy `254:1000`, Compose
+    `101:823` / question `272:648`, Post detail `115:454`.
+  - Older v2 frames replaced by the Refined baseline are labelled
+    "[Superseded → …]".
+- New components: List item / Request `548:550`, List item / Application
+  `551:647`, List item / Friend `555:4870`, List item / Career entry
+  `558:12773`, List item / Comment `567:569`; List item / Conversation gains
+  Dot=Unread `548:499`.
+
+## 2026-10-04 (later) · design agent
+
+- Component pass on "Player · Refined baseline v1":
+  - Home `313:632`: every feed item is a Feed component instance; Card /
+    Your week with player numbers (no purple accent for players); Ghost
+    search.
+  - Community `313:2304`: Header, Search field, Chips, Section header, Card /
+    Member (fit hidden — players never see fit; new Status text, e.g.
+    "Recruiting" on clubs).
+  - Opportunities `313:1417`: new Card / Role `541:9107` (Status: Open,
+    Applied) with six Package item slots; Search field, Segmented control,
+    Chips.
+  - Opportunity detail `313:2177`: Nav bar (share), club row = List item /
+    Role result, new List item / Benefit `543:629` (one per package type +
+    Note), Detail rows, Muted message button + Primary Apply.
+  - Profile `313:1016`: Glass buttons, Status bar Light, Buttons, Section
+    headers, new Card / Reference `544:3926`, List item / Career, Detail rows.
+- Package item `470:1660`: new types Skill, Requirement (neutral grey — never
+  amber) and Note.
+- List item / Activity `531:469`: Show chevron (only rows with a destination).
+
+## 2026-10-04 · design agent
+
+- Component pass on "04 · Player — Live":
+  - Your week `42:276` and zero-views `523:1482` now use new components
+    (section "Pulse" `531:410`): Card / Check-in `532:434` (Views: Some,
+    None), Card / Week tile `531:427` (Delta: Up, None), Card / Viewer
+    `531:445` (Hidden: False, True), Card / First this week `532:450`,
+    Card / Reference ask `532:461`, List item / Activity `531:469`
+    (Leading: Avatar, Icon; Icon swap). Nav bar + Section header. Check-in
+    question is Section Title 20/26.
+  - Hockia AI v2 `44:321` and its five states: Nav bar (title, More),
+    outgoing Message bubble for the question (solid brand), new List item /
+    Role result `534:2448`, Chip, Composer without attach.
+  - Onboarding (`104:2096`, `114:477`, `114:434`, `101:892`, `114:537`,
+    `114:608`): new Button / Social `535:8381` (Apple, Google; 48, radius
+    12), Field header + Text field (Input / Select), Primary Large buttons,
+    Link "Forgot password?", List item / Switch for Open to play, Option
+    card with the new optional icon tile for the role picker, Ghost back
+    buttons, System / Status bar.
+- Search frames: tab bar (Active Home) and " · " before the flag (code wins).
+
+## 2026-10-03 (evening) · design agent
+
+- Player gaps, page "04 · Player — Live" (founder rulings via the code agent):
+  - Search v2 `42:195` on components: Search field, AI row on brand-soft,
+    new List item / Member result `521:387` (Avatar 48, RoleBadge), clubs
+    show location only, no green dot. New states: recent (empty query)
+    `522:1436`, no results `522:1558` ("No members match “zzqxwv”").
+  - Your week v2: zero-views state `523:1482` ("No profile views yet this
+    week" in grey, no viewer rail, tiles at 0, check-in stays). "What
+    happened" stays all grey.
+  - Hockia AI v2 states: first use `524:1494`, loading `524:1575`, no match
+    `524:1644`, can’t answer `524:1715`, error `524:1785` (neutral grey,
+    never amber).
+  - Onboarding copy as shipped (PR #184): Choose your role `101:892`
+    (role lines, Brand before Umpire, "You can’t change it later without
+    support."), First run `104:2096` terms line, Set up step 2 subtitle,
+    date-of-birth helper on step 1; age gate 18+ (also Settings and its
+    dev note).
+- New components: Role badge `518:7691` (RoleBadge colours) with tokens
+  `role/*` (player, coach, club, brand; coach ink aliases `accent/teal`);
+  List item / Member result `521:387`; Avatar Size 48.
+
 ## 2026-10-03 (later) · design agent
 
 - D1 · Profile & Network rebuilt with components (D1.11 `337:372`, D1.12
