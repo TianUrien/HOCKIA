@@ -11,6 +11,9 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
   Section headers, Video thumbnails, List item / Career, Skill items), D2.3
   `395:563` and D2.4 `395:601` (Cancel/Save Nav bar = `CancelSaveBar`, Detail
   rows, Link "+ Add …", List item / Switch, Check items, Callout consent).
+- D2.4 checklist: missing rows get their own "Add" link (separate 44 pt target, as
+  shipped); new frame D2.4b `578:424` for the no-date-of-birth state ("Add your
+  date of birth" card, Save disabled, shipped `DOB_REQUIRED_COPY`).
 - Copy: shipped visas hint ("…Add the country and, if it has one, when it
   expires."); gender-neutral fit and references lines.
 - Founder ruling (2026-10-04): D5 reason lines are templates from profile
