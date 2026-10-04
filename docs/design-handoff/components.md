@@ -101,6 +101,16 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Benefit | `543:629` | Type: Paid … Education, Note · Title, Detail | "What the club offers" on Opportunity detail | opportunity detail |
 | Card / Reference | `544:3926` | Author, Meta, Quote, Footer, Date | References on a profile (gold border) | profile references |
 
+## Player lists (Inbox, applications, friends, career, comments)
+
+| Component | Node | Variants / properties | Usage | Code counterpart |
+|---|---|---|---|---|
+| List item / Request | `548:550` | State: Incoming, Accepted, Sent · Name, Meta, Detail | Friend requests | Inbox › Requests |
+| List item / Application | `551:647` | Tone: Positive, Warning, Neutral · Title, Club, Status, Applied | My applications (tones per `lib/applicationStatus`) | My applications |
+| List item / Friend | `555:4870` | Trailing: Ask, Requested, Friends, Add, Wrote, None · Name, Meta, Show reference | Friends lists (reference = gold) | Friends |
+| List item / Career entry | `558:12773` | Mode: Own, Public · Team, Role, When, Highlight 1–2, Show line | Career timeline | Career |
+| List item / Comment | `567:569` | Name, Meta, Text | Comments / answers on a post | Post detail |
+
 ## Icons
 
 34 icon components (`Icon/*`, section "Icons", `458:83`). In code, icons come
