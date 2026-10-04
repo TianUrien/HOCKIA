@@ -8,6 +8,7 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 - Audit of 04 Player `30:2`: about 75 live frames checked; most were already on components.
 - New Tag / Meta `582:7949` (Neutral / Brand, with Label and Icon) for the club, position and specialist pills under a name. It replaces one-off frames on 04 Player (12), D2 (4) and D6 (2). Nine "Open to play" / "Women's" pills now use Tag (Positive / Brand).
 - New List item / Switch pair `583:608` (Push + Email switches). Settings › Notifications `254:753` uses it for the six "Tell me about" rows; Profile views is off on both.
+- Settings › Notifications: footer `584:7680` "Push and Email move together for now — each type has one setting." (as shipped). Code name for Tag / Meta: `ui/MetaPill.tsx`.
 - Profile v2 `152:1368`: Edit profile (Primary) and Public view (Secondary) are now Buttons, and the cover camera is a Glass icon button.
 - Still one-off, on purpose:
   - Privacy radio rows `254:1170`/`254:1178`.
