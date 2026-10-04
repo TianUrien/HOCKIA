@@ -30,6 +30,15 @@ type Stat = WeekStat
 
 const PHONE = '(max-width: 1023px)'
 
+/**
+ * Player / coach cells, all ink-1 (purple emphasis is only the club "to
+ * review" cell). Phone follows Figma Home 313:632 — profile views, roles,
+ * club replies; desktop keeps its order.
+ */
+function talentStats(phone: boolean, c: { roles: Stat; views: Stat; replies: Stat }): Stat[] {
+  return phone ? [c.views, c.roles, c.replies] : [c.roles, c.views, c.replies]
+}
+
 export function YourWeekCard() {
   const role = useAuthStore((s) => s.profile?.role)
   const isTalent = role === 'player' || role === 'coach'
@@ -54,11 +63,11 @@ export function YourWeekCard() {
   const stats: Stat[] = clubV2
     ? clubWeekStats({ toReview: roles.totals.pending, views, openRoles: roles.totals.openRoles })
     : isTalent
-    ? [
-        { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
-        { value: views, label: views === 1 ? 'profile view' : 'profile views' },
-        { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
-      ]
+    ? talentStats(isPhone, {
+        roles: { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
+        views: { value: views, label: views === 1 ? 'profile view' : 'profile views' },
+        replies: { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
+      })
     : isClub
       ? [
           { value: scoped.fitCount, label: 'fit your search' },
