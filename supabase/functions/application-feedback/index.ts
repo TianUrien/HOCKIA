@@ -41,6 +41,7 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Json } from '../_shared/database.types.ts'
+import { roleOrganisationName } from '../_shared/role-organisation.ts'
 
 // Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
 // secret + redeploy. Default stays the prior prod model so a deploy can't
@@ -217,6 +218,38 @@ function derivePosition(title: string): string | null {
   return parts[0]?.trim() || null
 }
 
+// The organisation the role recruits for (same order as the server texts): a club
+// account's name; for a coach's role the organisation, never the coach's name.
+// Null when there is none — callers use a neutral phrase.
+async function roleClubName(
+  supabase: ReturnType<typeof getServiceClient>,
+  opp: { club_id: string | null; organization_name: string | null; world_club_id: string | null },
+): Promise<string | null> {
+  if (!opp.club_id) return null
+  const { data: publisher } = await supabase
+    .from('profiles')
+    .select('full_name, role, current_club, current_world_club_id')
+    .eq('id', opp.club_id)
+    .maybeSingle()
+  if (!publisher) return null
+  const worldNames = new Map<string, string>()
+  const worldIds = publisher.role === 'club'
+    ? []
+    : [opp.world_club_id, publisher.current_world_club_id].filter((id): id is string => !!id)
+  if (worldIds.length > 0) {
+    const { data: clubs } = await supabase.from('world_clubs').select('id, club_name').in('id', worldIds)
+    for (const club of clubs ?? []) worldNames.set(club.id, club.club_name)
+  }
+  return roleOrganisationName({
+    publisherRole: publisher.role,
+    publisherName: publisher.full_name,
+    publisherCurrentClub: publisher.current_club,
+    organizationName: opp.organization_name,
+    roleWorldClubName: opp.world_club_id ? worldNames.get(opp.world_club_id) ?? null : null,
+    publisherWorldClubName: publisher.current_world_club_id ? worldNames.get(publisher.current_world_club_id) ?? null : null,
+  })
+}
+
 function jsonResponse(body: unknown, status: number, corsHeaders: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -269,7 +302,7 @@ serve(async (req: Request) => {
     if (mode !== 'read') {
       const { data: opp } = await supabase
         .from('opportunities')
-        .select('id, title, club_id, position')
+        .select('id, title, club_id, position, organization_name, world_club_id')
         .eq('id', app.opportunity_id)
         .maybeSingle()
       if (!opp || opp.club_id !== userId) return jsonResponse({ error: 'forbidden' }, 403, corsHeaders)
@@ -277,13 +310,13 @@ serve(async (req: Request) => {
       // so the DB guard (guard_application_client_write) does not apply here.
       if (app.status === 'withdrawn') return jsonResponse({ error: 'withdrawn' }, 409, corsHeaders)
       if (!bodyReason || !REASON_CODES.includes(bodyReason)) return jsonResponse({ error: 'invalid_reason' }, 400, corsHeaders)
-      const { data: club } = await supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle()
+      const organisation = await roleClubName(supabase, opp)
       const title = opp.title ?? 'this role'
       const ctx: StatusContext = {
         status: 'rejected',
         reason: bodyReason,
         position: humanizePosition(opp.position) ?? derivePosition(title) ?? 'this role',
-        clubName: club?.full_name ?? 'our club',
+        clubName: organisation ?? 'our club',
         opportunityTitle: title,
       }
 
@@ -355,19 +388,11 @@ serve(async (req: Request) => {
     // 4) Context: opportunity title + club name.
     const { data: opp } = await supabase
       .from('opportunities')
-      .select('id, title, club_id, position')
+      .select('id, title, club_id, position, organization_name, world_club_id')
       .eq('id', app.opportunity_id)
       .maybeSingle()
     const title = opp?.title ?? 'this role'
-    let clubName = 'The club'
-    if (opp?.club_id) {
-      const { data: club } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', opp.club_id)
-        .maybeSingle()
-      if (club?.full_name) clubName = club.full_name
-    }
+    const clubName = (opp ? await roleClubName(supabase, opp) : null) ?? 'The club'
     const ctx: StatusContext = {
       status,
       reason,

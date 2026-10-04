@@ -123,10 +123,11 @@ export function publisherOrganisation(
 }
 
 /**
- * confirm_signing names the career entry from the role's organisation, else
- * the club typed on the coach's profile, and falls back to the publisher's
- * own name. With neither, a coach's signing would record the coach as the
- * club — so the signing is not offered until one of them exists.
+ * A coach's signing is with the organisation the role recruits for, never the
+ * coach. With no organisation on the role and no club on the coach's profile
+ * the signing is not offered. The server enforces it too (mark_signed and
+ * confirm_signing refuse with club_missing) and also accepts a linked world
+ * club, which this quick check does not look at.
  */
 export function coachSigningNeedsClub(
   profile: (CoachModeProfile & { current_club?: string | null }) | null | undefined,

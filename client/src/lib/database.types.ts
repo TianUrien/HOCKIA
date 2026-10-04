@@ -9629,6 +9629,13 @@ export type Database = {
         Returns: Json
       }
       revoke_club_invite_link: { Args: never; Returns: Json }
+      role_organisation: {
+        Args: { p_opportunity_id: string }
+        Returns: {
+          name: string
+          world_club_id: string
+        }[]
+      }
       search_clubs_for_transfer: {
         Args: { p_limit?: number; p_query: string }
         Returns: Json

@@ -15,6 +15,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { inviteRoleLabel } from '@/lib/invites'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import {
+  SIGNING_CLUB_MISSING_MESSAGE,
   SIGNING_CONFIRM_DAYS,
   confirmSigningTitle,
   hideFromClubsCopy,
@@ -58,6 +59,8 @@ export default function ConfirmSigningPage() {
   const { confirmSigning, busy } = useSigningActions()
   const [hide, setHide] = useState(true)
   const [confirmed, setConfirmed] = useState(false)
+  // The server refused because the role names no club yet (a coach's role).
+  const [clubMissing, setClubMissing] = useState(false)
   useDocumentTitle('Signing')
 
   const shell = (children: ReactNode) => (
@@ -152,6 +155,7 @@ export default function ConfirmSigningPage() {
   const confirm = async () => {
     if (!applicationId) return
     const res = await confirmSigning(applicationId, hide)
+    if (!res.ok) setClubMissing(res.error === SIGNING_CLUB_MISSING_MESSAGE)
     if (res.ok) {
       setConfirmed(true)
       void refetch()
@@ -192,6 +196,11 @@ export default function ConfirmSigningPage() {
           />
         </div>
       </div>
+      {clubMissing && (
+        <p className="mt-4 text-center text-secondary text-ink-2" role="status" data-testid="signing-club-missing">
+          This signing can’t be confirmed yet: the club’s details are incomplete. Message the club, then try again.
+        </p>
+      )}
       <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
         {busy ? 'Confirming…' : 'Yes, I signed'}
       </button>
