@@ -7,7 +7,7 @@ import { publisherOrganisation, type OrganisationRole, type PublisherOrganisatio
  * The organisation a role's publisher recruits for, for the sheets that name
  * it (offer, mark as signed, invite note). A club account is its own
  * organisation. A coach who recruits is never the organisation: it is the
- * role's linked world club, else the organisation typed on the role, else the
+ * organisation typed on the role, else the linked world club, else the
  * club on the coach's profile — the "Recruiting for <club>" source.
  */
 export function usePublisherOrganisation(role?: OrganisationRole | null): PublisherOrganisation {

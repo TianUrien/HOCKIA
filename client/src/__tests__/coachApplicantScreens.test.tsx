@@ -309,9 +309,10 @@ describe('publisherOrganisation', () => {
     expect(publisherOrganisation({ role: 'club', full_name: ' E2E Test FC ', avatar_url: 'crest.png' }, null, null)).toEqual({ name: 'E2E Test FC', avatarUrl: 'crest.png', isClub: true })
   })
 
-  it('a coach: world club → organisation on the role → club on the profile', () => {
+  it('a coach: organisation on the role → world club → club on the profile', () => {
     const coach = { role: 'coach', coach_recruits_for_team: true, full_name: 'Jo Coach', avatar_url: 'jo.jpg', current_club: 'Typed Club' }
-    expect(publisherOrganisation(coach, { organization_name: 'Role Org' }, { club_name: 'Barnes HC', avatar_url: 'barnes.png' })).toEqual({ name: 'Barnes HC', avatarUrl: 'barnes.png', isClub: false })
+    expect(publisherOrganisation(coach, { organization_name: 'Role Org' }, { club_name: 'Barnes HC', avatar_url: 'barnes.png' })).toEqual({ name: 'Role Org', avatarUrl: null, isClub: false })
+    expect(publisherOrganisation(coach, { organization_name: null }, { club_name: 'Barnes HC', avatar_url: 'barnes.png' })).toEqual({ name: 'Barnes HC', avatarUrl: 'barnes.png', isClub: false })
     expect(publisherOrganisation(coach, { organization_name: 'Role Org' }, null)).toEqual({ name: 'Role Org', avatarUrl: null, isClub: false })
     expect(publisherOrganisation(coach, { organization_name: '  ' }, null)).toEqual({ name: 'Typed Club', avatarUrl: null, isClub: false })
   })
@@ -328,7 +329,7 @@ describe('publisherOrganisation', () => {
       const org = usePublisherOrganisation(role)
       return <div data-testid="org">{org.name ?? 'none'}|{org.avatarUrl ?? 'none'}|{String(org.isClub)}</div>
     }
-    render(withClient(<Probe role={{ world_club_id: null, organization_name: 'Role Org' }} />))
+    render(withClient(<Probe role={{ world_club_id: null, organization_name: null }} />))
     await waitFor(() => expect(screen.getByTestId('org').textContent).toBe('Barnes HC|barnes.png|false'))
   })
 
@@ -442,8 +443,9 @@ describe('Applicant review · coach owner', () => {
     expect(coachSigningNeedsClub({ role: 'coach', current_club: null }, null)).toBe(true)
     expect(coachSigningNeedsClub({ role: 'coach', current_club: 'Typed Club' }, { organization_name: null })).toBe(false)
     expect(coachSigningNeedsClub({ role: 'coach', current_club: null }, { organization_name: 'Role Org' })).toBe(false)
-    // A linked world club alone does not name the career entry on the server.
-    expect(coachSigningNeedsClub({ role: 'coach', current_club: null }, { organization_name: null, world_club_id: 'wc1' })).toBe(true)
+    // A linked world club names the career entry, on the role or the profile.
+    expect(coachSigningNeedsClub({ role: 'coach', current_club: null }, { organization_name: null, world_club_id: 'wc1' })).toBe(false)
+    expect(coachSigningNeedsClub({ role: 'coach', current_club: null, current_world_club_id: 'wc2' }, { organization_name: null })).toBe(false)
     expect(coachSigningNeedsClub({ role: 'club' }, null)).toBe(false)
   })
 
