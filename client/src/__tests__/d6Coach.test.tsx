@@ -8,7 +8,8 @@
  *    ready" rows while career / references are missing, and the last closed
  *    roles with the coach's own status in grey.
  *  - My roles only for a coach who recruits, with "Recruiting for <club>"
- *    and one Primary on the role card.
+ *    and a Tonal "Review N applicants" on each role card (repeated per
+ *    card, so never the solid Primary).
  *  - Your week: the club version for a recruiting coach, the player version
  *    otherwise.
  *  - Coach key facts mapping, gaps reading "Not given".
@@ -286,30 +287,33 @@ describe('Opportunities · My roles (coach who recruits)', () => {
   })
   const props = { profile: { id: 'coach-1', current_world_club_id: null, current_club: 'Barnes HC' }, onPostRole: vi.fn(), onEditRole: vi.fn() }
 
-  it('"Recruiting for <club>", the waiting notice, the pipeline and ONE Primary', () => {
+  it('"Recruiting for <club>", the waiting notice, the pipeline and a Tonal review action', () => {
     myRoles = { ...myRoles, open: [ownRole(['pending', 'pending', 'pending', 'rejected'])] }
     wrap(<CoachMyRoles {...props} data={myRoles as never} />)
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')
     expect(screen.getByTestId('club-waiting-notice').textContent).toContain('3 applicants waiting for a reply')
     const card = screen.getByTestId('club-role-card')
     expect(card.textContent).toContain('To review')
-    const primaries = Array.from(document.querySelectorAll('button')).filter((b) => b.className.includes('bg-hockia-primary'))
-    expect(primaries).toHaveLength(1)
-    expect(primaries[0].textContent).toBe('Review 3 applicants')
+    // The per-card action is Tonal: no solid Primary on a list of role cards.
+    const review = screen.getByTestId('role-review-button')
+    expect(review.textContent).toBe('Review 3 applicants')
+    expect(review.className).toContain('bg-hockia-soft')
+    expect(review.className).toContain('text-hockia-primary')
+    expect(Array.from(document.querySelectorAll('button')).filter((b) => b.className.includes('bg-hockia-primary'))).toHaveLength(0)
     const group = screen.getByTestId('club-scouting-group')
     expect(group.textContent).toContain('Find players for this role')
     expect(group.textContent).toContain('Shortlist')
     // No Open / Closed control until a closed role exists.
     expect(screen.queryByRole('tablist', { name: 'Role status' })).toBeNull()
-    fireEvent.click(primaries[0])
+    fireEvent.click(review)
     expect(navigateSpy).toHaveBeenCalledWith('/dashboard/opportunities/own-1/applicants', { state: { from: '/opportunities?view=mine' } })
   })
 
-  it('no reply owed → no amber notice and no Primary', () => {
+  it('no reply owed → no amber notice and a neutral button', () => {
     myRoles = { ...myRoles, open: [ownRole(['shortlisted'])] }
     wrap(<CoachMyRoles {...props} data={myRoles as never} />)
     expect(screen.queryByTestId('club-waiting-notice')).toBeNull()
-    expect(Array.from(document.querySelectorAll('button')).filter((b) => b.className.includes('bg-hockia-primary'))).toHaveLength(0)
+    expect(screen.getByTestId('role-review-button').className).toContain('bg-surface-grouped')
     expect(screen.getByText('View applicants')).toBeInTheDocument()
   })
 

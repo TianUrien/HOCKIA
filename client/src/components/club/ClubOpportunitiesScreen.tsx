@@ -119,7 +119,10 @@ function RoleCard({ role, expiryDays, onReview, onChanged, onEdit }: { role: Clu
           {closedBreakdown(p, expiryDays)}
         </p>
       )}
-      <button type="button" onClick={onReview} className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1')}>
+      {/* Repeated per card → Tonal, never the solid Primary (design review,
+          D6): several role cards can owe a reply at once, and the solid
+          Primary belongs to single-focus screens such as applicant review. */}
+      <button type="button" onClick={onReview} data-testid="role-review-button" className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-soft text-hockia-primary active:bg-surface-muted-pressed' : 'bg-surface-grouped text-ink-1')}>
         {p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'}
       </button>
     </article>
