@@ -99,6 +99,9 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
 
       {!loading && !error && role && (
         <div className="px-4 pt-4">
+          {/* Zero suggestions: nothing to ask about, so no composer — the
+              neutral card above and the footnote stay. */}
+          {suggestions.length > 0 && (
           <form
             className="flex items-end gap-2"
             onSubmit={(e) => { e.preventDefault(); ask() }}
@@ -124,7 +127,8 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
               <ArrowUp className="h-5 w-5" strokeWidth={2.25} aria-hidden="true" />
             </button>
           </form>
-          <p className="pt-3 text-caption leading-4 text-ink-3" data-testid="suggests-footnote">{SUGGESTS_FOOTNOTE}</p>
+          )}
+          <p className={`${suggestions.length > 0 ? 'pt-3' : ''} text-caption leading-4 text-ink-3`} data-testid="suggests-footnote">{SUGGESTS_FOOTNOTE}</p>
         </div>
       )}
 

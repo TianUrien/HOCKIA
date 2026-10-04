@@ -283,11 +283,14 @@ describe('D5.1 · Hockia suggests', () => {
     expect(screen.getByTestId('suggests-intro').textContent).toMatch(/Two players who fit/)
   })
 
-  it('empty state: neutral card, no cards', () => {
+  it('empty state: neutral card, no cards, no composer, footnote kept', () => {
     state.payload = payload(0)
     const { container } = renderAt(<HockiaSuggestsScreen roleId="r1" />)
     expect(screen.getByTestId('suggests-empty').textContent).toBe(SUGGESTS_EMPTY)
     expect(screen.queryByTestId('suggestion-card')).toBeNull()
+    expect(screen.queryByTestId('suggests-composer')).toBeNull()
+    expect(screen.queryByLabelText('Ask Hockia')).toBeNull()
+    expect(screen.getByTestId('suggests-footnote')).toBeInTheDocument()
     noAmber(container)
   })
 
