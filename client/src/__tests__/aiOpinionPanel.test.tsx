@@ -221,9 +221,20 @@ describe('AIOpinionPanel', () => {
     hookState.status = { kind: 'error', message: 'network blip' }
     render(<AIOpinionPanel candidate={candidate} />)
     expect(screen.getByText(/Couldn't load the opinion right now/i)).toBeInTheDocument()
+    // Neutral icon (ink-3), never amber: the viewer has nothing to act on soon.
+    const icon = screen.getByTestId('ai-opinion-error-icon')
+    expect(icon.getAttribute('class')).toContain('text-ink-3')
+    expect(icon.getAttribute('class')).not.toContain('amber')
     const tryAgain = screen.getByRole('button', { name: /Try again/i })
     await userEvent.click(tryAgain)
     expect(regenerateSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('a ready status with a malformed payload falls into the neutral error state instead of crashing', () => {
+    hookState.status = { kind: 'ready', data: {}, cached: false, quotaRemaining: null, opinionId: null } as never
+    render(<AIOpinionPanel candidate={candidate} />)
+    expect(screen.getByText(/Couldn't load the opinion right now/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('ai-opinion-verdict')).toBeNull()
   })
 
   it('Regenerate button calls regenerate() from the hook', async () => {

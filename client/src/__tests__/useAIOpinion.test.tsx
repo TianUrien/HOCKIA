@@ -224,6 +224,25 @@ describe('useAIOpinion', () => {
     })
   })
 
+  it('a 2xx without a verdict ({} or an empty body) is an error, never a ready opinion', async () => {
+    setRecruiterViewer()
+    supabaseInvokeSpy.mockResolvedValueOnce({ data: {}, error: null })
+    const first = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => expect(first.result.current.status.kind).toBe('error'))
+    first.unmount()
+    supabaseInvokeSpy.mockResolvedValueOnce({ data: null, error: null })
+    const second = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => expect(second.result.current.status.kind).toBe('error'))
+  })
+
+  it('a verdict without a citations array is ready with no citations', async () => {
+    setRecruiterViewer()
+    supabaseInvokeSpy.mockResolvedValueOnce({ data: { verdict_short: 'Solid fit.', cached: false }, error: null })
+    const { result } = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => expect(result.current.status.kind).toBe('ready'))
+    expect(expectCachedReady(result.current.status).data.citations).toEqual([])
+  })
+
   it('maps a 429 quota_exceeded edge fn response to status.kind=quota_exceeded', async () => {
     setRecruiterViewer()
     // supabase-js's FunctionsHttpError shape — error has .context with status + body

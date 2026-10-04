@@ -25,7 +25,7 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCcw,
-  AlertCircle,
+  Info,
   Clock,
   ThumbsUp,
   ThumbsDown,
@@ -147,6 +147,10 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
   // with how ClubFitChip behaves.
   if (!featureEnabled) return null
   if (status.kind === 'idle' || status.kind === 'not_applicable') return null
+  // Belt and braces (the hook already rejects it): a "ready" status without a
+  // verdict string or a citations array is drawn as the neutral error state.
+  const malformed = status.kind === 'ready'
+    && (typeof status.data?.verdict_short !== 'string' || !Array.isArray(status.data?.citations))
 
   return (
     <section
@@ -179,9 +183,10 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         </div>
       )}
 
-      {status.kind === 'error' && (
+      {(status.kind === 'error' || malformed) && (
         <div className="mt-2 flex items-start gap-2 text-sm text-gray-700">
-          <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-500 mt-0.5" />
+          {/* Neutral, not amber: nothing here asks the viewer to act soon. */}
+          <Info className="h-4 w-4 flex-shrink-0 text-ink-3 mt-0.5" aria-hidden="true" data-testid="ai-opinion-error-icon" />
           <div className="flex-1 min-w-0">
             <p>Couldn't load the opinion right now.</p>
             <button
@@ -207,7 +212,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         </div>
       )}
 
-      {status.kind === 'ready' && (
+      {status.kind === 'ready' && !malformed && (
         <>
           <p
             className="text-sm text-gray-900 leading-snug"
