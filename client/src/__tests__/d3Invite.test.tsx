@@ -118,6 +118,8 @@ vi.mock('@/hooks/useInvites', () => ({
   useDeclineInvite: () => ({ decline: inv.decline, busy: false }),
 }))
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }) }))
+// D5 entry row on the role (its own suite: d5Suggests.test.tsx).
+vi.mock('@/hooks/useRoleSuggestions', () => ({ useRoleSuggestions: () => ({ data: null, suggestions: [], loading: false, error: false, refetch: () => undefined }) }))
 vi.mock('@/hooks/useRoleApplicants', () => ({
   useRoleApplicants: () => ({
     loading: false, error: null, expiryDays: 14, refresh: vi.fn(), setLocalStatus: vi.fn(),

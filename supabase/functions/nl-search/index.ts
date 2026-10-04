@@ -19,6 +19,13 @@
  *     the answer was drawn from, for the "From N open roles" caption.
  *   - Every answered question writes one ai_usage_log row (see
  *     _shared/aiUsage.ts); deploy with `--no-verify-jwt` (config.toml pins it).
+ *
+ * D5.2 (2026-10-04): body `{ mode: 'role_suggestions_refine', opportunity_id,
+ * query, history? }` refines the role's stored suggestions (see
+ * handleRoleSuggestionsRefine). Response: `kind: 'role_suggestions_refine'`,
+ * `ai_message`, `match_ids` (subset of the stored suggestions, best first),
+ * `chips`; `kind: 'soft_error'` on failure; 403 for anyone but the publisher;
+ * `kind: 'cap_reached'` like every other question.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -26,7 +33,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, refineRoleSuggestions, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, hasRecruitingIntent, routeForViewer, type RoutedIntent } from '../_shared/intent-router.ts'
 import {
   runOpportunitySearch,
@@ -48,6 +55,7 @@ import {
 } from '../_shared/opportunity-search.ts'
 import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
 import { AI_DAILY_QUESTION_CAP, aiQuestionCapReached, recordAiUsage } from '../_shared/aiUsage.ts'
+import { REFINE_EMPTY_POOL, REFINE_MODE, buildRefineCandidates, isUuid, type CountryName } from '../_shared/role-suggestions-refine.ts'
 import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
@@ -1711,6 +1719,85 @@ async function runKeywordFallback(params: {
   }
 }
 
+// ── D5.2 · role_suggestions_refine ──────────────────────────────────────
+async function handleRoleSuggestionsRefine(params: {
+  // deno-lint-ignore no-explicit-any
+  userClient: any
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  opportunityId: unknown
+  question: string
+  history: HistoryTurn[]
+  llmProvider: string
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { userClient, adminClient, userId, opportunityId, question, history, llmProvider, correlationId, headers } = params
+  const json = (payload: unknown, status = 200) =>
+    new Response(JSON.stringify(payload), { status, headers: { ...headers, 'Content-Type': 'application/json' } })
+
+  if (!isUuid(opportunityId)) {
+    return json({ success: false, error: 'Missing or invalid opportunity_id' }, 400)
+  }
+
+  const { data: payload, error: rpcError } = await userClient.rpc('get_role_suggestions', { p_opportunity_id: opportunityId })
+  if (rpcError) {
+    captureException(new Error(`get_role_suggestions failed: ${rpcError.message}`), {
+      functionName: 'nl-search', correlationId, extra: { phase: 'role_suggestions_refine' },
+    })
+    return json({ success: true, kind: 'soft_error' as ResponseKind, data: [], total: 0, ai_message: null, match_ids: [], chips: [] })
+  }
+  // NULL = not the role's publisher (or not a recruiter): nothing leaks.
+  if (!payload) {
+    return json({ success: false, error: 'Not available' }, 403)
+  }
+
+  const suggestions = Array.isArray((payload as any).suggestions) ? (payload as any).suggestions : []
+  const natIds = [...new Set(suggestions.flatMap((s: any) => [s?.nationality_country_id, s?.nationality2_country_id]).filter((v: unknown) => typeof v === 'number'))]
+  const { data: countryRows } = natIds.length
+    ? await adminClient.from('countries').select('id, name, common_name').in('id', natIds)
+    : { data: [] }
+  const built = buildRefineCandidates(payload, (countryRows ?? []) as CountryName[])
+
+  if (!built || built.candidates.length === 0) {
+    fireAndForget(recordAiUsage(adminClient, {
+      user_id: userId, function: 'nl-search', provider: llmProvider, input_tokens: 0, output_tokens: 0,
+    }))
+    return json({ success: true, kind: REFINE_MODE, data: [], total: 0, ai_message: REFINE_EMPTY_POOL, match_ids: [], chips: [] })
+  }
+
+  try {
+    const { result, meta } = await refineRoleSuggestions({ question, role: built.role, candidates: built.candidates, history })
+    fireAndForget(recordAiUsage(adminClient, {
+      user_id: userId,
+      function: 'nl-search',
+      provider: llmProvider,
+      input_tokens: meta.usage?.prompt_tokens ?? null,
+      output_tokens: meta.usage?.completion_tokens ?? null,
+      cached_tokens: meta.usage?.cached_tokens ?? null,
+    }))
+    return json({
+      success: true,
+      kind: REFINE_MODE,
+      data: [],
+      total: result.match_ids.length,
+      ai_message: result.answer,
+      match_ids: result.match_ids,
+      chips: result.chips,
+    })
+  } catch (err) {
+    // The question was asked: it counts toward the cap even when the model failed.
+    fireAndForget(recordAiUsage(adminClient, {
+      user_id: userId, function: 'nl-search', provider: llmProvider, input_tokens: null, output_tokens: null,
+    }))
+    captureException(err instanceof Error ? err : new Error(String(err)), {
+      functionName: 'nl-search', correlationId, extra: { phase: 'role_suggestions_refine' },
+    })
+    return json({ success: true, kind: 'soft_error' as ResponseKind, data: [], total: 0, ai_message: null, match_ids: [], chips: [] })
+  }
+}
+
 Deno.serve(async (req) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const origin = req.headers.get('origin')
@@ -1902,6 +1989,19 @@ Deno.serve(async (req) => {
           suggested_actions: [] as SuggestedAction[],
         }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
       }
+    }
+
+    // ── D5.2 · refine a role's suggestions (founder ruling 2026-10-04) ──
+    // Separate, self-contained path: reads ONLY the role's stored top 5
+    // through get_role_suggestions with the CALLER's JWT (the RPC answers the
+    // role's publisher only and re-applies every people fence), asks the LLM
+    // to filter / re-order them on their public profile facts, logs the cost
+    // to ai_usage_log and counts toward the same daily cap (checked above).
+    if (body?.mode === REFINE_MODE) {
+      return await handleRoleSuggestionsRefine({
+        userClient, adminClient, userId: user.id, opportunityId: body?.opportunity_id,
+        question: query, history, llmProvider, correlationId, headers,
+      })
     }
 
     // All prerequisites validated — record state so the catch block can

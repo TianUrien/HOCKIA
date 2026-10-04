@@ -50,6 +50,8 @@ vi.mock('@/hooks/useCountries', () => ({ useCountries: () => ({ countries: [{ id
 vi.mock('@/hooks/useCareerTimeline', () => ({
   useCareerTimeline: () => ({ entries: fx.career, loading: false, failed: false, refresh: vi.fn() }),
 }))
+// D5 entry row on the role (its own suite: d5Suggests.test.tsx).
+vi.mock('@/hooks/useRoleSuggestions', () => ({ useRoleSuggestions: () => ({ data: null, suggestions: [], loading: false, error: false, refetch: () => undefined }) }))
 vi.mock('@/hooks/useRoleApplicants', () => ({
   useRoleApplicants: () => ({
     loading: false, error: null, expiryDays: 14, refresh: vi.fn(), setLocalStatus: vi.fn(),
