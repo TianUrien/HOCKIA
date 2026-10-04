@@ -54,12 +54,18 @@ BEGIN
   VALUES (c_club, 'player', '[PROBE] D5 other role', 'Dublin', 'Ireland', 'draft', 'forward', 'Women')
   RETURNING id INTO o_other;
 
-  -- T1 a draft role has no suggestions; publishing it (trigger) computes them
+  -- T1 a draft role has no suggestions; publishing it (trigger) only clears — no
+  -- run record, so the next view computes — then a compute suggests the player
   SELECT count(*) INTO v_n FROM role_suggestions WHERE opportunity_id = o_role;
   UPDATE opportunities SET status = 'open' WHERE id = o_role;
-  SELECT EXISTS (SELECT 1 FROM role_suggestions WHERE opportunity_id = o_role AND player_id = c_player) INTO v_has;
-  v_out := v_out || E'\n' || format('%s T1 draft has none (%s), publish trigger suggests the player → %s',
+  SELECT NOT EXISTS (SELECT 1 FROM role_suggestion_runs WHERE opportunity_id = o_role)
+     AND NOT EXISTS (SELECT 1 FROM role_suggestions WHERE opportunity_id = o_role) INTO v_has;
+  v_out := v_out || E'\n' || format('%s T1a publish clears and leaves no run record (draft rows %s) → %s',
     CASE WHEN v_n = 0 AND v_has THEN 'PASS' ELSE 'FAIL' END, v_n, v_has);
+  PERFORM compute_role_suggestions(o_role);
+  SELECT EXISTS (SELECT 1 FROM role_suggestions WHERE opportunity_id = o_role AND player_id = c_player) INTO v_has;
+  v_out := v_out || E'\n' || format('%s T1b compute suggests the player → %s',
+    CASE WHEN v_has THEN 'PASS' ELSE 'FAIL' END, v_has);
 
   -- A1 evidence carries no private fields, rank 1..5, at most 5 rows
   SELECT evidence INTO v_ev FROM role_suggestions WHERE opportunity_id = o_role AND player_id = c_player;

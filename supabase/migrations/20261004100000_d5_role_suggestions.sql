@@ -598,10 +598,12 @@ REVOKE ALL ON FUNCTION public.run_role_suggestions_nightly() FROM PUBLIC, anon, 
 GRANT EXECUTE ON FUNCTION public.run_role_suggestions_nightly() TO service_role;
 
 
--- ═══ 7 · Recompute when the role changes ═══════════════════════════════════════
+-- ═══ 7 · Clear when the role changes ═══════════════════════════════════════════
 -- INSERT of an open role, or an UPDATE of position / gender / eu_passport_required /
--- status / opportunity_type. Open → recompute; anything else → rows cleared
--- (compute_role_suggestions does both). A failure never blocks the role save.
+-- status / opportunity_type. The save only clears the stored suggestions and the
+-- run record (founder ruling 2026-10-04: saving a role stays instant); the next
+-- view (useRoleSuggestions → refresh_role_suggestions when computed_at is null)
+-- or the nightly job recomputes. A failure never blocks the role save.
 
 CREATE OR REPLACE FUNCTION public._role_suggestions_on_change()
 RETURNS trigger
@@ -623,9 +625,10 @@ BEGIN
   END IF;
 
   BEGIN
-    PERFORM public.compute_role_suggestions(NEW.id);
+    DELETE FROM public.role_suggestions WHERE opportunity_id = NEW.id;
+    DELETE FROM public.role_suggestion_runs WHERE opportunity_id = NEW.id;
   EXCEPTION WHEN others THEN
-    RAISE WARNING 'role suggestions for % not recomputed: %', NEW.id, SQLERRM;
+    RAISE WARNING 'role suggestions for % not cleared: %', NEW.id, SQLERRM;
   END;
   RETURN NEW;
 END;
