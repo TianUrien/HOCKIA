@@ -1,3 +1,4 @@
+import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { useState } from 'react'
 import { ExternalLink, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -38,7 +39,7 @@ function LinkTile({ title, href, date, locked }: { title: string; href: string; 
       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
       {locked && <VideoLockBadge />}
       <span className="truncate text-caption font-semibold text-white">{title}</span>
-      {date && <span className="text-[11px] text-white/75">{date.slice(0, 7)}</span>}
+      <span className="truncate text-[11px] text-white/75">{[date ? date.slice(0, 7) : null, videoLinkSite(href)].filter(Boolean).join(' · ')}</span>
     </a>
   )
 }

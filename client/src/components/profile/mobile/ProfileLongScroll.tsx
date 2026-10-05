@@ -1,3 +1,4 @@
+import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus, Target } from 'lucide-react'
@@ -105,7 +106,7 @@ function LinkTile({ link }: { link: ScrollFullGameLink }) {
         <VideoLockBadge />
       )}
       <span className="truncate text-secondary font-semibold text-white">{title}</span>
-      {link.match_date && <span className="text-caption text-white/75">{monthYear(link.match_date)}</span>}
+      <span className="truncate text-caption text-white/75">{[link.match_date ? monthYear(link.match_date) : null, videoLinkSite(link.video_url)].filter(Boolean).join(' · ')}</span>
     </a>
   )
 }
