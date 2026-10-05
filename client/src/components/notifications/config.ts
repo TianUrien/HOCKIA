@@ -409,7 +409,12 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     accentClassName: 'bg-gray-100 text-gray-700',
     getTitle: (notification) => getMetadataString(notification, 'title') || 'HOCKIA update',
     getDescription: (notification) => getMetadataString(notification, 'summary'),
-    getRoute: defaultConfig.getRoute,
+    // The safety notice about a removed account is read in place when its
+    // conversation is no longer listed (it would open an empty inbox).
+    getRoute: (notification) => {
+      const route = defaultConfig.getRoute?.(notification) ?? null
+      return getMetadataString(notification, 'notice') === 'removed_account' && route === '/messages' ? null : route
+    },
   },
 }
 

@@ -2578,3 +2578,61 @@ export async function getResponseTimeStats(): Promise<ResponseTimeStats> {
   const row = Array.isArray(data) ? data[0] : data
   return row as ResponseTimeStats
 }
+
+// ── Spam signals + removed-account notice (20261004300000) ─────────────────
+
+export type SpamSignalKind = 'daily_limit' | 'repeated_first_message'
+
+export interface SpamSignalRow {
+  id: string
+  kind: SpamSignalKind
+  /** Different people: new conversations that day, or recipients of the repeated first message. */
+  people_count: number
+  /** repeated_first_message only: the largest group that got exactly the same text. */
+  identical_count: number | null
+  /** daily_limit only: refused attempts reported by the app after the allowance was used. */
+  refusal_count: number
+  /** repeated_first_message only: one sample of the text. */
+  sample_text: string | null
+  first_seen_at: string
+  last_seen_at: string
+  profile_id: string
+  full_name: string | null
+  role: string | null
+  account_created_at: string | null
+  is_blocked: boolean
+  blocked_at: string | null
+  /** Set once an admin marked the account as removed. */
+  removed_at: string | null
+  notice_sent_at: string | null
+  notice_count: number | null
+}
+
+export interface SpamSignalsPage {
+  rows: SpamSignalRow[]
+  total: number
+}
+
+export async function getSpamSignals(opts: { days?: number; limit?: number; offset?: number } = {}): Promise<SpamSignalsPage> {
+  const { data, error } = await adminRpc('admin_get_spam_signals', {
+    p_days: opts.days ?? 30,
+    p_limit: opts.limit ?? 50,
+    p_offset: opts.offset ?? 0,
+  })
+  if (error) throw new Error(`Failed to get spam signals: ${error.message}`)
+  const page = (data ?? {}) as Partial<SpamSignalsPage>
+  return { rows: page.rows ?? [], total: page.total ?? 0 }
+}
+
+/**
+ * Mark an account as removed for spam and send the safety notice to everyone
+ * it had a conversation with. Safe to repeat: nobody is notified twice.
+ * Returns how many people this call notified.
+ */
+export async function sendRemovedAccountNotice(profileId: string): Promise<number> {
+  const { data, error } = await adminRpc('admin_send_removed_account_notice', {
+    p_removed_profile_id: profileId,
+  })
+  if (error) throw new Error(`Failed to send the safety notice: ${error.message}`)
+  return typeof data === 'number' ? data : 0
+}

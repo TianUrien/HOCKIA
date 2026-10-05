@@ -325,6 +325,16 @@ export function buildPushPayload(
 
     // ── System ──
     case 'system_announcement':
+      // The safety notice about a removed account opens the notification list,
+      // where the full text is; its conversation is no longer listed.
+      if (getString(metadata, 'notice') === 'removed_account') {
+        return {
+          title: getString(metadata, 'title') || 'A message about your safety',
+          body: getString(metadata, 'summary') || 'Open HOCKIA to read it.',
+          url: '/notifications',
+          tag: 'safety-notice',
+        }
+      }
       return {
         title: getString(metadata, 'title') || 'HOCKIA Update',
         body: getString(metadata, 'summary') || 'You have a new update',
