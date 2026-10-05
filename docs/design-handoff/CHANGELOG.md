@@ -3,6 +3,10 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (B2 handoff) · design agent
+
+- B2 · Club reminders (Backlog `406:19`) scheduled by the founder for build next. The copy in B2.1 `385:586`, B2.2 `385:647` and B2.3 `385:682` is now gender-neutral (first name instead of he/his).
+
 ## 2026-10-05 (landing) · design agent
 
 - Hockia-UI-UX, Web A v2 landing (mirrors code PR #218):
