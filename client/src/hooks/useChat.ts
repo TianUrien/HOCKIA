@@ -15,6 +15,7 @@ import { checkMessageRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
+import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
@@ -655,6 +656,9 @@ export function useChat({
           conversationCreatedForSend = true
         } catch (creationError: unknown) {
           const parsedError = creationError as { code?: string; message?: string; details?: string }
+          // The daily allowance for new conversations: a normal refusal, shown
+          // as its own note below, not an error to report.
+          if (isNewConversationLimitError(parsedError)) throw creationError
           if (!isUniqueViolationError(parsedError)) {
             reportSupabaseError('messaging_chat.create_conversation', creationError, {
               currentUserId,
@@ -822,6 +826,13 @@ export function useChat({
       
       return true
     } catch (error) {
+      if (isNewConversationLimitError(error)) {
+        // Nothing was created and nothing was sent: the typed text stays in
+        // the composer, and the member is told when they can start again.
+        reportNewConversationRefusal()
+        addToast(NEW_CONVERSATION_LIMIT_MESSAGE, 'info')
+        return false
+      }
       logger.error('Error sending message:', error)
       reportSupabaseError('messaging_chat.send_message', error, {
         conversationId: conversation.id,
