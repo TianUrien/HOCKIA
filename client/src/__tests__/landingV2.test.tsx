@@ -182,9 +182,10 @@ describe('Landing v2 — store badges', () => {
   it('shows the official badges on the web, inside the pre-hydration native gate', async () => {
     h.native.value = false
     const { container } = await renderLanding()
-    expect(screen.getByRole('link', { name: /App Store/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Google Play/i })).toBeInTheDocument()
-    expect(container.querySelector('[data-store-badges]')).not.toBeNull()
+    // Twice: under the hero's roles line and in the final call to action.
+    expect(screen.getAllByRole('link', { name: /App Store/i })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /Google Play/i })).toHaveLength(2)
+    expect(container.querySelectorAll('[data-store-badges]')).toHaveLength(2)
   })
 
   it('hides them inside the native app', async () => {
