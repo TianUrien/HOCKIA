@@ -3,6 +3,12 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-05 (landing) · design agent
+
+- Hockia-UI-UX, Web A v2 landing (mirrors code PR #218):
+  - Desktop hero `114:1760`: the outer phones now sit whole inside the stage, left at x 24 (`114:1774`) and right at x 259 (`114:1775`).
+  - Store badges (44 high, 12 gap) sit under the audience line: left-aligned on desktop (`121:1803`), centred on mobile (`121:1841`).
+
 ## 2026-10-05 (D6 code review) · design agent
 
 - D6 coach code (PR #214) reviewed. D6.1 `377:186`:
