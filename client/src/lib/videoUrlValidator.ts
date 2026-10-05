@@ -52,4 +52,43 @@ export function validateAndNormalizeVideoUrl(url: string): string | null {
   }
 }
 
-export const VIDEO_URL_HOSTS_HUMAN = 'YouTube, Vimeo, or Google Drive'
+const KNOWN_VIDEO_HOSTS = /(^|\.)(youtube\.com|youtu\.be|vimeo\.com|drive\.google\.com)$/
+
+/**
+ * Full-match links (founder ruling 5 Oct): any https link, because matches
+ * live on many sites (Hockey TV, federation streams, Veo, Hudl, club sites).
+ * They are only ever opened in a new tab, never embedded. YouTube / Vimeo /
+ * Drive links keep their canonical form. Returns null when the text is not a
+ * usable https web address.
+ */
+export function validateFullMatchUrl(url: string): string | null {
+  const trimmed = url.trim()
+  if (!trimmed || /\s/.test(trimmed)) return null
+  // "www.site.com/match" typed without a scheme is an https link.
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`
+  let parsed: URL
+  try {
+    parsed = new URL(withScheme)
+  } catch {
+    return null
+  }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password) return null
+  const host = parsed.hostname.toLowerCase()
+  // A real site name: has a dot, ends in letters (not an IP address or localhost).
+  if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(host)) return null
+  if (KNOWN_VIDEO_HOSTS.test(host)) {
+    const canonical = validateAndNormalizeVideoUrl(parsed.href)
+    if (canonical) return canonical
+  }
+  return parsed.href.length <= 500 ? parsed.href : null
+}
+
+/** "hockeytv.com" for a link tile, so viewers see where a link leads. */
+export function videoLinkSite(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^(www|m)\./, '') || null
+  } catch {
+    return null
+  }
+}

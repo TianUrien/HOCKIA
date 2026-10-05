@@ -111,7 +111,7 @@ describe('FullGameVideosSection', () => {
     expect(screen.queryByRole('button', { name: /edit video/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /remove video/i })).not.toBeInTheDocument()
     // Watch link still present so visitors can open the video
-    expect(screen.getByRole('link', { name: /watch video/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /watch on youtube.com/i })).toBeInTheDocument()
   })
 
   it('renders match title, opponent line, context line, and player line for a complete row', async () => {
@@ -139,7 +139,7 @@ describe('FullGameVideosSection', () => {
     expect(screen.getByText(/Shirt #8/)).toBeInTheDocument()
     expect(screen.getByText(/70 minutes/)).toBeInTheDocument()
     // Watch link points to the canonical URL with target=_blank
-    const link = screen.getByRole('link', { name: /watch video/i }) as HTMLAnchorElement
+    const link = screen.getByRole('link', { name: /watch on youtube.com/i }) as HTMLAnchorElement
     expect(link.href).toBe('https://www.youtube.com/watch?v=match1')
     expect(link.target).toBe('_blank')
     expect(link.rel).toContain('noopener')

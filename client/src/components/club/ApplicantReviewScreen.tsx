@@ -1,3 +1,4 @@
+import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
@@ -452,7 +453,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                       <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">Full match</span>
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                       <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span>
-                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? `${l.minutes_played} min` : null, l.shirt_number ? `#${l.shirt_number}` : null].filter(Boolean).join(' · ')}</span>
+                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? `${l.minutes_played} min` : null, l.shirt_number ? `#${l.shirt_number}` : null, videoLinkSite(l.video_url)].filter(Boolean).join(' · ')}</span>
                     </a>
                   ))}
                   {[...scroll.fullMatches, ...scroll.highlights].map((v, i) => (
