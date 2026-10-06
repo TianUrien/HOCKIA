@@ -70,7 +70,10 @@ function release(applicationId: string) {
   if (!h) return
   clearTimeout(h.timer)
   held.delete(applicationId)
-  void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn, r.movedOn))
+  void commit(h.decision).then((r) => {
+    if (r.movedOn) h.onDone?.(r.ok, r.withdrawn, true)
+    else h.onDone?.(r.ok, r.withdrawn)
+  })
 }
 
 /** Hold a decision for the undo window, then write it. */
@@ -147,7 +150,10 @@ export function flushDecisions(opts: { unloading?: boolean } = {}): void {
     if (!h) continue
     clearTimeout(h.timer)
     held.delete(id)
-    if (!commitOnUnload(h.decision)) void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn, r.movedOn))
+    if (!commitOnUnload(h.decision)) void commit(h.decision).then((r) => {
+    if (r.movedOn) h.onDone?.(r.ok, r.withdrawn, true)
+    else h.onDone?.(r.ok, r.withdrawn)
+  })
   }
 }
 
