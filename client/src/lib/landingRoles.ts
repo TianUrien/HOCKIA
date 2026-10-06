@@ -26,6 +26,9 @@ export interface OpenRoleCard {
   id: string
   /** Club display name (the API's "Unknown Club" placeholder is dropped). */
   clubName: string | null
+  /** True when a club account published the role (the crest strip shows only
+   *  real club crests, never a person's photo). */
+  clubAccount: boolean
   /** Club avatar — many uploads carry a baked-in white square, so the card
    *  draws it with `mix-blend-mode: multiply` over white. */
   crestUrl: string | null
@@ -61,7 +64,7 @@ export type PublicOpportunity = {
   benefits?: (string | null)[] | null
   created_at?: string | null
   location?: { city?: string | null; country?: string | null } | null
-  club?: { name?: string | null; logo_url?: string | null; league?: string | null } | null
+  club?: { name?: string | null; logo_url?: string | null; league?: string | null; kind?: 'club' | 'coach' | null } | null
 }
 
 /** The API substitutes this when the publisher has no name. Not a club. */
@@ -153,6 +156,7 @@ export function toOpenRoleCard(row: PublicOpportunity, now = new Date()): OpenRo
   return {
     id: row.id,
     clubName,
+    clubAccount: row.club?.kind === 'club',
     crestUrl: row.club?.logo_url?.trim() || null,
     city: row.location?.city?.trim() || null,
     country: row.location?.country?.trim() || null,
@@ -172,19 +176,35 @@ export function placeLine(card: Pick<OpenRoleCard, 'city' | 'country' | 'league'
   return [place, card.league].filter(Boolean).join(' · ')
 }
 
-/** Unique clubs (first appearance wins) that have a crest, for the strip. */
+/** The strip shows nothing rather than a thin row. */
+export const MIN_CREST_STRIP = 3
+
+/**
+ * Unique club accounts (first appearance wins) that have a crest, for the
+ * strip: never a coach's photo and never an initials fallback. Fewer than
+ * MIN_CREST_STRIP qualifying clubs → an empty strip (hidden).
+ */
 export function clubCrests(cards: OpenRoleCard[], max = 8): ClubCrest[] {
   const seen = new Set<string>()
   const out: ClubCrest[] = []
   for (const c of cards) {
-    if (!c.clubName || !c.crestUrl) continue
+    if (!c.clubAccount || !c.clubName || !c.crestUrl) continue
     const key = c.clubName.toLowerCase()
     if (seen.has(key)) continue
     seen.add(key)
     out.push({ name: c.clubName, url: c.crestUrl })
     if (out.length >= max) break
   }
-  return out
+  return out.length >= MIN_CREST_STRIP ? out : []
+}
+
+/** Up to two letters for the crest-less tile: "Hockey Team Bologna" → "HB". */
+export function clubInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w))
+  if (words.length === 0) return ''
+  const first = words[0][0]
+  const second = words.length > 1 ? words[words.length - 1][0] : ''
+  return (first + second).toUpperCase()
 }
 
 /** Cards shown. */

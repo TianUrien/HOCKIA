@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { useInView, useReducedMotion } from '@/lib/motion'
 import { webButtonClassName, WEB_LINK_CHEVRON } from '@/components/ui/buttonClasses'
-import { placeLine, postedAgo, type ClubCrest, type OpenRoleCard } from '@/lib/landingRoles'
+import { clubInitials, placeLine, postedAgo, type ClubCrest, type OpenRoleCard } from '@/lib/landingRoles'
 
 /**
  * Open roles on the web landing (Figma "Landing v3" 122:1885, 6 Oct 2026):
@@ -77,7 +77,7 @@ export function RoleCard({ role, now, onClick, className = '' }: {
     >
       {/* Row 1: crest · club + place · posted-ago */}
       <div className="flex items-start gap-3">
-        {role.crestUrl && (
+        {role.crestUrl ? (
           <img
             src={role.crestUrl}
             alt=""
@@ -86,7 +86,16 @@ export function RoleCard({ role, now, onClick, className = '' }: {
             loading="lazy"
             className="lv3-crest h-[52px] w-[52px] shrink-0 object-contain transition-transform duration-200 ease-out group-hover/card:scale-[1.04] motion-reduce:transition-none motion-reduce:transform-none"
           />
-        )}
+        ) : role.clubName ? (
+          // No crest: an initials tile keeps the header aligned (design ruling 6 Oct).
+          <span
+            aria-hidden="true"
+            data-testid="crest-fallback"
+            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] bg-brand-soft text-[17px] font-semibold leading-[22px] text-brand-primary"
+          >
+            {clubInitials(role.clubName)}
+          </span>
+        ) : null}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           {role.clubName && (
             <p className="truncate text-[17px] font-semibold leading-[22px] text-ink-1" title={role.clubName}>{role.clubName}</p>

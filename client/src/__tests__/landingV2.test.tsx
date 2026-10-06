@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   clubCrests,
+  clubInitials,
   openRoleTitle,
   packageLabel,
   placeLine,
@@ -51,28 +52,28 @@ const ROWS = [
     id: 'r1', title: 'Forward', position: 'forward', gender: 'Women',
     start_date: '2026-09-16', duration: '3 months', benefits: ['housing', 'flights', 'job'],
     created_at: '2026-10-03T12:00:00Z',
-    club: { name: 'Hockey Team Bologna', logo_url: 'https://cdn/htb.png', league: 'Serie A1' },
+    club: { name: 'Hockey Team Bologna', logo_url: 'https://cdn/htb.png', league: 'Serie A1', kind: 'club' as const },
     location: { city: 'Bologna', country: 'Italy' },
   },
   {
     id: 'r2', title: 'Head Coach wanted', position: 'head_coach', gender: 'Men',
     start_date: null, duration: '12', benefits: ['housing', 'car', 'visa', 'bonuses', 'insurance'],
     created_at: '2026-09-15T12:00:00Z',
-    club: { name: 'KHCB', logo_url: 'https://cdn/khcb.png', league: null },
+    club: { name: 'KHCB', logo_url: 'https://cdn/khcb.png', league: null, kind: 'club' as const },
     location: { city: 'Barcelona', country: 'Spain' },
   },
   {
     id: 'r3', title: '', position: 'midfielder', gender: null,
     start_date: null, duration: null, benefits: [],
     created_at: '2026-10-01T12:00:00Z',
-    club: { name: 'Unknown Club', logo_url: null, league: null },
+    club: { name: 'Unknown Club', logo_url: null, league: null, kind: 'coach' as const },
     location: { city: '', country: 'Argentina' },
   },
   // Only feeds the crest strip (the cards are the newest three).
   {
     id: 'r4', title: 'Goalkeeper', position: 'goalkeeper', gender: 'Women',
     created_at: '2026-09-01T12:00:00Z',
-    club: { name: 'Kilkenny Hockey Club', logo_url: 'https://cdn/kilkenny.png', league: 'Leinster Division 1' },
+    club: { name: 'Kilkenny Hockey Club', logo_url: 'https://cdn/kilkenny.png', league: 'Leinster Division 1', kind: 'club' as const },
     location: { city: 'Kilkenny', country: 'Ireland' },
   },
 ]
@@ -129,7 +130,7 @@ describe('Landing v3 — copy', () => {
     expect(h1).toHaveTextContent(/^The network for\s*field hockey\.$/)
     expect(screen.getByText('Build your hockey profile, connect with clubs worldwide and find your next move.')).toBeInTheDocument()
     expect(screen.getByText('For players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: /One community for\s+the whole game./ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /One community for\s*the whole game\./ })).toBeInTheDocument()
     expect(screen.getByText('Free for players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
     expect(screen.getAllByText('Get the app').length).toBeGreaterThan(0)
     // Every "Create a profile" CTA points at signup (nav, hero, closing panel).
@@ -416,7 +417,7 @@ describe('landingRoles helpers', () => {
     expect(at('garbage')).toBe('')
   })
 
-  it('crest strip: unique clubs with a crest, first appearance wins, capped', () => {
+  it('crest strip: unique club accounts with a crest, first appearance wins, capped, hidden under three', () => {
     const cards = ROWS.map((r) => toOpenRoleCard(r, NOW)!)
     expect(clubCrests(cards)).toEqual([
       { name: 'Hockey Team Bologna', url: 'https://cdn/htb.png' },
@@ -424,7 +425,19 @@ describe('landingRoles helpers', () => {
       { name: 'Kilkenny Hockey Club', url: 'https://cdn/kilkenny.png' },
     ])
     expect(clubCrests([...cards, { ...cards[0], id: 'dup' }])).toHaveLength(3)
-    expect(clubCrests(cards, 2)).toHaveLength(2)
+    // Fewer than three qualifying clubs → no strip at all (never a thin row).
+    expect(clubCrests(cards, 2)).toEqual([])
+    // A coach-published role never contributes a crest, even with a logo URL.
+    const coachRole = { ...cards[0], id: 'c', clubName: 'Holcombe Hockey Club', clubAccount: false, crestUrl: 'https://cdn/jo.jpg' }
+    expect(clubCrests([coachRole, cards[1], cards[3]])).toEqual([])
+    expect(clubCrests([coachRole, cards[0], cards[1], cards[3]]).map((c) => c.name)).toEqual(['Hockey Team Bologna', 'KHCB', 'Kilkenny Hockey Club'])
+  })
+
+  it('initials tile: up to two letters from the first and last words', () => {
+    expect(clubInitials('Hockey Team Bologna')).toBe('HB')
+    expect(clubInitials('KHCB')).toBe('K')
+    expect(clubInitials('  club test ')).toBe('CT')
+    expect(clubInitials('')).toBe('')
   })
 
   it('flags match the country name or common name, case-insensitively', () => {
