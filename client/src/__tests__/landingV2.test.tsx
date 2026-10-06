@@ -129,7 +129,7 @@ describe('Landing v3 — copy', () => {
     expect(h1).toHaveTextContent(/^The network for\s*field hockey\.$/)
     expect(screen.getByText('Build your hockey profile, connect with clubs worldwide and find your next move.')).toBeInTheDocument()
     expect(screen.getByText('For players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'One community for the whole game.' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: /One community for\s+the whole game./ })).toBeInTheDocument()
     expect(screen.getByText('Free for players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
     expect(screen.getAllByText('Get the app').length).toBeGreaterThan(0)
     // Every "Create a profile" CTA points at signup (nav, hero, closing panel).
