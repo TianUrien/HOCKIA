@@ -334,10 +334,10 @@ describe('Landing v3 — store badges', () => {
   it('shows the official badges on the web, inside the pre-hydration native gate', async () => {
     h.native.value = false
     const { container } = await renderLanding()
-    // Hero (desktop + phone rows) and the closing panel.
-    expect(screen.getAllByRole('link', { name: /App Store/i })).toHaveLength(3)
-    expect(screen.getAllByRole('link', { name: /Google Play/i })).toHaveLength(3)
-    expect(container.querySelectorAll('[data-store-badges]')).toHaveLength(3)
+    // Hero only (desktop + phone rows); the closing panel carries none (founder, 6 Oct).
+    expect(screen.getAllByRole('link', { name: /App Store/i })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: /Google Play/i })).toHaveLength(2)
+    expect(container.querySelectorAll('[data-store-badges]')).toHaveLength(2)
   })
 
   it('hides them inside the native app', async () => {

@@ -563,13 +563,6 @@ export default function Landing() {
                     Log in
                   </Link>
                 </div>
-
-                {/* Store links are pointless (and Apple-frowned-upon) inside the app */}
-                {!isNativeApp && (
-                  <div data-store-badges className="flex justify-center">
-                    <StoreBadges heightClass="h-11" source="landing_footer" className="justify-center" />
-                  </div>
-                )}
               </div>
             </div>
           </Reveal>
