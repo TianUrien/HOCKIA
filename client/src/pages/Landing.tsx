@@ -240,7 +240,7 @@ function PhoneStage() {
       data-stage
     >
       {/* Left — Community */}
-      <div data-phone="left" className="absolute left-[5.14%] top-[17%] w-[42.29%] lg:left-[6.43%] lg:top-[17.14%] lg:w-[35.18%]">
+      <div data-phone="left" className="absolute [container-type:inline-size] left-[5.14%] top-[17%] w-[42.29%] lg:left-[6.43%] lg:top-[17.14%] lg:w-[35.18%]">
         <div data-float style={{ '--float-delay': '-2s' } as React.CSSProperties}>
           <div className="-rotate-6">
             <Phone
@@ -255,7 +255,7 @@ function PhoneStage() {
       </div>
       {/* Right — Feed. Top-anchored so the HOCKIA header and Feed/Pulse tabs
           stay visible whatever sliver object-cover trims. */}
-      <div data-phone="right" className="absolute left-[52.57%] top-[14.08%] w-[42.29%] lg:left-[58.39%] lg:top-[14.29%] lg:w-[35.18%]">
+      <div data-phone="right" className="absolute [container-type:inline-size] left-[52.57%] top-[14.08%] w-[42.29%] lg:left-[58.39%] lg:top-[14.29%] lg:w-[35.18%]">
         <div data-float style={{ '--float-delay': '-4s' } as React.CSSProperties}>
           <div className="rotate-6">
             <Phone
@@ -270,7 +270,7 @@ function PhoneStage() {
         </div>
       </div>
       {/* Front — First run */}
-      <div data-phone="front" className="absolute left-[25.29%] top-[4.85%] w-[49.43%] lg:left-[29.11%] lg:top-[5.36%] lg:w-[41.89%]">
+      <div data-phone="front" className="absolute [container-type:inline-size] left-[25.29%] top-[4.85%] w-[49.43%] lg:left-[29.11%] lg:top-[5.36%] lg:w-[41.89%]">
         <div data-float style={{ '--float-delay': '0s' } as React.CSSProperties}>
           <Phone
             src="/landing/phone-firstrun.webp"
