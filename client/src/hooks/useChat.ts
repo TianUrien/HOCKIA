@@ -16,6 +16,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
 import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
+import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from '@/lib/recruiterMinor'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
@@ -659,6 +660,8 @@ export function useChat({
           // The daily allowance for new conversations: a normal refusal, shown
           // as its own note below, not an error to report.
           if (isNewConversationLimitError(parsedError)) throw creationError
+          // Clubs / recruiting coaches and under-18s: a rule, not an error to report.
+          if (isRecruiterMinorError(parsedError)) throw creationError
           if (!isUniqueViolationError(parsedError)) {
             reportSupabaseError('messaging_chat.create_conversation', creationError, {
               currentUserId,
@@ -831,6 +834,11 @@ export function useChat({
         // the composer, and the member is told when they can start again.
         reportNewConversationRefusal()
         addToast(NEW_CONVERSATION_LIMIT_MESSAGE, 'info')
+        return false
+      }
+      if (isRecruiterMinorError(error)) {
+        // Nothing was created and nothing was sent; the typed text stays.
+        addToast(RECRUITER_MINOR_MESSAGE, 'info')
         return false
       }
       logger.error('Error sending message:', error)

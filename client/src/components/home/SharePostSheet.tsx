@@ -114,7 +114,7 @@ export function SharePostSheet({
           setSentTo((prev) => new Set(prev).add(contact.id))
           addToast(`Sent to ${contact.full_name}`, 'success')
         } else {
-          addToast(result.error || 'Failed to send post', 'error')
+          addToast(result.error || 'Failed to send post', result.notice ? 'info' : 'error')
         }
       } catch (error) {
         addToast(extractErrorMessage(error, 'Failed to share post. Please try again.'), 'error')

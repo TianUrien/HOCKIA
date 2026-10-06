@@ -59,6 +59,7 @@ import { useProfileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
 import { useCountries } from '@/hooks/useCountries'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { RECRUITER_MINOR_MESSAGE, recruiterCannotStartWith } from '@/lib/recruiterMinor'
 import type { KeyFactAction, KeyFactsViewer } from '@/lib/keyFacts'
 import type { ChecklistKey } from '@/lib/openToPlayScreen'
 
@@ -586,6 +587,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       const returnTo = location.pathname + location.search
       if (existingConv?.id) {
         navigate(`/messages?conversation=${existingConv.id}`, { state: { returnTo } })
+      } else if (recruiterCannotStartWith(authProfile, profileData.server_age)) {
+        // Founder ruling 2026-10-06: clubs and recruiting coaches cannot start a
+        // conversation with an under-18 (existing conversations still open above).
+        addToast(RECRUITER_MINOR_MESSAGE, 'info')
       } else {
         navigate(`/messages?new=${profileData.id}`, { state: { returnTo, messageOrigin: 'Profile' } })
       }

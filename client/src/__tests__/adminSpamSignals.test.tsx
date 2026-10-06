@@ -109,10 +109,10 @@ describe('AdminSpamSignals', () => {
     expect(within(second).getByText(/Sent to 12 people/)).toBeInTheDocument()
   })
 
-  it('sends the safety notice only after the confirmation and shows how many were sent', async () => {
+  it('sends the safety notice for a blocked account only after the confirmation and shows how many were sent', async () => {
     renderPage()
-    await screen.findByText('Alex Example')
-    await openRowAction('Alex Example', 'Send safety notice')
+    await screen.findByText('Sam Sample')
+    await openRowAction('Sam Sample', 'Send safety notice')
 
     expect(screen.getByText('Send the safety notice to everyone this account messaged?')).toBeInTheDocument()
     expect(rpcCalls.some((c) => c.fn === 'admin_send_removed_account_notice')).toBe(false)
@@ -120,22 +120,47 @@ describe('AdminSpamSignals', () => {
     const buttons = screen.getAllByRole('button', { name: 'Send safety notice' })
     await userEvent.click(buttons[buttons.length - 1])
 
-    await waitFor(() => expect(screen.getByTestId('notice-sent-sig-1')).toHaveTextContent('Sent to 3 people'))
+    await waitFor(() => expect(screen.getByTestId('notice-sent-sig-2')).toHaveTextContent('Sent to 3 people'))
     expect(rpcCalls.filter((c) => c.fn === 'admin_send_removed_account_notice')).toEqual([
-      { fn: 'admin_send_removed_account_notice', args: { p_removed_profile_id: 'profile-a' } },
+      { fn: 'admin_send_removed_account_notice', args: { p_removed_profile_id: 'profile-b' } },
     ])
   })
 
-  it('says so when the notice cannot be sent, and shows no count', async () => {
-    noticeResult = { data: null, error: { message: 'Unauthorized' } }
+  it('disables "Send safety notice" for an account that is not blocked, with a hint', async () => {
     renderPage()
     await screen.findByText('Alex Example')
-    await openRowAction('Alex Example', 'Send safety notice')
+    const row = screen.getByText('Alex Example').closest('tr') as HTMLElement
+    await userEvent.click(within(row).getByRole('button', { name: 'Open actions menu' }))
+
+    const send = await screen.findByRole('button', { name: 'Send safety notice' })
+    expect(send).toBeDisabled()
+    expect(screen.getByText('Block the account first.')).toBeInTheDocument()
+
+    await userEvent.click(send)
+    expect(screen.queryByText('Send the safety notice to everyone this account messaged?')).not.toBeInTheDocument()
+    expect(rpcCalls.some((c) => c.fn === 'admin_send_removed_account_notice')).toBe(false)
+  })
+
+  it('keeps "Send safety notice" enabled, without the hint, for a blocked account', async () => {
+    renderPage()
+    await screen.findByText('Sam Sample')
+    const row = screen.getByText('Sam Sample').closest('tr') as HTMLElement
+    await userEvent.click(within(row).getByRole('button', { name: 'Open actions menu' }))
+
+    expect(await screen.findByRole('button', { name: 'Send safety notice' })).toBeEnabled()
+    expect(screen.queryByText('Block the account first.')).not.toBeInTheDocument()
+  })
+
+  it('says so when the notice cannot be sent, and shows no count', async () => {
+    noticeResult = { data: null, error: { message: 'Block the account first.' } }
+    renderPage()
+    await screen.findByText('Sam Sample')
+    await openRowAction('Sam Sample', 'Send safety notice')
     const buttons = screen.getAllByRole('button', { name: 'Send safety notice' })
     await userEvent.click(buttons[buttons.length - 1])
 
-    expect(await screen.findByText('Failed to send the safety notice: Unauthorized')).toBeInTheDocument()
-    expect(screen.queryByTestId('notice-sent-sig-1')).not.toBeInTheDocument()
+    expect(await screen.findByText('Failed to send the safety notice: Block the account first.')).toBeInTheDocument()
+    expect(screen.queryByTestId('notice-sent-sig-2')).not.toBeInTheDocument()
   })
 
   it('blocks through the existing admin block action after the confirmation', async () => {
