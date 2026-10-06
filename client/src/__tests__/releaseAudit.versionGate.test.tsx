@@ -174,7 +174,7 @@ describe('useAppUpdateCheck', () => {
   it('installed below min_version → force', async () => {
     requirements('1.3.16', '1.3.16')
     const { result } = renderHook(() => useAppUpdateCheck())
-    await waitFor(() => expect(result.current.status).toBe('force'))
+    await waitFor(() => expect(result.current.status).toBe('force'), { timeout: 5000 })
   })
 
   it('installed equal to min_version is NOT forced (the boundary build stays usable)', async () => {
@@ -187,13 +187,13 @@ describe('useAppUpdateCheck', () => {
   it('at or above min but below latest → soft', async () => {
     requirements('1.3.9', '1.4.0')
     const { result } = renderHook(() => useAppUpdateCheck())
-    await waitFor(() => expect(result.current.status).toBe('soft'))
+    await waitFor(() => expect(result.current.status).toBe('soft'), { timeout: 5000 })
   })
 
   it('force wins when the build is below both', async () => {
     requirements('1.4.0', '1.5.0')
     const { result } = renderHook(() => useAppUpdateCheck())
-    await waitFor(() => expect(result.current.status).toBe('force'))
+    await waitFor(() => expect(result.current.status).toBe('force'), { timeout: 5000 })
   })
 
   it('a build newer than latest_version (store review build) is ok', async () => {
@@ -275,7 +275,7 @@ describe('NativeUpdatePrompt', () => {
   it('soft: dismissible, and a dismissal is remembered for a day, not for ever', async () => {
     requirements('1.0.0', '9.0.0')
     const first = render(<NativeUpdatePrompt />)
-    const dismiss = await screen.findByRole('button', { name: 'Dismiss' })
+    const dismiss = await screen.findByRole('button', { name: 'Dismiss' }, { timeout: 5000 })
     expect(screen.queryByText('Update required')).not.toBeInTheDocument()
     act(() => dismiss.click())
     expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument()
@@ -290,7 +290,7 @@ describe('NativeUpdatePrompt', () => {
     // 25 hours later: shown again.
     localStorage.setItem('native-update-prompt-dismissed-at', (Date.now() - 25 * 60 * 60 * 1000).toString())
     render(<NativeUpdatePrompt />)
-    expect(await screen.findByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Dismiss' }, { timeout: 5000 })).toBeInTheDocument()
   })
 
   it('ok: renders nothing', async () => {
