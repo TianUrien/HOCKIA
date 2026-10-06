@@ -3,7 +3,8 @@
  * and who sent the same first message to many people. Signals only: nothing is
  * blocked automatically. Each row links to the member in the User Directory,
  * offers the existing block action, and "Send safety notice" (marks the account
- * as removed and tells everyone it had a conversation with, once).
+ * as removed and tells everyone it had a conversation with, once; only for a
+ * blocked account).
  * Data: admin_get_spam_signals / admin_send_removed_account_notice.
  */
 import { useCallback, useEffect, useState } from 'react'
@@ -162,6 +163,10 @@ export function AdminSpamSignals() {
     {
       label: 'Send safety notice',
       icon: <Send className="h-4 w-4" />,
+      // The notice tells people the account "has been removed": the server
+      // refuses it until the account is blocked.
+      disabled: (row) => !row.is_blocked,
+      disabledHint: (row) => (row.is_blocked ? undefined : 'Block the account first.'),
       onClick: (row) => setConfirm({ type: 'notice', row }),
     },
   ]

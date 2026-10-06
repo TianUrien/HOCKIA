@@ -21,6 +21,8 @@ export interface Action<T> {
   onClick: (row: T) => void
   variant?: 'default' | 'danger'
   disabled?: (row: T) => boolean
+  /** Short reason shown under a disabled action. */
+  disabledHint?: (row: T) => string | undefined
 }
 
 interface DataTableProps<T> {
@@ -194,29 +196,31 @@ export function DataTable<T extends object>({
                             className="fixed z-[101] bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[140px]"
                             style={{ top: menuPosition.top, left: menuPosition.left }}
                           >
-                            {actions.map((action, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  action.onClick(row)
-                                  setOpenActionMenu(null)
-                                  setMenuPosition(null)
-                                }}
-                                disabled={action.disabled?.(row)}
-                                className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
-                                  action.variant === 'danger'
-                                    ? 'text-red-600 hover:bg-red-50'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                                } ${
-                                  action.disabled?.(row)
-                                    ? 'opacity-50 cursor-not-allowed'
-                                    : ''
-                                }`}
-                              >
-                                {action.icon}
-                                {action.label}
-                              </button>
-                            ))}
+                            {actions.map((action, i) => {
+                              const isDisabled = action.disabled?.(row) ?? false
+                              const hint = isDisabled ? action.disabledHint?.(row) : undefined
+                              return (
+                                <div key={i}>
+                                  <button
+                                    onClick={() => {
+                                      action.onClick(row)
+                                      setOpenActionMenu(null)
+                                      setMenuPosition(null)
+                                    }}
+                                    disabled={isDisabled}
+                                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                                      action.variant === 'danger'
+                                        ? 'text-red-600 hover:bg-red-50'
+                                        : 'text-gray-700 hover:bg-gray-50'
+                                    } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  >
+                                    {action.icon}
+                                    {action.label}
+                                  </button>
+                                  {hint && <p className="px-4 pb-2 text-xs text-gray-500">{hint}</p>}
+                                </div>
+                              )
+                            })}
                           </div>
                         </>,
                         document.body
