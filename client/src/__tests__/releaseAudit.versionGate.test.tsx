@@ -73,9 +73,11 @@ function requirements(min: string, latest: string, storeUrl: string | null = nul
 
 /** Let the hook's async check settle (version read → query → setState). */
 async function settle() {
+  // The chain is version read → query → setState, each a microtask or a
+  // macrotask. Under a loaded CI runner two ticks were not always enough,
+  // so flush generously; the assertions that need a result also use waitFor.
   await act(async () => {
-    await new Promise((r) => setTimeout(r, 0))
-    await new Promise((r) => setTimeout(r, 0))
+    for (let i = 0; i < 10; i += 1) await new Promise((r) => setTimeout(r, 5))
   })
 }
 
@@ -167,7 +169,7 @@ describe('useAppUpdateCheck', () => {
     requirements('1.16', '1.16')
     renderHook(() => useAppUpdateCheck())
     await settle()
-    expect(h.from).toHaveBeenCalledWith('app_version_requirements')
+    await waitFor(() => expect(h.from).toHaveBeenCalledWith('app_version_requirements'), { timeout: 5000 })
     expect(h.eq).toHaveBeenCalledWith('platform', 'android')
   })
 
@@ -234,7 +236,7 @@ describe('useAppUpdateCheck', () => {
     const c = renderHook(() => useAppUpdateCheck())
     await settle()
     expect(c.result.current.status).toBe('ok')
-    expect(h.loggerError).toHaveBeenCalled()
+    await waitFor(() => expect(h.loggerError).toHaveBeenCalled(), { timeout: 5000 })
     h.rowThrows = false
 
     h.info = new Error('bridge down')
@@ -251,7 +253,7 @@ describe('useAppUpdateCheck', () => {
     const { result } = renderHook(() => useAppUpdateCheck())
     await settle()
     expect(result.current.status).toBe('ok')
-    expect(h.loggerError).toHaveBeenCalled()
+    await waitFor(() => expect(h.loggerError).toHaveBeenCalled(), { timeout: 5000 })
   })
 })
 
@@ -259,7 +261,7 @@ describe('NativeUpdatePrompt', () => {
   it('force: a blocking "Update required" with no way to dismiss, and the button opens the store', async () => {
     requirements('9.0.0', '9.0.0')
     render(<NativeUpdatePrompt />)
-    expect(await screen.findByText('Update required')).toBeInTheDocument()
+    expect(await screen.findByText('Update required', {}, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument()
     screen.getByRole('button', { name: /Update HOCKIA/ }).click()
     expect(h.browserOpen).toHaveBeenCalledWith({ url: IOS_STORE })
@@ -269,7 +271,7 @@ describe('NativeUpdatePrompt', () => {
     localStorage.setItem('native-update-prompt-dismissed-at', Date.now().toString())
     requirements('9.0.0', '9.0.0')
     render(<NativeUpdatePrompt />)
-    expect(await screen.findByText('Update required')).toBeInTheDocument()
+    expect(await screen.findByText('Update required', {}, { timeout: 5000 })).toBeInTheDocument()
   })
 
   it('soft: dismissible, and a dismissal is remembered for a day, not for ever', async () => {
