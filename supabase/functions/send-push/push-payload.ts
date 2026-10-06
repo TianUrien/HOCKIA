@@ -36,10 +36,93 @@ export function isGeneratedHeadline(title: string, humanPosition: string | null)
   return rest === humanPosition.trim().toLowerCase()
 }
 
+/**
+ * Per-type preference column for each notification kind, matching what the
+ * settings screens promise (client components/settings/SettingsMobile.tsx and
+ * pages/SettingsPage.tsx) and the columns the matching emails respect.
+ * Kinds not listed are governed by notify_push (the master switch) alone.
+ */
+export type PushPreferenceColumn =
+  | 'notify_messages'
+  | 'notify_applications'
+  | 'notify_opportunities'
+  | 'notify_friends'
+  | 'notify_references'
+  | 'notify_profile_views'
+
+const PREFERENCE_BY_KIND: Record<string, PushPreferenceColumn> = {
+  message_received: 'notify_messages',
+  conversation_started: 'notify_messages',
+  vacancy_application_status: 'notify_applications',
+  vacancy_application_received: 'notify_applications',
+  applications_expired: 'notify_applications',
+  opportunity_published: 'notify_opportunities',
+  friend_request_received: 'notify_friends',
+  friend_request_accepted: 'notify_friends',
+  reference_request_received: 'notify_references',
+  reference_request_accepted: 'notify_references',
+  reference_request_rejected: 'notify_references',
+  reference_updated: 'notify_references',
+  profile_viewed: 'notify_profile_views',
+}
+
+export const PUSH_PREFERENCE_COLUMNS: PushPreferenceColumn[] = [
+  'notify_messages', 'notify_applications', 'notify_opportunities',
+  'notify_friends', 'notify_references', 'notify_profile_views',
+]
+
+export function pushPreferenceColumn(kind: string): PushPreferenceColumn | null {
+  return PREFERENCE_BY_KIND[kind] ?? null
+}
+
+/**
+ * Whether this kind may be pushed to a member with these settings.
+ * notify_push is the master switch (off → nothing); a per-type column that is
+ * explicitly false blocks its kinds. NULL/missing counts as on (the columns
+ * default to true, and the settings screens read them with `?? true`).
+ */
+export function pushAllowed(kind: string, prefs: Partial<Record<'notify_push' | PushPreferenceColumn, boolean | null>>): boolean {
+  if (!prefs.notify_push) return false
+  const column = pushPreferenceColumn(kind)
+  return column ? prefs[column] !== false : true
+}
+
+/** An in-app relative path ("/x"), never a protocol-relative "//host" or absolute URL. */
+export function safeInternalPath(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null
+  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return null
+  return value
+}
+
+/**
+ * Whether a database-webhook event on profile_notifications should push.
+ * INSERT → yes. UPDATE → only when created_at changed, which is what
+ * enqueue_notification's upsert does when the same source fires again;
+ * read/seen/cleared updates leave created_at alone. Anything else → no.
+ * A bare record (no webhook envelope) is treated as an INSERT.
+ */
+// deno-lint-ignore no-explicit-any
+export function shouldPushWebhookEvent(payload: any): boolean {
+  if (!payload || typeof payload !== 'object') return false
+  const type = payload.type
+  if (type === undefined) return true
+  if (type === 'INSERT') return true
+  if (type === 'UPDATE') {
+    const before = payload.old_record?.created_at
+    const after = payload.record?.created_at
+    return typeof before === 'string' && typeof after === 'string' && before !== after
+  }
+  return false
+}
+
+// Mirrors client components/notifications/config.ts referencesRoute.
+const REFERENCES_ROUTE = '/dashboard/profile?tab=references'
+
 export function buildPushPayload(
   kind: string,
   metadata: Metadata,
-  actorName: string
+  actorName: string,
+  actorId: string | null = null,
 ): PushPayload {
   switch (kind) {
     // ── Friends ──
@@ -67,30 +150,30 @@ export function buildPushPayload(
       return {
         title: 'Reference Request',
         body: `${actorName} requested a reference`,
-        url: '/dashboard/profile?tab=friends&section=incoming',
+        url: REFERENCES_ROUTE,
         tag: 'reference-request',
       }
     case 'reference_request_accepted':
       return {
         title: 'Reference Accepted',
         body: `${actorName} accepted your reference request`,
-        // Reference responses live on the dedicated References tab now,
-        // not under Friends. section=accepted on Friends was dead.
-        url: '/dashboard/profile/references',
+        // Reference responses live on the dedicated References tab
+        // (config.ts referenceAcceptedRoute).
+        url: `${REFERENCES_ROUTE}&section=accepted`,
         tag: 'reference-accepted',
       }
     case 'reference_updated':
       return {
         title: 'Reference Updated',
         body: `${actorName} updated their reference`,
-        url: '/dashboard/profile?tab=friends&section=references',
+        url: REFERENCES_ROUTE,
         tag: 'reference-updated',
       }
     case 'reference_request_rejected':
       return {
         title: 'Reference Update',
         body: `${actorName} declined your reference request`,
-        url: '/dashboard/profile?tab=friends&section=references',
+        url: REFERENCES_ROUTE,
         tag: 'reference-rejected',
       }
 
@@ -112,6 +195,23 @@ export function buildPushPayload(
         body: `${actorName} accepted your ambassador invitation`,
         url: '/dashboard/profile?tab=ambassadors',
         tag: 'ambassador-accepted',
+      }
+
+    // ── Club membership (mirrors config.ts) ──
+    case 'club_invitation_received':
+      return {
+        title: 'Club Invite',
+        body: `${actorName} invited you to join their club`,
+        // The inviting club's profile, so the invitee can see who it is.
+        url: actorId ? `/clubs/id/${encodeURIComponent(actorId)}` : '/home',
+        tag: 'club-invite',
+      }
+    case 'club_invitation_accepted':
+      return {
+        title: 'Club Update',
+        body: `${actorName} joined your club`,
+        url: '/dashboard/profile',
+        tag: 'club-joined',
       }
 
     // ── Profile views (aggregated daily) ──
@@ -287,7 +387,7 @@ export function buildPushPayload(
       return {
         title: getString(metadata, 'title') || 'Recruiting update',
         body: getString(metadata, 'summary') || 'Open HOCKIA to see what changed.',
-        url: targetUrl && targetUrl.startsWith('/') ? targetUrl : '/messages',
+        url: safeInternalPath(targetUrl) ?? '/messages',
         tag: event ? `recruiting-${event}` : 'recruiting',
       }
     }

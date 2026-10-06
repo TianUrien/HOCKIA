@@ -4,7 +4,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { buildPushPayload } from './push-payload.ts'
+import { buildPushPayload, PUSH_PREFERENCE_COLUMNS, pushAllowed, shouldPushWebhookEvent } from './push-payload.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
 import { sendApnsNotification, isApnsConfigured } from './apns.ts'
 
@@ -19,9 +19,19 @@ import { sendApnsNotification, isApnsConfigured } from './apns.ts'
  *
  * Webhook configuration (Dashboard → Database → Webhooks):
  *   - Table: profile_notifications
- *   - Events: INSERT
+ *   - Events: INSERT (and UPDATE, see below)
  *   - Type: Supabase Edge Function
  *   - Function: send-push
+ *
+ * Re-surfaced rows: enqueue_notification upserts on (recipient, kind,
+ * source), so a repeat event on the same source (e.g. a second recruiting
+ * step on one application) UPDATEs the row instead of inserting one. An
+ * UPDATE event is pushed only when created_at moved (the upsert re-stamps
+ * it; marking read / seen / cleared never touches it), so reading a
+ * notification can never re-push it.
+ *
+ * Preferences: notify_push is the master switch; each kind is also gated by
+ * its per-type column (pushPreferenceColumn in push-payload.ts).
  * ============================================================================
  */
 
@@ -66,6 +76,13 @@ Deno.serve(async (req: Request) => {
     const payload = await req.json()
     const record = payload.record || payload
 
+    if (!shouldPushWebhookEvent(payload)) {
+      return new Response(
+        JSON.stringify({ skipped: true, reason: 'not_a_new_event' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const recipientId: string = record.recipient_profile_id
     const actorId: string | null = record.actor_profile_id
     const kind: string = record.kind
@@ -80,16 +97,16 @@ Deno.serve(async (req: Request) => {
 
     const supabase = getServiceClient()
 
-    // Check if recipient has push enabled
+    // Master switch + the per-type setting for this kind.
     const { data: profile } = await supabase
       .from('profiles')
-      .select('notify_push')
+      .select(['notify_push', ...PUSH_PREFERENCE_COLUMNS].join(', '))
       .eq('id', recipientId)
       .single()
 
-    if (!profile?.notify_push) {
+    if (!profile || !pushAllowed(kind, profile as unknown as Record<string, boolean | null>)) {
       return new Response(
-        JSON.stringify({ skipped: true, reason: 'push_disabled' }),
+        JSON.stringify({ skipped: true, reason: (profile as any)?.notify_push ? 'type_disabled' : 'push_disabled' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -134,7 +151,7 @@ Deno.serve(async (req: Request) => {
       .is('cleared_at', null)
 
     // Build push payload
-    const pushPayload = { ...buildPushPayload(kind, metadata, actorName), badge: unreadCount ?? 1 }
+    const pushPayload = { ...buildPushPayload(kind, metadata, actorName, actorId), badge: unreadCount ?? 1 }
     const payloadString = JSON.stringify(pushPayload)
 
     // Send to each device
