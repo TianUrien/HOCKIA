@@ -9,6 +9,35 @@
 -- with audit_db_hardening_acl.probe.sql output captured BEFORE the migration and
 -- leave out the extra grants below accordingly.
 
+-- ── 14 · push device owner ───────────────────────────────────────────────────────
+DROP TRIGGER IF EXISTS push_subscriptions_single_owner ON public.push_subscriptions;
+DROP FUNCTION IF EXISTS public._push_subscription_single_owner();
+
+-- ── 13 · push for re-surfaced notifications ──────────────────────────────────────
+DROP TRIGGER IF EXISTS "send-push-resurfaced" ON public.profile_notifications;
+
+-- ── 12 · ai_questions_today, from 20261003140000_ai_usage_log.sql ────────────────
+CREATE OR REPLACE FUNCTION public.ai_questions_today(p_user uuid)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT count(*)::integer
+    FROM public.ai_usage_log l
+   WHERE l.user_id = p_user
+     AND l.function <> 'alert'
+     AND l.created_at >= (date_trunc('day', now() AT TIME ZONE 'utc') AT TIME ZONE 'utc');
+$$;
+
+REVOKE ALL ON FUNCTION public.ai_questions_today(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ai_questions_today(uuid) TO service_role;
+
+-- ── 11 · AI opinion quota functions (new) ────────────────────────────────────────
+DROP FUNCTION IF EXISTS public.ai_opinion_quota_take(uuid, integer);
+DROP FUNCTION IF EXISTS public.ai_opinion_quota_release(uuid);
+
 -- ── 10 · link_signup_attribution: both signatures back ───────────────────────────
 -- 6-argument body from 20260828100000_attribution_v2.sql (grants: 20260725100000, unchanged).
 CREATE OR REPLACE FUNCTION public.link_signup_attribution(
@@ -286,9 +315,9 @@ REVOKE ALL ON FUNCTION public.admin_unblock_user(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_unblock_user(uuid) TO authenticated, service_role;
 
 -- ── 6 · messages / conversations / work permits ──────────────────────────────────
-DROP TRIGGER IF EXISTS conversations_guard_client_start ON public.conversations;
+DROP TRIGGER IF EXISTS conversations_client_start_guard ON public.conversations;
 DROP FUNCTION IF EXISTS public._guard_client_conversation_start();
-DROP TRIGGER IF EXISTS messages_guard_client_sender ON public.messages;
+DROP TRIGGER IF EXISTS messages_client_sender_guard ON public.messages;
 DROP FUNCTION IF EXISTS public._guard_client_message_sender();
 
 -- Policy as in 20260928200000_d2_player_work_permits.sql.

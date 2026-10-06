@@ -45,8 +45,17 @@
 --   can_toggle_open_to_play(uuid)                        20260928210000 called by the signed-in open-to-play screen
 --   profiles: UPDATE (created_at, email) revoked from authenticated (20260612120000 granted it)
 --
+--   ai_questions_today(uuid)                             20261003140000_ai_usage_log.sql
+--     counts function = 'nl-search' only (was: everything except 'alert')
+--
 -- New objects: is_adult_profile(uuid), _guard_world_club_client_update() + trigger,
---   _guard_client_conversation_start() + trigger, _guard_client_message_sender() + trigger.
+--   _guard_client_conversation_start() + trigger, _guard_client_message_sender() + trigger,
+--   ai_opinion_quota_take(uuid, int), ai_opinion_quota_release(uuid),
+--   trigger "send-push-resurfaced" on profile_notifications (clone of the Dashboard
+--   send-push webhook), _push_subscription_single_owner() + trigger.
+--
+-- DEPLOY ORDER: deploy the send-push edge function that ignores UPDATE events unless
+-- created_at changed BEFORE applying this migration (section 13).
 --
 -- Note on anon: until 2026-10-30 this platform grants EXECUTE on new functions to anon
 -- by default ACL, so revoking from PUBLIC alone leaves anon able to call. Every revoke
@@ -450,6 +459,13 @@ GRANT EXECUTE ON FUNCTION public.create_and_claim_world_club(TEXT, INT, INT, UUI
 -- make_offer, mark_signed … keep their own rules), the service role or the owner. The
 -- existing triggers (enforce_message_not_blocked / enforce_conversation_not_blocked,
 -- 20260707151000) are unchanged and still refuse any thread with a hidden participant.
+-- Names sort before those ("…_client_…" < "…_enforce_…"; BEFORE triggers fire in name
+-- order) so a hidden SENDER gets its own sentence rather than "This user is not
+-- available"; refusals about the OTHER member are still answered by the existing ones.
+--
+-- Note: an account that declares an under-18 date of birth is frozen (frozen_minor_at,
+-- 20260711100000) and so already uncontactable. The rule below covers an under-18
+-- that is not frozen (e.g. a date set by support, or a role outside the freeze).
 
 -- An admin-blocked (or frozen) account cannot send.
 CREATE OR REPLACE FUNCTION public._guard_client_message_sender()
@@ -474,8 +490,8 @@ $$;
 REVOKE ALL ON FUNCTION public._guard_client_message_sender() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public._guard_client_message_sender() TO service_role;
 
-DROP TRIGGER IF EXISTS messages_guard_client_sender ON public.messages;
-CREATE TRIGGER messages_guard_client_sender
+DROP TRIGGER IF EXISTS messages_client_sender_guard ON public.messages;
+CREATE TRIGGER messages_client_sender_guard
   BEFORE INSERT ON public.messages
   FOR EACH ROW
   WHEN (current_user = 'authenticated')
@@ -520,8 +536,14 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF (public.is_recruiter(NEW.participant_one_id) AND public.is_minor(NEW.participant_two_id))
-     OR (public.is_recruiter(NEW.participant_two_id) AND public.is_minor(NEW.participant_one_id)) THEN
+  -- A hidden (frozen / blocked) member is left to enforce_conversation_not_blocked,
+  -- whose neutral sentence must not be replaced by one that hints at an age.
+  IF (public.is_recruiter(NEW.participant_one_id) AND public.is_minor(NEW.participant_two_id)
+        AND NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = NEW.participant_two_id
+                         AND public.profile_is_hidden(p.is_blocked, p.frozen_minor_at)))
+     OR (public.is_recruiter(NEW.participant_two_id) AND public.is_minor(NEW.participant_one_id)
+        AND NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = NEW.participant_one_id
+                         AND public.profile_is_hidden(p.is_blocked, p.frozen_minor_at))) THEN
     RAISE EXCEPTION 'This member can''t be contacted by clubs or coaches.'
       USING ERRCODE = 'P0001', DETAIL = 'recruiter_minor';
   END IF;
@@ -533,8 +555,8 @@ $$;
 REVOKE ALL ON FUNCTION public._guard_client_conversation_start() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public._guard_client_conversation_start() TO service_role;
 
-DROP TRIGGER IF EXISTS conversations_guard_client_start ON public.conversations;
-CREATE TRIGGER conversations_guard_client_start
+DROP TRIGGER IF EXISTS conversations_client_start_guard ON public.conversations;
+CREATE TRIGGER conversations_client_start_guard
   BEFORE INSERT ON public.conversations
   FOR EACH ROW
   WHEN (current_user = 'authenticated')
@@ -870,6 +892,156 @@ REVOKE ALL ON FUNCTION public.link_signup_attribution(text, text, text, jsonb, t
 GRANT EXECUTE ON FUNCTION public.link_signup_attribution(text, text, text, jsonb, text, timestamptz) TO authenticated, service_role;
 
 
+-- ═══ 11 · AI opinion: atomic daily quota (edge-function fix branch) ═════════════
+
+-- Table ai_opinion_quota (viewer_id, day, count), PK (viewer_id, day), 20260528130000.
+-- The ai-opinion edge function counts in UTC days (toISOString), so the day here
+-- is the UTC date too. take: +1 and the new count, or NULL when the cap is reached
+-- (the row is left untouched). release: gives one back after a failed generation.
+CREATE OR REPLACE FUNCTION public.ai_opinion_quota_take(p_viewer uuid, p_limit integer)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count integer;
+BEGIN
+  IF p_viewer IS NULL OR coalesce(p_limit, 0) <= 0 THEN
+    RETURN NULL;
+  END IF;
+  INSERT INTO public.ai_opinion_quota AS q (viewer_id, day, count)
+  VALUES (p_viewer, (now() AT TIME ZONE 'utc')::date, 1)
+  ON CONFLICT (viewer_id, day) DO UPDATE
+    SET count = q.count + 1
+    WHERE q.count < p_limit
+  RETURNING q.count INTO v_count;
+  RETURN v_count;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.ai_opinion_quota_take(uuid, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ai_opinion_quota_take(uuid, integer) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.ai_opinion_quota_release(p_viewer uuid)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE public.ai_opinion_quota
+     SET count = count - 1
+   WHERE viewer_id = p_viewer
+     AND day = (now() AT TIME ZONE 'utc')::date
+     AND count > 0;
+$$;
+
+REVOKE ALL ON FUNCTION public.ai_opinion_quota_release(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ai_opinion_quota_release(uuid) TO service_role;
+
+
+-- ═══ 12 · ai_questions_today: Hockia AI questions only ══════════════════════════
+
+-- Copied from 20261003140000_ai_usage_log.sql; only the function filter changed
+-- (was: function <> 'alert'). Drafting functions now log usage to ai_usage_log
+-- too and must not use up the member's daily Hockia AI questions.
+CREATE OR REPLACE FUNCTION public.ai_questions_today(p_user uuid)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT count(*)::integer
+    FROM public.ai_usage_log l
+   WHERE l.user_id = p_user
+     AND l.function = 'nl-search'
+     AND l.created_at >= (date_trunc('day', now() AT TIME ZONE 'utc') AT TIME ZONE 'utc');
+$$;
+
+REVOKE ALL ON FUNCTION public.ai_questions_today(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ai_questions_today(uuid) TO service_role;
+
+
+-- ═══ 13 · Push for re-surfaced notifications ════════════════════════════════════
+
+-- DEPLOY ORDER: the send-push edge function that ignores UPDATE events unless
+-- created_at changed must be deployed BEFORE this migration runs.
+--
+-- enqueue_notification (newest: 202603251400) upserts on (recipient, kind, source)
+-- and sets created_at again, so a later step on the same item re-surfaces the row
+-- by UPDATE; the send-push database webhook (created in the Dashboard) fires on
+-- INSERT only. This clones that webhook trigger as "send-push-resurfaced",
+-- AFTER UPDATE, only when created_at changed. Nothing else changes created_at on
+-- profile_notifications: handle_message_notifications (newest 20260928110000)
+-- updates rows but keeps created_at on purpose; no edge function or client
+-- updates the table's created_at.
+DO $$
+DECLARE
+  v_def    text;
+  v_n      integer;
+  v_new    text;
+BEGIN
+  SELECT count(*), max(pg_get_triggerdef(t.oid))
+    INTO v_n, v_def
+    FROM pg_trigger t
+   WHERE t.tgrelid = 'public.profile_notifications'::regclass
+     AND NOT t.tgisinternal
+     AND t.tgname <> 'send-push-resurfaced'
+     AND pg_get_triggerdef(t.oid) LIKE '%/functions/v1/send-push%';
+  IF v_n = 0 THEN
+    RAISE EXCEPTION 'send-push webhook trigger not found on public.profile_notifications';
+  END IF;
+  IF v_n > 1 THEN
+    RAISE EXCEPTION 'more than one send-push webhook trigger on public.profile_notifications (%)', v_n;
+  END IF;
+
+  v_new := regexp_replace(v_def, '^CREATE TRIGGER .*? AFTER INSERT ON ', 'CREATE TRIGGER "send-push-resurfaced" AFTER UPDATE ON ');
+  v_new := regexp_replace(v_new, ' FOR EACH ROW EXECUTE ', ' FOR EACH ROW WHEN (OLD.created_at IS DISTINCT FROM NEW.created_at) EXECUTE ');
+  IF v_new NOT LIKE 'CREATE TRIGGER "send-push-resurfaced" AFTER UPDATE ON public.profile_notifications FOR EACH ROW WHEN (OLD.created_at IS DISTINCT FROM NEW.created_at) EXECUTE %' THEN
+    RAISE EXCEPTION 'could not derive the AFTER UPDATE ... WHEN clone from the send-push trigger definition';
+  END IF;
+
+  DROP TRIGGER IF EXISTS "send-push-resurfaced" ON public.profile_notifications;
+  EXECUTE v_new;
+END $$;
+
+
+-- ═══ 14 · One owner per push device ═════════════════════════════════════════════
+
+-- push_subscriptions (202602200300 + 202603230600): profile_id, endpoint (web push,
+-- nullable since 202603230600), fcm_token (native, nullable); UNIQUE (profile_id,
+-- endpoint) and UNIQUE (profile_id, fcm_token) are per profile only, so a device
+-- shared by two accounts (sign out, sign in as someone else) kept pushing to both.
+-- Registering a device now removes it from every OTHER profile.
+CREATE OR REPLACE FUNCTION public._push_subscription_single_owner()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.endpoint IS NULL AND NEW.fcm_token IS NULL THEN
+    RETURN NEW;
+  END IF;
+  DELETE FROM public.push_subscriptions s
+   WHERE s.profile_id IS DISTINCT FROM NEW.profile_id
+     AND ((NEW.endpoint IS NOT NULL AND s.endpoint = NEW.endpoint)
+       OR (NEW.fcm_token IS NOT NULL AND s.fcm_token = NEW.fcm_token));
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public._push_subscription_single_owner() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public._push_subscription_single_owner() TO service_role;
+
+DROP TRIGGER IF EXISTS push_subscriptions_single_owner ON public.push_subscriptions;
+CREATE TRIGGER push_subscriptions_single_owner
+  BEFORE INSERT OR UPDATE OF endpoint, fcm_token, profile_id ON public.push_subscriptions
+  FOR EACH ROW
+  EXECUTE FUNCTION public._push_subscription_single_owner();
+
+
 -- ═══ Self-checks ════════════════════════════════════════════════════════════════
 
 DO $$
@@ -882,7 +1054,11 @@ BEGIN
     'public.cleanup_rate_limits(integer)',
     'public.prune_old_heartbeats(integer)',
     'public.prune_old_logs()',
-    'public.compute_product_health_score()'
+    'public.compute_product_health_score()',
+    'public.ai_opinion_quota_take(uuid, integer)',
+    'public.ai_opinion_quota_release(uuid)',
+    'public.ai_questions_today(uuid)',
+    'public._push_subscription_single_owner()'
   ] LOOP
     IF has_function_privilege('anon', v_fn, 'EXECUTE') OR has_function_privilege('authenticated', v_fn, 'EXECUTE') THEN
       RAISE EXCEPTION 'self-check: % is still callable by a client role', v_fn;
@@ -913,6 +1089,11 @@ BEGIN
   END IF;
   IF NOT has_column_privilege('authenticated', 'public.profiles', 'full_name', 'UPDATE') THEN
     RAISE EXCEPTION 'self-check: authenticated lost UPDATE on profiles.full_name';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'public.profile_notifications'::regclass
+                  AND tgname = 'send-push-resurfaced' AND pg_get_triggerdef(oid) ILIKE '%AFTER UPDATE%WHEN%created_at%') THEN
+    RAISE EXCEPTION 'self-check: send-push-resurfaced trigger missing or not AFTER UPDATE ... WHEN';
   END IF;
 
   IF (SELECT count(*) FROM pg_proc WHERE pronamespace = 'public'::regnamespace AND proname = 'link_signup_attribution') <> 1 THEN
