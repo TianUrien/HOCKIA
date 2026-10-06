@@ -1,6 +1,7 @@
 /**
  * AuthScreen is sign-in only since the account-first onboarding
- * (2026-10-03; Figma "Log in" 114:477). These pin:
+ * (2026-10-03); layout per Figma "Landing v3" Log in 127:2141 / 127:2204
+ * (6 Oct 2026). These pin:
  *   - OAuth first, email form visible IMMEDIATELY (no collapse link — a
  *     returning member with a password must not pay an extra tap),
  *   - "Forgot password?" present,
@@ -67,13 +68,21 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     const forgot = screen.getByRole('link', { name: /forgot password/i })
     expect(forgot).toHaveAttribute('href', '/forgot-password')
-    // Button Link Small (459:146): brand text, 36 pt visual with a 44 pt hit area.
-    expect(forgot).toHaveClass('h-9', 'text-hockia-primary', 'font-semibold')
-    // One Primary Large (48).
-    expect(screen.getByRole('button', { name: /^log in$/i })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
-    // Back = Ghost icon button 44 with the chevron.
+    // Web v3 Link button: brand text, 14 semibold, on the password label row.
+    expect(forgot).toHaveClass('text-brand-primary', 'font-semibold')
+    // One Primary Large (52 pill), full width.
+    expect(screen.getByRole('button', { name: /^log in$/i })).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-brand-primary')
+    // OAuth pills: Apple black, Google white with the 1.5 px line-strong border.
+    expect(buttons[1]).toHaveClass('h-[52px]', 'rounded-full', 'bg-surface-inverse')
+    expect(buttons[2]).toHaveClass('h-[52px]', 'rounded-full', 'border-line-strong')
+    // Fields: surface-muted, radius 14, 52 tall, no border; "Show" toggle inside.
+    expect(screen.getByLabelText('Password')).toHaveClass('h-[52px]', 'rounded-[14px]', 'bg-surface-muted')
+    expect(screen.getByRole('button', { name: /show password/i })).toHaveTextContent('Show')
+    // Phone top bar: back = Ghost icon button 44 with the chevron; centred logo.
     expect(screen.getByRole('button', { name: /back to start/i })).toHaveClass('h-11', 'w-11', 'rounded-full')
-    expect(screen.getByRole('button', { name: /^log in$/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+    expect(screen.getByText('Log in to your Hockia profile.')).toBeInTheDocument()
     // Sign-up-only things never appear here.
     expect(screen.queryByText(/by continuing, you agree/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
@@ -94,6 +103,7 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     const user = userEvent.setup()
     render(<AuthScreen />)
     expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
+    expect(screen.getByText(/New to HOCKIA\?/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /email me a link instead/i }))
     expect(screen.getByRole('button', { name: /email me a sign-in link/i })).toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()

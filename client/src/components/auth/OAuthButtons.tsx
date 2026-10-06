@@ -27,9 +27,11 @@ interface OAuthButtonsProps {
   next?: string | null
   onError: (message: string) => void
   className?: string
+  /** 'web' = Landing v3 pills (Figma 127:2141); default = the app cut. */
+  appearance?: 'app' | 'web'
 }
 
-export function OAuthButtons({ intent, next, onError, className }: OAuthButtonsProps) {
+export function OAuthButtons({ intent, next, onError, className, appearance = 'app' }: OAuthButtonsProps) {
   const [warning, setWarning] = useState<string | null>(null)
 
   const start = (provider: OAuthProvider) => {
@@ -51,11 +53,11 @@ export function OAuthButtons({ intent, next, onError, className }: OAuthButtonsP
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
-      <SocialButton provider="apple" onClick={() => start('apple')}>
+    <div className={cn(appearance === 'web' ? 'space-y-4' : 'space-y-3', className)}>
+      <SocialButton provider="apple" appearance={appearance} onClick={() => start('apple')}>
         Continue with Apple
       </SocialButton>
-      <SocialButton provider="google" onClick={() => start('google')}>
+      <SocialButton provider="google" appearance={appearance} onClick={() => start('google')}>
         Continue with Google
       </SocialButton>
       {warning && (

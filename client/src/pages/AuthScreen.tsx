@@ -1,8 +1,13 @@
 /**
- * AuthScreen — Log in (Figma 04 Player 114:477). OAuth first (Apple top per
- * HIG), then the email form as the fallback — visible immediately, because a
+ * AuthScreen — Log in (Figma "Landing v3" Log in 127:2141 desktop /
+ * 127:2204 phone, approved 6 Oct 2026). OAuth first (Apple top per HIG),
+ * then the email form as the fallback — visible immediately, because a
  * returning member with a password wants the field without an extra tap —
  * with "Forgot password?" and the magic-link alternative.
+ *
+ * Behaviour, copy and the auth flows (OAuth round-trip, password, magic
+ * link, `?next=` preservation, errors) are unchanged from the 04 Player
+ * screen; only the layout and styling follow the web spec (AuthPage).
  *
  * Sign-up no longer lives here: the account-first flow (founder rulings
  * 2026-10-03) is /signup (First run) → /signup/email (Create with email) →
@@ -11,13 +16,12 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
-import { AuthShell, FormError } from '@/components/auth/authUi'
-import { Button } from '@/components/ui/Button'
-import { buttonClassName } from '@/components/ui/buttonClasses'
-import { fieldInput, fieldLabel, fieldLabelText } from '@/components/ui/fieldClasses'
+import { AuthHeading, AuthPage, FormError } from '@/components/auth/authUi'
+import { orDivider, switchLink, webFieldInput, webFieldLabel } from '@/components/auth/authClasses'
+import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
@@ -28,6 +32,9 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 
 const RESEND_COOLDOWN_SECONDS = 60
+
+const PRIMARY_L = webButtonClassName({ variant: 'primary', size: 'large', block: true })
+const LINK_M = webButtonClassName({ variant: 'link', size: 'medium' })
 
 export default function AuthScreen() {
   const navigate = useNavigate()
@@ -151,29 +158,33 @@ export default function AuthScreen() {
     }
   }
 
-  const back = {
-    parent: 'Start',
-    onBack: () => {
-      if (typeof window !== 'undefined' && window.history.length > 1) navigate(-1)
-      else navigate('/')
-    },
+  const onBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) navigate(-1)
+    else navigate('/')
   }
+
+  const switchLine = (
+    <>
+      New to HOCKIA?{' '}
+      <Link to={`/signup${search}`} className={switchLink}>Create an account</Link>
+    </>
+  )
 
   // ── Sent state ──
   if (sentTo) {
     return (
-      <AuthShell back={back} title="Log in">
-        <div className="flex flex-1 flex-col items-center pt-12 text-center">
+      <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
+        <div className="flex flex-1 flex-col items-center pt-6 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-positive-soft text-positive">
             <CheckCircle2 className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 text-title text-ink-1">Check your inbox</h1>
-          <p className="mt-2 text-row text-ink-2">We sent a sign-in link to</p>
-          <p className="mt-0.5 break-all text-row font-semibold text-ink-1">{sentTo}</p>
-          <p className="mt-4 text-caption text-ink-3">Tap the link in the email to continue. It expires in 1 hour.</p>
+          <h1 className="mt-5 text-web3-title text-ink-1">Check your inbox</h1>
+          <p className="mt-2 text-[15px] leading-[21px] text-ink-2">We sent a sign-in link to</p>
+          <p className="mt-0.5 break-all text-[15px] font-semibold leading-[21px] text-ink-1">{sentTo}</p>
+          <p className="mt-4 text-[13px] leading-[18px] text-ink-3">Tap the link in the email to continue. It expires in 1 hour.</p>
           <div className="mt-4 w-full"><FormError>{error}</FormError></div>
-          <div className="mt-6 flex items-center gap-4 text-row">
-            <button type="button" onClick={handleResendLink} disabled={cooldown > 0 || loading} className="h-11 font-semibold text-hockia-primary disabled:opacity-40">
+          <div className="mt-6 flex items-center gap-4 text-[15px] leading-[21px]">
+            <button type="button" onClick={handleResendLink} disabled={cooldown > 0 || loading} className="h-11 font-semibold text-brand-primary disabled:opacity-40">
               {cooldown > 0 ? `Resend in ${cooldown}s` : loading ? 'Resending…' : 'Resend link'}
             </button>
             <span className="text-ink-4">·</span>
@@ -182,100 +193,94 @@ export default function AuthScreen() {
             </button>
           </div>
         </div>
-      </AuthShell>
+      </AuthPage>
     )
   }
 
   return (
-    <AuthShell back={back} title="Log in">
+    <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
       <InAppBrowserWarning context="login" />
-      <div className="pt-6">
-        <h1 className="text-title text-ink-1">Welcome back</h1>
-      </div>
+      <AuthHeading title="Welcome back" subtitle="Log in to your Hockia profile." />
 
       <div className="mt-6">
-        <OAuthButtons intent="signin" next={next} onError={setError} />
+        <OAuthButtons intent="signin" next={next} onError={setError} appearance="web" />
       </div>
 
-      <div className="relative my-5">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="w-full border-t border-line" /></div>
-        <div className="relative flex justify-center"><span className="bg-white px-3 text-caption font-semibold text-ink-3">or</span></div>
-      </div>
+      <div className={`${orDivider} my-4`} aria-hidden="true">or</div>
 
-      <form onSubmit={passwordMode ? handlePasswordSignIn : handleSendMagicLink} noValidate className="flex flex-1 flex-col">
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="auth-email" className={fieldLabel}>Email</label>
-            <input
-              id="auth-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className={fieldInput}
-              autoComplete="email"
-              inputMode="email"
-              autoCapitalize="none"
-              required
-            />
-          </div>
-
-          {passwordMode && (
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="auth-password" className={fieldLabelText}>Password</label>
-                <Link to="/forgot-password" className={buttonClassName({ variant: 'link', size: 'small', className: '-mr-3.5' })}>Forgot password?</Link>
-              </div>
-              <div className="relative">
-                <input
-                  id="auth-password"
-                  type={shown ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`${fieldInput} pr-12`}
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShown((v) => !v)}
-                  aria-label={shown ? 'Hide password' : 'Show password'}
-                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3"
-                >
-                  {shown ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {error && !userNotFound && <FormError>{error}</FormError>}
-          {userNotFound && (
-            <div className="rounded-[12px] bg-surface-grouped px-3.5 py-3" role="alert">
-              <p className="text-secondary font-semibold text-ink-1">No account found for this email.</p>
-              <Link to={`/signup${search}`} className="mt-1 inline-block text-secondary font-semibold text-hockia-primary">Create an account</Link>
-            </div>
-          )}
-
-          <Button type="submit" block loading={loading} disabled={!email.trim() || (passwordMode && !password)}>
-            {passwordMode ? 'Log in' : 'Email me a sign-in link'}
-          </Button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => { setPasswordMode((m) => !m); setError(null); setUserNotFound(false) }}
-              className="h-11 text-secondary font-semibold text-ink-2"
-            >
-              {passwordMode ? 'Email me a link instead' : 'Use a password instead'}
-            </button>
-          </div>
+      <form onSubmit={passwordMode ? handlePasswordSignIn : handleSendMagicLink} noValidate className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="auth-email" className={webFieldLabel}>Email</label>
+          <input
+            id="auth-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className={webFieldInput}
+            autoComplete="email"
+            inputMode="email"
+            autoCapitalize="none"
+            required
+          />
         </div>
 
-        <p className="mt-auto pt-8 text-center text-row text-ink-2">
-          New to HOCKIA?{' '}
-          <Link to={`/signup${search}`} className="font-semibold text-hockia-primary">Create an account</Link>
-        </p>
+        {passwordMode && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="auth-password" className={webFieldLabel}>Password</label>
+              <Link to="/forgot-password" className={`${LINK_M} h-5`}>Forgot password?</Link>
+            </div>
+            <div className="relative">
+              <input
+                id="auth-password"
+                type={shown ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${webFieldInput} pr-16`}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShown((v) => !v)}
+                aria-label={shown ? 'Hide password' : 'Show password'}
+                className="absolute right-1 top-1/2 flex h-11 -translate-y-1/2 items-center rounded-lg px-3 text-[14px] font-semibold text-ink-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+              >
+                {shown ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && !userNotFound && <FormError>{error}</FormError>}
+        {userNotFound && (
+          <div className="rounded-[12px] bg-surface-grouped px-3.5 py-3" role="alert">
+            <p className="text-secondary font-semibold text-ink-1">No account found for this email.</p>
+            <Link to={`/signup${search}`} className="mt-1 inline-block text-secondary font-semibold text-brand-primary">Create an account</Link>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading || !email.trim() || (passwordMode && !password)}
+          aria-busy={loading || undefined}
+          className={PRIMARY_L}
+        >
+          {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />}
+          {passwordMode ? 'Log in' : 'Email me a sign-in link'}
+        </button>
+
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => { setPasswordMode((m) => !m); setError(null); setUserNotFound(false) }}
+            className={`${LINK_M} h-11`}
+          >
+            {passwordMode ? 'Email me a link instead' : 'Use a password instead'}
+          </button>
+        </div>
       </form>
-    </AuthShell>
+    </AuthPage>
   )
 }
