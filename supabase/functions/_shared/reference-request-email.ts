@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Shared Email Template for Reference Request Notifications
@@ -92,31 +93,32 @@ export function generateEmailHtml(
 
   const initials = getInitials(displayName)
 
-  const avatarHtml = requester.avatar_url
-    ? `<img src="${requester.avatar_url}" alt="${displayName}" style="width: 48px; height: 48px; border-radius: 24px;" />`
+  const avatarSrc = safeHttpsUrl(requester.avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
+          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
       </table>`
 
   const detailItems: string[] = []
 
   detailItems.push(
-    `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${relationshipType}</span>`
+    `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
   )
 
   if (location) {
     detailItems.push(
-      `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">\u{1F4CD} ${location}</span>`
+      `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
     )
   }
 
   const requestNoteHtml = requestNote?.trim()
     ? `
     <div style="background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
-      <p style="color: #92400e; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Message from ${displayName}</p>
-      <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.5;">${requestNote.trim()}</p>
+      <p style="color: #92400e; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Message from ${escapeHtml(displayName)}</p>
+      <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(requestNote.trim())}</p>
     </div>`
     : ''
 
@@ -145,7 +147,7 @@ export function generateEmailHtml(
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${displayName}</p>
+            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
             <div>
               ${detailItems.join('\n              ')}
             </div>
@@ -160,7 +162,7 @@ export function generateEmailHtml(
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${profileUrl}" style="color: #6d28d9; text-decoration: none;">View their profile</a> to learn more.
+      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View their profile</a> to learn more.
     </p>
   </div>
 

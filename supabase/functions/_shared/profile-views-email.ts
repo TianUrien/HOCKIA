@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml } from './html-escape.ts'
 
 /**
  * Shared Email Template for Profile View Digest Notifications
@@ -121,10 +122,10 @@ export function generateEmailHtml(
     : `${stats.uniqueViewers} people checked out your HOCKIA profile this week.`
 
   const breakdownHtml = stats.statsLine
-    ? `<p style="color: #6b7280; margin: 0 0 8px 0; font-size: 15px;">${stats.statsLine}</p>`
+    ? `<p style="color: #6b7280; margin: 0 0 8px 0; font-size: 15px;">${escapeHtml(stats.statsLine)}</p>`
     : ''
   const trendHtml = stats.trendLine
-    ? `<p style="color: #6b7280; margin: 0 0 16px 0; font-size: 15px;">${stats.trendLine}</p>`
+    ? `<p style="color: #6b7280; margin: 0 0 16px 0; font-size: 15px;">${escapeHtml(stats.trendLine)}</p>`
     : ''
 
   // ?tab=pulse REQUIRED since Feed became the default tab (2026-07-27):
@@ -146,7 +147,7 @@ export function generateEmailHtml(
 
   <div style="padding: 0 0 24px 0;">
 
-    <p style="color: #1f2937; margin: 0 0 8px 0; font-size: 16px;">Hi ${firstName},</p>
+    <p style="color: #1f2937; margin: 0 0 8px 0; font-size: 16px;">Hi ${escapeHtml(firstName)},</p>
 
     <p style="color: #1f2937; margin: 0 0 16px 0; font-size: 16px;">${viewCountText}</p>
 

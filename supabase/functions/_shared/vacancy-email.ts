@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 import { positionLabel } from './display-labels.ts'
+import { escapeHtml } from './html-escape.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -59,11 +60,11 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   const detailItems: string[] = []
   
   if (position) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${position}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(position)}</span>`)
   }
   
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${location}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
   }
 
   return `
@@ -88,17 +89,17 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
     <!-- Vacancy Card -->
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-      <h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${vacancy.title}</h2>
-      <p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${safeClubName}</p>
+      <h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(vacancy.title)}</h2>
+      <p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(safeClubName)}</p>
 
       ${detailItems.length > 0 ? `<div style="margin-bottom: 16px;">${detailItems.join('')}</div>` : ''}
 
-      ${summary ? `<p style="color: #4b5563; margin: 0; font-size: 14px; line-height: 1.6;">${summary}${hasMoreSummary ? '...' : ''}</p>` : ''}
+      ${summary ? `<p style="color: #4b5563; margin: 0; font-size: 14px; line-height: 1.6;">${escapeHtml(summary)}${hasMoreSummary ? '...' : ''}</p>` : ''}
     </div>
 
     <!-- CTA -->
     <p style="margin: 0 0 24px 0;">
-      <a href="${vacancyUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
+      <a href="${escapeHtml(vacancyUrl)}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
     </p>
   </div>
 
