@@ -520,9 +520,22 @@ export default function Landing() {
         {/* ───────────── S3 · Closing panel ───────────── */}
         <section aria-labelledby="final-title" className="pb-16 pt-12 lg:pb-20 lg:pt-12">
           <Reveal className={CONTAINER} distance={16}>
+            <div className="relative mt-10 lg:mt-12">
+            {/* The app icon straddles the panel's top edge, half outside (founder, 6 Oct).
+                It sits outside the clipped panel so it is never cropped. */}
+            <img
+              src="/brand/app-icons/hockia-pwa-512.png"
+              alt=""
+              aria-hidden="true"
+              width={512}
+              height={512}
+              loading="lazy"
+              className="absolute left-1/2 top-0 z-10 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-[22.5%] shadow-[0_12px_32px_rgba(59,18,138,0.35),0_0_0_4px_#ffffff] lg:h-24 lg:w-24"
+              data-testid="closing-app-icon"
+            />
             <div
               data-testid="closing-panel"
-              className="relative isolate overflow-hidden rounded-[20px] border border-white/[0.08] px-6 py-10 text-center shadow-[0_24px_64px_rgba(59,18,138,0.28)] lg:rounded-panel lg:p-16"
+              className="relative isolate overflow-hidden rounded-[20px] border border-white/[0.08] px-6 pb-10 pt-16 text-center shadow-[0_24px_64px_rgba(59,18,138,0.28)] lg:rounded-panel lg:px-16 lg:pb-16 lg:pt-[88px]"
               style={{
                 backgroundImage:
                   'radial-gradient(ellipse 70% 80% at 18% 85%, rgba(167,139,250,0.55) 0%, rgba(167,139,250,0) 60%), linear-gradient(135deg, #1a0a45 0%, #3b128a 55%, #6c2bd9 100%)',
@@ -564,6 +577,7 @@ export default function Landing() {
                   </Link>
                 </div>
               </div>
+            </div>
             </div>
           </Reveal>
         </section>
