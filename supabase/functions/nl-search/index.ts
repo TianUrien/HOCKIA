@@ -55,6 +55,7 @@ import {
 } from '../_shared/opportunity-search.ts'
 import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
 import { AI_DAILY_QUESTION_CAP, aiQuestionCapReached, recordAiUsage } from '../_shared/aiUsage.ts'
+import { boundHistory, CONTINUATION_WINDOW_MINUTES } from '../_shared/history-limits.ts'
 import { REFINE_EMPTY_POOL, REFINE_MODE, buildRefineCandidates, isUuid, type CountryName } from '../_shared/role-suggestions-refine.ts'
 import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
@@ -1901,10 +1902,8 @@ Deno.serve(async (req) => {
           .filter((x): x is string => typeof x === 'string')
           .slice(0, 50)
       : []
-    const rawHistory = Array.isArray(body?.history) ? body.history : []
-    const history: HistoryTurn[] = rawHistory
-      .slice(-10)
-      .filter((t: any) => (t?.role === 'user' || t?.role === 'assistant') && typeof t?.content === 'string')
+    // Last 10 turns, each cut to 1,000 characters, ~6,000 in total.
+    const history: HistoryTurn[] = boundHistory(body?.history)
     // PR-3 — recovery_context lets the backend detect "the last turn failed,
     // this is a recovery follow-up" without re-running the LLM. The frontend
     // populates it from the most recent assistant message's kind / applied
@@ -1964,11 +1963,30 @@ Deno.serve(async (req) => {
 
     // ── Daily question cap (founder ruling 2026-10-03) ─────────────────
     // 30 questions per member per UTC day, counted from ai_usage_log before
-    // any LLM call. A "Show more" continuation (offset > 0) pages an answer
-    // already given and is not a new question. The RPC failing never blocks
-    // anyone (fail-open, reported). Response contract: HTTP 200 with
-    // `kind: 'cap_reached'`; the client renders the limit card.
-    if (requestedOffset === 0) {
+    // any LLM call, on EVERY request. The only exception is a "Show more"
+    // continuation (offset > 0) of an answer this member got for the very
+    // same question in the last CONTINUATION_WINDOW_MINUTES (looked up in
+    // discovery_events): that pages an answer already given. The RPC failing
+    // never blocks anyone (fail-open, reported). Response contract: HTTP 200
+    // with `kind: 'cap_reached'`; the client renders the limit card.
+    let isContinuation = false
+    if (requestedOffset > 0) {
+      const since = new Date(Date.now() - CONTINUATION_WINDOW_MINUTES * 60_000).toISOString()
+      const { data: prior, error: priorErr } = await adminClient
+        .from('discovery_events')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('query_text', query)
+        .gte('created_at', since)
+        .limit(1)
+      if (priorErr) {
+        captureException(new Error(`continuation lookup failed: ${priorErr.message}`), {
+          functionName: 'nl-search', correlationId, extra: { phase: 'daily_cap' },
+        })
+      }
+      isContinuation = !priorErr && (prior ?? []).length > 0
+    }
+    if (!isContinuation) {
       const cap = await aiQuestionCapReached(adminClient, user.id, AI_DAILY_QUESTION_CAP)
       if (cap.error) {
         captureException(new Error(`ai_questions_today failed: ${cap.error}`), {
