@@ -203,7 +203,7 @@ describe('push payload × every notification kind', () => {
   // guard is `startsWith('/')`, which a protocol-relative URL passes. Only the
   // server's own SQL writes target_url today, so nothing reaches it; the guard
   // should still refuse it (`startsWith('/') && !startsWith('//')`).
-  it.fails('BUG: a protocol-relative target ("//host/path") is refused too', () => {
+  it('a protocol-relative target ("//host/path") is refused too', () => {
     expect(buildPushPayload('recruiting_update', { target_url: '//evil.example/phish' }, 'x').url).toBe('/messages')
   })
 
@@ -226,62 +226,31 @@ function screenOf(url: string): string {
   return tab ? `${base} [${tab}]` : base
 }
 
-/**
- * Kinds where the push and the row disagree today. Each is a real defect for
- * the person tapping the push; see the it.fails per group below.
- */
-const PUSH_OPENS_WRONG_TAB: NotificationKind[] = ['reference_request_received', 'reference_updated', 'reference_request_rejected']
-const PUSH_HAS_NO_COPY: NotificationKind[] = ['club_invitation_received', 'club_invitation_accepted']
 // An announcement's row follows the admin-set target; its push goes to the
 // feed by design (the full text is in the list).
 const BY_DESIGN: NotificationKind[] = ['system_announcement']
+const CLUB_INVITATIONS: NotificationKind[] = ['club_invitation_received', 'club_invitation_accepted']
 
 describe('push ↔ in-app parity', () => {
-  it('for every other kind, the push opens the same screen as the row', () => {
-    const skip = new Set<NotificationKind>([...PUSH_OPENS_WRONG_TAB, ...PUSH_HAS_NO_COPY, ...BY_DESIGN])
+  it('for every kind, the push opens the same screen as the row', () => {
+    const skip = new Set<NotificationKind>(BY_DESIGN)
     const compared: string[] = []
     for (const kind of KINDS.filter((k) => !skip.has(k))) {
       const inApp = resolveNotificationRoute(notification(kind, { metadata: FULL_METADATA })) as string
-      const push = buildPushPayload(kind, FULL_METADATA, 'Ana Club').url
+      const push = buildPushPayload(kind, FULL_METADATA, 'Ana Club', ACTOR).url
       expect(screenOf(push), `${kind}: row ${inApp} vs push ${push}`).toBe(screenOf(inApp))
       compared.push(kind)
     }
     expect(compared.length).toBe(KINDS.length - skip.size)
   })
 
-  // BUG (release audit 2026-10-05, MEDIUM, send-push/push-payload.ts:66-95):
-  // reference pushes still deep-link into the Friends tab. References moved to
-  // their own tab on 2026-05-08 and the in-app rows were fixed then
-  // (notifications/config.ts: "same noun, different feature"); the push
-  // payload was not. Tapping "Ann requested a reference" opens Friends →
-  // incoming friend requests, where there is nothing to answer; "updated" /
-  // "declined" open Friends with a `section=references` anchor that does not
-  // exist for players (FriendsTab is mounted with hideReferences).
-  it.fails('BUG: reference pushes open the References tab, like their rows', () => {
-    for (const kind of PUSH_OPENS_WRONG_TAB) {
-      const inApp = resolveNotificationRoute(notification(kind)) as string
-      const push = buildPushPayload(kind, {}, 'Ana Club').url
-      expect(screenOf(push), kind).toBe(screenOf(inApp))
-    }
-  })
-
-  // BUG (same audit, LOW-MEDIUM, send-push/push-payload.ts default branch):
-  // the two club-invitation kinds have no case in buildPushPayload, so the
-  // push reads "HOCKIA · You have a new notification" and opens the feed,
-  // while the row says who invited you and opens that club.
-  it.fails('BUG: club invitation pushes name the club and open the same place as their rows', () => {
-    for (const kind of PUSH_HAS_NO_COPY) {
+  // Fixed after the release audit (2026-10-06): the two club-invitation kinds
+  // used to fall to the generic "You have a new notification" push.
+  it('club invitation pushes name the club', () => {
+    for (const kind of CLUB_INVITATIONS) {
       const push = buildPushPayload(kind, {}, 'Ana Club')
       expect(push.body, kind).toContain('Ana Club')
       expect(push.body, kind).not.toBe('You have a new notification')
-    }
-  })
-
-  it('the documented exceptions are still exceptions (delete an entry here when it is fixed)', () => {
-    for (const kind of [...PUSH_OPENS_WRONG_TAB, ...PUSH_HAS_NO_COPY]) {
-      const inApp = resolveNotificationRoute(notification(kind)) as string
-      const push = buildPushPayload(kind, {}, 'Ana Club').url
-      expect(screenOf(push), kind).not.toBe(screenOf(inApp))
     }
   })
 })

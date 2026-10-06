@@ -567,14 +567,8 @@ describe('C · useSendInvite / useDeclineInvite', () => {
     }
   })
 
-  // BUG (release audit 2026-10-05, LOW, hooks/useInvites.ts:151): the "is this a
-  // rule?" test is a regex (/can.t be invited|already|limit|not open|500 characters/)
-  // kept apart from the PASS_THROUGH list in lib/invites.ts. "This player passed
-  // on this role" (founder ruling 2026-10-01, added by 20261001210000) matches
-  // neither alternative, so every such ordinary refusal is sent to Sentry as an
-  // error. The club still reads the right sentence. Fix: report only when
-  // inviteErrorMessage returned the generic line.
-  it.fails('BUG: no send_invite rule refusal is reported to Sentry as an incident', async () => {
+  // Fixed after the release audit (2026-10-06): only the generic fallback is reported.
+  it('no send_invite rule refusal is reported to Sentry as an incident', async () => {
     const reported: string[] = []
     for (const message of sendInviteRules()) {
       if ((await refusedSend(message)).reported > 0) reported.push(message)
@@ -582,13 +576,6 @@ describe('C · useSendInvite / useDeclineInvite', () => {
     expect(reported).toEqual([])
   })
 
-  it('the rule refusals reported as incidents today are exactly this one (update when fixed)', async () => {
-    const reported: string[] = []
-    for (const message of sendInviteRules()) {
-      if ((await refusedSend(message)).reported > 0) reported.push(message)
-    }
-    expect(reported).toEqual(['This player passed on this role'])
-  })
 
   it('an unexpected error is reported and returns the neutral line', async () => {
     h.rpc.mockResolvedValue({ data: null, error: { code: 'XX000', message: 'internal error' } })
