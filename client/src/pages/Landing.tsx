@@ -72,7 +72,15 @@ const LINK_M = webButtonClassName({ variant: 'link', size: 'medium' })
  * flash — while the static HTML (no class) stays final.
  */
 function useEntrance(): boolean {
-  const [enter] = useState(() => typeof window !== 'undefined' && !PRERENDERED && !prefersReducedMotion())
+  const [enter] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      !PRERENDERED &&
+      // The prerender snapshot itself (scripts/prerender-landing.mjs sets
+      // __PRERENDER__): the captured HTML must carry no animation class.
+      !(window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__ &&
+      !prefersReducedMotion(),
+  )
   const reduced = useReducedMotion()
   return enter && !reduced
 }
@@ -445,7 +453,7 @@ export default function Landing() {
           data-testid="hero"
           className={`overflow-x-clip pt-[calc(env(safe-area-inset-top)+60px)] lg:pt-[72px] ${enter ? 'lv3-enter' : ''}`}
         >
-          <div className={`${CONTAINER} flex flex-col gap-5 pb-10 pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(400px,560px)] lg:items-center lg:gap-16 lg:pb-20 lg:pt-10`}>
+          <div className={`${CONTAINER} flex flex-col gap-5 pb-10 pt-6 lg:grid lg:grid-cols-[minmax(440px,1fr)_minmax(400px,560px)] lg:items-center lg:gap-16 lg:pb-20 lg:pt-10`}>
             <div className="mx-auto flex w-full max-w-[560px] flex-col lg:mx-0 lg:max-w-none">
               <h1 id="hero-title" className="text-web3-display-m text-ink-1 lg:text-[48px] lg:leading-[1] xl:text-web3-display">
                 <span className="block" data-enter style={{ '--d': '0ms' } as React.CSSProperties}>The network for</span>
@@ -456,7 +464,7 @@ export default function Landing() {
                 Build your hockey profile, connect with clubs worldwide and find your next move.
               </p>
 
-              <div className="mt-6 flex flex-col items-center gap-4 lg:mt-8 lg:flex-row lg:gap-6" data-enter style={{ '--d': '320ms' } as React.CSSProperties}>
+              <div className="mt-6 flex flex-col items-center gap-4 lg:mt-8 lg:flex-row lg:flex-wrap lg:gap-x-6 lg:gap-y-3" data-enter style={{ '--d': '320ms' } as React.CSSProperties}>
                 <Link
                   to="/signup"
                   onClick={() => handleCta('create_profile', 'hero')}
