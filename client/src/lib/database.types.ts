@@ -9461,6 +9461,7 @@ export type Database = {
         Args: { p_member_profile_id: string }
         Returns: Json
       }
+      is_adult_profile: { Args: { p_uid: string }; Returns: boolean }
       is_blocked_pair: {
         Args: { p_user_a: string; p_user_b: string }
         Returns: boolean

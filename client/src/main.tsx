@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from '@sentry/react'
 import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
+import { EXPECTED_REFUSAL_MESSAGES, isExpectedRefusal } from '@/lib/sentryFilters'
+import { scrubBreadcrumb, scrubEvent } from '@/lib/sentryScrub'
+import { getAppVersion } from '@/lib/appVersion'
 import './globals.css'
 import App from './App.tsx'
 import LaunchSplashController from './components/LaunchSplashController'
@@ -48,9 +51,10 @@ Sentry.init({
   // triage), burying real production signals.
   enabled: Boolean(import.meta.env.VITE_SENTRY_DSN) && sentryEnvironment !== 'development',
   environment: sentryEnvironment,
-  // Release tag — set via Vercel/Capacitor build env. Falls back to 'unknown'
-  // so events from an untagged build are still identifiable in Sentry.
-  release: import.meta.env.VITE_APP_VERSION || import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'unknown',
+  // The SAME release name the source-map upload used (vite.config.ts →
+  // lib/sentryRelease): web@<sha> on Vercel, native@<sha> in the Capacitor
+  // bundle, dev locally. Native store version/build are tags (set below).
+  release: import.meta.env.VITE_SENTRY_RELEASE || 'dev',
   // PERF (Lighthouse 2026-07-29): integrations attach AFTER first paint —
   // see below. init() itself is cheap; browserTracing + replay setup were
   // part of a 5.4s mobile render delay (sentry chunk alone: 643ms boot-up
@@ -99,7 +103,17 @@ Sentry.init({
     // Android WebView bridge torn down mid-call after the app was
     // backgrounded — the OS reclaimed the page, not a code path.
     'Java object is gone',
+    // Deliberate business refusals the UI already explains (blocked member,
+    // daily new-conversation allowance) — release audit 2026-10-06.
+    ...EXPECTED_REFUSAL_MESSAGES,
   ],
+  beforeBreadcrumb(crumb) {
+    // Navigation / fetch URLs can carry auth tokens (#access_token, ?code=).
+    return scrubBreadcrumb(crumb)
+  },
+  beforeSendTransaction(event) {
+    return scrubEvent(event)
+  },
   beforeSend(event, hint) {
     // Network failures (Safari "Load failed", Chrome "Failed to fetch"): the
     // request never reached the server — offline, a blocked ISP, a dropped
@@ -109,6 +123,7 @@ Sentry.init({
     // 2026-09-24: out of alerts, still counted). Alert rules key on
     // level:error, so these never page.
     const original = hint?.originalException
+    if (isExpectedRefusal(original)) return null
     const message = [event.message, ...(event.exception?.values?.map((v) => v.value) ?? []), original instanceof Error ? original.message : '']
       .filter((m): m is string => typeof m === 'string')
       .join('\n')
@@ -118,26 +133,21 @@ Sentry.init({
       event.tags = { ...event.tags, network_failure: 'true' }
       event.fingerprint = ['network-failure']
     }
-    // Scrub PII from error events before sending to Sentry
-    if (event.user) {
-      delete event.user.email
-      delete event.user.ip_address
-      delete event.user.username
-    }
-    // Scrub email-like patterns from breadcrumb messages
-    if (event.breadcrumbs) {
-      for (const crumb of event.breadcrumbs) {
-        if (typeof crumb.message === 'string') {
-          crumb.message = crumb.message.replace(
-            /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-            '[REDACTED_EMAIL]'
-          )
-        }
-      }
-    }
-    return event
+    // Scrub PII before sending: user email/IP/username, emails in messages,
+    // exception values and breadcrumbs, and auth tokens / the hash in URLs.
+    return scrubEvent(event)
   },
 })
+
+// Which shell is running, plus (native) the store version and build — one web
+// bundle serves both native apps, so these can only be known at runtime.
+Sentry.setTag('platform', isNativePlatform ? Capacitor.getPlatform() : 'web')
+if (isNativePlatform) {
+  void getAppVersion().then((info) => {
+    if (!info) return
+    Sentry.setTags({ app_version: info.version, app_build: info.build })
+  })
+}
 
 // Attach the heavyweight integrations once the page has painted and the
 // main thread is idle. Errors before this point are still captured by the
