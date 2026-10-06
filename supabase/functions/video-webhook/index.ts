@@ -26,6 +26,8 @@
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { withSentry } from '../_shared/sentry.ts'
+import { isFreshWebhookTimestamp } from '../_shared/webhook-time.ts'
 
 async function verifySignature(
   rawBody: string,
@@ -46,7 +48,7 @@ async function verifySignature(
 
   // Reject stale timestamps (>5 min skew) to blunt replay.
   const tsec = Number(time)
-  if (!Number.isFinite(tsec)) return false
+  if (!isFreshWebhookTimestamp(tsec)) return false
 
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey(
@@ -65,7 +67,7 @@ async function verifySignature(
   return diff === 0
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry('video-webhook', async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'method_not_allowed' }), {
@@ -123,7 +125,7 @@ Deno.serve(async (req) => {
   if (state === 'ready' || payload.readyToStream === true) {
     const duration = typeof payload.duration === 'number' ? Math.round(payload.duration) : null
     const thumbnail = typeof payload.thumbnail === 'string' ? payload.thumbnail : null
-    await supabase
+    const { error } = await supabase
       .from('player_videos')
       .update({
         status: 'ready',
@@ -134,24 +136,27 @@ Deno.serve(async (req) => {
         error_reason: null,
       })
       .eq(match.col, match.val)
+    if (error) throw error
   } else if (state === 'error') {
-    await supabase
+    const { error } = await supabase
       .from('player_videos')
       .update({
         status: 'errored',
         error_reason: (statusObj.errorReasonText ?? 'Cloudflare processing error').slice(0, 500),
       })
       .eq(match.col, match.val)
+    if (error) throw error
   } else {
     // inprogress / queued → reflect processing.
-    await supabase
+    const { error } = await supabase
       .from('player_videos')
       .update({ status: 'processing', cf_uid: uid })
       .eq(match.col, match.val)
+    if (error) throw error
   }
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
-})
+}, corsHeaders))
