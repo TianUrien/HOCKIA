@@ -165,7 +165,7 @@ const FAILSAFE_MS = 1500
  *  stamps the flag). The visitor has been READING the static content for
  *  seconds by the time React boots — fading it back in would be a regression
  *  dressed as polish, so entrances start visible on those loads. */
-const PRERENDERED =
+export const PRERENDERED =
   typeof window !== 'undefined' &&
   (window as unknown as { __PRERENDERED_LANDING__?: boolean }).__PRERENDERED_LANDING__ === true
 

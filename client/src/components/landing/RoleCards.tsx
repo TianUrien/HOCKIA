@@ -1,179 +1,150 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { UserRound, ClipboardList, Building2, Sparkles, ShieldCheck, Handshake } from 'lucide-react'
-import {
-  useInView,
-  usePointerGlow,
-  useReducedMotion,
-  stagger,
-  EASE_ENTRANCE,
-  DUR_ENTRANCE,
-} from '@/lib/motion'
+import { Link } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
+import { useInView, useReducedMotion } from '@/lib/motion'
+import { webButtonClassName, WEB_LINK_CHEVRON } from '@/components/ui/buttonClasses'
+import { clubInitials, placeLine, postedAgo, type ClubCrest, type OpenRoleCard } from '@/lib/landingRoles'
 
 /**
- * "Built for everyone who makes field hockey happen."
+ * Open roles on the web landing (Figma "Landing v3" 122:1885, 6 Oct 2026):
+ * the crest strip ("Clubs recruiting on Hockia") and the role cards.
  *
- * ONE DOM tree, two behaviours:
- *   • ≥640px — a grid lit by the cursor. The glow bleeds between neighbours,
- *     so six boxes read as a single lit surface.
- *   • <640px — a snap carousel. Six stacked cards is a long scroll past
- *     secondary content; a rail with a visible peek of the next card turns it
- *     into one screen. The browser drives the momentum — no JS carousel
- *     matches the platform's own inertia on iOS — and JS only reads position
- *     to scale the neighbours and light the dots.
- *
- * Duplicating the markup per breakpoint would double the DOM and desync the
- * two copies the first time someone edits one of them, so the layout switch is
- * pure CSS and the JS no-ops when the rail isn't scrollable.
+ * The whole card is one link to the role page. Desktop: three columns.
+ * Phones: a 300-wide scroll-snap carousel with the next card peeking — the
+ * browser drives the momentum, there is no JS carousel. Data is the public
+ * opportunities read (lib/landingRoles); every missing field drops its line
+ * rather than showing a placeholder.
  */
 
-const ROLES = [
-  { t: 'Players', d: 'Build the profile that gets you found, and find opportunities that fit.', icon: UserRound },
-  { t: 'Coaches', d: 'Show your coaching journey and connect with clubs that need you.', icon: ClipboardList },
-  { t: 'Clubs', d: 'Present your club, recruit with full context, and reach the wider hockey world.', icon: Building2 },
-  { t: 'Brands', d: 'Understand the community and find meaningful ways to take part in the sport.', icon: Sparkles },
-  { t: 'Umpires', d: 'Be visible in the ecosystem and connect beyond the matchday.', icon: ShieldCheck },
-  { t: 'Everyone else', d: 'One place for the people and organisations moving the sport forward.', icon: Handshake },
-] as const
+const LV3_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+const CREST_STAGGER_MS = 60
+/** Chips shown before the "+N" overflow. */
+const MAX_PACKAGE_CHIPS = 3
 
-export default function RoleCards() {
-  const glowRef = usePointerGlow<HTMLDivElement>('[data-glow]')
-  const { ref: viewRef, inView } = useInView<HTMLDivElement>()
-  const railRef = useRef<HTMLDivElement | null>(null)
-  const [active, setActive] = useState(0)
-  const [scrollable, setScrollable] = useState(false)
+export function CrestStrip({ crests }: { crests: ClubCrest[] }) {
+  // One-shot: the strip fades in with a 60 ms stagger when the section
+  // enters view (IntersectionObserver via lib/motion, not scroll-linked).
+  const { ref, inView } = useInView<HTMLDivElement>()
   const reduced = useReducedMotion()
-
-  // Proximity-to-centre drives each card's scale/opacity on the rail, so the
-  // focused card is obvious mid-swipe rather than only after the snap lands.
-  const paint = useCallback(() => {
-    const rail = railRef.current
-    if (!rail) return
-    const canScroll = rail.scrollWidth - rail.clientWidth > 8
-    setScrollable(canScroll)
-
-    const cards = Array.from(rail.children) as HTMLElement[]
-    if (!canScroll) {
-      for (const c of cards) c.style.removeProperty('--near')
-      return
-    }
-
-    const mid = rail.scrollLeft + rail.clientWidth / 2
-    let best = 0
-    let bestDist = Infinity
-    cards.forEach((c, i) => {
-      const centre = c.offsetLeft + c.offsetWidth / 2
-      const dist = Math.abs(centre - mid)
-      // 1 at dead centre, 0 once a full card-width away.
-      const near = Math.max(0, 1 - dist / c.offsetWidth)
-      c.style.setProperty('--near', near.toFixed(3))
-      if (dist < bestDist) {
-        bestDist = dist
-        best = i
-      }
-    })
-    setActive(best)
-  }, [])
-
-  useEffect(() => {
-    const rail = railRef.current
-    if (!rail) return
-    let frame = 0
-    const onScroll = () => {
-      if (frame) return
-      frame = requestAnimationFrame(() => {
-        frame = 0
-        paint()
-      })
-    }
-    paint()
-    rail.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
-    return () => {
-      rail.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-      if (frame) cancelAnimationFrame(frame)
-    }
-  }, [paint])
-
-  const goTo = (i: number) => {
-    const rail = railRef.current
-    const card = rail?.children[i] as HTMLElement | undefined
-    if (!rail || !card) return
-    rail.scrollTo({
-      left: card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2,
-      behavior: reduced ? 'auto' : 'smooth',
-    })
-  }
-
+  if (crests.length === 0) return null
   return (
-    <div ref={viewRef}>
-      <div ref={glowRef}>
-        <div
-          ref={railRef}
-          className="snap-rail -mx-6 flex gap-4 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3"
-          // A scrollable region with no focusable children still has to be
-          // reachable and operable by keyboard — but ONLY while it actually
-          // scrolls. Above the rail breakpoint this is a plain grid, and a
-          // permanent tab stop there is just a dead stop between the heading
-          // and the next link.
-          tabIndex={scrollable ? 0 : undefined}
-          role="group"
-          aria-label="Who HOCKIA is built for"
-        >
-          {ROLES.map((r, i) => {
-            const Icon = r.icon
-            return (
-              <article
-                key={r.t}
-                data-glow
-                className="glow-card rail-card snap-item group h-auto w-[80%] flex-shrink-0 rounded-2xl border border-gray-100 bg-white p-6 sm:w-auto"
-                style={{
-                  opacity: inView ? 1 : 0,
-                  transform: inView ? 'translateY(0)' : 'translateY(14px)',
-                  transition: reduced
-                    ? 'none'
-                    : `opacity ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${stagger(i)}ms, transform ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${stagger(i)}ms, box-shadow 240ms ${EASE_ENTRANCE}, border-color 240ms ${EASE_ENTRANCE}`,
-                }}
-              >
-                {/* Inner element carries the rail's proximity scale. The
-                    entrance above writes `transform` inline, and an inline
-                    style always beats a stylesheet rule — two animations on
-                    one element would silently drop one of them. */}
-                <div className="rail-inner">
-                  <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-hockia-primary/[0.07] text-hockia-primary transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-0.5 group-hover:scale-[1.06] motion-reduce:transform-none">
-                    <Icon className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-                  </span>
-                  <h3 className="text-lg font-bold text-gray-900">{r.t}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-gray-600">{r.d}</p>
-                </div>
-              </article>
-            )
-          })}
+    <div ref={ref} className="flex flex-wrap items-center gap-x-4 gap-y-3 lg:gap-x-5" data-testid="crest-strip">
+      <p className="text-[13px] font-semibold leading-[18px] text-ink-3">Clubs recruiting on Hockia</p>
+      <ul className="flex items-center gap-2.5 lg:gap-3.5" aria-label="Clubs recruiting on Hockia">
+        {crests.map((c, i) => (
+          <li
+            key={c.name}
+            className="group relative"
+            style={{
+              opacity: inView ? 1 : 0,
+              transform: inView ? 'translateY(0)' : 'translateY(8px)',
+              transition: reduced
+                ? 'none'
+                : `opacity 500ms ${LV3_EASE} ${i * CREST_STAGGER_MS}ms, transform 500ms ${LV3_EASE} ${i * CREST_STAGGER_MS}ms`,
+            }}
+          >
+            <img
+              src={c.url}
+              alt={c.name}
+              title={c.name}
+              width={56}
+              height={56}
+              loading="lazy"
+              className="lv3-crest h-12 w-12 object-contain transition-transform duration-200 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:transform-none lg:h-14 lg:w-14"
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export function RoleCard({ role, now, onClick, className = '' }: {
+  role: OpenRoleCard
+  now: Date
+  onClick?: () => void
+  className?: string
+}) {
+  const place = placeLine(role)
+  const ago = postedAgo(role.createdAt, now)
+  const chips = role.packages.slice(0, MAX_PACKAGE_CHIPS)
+  const more = role.packages.length - chips.length
+  return (
+    <Link
+      to={`/opportunities/${role.id}`}
+      onClick={onClick}
+      data-testid="role-card"
+      className={`group/card flex h-full flex-col gap-4 rounded-[20px] border border-line bg-white p-6 shadow-[0_1px_2px_rgba(15,15,20,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:border-brand-primary/35 hover:shadow-[0_16px_40px_rgba(108,43,217,0.12)] focus:outline-none focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white motion-reduce:transition-none motion-reduce:transform-none ${className}`}
+    >
+      {/* Row 1: crest · club + place · posted-ago */}
+      <div className="flex items-start gap-3">
+        {role.crestUrl ? (
+          <img
+            src={role.crestUrl}
+            alt=""
+            width={52}
+            height={52}
+            loading="lazy"
+            className="lv3-crest h-[52px] w-[52px] shrink-0 object-contain transition-transform duration-200 ease-out group-hover/card:scale-[1.04] motion-reduce:transition-none motion-reduce:transform-none"
+          />
+        ) : role.clubName ? (
+          // No crest: an initials tile keeps the header aligned (design ruling 6 Oct).
+          <span
+            aria-hidden="true"
+            data-testid="crest-fallback"
+            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] bg-brand-soft text-[17px] font-semibold leading-[22px] text-brand-primary"
+          >
+            {clubInitials(role.clubName)}
+          </span>
+        ) : null}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          {role.clubName && (
+            <p className="truncate text-[17px] font-semibold leading-[22px] text-ink-1" title={role.clubName}>{role.clubName}</p>
+          )}
+          {place && (
+            <p className="truncate text-[13px] leading-[18px] text-ink-3" title={place}>
+              {role.flag && <span aria-hidden="true">{role.flag} </span>}
+              {place}
+            </p>
+          )}
         </div>
+        {ago && (
+          <span className="shrink-0 text-[13px] leading-[18px] text-ink-3" aria-label={`Posted ${ago}`}>{ago}</span>
+        )}
       </div>
 
-      {/* Rail position. Hidden when the cards are a grid — and when the rail
-          somehow isn't scrollable, so it can never be a row of dead dots. */}
-      {scrollable && (
-        <div className="mt-5 flex items-center justify-center gap-2 sm:hidden">
-          {ROLES.map((r, i) => (
-            <button
-              key={r.t}
-              type="button"
-              onClick={() => goTo(i)}
-              aria-label={`Show ${r.t}`}
-              aria-current={active === i}
-              className="group flex h-11 w-6 items-center justify-center focus-visible:outline-none"
-            >
-              <span
-                className={`block h-1.5 rounded-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-focus-visible:ring-2 group-focus-visible:ring-hockia-primary/50 group-focus-visible:ring-offset-2 ${
-                  active === i ? 'w-5 bg-hockia-primary' : 'w-1.5 bg-gray-300'
-                }`}
-              />
-            </button>
+      {/* Row 2: position + team tag */}
+      <div className="flex flex-wrap items-center gap-3">
+        <h3 className="text-[24px] font-semibold leading-[30px] text-ink-1">{role.position}</h3>
+        {role.team && (
+          <span className="inline-flex h-6 items-center rounded-full bg-brand-soft px-2.5 text-[12px] font-semibold leading-4 text-brand-primary">
+            {role.team}
+          </span>
+        )}
+      </div>
+
+      {/* Row 3: start · duration */}
+      {role.when && <p className="text-[14px] font-medium leading-5 text-ink-2">{role.when}</p>}
+
+      {/* Row 4: package chips */}
+      {chips.length > 0 && (
+        <ul className="flex flex-wrap gap-2" aria-label="Package">
+          {chips.map((p) => (
+            <li key={p} className="inline-flex items-center rounded-full bg-surface-muted px-2.5 py-[5px] text-[12px] font-semibold leading-4 text-ink-2">{p}</li>
           ))}
-        </div>
+          {more > 0 && (
+            <li className="inline-flex items-center rounded-full bg-surface-muted px-2.5 py-[5px] text-[12px] font-semibold leading-4 text-ink-2">+{more}</li>
+          )}
+        </ul>
       )}
-    </div>
+
+      {/* Footer */}
+      <div className="mt-auto flex items-center justify-between border-t border-line pt-4">
+        <span className="text-[14px] leading-5 text-ink-3">Apply in the app</span>
+        <span className={webButtonClassName({ variant: 'link', size: 'medium', className: 'h-5 group-hover/card:underline' })}>
+          View role
+          <ChevronRight className={`${WEB_LINK_CHEVRON} group-hover/card:translate-x-0.5`} aria-hidden="true" />
+        </span>
+      </div>
+    </Link>
   )
 }

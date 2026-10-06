@@ -1,7 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import RoleCards from '@/components/landing/RoleCards'
+import { CrestStrip, RoleCard } from '@/components/landing/RoleCards'
 import { stagger, prefersReducedMotion } from '@/lib/motion'
+import { useScrolled } from '@/hooks/useScrolled'
+import { renderHook, act } from '@testing-library/react'
+import type { OpenRoleCard } from '@/lib/landingRoles'
 
 /**
  * Motion is a progressive enhancement on a CONVERSION page. The invariant that
@@ -10,73 +14,106 @@ import { stagger, prefersReducedMotion } from '@/lib/motion'
  * here is about the failure path.
  */
 
+// RoleCards imports lib/landingRoles → lib/supabase, which THROWS at import
+// without the env vars (absent in the CI unit job). Nothing here fetches.
+vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() }, from: vi.fn() } }))
+
 afterEach(() => vi.unstubAllGlobals())
 
-const ROLES = ['Players', 'Coaches', 'Clubs', 'Brands', 'Umpires', 'Everyone else']
+const CRESTS = [
+  { name: 'Hockey Team Bologna', url: 'https://cdn/htb.png' },
+  { name: 'KHCB', url: 'https://cdn/khcb.png' },
+]
 
-describe('RoleCards', () => {
-  it('renders every role', async () => {
-    render(<RoleCards />)
-    for (const r of ROLES) {
-      expect(await screen.findByRole('heading', { name: r })).toBeInTheDocument()
-    }
+const ROLE: OpenRoleCard = {
+  id: 'r1', clubName: 'Hockey Team Bologna', clubAccount: true, crestUrl: 'https://cdn/htb.png', city: 'Bologna', country: 'Italy',
+  flag: '🇮🇹', league: 'Serie A1', position: 'Forward', team: "Women's", when: 'Starts 16 Sep · 3 months',
+  packages: ['Housing', 'Flights', 'Job', 'Car'], createdAt: '2026-10-03T12:00:00Z',
+}
+
+function stubReducedMotion() {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockImplementation((q: string) => ({
+      matches: q.includes('prefers-reduced-motion'),
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  )
+}
+
+describe('CrestStrip', () => {
+  it('renders every crest with the club name as its tooltip, with the 60 ms stagger', async () => {
+    render(<CrestStrip crests={CRESTS} />)
+    const imgs = await screen.findAllByRole('img')
+    expect(imgs.map((i) => i.getAttribute('title'))).toEqual(['Hockey Team Bologna', 'KHCB'])
+    // jsdom has no layout, so visibility arrives via useInView's 1.5 s failsafe.
+    await waitFor(() => expect((imgs[1].parentElement as HTMLElement).style.opacity).toBe('1'), { timeout: 3000 })
+    expect((imgs[1].parentElement as HTMLElement).style.transition).toMatch(/ 60ms/)
+    expect((imgs[0].parentElement as HTMLElement).style.transition).toMatch(/ 0ms/)
   })
 
-  it('is VISIBLE without IntersectionObserver — the enhancement can fail, the copy cannot', async () => {
+  it('is VISIBLE without IntersectionObserver — the enhancement can fail, the crests cannot', async () => {
     vi.stubGlobal('IntersectionObserver', undefined)
-    render(<RoleCards />)
+    render(<CrestStrip crests={CRESTS} />)
     await waitFor(() => {
-      const card = screen.getByRole('heading', { name: 'Players' }).closest('article')!
-      expect(card.style.opacity).toBe('1')
+      const li = screen.getAllByRole('img')[0].parentElement as HTMLElement
+      expect(li.style.opacity).toBe('1')
     })
   })
 
-  it('is NOT a tab stop while it is a grid — a focus stop that does nothing', async () => {
-    // jsdom reports zero scroll extent, which is the desktop grid case.
-    render(<RoleCards />)
-    const rail = await screen.findByRole('group', { name: /who hockia is built for/i })
-    expect(rail).not.toHaveAttribute('tabindex')
-  })
-
-  it('renders NO position dots when the rail cannot scroll', async () => {
-    // Dots that can't do anything are worse than no dots.
-    render(<RoleCards />)
-    await screen.findByRole('heading', { name: 'Players' })
-    expect(screen.queryByRole('button', { name: /^Show / })).not.toBeInTheDocument()
-  })
-
-  it('BECOMES a keyboard-operable region with dots once it scrolls', async () => {
-    // The carousel case: a scrollable region with no focusable children is
-    // unreachable by keyboard unless it is itself a tab stop.
-    const w = vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(1800)
-    const c = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(390)
-    try {
-      render(<RoleCards />)
-      const rail = await screen.findByRole('group', { name: /who hockia is built for/i })
-      await waitFor(() => expect(rail).toHaveAttribute('tabindex', '0'))
-      expect(await screen.findAllByRole('button', { name: /^Show / })).toHaveLength(ROLES.length)
-    } finally {
-      w.mockRestore()
-      c.mockRestore()
-    }
-  })
-
   it('does not animate under prefers-reduced-motion', async () => {
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn().mockImplementation((q: string) => ({
-        matches: q.includes('prefers-reduced-motion'),
-        media: q,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-      })),
+    stubReducedMotion()
+    render(<CrestStrip crests={CRESTS} />)
+    const li = (await screen.findAllByRole('img'))[0].parentElement as HTMLElement
+    expect(li.style.transition).toBe('none')
+    expect(li.style.opacity).toBe('1')
+  })
+
+  it('renders nothing for an empty list', () => {
+    const { container } = render(<CrestStrip crests={[]} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe('RoleCard', () => {
+  it('is one link with the hover lift, three chips + overflow, and the posted-ago on the right', () => {
+    render(
+      <MemoryRouter>
+        <RoleCard role={ROLE} now={new Date('2026-10-06T12:00:00Z')} />
+      </MemoryRouter>,
     )
-    render(<RoleCards />)
-    const card = (await screen.findByRole('heading', { name: 'Players' })).closest('article')!
-    expect(card.style.transition).toBe('none')
-    expect(card.style.opacity).toBe('1')
+    const card = screen.getByTestId('role-card')
+    expect(card.tagName).toBe('A')
+    expect(card).toHaveAttribute('href', '/opportunities/r1')
+    expect(card.className).toMatch(/hover:-translate-y-1/)
+    expect(card.className).toMatch(/hover:border-brand-primary\/35/)
+    expect(card.className).toMatch(/duration-200/)
+    expect(card.className).toMatch(/motion-reduce:transition-none/)
+    expect(screen.getByRole('list', { name: 'Package' })).toHaveTextContent('HousingFlightsJob+1')
+    expect(screen.getByLabelText('Posted 3d')).toHaveTextContent('3d')
+    expect(card).toHaveTextContent('🇮🇹 Bologna, Italy · Serie A1')
+  })
+})
+
+describe('useScrolled', () => {
+  it('flips past the threshold and back', () => {
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true })
+    const { result } = renderHook(() => useScrolled(8))
+    expect(result.current).toBe(false)
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 9, configurable: true })
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(result.current).toBe(true)
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 8, configurable: true })
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(result.current).toBe(false)
   })
 })
 

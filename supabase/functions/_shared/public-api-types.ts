@@ -38,6 +38,11 @@ export interface PublicOpportunityClub {
   logo_url: string | null
   location: string | null
   league: string | null
+  /** 'club' when a club account published the role; 'coach' when a coach
+   *  who recruits for a team did. For a coach, `name` is the organisation
+   *  (typed on the role, else the linked club), never the coach's own name,
+   *  and `logo_url` is the linked club's crest or null, never a photo. */
+  kind: 'club' | 'coach'
 }
 
 export interface PublicOpportunityLocation {
@@ -115,6 +120,10 @@ export interface PublicOpportunityRow {
   club_logo_url: string | null
   club_location: string | null
   club_league: string | null
+  publisher_role: string | null
+  organization_name: string | null
+  world_club_name: string | null
+  world_club_avatar_url: string | null
   eu_passport_required: boolean
 }
 
@@ -153,6 +162,32 @@ export const RATE_LIMIT = {
 // =============================================================================
 
 /**
+ * The organisation a role recruits for. A club account is its own
+ * organisation. A coach who recruits is never it: the role's typed
+ * organisation, else the linked world club (same order as the database's
+ * role_organisation); the coach's photo is never used as a crest.
+ */
+export function publicClub(row: Pick<PublicOpportunityRow, 'club_name' | 'club_logo_url' | 'club_location' | 'club_league' | 'publisher_role' | 'organization_name' | 'world_club_name' | 'world_club_avatar_url'>): PublicOpportunityClub {
+  if (row.publisher_role === 'club') {
+    return {
+      name: row.club_name || 'Unknown Club',
+      logo_url: row.club_logo_url,
+      location: row.club_location,
+      league: row.club_league,
+      kind: 'club',
+    }
+  }
+  const organisation = row.organization_name?.trim() || row.world_club_name?.trim() || null
+  return {
+    name: organisation || 'Unknown Club',
+    logo_url: organisation ? row.world_club_avatar_url : null,
+    location: row.club_location,
+    league: row.club_league,
+    kind: 'coach',
+  }
+}
+
+/**
  * Transform a database row to the public API response format
  */
 export function transformToPublicOpportunity(row: PublicOpportunityRow): PublicOpportunity {
@@ -177,12 +212,7 @@ export function transformToPublicOpportunity(row: PublicOpportunityRow): PublicO
       ...(row.benefits || []),
       ...(row.custom_benefits || []),
     ],
-    club: {
-      name: row.club_name || 'Unknown Club',
-      logo_url: row.club_logo_url,
-      location: row.club_location,
-      league: row.club_league,
-    },
+    club: publicClub(row),
     published_at: row.published_at,
     created_at: row.created_at,
     apply_url: `${HOCKIA_BASE_URL}/opportunities/${row.id}`,

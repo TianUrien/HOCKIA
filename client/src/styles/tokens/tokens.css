@@ -17,6 +17,8 @@
   --surface-muted-pressed: #e6e6ec;
   --surface-inverse: #0f0f14;
   --line-default: #e6e6ec;
+  --line-strong: #d4d4dc;
+  --surface-nav: #ffffffdb;
   --status-positive: #15803d;
   --status-positive-soft: #e8f7ee;
   --status-warning: #b45309;
@@ -71,10 +73,13 @@
   --space-24: 24px;
   --space-32: 32px;
   --space-40: 40px;
+  --space-80: 80px;
+  --space-96: 96px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 999px;
   --text-display-size: 34px;
   --text-display-line-height: 41px;

@@ -94,8 +94,11 @@ export default {
           muted: t.surface.muted, grouped: t.surface.muted,
           base: t.surface.base, subtle: t.surface.subtle,
           'muted-pressed': t.surface['muted-pressed'], inverse: t.surface.inverse,
+          // surface/nav: the landing navbar capsule (white at 86 %; the
+          // capsule itself paints it at 72 % over a 20 px backdrop blur).
+          nav: t.surface.nav,
         },
-        line: t.line.default,
+        line: { DEFAULT: t.line.default, strong: t.line.strong },
         positive: { DEFAULT: t.status.positive, soft: t.status['positive-soft'] },
         // Gold = TRUST (references). Never the amber warning hue: amber
         // (#B45309 / #FDF1E4) is for notices only — EU passport, "Apply by".
@@ -152,6 +155,17 @@ export default {
         'web-subhead': ['14px', { lineHeight: '20px', fontWeight: '500' }],
         'web-subhead-strong': ['14px', { lineHeight: '20px', fontWeight: '600' }],
         'web-footnote': ['13px', { lineHeight: '18px', fontWeight: '500' }],
+        // Landing v3 (Figma Hockia-UI-UX "Landing v3" 122:1885, 6 Oct 2026).
+        'web3-display': ['72px', { lineHeight: '72px', letterSpacing: '-0.03em', fontWeight: '800' }],
+        'web3-display-m': ['42px', { lineHeight: '44px', letterSpacing: '-0.03em', fontWeight: '800' }],
+        'web3-h2': ['40px', { lineHeight: '46px', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'web3-title': ['28px', { lineHeight: '34px', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'web3-lead': ['19px', { lineHeight: '29px', fontWeight: '400' }],
+        'web3-position': ['24px', { lineHeight: '30px', fontWeight: '600' }],
+        'web3-button': ['17px', { lineHeight: '22px', fontWeight: '600' }],
+        'web3-body': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'web3-row': ['15px', { lineHeight: '21px', fontWeight: '400' }],
+        'web3-eyebrow': ['12px', { lineHeight: '16px', letterSpacing: '0.06em', fontWeight: '600' }],
       },
       // Figma "Hockia / Space & Radius" wins (founder ruling 2026-10-02):
       // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·
@@ -160,6 +174,8 @@ export default {
         tile: `${r.sm}px`,
         card: `${r.lg}px`,
         sheet: `${r.xl}px`,
+        // radius/2xl 28: the landing closing panel and the web auth card.
+        panel: `${r['2xl']}px`,
       },
       keyframes: {
         shimmer: {

@@ -176,15 +176,17 @@ describe('route order: account first, then role, then set-up', () => {
     mocks.signedOut.current = true
     renderAuthRoutes('/signup')
     expect(screen.getByRole('heading', { name: 'Your game. Your network.' })).toBeInTheDocument()
-    const buttons = screen.getAllByRole('button')
+    // The phone top bar's back chevron (icon only) precedes the actions on the web.
+    const buttons = screen.getAllByRole('button').filter((b) => b.textContent)
     expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
-    // Button / Social (535:8381): 48 tall, full width, radius 12; Apple on the
-    // inverse surface, Google white with the line border; label 16 semibold.
+    // Web v3 social pills (Figma 127:2261): 52 tall, full width, pill; Apple
+    // on the inverse surface, Google white with the line-strong border; 17 semibold.
     const [apple, google] = buttons
     expect(apple).toHaveAttribute('data-provider', 'apple')
-    expect(apple).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-surface-inverse', 'text-white', 'text-[16px]', 'font-semibold')
+    expect(apple).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-surface-inverse', 'text-white', 'text-[17px]', 'font-semibold')
     expect(google).toHaveAttribute('data-provider', 'google')
-    expect(google).toHaveClass('h-12', 'w-full', 'rounded-[12px]', 'bg-white', 'ring-line', 'text-[16px]', 'font-semibold')
+    expect(google).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-white', 'border-line-strong', 'text-[17px]', 'font-semibold')
+    expect(screen.getByText('Free for players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
     // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
