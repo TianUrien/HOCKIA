@@ -20,10 +20,12 @@ export const colors = {
     "subtle": "#f8f8fa",
     "muted": "#f4f4f7",
     "muted-pressed": "#e6e6ec",
-    "inverse": "#0f0f14"
+    "inverse": "#0f0f14",
+    "nav": "#ffffffdb"
   },
   "line": {
-    "default": "#e6e6ec"
+    "default": "#e6e6ec",
+    "strong": "#d4d4dc"
   },
   "status": {
     "positive": "#15803d",
@@ -95,7 +97,9 @@ export const space = {
   "20": 20,
   "24": 24,
   "32": 32,
-  "40": 40
+  "40": 40,
+  "80": 80,
+  "96": 96
 }
 
 export const radius = {
@@ -103,5 +107,6 @@ export const radius = {
   "md": 12,
   "lg": 16,
   "xl": 20,
+  "2xl": 28,
   "full": 999
 }

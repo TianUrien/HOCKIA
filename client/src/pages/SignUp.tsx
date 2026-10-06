@@ -3,21 +3,24 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
-import { AuthShell, FormError, TermsLine } from '@/components/auth/authUi'
-import { Button } from '@/components/ui/Button'
+import { AuthHeading, AuthPage, FormError, TermsLine } from '@/components/auth/authUi'
+import { switchLink } from '@/components/auth/authClasses'
+import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { useAuthStore } from '@/lib/auth'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 
 /**
- * First run — OAuth first (Figma 04 Player 104:2096). Account-first
- * onboarding (founder rulings 2026-10-03): the account is created BEFORE any
- * role or profile question. Continue with Apple / Google round-trip through
- * /auth/callback and land on "Choose your role"; "Create with email" goes to
- * the email + password screen; members log in at /signin.
+ * First run — OAuth first (Figma "Landing v3" Sign up 127:2261 desktop /
+ * 127:2304 phone, approved 6 Oct 2026). Account-first onboarding (founder
+ * rulings 2026-10-03): the account is created BEFORE any role or profile
+ * question. Continue with Apple / Google round-trip through /auth/callback
+ * and land on "Choose your role"; "Create with email" goes to the email +
+ * password screen; members log in at /signin.
  *
  * No role is picked here any more — SignUp used to open with five role cards
  * (that step now lives in components/onboarding/ChooseRoleScreen, shown once
- * the account exists). Desktop renders the same centred column.
+ * the account exists). Layout and styling follow the web spec (AuthPage);
+ * the flows and the copy are unchanged.
  */
 export default function SignUp() {
   const navigate = useNavigate()
@@ -37,36 +40,36 @@ export default function SignUp() {
   }, [authLoading, user, profile?.onboarding_completed, navigate, next])
 
   return (
-    <AuthShell>
-      <InAppBrowserWarning context="signup" />
-      <div className="flex flex-1 flex-col justify-end pb-6 pt-10">
-        {/* On the web the wordmark is the way back to the landing page; in the
-            native app this screen is the start, so there is nothing to go back to. */}
-        {Capacitor.isNativePlatform() ? (
-          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto self-start" />
-        ) : (
-          <Link to="/" aria-label="HOCKIA home" className="self-start">
-            <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 w-auto" />
-          </Link>
-        )}
-        <h1 className="mt-8 text-large-title text-ink-1">Your game. Your network.</h1>
-      </div>
-      <div className="space-y-3 pb-2">
-        <FormError>{error}</FormError>
-        <OAuthButtons intent="signup" next={next} onError={setError} />
-        <Button variant="secondary" block onClick={() => navigate(`/signup/email${search}`)}>
-          Create with email
-        </Button>
-        {/* Founder ruling 2026-10-03: the standard line sits under the actions
-            it governs, so the OAuth path sees it too. */}
-        <TermsLine className="pt-1" />
-        <p className="pt-3 text-center text-row text-ink-2">
+    <AuthPage
+      // On the web the chevron goes back to the landing page; in the native
+      // app this screen is the start, so there is nothing to go back to.
+      onBack={Capacitor.isNativePlatform() ? undefined : () => navigate('/')}
+      backLabel="Back to home"
+      switchLine={
+        <>
           Already a member?{' '}
-          <Link to={`/signin${search}`} className="font-semibold text-hockia-primary">
+          <Link to={`/signin${search}`} className={switchLink}>
             Log in
           </Link>
-        </p>
+        </>
+      }
+    >
+      <InAppBrowserWarning context="signup" />
+      <AuthHeading title="Your game. Your network." subtitle="Free for players, coaches, clubs, umpires and brands." />
+      <div className="mt-6 flex flex-col gap-4">
+        <FormError>{error}</FormError>
+        <OAuthButtons intent="signup" next={next} onError={setError} appearance="web" />
+        <button
+          type="button"
+          onClick={() => navigate(`/signup/email${search}`)}
+          className={webButtonClassName({ variant: 'secondary', size: 'large', block: true })}
+        >
+          Create with email
+        </button>
+        {/* Founder ruling 2026-10-03: the standard line sits under the actions
+            it governs, so the OAuth path sees it too. */}
+        <TermsLine tone="web" />
       </div>
-    </AuthShell>
+    </AuthPage>
   )
 }

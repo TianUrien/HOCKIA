@@ -13,11 +13,19 @@ export type SocialProvider = 'apple' | 'google'
 
 export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   provider: SocialProvider
+  /** 'web' = the Landing v3 auth cut (Figma 127:2141): Large 52 pill, 17
+   *  semibold; Google with the 1.5 px line-strong border. Default 'app'. */
+  appearance?: 'app' | 'web'
 }
 
 const PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white active:opacity-90',
   google: 'bg-white text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted',
+}
+
+const WEB_PROVIDER_STYLES: Record<SocialProvider, string> = {
+  apple: 'bg-surface-inverse text-white hover:bg-[#26262e] active:opacity-90',
+  google: 'border-[1.5px] border-line-strong bg-white text-ink-1 hover:bg-surface-subtle active:bg-surface-muted',
 }
 
 function AppleLogo() {
@@ -40,17 +48,22 @@ function GoogleLogo() {
 }
 
 export const SocialButton = forwardRef<HTMLButtonElement, SocialButtonProps>(function SocialButton(
-  { provider, className, children, type = 'button', ...rest },
+  { provider, appearance = 'app', className, children, type = 'button', ...rest },
   ref,
 ) {
+  const web = appearance === 'web'
   return (
     <button
       ref={ref}
       type={type}
       data-provider={provider}
+      data-appearance={appearance}
       className={cn(
-        'flex h-12 w-full shrink-0 select-none items-center justify-center gap-2.5 rounded-[12px] text-[16px] font-semibold leading-[22px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 disabled:opacity-40',
-        PROVIDER_STYLES[provider],
+        'flex w-full shrink-0 select-none items-center justify-center gap-2.5 font-semibold transition-colors focus:outline-none disabled:opacity-40',
+        web
+          ? 'h-[52px] rounded-full text-[17px] leading-[22px] duration-[160ms] focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+          : 'h-12 rounded-[12px] text-[16px] leading-[22px] focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
+        web ? WEB_PROVIDER_STYLES[provider] : PROVIDER_STYLES[provider],
         className,
       )}
       {...rest}

@@ -19,6 +19,8 @@
     "surface/muted-pressed": "#e6e6ec",
     "surface/inverse": "#0f0f14",
     "line/default": "#e6e6ec",
+    "line/strong": "#d4d4dc",
+    "surface/nav": "#ffffffdb",
     "status/positive": "#15803d",
     "status/positive-soft": "#e8f7ee",
     "status/warning": "#b45309",
@@ -64,8 +66,8 @@
     "role/brand-bg": "#fff1f2",
     "role/brand-ink": "#be123c"
   },
-  "space": { "2": 2, "4": 4, "6": 6, "8": 8, "12": 12, "16": 16, "20": 20, "24": 24, "32": 32, "40": 40 },
-  "radius": { "sm": 8, "md": 12, "lg": 16, "xl": 20, "full": 999 },
+  "space": { "2": 2, "4": 4, "6": 6, "8": 8, "12": 12, "16": 16, "20": 20, "24": 24, "32": 32, "40": 40, "80": 80, "96": 96 },
+  "radius": { "sm": 8, "md": 12, "lg": 16, "xl": 20, "2xl": 28, "full": 999 },
   "text": {
     "display": { "weight": 700, "size": 34, "lineHeight": 41, "letterSpacing": "-0.015em" },
     "title-l": { "weight": 700, "size": 30, "lineHeight": 36, "letterSpacing": "-0.015em" },
