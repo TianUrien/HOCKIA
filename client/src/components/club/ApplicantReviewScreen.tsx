@@ -26,7 +26,7 @@ import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
 import { COACH_SIGNING_NEEDS_CLUB_NOTE, coachSigningNeedsClub } from '@/lib/coachRoles'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
+import { APPLICATION_MOVED_ON_MESSAGE, WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -286,9 +286,10 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     if (!review) return
     const prev = review.status
     setDeclining(false)
-    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok, withdrawn) => {
+    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok, withdrawn, movedOn) => {
       if (ok) trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: 'rejected', reason })
       else if (withdrawn) { patchRoleApplicantStatus(roleId, applicationId, 'withdrawn'); addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info') }
+      else if (movedOn) { patchRoleApplicantStatus(roleId, applicationId, prev); addToast(APPLICATION_MOVED_ON_MESSAGE, 'info') }
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t send the decline. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')

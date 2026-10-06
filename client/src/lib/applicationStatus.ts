@@ -146,6 +146,24 @@ export async function isWithdrawnApplicationError(err: unknown): Promise<boolean
   return false
 }
 
+/** Shown to a club whose decline arrived after the application already moved on (offer, signing…). */
+export const APPLICATION_MOVED_ON_MESSAGE = 'This application has already moved on, so it wasn’t declined'
+
+/** True when application-feedback refused a decline with 409 invalid_status. */
+export async function isApplicationMovedOnError(err: unknown): Promise<boolean> {
+  if (!err || typeof err !== 'object') return false
+  const res = (err as { context?: unknown }).context
+  if (res instanceof Response && res.status === 409) {
+    try {
+      const body = (await res.clone().json()) as { error?: string } | null
+      return body?.error === 'invalid_status'
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
 /**
  * Deterministic, kind, player-facing explanation for a reason code. This is the
  * FALLBACK used when the AI explanation is unavailable, and the baseline the AI

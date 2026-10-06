@@ -2,7 +2,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, supabase } from '@/lib/supabase'
 import { AUTH_STORAGE_KEY } from '@/lib/authStorageKey'
 import { logger } from '@/lib/logger'
 import type { Json } from '@/lib/database.types'
-import { isWithdrawnApplicationError } from '@/lib/applicationStatus'
+import { isApplicationMovedOnError, isWithdrawnApplicationError } from '@/lib/applicationStatus'
 
 /**
  * Club decisions on an application (Figma 04 Club · Applicant review):
@@ -28,12 +28,16 @@ export type Decision =
   | { kind: 'status'; applicationId: string; status: 'shortlisted' | 'maybe'; metadata: Json }
   | { kind: 'decline'; applicationId: string; reason: string; message: string }
 
-/** `withdrawn`: refused because the player withdrew the application. */
-type OnDone = (ok: boolean, withdrawn?: boolean) => void
+/**
+ * `withdrawn`: refused because the player withdrew the application.
+ * `movedOn`: a decline refused because the application already moved past
+ * an open decision (e.g. an offer went out in another tab).
+ */
+type OnDone = (ok: boolean, withdrawn?: boolean, movedOn?: boolean) => void
 type Held = { decision: Decision; timer: ReturnType<typeof setTimeout>; onDone?: OnDone }
 const held = new Map<string, Held>()
 
-async function commit(decision: Decision): Promise<{ ok: boolean; withdrawn?: boolean }> {
+async function commit(decision: Decision): Promise<{ ok: boolean; withdrawn?: boolean; movedOn?: boolean }> {
   try {
     if (decision.kind === 'status') {
       const { data, error } = await supabase
@@ -55,6 +59,7 @@ async function commit(decision: Decision): Promise<{ ok: boolean; withdrawn?: bo
     return { ok: true }
   } catch (err) {
     if (await isWithdrawnApplicationError(err)) return { ok: false, withdrawn: true }
+    if (await isApplicationMovedOnError(err)) return { ok: false, movedOn: true }
     logger.error('[pendingDecisions] commit failed', err)
     return { ok: false }
   }
@@ -65,7 +70,7 @@ function release(applicationId: string) {
   if (!h) return
   clearTimeout(h.timer)
   held.delete(applicationId)
-  void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn))
+  void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn, r.movedOn))
 }
 
 /** Hold a decision for the undo window, then write it. */
@@ -142,7 +147,7 @@ export function flushDecisions(opts: { unloading?: boolean } = {}): void {
     if (!h) continue
     clearTimeout(h.timer)
     held.delete(id)
-    if (!commitOnUnload(h.decision)) void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn))
+    if (!commitOnUnload(h.decision)) void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn, r.movedOn))
   }
 }
 
