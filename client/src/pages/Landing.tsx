@@ -540,7 +540,9 @@ export default function Landing() {
 
               <div className="relative flex flex-col items-center gap-5 lg:gap-6">
                 <h2 id="final-title" className="max-w-[640px] text-[30px] font-extrabold leading-[36px] tracking-[-0.02em] text-white lg:text-web3-h2">
-                  One community for the whole game.
+                  One community for
+                  <br />
+                  the whole game.
                 </h2>
                 <p className="max-w-[560px] text-web3-body text-white/[0.72] lg:text-web3-lead">
                   Free for players, coaches, clubs, umpires and brands.
