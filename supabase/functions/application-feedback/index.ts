@@ -469,13 +469,14 @@ serve(async (req: Request) => {
     //    source so a fallback is never served as a permanent cache hit.
     let message: string
     let source: 'ai' | 'fallback'
+    // Not logged to ai_usage_log on purpose: ai_questions_today counts every
+    // row there toward the member's Hockia AI question cap, and reading one's
+    // own application status must never use it up.
     const sink: UsageSink = { usage: null }
     try {
       message = await callClaude(ctx, 'player', sink)
       source = 'ai'
-      await logUsage(supabase, userId, sink)
     } catch (err) {
-      await logUsage(supabase, userId, sink)
       console.warn('application-feedback: AI fallback —', String(err))
       message = fallbackMessage(ctx)
       source = 'fallback'
