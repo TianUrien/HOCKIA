@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, PenLine, Search, UserPlus } from 'lucide-react'
+import { Search, UserPlus } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
-import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { FriendListItem, type FriendTrailing } from '@/components/ui/FriendListItem'
+import { IconButton } from '@/components/ui/IconButton'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import AddReferenceModal, { type ReferenceFriendOption } from '@/components/AddReferenceModal'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -18,10 +20,11 @@ import { profilePath } from '@/lib/profileNavigation'
 /**
  * Friends / Friends — public (Figma 101:460 · 250:581): one screen, two
  * modes. Own rows carry the owner tools (Ask for reference · Requested ·
- * Wrote you a reference). Public rows are viewer-relative — Friends,
+ * Wrote you a reference, in gold). Public rows are viewer-relative — Friends,
  * Requested, Accept or Add — with people in common first and a gold
  * "Wrote a reference" on whoever vouched for the profile owner. Owner-only
- * actions never render for another viewer.
+ * actions never render for another viewer. Rows are List item / Friend
+ * (`ui/FriendListItem`).
  */
 interface FriendsScreenProps {
   profileId: string
@@ -38,23 +41,21 @@ function detailFor(p: FriendPerson): string | null {
   return null
 }
 
-function RelationshipAction({ personId }: { personId: string }) {
-  const f = useFriendship(personId)
-  if (f.isOwnProfile) return null
-  const quiet = 'flex h-8 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2'
-  if (f.isFriend) return <span className={quiet}><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Friends</span>
-  if (f.isOutgoingRequest) return <span className={quiet}><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Requested</span>
-  return (
-    <button
-      type="button"
-      disabled={f.mutating}
-      onClick={() => void (f.isIncomingRequest ? f.acceptRequest() : f.sendRequest())}
-      className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-hockia-soft px-3 text-secondary font-semibold text-hockia-primary disabled:opacity-60"
-    >
-      <UserPlus className="h-3.5 w-3.5" strokeWidth={2.2} /> {f.isIncomingRequest ? 'Accept' : 'Add'}
-    </button>
-  )
+/** Public list: the trailing state is the VIEWER's relationship with that person. */
+function PublicFriendRow({ person, meta, flags, vouched, onOpen }: { person: FriendPerson; meta: string; flags: string; vouched: boolean; onOpen: () => void }) {
+  const f = useFriendship(person.id)
+  const name = person.fullName?.trim() || 'Hockia member'
+  const trailing: FriendTrailing = f.isOwnProfile
+    ? { kind: 'none' }
+    : f.isFriend
+      ? { kind: 'friends' }
+      : f.isOutgoingRequest
+        ? { kind: 'requested' }
+        : { kind: 'add', label: f.isIncomingRequest ? 'Accept' : 'Add', disabled: f.mutating, onClick: () => void (f.isIncomingRequest ? f.acceptRequest() : f.sendRequest()) }
+  return <FriendListItem name={name} avatarUrl={avatarOf(person)} role={person.role} meta={meta} flags={flags} showReference={vouched} trailing={trailing} onOpen={onOpen} />
 }
+
+const avatarOf = (p: FriendPerson) => (p.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null)
 
 export default function FriendsScreen({ profileId, profileName, profileRole, mode, onBack }: FriendsScreenProps) {
   const navigate = useNavigate()
@@ -90,45 +91,19 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
 
   const row = (p: FriendPerson) => {
     const name = p.fullName?.trim() || 'Hockia member'
-    const passportFlags = flags(p)
     const vouched = wrote.has(p.id)
-    return (
-      <li key={p.id} className="flex items-center gap-3 border-b border-line py-3 last:border-b-0">
-        <button
-          type="button"
-          onClick={() => { const to = profilePath(p.role, p.username, p.id); if (to) navigate(to) }}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
-        >
-          <EntityAvatar src={p.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null} name={name} role={p.role} size={48} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
-            {/* One line, always: the identity text truncates, the flags never do. */}
-            <span className="flex min-w-0 items-center text-secondary text-ink-2">
-              <span className="min-w-0 truncate">{identityLine(p.role, detailFor(p))}</span>
-              {passportFlags && <span className="shrink-0 whitespace-pre"> · {passportFlags}</span>}
-            </span>
-            {!own && vouched && (
-              <span className="mt-1 inline-flex h-[22px] items-center gap-1 rounded-full bg-gold-soft px-2 text-caption font-semibold text-gold">
-                <PenLine className="h-3 w-3" strokeWidth={2.2} /> Wrote a reference
-              </span>
-            )}
-          </span>
-        </button>
-        {own ? (
-          vouched ? (
-            <span className="shrink-0 text-caption font-semibold text-positive">Wrote you a reference</span>
-          ) : asked.has(p.id) ? (
-            <span className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Requested</span>
-          ) : canAsk ? (
-            <button type="button" onClick={() => setAskFor(p.id)} disabled={!refs.canAddMore} className="flex h-8 shrink-0 items-center rounded-full bg-hockia-soft px-3 text-secondary font-semibold text-hockia-primary disabled:opacity-50">
-              Ask for reference
-            </button>
-          ) : null
-        ) : (
-          <RelationshipAction personId={p.id} />
-        )}
-      </li>
-    )
+    const meta = identityLine(p.role, detailFor(p))
+    const open = () => { const to = profilePath(p.role, p.username, p.id); if (to) navigate(to) }
+    if (!own) return <PublicFriendRow key={p.id} person={p} meta={meta} flags={flags(p)} vouched={vouched} onOpen={open} />
+    // Own list: the owner tools. "Wrote you a reference" is trust → gold.
+    const trailing: FriendTrailing = vouched
+      ? { kind: 'wrote' }
+      : asked.has(p.id)
+        ? { kind: 'requested' }
+        : canAsk
+          ? { kind: 'ask', onClick: () => setAskFor(p.id), disabled: !refs.canAddMore }
+          : { kind: 'none' }
+    return <FriendListItem key={p.id} name={name} avatarUrl={avatarOf(p)} role={p.role} meta={meta} flags={flags(p)} trailing={trailing} onOpen={open} />
   }
 
   const title = own ? `Friends · ${people.length}` : firstName ? `${firstName}’s friends` : 'Friends'
@@ -141,9 +116,9 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           title={loading && own ? 'Friends' : title}
           onBack={onBack}
           trailing={own ? (
-            <button type="button" onClick={() => navigate('/community')} aria-label="Find people" className="flex h-11 w-11 items-center justify-center text-ink-1">
+            <IconButton label="Add friends" onClick={() => navigate('/community')}>
               <UserPlus className="h-[22px] w-[22px]" strokeWidth={1.8} />
-            </button>
+            </IconButton>
           ) : undefined}
         />
         {!signedOut && (
@@ -166,13 +141,13 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           <div className="mt-6 rounded-card bg-surface-grouped p-5">
             <p className="text-row font-semibold text-ink-1">Join Hockia to see {firstName ? `${firstName}’s` : 'their'} friends</p>
             <p className="mt-1 text-secondary text-ink-2">Friends lists are for members only.</p>
-            <button type="button" onClick={() => setJoin(true)} className="mt-4 flex h-[46px] w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white">Join Hockia</button>
+            <button type="button" onClick={() => setJoin(true)} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-4' })}>Join Hockia</button>
           </div>
         ) : loading ? (
           <ul aria-busy="true">
             {Array.from({ length: 6 }, (_, i) => (
               <li key={i} className="flex items-center gap-3 border-b border-line py-3">
-                <span className="h-12 w-12 animate-pulse rounded-full bg-surface-grouped" />
+                <span className="h-[52px] w-[52px] animate-pulse rounded-full bg-surface-grouped" />
                 <span className="flex-1 space-y-2"><span className="block h-3.5 w-36 animate-pulse rounded bg-surface-grouped" /><span className="block h-3 w-24 animate-pulse rounded bg-surface-grouped" /></span>
               </li>
             ))}
@@ -190,9 +165,9 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           <>
             {inCommon.length > 0 && (
               <>
-                <h2 className="pb-1 pt-3 text-secondary font-semibold text-ink-2">In common · {inCommon.length}</h2>
+                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">In common · {inCommon.length}</h2>
                 <ul>{inCommon.map(row)}</ul>
-                {rest.length > 0 && <h2 className="pb-1 pt-5 text-secondary font-semibold text-ink-2">All friends</h2>}
+                {rest.length > 0 && <h2 className="pb-1 pt-5 text-[20px] font-semibold leading-6 text-ink-1">All friends</h2>}
               </>
             )}
             <ul>{rest.map(row)}</ul>

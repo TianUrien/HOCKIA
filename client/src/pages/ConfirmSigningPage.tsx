@@ -15,6 +15,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { inviteRoleLabel } from '@/lib/invites'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import {
+  SIGNING_CLUB_MISSING_MESSAGE,
   SIGNING_CONFIRM_DAYS,
   confirmSigningTitle,
   hideFromClubsCopy,
@@ -58,6 +59,8 @@ export default function ConfirmSigningPage() {
   const { confirmSigning, busy } = useSigningActions()
   const [hide, setHide] = useState(true)
   const [confirmed, setConfirmed] = useState(false)
+  // The server refused because the role names no club yet (a coach's role).
+  const [clubMissing, setClubMissing] = useState(false)
   useDocumentTitle('Signing')
 
   const shell = (children: ReactNode) => (
@@ -78,7 +81,12 @@ export default function ConfirmSigningPage() {
   }
 
   const { application, role, club, offer } = data
-  const clubName = role.organization_name?.trim() || club.full_name?.trim() || 'The club'
+  // A coach who recruits is never the club: the signing is with the role's
+  // organisation, else the club on the coach's profile (what confirm_signing
+  // writes on the career entry). The crest is a club account's only.
+  const coachPublisher = club.role === 'coach'
+  const clubName = role.organization_name?.trim() || (coachPublisher ? club.current_club?.trim() : club.full_name?.trim()) || 'The club'
+  const clubCrest = coachPublisher ? null : club.avatar_url
   const roleText = inviteRoleLabel(role)
   const start = offer?.start_date ?? role.start_date
   const signed = confirmed || application.status === 'signed'
@@ -107,7 +115,7 @@ export default function ConfirmSigningPage() {
           <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
           <p className="mt-2 text-[16px] leading-[23px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
-            <Crest src={club.avatar_url} name={clubName} size={52} />
+            <Crest src={clubCrest} name={clubName} size={52} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[16px] font-semibold text-ink-1">{clubName}</p>
               <p className="truncate text-[14px] text-ink-1">{roleText} · {seasonLabel(start)}</p>
@@ -147,6 +155,7 @@ export default function ConfirmSigningPage() {
   const confirm = async () => {
     if (!applicationId) return
     const res = await confirmSigning(applicationId, hide)
+    if (!res.ok) setClubMissing(res.error === SIGNING_CLUB_MISSING_MESSAGE)
     if (res.ok) {
       setConfirmed(true)
       void refetch()
@@ -164,7 +173,7 @@ export default function ConfirmSigningPage() {
   return shell(
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
-        <Crest src={club.avatar_url} name={clubName} size={80} />
+        <Crest src={clubCrest} name={clubName} size={80} />
         <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
         <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
@@ -187,6 +196,11 @@ export default function ConfirmSigningPage() {
           />
         </div>
       </div>
+      {clubMissing && (
+        <p className="mt-4 text-center text-secondary text-ink-2" role="status" data-testid="signing-club-missing">
+          This signing can’t be confirmed yet: the club’s details are incomplete. Message the club, then try again.
+        </p>
+      )}
       <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
         {busy ? 'Confirming…' : 'Yes, I signed'}
       </button>

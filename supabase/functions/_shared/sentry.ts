@@ -12,6 +12,10 @@ declare const Deno: {
   env: { get(key: string): string | undefined }
 }
 
+// Supabase Edge Runtime global: keeps the isolate alive for background work
+// after the response is sent. Absent in tests / plain Deno.
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined
+
 // ---------------------------------------------------------------------------
 // DSN parsing (lazy singleton, follows supabase-client.ts pattern)
 // ---------------------------------------------------------------------------
@@ -66,14 +70,25 @@ function parseDsn(): ParsedDsn | false {
 // Environment detection
 // ---------------------------------------------------------------------------
 
-function getEnvironment(): string {
-  const explicit = Deno.env.get('SENTRY_ENVIRONMENT')
+/**
+ * SENTRY_ENVIRONMENT wins when set. Otherwise PUBLIC_SITE_URL decides, with
+ * "staging" checked FIRST: the staging site lives under inhockia.com too
+ * (staging.inhockia.com), so testing the domain first labelled staging
+ * errors as production.
+ */
+export function detectEnvironment(get: (key: string) => string | undefined): string {
+  const explicit = get('SENTRY_ENVIRONMENT')?.trim()
   if (explicit) return explicit
 
-  const siteUrl = Deno.env.get('PUBLIC_SITE_URL') ?? ''
-  if (siteUrl.includes('inhockia.com')) return 'production'
+  const siteUrl = (get('PUBLIC_SITE_URL') ?? '').toLowerCase()
   if (siteUrl.includes('staging')) return 'staging'
+  if (siteUrl.includes('localhost') || siteUrl.includes('127.0.0.1')) return 'development'
+  if (siteUrl.includes('inhockia.com')) return 'production'
   return 'development'
+}
+
+function getEnvironment(): string {
+  return detectEnvironment((key) => Deno.env.get(key))
 }
 
 // ---------------------------------------------------------------------------
@@ -168,7 +183,7 @@ function sendEnvelope(event: Record<string, any>): void {
     JSON.stringify(event),
   ].join('\n')
 
-  fetch(config.envelopeUrl, {
+  const request = fetch(config.envelopeUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-sentry-envelope',
@@ -178,6 +193,16 @@ function sendEnvelope(event: Record<string, any>): void {
   }).catch(() => {
     // Silently swallow — never block the edge function
   })
+
+  // Without waitUntil the runtime may stop the isolate as soon as the
+  // response is returned, dropping the in-flight envelope.
+  try {
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime && typeof EdgeRuntime.waitUntil === 'function') {
+      EdgeRuntime.waitUntil(request)
+    }
+  } catch {
+    // never let reporting fail the request
+  }
 }
 
 function buildBaseEvent(context?: SentryContext): Record<string, any> {
@@ -259,4 +284,39 @@ export function captureMessage(
   }
 
   sendEnvelope(event)
+}
+
+/**
+ * Wrap a Deno.serve handler so failures reach Sentry:
+ *   - an uncaught throw → captureException + a JSON 500 (with CORS headers
+ *     when given), never a bare runtime error;
+ *   - a returned 5xx → captureMessage (the handler handled it but the
+ *     request still failed).
+ * Expected refusals (4xx) are business outcomes and are NOT reported.
+ */
+export function withSentry(
+  functionName: string,
+  handler: (req: Request) => Response | Promise<Response>,
+  errorHeaders: Record<string, string> | ((req: Request) => Record<string, string>) = {},
+): (req: Request) => Promise<Response> {
+  return async (req: Request) => {
+    try {
+      const res = await handler(req)
+      if (res.status >= 500) {
+        captureMessage(`${functionName} responded ${res.status}`, 'error', {
+          functionName,
+          tags: { status: String(res.status) },
+        })
+      }
+      return res
+    } catch (err) {
+      console.error(`[${functionName}] unhandled`, err)
+      captureException(err, { functionName })
+      const headers = typeof errorHeaders === 'function' ? errorHeaders(req) : errorHeaders
+      return new Response(JSON.stringify({ error: 'internal_error' }), {
+        status: 500,
+        headers: { ...headers, 'Content-Type': 'application/json' },
+      })
+    }
+  }
 }

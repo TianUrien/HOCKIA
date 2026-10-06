@@ -348,9 +348,10 @@ describe('player bits', () => {
     expect(screen.getByTestId('player-hero-empty-sub').textContent).toMatch(/Mark yourself open to play/)
   })
 
-  it('My applications: rows after the first are widened back so chevrons line up', () => {
+  it('My applications: the divider sits under the text column so chevrons line up', () => {
     const src = read('../pages/MyApplicationsPage.tsx')
-    expect(src).toContain('[&>li+li>button]:-ml-[84px] [&>li+li>button]:w-[calc(100%+84px)]')
+    expect(src).toContain('border-b border-line py-3 pr-3 group-last:border-b-0')
+    expect(src).not.toContain('divide-y')
   })
 
   it('passport tile: one line per passport and an EU tag', () => {

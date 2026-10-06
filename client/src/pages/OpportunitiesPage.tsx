@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { lazy, Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -23,11 +23,20 @@ import { IconButton } from '@/components/ui/IconButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { RoleCard } from '@/components/opportunities/RoleCard'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
-import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
-import SignInPromptModal from '../components/SignInPromptModal'
-import { EMPTY_ROLE_FILTERS, applyRoleFilters, countActiveRoleFilters, type RoleFilters } from '@/lib/opportunityFilters'
+import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
+import { Chip } from '@/components/ui/Chip'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
+import { useCoachingRolesHistory } from '@/hooks/useCoachingRolesHistory'
+import { useProfileWriter } from '@/hooks/useProfileWriter'
+import { CoachRolesEmptyState } from '@/components/opportunities/CoachRolesEmptyState'
+import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
+
+// Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
+// own chunk, so players and candidate coaches never download it.
+const CoachMyRoles = lazy(() => import('@/components/opportunities/CoachMyRoles'))
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -178,6 +187,35 @@ export default function OpportunitiesPage() {
   // status (No reply, Shortlisted…) instead of a generic "submitted".
   const [applicationStatuses, setApplicationStatuses] = useState<Record<string, string>>({})
   const [showCreateModal, setShowCreateModal] = useState(false)
+  // Coach v2 · My roles: "Edit role" / a draft's Continue open the coach's own role form.
+  const [editingRole, setEditingRole] = useState<Vacancy | null>(null)
+
+  // Coach v2 (Figma D6.2 377:614 · D6.4 377:1814), phone only. A candidate
+  // coach's Roles list holds coaching roles only; a coach who recruits keeps
+  // today's list and gets "My roles" next to it. Players are untouched.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  const candidateCoach = isCandidateCoach(profile)
+  const recruitingCoach = isRecruitingCoach(profile)
+  const [coachView, setCoachView] = useState<'roles' | 'mine'>(() => (searchParams.get('view') === 'mine' ? 'mine' : 'roles'))
+  const showMyRoles = recruitingCoach && isPhone && coachView === 'mine'
+  const myRoles = useClubRoles(recruitingCoach && isPhone ? profile?.id : null)
+  const myOpenRoleCount = myRoles.open.filter((r) => r.status === 'open').length
+  // "Edit role" on a coach's applicants screen lands here with the role to
+  // edit: open the coach's own role form once their roles have loaded.
+  const routeLocation = useLocation()
+  const routeEditRoleId = (routeLocation.state as { editRoleId?: string } | null)?.editRoleId ?? null
+  const [pendingEditRoleId, setPendingEditRoleId] = useState<string | null>(routeEditRoleId)
+  // Taken once: drop it from the history entry so coming back doesn't reopen the form.
+  useEffect(() => {
+    if (routeEditRoleId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
+  }, [routeEditRoleId, navigate, routeLocation.pathname, routeLocation.search])
+  useEffect(() => {
+    if (!pendingEditRoleId || !showMyRoles || myRoles.loading) return
+    const hit = [...myRoles.open, ...myRoles.closed].find((r) => r.id === pendingEditRoleId)
+    if (hit) { setEditingRole(hit); setShowCreateModal(true) }
+    setPendingEditRoleId(null)
+  }, [pendingEditRoleId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
+  const settings = useProfileWriter()
 
   // Modal preview state — opening an opportunity from the list shows
   // it as an overlay on top of the (still-mounted) list, so scroll /
@@ -189,8 +227,6 @@ export default function OpportunitiesPage() {
   // client-side on top of the open list; the wide layout keeps its dropdowns.
   const [roleFilters, setRoleFilters] = useState<RoleFilters>(EMPTY_ROLE_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [applyTarget, setApplyTarget] = useState<Vacancy | null>(null)
-  const [showJoin, setShowJoin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
@@ -235,8 +271,9 @@ export default function OpportunitiesPage() {
     if (filters.euPassport) params.set('eu_passport', 'true')
     if (filters.applied !== 'all') params.set('applied', filters.applied)
     if (sort !== 'newest') params.set('sort', sort)
+    if (recruitingCoach && coachView === 'mine') params.set('view', 'mine')
     setSearchParams(params, { replace: true })
-  }, [filters, sort, setSearchParams])
+  }, [filters, sort, recruitingCoach, coachView, setSearchParams])
 
   const { count: opportunityCount, markSeen, refresh: refreshOpportunityNotifications } = useOpportunityNotifications()
 
@@ -511,15 +548,19 @@ export default function OpportunitiesPage() {
   // incomplete profile).
   const euCountryIds = useMemo(() => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)), [countries])
   const viewerIsEuEligible = isEuEligible(profile?.nationality_country_id, profile?.nationality2_country_id, euCountryIds)
-  const mobileList = useMemo(() => applyRoleFilters(filteredOpportunities, roleFilters, viewerIsEuEligible), [filteredOpportunities, roleFilters, viewerIsEuEligible])
+  // The phone list's base: coaching roles only for a candidate coach.
+  const phoneBase = useMemo(
+    () => (candidateCoach ? filteredOpportunities.filter((v) => v.opportunity_type === 'coach') : filteredOpportunities),
+    [candidateCoach, filteredOpportunities],
+  )
+  const mobileList = useMemo(() => applyRoleFilters(phoneBase, roleFilters, viewerIsEuEligible), [phoneBase, roleFilters, viewerIsEuEligible])
+  // No coaching role open at all (before any phone filter): the D6.2 empty state.
+  const coachEmpty = candidateCoach && !isLoading && !fetchError && filters.applied !== 'mine' && phoneBase.length === 0
+  const coachHistory = useCoachingRolesHistory({ enabled: coachEmpty && isPhone, includeTestAccounts: Boolean(isStaging) || isCurrentUserTestAccount })
   const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
   const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
   const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
-  const canApplyTo = (v: Vacancy) =>
-    !user
-      ? true
-      : v.club_id !== user.id && ((profile?.role === 'player' && v.opportunity_type === 'player') || (profile?.role === 'coach' && v.opportunity_type === 'coach'))
   const leagueFor = (v: Vacancy) => {
     const wc = v.world_club_id ? worldClubsMap[v.world_club_id] : null
     const club = clubs[v.club_id]
@@ -554,21 +595,49 @@ export default function OpportunitiesPage() {
           <div className="lg:hidden">
             <LargeTitleBar
               title="Opportunities"
-              trailing={
+              trailing={showMyRoles ? (
+                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setShowCreateModal(true) }}>
+                  <Plus className="h-6 w-6" strokeWidth={2} />
+                </IconButton>
+              ) : (
                 <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
                   <span className="relative">
                     <SlidersHorizontal className="h-6 w-6" strokeWidth={1.8} />
                     {activeRoleFilterCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
                   </span>
                 </IconButton>
-              }
+              )}
             />
-            <div className="px-5 pb-2">
-              <button type="button" onClick={() => navigate('/search')} className="flex h-9 w-full items-center gap-2 rounded-[10px] bg-surface-grouped px-3 text-body text-ink-3">
-                <Search className="h-4 w-4" strokeWidth={2} /> Search clubs and roles
+            {!showMyRoles && (
+            <div className="px-5 pb-3">
+              <button type="button" onClick={() => navigate('/search')} className="flex h-10 w-full items-center gap-2 rounded-[12px] bg-surface-muted px-3 text-body text-ink-3" data-testid="opportunities-search">
+                <Search className="h-[18px] w-[18px]" strokeWidth={2} /> Search roles and clubs
               </button>
             </div>
-            {user && (profile?.role === 'player' || profile?.role === 'coach') && (
+            )}
+            {user && profile?.role === 'coach' && (
+              /* Coach v2 (Figma D6.2 / D6.4): Roles · Applied · My roles — the
+                 last one only for a coach who recruits for their team. */
+              <div className="px-5 pb-3">
+                <SegmentedControl<'roles' | 'applied' | 'mine'>
+                  ariaLabel="Roles"
+                  value={showMyRoles ? 'mine' : 'roles'}
+                  onChange={(v) => {
+                    if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } })
+                    else setCoachView(v)
+                  }}
+                  options={[
+                    { value: 'roles', label: 'Roles' },
+                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My roles', count: myOpenRoleCount }] : []),
+                  ]}
+                />
+              </div>
+            )}
+            {candidateCoach && !isLoading && !fetchError && (
+              <p className="px-5 pb-2.5 text-secondary text-ink-2" data-testid="coach-roles-open-line">{coachingRolesOpenLine(phoneBase.length)}</p>
+            )}
+            {user && profile?.role === 'player' && (
               <div className="px-5 pb-3">
                 <SegmentedControl<'open' | 'applied'>
                   ariaLabel="Roles"
@@ -580,6 +649,14 @@ export default function OpportunitiesPage() {
                   ]}
                 />
               </div>
+            )}
+            {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
+            {!showMyRoles && !coachEmpty && (
+            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
+              {QUICK_CHIPS.map((c) => (
+                <Chip key={c.key} label={c.label} selected={isQuickChipOn(roleFilters, c.key)} onClick={() => setRoleFilters((f) => toggleQuickChip(f, c.key))} />
+              ))}
+            </div>
             )}
           </div>
           {/* Page Header (wide layout) */}
@@ -734,6 +811,31 @@ export default function OpportunitiesPage() {
             </div>
           </div>
 
+          {showMyRoles && profile ? (
+            <Suspense fallback={<div className="min-h-[40vh]" />}>
+              <CoachMyRoles
+                profile={profile}
+                data={myRoles}
+                onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
+                onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+              />
+            </Suspense>
+          ) : coachEmpty && isPhone ? (
+            <CoachRolesEmptyState
+              postedThisYear={coachHistory.postedThisYear}
+              recentlyClosed={coachHistory.recentlyClosed}
+              ownStatuses={applicationStatuses}
+              careerEntryCount={profile?.career_entry_count ?? 0}
+              acceptedReferenceCount={profile?.accepted_reference_count ?? 0}
+              alertsOn={settings.read('notify_opportunities', true)}
+              alertsBusy={settings.busy === 'notify_opportunities'}
+              onToggleAlerts={() => void settings.toggle('notify_opportunities', true)}
+              onAddCareer={() => navigate('/dashboard/profile/journey')}
+              onAskReference={() => navigate('/dashboard/profile/references')}
+              onOpenRole={(id) => navigate(`/opportunities/${id}`)}
+            />
+          ) : (
+          <>
           {/* New opportunities banner */}
           {opportunityCount > 0 && (
             <div className="mx-5 mb-6 flex flex-col gap-3 rounded-xl border border-hockia-primary/10 bg-hockia-primary/5 p-4 text-gray-900 sm:flex-row sm:items-center sm:justify-between lg:mx-0">
@@ -851,9 +953,7 @@ export default function OpportunitiesPage() {
                       countryFlag={getFlagEmoji(vacancy.location_country)}
                       league={leagueFor(vacancy)}
                       applied={userApplications.includes(vacancy.id)}
-                      canApply={canApplyTo(vacancy)}
                       onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
-                      onApply={() => (user ? setApplyTarget(vacancy) : setShowJoin(true))}
                     />
                   )
                 })}
@@ -881,6 +981,8 @@ export default function OpportunitiesPage() {
             </div>
             </>
           )}
+          </>
+          )}
         </main>
       </div>
 
@@ -889,29 +991,8 @@ export default function OpportunitiesPage() {
         onClose={() => setFiltersOpen(false)}
         value={roleFilters}
         onApply={setRoleFilters}
-        countFor={(draft) => applyRoleFilters(filteredOpportunities, draft, viewerIsEuEligible).length}
+        countFor={(draft) => applyRoleFilters(phoneBase, draft, viewerIsEuEligible).length}
         passportHint={passportHint}
-      />
-
-      {applyTarget && (
-        <ApplyToOpportunityModal
-          isOpen
-          onClose={() => setApplyTarget(null)}
-          vacancy={applyTarget}
-          clubName={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.clubName : null) || clubs[applyTarget.club_id]?.full_name || null}
-          clubLogo={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.avatarUrl : null) || clubs[applyTarget.club_id]?.avatar_url || null}
-          publisherRole={clubs[applyTarget.club_id]?.role ?? null}
-          league={leagueFor(applyTarget)}
-          onSuccess={(vacancyId) => setUserApplications((prev) => (prev.includes(vacancyId) ? prev : [...prev, vacancyId]))}
-        />
-      )}
-
-      <SignInPromptModal
-        isOpen={showJoin}
-        onClose={() => setShowJoin(false)}
-        title="Sign in to apply"
-        message="Create a free HOCKIA profile — it is your application. Clubs see your career, videos and references."
-        action="apply"
       />
 
       {/* Create Opportunity — launched directly from the feed for clubs
@@ -921,10 +1002,13 @@ export default function OpportunitiesPage() {
       {showCreateModal && (
         <CreateOpportunityModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          editingVacancy={editingRole}
+          onClose={() => { setShowCreateModal(false); setEditingRole(null) }}
           onSuccess={() => {
             setShowCreateModal(false)
+            setEditingRole(null)
             fetchVacancies({ skipCache: true })
+            myRoles.refresh()
           }}
         />
       )}

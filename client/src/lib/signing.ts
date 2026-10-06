@@ -435,10 +435,19 @@ export function hasTalked(messages: { sender_id: string; metadata?: unknown }[],
 // ── Mark as signed (D4.4) ──
 
 /** Sheet body; gender-neutral (Figma: "He’ll be asked to confirm…"). */
-export function markSignedBody(firstName: string, publisherIsClub: boolean): string {
-  return publisherIsClub
-    ? `${firstName} will be asked to confirm. Then they join your squad on Hockia and the signing goes on their career.`
+export function markSignedBody(firstName: string, publisherIsClub: boolean, organisation?: string | null): string {
+  if (publisherIsClub) return `${firstName} will be asked to confirm. Then they join your squad on Hockia and the signing goes on their career.`
+  // A coach who recruits: the signing is with the organisation the role is for.
+  const org = organisation?.trim()
+  return org
+    ? `${firstName} will be asked to confirm. Then the signing with ${org} goes on their career.`
     : `${firstName} will be asked to confirm. Then the signing goes on their career.`
+}
+
+/** The offer sheet's footnote: who the contract is with (a coach's offer names the organisation). */
+export function offerContractNote(publisherIsClub: boolean, organisation?: string | null): string {
+  const party = publisherIsClub ? 'your club' : organisation?.trim() || 'the club'
+  return `An offer on Hockia sets out what you’re offering. The contract itself is between ${party} and the player.`
 }
 
 /** The close-the-role toggle's line: the others still waiting get the kind note. */
@@ -598,7 +607,14 @@ const PASS_THROUGH = [
   'This application is already closed',
   'A trial can be recorded for shortlisted applicants only',
   'A withdrawn application cannot be changed',
+  // A coach's role with no organisation (role_organisation, 20261004200000).
+  'Add your club to your profile to mark a signing',
+  'This signing can’t be confirmed yet',
+  'This signing can\'t be confirmed yet',
 ]
+
+/** What signingErrorMessage returns when confirm_signing refuses a role with no club named (club_missing). */
+export const SIGNING_CLUB_MISSING_MESSAGE = 'This signing can’t be confirmed yet.'
 
 export function signingErrorMessage(err: unknown, fallback: string): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''

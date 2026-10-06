@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Shared Email Template for Message Digest Notifications
@@ -66,11 +67,12 @@ function getFirstName(fullName: string | null): string {
 function buildConversationCardHtml(conv: ConversationDigest): string {
   const initials = getInitials(conv.sender_name)
 
-  const avatarHtml = conv.sender_avatar_url
-    ? `<img src="${conv.sender_avatar_url}" alt="${conv.sender_name}" style="width: 40px; height: 40px; border-radius: 20px;" />`
+  const avatarSrc = safeHttpsUrl(conv.sender_avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(conv.sender_name)}" style="width: 40px; height: 40px; border-radius: 20px;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; border-radius: 20px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
-          <td align="center" valign="middle" style="width: 40px; height: 40px; color: white; font-weight: bold; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
+          <td align="center" valign="middle" style="width: 40px; height: 40px; color: white; font-weight: bold; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
       </table>`
 
@@ -86,7 +88,7 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0; font-size: 16px; font-weight: 600;">${conv.sender_name}</p>
+            <p style="color: #1f2937; margin: 0; font-size: 16px; font-weight: 600;">${escapeHtml(conv.sender_name)}</p>
             <p style="color: #6b7280; margin: 2px 0 0 0; font-size: 14px;">${messageLabel}</p>
           </td>
         </tr>
@@ -128,15 +130,15 @@ export function generateEmailHtml(
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${heading}</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${firstName}, you have unread messages on HOCKIA.</p>
+    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
+    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you have unread messages on HOCKIA.</p>
 
     <div style="margin-bottom: 24px;">
       ${conversationCards}
     </div>
 
     <p style="margin: 0;">
-      <a href="${ctaUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
+      <a href="${escapeHtml(ctaUrl)}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
     </p>
 
   </div>

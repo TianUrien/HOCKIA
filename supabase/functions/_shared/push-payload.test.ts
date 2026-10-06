@@ -100,3 +100,18 @@ Deno.test('a generated headline names the position, a typed title stays', () => 
   assertEquals(isGeneratedHeadline("Men's midfielder", null), false)
   assertEquals(isGeneratedHeadline('Senior midfielder', 'Midfielder'), false)
 })
+
+Deno.test('the removed-account safety notice opens the notification list', () => {
+  const payload = buildPushPayload('system_announcement', {
+    notice: 'removed_account',
+    title: 'A message about your safety',
+    summary: 'An account that messaged you has been removed for spam.',
+    target_url: '/messages',
+  }, 'HOCKIA')
+  assertEquals(payload.title, 'A message about your safety')
+  assertEquals(payload.body, 'An account that messaged you has been removed for spam.')
+  assertEquals(payload.url, '/notifications')
+
+  const other = buildPushPayload('system_announcement', { title: 'New in HOCKIA', summary: 'Hello' }, 'HOCKIA')
+  assertEquals(other.url, '/home')
+})

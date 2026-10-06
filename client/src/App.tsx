@@ -37,7 +37,9 @@ import Terms from '@/pages/Terms'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
+import { isStaleChunkMessage } from '@/lib/sentryFilters'
 import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
+import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
@@ -48,20 +50,10 @@ function lazyWithRetry<T extends ComponentType<any>>(
 ) {
   return lazy(() =>
     importFn().catch((error: Error) => {
-      const msg = (error.message ?? '').toLowerCase()
-      // Three stale-chunk signatures we've seen in prod Sentry:
-      //   1. "failed to fetch dynamically imported module" — Chrome/FF when
-      //      the old hashed file 404s post-deploy.
-      //   2. "failed to load module script" — generic browser variant.
-      //   3. "is not a valid javascript mime type" — Vercel's SPA fallback
-      //      serves index.html (text/html) for any unknown path, so when
-      //      Safari fetches a missing chunk it gets HTML and the ES module
-      //      loader throws this. Previously slipped past the guard and
-      //      surfaced as JAVASCRIPT-REACT-3 (95 occurrences in Sentry).
-      const isStale =
-        msg.includes('failed to fetch dynamically imported module') ||
-        msg.includes('failed to load module script') ||
-        msg.includes('is not a valid javascript mime type')
+      // Chrome, Firefox and Safari word the stale-chunk failure differently
+      // (incl. the HTML-served-as-JS MIME error, JAVASCRIPT-REACT-3) — the
+      // signature list lives in lib/sentryFilters.
+      const isStale = isStaleChunkMessage(error?.message)
 
       if (isStale && !sessionStorage.getItem('chunk-reload')) {
         sessionStorage.setItem('chunk-reload', '1')
@@ -144,6 +136,7 @@ const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/Adm
 const AdminAIOpinions = lazyWithRetry(() => import('@/features/admin/pages/AdminAIOpinions').then(m => ({ default: m.AdminAIOpinions })))
 const AdminFeedback = lazyWithRetry(() => import('@/features/admin/pages/AdminFeedback').then(m => ({ default: m.AdminFeedback })))
 const AdminAppRatings = lazyWithRetry(() => import('@/features/admin/pages/AdminAppRatings').then(m => ({ default: m.AdminAppRatings })))
+const AdminSpamSignals = lazyWithRetry(() => import('@/features/admin/pages/AdminSpamSignals').then(m => ({ default: m.AdminSpamSignals })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
 const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
@@ -401,6 +394,7 @@ function App() {
           <EngagementTracker />
           <AnalyticsTracker />
           <NativeDeepLinkRouter />
+          <NativePushBridge />
           <DbPageViewTracker />
           <SessionTracker />
           <ScrollToTop />
@@ -634,6 +628,7 @@ function App() {
                   <Route path="data-issues" element={<AdminDataIssues />} />
                   <Route path="directory" element={<AdminDirectory />} />
                   <Route path="reports" element={<AdminReports />} />
+                  <Route path="spam-signals" element={<AdminSpamSignals />} />
                   <Route path="audit-log" element={<AdminAuditLog />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>

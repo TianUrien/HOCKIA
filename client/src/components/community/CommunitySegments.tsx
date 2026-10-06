@@ -52,7 +52,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
               aria-selected={active}
               onClick={() => navigate(pathWithSearch(s.path, query))}
               className={`flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-semibold transition-colors ${
-                active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1 active:bg-gray-200'
+                active ? 'bg-brand-soft text-brand-primary lg:bg-ink-1 lg:text-white' : 'bg-surface-grouped text-ink-1 active:bg-gray-200'
               }`}
             >
               {s.label}

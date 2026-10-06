@@ -1,3 +1,4 @@
+import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { useState } from 'react'
 import { Calendar, ExternalLink, Film, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
 import Button from './Button'
@@ -302,7 +303,7 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
         rel="noopener noreferrer"
         className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90"
       >
-        Watch video
+        {videoLinkSite(video.video_url) ? `Watch on ${videoLinkSite(video.video_url)}` : 'Watch video'}
         <ExternalLink className="h-3 w-3" aria-hidden="true" />
       </a>
     </li>

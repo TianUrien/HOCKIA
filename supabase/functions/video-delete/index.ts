@@ -21,10 +21,12 @@
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { setSentryUser, withSentry } from '../_shared/sentry.ts'
+import { deleteStreamAsset } from '../_shared/cloudflare-stream.ts'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry('video-delete', async (req) => {
   const cors = getCorsHeaders(req.headers.get('Origin'))
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -43,6 +45,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userErr } = await supabase.auth.getUser(jwt)
   if (userErr || !userData.user) return json({ error: 'unauthenticated' }, 401)
   const userId = userData.user.id
+  setSentryUser(userId)
 
   // 2) Parse.
   let body: Record<string, unknown>
@@ -81,30 +84,9 @@ Deno.serve(async (req) => {
   if (refErr) return json({ error: 'in_use_check_failed', detail: refErr.message }, 500)
   if ((count ?? 0) > 0) return json({ error: 'video_in_use' }, 409)
 
-  // 5) Cloudflare first. Best-effort: a 404 means it's already gone.
-  let cloudflare: 'deleted' | 'skipped' | 'failed' = 'skipped'
-  const accountId = Deno.env.get('CF_ACCOUNT_ID')
-  const apiToken = Deno.env.get('CF_STREAM_API_TOKEN')
-  if (row.cf_uid && accountId && apiToken) {
-    try {
-      const res = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${row.cf_uid}`,
-        { method: 'DELETE', headers: { Authorization: `Bearer ${apiToken}` } },
-      )
-      if (res.ok || res.status === 404) {
-        cloudflare = 'deleted'
-      } else {
-        cloudflare = 'failed'
-        const detail = await res.text().catch(() => '')
-        console.error(
-          `[video-delete] ORPHANED Cloudflare asset cf_uid=${row.cf_uid} status=${res.status} ${detail.slice(0, 300)}`,
-        )
-      }
-    } catch (err) {
-      cloudflare = 'failed'
-      console.error(`[video-delete] ORPHANED Cloudflare asset cf_uid=${row.cf_uid}`, err)
-    }
-  }
+  // 5) Cloudflare first. Best-effort: a 404 means it's already gone; a
+  //    failure is logged as an orphan and the row is still deleted.
+  const cloudflare = await deleteStreamAsset(row.cf_uid, '[video-delete]')
 
   // 6) Row second — always, so the user's delete always takes effect.
   const { error: delErr } = await supabase
@@ -115,4 +97,4 @@ Deno.serve(async (req) => {
   if (delErr) return json({ error: 'delete_failed', detail: delErr.message }, 500)
 
   return json({ success: true, cloudflare })
-})
+}, (req) => getCorsHeaders(req.headers.get('Origin'))))

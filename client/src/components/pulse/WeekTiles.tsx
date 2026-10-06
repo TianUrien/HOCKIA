@@ -29,7 +29,7 @@ export function WeekTiles({ tiles, loading }: { tiles: WeekTile[]; loading?: boo
             {loading ? (
               <span className="block h-[31px] w-10 animate-pulse rounded-md bg-line" />
             ) : (
-              <span className="block text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums text-ink-1" data-testid={`week-tile-${t.id}-value`}>
+              <span className="block text-figure tabular-nums text-ink-1" data-testid={`week-tile-${t.id}-value`}>
                 {t.value}
               </span>
             )}

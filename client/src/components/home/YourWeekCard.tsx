@@ -7,6 +7,7 @@ import { useMyApplications } from '@/hooks/useMyApplications'
 import { useRolesHealth } from '@/hooks/useRolesHealth'
 import { useScopedMatches } from '@/hooks/useScopedMatches'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
 import { cn } from '@/lib/utils'
 import { clubWeekStats, type WeekStat } from '@/lib/clubInbox'
 
@@ -25,16 +26,35 @@ import { clubWeekStats, type WeekStat } from '@/lib/clubInbox'
  * (pending applications on the club's open roles, brand purple, opens
  * Opportunities) · profile views (last 7 days) · open roles. The title row
  * still opens Pulse; the role numbers open Opportunities.
+ *
+ * Coach v2 (Figma D6.3 377:1430; DEV NOTE 378:317–318): a coach who recruits
+ * for their team gets the club version on phones (same queries, owner = the
+ * coach; the role numbers open My roles) while their Pulse is on "recruit"
+ * (useCoachPulseMode, which defaults from coach_recruits_for_team). A coach
+ * who does not recruit always gets the player version.
  */
 type Stat = WeekStat
 
 const PHONE = '(max-width: 1023px)'
 
+/**
+ * Player / coach cells, all ink-1 (purple emphasis is only the club "to
+ * review" cell). Phone follows Figma Home 313:632 — profile views, roles,
+ * club replies; desktop keeps its order.
+ */
+function talentStats(phone: boolean, c: { roles: Stat; views: Stat; replies: Stat }): Stat[] {
+  return phone ? [c.views, c.roles, c.replies] : [c.roles, c.views, c.replies]
+}
+
 export function YourWeekCard() {
   const role = useAuthStore((s) => s.profile?.role)
-  const isTalent = role === 'player' || role === 'coach'
-  const isClub = role === 'club'
+  const coachRecruits = useAuthStore((s) => s.profile?.role === 'coach' && (s.profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team === true)
+  const [coachMode] = useCoachPulseMode()
   const isPhone = useMediaQuery(PHONE)
+  // The recruiting coach's week is the club's week (phones only, like Club v2).
+  const coachClubWeek = coachRecruits && coachMode === 'recruit' && isPhone
+  const isTalent = (role === 'player' || role === 'coach') && !coachClubWeek
+  const isClub = role === 'club' || coachClubWeek
   const clubV2 = isClub && isPhone
 
   const vis = useWeeklyVisibility(true, false)
@@ -53,12 +73,14 @@ export function YourWeekCard() {
   const replies = apps.applications.filter((a) => a.status !== 'pending').length
   const stats: Stat[] = clubV2
     ? clubWeekStats({ toReview: roles.totals.pending, views, openRoles: roles.totals.openRoles })
+        // A coach's own roles live under My roles on Opportunities.
+        .map((st) => (coachClubWeek && st.to === '/opportunities' ? { ...st, to: '/opportunities?view=mine' } : st))
     : isTalent
-    ? [
-        { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
-        { value: views, label: views === 1 ? 'profile view' : 'profile views' },
-        { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
-      ]
+    ? talentStats(isPhone, {
+        roles: { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
+        views: { value: views, label: views === 1 ? 'profile view' : 'profile views' },
+        replies: { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
+      })
     : isClub
       ? [
           { value: scoped.fitCount, label: 'fit your search' },
@@ -82,7 +104,7 @@ export function YourWeekCard() {
               {loading ? (
                 <div className="h-[31px] w-8 animate-pulse rounded-md bg-line" />
               ) : (
-                <div className={cn('text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums', s.accent && s.value > 0 ? 'text-hockia-primary' : 'text-ink-1')}>{s.value}</div>
+                <div className={cn('text-figure tabular-nums', s.accent && s.value > 0 ? 'text-hockia-primary' : 'text-ink-1')}>{s.value}</div>
               )}
               <div className="max-w-full truncate px-2 text-caption text-ink-2">{s.label}</div>
             </Link>
@@ -113,7 +135,7 @@ export function YourWeekCard() {
             {loading ? (
               <div className="h-[31px] w-8 animate-pulse rounded-md bg-line" />
             ) : (
-              <div className="text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums text-ink-1">{s.value}</div>
+              <div className="text-figure tabular-nums text-ink-1">{s.value}</div>
             )}
             <div className="max-w-full truncate px-2 text-caption text-ink-2">{s.label}</div>
           </div>

@@ -67,7 +67,7 @@ const WEBHOOK_FUNCTIONS = [
   'notify-reference-request', 'notify-reference-response', 'notify-opportunity-renewal',
   'notify-application-digest', 'notify-message-digest', 'notify-profile-views',
   'notify-application-status', 'notify-application-expiry', 'notify-application',
-  'notify-reference-reminder', 'admin-market-digest',
+  'notify-reference-reminder', 'admin-market-digest', 'notify-onboarding-reminder',
 ]
 
 Deno.test('every webhook function calls assertServiceRole', async () => {

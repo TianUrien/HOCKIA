@@ -142,7 +142,7 @@ export default function FindPlayersScreen() {
         {chips.map((c) => {
           const on = filters.has(c.id)
           return (
-            <button key={c.id} type="button" aria-pressed={on} onClick={() => toggle(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', on ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1')}>
+            <button key={c.id} type="button" aria-pressed={on} onClick={() => toggle(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', on ? 'bg-brand-soft text-brand-primary' : 'bg-surface-grouped text-ink-1')}>
               {c.label}
             </button>
           )

@@ -1,3 +1,4 @@
+import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
@@ -21,9 +22,11 @@ import { useToastStore } from '@/lib/toast'
 import { useCountries } from '@/hooks/useCountries'
 import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
+import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
+import { COACH_SIGNING_NEEDS_CLUB_NOTE, coachSigningNeedsClub } from '@/lib/coachRoles'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
+import { APPLICATION_MOVED_ON_MESSAGE, WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -126,9 +129,15 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
         person.current_world_club_id
           ? supabase.from('world_clubs').select('club_name, avatar_url, men_league_id, women_league_id').eq('id', person.current_world_club_id).maybeSingle()
           : Promise.resolve({ data: null }),
-        (() => {
-          const ids = [club.mens_league_id, club.womens_league_id].filter((x): x is number => typeof x === 'number')
-          return ids.length ? supabase.from('world_leagues').select('id, level_band_global').in('id', ids) : Promise.resolve({ data: [] })
+        (async () => {
+          // The publisher's level = the league of their current club (what
+          // compute_club_fit bands by) plus a club account's own league ids;
+          // a coach who recruits has only the former.
+          const own = club.current_world_club_id
+            ? ((await supabase.from('world_clubs').select('men_league_id, women_league_id').eq('id', club.current_world_club_id).maybeSingle()).data as { men_league_id: number | null; women_league_id: number | null } | null)
+            : null
+          const ids = [own?.men_league_id, own?.women_league_id, club.mens_league_id, club.womens_league_id].filter((x, i, a): x is number => typeof x === 'number' && a.indexOf(x) === i)
+          return ids.length ? supabase.from('world_leagues').select('id, level_band_global').in('id', ids) : { data: [] }
         })(),
       ])
       if (cancelled) return
@@ -166,13 +175,17 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       if (!cancelled) setError('Couldn’t load this application.')
     })
     return () => { cancelled = true }
-  }, [club?.id, club?.mens_league_id, club?.womens_league_id, roleId, applicationId])
+  }, [club?.id, club?.mens_league_id, club?.womens_league_id, club?.current_world_club_id, roleId, applicationId])
 
   const p = review?.person
   const firstName = p?.full_name?.trim().split(/\s+/)[0] || 'this player'
   const onRoad = review ? isOnRoad(review.status) : false
   const road = useApplicationRoad({ applicationId, roleId, clubId: club?.id ?? null, playerId, enabled: onRoad })
   const roadData = road.data
+  // Who the offer and the signing are with: the club, or — for a coach who
+  // recruits — the organisation the role is for, never the coach.
+  const organisation = usePublisherOrganisation(roadData?.role)
+  const signingNeedsClub = onRoad && coachSigningNeedsClub(club, roadData?.role)
   // The D4 sheets are lazy chunks: fetch them as soon as the road shows so
   // the first tap on "Make an offer" opens the sheet instead of waiting on a
   // download with a null fallback (QA 2 Oct: the first tap did nothing).
@@ -273,9 +286,10 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     if (!review) return
     const prev = review.status
     setDeclining(false)
-    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok, withdrawn) => {
+    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok, withdrawn, movedOn) => {
       if (ok) trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: 'rejected', reason })
       else if (withdrawn) { patchRoleApplicantStatus(roleId, applicationId, 'withdrawn'); addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info') }
+      else if (movedOn) { patchRoleApplicantStatus(roleId, applicationId, prev); addToast(APPLICATION_MOVED_ON_MESSAGE, 'info') }
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t send the decline. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')
@@ -315,9 +329,14 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   // Closed applications (no reply, filled, withdrawn, signing statuses) can't
   // be re-decided: no decision bar, just the grey note with Message.
   const decidable = review ? isDecidableApplicationStatus(review.status) && !onRoad : false
-  const mainAction = review && onRoad ? roadMainAction(review.status) : null
-  const menu = review && onRoad ? roadMenu(review.status) : []
-  const waitingLine = review && onRoad ? roadWaitingLine(review.status, firstName) : null
+  // A coach with no club on the role or the profile can't mark a signing yet:
+  // the career entry would be named after the coach (coachSigningNeedsClub).
+  const roadAction = review && onRoad ? roadMainAction(review.status) : null
+  const mainAction = signingNeedsClub && roadAction === 'mark_signed' ? null : roadAction
+  const menu = (review && onRoad ? roadMenu(review.status) : []).filter((item) => !(signingNeedsClub && item === 'mark_signed'))
+  const waitingLine = review && onRoad
+    ? signingNeedsClub && roadAction === 'mark_signed' ? COACH_SIGNING_NEEDS_CLUB_NOTE : roadWaitingLine(review.status, firstName)
+    : null
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
@@ -435,7 +454,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                       <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">Full match</span>
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                       <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span>
-                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? `${l.minutes_played} min` : null, l.shirt_number ? `#${l.shirt_number}` : null].filter(Boolean).join(' · ')}</span>
+                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? `${l.minutes_played} min` : null, l.shirt_number ? `#${l.shirt_number}` : null, videoLinkSite(l.video_url)].filter(Boolean).join(' · ')}</span>
                     </a>
                   ))}
                   {[...scroll.fullMatches, ...scroll.highlights].map((v, i) => (
@@ -561,6 +580,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             roleLabel={roleLabel}
             role={roadData?.role ?? null}
             current={liveOffer}
+            publisherIsClub={organisation.isClub}
+            organisation={organisation.name}
             busy={signing.busy}
             onClose={() => setSheet(null)}
             onSend={(d) => void sendOffer(d)}
@@ -574,9 +595,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             firstName={firstName}
             playerAvatar={avatar}
             playerName={p.full_name}
-            clubAvatar={club?.avatar_url ?? null}
-            clubName={club?.full_name ?? null}
-            publisherIsClub={club?.role === 'club'}
+            clubAvatar={organisation.avatarUrl}
+            clubName={organisation.name}
+            publisherIsClub={organisation.isClub}
             roleLabel={roleLabel}
             waiting={roadData?.waiting ?? 0}
             busy={signing.busy}

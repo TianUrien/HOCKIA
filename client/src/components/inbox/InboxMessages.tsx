@@ -5,6 +5,7 @@ import { Clock, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { ConversationSkeleton } from '@/components/Skeleton'
 import { identityLine } from '@/lib/identity'
 import { formatInboxTime } from '@/lib/inboxTime'
@@ -41,8 +42,10 @@ interface InboxMessagesProps {
 }
 
 /**
- * Inbox › Messages (Figma 100:278): one thread per row — crest/avatar,
- * name + time, role line, last message, purple unread dot. Tapping opens
+ * Inbox › Messages (Figma 100:278): a filled grey Search field, then one
+ * thread per row (List item / Conversation 494:2377) — crest/avatar 52,
+ * name + date (clock today, day-first before), role line, last message, and
+ * a brand-purple dot (never a number) while unread. Tapping opens
  * the conversation. Reads the same `get_user_conversations` RPC as the
  * desktop Messages page.
  *
@@ -92,9 +95,9 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
 
   return (
     <section aria-label="Messages">
-      <div className="px-5 pb-2">
+      <div className="px-5 pb-1.5">
         <label className="relative block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" strokeWidth={2} />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={2} aria-hidden="true" />
           <input
             type="search"
             value={query}
@@ -105,14 +108,15 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            className="h-9 w-full rounded-[10px] bg-surface-grouped pl-9 pr-9 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
+            className="h-10 w-full rounded-[12px] bg-surface-muted pl-10 pr-10 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40 [&::-webkit-search-cancel-button]:hidden"
+            data-testid="inbox-search"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-ink-3"
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-3"
             >
               <X className="h-4 w-4" />
             </button>
@@ -141,7 +145,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
       ) : isError ? (
         <div className="px-5 py-10 text-center">
           <p className="text-row font-semibold text-ink-1">Could not load your messages</p>
-          <button type="button" onClick={() => void refetch()} className="mt-3 rounded-full bg-surface-grouped px-4 py-2 text-secondary font-semibold text-ink-1">
+          <button type="button" onClick={() => void refetch()} className={buttonClassName({ variant: 'secondary', size: 'small', radius: 'rounded-full', className: 'mt-3' })}>
             Try again
           </button>
         </div>
@@ -152,13 +156,13 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             {query ? 'Try another name.' : role === 'club' ? 'Messages from players, coaches and clubs show up here.' : 'Clubs answer messages far more often than they update applications.'}
           </p>
           {!query && (
-            <button type="button" onClick={onCompose} className="mt-4 rounded-full bg-hockia-primary px-5 py-2.5 text-row font-semibold text-white">
+            <button type="button" onClick={onCompose} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'mt-4' })}>
               New message
             </button>
           )}
         </div>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul>
           {filtered.map((row) => {
             const unread = Number(row.unread_count ?? 0) > 0
             const name = row.other_participant_name ?? row.other_participant_username ?? 'HOCKIA member'
@@ -170,26 +174,33 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             const m = clubV2 ? meta?.get(row.conversation_id) : undefined
             const roleLine = m ? clubInboxRoleLine(row.other_participant_role, m.detail, m.applied) : identityLine(row.other_participant_role)
             return (
-              <li key={row.conversation_id}>
+              <li key={row.conversation_id} className="group">
+                {/* List item / Conversation (Figma 494:2377): avatar 52, name +
+                    date, meta, preview; the divider starts at the text. */}
                 <button
                   type="button"
                   onClick={() => navigate(`/messages/${row.conversation_id}`)}
-                  className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors active:bg-surface-muted"
+                  className="flex w-full items-center gap-3 pl-4 text-left transition-colors active:bg-surface-muted"
+                  data-testid="conversation-row"
                 >
-                  <EntityAvatar src={row.other_participant_avatar} name={name} role={row.other_participant_role} size={48} />
-                  <span className="min-w-0 flex-1">
+                  <EntityAvatar src={row.other_participant_avatar} name={name} role={row.other_participant_role} size={52} />
+                  <span className="min-w-0 flex-1 border-b border-line py-3 pr-4 group-last:border-b-0">
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-row font-semibold text-ink-1">{name}</span>
-                      <span className="shrink-0 text-secondary text-ink-3">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
+                      <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{name}</span>
+                      <span className="shrink-0 text-secondary text-ink-3" data-testid="conversation-date">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
                     </span>
                     <span className="block truncate text-secondary text-ink-2">{roleLine}</span>
-                    <span className={cn('block truncate text-secondary', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>
+                    <span className="mt-0.5 flex items-center gap-2">
+                      <span className={cn('min-w-0 flex-1 truncate text-[14px] leading-[19px]', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>
+                      {/* Dot, never a number. Amber = the club owes a first
+                          reply (club only); brand purple = unread. */}
+                      {m?.waiting ? (
+                        <span aria-label="Waiting for your first reply" className="h-2 w-2 shrink-0 rounded-full bg-[#b45309]" data-testid="inbox-waiting-dot" />
+                      ) : unread ? (
+                        <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="inbox-unread-dot" />
+                      ) : null}
+                    </span>
                   </span>
-                  {m?.waiting ? (
-                    <span aria-label="Waiting for your first reply" className="h-2 w-2 shrink-0 rounded-full bg-[#b45309]" data-testid="inbox-waiting-dot" />
-                  ) : unread ? (
-                    <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" />
-                  ) : null}
                 </button>
               </li>
             )

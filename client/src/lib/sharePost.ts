@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 import { logger } from './logger'
 import type { SharedPostMetadata } from '@/types/chat'
+import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from './newConversationLimit'
+import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from './recruiterMinor'
 
 /**
  * Send a shared-post message to a recipient without requiring an active chat window.
@@ -10,7 +12,7 @@ export async function sendSharedPostMessage(
   currentUserId: string,
   recipientUserId: string,
   postData: SharedPostMetadata,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; notice?: boolean }> {
   try {
     // 1. Find existing conversation (either participant ordering)
     let conversationId: string | null = null
@@ -60,6 +62,13 @@ export async function sendSharedPostMessage(
             logger.error('[sharePost] Race condition but could not find conversation')
             return { success: false, error: 'Failed to create conversation' }
           }
+        } else if (isNewConversationLimitError(createError)) {
+          // Sharing to someone new counts as starting a conversation.
+          reportNewConversationRefusal()
+          return { success: false, error: NEW_CONVERSATION_LIMIT_MESSAGE }
+        } else if (isRecruiterMinorError(createError)) {
+          // A rule, not a failure: shown as an info note.
+          return { success: false, error: RECRUITER_MINOR_MESSAGE, notice: true }
         } else {
           logger.error('[sharePost] Error creating conversation:', createError)
           return { success: false, error: 'Failed to create conversation' }

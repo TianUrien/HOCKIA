@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { Upload } from 'tus-js-client'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { VIDEO_UPLOAD_LIMIT_MESSAGE } from '@/lib/uploadManager'
 
 /**
  * useNativeVideoUpload — drives a native player-video upload to Cloudflare
@@ -94,7 +95,8 @@ export function useNativeVideoUpload() {
       createData = data as { videoId: string; tusUploadUrl: string }
     } catch (err) {
       logger.error('[useNativeVideoUpload] create-upload failed', err)
-      setError('Could not start the upload. Please try again.')
+      const status = (err as { context?: { status?: number } } | null)?.context?.status
+      setError(status === 429 ? VIDEO_UPLOAD_LIMIT_MESSAGE : 'Could not start the upload. Please try again.')
       setPhase('error')
       return null
     }

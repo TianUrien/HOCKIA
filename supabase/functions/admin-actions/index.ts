@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
+import { deleteStreamAssets } from '../_shared/cloudflare-stream.ts'
 
 // UUID format validation
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -159,6 +160,24 @@ Deno.serve(async (req) => {
           logger.warn('Target user not found', { targetId: target_id })
           result = { success: false, error: 'User not found' }
           break
+        }
+
+        // Cloudflare Stream assets first: removing the auth user cascades the
+        // player_videos rows that carry the uids. Best-effort, never blocks.
+        try {
+          const { data: videos, error: videosError } = await adminClient
+            .from('player_videos')
+            .select('cf_uid')
+            .eq('user_id', target_id)
+            .not('cf_uid', 'is', null)
+          if (videosError) throw videosError
+          const uids = (videos ?? []).map((v: { cf_uid: string | null }) => v.cf_uid)
+          if (uids.length > 0) {
+            const counts = await deleteStreamAssets(uids, '[admin-actions]')
+            logger.info('Cloudflare Stream cleanup', { targetId: target_id, ...counts })
+          }
+        } catch (streamError) {
+          logger.warn('Cloudflare Stream cleanup failed', { targetId: target_id, error: String(streamError) })
         }
 
         // Delete the user

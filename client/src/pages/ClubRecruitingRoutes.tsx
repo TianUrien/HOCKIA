@@ -23,8 +23,9 @@ const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
 /**
  * Phone routing for the club's recruiting screens (Figma 04 Club · Row 1).
  * Phones: a club's Opportunities tab is its own roles; a role's applicants
- * and each applicant review are the v2 screens. Desktop and every other
- * role keep the existing pages.
+ * and each applicant review are the v2 screens, for clubs and for coaches who
+ * recruit (their roles live under Opportunities · My roles). Desktop and every
+ * other role keep the existing pages.
  */
 const PHONE = '(max-width: 1023px)'
 
@@ -41,28 +42,29 @@ export function OpportunitiesEntry() {
   return <Screen><OpportunitiesPage /></Screen>
 }
 
-// The v2 applicant screens are for clubs only, like the Opportunities tab above.
-// Everyone else (players, and coaches until Coach v2 opens these to recruiting
-// coaches) keeps ApplicantsList, which refuses non-owners. Role still loading →
-// blank, so a club never flashes the v1 page.
+// The v2 applicant screens are for whoever publishes roles: clubs, and coaches
+// who recruit for their team (isRecruitingViewer; the server answers only the
+// role's publisher). Everyone else (players, coaches who only look for a role)
+// keeps ApplicantsList, which refuses non-owners. Profile still loading →
+// blank, so a recruiter never flashes the v1 page.
 export function ApplicantsEntry() {
   const isPhone = useMediaQuery(PHONE)
-  const role = useAuthStore((s) => s.profile?.role)
+  const profile = useAuthStore((s) => s.profile)
   const { opportunityId } = useParams<{ opportunityId: string }>()
   if (isPhone && opportunityId) {
-    if (!role) return <Blank />
-    if (role === 'club') return <Screen><ApplicantsScreen roleId={opportunityId} /></Screen>
+    if (!profile?.role) return <Blank />
+    if (isRecruitingViewer(profile)) return <Screen><ApplicantsScreen roleId={opportunityId} /></Screen>
   }
   return <Screen><ApplicantsList /></Screen>
 }
 
 export function ApplicantReviewEntry() {
   const isPhone = useMediaQuery(PHONE)
-  const role = useAuthStore((s) => s.profile?.role)
+  const profile = useAuthStore((s) => s.profile)
   const { opportunityId, applicationId } = useParams<{ opportunityId: string; applicationId: string }>()
   if (!opportunityId || !applicationId) return <Navigate to="/opportunities" replace />
-  if (!isPhone || (role && role !== 'club')) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
-  if (!role) return <Blank />
+  if (!isPhone || (profile?.role && !isRecruitingViewer(profile))) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
+  if (!profile?.role) return <Blank />
   return <Screen><ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} /></Screen>
 }
 

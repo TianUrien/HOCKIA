@@ -39,7 +39,11 @@ vi.mock('@/hooks/useInvites', () => ({
   useInviteCard: () => ({ data: inv.card, loading: false, refetch: vi.fn() }),
   useDeclineInvite: () => ({ decline: vi.fn(), busy: false }),
 }))
-vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }) }))
+// useQuery: the sheet's organisation lookup (usePublisherOrganisation) — never enabled for a club account.
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }),
+  useQuery: () => ({ data: undefined, isLoading: false }),
+}))
 
 import InviteSheet from '@/components/club/InviteSheet'
 import InviteCard from '@/features/chat-v2/components/InviteCard'

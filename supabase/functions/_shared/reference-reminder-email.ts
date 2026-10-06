@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Reference Reminder Email Helpers (Phase 3.2)
@@ -34,14 +35,6 @@ export interface ReminderSuggestedFriend {
   role: string | null
 }
 
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
 
 function getInitials(name: string): string {
   return name
@@ -115,8 +108,9 @@ export function generateReminderEmailHtml(
   const ctaUrl = buildReminderCtaUrl(HOCKIA_BASE_URL, friend.id)
   const initials = getInitials(friendName)
 
-  const avatarHtml = friend.avatar_url
-    ? `<img src="${escapeHtml(friend.avatar_url)}" alt="${escapeHtml(friendName)}" style="width: 48px; height: 48px; border-radius: 24px; object-fit: cover;" />`
+  const avatarSrc = safeHttpsUrl(friend.avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(friendName)}" style="width: 48px; height: 48px; border-radius: 24px; object-fit: cover;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #10b981 0%, #34d399 100%);">
         <tr>
           <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>

@@ -38,15 +38,18 @@ export function roleHeadline(v: { position: string | null; title: string | null;
 
 export interface GenderPill { label: string; className: string }
 
+/**
+ * Team / category tag. Founder ruling 2026-10-04: every category (Men's,
+ * Women's, Girls, Boys, Mixed) uses the one soft-purple Tag style — no pink /
+ * blue by gender.
+ */
+export const CATEGORY_TAG_CLASS = 'bg-brand-soft text-brand-primary'
+
+const CATEGORY_LABELS: Record<string, string> = { Women: "Women's", Men: "Men's", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed' }
+
 export function genderPill(gender: string | null | undefined): GenderPill | null {
-  switch (gender) {
-    case 'Women': return { label: "Women's", className: 'bg-[#fce7f3] text-[#be185d]' }
-    case 'Men': return { label: "Men's", className: 'bg-[#e0f2fe] text-[#0369a1]' }
-    case 'Girls': return { label: 'Girls', className: 'bg-[#fce7f3] text-[#be185d]' }
-    case 'Boys': return { label: 'Boys', className: 'bg-[#e0f2fe] text-[#0369a1]' }
-    case 'Mixed': return { label: 'Mixed', className: 'bg-surface-grouped text-ink-1' }
-    default: return null
-  }
+  const label = gender ? CATEGORY_LABELS[gender] : undefined
+  return label ? { label, className: CATEGORY_TAG_CLASS } : null
 }
 
 /**
@@ -170,6 +173,45 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
     .map((b) => BENEFIT_TILES[b])
 }
 
+/**
+ * Package item (Figma 470:1660) as the Card / Role (541:9107) shows it:
+ * Benefit (the package colours), Skill (soft brand), Requirement (neutral —
+ * information, never a call to act) and Note (subtle grey, a check).
+ */
+export type PackageItemType = 'benefit' | 'skill' | 'requirement' | 'note'
+export interface PackageItem { key: string; type: PackageItemType; label: string; icon: LucideIcon; tileClass: string }
+
+export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
+export const NOTE_TILE = { icon: Info, tileClass: 'bg-surface-muted text-ink-2' }
+export const PACKAGE_NOT_LISTED = 'Package not listed · ask the club'
+export const MAX_CARD_PACKAGE_ITEMS = 6
+
+/**
+ * Up to six package items for a role card, in reading order: pay, benefits,
+ * wanted skills, then the EU passport requirement (kept even when the row is
+ * full). A role with nothing listed says so instead of showing an empty row.
+ */
+export function rolePackageItems(
+  v: Pick<Vacancy, 'compensation' | 'benefits' | 'eu_passport_required'> & { specialist_skills_wanted?: string[] | null },
+  max = MAX_CARD_PACKAGE_ITEMS,
+): PackageItem[] {
+  const items: PackageItem[] = []
+  const comp = (v.compensation ?? '').toLowerCase()
+  if (comp === 'paid') items.push({ key: 'paid', type: 'benefit', label: PAID_TILE.label, icon: PAID_TILE.icon, tileClass: PAID_TILE.tileClass })
+  else if (comp === 'either') items.push({ key: 'comp', type: 'note', label: 'Paid or unpaid', ...NOTE_TILE })
+  else if (comp) items.push({ key: 'comp', type: 'note', label: compensationText(v), ...NOTE_TILE })
+  for (const b of roleBenefits(v)) items.push({ key: b.key, type: 'benefit', label: b.label, icon: b.icon, tileClass: b.tileClass })
+  for (const s of (v.specialist_skills_wanted ?? []).slice(0, 2)) {
+    items.push({ key: `skill-${s}`, type: 'skill', label: humanizeToken(s) ?? s, icon: SPECIALIST_TILE.icon, tileClass: SPECIALIST_TILE.tileClass })
+  }
+  const requirement: PackageItem | null = v.eu_passport_required
+    ? { key: 'eu-passport', type: 'requirement', label: 'EU passport', icon: REQUIREMENT_TILE.icon, tileClass: REQUIREMENT_TILE.tileClass }
+    : null
+  if (items.length === 0 && !requirement) return [{ key: 'not-listed', type: 'note', label: PACKAGE_NOT_LISTED, ...NOTE_TILE }]
+  if (!requirement) return items.slice(0, max)
+  return [...items.slice(0, max - 1), requirement]
+}
+
 // No amber here: amber is only for a viewer who must act (founder ruling
 // 2026-09-26), and a player waiting on a club can't.
 export type ApplicationTone = 'positive' | 'grey' | 'neutral'
@@ -195,7 +237,9 @@ export function applicationStatusPill(
   const L = APPLICATION_STATUS_LABELS
   switch (status) {
     case 'shortlisted': return { label: L.shortlisted, tone: 'positive' }
-    case 'maybe': return { label: L.maybe, tone: 'positive' }
+    // "Replied" is not an outcome and the player can't act on it: grey, like
+    // playerApplicationStatusBadge (lib/applicationStatus).
+    case 'maybe': return { label: L.maybe, tone: 'grey' }
     case 'rejected': return { label: L.rejected, tone: 'grey' }
     case 'withdrawn': return { label: L.withdrawn, tone: 'grey' }
     case 'no_response': return { label: L.no_response, tone: 'grey' }
@@ -255,6 +299,13 @@ export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
   positive: 'bg-positive-soft text-positive',
   grey: 'bg-surface-grouped text-ink-2',
   neutral: 'bg-hockia-soft text-hockia-primary',
+}
+
+/** Status as words, no pill (List item / Application, Figma 551:647). */
+export const APPLICATION_TONE_TEXT: Record<ApplicationTone, string> = {
+  positive: 'text-positive',
+  grey: 'text-ink-2',
+  neutral: 'text-hockia-primary',
 }
 
 /** "Applied 2d" — same rule as the feed: never "ago". */

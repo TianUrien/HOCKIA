@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { AlertCircle, ChevronRight, Loader2, X } from 'lucide-react'
+import { ChevronRight, Info, X } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -16,6 +16,9 @@ import { extractErrorMessage } from '@/lib/utils'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { ApplicationSent } from '@/components/opportunities/ApplicationSent'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
@@ -43,9 +46,13 @@ const DURATION_LABELS: Record<string, string> = {
  * Eligibility is evaluated HERE with the same two rules as the
  * check_application_eligibility trigger — (A) EU passport, (B) team category
  * vs gender; missing data never blocks — so the server error is never the
- * first time the player hears about it. Not eligible: amber reason, no
- * message box, Message the club, Send disabled. On success the Application
- * sent screen takes over.
+ * first time the player hears about it. Not eligible: a NEUTRAL callout with
+ * an info icon (never amber — the player cannot act on it here), no message
+ * box, Secondary "Message the club", Primary "Send application" disabled. On
+ * success the Application sent screen takes over.
+ *
+ * Header: crest 48, "Apply to <club>", the role, Ghost ✕. The facts are
+ * Detail rows with a chevron (each opens its Edit profile field).
  */
 export default function ApplyToVacancyModal({
   isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league,
@@ -189,36 +196,37 @@ export default function ApplyToVacancyModal({
     navigate(profile?.role === 'player' ? `/dashboard/profile/edit?field=${field}` : '/dashboard/profile?action=edit')
   }
   const Row = ({ label, value, field }: { label: string; value: string; field: 'availability' | 'passports' | 'contact' }) => (
-    <button type="button" onClick={() => editField(field)} aria-label={`${label}: ${value}. Edit`} className="flex w-full items-center gap-3 py-3 pl-3.5 pr-3 text-left">
-      <span className="shrink-0 text-body text-ink-1">{label}</span>
-      <span className="min-w-0 flex-1 truncate text-right text-row text-ink-2">{value}</span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={1.8} />
+    <button type="button" onClick={() => editField(field)} aria-label={`${label}: ${value}. Edit`} className="flex min-h-[48px] w-full items-center gap-3 py-3 pl-4 pr-3 text-left active:bg-surface-muted-pressed" data-testid="apply-detail-row">
+      <span className="shrink-0 text-row text-ink-2">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-right text-row font-semibold text-ink-1">{value}</span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={1.8} aria-hidden="true" />
     </button>
   )
 
   return (
     <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`}>
-      <div className="flex flex-col gap-[18px] px-5 pb-2 pt-1">
+      <div className="flex flex-col gap-4 px-5 pb-2 pt-1">
         <div className="flex items-start gap-3">
-          <EntityAvatar src={clubLogo} name={displayClub} role={publisherRole ?? 'club'} size={44} />
+          <EntityAvatar src={clubLogo} name={displayClub} role={publisherRole ?? 'club'} size={48} />
           <div className="min-w-0 flex-1">
             <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">Apply to {displayClub}</h2>
             <p className="mt-0.5 text-row text-ink-2">{subtitle}</p>
           </div>
-          <button type="button" onClick={handleClose} aria-label="Close" className="-mr-2 -mt-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-4">
-            <X className="h-[22px] w-[22px]" strokeWidth={2} />
-          </button>
+          <IconButton label="Close" onClick={handleClose} className="-mr-2.5 -mt-1">
+            <X className="h-6 w-6" strokeWidth={1.8} />
+          </IconButton>
         </div>
 
-        <div className="divide-y divide-line rounded-[12px] bg-surface-grouped">
+        <div className="divide-y divide-line overflow-hidden rounded-[12px] bg-surface-muted">
           <Row label="Available from" value={availableText} field="availability" />
           <Row label="Passport" value={passportText} field="passports" />
           <Row label="Contact" value={contactText} field="contact" />
         </div>
 
         {blocked ? (
-          <div className="flex items-start gap-2 rounded-[12px] bg-[#fdf1e4] px-3 py-2.5 text-[14px] leading-[18px] text-[#b45309]" role="status">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.6} />
+          // Callout (Figma 460:23): neutral surface, info icon. Never amber.
+          <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" role="status" data-testid="apply-not-eligible">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-2" strokeWidth={1.8} aria-hidden="true" />
             <p>{blockedReason}</p>
           </div>
         ) : (
@@ -226,33 +234,33 @@ export default function ApplyToVacancyModal({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add a message to the club (optional)"
+            aria-label="Add a message to the club (optional)"
             rows={3}
             maxLength={600}
-            className="w-full resize-none rounded-[12px] bg-surface-grouped px-3.5 py-3 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
+            className="min-h-[100px] w-full resize-none rounded-[12px] bg-surface-muted px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
           />
         )}
 
-        {error && <p className="text-secondary text-red-600" role="alert">{error}</p>}
+        {error && <p className="text-secondary text-status-danger" role="alert">{error}</p>}
 
-        {blocked && (
-          <button
-            type="button"
-            onClick={messageClub}
-            className="flex h-[50px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1"
+        <div className="flex flex-col gap-2.5">
+          {blocked && (
+            <button type="button" onClick={messageClub} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
+              Message the club
+            </button>
+          )}
+          <Button
+            block
+            loading={isSubmitting}
+            disabled={blocked}
+            aria-disabled={blocked || undefined}
+            onClick={() => void handleSubmit()}
+            className="!rounded-full"
+            data-testid="send-application"
           >
-            Message the club
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => void handleSubmit()}
-          disabled={isSubmitting || blocked}
-          aria-disabled={blocked || undefined}
-          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Send application
-        </button>
+            Send application
+          </Button>
+        </div>
         <p className="text-center text-secondary text-ink-3">
           {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from My applications.'}
         </p>

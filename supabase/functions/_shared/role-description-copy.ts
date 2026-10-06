@@ -18,6 +18,25 @@ export type Answers = {
   euPassport?: boolean
 }
 
+/** Most entries kept from each list answer (skills, package) sent to the model. */
+export const ANSWER_LIST_CAP = 12
+
+/**
+ * Normalise the client's answers: list answers become string arrays of at
+ * most ANSWER_LIST_CAP entries (anything else is dropped), so a malformed or
+ * oversized body can neither break the copy helpers nor inflate the prompt.
+ */
+export function sanitizeAnswers(raw: unknown): Answers {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const a = { ...(raw as Record<string, unknown>) } as Answers & Record<string, unknown>
+  const list = (v: unknown): string[] | undefined =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string').slice(0, ANSWER_LIST_CAP) : undefined
+  a.skills = list(a.skills)
+  a.package = list(a.package)
+  a.euPassport = a.euPassport === true
+  return a
+}
+
 export const clean = (s: unknown, max = 80) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, max) : '')
 export const human = (s: string) => s.replace(/_/g, ' ')
 

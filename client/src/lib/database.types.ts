@@ -2917,6 +2917,54 @@ export type Database = {
           },
         ]
       }
+      new_conversation_log: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          first_message_at: string | null
+          first_message_hash: string | null
+          first_message_loose_key: string | null
+          id: number
+          other_user_id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          first_message_at?: string | null
+          first_message_hash?: string | null
+          first_message_loose_key?: string | null
+          id?: number
+          other_user_id: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          first_message_at?: string | null
+          first_message_hash?: string | null
+          first_message_loose_key?: string | null
+          id?: number
+          other_user_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_conversation_log_other_user_id_fkey"
+            columns: ["other_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_conversation_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_reminder_queue: {
         Row: {
           created_at: string
@@ -5145,6 +5193,74 @@ export type Database = {
           },
         ]
       }
+      removed_account_notice_recipients: {
+        Row: {
+          created_at: string
+          notification_id: string | null
+          profile_id: string
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          notification_id?: string | null
+          profile_id: string
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          notification_id?: string | null
+          profile_id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "removed_account_notice_recipients_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "removed_account_notices"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "removed_account_notice_recipients_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      removed_account_notices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          last_sent_at: string | null
+          notified_count: number
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          last_sent_at?: string | null
+          notified_count?: number
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          last_sent_at?: string | null
+          notified_count?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "removed_account_notices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_profiles: {
         Row: {
           created_at: string
@@ -5328,6 +5444,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spam_signals: {
+        Row: {
+          first_seen_at: string
+          id: string
+          identical_count: number | null
+          kind: string
+          last_seen_at: string
+          people_count: number
+          refusal_count: number
+          sample_text: string | null
+          signal_key: string
+          user_id: string
+        }
+        Insert: {
+          first_seen_at?: string
+          id?: string
+          identical_count?: number | null
+          kind: string
+          last_seen_at?: string
+          people_count?: number
+          refusal_count?: number
+          sample_text?: string | null
+          signal_key: string
+          user_id: string
+        }
+        Update: {
+          first_seen_at?: string
+          id?: string
+          identical_count?: number | null
+          kind?: string
+          last_seen_at?: string
+          people_count?: number
+          refusal_count?: number
+          sample_text?: string | null
+          signal_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spam_signals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -7190,6 +7353,14 @@ export type Database = {
         Args: { p_metadata?: Json; p_signal: string; p_user_id: string }
         Returns: undefined
       }
+      _new_conversation_daily_limit: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      _normalise_first_message: {
+        Args: { p_content: string }
+        Returns: string
+      }
       _phs_normalize: {
         Args: { p_floor?: number; p_target: number; p_value: number }
         Returns: number
@@ -7889,6 +8060,10 @@ export type Database = {
           total_signups: number
         }[]
       }
+      admin_get_spam_signals: {
+        Args: { p_days?: number; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       admin_get_time_to_first_value: {
         Args: { p_days?: number }
         Returns: {
@@ -8051,6 +8226,10 @@ export type Database = {
           updated_at: string
           username: string
         }[]
+      }
+      admin_send_removed_account_notice: {
+        Args: { p_removed_profile_id: string }
+        Returns: number
       }
       admin_set_profile_verified: {
         Args: {
@@ -9282,6 +9461,7 @@ export type Database = {
         Args: { p_member_profile_id: string }
         Returns: Json
       }
+      is_adult_profile: { Args: { p_uid: string }; Returns: boolean }
       is_blocked_pair: {
         Args: { p_user_a: string; p_user_b: string }
         Returns: boolean
@@ -9289,6 +9469,7 @@ export type Database = {
       is_current_user_test_account: { Args: never; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       is_recruiter: { Args: { p_uid: string }; Returns: boolean }
+      is_removed_account: { Args: { p_profile_id: string }; Returns: boolean }
       is_staging_env: { Args: never; Returns: boolean }
       is_suggestible: { Args: { p_uid: string }; Returns: boolean }
       is_test_opportunity: {
@@ -9327,6 +9508,7 @@ export type Database = {
         }
         Returns: string
       }
+      log_new_conversation_refusal: { Args: never; Returns: undefined }
       mark_all_notifications_read: {
         Args: {
           p_kind?: Database["public"]["Enums"]["profile_notification_kind"]
@@ -9629,6 +9811,13 @@ export type Database = {
         Returns: Json
       }
       revoke_club_invite_link: { Args: never; Returns: Json }
+      role_organisation: {
+        Args: { p_opportunity_id: string }
+        Returns: {
+          name: string
+          world_club_id: string
+        }[]
+      }
       search_clubs_for_transfer: {
         Args: { p_limit?: number; p_query: string }
         Returns: Json

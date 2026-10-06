@@ -11,6 +11,7 @@ import {
   OPEN_APPLICATION_STATUSES,
   firstNameOf,
   inviteDailyLimit,
+  INVITE_GENERIC_ERROR,
   inviteErrorMessage,
   inviteLimitReason,
   isInvitablePlayer,
@@ -125,7 +126,7 @@ export function useInviteRoles(kind: 'player' | 'coach' = 'player', enabled = tr
     queryFn: async (): Promise<InviteRole[]> => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('id, title, position, gender, compensation, benefits, opportunity_type')
+        .select('id, title, position, gender, compensation, benefits, opportunity_type, world_club_id, organization_name')
         .eq('club_id', viewerId as string)
         .eq('status', 'open')
         .eq('opportunity_type', kind)
@@ -148,8 +149,11 @@ export function useSendInvite() {
       const note = opts.note.trim()
       const { data, error } = await db.rpc('send_invite', { p_player_id: opts.playerId, p_opportunity_id: opts.opportunityId, p_note: note || null })
       if (error) {
-        if (!/can.t be invited|already|limit|not open|500 characters/i.test(error.message ?? '')) reportSupabaseError('useInvites.send', error)
-        return inviteErrorMessage(error)
+        // Refusals with their own copy (limit, passed, already applied…) are
+        // expected outcomes; only the generic fallback means something broke.
+        const message = inviteErrorMessage(error)
+        if (message === INVITE_GENERIC_ERROR) reportSupabaseError('useInvites.send', error)
+        return message
       }
       const res = (data ?? {}) as { invite_id?: string }
       trackDbEvent('invite_sent', 'opportunity', opts.opportunityId, { invite_id: res.invite_id ?? null, player_id: opts.playerId })

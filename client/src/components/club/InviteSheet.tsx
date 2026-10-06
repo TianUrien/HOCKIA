@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Pencil } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { useAuthStore } from '@/lib/auth'
+import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
 import { getImageUrl } from '@/lib/imageUrl'
 import { personRoleLine } from '@/lib/clubRecruiting'
 import { useClubInviteStatuses, useInviteAllowance, useInviteRoles, useSendInvite } from '@/hooks/useInvites'
@@ -43,7 +43,6 @@ interface Props {
 }
 
 export default function InviteSheet({ open, player, activeRoleId, onClose, onSent }: Props) {
-  const clubName = useAuthStore((s) => s.profile?.full_name ?? null)
   const { roles, loading } = useInviteRoles('player', open)
   const allowance = useInviteAllowance()
   const { send, sending } = useSendInvite()
@@ -87,6 +86,8 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
   }, [open, invitable, roleId, activeRoleId, choosing])
 
   const role = useMemo(() => invitable.find((r) => r.id === roleId) ?? null, [invitable, roleId])
+  // The note names who is recruiting: the club, or the organisation a coach recruits for.
+  const clubName = usePublisherOrganisation(role).name
   const draft = useMemo(() => (role ? draftInviteNote({ firstName, clubName, role }) : ''), [role, firstName, clubName])
   // The draft follows the role until the club edits it.
   useEffect(() => { if (!edited) setNote(draft) }, [draft, edited])

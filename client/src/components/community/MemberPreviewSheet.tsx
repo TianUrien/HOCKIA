@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Check, ChevronRight, MessageCircle, UserPlus, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { DetailRowItem } from '@/components/ui/DetailRowItem'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { useAuthStore } from '@/lib/auth'
@@ -59,6 +62,8 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
   const [signIn, setSignIn] = useState<'view' | 'message' | 'connect' | null>(null)
   const [photoOpen, setPhotoOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  // Phone = the Figma component pass (72:316). Desktop keeps the earlier look.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
 
   const isOrg = isOrganisationRole(member.role)
   const name = member.full_name?.trim() || 'HOCKIA member'
@@ -148,9 +153,16 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
               <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
-          <div className="flex items-start gap-3.5">
+          <div className={isPhone ? 'flex items-center gap-3.5' : 'flex items-start gap-3.5'}>
             <button type="button" onClick={() => photoUrl && setPhotoOpen(true)} aria-label={photoUrl ? `Open ${name}'s photo` : undefined} className="shrink-0">
-              {isOrg ? (
+              {isPhone ? (
+                // Avatar 80: people are circles, organisations rounded squares.
+                isOrg || !photoUrl ? (
+                  <EntityAvatar src={photoUrl} name={name} role={member.role} size={80} />
+                ) : (
+                  <SmoothImage src={photoUrl} srcSet={getImageSrcSet(rawPhoto, 'avatar-lg') ?? undefined} sizes="80px" alt="" priority wrapperClassName="h-20 w-20 overflow-hidden rounded-full" className="object-cover" />
+                )
+              ) : isOrg ? (
                 <EntityAvatar src={photoUrl} name={name} role={member.role} size={96} />
               ) : photoUrl ? (
                 <SmoothImage src={photoUrl} srcSet={getImageSrcSet(rawPhoto, 'avatar-lg') ?? undefined} sizes="96px" alt="" priority wrapperClassName="h-24 w-24 overflow-hidden rounded-[20px]" className="object-cover" />
@@ -159,12 +171,42 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
               )}
             </button>
             <div className="min-w-0 flex-1 pt-0.5">
-              <h2 className="line-clamp-2 text-[24px] font-bold leading-[29px] text-ink-1">{name}</h2>
+              <h2 className={isPhone ? 'line-clamp-2 text-title text-ink-1' : 'line-clamp-2 text-[24px] font-bold leading-[29px] text-ink-1'}>{name}</h2>
               <p className="mt-0.5 text-row text-ink-2">{identityLine(member.role, detail)}</p>
               {availability && <p className="mt-0.5 text-secondary font-semibold text-positive">{availability}</p>}
             </div>
           </div>
 
+          {isPhone ? (
+            <>
+              <div className="mt-3 divide-y divide-line border-b border-line" data-testid="member-preview-rows">
+                {rows.map((r) => <DetailRowItem key={r.label} label={r.label} value={r.value} sub={r.sub} />)}
+              </div>
+
+              <button type="button" onClick={viewProfile} className="flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="member-preview-full-profile">
+                See full profile
+              </button>
+
+              <div className="mt-1 flex gap-2.5">
+                {friendButton && (friendship.isFriend || friendship.isOutgoingRequest ? (
+                  // Request sent (Figma 115:904): Secondary, disabled.
+                  <button type="button" disabled className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-friend">
+                    <Check className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden="true" /> {friendButton.label}
+                  </button>
+                ) : (
+                  <button type="button" onClick={addFriend} disabled={friendButton.disabled} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-friend">
+                    <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> {friendButton.label}
+                  </button>
+                ))}
+                {!friendship.isOwnProfile && (
+                  <button type="button" onClick={() => void message()} disabled={sending} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-message">
+                    <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" /> Message
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
           <div className="mt-2 divide-y divide-line">
             {rows.map((r) => (
               <div key={r.label} className="flex items-start gap-3 py-2.5">
@@ -203,6 +245,8 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
               </button>
             )}
           </div>
+            </>
+          )}
         </div>
       </BottomSheet>
 

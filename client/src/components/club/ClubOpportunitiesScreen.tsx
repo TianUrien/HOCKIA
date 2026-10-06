@@ -6,7 +6,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuthStore } from '@/lib/auth'
 import { useRoleShortlist, useScoutingContext } from '@/hooks/useScouting'
 import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
-import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
+import { useClubRoles, type ClubRole, type ClubRolesData } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { closedBreakdown, waitingNotice } from '@/lib/clubRecruiting'
 import { shortDayOf } from '@/lib/signing'
@@ -60,7 +60,7 @@ function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => voi
   )
 }
 
-function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; expiryDays: number; onReview: () => void; onChanged: () => void }) {
+function RoleCard({ role, expiryDays, onReview, onChanged, onEdit }: { role: ClubRole; expiryDays: number; onReview: () => void; onChanged: () => void; onEdit?: () => void }) {
   const pill = genderPill(role.gender)
   const benefits = roleBenefits(role)
   const paid = isPaid(role)
@@ -78,7 +78,7 @@ function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; e
         <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
         <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
           <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(rolePostedAt(role))}` : closedLabel(role)}
-          <RoleActions role={role} onChanged={onChanged} />
+          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} />
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -119,7 +119,10 @@ function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; e
           {closedBreakdown(p, expiryDays)}
         </p>
       )}
-      <button type="button" onClick={onReview} className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1')}>
+      {/* Repeated per card → Tonal, never the solid Primary (design review,
+          D6): several role cards can owe a reply at once, and the solid
+          Primary belongs to single-focus screens such as applicant review. */}
+      <button type="button" onClick={onReview} data-testid="role-review-button" className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-soft text-hockia-primary active:bg-surface-muted-pressed' : 'bg-surface-grouped text-ink-1')}>
         {p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'}
       </button>
     </article>
@@ -156,10 +159,32 @@ function FirstRunOpportunities({ onPostRole, onFindPlayers }: { onPostRole: () =
   )
 }
 
-export default function ClubOpportunitiesScreen() {
+/**
+ * The recruiter's roles — everything under the title on the club's
+ * Opportunities tab: Open / Closed, the amber waiting notice, the role cards
+ * with their pipeline and "Review N applicants", then Find players and
+ * Shortlist. The owner is whoever posted the roles: a club, or a coach who
+ * recruits for their team (Coach v2 · My roles, Figma D6.4 377:1814 — "the
+ * Club v2 component with owner = coach"). The host passes the owner's roles
+ * and decides where posting and editing go; nothing here reads the role.
+ */
+export interface RecruiterRolesProps {
+  data: ClubRolesData
+  /** Post a role (the "+" lives in the host's header). */
+  onPostRole: () => void
+  /** Continue a draft / edit a role. Default: the club's phone editor. */
+  onEditRole?: (role: ClubRole) => void
+  /** Where the applicant screens return to. */
+  from?: string
+  /** 'always' = the club tab; 'when-closed' = only once a closed role exists
+   *  (Coach v2 · My roles sits under the page's own segmented control). */
+  statusSegment?: 'always' | 'when-closed'
+  /** Parent label the Shortlist screen's back button names. */
+  parentLabel?: string
+}
+
+export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities' }: RecruiterRolesProps) {
   const navigate = useNavigate()
-  const profile = useAuthStore((s) => s.profile)
-  const data = useClubRoles(profile?.id)
   const [segment, setSegment] = useState<Segment>('open')
   const location = useLocation()
   const highlight = (location.state as { highlight?: string } | null)?.highlight ?? null
@@ -170,7 +195,8 @@ export default function ClubOpportunitiesScreen() {
     const hit = list.find((r) => r.id === highlight)
     return hit ? [hit, ...list.filter((r) => r.id !== highlight)] : list
   }, [segment, data.open, data.closed, highlight])
-  const postRole = () => navigate('/dashboard/opportunities/new')
+  const postRole = onPostRole
+  const editRole = (r: ClubRole) => (onEditRole ? onEditRole(r) : navigate(`/dashboard/opportunities/${r.id}/edit`))
   // "Open · N" counts published open roles only — drafts are listed under Open
   // but aren't open (same number as desktop's "Published").
   const publishedOpen = data.open.filter((r) => r.status === 'open').length
@@ -191,35 +217,31 @@ export default function ClubOpportunitiesScreen() {
   const rolesWithPending = data.open.filter((r) => r.pipeline.toReview > 0)
   const applicantsPath = (id: string) => `/dashboard/opportunities/${id}/applicants`
   const openNotice = () => {
-    if (rolesWithPending.length === 1) navigate(applicantsPath(rolesWithPending[0].id), { state: { from: '/opportunities' } })
+    if (rolesWithPending.length === 1) navigate(applicantsPath(rolesWithPending[0].id), { state: { from } })
     else setSegment('open')
   }
 
   const firstRun = isFirstRunOpportunities(data.loading, data.open, data.closed)
 
+  const showSegment = statusSegment === 'always' || data.closed.length > 0
+
+  if (firstRun) {
+    // Find players now opens Find players with "No context" active.
+    return <FirstRunOpportunities onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+  }
+
   return (
-    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="club-opportunities-screen">
-      <LargeTitleBar
-        title="Opportunities"
-        trailing={(
-          <button type="button" onClick={postRole} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center text-ink-1">
-            <Plus className="h-6 w-6" strokeWidth={2} />
-          </button>
-        )}
-      />
-      {firstRun ? (
-        // Find players now opens Find players with "No context" active.
-        <FirstRunOpportunities onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
-      ) : (
-      <>
-      <div className="px-5 pb-3.5 pt-1">
-        <SegmentedControl<Segment>
-          ariaLabel="Role status"
-          value={segment}
-          onChange={setSegment}
-          options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
-        />
-      </div>
+    <>
+      {showSegment && (
+        <div className="px-5 pb-3.5 pt-1">
+          <SegmentedControl<Segment>
+            ariaLabel="Role status"
+            value={segment}
+            onChange={setSegment}
+            options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+          />
+        </div>
+      )}
 
       {segment === 'open' && notice && (
         <div className="px-5 pb-3.5">
@@ -243,8 +265,8 @@ export default function ClubOpportunitiesScreen() {
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
         {roles.map((r) => (r.status === 'draft'
-          ? <DraftCard key={r.id} role={r} onContinue={() => navigate(`/dashboard/opportunities/${r.id}/edit`)} />
-          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from: '/opportunities' } })} onChanged={data.refresh} />
+          ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
+          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
         ))}
 
         {segment === 'open' && (
@@ -255,7 +277,7 @@ export default function ClubOpportunitiesScreen() {
               <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
             </button>
             <div className="ml-[58px] h-[0.5px] bg-line" />
-            <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: 'Opportunities' } })} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
+            <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: parentLabel } })} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
               <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Star className="h-[18px] w-[18px]" strokeWidth={2} /></span>
               <span className="flex-1 text-[16px] font-medium text-ink-1">Shortlist</span>
               <span className="text-[16px] text-ink-2 tabular-nums" data-testid="club-shortlist-count">{activeShortlist.loading ? '' : activeShortlist.rows.length}</span>
@@ -264,9 +286,26 @@ export default function ClubOpportunitiesScreen() {
           </div>
         )}
       </div>
+    </>
+  )
+}
 
-      </>
-      )}
+export default function ClubOpportunitiesScreen() {
+  const navigate = useNavigate()
+  const profile = useAuthStore((s) => s.profile)
+  const data = useClubRoles(profile?.id)
+  const postRole = () => navigate('/dashboard/opportunities/new')
+  return (
+    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="club-opportunities-screen">
+      <LargeTitleBar
+        title="Opportunities"
+        trailing={(
+          <button type="button" onClick={postRole} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center text-ink-1">
+            <Plus className="h-6 w-6" strokeWidth={2} />
+          </button>
+        )}
+      />
+      <RecruiterRoles data={data} onPostRole={postRole} />
     </div>
   )
 }

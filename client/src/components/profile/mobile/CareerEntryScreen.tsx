@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react'
 import { Camera, ChevronRight, MapPin, Plus, Trash2, Trophy, X } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { Chip } from '@/components/ui/Chip'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { fieldInput, fieldInputBase, fieldLabel, fieldSelect } from '@/components/ui/fieldClasses'
 import WorldClubSearch, { type WorldClubSearchResult } from '@/components/WorldClubSearch'
 import CountrySelect from '@/components/CountrySelect'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -50,10 +53,11 @@ interface CareerEntryScreenProps {
   onClose: (changed: boolean) => void
 }
 
-const field = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+// Text field (Figma 472:243) — `ui/fieldClasses`.
+const field = fieldInput
 
 function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
-  return <label htmlFor={htmlFor} className="mb-1.5 block text-secondary font-semibold text-ink-2">{children}</label>
+  return <label htmlFor={htmlFor} className={fieldLabel}>{children}</label>
 }
 
 export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextDisplayOrder, onClose }: CareerEntryScreenProps) {
@@ -215,16 +219,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
         )}
         <div className="flex gap-2 overflow-x-auto px-5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="radiogroup" aria-label="Entry type">
           {chips.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              role="radio"
-              aria-checked={type === c.value}
-              onClick={() => setType(c.value)}
-              className={cn('flex h-9 shrink-0 items-center rounded-full px-3.5 text-[14px] font-semibold', type === c.value ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1')}
-            >
-              {c.label}
-            </button>
+            <Chip key={c.value} label={c.label} selected={type === c.value} onClick={() => setType(c.value)} role="radio" aria-checked={type === c.value} aria-pressed={undefined} data-testid="career-entry-type" />
           ))}
         </div>
       </div>
@@ -269,7 +264,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="career-entry-level">Level</Label>
-                <select id="career-entry-level" value={level} onChange={(e) => setLevel(e.target.value)} className={field}>
+                <select id="career-entry-level" value={level} onChange={(e) => setLevel(e.target.value)} className={fieldSelect}>
                   <option value="">Not specified</option>
                   <option value="senior">Senior</option>
                   <option value="junior">Junior (U14–U23)</option>
@@ -299,7 +294,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
             <Label htmlFor="career-entry-league">League</Label>
             <div className="relative">
               <Trophy className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
-              <input id="career-entry-league" value={league} onChange={(e) => setLeague(e.target.value)} placeholder="Division One South" className={cn(field, 'pl-11')} />
+              <input id="career-entry-league" value={league} onChange={(e) => setLeague(e.target.value)} placeholder="Division One South" className={`${fieldInputBase} pl-11 pr-3.5`} />
             </div>
           </div>
         )}
@@ -308,7 +303,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
           <Label htmlFor="career-entry-where">Where</Label>
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={1.8} />
-            <input id="career-entry-where" value={where} onChange={(e) => setWhere(e.target.value)} placeholder="Rochester, England" className={cn(field, 'pl-11')} />
+            <input id="career-entry-where" value={where} onChange={(e) => setWhere(e.target.value)} placeholder="Rochester, England" className={`${fieldInputBase} pl-11 pr-3.5`} />
           </div>
         </div>
 
@@ -321,7 +316,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
           <div>
             <Label htmlFor="career-entry-to">To</Label>
             {stillHere ? (
-              <div className={cn(field, 'flex items-center text-ink-2')}>Present</div>
+              <div className="flex h-[50px] w-full items-center rounded-[12px] bg-surface-muted px-3.5 text-[16px] leading-[22px] text-ink-2">Present</div>
             ) : (
               <input id="career-entry-to" type="month" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={field} />
             )}
@@ -343,12 +338,12 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
           <Label>Highlights</Label>
           <ul className="flex flex-col gap-2">
             {highlights.map((h, i) => (
-              <li key={`${h}-${i}`} className={cn(field, 'flex items-center gap-2')}>
+              <li key={`${h}-${i}`} className="flex h-[50px] w-full items-center gap-2 rounded-[12px] bg-surface-muted px-3.5 text-[16px] leading-[22px] text-ink-1">
                 <span className="min-w-0 flex-1 truncate">{h}</span>
-                <button type="button" onClick={() => setHighlights((list) => list.filter((_, j) => j !== i))} aria-label={`Remove “${h}”`} className="flex h-8 w-8 shrink-0 items-center justify-center text-ink-3"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={() => setHighlights((list) => list.filter((_, j) => j !== i))} aria-label={`Remove “${h}”`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-ink-3"><X className="h-4 w-4" /></button>
               </li>
             ))}
-            <li className={cn(field, 'flex items-center gap-2')}>
+            <li className="flex h-[50px] w-full items-center gap-2 rounded-[12px] bg-surface-muted px-3.5 focus-within:bg-white focus-within:ring-1 focus-within:ring-inset focus-within:ring-hockia-primary">
               <Plus className="h-[18px] w-[18px] shrink-0 text-hockia-primary" strokeWidth={2.2} />
               <input
                 value={draftHighlight}
@@ -357,7 +352,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
                 onBlur={addHighlight}
                 placeholder="Add a highlight"
                 aria-label="Add a highlight"
-                className="h-full min-w-0 flex-1 bg-transparent text-body text-ink-1 placeholder:text-hockia-primary focus:outline-none"
+                className="h-full min-w-0 flex-1 bg-transparent text-[16px] leading-[22px] text-ink-1 placeholder:text-hockia-primary focus:outline-none"
               />
             </li>
           </ul>
@@ -391,7 +386,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
       </div>
 
       <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-20 border-t border-line bg-white px-5 pb-3 pt-3 lg:hidden">
-        <button type="button" onClick={() => void save()} disabled={saving || uploading} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">
+        <button type="button" onClick={() => void save()} disabled={saving || uploading} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })} data-testid="career-entry-save">
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>

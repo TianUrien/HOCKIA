@@ -29,13 +29,14 @@
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { withSentry } from '../_shared/sentry.ts'
 import { localSigningConfig, signStreamToken } from '../_shared/stream-signing.ts'
 
 const TOKEN_TTL_SECONDS = 60 * 60 // 1h — long enough to watch, short enough to not be a durable link
 // Upper bound for one batch request — a screenful of tiles plus lookahead.
 const MAX_BATCH = 24
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry('video-playback-token', async (req) => {
   const cors = getCorsHeaders(req.headers.get('Origin'))
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -311,7 +312,7 @@ Deno.serve(async (req) => {
       expiresInSeconds: TOKEN_TTL_SECONDS,
     }
   }
-})
+}, (req) => getCorsHeaders(req.headers.get('Origin'))))
 
 type VideoRow = {
   id: string

@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Shared Email Template for Application Notifications (to Clubs)
@@ -107,22 +108,23 @@ export function generateEmailHtml(
   const detailItems: string[] = []
 
   if (positionsText) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${positionsText}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(positionsText)}</span>`)
   }
 
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${location}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
   }
 
   // Generate initials for fallback avatar
   const initials = getInitials(displayName)
   
   // Generate avatar HTML - use table-based layout for email compatibility
-  const avatarHtml = applicant.avatar_url 
-    ? `<img src="${applicant.avatar_url}" alt="${displayName}" style="width: 48px; height: 48px; border-radius: 24px;" />`
+  const avatarSrc = safeHttpsUrl(applicant.avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
+          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
       </table>`
 
@@ -146,7 +148,7 @@ export function generateEmailHtml(
 
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
       <p style="color: #6b7280; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Opportunity</p>
-      <h2 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">${opportunity.title}</h2>
+      <h2 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">${escapeHtml(opportunity.title)}</h2>
     </div>
 
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -158,7 +160,7 @@ export function generateEmailHtml(
             ${avatarHtml}
           </td>
           <td style="vertical-align: middle; padding-left: 12px;">
-            <h3 style="color: #1f2937; margin: 0 0 8px 0; font-size: 18px; font-weight: 600;">${displayName}</h3>
+            <h3 style="color: #1f2937; margin: 0 0 8px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</h3>
             ${detailItems.length > 0 ? `<div>${detailItems.join('')}</div>` : ''}
           </td>
         </tr>
@@ -166,11 +168,11 @@ export function generateEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${applicantsUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">Review applicants &rarr;</a>
+      <a href="${escapeHtml(applicantsUrl)}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">Review applicants &rarr;</a>
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${profileUrl}" style="color: #6d28d9; text-decoration: none;">View ${displayName}'s profile</a>
+      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
     </p>
   </div>
 

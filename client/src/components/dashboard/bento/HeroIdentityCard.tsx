@@ -1,8 +1,11 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Check, ChevronLeft, Eye, MapPin, MessageCircle, Pencil, Settings, Share, Shield, Sparkles, Star, Target, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Eye, MapPin, MessageCircle, Pencil, Plus, Settings, Share, Shield, Sparkles, Star, Target, UserPlus } from 'lucide-react'
 import { Avatar, DualNationalityDisplay, LastActivePill, VerifiedBadge } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
+import { IconButton } from '@/components/ui/IconButton'
+import { MetaPill } from '@/components/ui/MetaPill'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import type { MoreMenuItem } from '@/components/safety/MoreMenu'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import SettingsSheet from '@/components/SettingsSheet'
@@ -74,6 +77,8 @@ const SOCIAL_COLORS: Record<SocialPlatform, string> = {
 }
 
 const GLASS = 'flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur'
+/** Phone profile (Figma 313:1016) actions: Large buttons drawn as pills. */
+const pillButton = (variant: 'primary' | 'secondary') => buttonClassName({ variant, size: 'large', radius: 'rounded-full', className: 'flex-1 min-w-0' })
 
 /**
  * Identity block at the top of the Profile screen (Figma Profile v2 owner /
@@ -200,6 +205,10 @@ export default function HeroIdentityCard({
   )
 
   const coverUrl = coverPhoto ? getImageUrl(coverPhoto, 'lightbox') ?? coverPhoto : null
+  // Phone profile over a cover photo: Glass icon buttons (black 40 %, blur,
+  // white icon). Without a photo the cover is a pale gradient, where white
+  // icons would vanish, so the solid white chips stay — as on desktop.
+  const glass = d2 && Boolean(coverUrl)
 
   return (
     <section data-testid="hero-identity-card" className="-mx-4 md:mx-0 md:overflow-hidden md:rounded-2xl md:border md:border-gray-200/80 md:bg-white md:shadow-sm">
@@ -208,7 +217,17 @@ export default function HeroIdentityCard({
         {coverUrl && <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" decoding="async" />}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/35 to-transparent" aria-hidden="true" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-3">
-          {isOwnerView ? (
+          {glass ? (
+            isOwnerView ? (
+              <IconButton variant="glass" label="Change cover photo" onClick={onEdit}>
+                <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              </IconButton>
+            ) : (
+              <IconButton variant="glass" label="Back" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))}>
+                <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
+              </IconButton>
+            )
+          ) : isOwnerView ? (
             <button type="button" onClick={onEdit} aria-label="Change cover photo" className={GLASS}>
               <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </button>
@@ -218,19 +237,31 @@ export default function HeroIdentityCard({
             </button>
           )}
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
-              <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            </button>
+            {glass ? (
+              <IconButton variant="glass" label="Share profile" onClick={() => void share()}>
+                <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              </IconButton>
+            ) : (
+              <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
+                <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              </button>
+            )}
             {isOwnerView && (
               <>
                 {/* Phone: the gear opens the Settings hub. Desktop keeps the sheet. */}
-                <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur lg:hidden">
-                  <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
-                </button>
+                {glass ? (
+                  <IconButton variant="glass" label="Settings" onClick={() => navigate('/settings')} className="lg:hidden">
+                    <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
+                  </IconButton>
+                ) : (
+                  <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur lg:hidden">
+                    <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
+                  </button>
+                )}
                 <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
               </>
             )}
-            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={GLASS} iconClassName="h-[18px] w-[18px]" />}
+            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
       </div>
@@ -269,9 +300,12 @@ export default function HeroIdentityCard({
                 {availabilityLabel}
               </button>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]">
+              // Coach (Figma D6.1 377:186): "Open to coach" from open_to_coach, in
+              // the Open to play slot and tone. "Recruiting" only when the
+              // coach recruits and is not open to coach.
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]" data-testid="hero-status-pill">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
-                {isRecruiterMode ? 'Recruiting' : availabilityLabel}
+                {isAvailable ? availabilityLabel : 'Recruiting'}
               </span>
             ))}
             {/* "Active today" — Settings › Privacy › show_last_active drives it (DEV NOTE). */}
@@ -279,7 +313,7 @@ export default function HeroIdentityCard({
           </div>
         </div>
 
-        <h1 className="mt-2 text-[26px] font-bold leading-[31px] text-ink-1">
+        <h1 className="mt-2 text-title-xl text-ink-1 lg:text-[26px] lg:leading-[31px] lg:tracking-normal">
           {profile.full_name}
           <span className="ml-1.5 inline-block align-middle">
             <VerifiedBadge verified={full.is_verified} verifiedAt={full.verified_at ?? null} />
@@ -319,7 +353,25 @@ export default function HeroIdentityCard({
           )}
         </p>
 
-        {(profile.current_club || specialistSkills.length > 0 || brandRepresentation) && (
+        {d2 && (profile.current_club || specialistSkills.length > 0 || brandRepresentation) && (
+          /* Phone: Tag / Meta pills (Figma 582:7949) — club, specialist skills, brand. */
+          <div className="mt-3 flex flex-wrap gap-2" data-testid="hero-meta-pills">
+            {profile.current_club && (worldClubId ? (
+              <button type="button" onClick={() => navigate(`/world/clubs/${worldClubId}`)} className="max-w-full text-left">
+                <MetaPill icon="club">{profile.current_club}</MetaPill>
+              </button>
+            ) : (
+              <MetaPill icon="club">{profile.current_club}</MetaPill>
+            ))}
+            {specialistSkills.map((skill) => (
+              <MetaPill key={skill} icon="position">{humanizeToken(skill)}</MetaPill>
+            ))}
+            {brandRepresentation && authProfileRole !== 'brand' && (
+              <MetaPill tone="brand" icon="specialist">{brandRepresentation}</MetaPill>
+            )}
+          </div>
+        )}
+        {!d2 && (profile.current_club || specialistSkills.length > 0 || brandRepresentation) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {profile.current_club && (
               <button
@@ -353,10 +405,10 @@ export default function HeroIdentityCard({
         <div className="mt-4 flex items-stretch gap-2.5">
           {isOwnerView && d2 ? (
             <>
-              <button type="button" onClick={onEdit} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white active:opacity-90">
+              <button type="button" onClick={onEdit} className={pillButton('primary')}>
                 <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} /> Edit profile
               </button>
-              <button type="button" onClick={onViewAsClub ?? onViewPublic} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 active:bg-gray-200">
+              <button type="button" onClick={onViewAsClub ?? onViewPublic} className={pillButton('secondary')}>
                 <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} /> View as club
               </button>
             </>
@@ -410,6 +462,29 @@ export default function HeroIdentityCard({
               >
                 <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
               </button>
+            </>
+          ) : isVisitorView && d2 ? (
+            <>
+              {/* Phone (Figma 313:1016): Add friend = Primary with plus, Message = Secondary with chat. */}
+              {friendButton && (friendship.isOutgoingRequest ? (
+                // Request sent (Figma 152:581): Secondary, disabled, in place of Add friend.
+                <button type="button" disabled className={pillButton('secondary')} data-testid="hero-friend-requested">
+                  {friendButton.icon} {friendButton.label}
+                </button>
+              ) : friendship.isFriend ? (
+                <span className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full text-body font-semibold ${friendButton.cls}`}>
+                  {friendButton.icon} {friendButton.label}
+                </span>
+              ) : (
+                <button type="button" onClick={addFriend} disabled={friendButton.disabled} className={pillButton('primary')} data-testid="hero-add-friend">
+                  <Plus className="h-[18px] w-[18px]" strokeWidth={2} /> {friendButton.label}
+                </button>
+              ))}
+              {authProfileRole !== 'brand' && onMessage && (
+                <button type="button" onClick={onMessage} disabled={sendingMessage} className={pillButton('secondary')} data-testid="hero-message">
+                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
+                </button>
+              )}
             </>
           ) : isVisitorView ? (
             <>

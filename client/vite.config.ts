@@ -3,37 +3,41 @@ import react from '@vitejs/plugin-react'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
-import { readFileSync } from 'fs'
+import { execSync } from 'child_process'
+import { buildSentryRelease } from './src/lib/sentryRelease'
 
-// Sentry release tag for NATIVE builds: derive "<marketing>+<build>" from the
-// iOS Xcode project (the single source of truth for the shipped version), so
-// crashes from the store binary are attributable instead of tagged 'unknown'.
-// An explicit VITE_APP_VERSION always wins (e.g. Vercel web builds).
-function readNativeAppVersion(): string {
+function readGitSha(): string {
   try {
-    const pbx = readFileSync(
-      path.resolve(__dirname, 'ios/App/App.xcodeproj/project.pbxproj'),
-      'utf8',
-    )
-    const marketing = pbx.match(/MARKETING_VERSION = ([0-9][0-9.]*);/)?.[1]
-    const build = pbx.match(/CURRENT_PROJECT_VERSION = ([0-9]+);/)?.[1]
-    return marketing ? `${marketing}+${build ?? '0'}` : ''
+    return execSync('git rev-parse HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
   } catch {
     return ''
   }
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const rootEnv = loadEnv(mode, path.resolve(__dirname, '..'), '')
   const localEnv = loadEnv(mode, __dirname, '')
   const mergedEnv = { ...rootEnv, ...localEnv }
   const devHost = mergedEnv.VITE_DEV_HOST ?? '0.0.0.0'
   const devPort = Number(mergedEnv.VITE_DEV_PORT ?? '5173')
+  // ONE release name for the upload AND the runtime (see src/lib/sentryRelease.ts):
+  // web@<sha> on Vercel, native@<sha> for the Capacitor bundle, dev otherwise.
+  const sentryRelease = buildSentryRelease({
+    command,
+    vercel: mergedEnv.VERCEL,
+    vercelSha: mergedEnv.VERCEL_GIT_COMMIT_SHA,
+    gitSha: command === 'build' ? readGitSha() : '',
+  })
+  // Uploads need the token, org and project, and a real release (never 'dev').
   const enableSentryUploads = Boolean(
+    command === 'build' &&
     mergedEnv.SENTRY_AUTH_TOKEN &&
     mergedEnv.SENTRY_ORG &&
-    mergedEnv.SENTRY_PROJECT
+    mergedEnv.SENTRY_PROJECT &&
+    sentryRelease !== 'dev'
   )
   const manualChunkGroups: Array<{ name: string; pattern: RegExp }> = [
     { name: 'react', pattern: /node_modules\/(react|react-dom|scheduler|shared)\// },
@@ -81,6 +85,9 @@ export default defineConfig(({ mode }) => {
         manifest: false, // We use our own manifest.json
         workbox: {
           importScripts: ['/push-sw.js'],
+          // No sw.js.map / workbox-*.js.map: with build.sourcemap 'hidden' the
+          // plugin would otherwise emit them (and a sourceMappingURL comment).
+          sourcemap: false,
           // Images are deliberately NOT precached: public/ images aren't
           // content-hashed, so workbox fetches them with a revision query —
           // a SECOND download of e.g. the hero mockup during first load.
@@ -93,6 +100,7 @@ export default defineConfig(({ mode }) => {
           // Heavy lazy chunks are excluded from INSTALL-time precache and
           // picked up by the runtime route below on first actual use.
           globIgnores: [
+            '**/*.map',            // source maps are uploaded to Sentry, never served
             '**/charts-*.js',      // recharts — admin dashboards only
             '**/Admin*-*.js',      // every /admin page chunk
             '**/posthog-*.js',     // consent-gated; never needed pre-consent
@@ -192,8 +200,16 @@ export default defineConfig(({ mode }) => {
           org: mergedEnv.SENTRY_ORG,
           project: mergedEnv.SENTRY_PROJECT,
           telemetry: false,
+          release: {
+            name: sentryRelease,
+          },
           sourcemaps: {
-            assets: './dist/assets',
+            // Globs match FILES only — the old './dist/assets' (a directory)
+            // matched nothing, so no source map was ever uploaded.
+            assets: ['./dist/**/*.js', './dist/**/*.map'],
+            // Maps exist only for the upload: never served on the web, never
+            // shipped inside the native bundle (cap:build copies dist/).
+            filesToDeleteAfterUpload: ['./dist/**/*.map'],
           },
         }),
     ].filter(Boolean),
@@ -215,6 +231,10 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
     },
     build: {
+      // 'hidden' = maps written for the Sentry upload but no sourceMappingURL
+      // comment in the shipped JS; the plugin deletes them after upload. No
+      // maps at all when uploads are off (CI, local, native without a token).
+      sourcemap: enableSentryUploads ? 'hidden' : false,
       chunkSizeWarningLimit: 700,
       // Strip admin-only chunks from the entry HTML's modulepreload list.
       // Vite's default preload logic is aggressive: it preloads every chunk
@@ -277,12 +297,10 @@ export default defineConfig(({ mode }) => {
         (mode === 'production' ? mergedEnv.VITE_SUPABASE_ANON_KEY : mergedEnv.SUPABASE_ANON_KEY) ?? '',
       ),
       'import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA': JSON.stringify(mergedEnv.VERCEL_GIT_COMMIT_SHA ?? ''),
-      // Native builds have no VITE_APP_VERSION / Vercel SHA in the env; fall
-      // back to the version baked into the iOS project so Sentry release tags
-      // are real. Explicit env wins (web/CI).
-      'import.meta.env.VITE_APP_VERSION': JSON.stringify(
-        mergedEnv.VITE_APP_VERSION || readNativeAppVersion(),
-      ),
+      // The Sentry release (same string the upload uses). The pbxproj-derived
+      // VITE_APP_VERSION fallback is gone: it tagged every web and Android
+      // event with the iOS version. Native store versions are runtime tags.
+      'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(sentryRelease),
     },
     // Only VITE_* is exposed to import.meta.env / inlined into the bundle.
     // The two legit bare SUPABASE_URL / SUPABASE_ANON_KEY values are provided

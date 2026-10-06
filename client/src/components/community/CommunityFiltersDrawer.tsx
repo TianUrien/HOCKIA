@@ -1,4 +1,8 @@
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { Chip } from '@/components/ui/Chip'
+import { SwitchCardRow } from '@/components/ui/SwitchCardRow'
+import { buttonClassName } from '@/components/ui/buttonClasses'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { AvailabilityFilter, CommunityFiltersState, RoleFilter } from './communityFilters'
 
@@ -38,31 +42,18 @@ const OPEN_TO: { value: Exclude<AvailabilityFilter, 'all'>; label: string }[] = 
   { value: 'opportunities', label: 'Opportunities' },
 ]
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'flex h-9 items-center rounded-full px-3.5 text-row font-semibold transition-colors',
-        active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1',
-      )}
-    >
-      {children}
-    </button>
-  )
-}
-
 /**
  * Community filters (Figma 116:631): Position, Role (incl. Brands and
  * Umpires), Open to (Play · Coach · Recruiting · Opportunities), and the EU
  * passport toggle as a first-class row. No geography, no appointments, no
- * level, no match scores. Live count on the button.
+ * level, no match scores. Live count on the button. Every option is the
+ * shared Chip (selected = soft purple).
  */
 export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: CommunityFiltersDrawerProps) {
   const { filters, updateFilter, clearFilters, togglePosition, showFilters, setShowFilters } = state
   const close = () => setShowFilters(false)
+  // Phone = Figma 116:631 (switch row + Primary button components). Desktop keeps the earlier controls.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const showPositions = filters.role === 'all' || filters.role === 'player'
   const count = resultCount ?? null
   const setOpenTo = (value: AvailabilityFilter) => updateFilter('availability', filters.availability === value ? 'all' : value)
@@ -72,7 +63,7 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
       <div className="flex flex-col gap-[18px] px-5 pb-2 pt-1">
         <div className="flex items-center justify-between">
           <h2 className="text-title text-ink-1">Filters</h2>
-          <button type="button" onClick={() => { clearFilters(); if (filters.role !== 'all') onSelectRole('all') }} className="text-row font-semibold text-hockia-primary">
+          <button type="button" onClick={() => { clearFilters(); if (filters.role !== 'all') onSelectRole('all') }} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary">
             Reset
           </button>
         </div>
@@ -82,7 +73,7 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
             <h3 className="text-row font-semibold text-ink-1">Position</h3>
             <div className="flex flex-wrap gap-2">
               {POSITIONS.map((p) => (
-                <Chip key={p.value} active={filters.position.includes(p.value)} onClick={() => togglePosition(p.value)}>{p.label}</Chip>
+                <Chip key={p.value} label={p.label} selected={filters.position.includes(p.value)} onClick={() => togglePosition(p.value)} />
               ))}
             </div>
           </section>
@@ -92,7 +83,7 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
           <h3 className="text-row font-semibold text-ink-1">Role</h3>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <Chip key={r.role} active={filters.role === r.role} onClick={() => onSelectRole(filters.role === r.role ? 'all' : r.role)}>{r.label}</Chip>
+              <Chip key={r.role} label={r.label} selected={filters.role === r.role} onClick={() => onSelectRole(filters.role === r.role ? 'all' : r.role)} />
             ))}
           </div>
         </section>
@@ -101,11 +92,28 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
           <h3 className="text-row font-semibold text-ink-1">Open to</h3>
           <div className="flex flex-wrap gap-2">
             {OPEN_TO.map((o) => (
-              <Chip key={o.value} active={filters.availability === o.value} onClick={() => setOpenTo(o.value)}>{o.label}</Chip>
+              <Chip key={o.value} label={o.label} selected={filters.availability === o.value} onClick={() => setOpenTo(o.value)} />
             ))}
           </div>
         </section>
 
+        {isPhone ? (
+          <>
+            {filters.role !== 'club' && filters.role !== 'brand' && (
+              <SwitchCardRow
+                title="Only members with an EU passport"
+                description="Either nationality counts — dual passports included"
+                checked={filters.euOnly}
+                onChange={() => updateFilter('euOnly', !filters.euOnly)}
+                testId="community-filter-eu"
+              />
+            )}
+            <button type="button" onClick={close} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-1' })} data-testid="community-filter-show">
+              {count === null ? 'Show members' : count === 1 ? 'Show 1 member' : `Show ${count.toLocaleString()} members`}
+            </button>
+          </>
+        ) : (
+          <>
         {filters.role !== 'club' && filters.role !== 'brand' && (
           <button
             type="button"
@@ -132,6 +140,8 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
         >
           {count === null ? 'Show members' : count === 1 ? 'Show 1 member' : `Show ${count.toLocaleString()} members`}
         </button>
+          </>
+        )}
       </div>
     </BottomSheet>
   )

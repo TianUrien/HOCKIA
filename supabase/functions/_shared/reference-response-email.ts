@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Reference Response Email Helpers
@@ -83,14 +84,6 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
 
 /** Excerpt the endorsement to a sane preview length. The DB CHECK now
  *  caps endorsement_text at 800 chars (post-Phase 4 references-bug-bundle
@@ -113,11 +106,12 @@ export function generateAcceptedEmailHtml(
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
   const initials = getInitials(displayName)
 
-  const avatarHtml = endorser.avatar_url
-    ? `<img src="${endorser.avatar_url}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
+  const avatarSrc = safeHttpsUrl(endorser.avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
+          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
       </table>`
 
@@ -173,7 +167,7 @@ export function generateAcceptedEmailHtml(
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${profileUrl}" style="color: #6d28d9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
+      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
     </p>
   </div>
 

@@ -177,8 +177,9 @@ function PhoneCluster() {
   // floats in dead space on a wide phone and overflows a narrow one, the
   // outer box takes its column's width and the canvas scales to fit it —
   // proportionally identical everywhere. Mobile: the outer phones bleed off
-  // the screen edges (the hero clips at the viewport). Desktop: the frame
-  // clips the outer phones at the 507×611 stage, as in Figma.
+  // the screen edges (the hero clips at the viewport). Desktop: the outer
+  // phones sit whole inside the 507×611 stage, tucked behind the front one
+  // (founder ruling 5 Oct: no phone is cut on desktop).
   //
   // The scale is a NUMBER, so it is measured in JS: CSS can't derive a
   // unitless ratio from `100vw / 390px`. ResizeObserver keeps it right on
@@ -206,7 +207,7 @@ function PhoneCluster() {
   return (
     <div
       ref={outerRef}
-      className="relative mx-auto w-full max-w-[390px] shrink-0 lg:max-w-none lg:overflow-hidden"
+      className="relative mx-auto w-full max-w-[390px] shrink-0 lg:max-w-none"
       // The canvas is absolutely positioned, so the box has no intrinsic
       // height — set it explicitly (including at exactly scale 1).
       style={{ height: canvas.h * scale }}
@@ -217,7 +218,7 @@ function PhoneCluster() {
         style={{ transform: scale === 1 ? undefined : `scale(${scale})` }}
       >
         {/* Left — Community */}
-        <div className="absolute left-[-24px] top-[64px] -rotate-6 lg:left-[-31px] lg:top-[83px]">
+        <div className="absolute left-[-24px] top-[64px] -rotate-6 lg:left-[24px] lg:top-[83px]">
           <Phone
             src="/landing/phone-community.png"
             alt="Hockia community screen: players, coaches and clubs around the world"
@@ -228,7 +229,7 @@ function PhoneCluster() {
         </div>
         {/* Right — Feed. Top-anchored so the HOCKIA header and Feed/Pulse tabs
             stay visible whatever sliver object-cover trims. */}
-        <div className="absolute left-[242px] top-[52px] rotate-6 lg:left-[315px] lg:top-[68px]">
+        <div className="absolute left-[242px] top-[52px] rotate-6 lg:left-[259px] lg:top-[68px]">
           <Phone
             src="/landing/phone-feed.jpg"
             alt="Hockia home feed: opportunities, milestones and community activity"
@@ -445,6 +446,15 @@ export default function Landing() {
                   For players, coaches, clubs, umpires and brands.
                 </p>
               </Reveal>
+
+              {/* Store links are pointless (and Apple-frowned-upon) inside the app */}
+              {!isNativeApp && (
+                <Reveal delay={200}>
+                  <div data-store-badges="hero" className="flex justify-center lg:justify-start">
+                    <StoreBadges heightClass="h-11" source="landing_hero" className="justify-center lg:justify-start" />
+                  </div>
+                </Reveal>
+              )}
             </div>
 
             {/* App visual. Mobile: a full-bleed block (pad 24/40) whose canvas

@@ -29,6 +29,11 @@
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { setSentryUser, withSentry } from '../_shared/sentry.ts'
+import { checkUserRateLimit } from '../_shared/rate-limit.ts'
+
+// Upload URLs per member per hour (check_rate_limit, action 'video_upload').
+const UPLOADS_PER_HOUR = 10
 
 // Upload guardrails (MVP). Highlights are the focus; full_match is allowed
 // but with a longer max duration. Size is enforced by Cloudflare via the
@@ -46,7 +51,7 @@ const LIMITS = {
 
 type Kind = keyof typeof LIMITS
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry('video-create-upload', async (req) => {
   const cors = getCorsHeaders(req.headers.get('Origin'))
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -71,6 +76,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userErr } = await supabase.auth.getUser(jwt)
   if (userErr || !userData.user) return json({ error: 'unauthenticated' }, 401)
   const userId = userData.user.id
+  setSentryUser(userId)
 
   // 2) Any authenticated member may upload their OWN video. Social reels are
   //    posted from Home by every role (player/coach/club/brand/umpire); the row
@@ -84,6 +90,16 @@ Deno.serve(async (req) => {
     .single()
   if (!profile) {
     return json({ error: 'profile_not_found' }, 403)
+  }
+
+  // 2b) Per-member hourly limit on new uploads.
+  const limit = await checkUserRateLimit(supabase, userId, 'video_upload', UPLOADS_PER_HOUR, 3600)
+  if (limit.error) console.warn('[video-create-upload] rate limit check failed', limit.error)
+  if (!limit.allowed) {
+    return new Response(JSON.stringify({ error: 'rate_limited' }), {
+      status: 429,
+      headers: { ...cors, 'Content-Type': 'application/json', 'Retry-After': String(limit.retryAfter ?? 3600) },
+    })
   }
 
   // 3) Parse + validate body.
@@ -183,4 +199,4 @@ Deno.serve(async (req) => {
 
   // tusUploadUrl is what the client resumes against with tus-js-client.
   return json({ videoId, tusUploadUrl: location, cfUid: uid })
-})
+}, (req) => getCorsHeaders(req.headers.get('Origin'))))

@@ -351,11 +351,12 @@ describe('buildCoachKeyFacts', () => {
 
   it('returns the six coach facts in order', () => {
     const facts = buildCoachKeyFacts(coach, { viewer: 'recruiter', today: TODAY })
-    expect(facts.map((f) => f.id)).toEqual(['specialization', 'categories', 'current_role', 'available', 'passport', 'age'])
+    expect(facts.map((f) => f.id)).toEqual(['specialization', 'coaches_at', 'available', 'passport', 'categories', 'age'])
     expect(byId(facts, 'specialization').value).toBe('Head coach')
     expect(byId(facts, 'categories').value).toBe('Adult women, Girls')
-    expect(byId(facts, 'current_role').value).toBe('Head coach')
-    expect(byId(facts, 'current_role').detail).toBe('Belgrano AC')
+    expect(byId(facts, 'coaches_at').label).toBe('Coaches at')
+    expect(byId(facts, 'coaches_at').value).toBe('Belgrano AC')
+    expect(byId(facts, 'coaches_at').detail).toBe('Head coach · current role')
     expect(byId(facts, 'available').value).toBe('Open to coach')
     expect(byId(facts, 'available').detail).toBe('Start date not given')
     expect(byId(facts, 'passport').detail).toBe('EU passport')
@@ -383,16 +384,26 @@ describe('buildCoachKeyFacts', () => {
       age: null,
     }
     const others = buildCoachKeyFacts(empty, { viewer: 'recruiter', today: TODAY })
-    expect(others.every((f) => f.value === NOT_GIVEN)).toBe(true)
+    // Never hidden: six tiles, each gap reads "Not given"; no categories = any category.
+    expect(others).toHaveLength(6)
+    expect(others.filter((f) => f.id !== 'categories').every((f) => f.value === NOT_GIVEN && f.missing)).toBe(true)
+    expect(byId(others, 'categories').value).toBe('Any category')
     const owner = buildCoachKeyFacts(empty, { viewer: 'owner', today: TODAY })
     expect(owner.map((f) => f.action)).toEqual([
-      'add_specialization', 'add_categories', 'add_current_role', 'add_availability', 'add_passport', null,
+      'add_specialization', 'add_club', 'add_availability', 'add_passport', 'add_categories', null,
     ])
   })
 
   it('a start date wins over the plain open-to-coach line', () => {
     const f = byId(buildCoachKeyFacts({ ...coach, availableFrom: '2027-02-01' }, { viewer: 'owner', today: TODAY }), 'available')
     expect(f.value).toBe('From 1 Feb 2027')
+  })
+
+  it('the relocation answer sits under the start date', () => {
+    const f = byId(buildCoachKeyFacts({ ...coach, availableFrom: '2027-01-04', relocationWillingness: 'relocate' }, { viewer: 'recruiter', today: TODAY }), 'available')
+    expect(f.value).toBe('From 4 Jan 2027')
+    expect(f.detail).toBe('Open to relocating')
+    expect(f.detailMissing).toBe(false)
   })
 })
 

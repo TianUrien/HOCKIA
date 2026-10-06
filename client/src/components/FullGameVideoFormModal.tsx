@@ -6,15 +6,15 @@ import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToastStore } from '@/lib/toast'
 import { useAuthStore } from '@/lib/auth'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
-import { validateAndNormalizeVideoUrl, VIDEO_URL_HOSTS_HUMAN } from '@/lib/videoUrlValidator'
+import { validateFullMatchUrl } from '@/lib/videoUrlValidator'
 import type { FullGameVideo, FullGameVideoVisibility } from '@/hooks/useFullGameVideos'
 
 /**
  * FullGameVideoFormModal — add or edit a single full match video.
  *
- * Same URL validation + normalisation rules as the highlight-video flow
- * (shared via @/lib/videoUrlValidator), so users learn one mental model
- * about which platforms are accepted.
+ * Any https link is accepted (validateFullMatchUrl): matches live on many
+ * sites and are only ever opened in a new tab. YouTube / Vimeo / Drive links
+ * keep the same canonical form as the highlight-video flow.
  *
  * Visibility starts from the player's master switch
  * (profiles.full_match_visibility, Settings › Privacy); 'recruiters' means
@@ -144,9 +144,9 @@ export default function FullGameVideoFormModal({
       return
     }
 
-    const normalizedUrl = validateAndNormalizeVideoUrl(videoUrl)
+    const normalizedUrl = validateFullMatchUrl(videoUrl)
     if (!normalizedUrl) {
-      setError(`Invalid video URL. Please use ${VIDEO_URL_HOSTS_HUMAN} links.`)
+      setError('That link doesn\'t look right. Paste the full link to the match, starting with https://')
       return
     }
 
@@ -227,7 +227,7 @@ export default function FullGameVideoFormModal({
               ref={inputRef}
               id={urlInputId}
               label="Video link *"
-              placeholder="YouTube, Vimeo, or Google Drive URL"
+              placeholder="Link to the match (YouTube, Hockey TV, Veo…)"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               disabled={isSaving}

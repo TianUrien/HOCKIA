@@ -155,6 +155,15 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(shortlisted).toHaveLength(1)
     expect(shortlisted[0].textContent).toContain('Ana Pérez')
     expect(shortlisted[0].querySelector('[data-testid="applicant-status-tag"]')?.textContent).toBe('Offer sent')
+
+    // Status filters are ui/Chip: selected = soft purple, never black; tab semantics kept.
+    const sel = screen.getByRole('tab', { name: 'Shortlisted' })
+    expect(sel).toHaveAttribute('aria-selected', 'true')
+    expect(sel.className).toContain('bg-brand-soft')
+    expect(sel.className).toContain('text-brand-primary')
+    expect(sel.className).not.toContain('bg-ink-1')
+    expect(sel).not.toHaveAttribute('aria-pressed')
+    expect(screen.getByRole('tab', { name: 'Closed · 1' }).className).toContain('bg-surface-grouped')
   })
 })
 

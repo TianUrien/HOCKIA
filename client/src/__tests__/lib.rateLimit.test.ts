@@ -8,7 +8,14 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-import { formatRateLimitError, checkLoginRateLimit, checkMessageRateLimit } from '@/lib/rateLimit'
+import {
+  formatRateLimitError,
+  checkLoginRateLimit,
+  checkMessageRateLimit,
+  checkSignupRateLimit,
+  checkPasswordResetRateLimit,
+  checkApplicationRateLimit,
+} from '@/lib/rateLimit'
 import type { RateLimitResult } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
 
@@ -73,23 +80,21 @@ describe('checkLoginRateLimit', () => {
     expect(supabase.rpc).toHaveBeenCalledWith('check_login_rate_limit', { p_email: 'test@example.com' })
   })
 
-  it('returns fail-closed result on RPC error', async () => {
+  it('fails open (null) on RPC error, so the caller carries on', async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
       error: { message: 'function not found', code: 'PGRST202' },
     } as never)
 
     const result = await checkLoginRateLimit('test@example.com')
-    expect(result).not.toBeNull()
-    expect(result!.allowed).toBe(false)
+    expect(result).toBeNull()
   })
 
-  it('returns fail-closed result on unexpected exception', async () => {
+  it('fails open (null) on a network failure', async () => {
     vi.mocked(supabase.rpc).mockRejectedValue(new Error('Network failure'))
 
     const result = await checkLoginRateLimit('test@example.com')
-    expect(result).not.toBeNull()
-    expect(result!.allowed).toBe(false)
+    expect(result).toBeNull()
   })
 })
 
@@ -112,22 +117,45 @@ describe('checkMessageRateLimit', () => {
     expect(supabase.rpc).toHaveBeenCalledWith('check_message_rate_limit', { p_user_id: 'user-123' })
   })
 
-  it('returns fail-closed result on RPC error', async () => {
+  it('fails open (null) on RPC error', async () => {
     vi.mocked(supabase.rpc).mockResolvedValue({
       data: null,
       error: { message: 'function not found', code: 'PGRST202' },
     } as never)
 
     const result = await checkMessageRateLimit('user-123')
-    expect(result).not.toBeNull()
-    expect(result!.allowed).toBe(false)
+    expect(result).toBeNull()
   })
 
-  it('returns fail-closed result on unexpected exception', async () => {
+  it('fails open (null) on a network failure', async () => {
     vi.mocked(supabase.rpc).mockRejectedValue(new Error('Network failure'))
 
     const result = await checkMessageRateLimit('user-123')
-    expect(result).not.toBeNull()
-    expect(result!.allowed).toBe(false)
+    expect(result).toBeNull()
+  })
+
+  it('still passes a real refusal through', async () => {
+    const refused: RateLimitResult = { allowed: false, remaining: 0, reset_at: new Date(Date.now() + 30_000).toISOString(), limit: 30 }
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: refused, error: null } as never)
+
+    const result = await checkMessageRateLimit('user-123')
+    expect(result).toEqual(refused)
+  })
+})
+
+describe('the other pre-checks fail open too', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it.each([
+    ['checkSignupRateLimit', () => checkSignupRateLimit('a@b.co')],
+    ['checkPasswordResetRateLimit', () => checkPasswordResetRateLimit('a@b.co')],
+    ['checkApplicationRateLimit', () => checkApplicationRateLimit('user-123')],
+  ])('%s returns null on RPC error and on a network failure', async (_name, call) => {
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { message: 'boom', code: '500' } } as never)
+    expect(await call()).toBeNull()
+    vi.mocked(supabase.rpc).mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    expect(await call()).toBeNull()
   })
 })

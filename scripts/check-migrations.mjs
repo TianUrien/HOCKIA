@@ -6,7 +6,7 @@
  *   node scripts/check-migrations.mjs --all      # include every migration (informational)
  *   node scripts/check-migrations.mjs <file...>  # lint only the given migration files
  *
- * Two rules, both from docs/engineering/standards.md section 6:
+ * Three rules, from docs/engineering/standards.md section 6:
  *
  *   1. GRANTS   Every table, view or function a migration CREATES must have an
  *               explicit GRANT or REVOKE statement for it in the same file.
@@ -20,6 +20,15 @@
  *               A combined rollback file may cover several versions by listing
  *               each version number in its text (see 20260928200000_d2_slice1).
  *
+ *   3. ANON     (migrations from ANON_RULE_FROM on) A SECURITY DEFINER function
+ *               that a migration revokes from PUBLIC must also carry an explicit
+ *               decision for anon in the same file: a REVOKE ... FROM anon or a
+ *               GRANT ... TO anon naming it. Until 2026-10-30 this platform grants
+ *               EXECUTE on new functions to anon by default ACL, so revoking from
+ *               PUBLIC alone leaves the function callable signed out. Whether a
+ *               function is SECURITY DEFINER is read from its newest CREATE up to
+ *               and including that migration.
+ *
  * The lint is static and conservative: it reads SQL as text, strips comments
  * and string literals, and only reports what it can prove. It never connects
  * to a database.
@@ -32,6 +41,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const MIGRATIONS_DIR = join(ROOT, 'supabase', 'migrations')
 const ROLLBACKS_DIR = join(ROOT, 'supabase', 'rollbacks')
+
+/** Rule 3 (anon decision) applies to migrations at or after this version. Older files
+ *  are history: several revoke from PUBLIC only and are covered by later revokes. */
+const ANON_RULE_FROM = 20261006100000n
 
 /** Migrations at or below this version predate the rollback-file convention. */
 const MIN_VERSION = 20260926100000n
@@ -129,6 +142,42 @@ function createdObjects(stripped) {
   return found
 }
 
+/** SECURITY DEFINER flag per function name for the CREATE statements of a (stripped)
+ *  migration. Function bodies are blanked by stripSql, so the text from CREATE to
+ *  the next `;` is the header plus attributes. */
+function definerFlags(stripped) {
+  const flags = new Map()
+  for (const m of stripped.matchAll(CREATE_RE)) {
+    const kind = m[1].toLowerCase()
+    if (kind !== 'function' && kind !== 'procedure') continue
+    const end = stripped.indexOf(';', m.index)
+    const header = stripped.slice(m.index, end === -1 ? undefined : end)
+    flags.set(bareName(m[2]), /\bsecurity\s+definer\b/i.test(header))
+  }
+  return flags
+}
+
+const FN_ACL_RE = new RegExp(
+  String.raw`^\s*(grant|revoke)\b[\s\S]*?\bon\s+(?:function|procedure)\s+(${IDENT})[\s\S]*?\b(to|from)\s+([\s\S]*)$`,
+  'i',
+)
+
+/** GRANT/REVOKE ... ON FUNCTION statements: [{ verb, name, roles }] (roles lower-cased). */
+function functionAclStatements(stripped) {
+  const out = []
+  for (const statement of stripped.split(';')) {
+    const m = FN_ACL_RE.exec(statement)
+    if (!m) continue
+    const roles = m[5]
+      .replace(/\b(cascade|restrict|with\s+grant\s+option|granted\s+by\s+\S+)\b/gi, ' ')
+      .split(',')
+      .map((r) => r.trim().replace(/"/g, '').toLowerCase())
+      .filter(Boolean)
+    out.push({ verb: m[1].toLowerCase(), name: bareName(m[2]), roles: new Set(roles) })
+  }
+  return out
+}
+
 /** True when a GRANT/REVOKE statement in the (stripped) text names the object. */
 function hasGrantFor(stripped, name) {
   const statements = stripped.split(';')
@@ -178,11 +227,16 @@ function main(argv) {
   /** Every migration, in order: used to know whether a name was created earlier. */
   const everyMigration = migrationFiles()
   const firstSeen = new Map() // bare object name -> version that first creates it
+  const definerAt = new Map() // version -> Map(function name -> SECURITY DEFINER as of that version)
+  const definerSoFar = new Map()
   for (const file of everyMigration) {
     const v = versionOf(file)
-    for (const { name } of createdObjects(stripSql(readFileSync(file, 'utf8')))) {
+    const stripped = stripSql(readFileSync(file, 'utf8'))
+    for (const { name } of createdObjects(stripped)) {
       if (!firstSeen.has(name)) firstSeen.set(name, v)
     }
+    for (const [name, isDefiner] of definerFlags(stripped)) definerSoFar.set(name, isDefiner)
+    definerAt.set(v, new Map(definerSoFar))
   }
 
   let targets
@@ -213,6 +267,27 @@ function main(argv) {
             `    Add e.g.  REVOKE ALL ON ${kind.toUpperCase()} public.${name}${kind === 'function' ? '(...)' : ''} FROM PUBLIC;  then grant what each role needs\n` +
             `    (standards.md section 6, rule 5: Supabase provides no default ACL for new objects from 2026-10-30).`,
         )
+      }
+    }
+
+    // Rule 3: SECURITY DEFINER revoked from PUBLIC needs an explicit anon decision.
+    if (BigInt(version) >= ANON_RULE_FROM) {
+      const definer = definerAt.get(version) ?? new Map()
+      const byName = new Map()
+      for (const st of functionAclStatements(stripped)) {
+        const entry = byName.get(st.name) ?? { revokedPublic: false, anonDecided: false }
+        if (st.verb === 'revoke' && st.roles.has('public')) entry.revokedPublic = true
+        if (st.roles.has('anon')) entry.anonDecided = true
+        byName.set(st.name, entry)
+      }
+      for (const [name, { revokedPublic, anonDecided }] of byName) {
+        if (revokedPublic && !anonDecided && definer.get(name) === true) {
+          errors.push(
+            `${rel}: SECURITY DEFINER function "${name}" is revoked from PUBLIC but this file makes no decision for anon.\n` +
+              `    Until 2026-10-30 anon holds EXECUTE by default ACL. Add  REVOKE ... ON FUNCTION public.${name}(...) FROM PUBLIC, anon;\n` +
+              `    or, if signed-out callers really need it,  GRANT EXECUTE ON FUNCTION public.${name}(...) TO anon;`,
+          )
+        }
       }
     }
 

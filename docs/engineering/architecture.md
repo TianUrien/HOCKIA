@@ -174,6 +174,7 @@ ranked query); see capacity.md.
 | Hidden / blocked / frozen-minor visibility | `profile_is_hidden`, `profile_is_uncontactable`, RLS, every RPC | None |
 | Age gate (DOB immutable, 18+ for club-facing surfaces) | Column-level grants, `is_minor`, `age-gate` function | `components/AgeGate.tsx` for UX only |
 | Rate limits | `check_rate_limit` RPC (database-backed, fail-closed) | `lib/rateLimit.ts` wraps the RPC |
+| New-conversation allowance (rolling 24 h: 5 in the account's first 7 days, then 15, or 30 for clubs and coaches who recruit; test accounts, admins and server-opened recruiting threads exempt), admin spam signals, removed-account notice (added 2026-10-04, migration `20261004300000`) | Triggers `conversations_new_conversation_limit` and `messages_track_first_message` (client statements only: `WHEN (current_user = 'authenticated')`), `admin_get_spam_signals`, `admin_send_removed_account_notice`, `is_removed_account` | `lib/newConversationLimit.ts` shows the server's sentence; `features/chat-v2/removedAccount.ts` asks whether to show the notice |
 | Attribution and short links | SQL `attribution_channel_rules` with a client mirror kept in parity by a DB corpus test | `lib/attributionRules.ts` |
 | Fit / matching explanations | Mixed: SQL ranking in `discover_profiles` and friends; client-side explanation in `lib/clubFit.ts`, `lib/coachFit.ts`, `lib/interestFit.ts` | Computes display-only fit from fetched data |
 
