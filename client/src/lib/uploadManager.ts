@@ -97,6 +97,9 @@ function formatUploadError(raw: string): string {
   return raw
 }
 
+/** Shown when video-create-upload answers 429 (hourly upload limit). */
+export const VIDEO_UPLOAD_LIMIT_MESSAGE = 'You’ve started a lot of uploads in the last hour. Please try again a little later.'
+
 /** video-create-upload requires a 1–120 char title; derive one from the file. */
 function deriveTitle(file: File): string {
   const base = file.name.replace(/\.[^.]+$/, '').trim()
@@ -194,6 +197,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
             try {
               reason = ctx ? ((await ctx.clone().json()) as { error?: string }).error ?? '' : ''
             } catch { /* body not JSON — fall through to the generic message */ }
+            if (ctx?.status === 429 || reason === 'rate_limited') throw new Error(VIDEO_UPLOAD_LIMIT_MESSAGE)
             throw new Error(reason || 'Could not start the upload. Please try again.')
           }
           const created = data as { videoId?: string; tusUploadUrl?: string } | null

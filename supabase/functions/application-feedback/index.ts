@@ -42,6 +42,10 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Json } from '../_shared/database.types.ts'
 import { roleOrganisationName } from '../_shared/role-organisation.ts'
+import { canDecline, DECLINABLE_STATUSES } from '../_shared/application-decline.ts'
+import { checkUserRateLimit } from '../_shared/rate-limit.ts'
+import { recordAiUsage } from '../_shared/aiUsage.ts'
+import { captureException, setSentryUser } from '../_shared/sentry.ts'
 
 // Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
 // secret + redeploy. Default stays the prior prod model so a deploy can't
@@ -62,6 +66,9 @@ const REASON_CODES = [
 ]
 // A club may edit the drafted note; keep it a note, not a letter.
 const CLUB_NOTE_MAX_CHARS = 600
+// Club drafts per user per hour (check_rate_limit, action 'feedback_draft').
+const DRAFT_LIMIT_PER_HOUR = 20
+const ANTHROPIC_TIMEOUT_MS = 20_000
 
 interface StatusContext {
   status: string
@@ -166,7 +173,13 @@ function userPrompt(ctx: StatusContext): string {
   })
 }
 
-async function callClaude(ctx: StatusContext, voice: 'player' | 'club' = 'player'): Promise<string> {
+// Per-request token sink: filled as soon as Anthropic answers, so spend is
+// logged even when the reply is then rejected by the guard rails.
+interface UsageSink {
+  usage: { input: number | null; output: number | null; cached: number | null } | null
+}
+
+async function callClaude(ctx: StatusContext, voice: 'player' | 'club', sink: UsageSink): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -183,11 +196,20 @@ async function callClaude(ctx: StatusContext, voice: 'player' | 'club' = 'player
       system: [{ type: 'text', text: voice === 'club' ? clubSystemPrompt() : systemPrompt(), cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userPrompt(ctx) }],
     }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   })
   if (!response.ok) {
     throw new Error(`Anthropic API error (${response.status}): ${await response.text()}`)
   }
-  const data = await response.json() as { content: Array<{ type: string; text?: string }> }
+  const data = await response.json() as {
+    content: Array<{ type: string; text?: string }>
+    usage?: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number }
+  }
+  sink.usage = {
+    input: data.usage?.input_tokens ?? null,
+    output: data.usage?.output_tokens ?? null,
+    cached: data.usage?.cache_read_input_tokens ?? null,
+  }
   const text = data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join('').trim()
   const stripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
   const parsed = JSON.parse(stripped) as { message?: unknown }
@@ -200,6 +222,22 @@ async function callClaude(ctx: StatusContext, voice: 'player' | 'club' = 'player
     if (lower.includes(banned)) throw new Error(`banned vocabulary: ${banned}`)
   }
   return message
+}
+
+/** Log the last Anthropic call's tokens to ai_usage_log (never throws). */
+async function logUsage(supabase: ReturnType<typeof getServiceClient>, userId: string, sink: UsageSink): Promise<void> {
+  const usage = sink.usage
+  if (!usage) return
+  sink.usage = null
+  await recordAiUsage(supabase, {
+    user_id: userId,
+    function: 'application-feedback',
+    provider: 'claude',
+    model: MODEL,
+    input_tokens: usage.input,
+    output_tokens: usage.output,
+    cached_tokens: usage.cached,
+  })
 }
 
 // The structured opportunities.position enum is the source of truth ('goalkeeper'
@@ -273,6 +311,7 @@ serve(async (req: Request) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(jwt)
     if (userError || !userData.user) return jsonResponse({ error: 'unauthenticated' }, 401, corsHeaders)
     const userId = userData.user.id
+    setSentryUser(userId)
 
     // 2) Body.
     let applicationId: string
@@ -309,6 +348,10 @@ serve(async (req: Request) => {
       // A withdrawn application is final. This function writes as service role,
       // so the DB guard (guard_application_client_write) does not apply here.
       if (app.status === 'withdrawn') return jsonResponse({ error: 'withdrawn' }, 409, corsHeaders)
+      // Only open decisions can be declined; offers/signings are final here.
+      if (mode === 'decline' && !canDecline(app.status)) {
+        return jsonResponse({ error: 'invalid_status' }, 409, corsHeaders)
+      }
       if (!bodyReason || !REASON_CODES.includes(bodyReason)) return jsonResponse({ error: 'invalid_reason' }, 400, corsHeaders)
       const organisation = await roleClubName(supabase, opp)
       const title = opp.title ?? 'this role'
@@ -321,9 +364,20 @@ serve(async (req: Request) => {
       }
 
       if (mode === 'draft') {
+        // Over the hourly limit → the deterministic note (no model call); the
+        // club can still edit and send it.
+        const limit = await checkUserRateLimit(supabase, userId, 'feedback_draft', DRAFT_LIMIT_PER_HOUR, 3600)
+        if (limit.error) console.warn('application-feedback: rate limit check failed —', limit.error)
+        if (!limit.allowed) {
+          return jsonResponse({ message: clubFallbackMessage(ctx), source: 'fallback' }, 200, corsHeaders)
+        }
+        const sink: UsageSink = { usage: null }
         try {
-          return jsonResponse({ message: await callClaude(ctx, 'club'), source: 'ai' }, 200, corsHeaders)
+          const message = await callClaude(ctx, 'club', sink)
+          await logUsage(supabase, userId, sink)
+          return jsonResponse({ message, source: 'ai' }, 200, corsHeaders)
         } catch (err) {
+          await logUsage(supabase, userId, sink)
           console.warn('application-feedback: club draft fallback —', String(err))
           return jsonResponse({ message: clubFallbackMessage(ctx), source: 'fallback' }, 200, corsHeaders)
         }
@@ -336,7 +390,7 @@ serve(async (req: Request) => {
         app.metadata && typeof app.metadata === 'object' && !Array.isArray(app.metadata)
           ? (app.metadata as Record<string, unknown>)
           : {}
-      const { error: updErr } = await supabase
+      const { data: updated, error: updErr } = await supabase
         .from('opportunity_applications')
         .update({
           status: 'rejected',
@@ -346,9 +400,17 @@ serve(async (req: Request) => {
           ai_feedback: { message: note, status: 'rejected', reason: bodyReason, source: 'club' } as unknown as Json,
         })
         .eq('id', applicationId)
+        // Same allow-list as above: if an offer/withdrawal landed in between,
+        // nothing is written and the club is told the status moved on.
+        .in('status', [...DECLINABLE_STATUSES])
+        .select('id')
       if (updErr) {
         console.error('application-feedback decline failed', updErr)
+        captureException(updErr, { functionName: 'application-feedback', tags: { mode: 'decline' } })
         return jsonResponse({ error: 'update_failed' }, 500, corsHeaders)
+      }
+      if (!updated || updated.length === 0) {
+        return jsonResponse({ error: 'invalid_status' }, 409, corsHeaders)
       }
       return jsonResponse({ ok: true }, 200, corsHeaders)
     }
@@ -407,8 +469,12 @@ serve(async (req: Request) => {
     //    source so a fallback is never served as a permanent cache hit.
     let message: string
     let source: 'ai' | 'fallback'
+    // Not logged to ai_usage_log on purpose: ai_questions_today counts every
+    // row there toward the member's Hockia AI question cap, and reading one's
+    // own application status must never use it up.
+    const sink: UsageSink = { usage: null }
     try {
-      message = await callClaude(ctx)
+      message = await callClaude(ctx, 'player', sink)
       source = 'ai'
     } catch (err) {
       console.warn('application-feedback: AI fallback —', String(err))
@@ -424,6 +490,7 @@ serve(async (req: Request) => {
     return jsonResponse({ message, status, cached: false, source }, 200, corsHeaders)
   } catch (err) {
     console.error('application-feedback error', err)
+    captureException(err, { functionName: 'application-feedback' })
     return jsonResponse({ error: 'internal_error' }, 500, corsHeaders)
   }
 })

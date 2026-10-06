@@ -4,6 +4,8 @@ import { captureException } from '../_shared/sentry.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
+import { assertServiceRole } from '../_shared/webhook-auth.ts'
+import { escapeHtml } from '../_shared/html-escape.ts'
 
 /**
  * ============================================================================
@@ -95,6 +97,10 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Only the database webhook (service_role JWT) may trigger a send.
+  const unauthorized = assertServiceRole(req)
+  if (unauthorized) return unauthorized
+
   try {
     logger.info('=== Received webhook request ===')
 
@@ -167,8 +173,6 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Fetched recipient', {
       recipientId: recipient.id,
-      email: recipient.email,
-      fullName: recipient.full_name,
       isTestAccount: recipient.is_test_account,
       onboardingCompleted: recipient.onboarding_completed,
       reminderNumber,
@@ -246,7 +250,7 @@ Deno.serve(async (req: Request) => {
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #6d28d9;">${content.heading}</h1>
-          <p>Hi ${firstName},</p>
+          <p>Hi ${escapeHtml(firstName)},</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
             <a href="${templateVars.cta_url}"
@@ -292,7 +296,7 @@ Deno.serve(async (req: Request) => {
     }
 
     logger.info('=== Onboarding reminder email sent successfully ===', {
-      recipient: recipient.email,
+      recipientId: recipient.id,
       subject,
       reminderNumber,
       resendEmailId: result.resendEmailId,
@@ -302,7 +306,6 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: 'Onboarding reminder email sent',
-        recipient: recipient.email,
         reminderNumber,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

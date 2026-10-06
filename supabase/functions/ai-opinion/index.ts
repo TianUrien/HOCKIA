@@ -21,15 +21,18 @@
  *      coach_recruits_for_team = true).
  *   2. Resolve viewer's effective target (override from recruiting_context
  *      or profile-derived for clubs). Same logic as clubFit.ts.
- *   3. Fetch viewer + player facts + both sides' league bands.
+ *   3. Fetch viewer + player facts + both sides' league bands. A candidate
+ *      who is hidden, under 18 / unknown age, a test account (for a real
+ *      viewer) or blocked either way answers 404 profile_not_found.
  *   4. Compute deterministic Fit math (mirror of clubFit.ts).
  *   5. Compute context_hash. Cache lookup on ai_opinions —
  *      same viewer+player+hash AND not expired → return cached.
- *   6. Cache miss: check per-viewer daily quota in ai_opinion_quota.
- *      If >= 50 → 429.
+ *   6. Cache miss: take a slot of the per-viewer daily quota in
+ *      ai_opinion_quota (compare-and-swap). If >= 50 → 429. A failed call
+ *      gives the slot back.
  *   7. Build structured prompt, call Claude Sonnet, parse JSON output.
  *   8. Content filter (closed vocabulary) — reject if banned words.
- *   9. UPSERT into ai_opinions; increment ai_opinion_quota; return.
+ *   9. UPSERT into ai_opinions; return.
  *
  * Prompt v1.0 — FIRST DRAFT. Review docs/SECTION_F_AI_OPINION_ENGINE_PROPOSAL.md
  * before this is deployed to staging.
@@ -39,6 +42,8 @@ import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Json } from '../_shared/database.types.ts'
+import { targetIsInvisible } from '../_shared/profile-visibility.ts'
+import { captureException, setSentryUser } from '../_shared/sentry.ts'
 
 // ── Prompt version + constants ──────────────────────────────────────
 // Bump PROMPT_VERSION when the system prompt or output schema changes
@@ -51,6 +56,7 @@ const PROMPT_VERSION = 'v2.1'
 const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
+const ANTHROPIC_TIMEOUT_MS = 25_000
 
 // Words the LLM must NOT use — judgment about the PERSON, not the
 // MATCH. Stays small Phase 1; tighten via staging review.
@@ -640,6 +646,7 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
       ],
       messages: [{ role: 'user', content: userPrompt }],
     }),
+    signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   })
   if (!response.ok) {
     const body = await response.text()
@@ -695,6 +702,114 @@ function passesContentFilter(payload: OpinionPayload): { ok: boolean; reason?: s
   return { ok: true }
 }
 
+// ── Daily quota (compare-and-swap) ──────────────────────────────────
+// A slot is TAKEN before the model call, and given back if the call fails,
+// so concurrent requests can never all read the same `used` and overshoot.
+// Each write only lands if the count is still what was read; on a lost race
+// the loop re-reads. An atomic SQL function would replace this (see the
+// release notes); until then this keeps the cap exact.
+type ServiceClient = ReturnType<typeof getServiceClient>
+const QUOTA_CAS_ATTEMPTS = 5
+
+async function takeQuotaSlot(
+  supabase: ServiceClient,
+  viewerId: string,
+  day: string,
+): Promise<{ taken: boolean; usedAfter: number }> {
+  for (let attempt = 0; attempt < QUOTA_CAS_ATTEMPTS; attempt++) {
+    const { data: row, error: readErr } = await supabase
+      .from('ai_opinion_quota')
+      .select('count')
+      .eq('viewer_id', viewerId)
+      .eq('day', day)
+      .maybeSingle()
+    if (readErr) throw readErr
+    if (!row) {
+      const { error: insErr } = await supabase
+        .from('ai_opinion_quota')
+        .insert({ viewer_id: viewerId, day, count: 1 })
+      if (!insErr) return { taken: true, usedAfter: 1 }
+      if ((insErr as { code?: string }).code === '23505') continue // someone inserted first
+      throw insErr
+    }
+    const used = (row as { count: number }).count
+    if (used >= QUOTA_PER_DAY) return { taken: false, usedAfter: used }
+    const { data: updated, error: updErr } = await supabase
+      .from('ai_opinion_quota')
+      .update({ count: used + 1 })
+      .eq('viewer_id', viewerId)
+      .eq('day', day)
+      .eq('count', used)
+      .select('count')
+    if (updErr) throw updErr
+    if (updated && updated.length > 0) return { taken: true, usedAfter: used + 1 }
+  }
+  throw new Error('quota slot contention')
+}
+
+async function releaseQuotaSlot(supabase: ServiceClient, viewerId: string, day: string): Promise<void> {
+  try {
+    for (let attempt = 0; attempt < QUOTA_CAS_ATTEMPTS; attempt++) {
+      const { data: row } = await supabase
+        .from('ai_opinion_quota')
+        .select('count')
+        .eq('viewer_id', viewerId)
+        .eq('day', day)
+        .maybeSingle()
+      const used = (row as { count: number } | null)?.count ?? 0
+      if (used <= 0) return
+      const { data: updated } = await supabase
+        .from('ai_opinion_quota')
+        .update({ count: used - 1 })
+        .eq('viewer_id', viewerId)
+        .eq('day', day)
+        .eq('count', used)
+        .select('count')
+      if (updated && updated.length > 0) return
+    }
+  } catch (err) {
+    console.warn('[ai-opinion] quota release failed', err)
+  }
+}
+
+/**
+ * The candidate must be visible to this viewer: not hidden (banned/frozen),
+ * an adult with a known DOB, not a test account seen by a real member, and
+ * no block either way. Anything else answers exactly like a missing profile.
+ */
+async function candidateVisibleTo(supabase: ServiceClient, viewerId: string, playerId: string): Promise<boolean> {
+  const [targetRes, viewerRes, blocksRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('is_blocked, frozen_minor_at, date_of_birth, is_test_account')
+      .eq('id', playerId)
+      .maybeSingle(),
+    supabase.from('profiles').select('is_test_account').eq('id', viewerId).maybeSingle(),
+    supabase
+      .from('user_blocks')
+      .select('blocker_id')
+      .or(`and(blocker_id.eq.${viewerId},blocked_id.eq.${playerId}),and(blocker_id.eq.${playerId},blocked_id.eq.${viewerId})`)
+      .limit(1),
+  ])
+  if (targetRes.error) throw targetRes.error
+  if (viewerRes.error) throw viewerRes.error
+  if (blocksRes.error) throw blocksRes.error
+  const target = targetRes.data as {
+    is_blocked: boolean | null
+    frozen_minor_at: string | null
+    date_of_birth: string | null
+    is_test_account: boolean | null
+  } | null
+  if (!target) return false
+  return !targetIsInvisible({
+    target,
+    viewerIsTestAccount: Boolean((viewerRes.data as { is_test_account: boolean | null } | null)?.is_test_account),
+    blockedPair: (blocksRes.data ?? []).length > 0,
+  })
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // ── HTTP handler ────────────────────────────────────────────────────
 serve(async (req: Request) => {
   // CORS headers must be resolved BEFORE any work that could throw —
@@ -735,6 +850,7 @@ serve(async (req: Request) => {
     })
   }
   const viewerId = userData.user.id
+  setSentryUser(viewerId)
 
   // 2) Parse + validate request body.
   //    `force: true` (QA F8) bypasses the server-side cache check
@@ -746,7 +862,7 @@ serve(async (req: Request) => {
   let force = false
   try {
     const body = await req.json() as { player_id?: string; force?: boolean }
-    if (!body.player_id || typeof body.player_id !== 'string') throw new Error()
+    if (!body.player_id || typeof body.player_id !== 'string' || !UUID_RE.test(body.player_id)) throw new Error()
     playerId = body.player_id
     force = body.force === true
   } catch {
@@ -767,7 +883,7 @@ serve(async (req: Request) => {
     fetchProfile(supabase, viewerId),
     fetchProfile(supabase, playerId),
   ])
-  if (!viewer || !player) {
+  if (!viewer || !player || !(await candidateVisibleTo(supabase, viewerId, playerId))) {
     return new Response(JSON.stringify({ error: 'profile_not_found' }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -891,16 +1007,11 @@ serve(async (req: Request) => {
     }
   }
 
-  // 7) Cache miss — quota check before paying the LLM.
+  // 7) Cache miss — take a quota slot before paying the LLM (given back
+  //    below if the call or the content filter fails).
   const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
-  const { data: quotaRow } = await supabase
-    .from('ai_opinion_quota')
-    .select('count')
-    .eq('viewer_id', viewerId)
-    .eq('day', today)
-    .maybeSingle()
-  const used = (quotaRow as { count: number } | null)?.count ?? 0
-  if (used >= QUOTA_PER_DAY) {
+  const slot = await takeQuotaSlot(supabase, viewerId, today)
+  if (!slot.taken) {
     return new Response(JSON.stringify({
       error: 'quota_exceeded',
       resets_at: `${today}T23:59:59Z`,
@@ -918,6 +1029,8 @@ serve(async (req: Request) => {
     payload = await callClaude(SYSTEM_PROMPT, userPrompt)
   } catch (err) {
     console.error('[ai-opinion] LLM call failed', err)
+    captureException(err, { functionName: 'ai-opinion', tags: { stage: 'llm' } })
+    await releaseQuotaSlot(supabase, viewerId, today)
     return new Response(JSON.stringify({ error: 'llm_failed' }), {
       status: 502,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -926,6 +1039,7 @@ serve(async (req: Request) => {
   const filter = passesContentFilter(payload)
   if (!filter.ok) {
     console.error('[ai-opinion] content filter rejected', filter.reason, payload.verdict_short)
+    await releaseQuotaSlot(supabase, viewerId, today)
     return new Response(JSON.stringify({ error: 'content_filter_rejected', detail: filter.reason }), {
       status: 502,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -956,11 +1070,6 @@ serve(async (req: Request) => {
       .select('id')
       .single()
     opinionId = (upserted as { id: string } | null)?.id ?? null
-    await supabase.from('ai_opinion_quota').upsert({
-      viewer_id: viewerId,
-      day: today,
-      count: used + 1,
-    }, { onConflict: 'viewer_id,day' })
   } catch (err) {
     console.error('[ai-opinion] persist failed (response still returned)', err)
   }
@@ -970,7 +1079,7 @@ serve(async (req: Request) => {
     verdict_short: payload.verdict_short,
     citations: payload.citations,
     cached: false,
-    quota_remaining: QUOTA_PER_DAY - used - 1,
+    quota_remaining: Math.max(0, QUOTA_PER_DAY - slot.usedAfter),
   }), {
     status: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -985,6 +1094,7 @@ serve(async (req: Request) => {
     // catch as the reason `FunctionsFetchError: Failed to send a
     // request` was reaching the browser.
     console.error('[ai-opinion] unhandled exception', err)
+    captureException(err, { functionName: 'ai-opinion' })
     return new Response(
       JSON.stringify({
         error: 'internal',

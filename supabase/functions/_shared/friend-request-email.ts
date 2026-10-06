@@ -1,5 +1,6 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 /**
  * Shared Email Template for Friend Request Notifications
@@ -93,16 +94,17 @@ export function generateEmailHtml(requester: RequesterData): string {
 
   const initials = getInitials(displayName)
 
-  const avatarHtml = requester.avatar_url
-    ? `<img src="${requester.avatar_url}" alt="${displayName}" style="width: 48px; height: 48px; border-radius: 24px;" />`
+  const avatarSrc = safeHttpsUrl(requester.avatar_url)
+  const avatarHtml = avatarSrc
+    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
     : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
+          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
       </table>`
 
   const locationHtml = location
-    ? `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-top: 8px;">\u{1F4CD} ${location}</span>`
+    ? `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-top: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
     : ''
 
   return `
@@ -130,7 +132,7 @@ export function generateEmailHtml(requester: RequesterData): string {
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">${displayName}</p>
+            <p style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
             ${locationHtml}
           </td>
         </tr>
@@ -142,7 +144,7 @@ export function generateEmailHtml(requester: RequesterData): string {
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${profileUrl}" style="color: #6d28d9; text-decoration: none;">View their profile</a> to learn more.
+      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View their profile</a> to learn more.
     </p>
   </div>
 

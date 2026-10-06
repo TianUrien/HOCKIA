@@ -20,6 +20,7 @@
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
+import { captureException, captureMessage } from '../_shared/sentry.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
 import { evaluateMarketRules, type MarketRecommendation } from '../_shared/market-rules.ts'
 
@@ -199,6 +200,7 @@ Deno.serve(async (req: Request) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     if (!resendApiKey) {
       logger.error('RESEND_API_KEY not configured')
+      captureMessage('admin-market-digest: RESEND_API_KEY not configured', 'error', { functionName: 'admin-market-digest' })
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -267,6 +269,9 @@ Deno.serve(async (req: Request) => {
       metadata: { digest: email.digest, queue_id: record.id },
     })
 
+    if (!result.success) {
+      captureMessage(`admin-market-digest send failed: ${result.error ?? 'unknown'}`, 'error', { functionName: 'admin-market-digest' })
+    }
     await supabase
       .from('admin_digest_queue')
       .update(result.success
@@ -280,6 +285,7 @@ Deno.serve(async (req: Request) => {
     })
   } catch (err) {
     logger.error(`Unhandled: ${err instanceof Error ? err.message : String(err)}`)
+    captureException(err, { functionName: 'admin-market-digest' })
     return new Response(JSON.stringify({ error: 'internal' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

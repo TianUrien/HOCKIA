@@ -3,6 +3,7 @@ import { type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
+import { deleteStreamAssets } from '../_shared/cloudflare-stream.ts'
 
 // Rate limiting for delete-account endpoint (database-backed, survives cold starts)
 const MAX_DELETE_ATTEMPTS = 3
@@ -356,6 +357,28 @@ Deno.serve(async (req) => {
           warnings.push(`Failed to purge ${target.bucket}/${target.prefix}`)
         }
       }
+    }
+
+    // Cloudflare Stream assets (player_videos.cf_uid — the only table holding
+    // Stream uids). Must run BEFORE the relational cleanup removes the rows
+    // that carry the uids. Best-effort: failures are logged as orphans and
+    // never block the deletion.
+    try {
+      const { data: videos, error: videosError } = await supabase
+        .from('player_videos')
+        .select('cf_uid')
+        .eq('user_id', user.id)
+        .not('cf_uid', 'is', null)
+      if (videosError) throw videosError
+      const uids = (videos ?? []).map((v: { cf_uid: string | null }) => v.cf_uid)
+      if (uids.length > 0) {
+        const counts = await deleteStreamAssets(uids, `[DELETE_ACCOUNT][${correlationId}]`)
+        logger.info('Cloudflare Stream cleanup', counts)
+        if (counts.failed > 0) warnings.push(`Failed to remove ${counts.failed} video asset(s)`)
+      }
+    } catch (streamError) {
+      logger.warn('Cloudflare Stream cleanup failed', { error: streamError })
+      warnings.push('Video asset cleanup failed')
     }
 
     try {

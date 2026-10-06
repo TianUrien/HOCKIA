@@ -14,6 +14,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 
 const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
@@ -105,7 +106,7 @@ export function interpolateVariables(
   template: string,
   variables: Record<string, string>
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, varName) => {
     return variables[varName] ?? ''
   })
 }
@@ -128,12 +129,18 @@ export function validateVariables(
 // HTML Rendering — Block-by-Block
 // ============================================================================
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+/** Variables with every value HTML-escaped, for blocks whose template text is trusted HTML. */
+function escapeVars(vars: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(vars)) out[k] = escapeHtml(v)
+  return out
+}
+
+/** href value: escaped, and only http(s)/mailto or a site-relative path; else '' (link dropped). */
+function safeHref(url: string): string {
+  const u = url.trim()
+  if (/^(https?:|mailto:)/i.test(u) || (u.startsWith('/') && !u.startsWith('//'))) return escapeHtml(u)
+  return ''
 }
 
 function getInitials(name: string): string {
@@ -145,12 +152,14 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-function renderAvatarHtml(avatarUrl: string | null, name: string, size = 48): string {
-  if (avatarUrl) {
+export function renderAvatarHtml(avatarUrl: string | null, name: string, size = 48): string {
+  // Only https images are embedded; anything else falls back to initials.
+  const src = safeHttpsUrl(avatarUrl)
+  if (src) {
     const r = Math.floor(size / 2)
-    return `<img src="${avatarUrl}" alt="${escapeHtml(name)}" style="width: ${size}px; height: ${size}px; border-radius: ${r}px;" />`
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(name)}" style="width: ${size}px; height: ${size}px; border-radius: ${r}px;" />`
   }
-  const initials = getInitials(name)
+  const initials = escapeHtml(getInitials(name))
   const r = Math.floor(size / 2)
   const fontSize = size > 40 ? 16 : 14
   return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
@@ -164,8 +173,11 @@ function renderPill(text: string): string {
   return `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(text)}</span>`
 }
 
-function renderBlock(block: ContentBlock, vars: Record<string, string>): string {
+export function renderBlock(block: ContentBlock, vars: Record<string, string>): string {
   const interpolate = (s: string | undefined) => s ? interpolateVariables(s, vars) : ''
+  // For template text that is HTML on purpose (is_html), only the variable
+  // VALUES are escaped; the template's own markup is kept.
+  const interpolateHtml = (s: string | undefined) => s ? interpolateVariables(s, escapeVars(vars)) : ''
 
   switch (block.type) {
     case 'heading': {
@@ -173,7 +185,7 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
       if (!text) return ''
       const tag = block.level === 2 ? 'h2' : 'h1'
       const fontSize = block.level === 2 ? '20px' : '24px'
-      return `<${tag} style="color: #1f2937; margin: 0 0 8px 0; font-size: ${fontSize}; font-weight: 700;">${text}</${tag}>`
+      return `<${tag} style="color: #1f2937; margin: 0 0 8px 0; font-size: ${fontSize}; font-weight: 700;">${escapeHtml(text)}</${tag}>`
     }
 
     case 'paragraph': {
@@ -182,8 +194,8 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
       const align = block.align || 'left'
       const fontSize = block.size === 'small' ? '13px' : '16px'
       const color = block.color === 'muted' ? '#9ca3af' : '#6b7280'
-      // Allow controlled HTML for links
-      const content = block.is_html ? text : escapeHtml(text)
+      // Allow controlled HTML for links (template markup only; values escaped)
+      const content = block.is_html ? interpolateHtml(block.text) : escapeHtml(text)
       return `<p style="color: ${color}; margin: 0 0 24px 0; font-size: ${fontSize}; text-align: ${align};">${content}</p>`
     }
 
@@ -254,7 +266,7 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
 
     case 'button': {
       const text = interpolate(block.text) || 'Learn More'
-      const url = interpolate(block.url)
+      const url = safeHref(interpolate(block.url))
       if (!url) return ''
       return `
     <p style="margin: 0 0 24px 0;">
@@ -346,7 +358,7 @@ function renderPlainOutreach(
       case 'paragraph': {
         const text = interpolate(block.text)
         if (!text && block.conditional) break
-        const content = block.is_html ? text : escapeHtml(text)
+        const content = block.is_html ? interpolateVariables(block.text ?? '', escapeVars(variables)) : escapeHtml(text)
         paragraphs.push(`<p style="margin: 0 0 16px 0; color: #333;">${content}</p>`)
         textLines.push(text, '')
         break
@@ -354,8 +366,9 @@ function renderPlainOutreach(
       case 'button': {
         const text = interpolate(block.text) || 'Learn More'
         const url = interpolate(block.url)
-        if (url) {
-          paragraphs.push(`<p style="margin: 0 0 16px 0;"><a href="${url}" style="color: #1a73e8;">${escapeHtml(text)}</a></p>`)
+        const href = safeHref(url)
+        if (href) {
+          paragraphs.push(`<p style="margin: 0 0 16px 0;"><a href="${href}" style="color: #1a73e8;">${escapeHtml(text)}</a></p>`)
           textLines.push(`${text}: ${url}`, '')
         }
         break
@@ -431,7 +444,7 @@ export function renderContentBlocks(
 
   const footerHtml = `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
       You're receiving this because you have a HOCKIA account.<br>
-      <a href="${settingsUrl}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+      <a href="${safeHref(settingsUrl)}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
     </p>`
 
   const html = `
