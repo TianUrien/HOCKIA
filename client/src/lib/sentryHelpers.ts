@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react'
 import { detectInAppBrowser } from './inAppBrowser'
+import { isExpectedRefusal } from './sentryFilters'
 
 type SupabaseErrorLike = {
   message?: string
@@ -102,6 +103,9 @@ export function reportSupabaseError(
   // hook + page) from polluting Sentry without each having to add
   // its own guard. The auth store handles the actual sign-out + UX.
   if (isAuthExpiredError(error)) return
+  // Deliberate business refusals (blocked member, daily new-conversation
+  // allowance) are explained in the UI — not bugs.
+  if (isExpectedRefusal(error)) return
 
   const supabaseError = (typeof error === 'object' && error !== null ? error : undefined) as SupabaseErrorLike | undefined
   const browserContext = getInAppBrowserContext()

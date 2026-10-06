@@ -183,6 +183,13 @@ function isStaleAssetError(error?: Error): boolean {
     return false;
   }
 
+  // Safari ("Importing a module script failed", which never names the file)
+  // and Firefox ("error loading dynamically imported module") — both only
+  // ever mean a lazy chunk failed to load, so no /assets/ check is needed.
+  const message = (error.message ?? '').toLowerCase();
+  if (message.includes('importing a module script failed') || message.includes('error loading dynamically imported module')) {
+    return true;
+  }
   const haystack = `${error.message ?? ''}\n${error.stack ?? ''}`.toLowerCase();
   const mentionsModuleFailure =
     haystack.includes('failed to fetch dynamically imported module') ||

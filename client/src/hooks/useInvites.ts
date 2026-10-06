@@ -11,6 +11,7 @@ import {
   OPEN_APPLICATION_STATUSES,
   firstNameOf,
   inviteDailyLimit,
+  INVITE_GENERIC_ERROR,
   inviteErrorMessage,
   inviteLimitReason,
   isInvitablePlayer,
@@ -148,8 +149,11 @@ export function useSendInvite() {
       const note = opts.note.trim()
       const { data, error } = await db.rpc('send_invite', { p_player_id: opts.playerId, p_opportunity_id: opts.opportunityId, p_note: note || null })
       if (error) {
-        if (!/can.t be invited|already|limit|not open|500 characters/i.test(error.message ?? '')) reportSupabaseError('useInvites.send', error)
-        return inviteErrorMessage(error)
+        // Refusals with their own copy (limit, passed, already applied…) are
+        // expected outcomes; only the generic fallback means something broke.
+        const message = inviteErrorMessage(error)
+        if (message === INVITE_GENERIC_ERROR) reportSupabaseError('useInvites.send', error)
+        return message
       }
       const res = (data ?? {}) as { invite_id?: string }
       trackDbEvent('invite_sent', 'opportunity', opts.opportunityId, { invite_id: res.invite_id ?? null, player_id: opts.playerId })

@@ -157,6 +157,9 @@ const PASS_THROUGH = [
   'You can only invite players to your own roles',
 ]
 
+/** The fallback copy — the only invite refusal that is worth reporting to Sentry. */
+export const INVITE_GENERIC_ERROR = 'Couldn’t send the invite. Please try again.'
+
 export function inviteErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   const limit = /Daily invite limit reached \((\d+) per day\)/.exec(msg)
@@ -164,7 +167,7 @@ export function inviteErrorMessage(err: unknown): string {
   if (msg.startsWith('This person can')) return 'This player can’t be invited to this role.'
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
   if (hit) return `${hit.replace('\'', '’')}.`
-  return 'Couldn’t send the invite. Please try again.'
+  return INVITE_GENERIC_ERROR
 }
 
 export function respondErrorMessage(err: unknown): string {
