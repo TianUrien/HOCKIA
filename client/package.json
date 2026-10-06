@@ -33,13 +33,13 @@
     "postbuild": "node scripts/prerender-landing.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
+    "@capacitor/android": "^8.5.2",
     "@capacitor/app": "^8.0.1",
     "@capacitor/browser": "^8.0.2",
     "@capacitor/camera": "^8.0.2",
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/core": "^8.5.2",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.2.0",
+    "@capacitor/ios": "^8.5.2",
     "@capacitor/push-notifications": "^8.0.2",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.2",
@@ -69,7 +69,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.2.0",
+    "@capacitor/cli": "^8.5.2",
     "@eslint/js": "^9.36.0",
     "@playwright/test": "^1.57.0",
     "@sentry/vite-plugin": "^4.6.1",
