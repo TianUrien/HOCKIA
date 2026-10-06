@@ -233,7 +233,8 @@ describe('Landing v3 — motion', () => {
     const { container } = await renderLanding()
     expect(screen.getByTestId('hero').className).not.toMatch(/\blv3-enter\b/)
     // The closing panel reveal collapses to its final state instantly.
-    const reveal = screen.getByTestId('closing-panel').parentElement as HTMLElement
+    // The panel sits in a wrapper (for the straddling app icon) inside the Reveal.
+    const reveal = screen.getByTestId('closing-panel').parentElement!.parentElement as HTMLElement
     expect(reveal.style.transition).toBe('none')
     await waitFor(() => expect(reveal.style.opacity).toBe('1'))
     expect(container.querySelector('[data-float]')).toBeTruthy()
