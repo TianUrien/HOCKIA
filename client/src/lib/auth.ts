@@ -19,6 +19,7 @@ import { trackDbEvent } from './trackDbEvent'
 import { submitSignupAttribution } from '@/lib/attribution'
 import { trackUserDevice } from './trackUserDevice'
 import { detectPlatform } from './detectPlatform'
+import { removeThisDevicePushSubscription } from './nativePush'
 import { queryClient } from './queryClient'
 import { useUploadManager } from './uploadManager'
 import { clearFriendshipEdgeCache } from '@/hooks/friendshipEdgeCache'
@@ -78,6 +79,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       message: 'auth.signOut.global',
       level: 'info'
     })
+    // Native: drop this device's push row while the session can still write
+    // it, so the next account on this phone never gets this account's pushes.
+    // Bounded so a slow network never holds up signing out.
+    await Promise.race([
+      removeThisDevicePushSubscription(get().user?.id),
+      new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+    ])
     const { error } = await supabase.auth.signOut({ scope: 'global' })
 
     if (error) {

@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { forgetNativePushToken, registerNativePushToken, saveNativePushToken } from '@/lib/nativePush'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 
@@ -135,59 +136,11 @@ export function usePushSubscription() {
         // exists and is missed — leaving the toggle stuck "loading" until the
         // 15s timeout, with no token ever saved. (This was the iOS push bug:
         // the permission prompt appeared but enabling never completed.)
-        let resolveToken!: (value: string) => void
-        let rejectToken!: (err: Error) => void
-        const tokenPromise = new Promise<string>((resolve, reject) => {
-          resolveToken = resolve
-          rejectToken = reject
-        })
-        const timeout = setTimeout(() => rejectToken(new Error('Push registration timeout')), 15000)
-
-        const regHandle = await PushNotifications.addListener('registration', (token) => {
-          clearTimeout(timeout)
-          resolveToken(token.value)
-        })
-        const errHandle = await PushNotifications.addListener('registrationError', (err) => {
-          clearTimeout(timeout)
-          rejectToken(new Error(err.error))
-        })
-
-        let fcmToken: string
-        try {
-          // register() triggers the 'registration' event carrying the token.
-          await PushNotifications.register()
-          fcmToken = await tokenPromise
-        } finally {
-          await regHandle.remove()
-          await errHandle.remove()
-        }
-        // Authoritative native platform ('ios' | 'android') — the send-push
-        // backend routes on this (ios → APNs, android → FCM). Capacitor's value
-        // is reliable; the UA can misreport (e.g. iPad reporting as a Mac).
-        const platform = Capacitor.getPlatform()
-
-        // Upsert FCM token to database
-        // Cast needed because fcm_token/platform columns are added via migration
-        // and may not yet be in the generated types
-        const { error } = await supabase
-          .from('push_subscriptions')
-          .upsert(
-            {
-              profile_id: user.id,
-              fcm_token: fcmToken,
-              platform,
-              user_agent: navigator.userAgent,
-              endpoint: `fcm:${fcmToken}`,
-              p256dh: 'fcm',
-              auth: 'fcm',
-            } as never,
-            { onConflict: 'profile_id,endpoint' }
-          )
-
-        if (error) throw error
+        const fcmToken = await registerNativePushToken()
+        await saveNativePushToken(user.id, fcmToken)
 
         setIsSubscribed(true)
-        logger.info('[Push] Native FCM registered', { platform })
+        logger.info('[Push] Native FCM registered')
       } else {
         // ---- Web Push (VAPID) registration ----
         if (!VAPID_PUBLIC_KEY) return
@@ -258,6 +211,7 @@ export function usePushSubscription() {
           .delete()
           .eq('profile_id', user.id)
           .not('fcm_token', 'is', null)
+        forgetNativePushToken()
       } else {
         // Unsubscribe from PushManager
         const registration = await navigator.serviceWorker.ready

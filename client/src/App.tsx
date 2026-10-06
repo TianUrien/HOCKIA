@@ -38,6 +38,7 @@ import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
 import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
+import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
@@ -402,6 +403,7 @@ function App() {
           <EngagementTracker />
           <AnalyticsTracker />
           <NativeDeepLinkRouter />
+          <NativePushBridge />
           <DbPageViewTracker />
           <SessionTracker />
           <ScrollToTop />
