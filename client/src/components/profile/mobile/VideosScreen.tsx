@@ -7,7 +7,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useProfileVideos, type ProfileFullGameLink, type ProfileVideo } from '@/hooks/useProfileVideos'
 import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
 import { LockedVideoTile, ProfileVideoTile } from './ProfileVideoTile'
-import { isRecruiterProfile, fullMatchVisibilityOf } from '@/lib/recruiter'
+import { isRecruiterProfile, fullMatchVisibilityOf, canViewLinkedHighlight } from '@/lib/recruiter'
 import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -85,7 +85,10 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
   const highlights = videos.filter((v) => v.kind === 'highlight')
   const fullMatches = videos.filter((v) => v.kind === 'full_match')
   const reels = videos.filter((v) => v.kind === 'reel')
-  const highlightCount = highlights.length + (profile.highlight_video_url ? 1 : 0) + lockedHighlights
+  // The legacy linked highlight honours "Recruiters only" (desktop MediaTab rule).
+  const linkedHighlight = profile.highlight_video_url || null
+  const canOpenLinkedHighlight = canViewLinkedHighlight({ owner: own, profile, viewer })
+  const highlightCount = highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullCount = fullMatches.length + links.length + lockedFull
   const lockFullMatches = own
     ? fullMatchVisibilityOf(profile) === 'recruiters'
@@ -120,7 +123,8 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
               <Group title="Highlights" count={highlightCount}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} priority={i === 0} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
-                  {profile.highlight_video_url && <LinkTile title="Linked highlight" href={profile.highlight_video_url} />}
+                  {linkedHighlight && canOpenLinkedHighlight && <LinkTile title="Linked highlight" href={linkedHighlight} />}
+                  {linkedHighlight && !canOpenLinkedHighlight && <LockedVideoTile label="Highlight" onOpen={showLocked} className="aspect-[16/9] w-full" />}
                   {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="aspect-[16/9] w-full" />)}
                 </div>
               </Group>
