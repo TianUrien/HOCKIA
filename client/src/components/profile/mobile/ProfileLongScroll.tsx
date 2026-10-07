@@ -6,7 +6,7 @@ import { useProfileScrollData, type ScrollCareerEntry, type ScrollFullGameLink, 
 import { LockedVideoTile, ProfileVideoTile } from './ProfileVideoTile'
 import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
 import { useAuthStore } from '@/lib/auth'
-import { isRecruiterProfile, fullMatchVisibilityOf } from '@/lib/recruiter'
+import { isRecruiterProfile, fullMatchVisibilityOf, canViewLinkedHighlight } from '@/lib/recruiter'
 import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { useTrustedReferences, type PublicReferenceCard } from '@/hooks/useTrustedReferences'
 import { useCountries } from '@/hooks/useCountries'
@@ -234,7 +234,11 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
     else if (locked && !canWatchLocked) setVideoBlock('locked')
     else setPlayer(v)
   }
-  const highlightCount = data.highlights.length + (profile.highlight_video_url ? 1 : 0) + lockedHighlights
+  // The legacy linked highlight honours "Recruiters only" like the desktop
+  // MediaTab; a viewer who may not watch it gets a locked tile instead.
+  const linkedHighlight = profile.highlight_video_url || null
+  const canOpenLinkedHighlight = canViewLinkedHighlight({ owner, profile, viewer })
+  const highlightCount = data.highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
   const videoTotal = highlightCount + fullMatchCount + data.reels.length
   useEffect(() => {
@@ -277,11 +281,14 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           {highlightCount > 0 && (
             <VideoRow label="Highlights" count={highlightCount}>
               {data.highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
-              {profile.highlight_video_url && (
-                <a href={profile.highlight_video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
+              {linkedHighlight && canOpenLinkedHighlight && (
+                <a href={linkedHighlight} target="_blank" rel="noopener noreferrer" data-testid="linked-highlight" className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
                   <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                   <span className="text-secondary font-semibold text-white">Linked highlight</span>
                 </a>
+              )}
+              {linkedHighlight && !canOpenLinkedHighlight && (
+                <LockedVideoTile label="Highlight" onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />
               )}
               {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
             </VideoRow>

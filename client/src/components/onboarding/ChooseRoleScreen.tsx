@@ -4,6 +4,7 @@ import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
 import { ONBOARDING_ROLES, ROLE_CARDS, ROLE_LOCK_COPY, roleCtaLabel, type OnboardingRole } from '@/lib/onboardingV2'
 import { cn } from '@/lib/utils'
+import { SetupSignOut } from './SetupSignOut'
 
 /**
  * Choose your role (Figma 04 Player 101:892) — shown right after the account
@@ -36,7 +37,7 @@ export default function ChooseRoleScreen({ onSelect, busy = false, error }: Choo
   const [role, setRole] = useState<OnboardingRole | null>(null)
 
   return (
-    <AuthShell>
+    <AuthShell trailing={<SetupSignOut />}>
       <div className="pt-6">
         <h1 className="text-title text-ink-1">Choose your role</h1>
         <p className="mt-1.5 text-row text-ink-2">{ROLE_LOCK_COPY}</p>

@@ -22,6 +22,7 @@ import { setOpenToPlay } from '@/lib/openToPlay'
 import { leagueSideFor } from '@/lib/profileD2'
 import { CATEGORY_LABELS, PLAYING_CATEGORIES, playingCategoryToLegacyGender, type PlayingCategory } from '@/lib/hockeyCategories'
 import { positionLabel } from '@/lib/identity'
+import { SetupSignOut } from './SetupSignOut'
 import {
   OPEN_TO_PLAY_HELPER,
   OPEN_TO_PLAY_UNDER_18,
@@ -325,7 +326,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
   if (step === 1) {
     return (
-      <AuthShell step={{ current: 1, total: 2 }}>
+      <AuthShell step={{ current: 1, total: 2 }} trailing={<SetupSignOut />}>
         <form
           onSubmit={(e) => { e.preventDefault(); void saveAboutYou() }}
           noValidate
@@ -541,6 +542,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
         <div className="mt-auto pt-8">
           <Button type="submit" block loading={saving}>Continue</Button>
+          <SetupSignOut placement="footer" />
         </div>
       </form>
     </AuthShell>
