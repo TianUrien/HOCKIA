@@ -212,17 +212,21 @@ jobs:
           TOTAL_KB=$((TOTAL_JS / 1024))
           echo "Initial-load JS: ${EAGER_KB}KB gzip (eager chunks) | ${TOTAL_KB}KB raw across all chunks"
 
-          # Early warning at ~94% of the 480KB initial-load budget
-          if [ "$EAGER_GZIP" -gt 460800 ]; then
-            echo "::warning::Initial-load bundle nearing budget: ${EAGER_KB}KB / 480KB ($(( EAGER_KB * 100 / 480 ))%)"
+          # Early warning at 520KB of the 560KB initial-load budget
+          if [ "$EAGER_GZIP" -gt 532480 ]; then
+            echo "::warning::Initial-load bundle nearing budget: ${EAGER_KB}KB / 560KB ($(( EAGER_KB * 100 / 560 ))%)"
           fi
 
-          # Primary gate: initial-load gzip must stay under 480KB. Features belong
+          # Primary gate: initial-load gzip must stay under 560KB. Features belong
           # in lazy route chunks (not the eager set), so this grows slowly; a rise
           # means something heavy leaked into the entry/shared graph — investigate
           # rather than bump.
-          if [ "$EAGER_GZIP" -gt 491520 ]; then
-            echo "::error::Initial-load bundle budget exceeded! ${EAGER_KB}KB > 480KB"
+          # History: 480KB until 2026-10-07 (eager set reached 478KB after the
+          # Sentry Capacitor SDK joined the shared chunk); raised to 560KB with
+          # founder approval. Headroom to earn back: lazy-load Sentry replay and
+          # tracing, and move signed-in-only paths out of the eager graph.
+          if [ "$EAGER_GZIP" -gt 573440 ]; then
+            echo "::error::Initial-load bundle budget exceeded! ${EAGER_KB}KB > 560KB"
             exit 1
           fi
 
