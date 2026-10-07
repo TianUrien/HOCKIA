@@ -8,8 +8,15 @@ import { TERMS_GATE_OVERLAY } from '@/lib/overlaySequence'
 
 const CURRENT_TERMS_VERSION = '1.0'
 
-/** Never gated: the transient auth callback and the onboarding screens (see effect). */
-const UNGATED_PREFIXES = ['/auth/callback', '/complete-profile', '/brands/onboarding']
+/**
+ * Never gated: the transient auth callback, the onboarding screens (see
+ * effect) and the two legal pages. The modal's own "Terms & Conditions" /
+ * "Privacy Policy" links navigate there; without this exemption the gate
+ * re-rendered on top of the legal page, so tapping a link did nothing
+ * visible (release audit 2026-10-05). Both pages are static, non-UGC
+ * content, so showing them before acceptance is exactly what Apple 1.2 wants.
+ */
+const UNGATED_PREFIXES = ['/auth/callback', '/complete-profile', '/brands/onboarding', '/terms', '/privacy-policy']
 
 /**
  * Terms acceptance gate — shown once to authenticated users
