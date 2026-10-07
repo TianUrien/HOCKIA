@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { searchClubsInCountry, type LinkClubMatch } from '@/lib/linkClubSearch'
 import type { ClubProfileShape } from '@/pages/ClubDashboard'
+import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -185,7 +186,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
           <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">Cancel</button>
         )}
         <h1 className="text-body font-semibold text-ink-1">Link your club</h1>
-        <span className="w-[120px]" />
+        {onboarding ? <div className="-mr-2 flex w-[120px] justify-end"><SetupSignOut /></div> : <span className="w-[120px]" />}
       </div>
 
       <div className={cn('flex-1 overflow-y-auto', onboarding ? 'pb-40' : 'pb-28')}>

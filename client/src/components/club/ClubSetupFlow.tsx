@@ -17,6 +17,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { cn } from '@/lib/utils'
 import { CLUB_NAME_MAX, foundedYears } from '@/lib/clubEdit'
 import { clubSetupReady, type ClubSetupDraft } from '@/lib/clubSetup'
+import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 
 const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 
@@ -176,8 +177,9 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white lg:hidden" data-testid="club-setup-screen">
-      <div className="flex h-11 items-center justify-center px-2 pt-[env(safe-area-inset-top)]">
+      <div className="relative flex h-11 items-center justify-center px-2 pt-[env(safe-area-inset-top)]">
         <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-[22px]" />
+        <div className="absolute right-2 top-[env(safe-area-inset-top)] flex h-11 items-center"><SetupSignOut /></div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-32 pt-6">

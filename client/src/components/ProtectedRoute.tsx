@@ -85,6 +85,10 @@ const ONBOARDING_EXEMPT_ROUTES = [
   // it right back — an infinite loop that made brand signup impossible.
   '/complete-profile', '/brands/onboarding', '/auth/callback', '/verify-email',
   '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist',
+  // A recovery link signs the account in and lands on /reset-password; an
+  // un-onboarded account was bounced to set-up before it could set the new
+  // password (release audit 2026-10-05, finding 17).
+  '/reset-password',
 ]
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {

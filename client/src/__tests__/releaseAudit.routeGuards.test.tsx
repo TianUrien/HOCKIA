@@ -152,7 +152,7 @@ describe('signed-out visitor × every route in App.tsx', () => {
 })
 
 describe('signed in but onboarding not finished × every route in App.tsx', () => {
-  const EXEMPT = ['/complete-profile', '/brands/onboarding', '/auth/callback', '/verify-email', '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist']
+  const EXEMPT = ['/complete-profile', '/brands/onboarding', '/auth/callback', '/verify-email', '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist', '/reset-password']
   const exempt = (pattern: string) => EXEMPT.some((p) => pattern === p || pattern.startsWith(`${p}/`))
 
   beforeEach(() => {

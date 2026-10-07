@@ -27,6 +27,7 @@ import { showsClubSetup } from '@/lib/clubSetup'
 import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
 import { legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft } from '@/lib/onboardingV2'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
+import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { Button as UiButton } from '@/components/ui/Button'
 import {
   type PlayingCategory,
@@ -1198,12 +1199,13 @@ export default function CompleteProfile() {
       <div className="relative z-10 w-full max-w-2xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center justify-between gap-3 mb-2">
               <img
                 src="/brand/wordmark/hockia-wordmark-white.svg"
                 alt="HOCKIA"
                 className="h-8"
               />
+              <SetupSignOut className="text-white/80 active:text-white" />
             </div>
             <p className="text-white/90 text-sm">
               Complete your profile to get started
