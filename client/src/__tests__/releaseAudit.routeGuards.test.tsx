@@ -60,15 +60,11 @@ const MEANT_TO_BE_PUBLIC = [
   '/community', '/opportunities',
   '/members', '/players', '/coaches', '/clubs', '/umpires',
 ]
+/** Personal pages that happen to live under a public prefix. */
+const PERSONAL_UNDER_PUBLIC = ['/opportunities/applications']
 const meantPublic = (pattern: string) =>
+  !PERSONAL_UNDER_PUBLIC.some((p) => pattern === p || pattern.startsWith(`${p}/`)) &&
   MEANT_TO_BE_PUBLIC.some((p) => (p === '/' ? pattern === '/' : pattern === p || pattern.startsWith(`${p}/`)))
-
-/**
- * Member-only pages the gate does not cover today (BUG, see the it.fails
- * below). Each renders for a signed-out visitor instead of sending them to
- * sign in, and the path is not remembered for after login.
- */
-const KNOWN_UNGUARDED = ['/pulse', '/inbox', '/inbox/:segment', '/applications/:applicationId/signing']
 
 function LocationProbe() {
   const loc = useLocation()
@@ -114,8 +110,8 @@ describe('signed-out visitor × every route in App.tsx', () => {
     }
   })
 
-  it('every member-only page outside the known-unguarded list redirects to the landing page and remembers the path', () => {
-    const memberOnly = APP_ROUTES.filter((p) => !meantPublic(p) && !KNOWN_UNGUARDED.includes(p))
+  it('every member-only page redirects to the landing page and remembers the path', () => {
+    const memberOnly = APP_ROUTES.filter((p) => !meantPublic(p))
     expect(memberOnly.length).toBeGreaterThan(20)
     for (const pattern of memberOnly) {
       sessionStorage.clear()
@@ -124,31 +120,34 @@ describe('signed-out visitor × every route in App.tsx', () => {
     }
   })
 
-  // BUG (release audit 2026-10-05, MEDIUM): /pulse, /inbox, /inbox/:segment and
-  // /applications/:applicationId/signing are in neither PUBLIC_ROUTES nor
-  // PROTECTED_ROUTE_PREFIXES (components/ProtectedRoute.tsx), so the gate
-  // treats them as "unknown URL → let the router 404" and renders the page
-  // for a signed-out visitor. No data leaks (RLS returns nothing), but a
-  // member whose session expired sees an empty Inbox / "This signing isn't
-  // available." instead of the sign-in screen, and is not brought back after
-  // signing in. Fix: add '/pulse', '/inbox', '/applications' to
-  // PROTECTED_ROUTE_PREFIXES, then delete KNOWN_UNGUARDED and turn this into
-  // a plain `it`.
-  it.fails('BUG: no member-only page renders for a signed-out visitor', () => {
+  // Release audit 2026-10-05 (MEDIUM, fixed): /pulse, /inbox, /inbox/:segment
+  // and /applications/:applicationId/signing were in neither PUBLIC_ROUTES
+  // nor PROTECTED_ROUTE_PREFIXES, so the gate treated them as "unknown URL →
+  // let the router 404" and rendered the page for a signed-out visitor.
+  it('no member-only page renders for a signed-out visitor', () => {
     const unguarded = APP_ROUTES.filter((p) => !meantPublic(p)).filter((p) => landingPathFor(sample(p)) !== '/')
     expect(unguarded).toEqual([])
   })
 
-  it('the unguarded set is exactly the four known routes (fails when one is fixed or a new one appears)', () => {
-    const unguarded = APP_ROUTES.filter((p) => !meantPublic(p)).filter((p) => landingPathFor(sample(p)) !== '/')
-    expect(unguarded.sort()).toEqual([...KNOWN_UNGUARDED].sort())
+  it('the once-unguarded routes are now sent to sign in with the path remembered', () => {
+    for (const path of ['/pulse', '/inbox', '/inbox/x', '/applications/x/signing']) {
+      sessionStorage.clear()
+      expect(landingPathFor(path), path).toBe('/')
+      expect(sessionStorage.getItem('hockia-redirect-after-login'), path).toBe(path)
+    }
   })
 
-  // BUG (same audit, LOW): "My applications" lives under the public
-  // /opportunities prefix, so it is treated as a public page. A signed-out
-  // visitor gets the personal page shell instead of the sign-in screen.
-  it.fails('BUG: /opportunities/applications (a personal page) asks a signed-out visitor to sign in', () => {
+  // Same audit (LOW, fixed): "My applications" lives under the public
+  // /opportunities prefix, so the prefix match alone treated it as public.
+  it('/opportunities/applications (a personal page) asks a signed-out visitor to sign in', () => {
     expect(landingPathFor('/opportunities/applications')).toBe('/')
+    expect(sessionStorage.getItem('hockia-redirect-after-login')).toBe('/opportunities/applications')
+  })
+
+  it('the public /opportunities listings around it stay public', () => {
+    for (const path of ['/opportunities', '/opportunities/x', '/opportunities/applications-look-alike']) {
+      expect(landingPathFor(path), path).toBe(path)
+    }
   })
 })
 

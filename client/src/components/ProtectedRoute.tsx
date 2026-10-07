@@ -45,6 +45,9 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
  * - /settings            User settings
  * - /complete-profile    Onboarding
  * - /admin/*             Admin portal
+ * - /inbox/*, /pulse     Member inbox and activity
+ * - /applications/*      Signing confirmation
+ * - /opportunities/applications  "My applications" (under the public prefix)
  * 
  * IMPORTANT: Never redirect from /auth/callback or /verify-email
  * before auth processing completes
@@ -62,7 +65,17 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
 const PROTECTED_ROUTE_PREFIXES = [
   '/home', '/dashboard', '/messages', '/settings', '/notifications',
   '/search', '/discover', '/discovery', '/complete-profile', '/admin',
+  // Release audit 2026-10-05: these three were in neither list, so a
+  // signed-out or expired-session visitor got an empty Inbox / Pulse / "This
+  // signing isn't available." instead of sign-in, and was not brought back.
+  '/inbox', '/pulse', '/applications',
 ]
+
+// Personal pages that live UNDER a public prefix. "My applications" sits at
+// /opportunities/applications, inside the public /opportunities listings, so
+// the prefix match alone would let a signed-out visitor see the page shell.
+// Checked before the public-route match. Exact paths (plus sub-paths).
+const PROTECTED_EXACT_ROUTES = ['/opportunities/applications']
 
 const ONBOARDING_EXEMPT_ROUTES = [
   // '/brands/onboarding' is the ONE onboarding surface that lives outside
@@ -120,8 +133,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }
 
+  const isProtectedExactRoute = PROTECTED_EXACT_ROUTES.some(route =>
+    location.pathname === route || location.pathname.startsWith(route + '/'))
+
   // Check if current route is public (exact match for /, prefix match for others)
-  const isPublicRoute = PUBLIC_ROUTES.some(route => {
+  const isPublicRoute = !isProtectedExactRoute && PUBLIC_ROUTES.some(route => {
     if (route === '/') return location.pathname === '/'
     // Ensure prefix match doesn't collide: /opportunities must not match /opportunities-admin
     return location.pathname === route || location.pathname.startsWith(route + '/')
@@ -138,7 +154,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // page — a soft-404 with no feedback that the link was wrong (and the bad
   // path was even stored as their post-login redirect target). The 404 page
   // carries no data, so letting anon reach it is safe by construction.
-  const isKnownProtectedRoute = PROTECTED_ROUTE_PREFIXES.some(route =>
+  const isKnownProtectedRoute = isProtectedExactRoute || PROTECTED_ROUTE_PREFIXES.some(route =>
     location.pathname === route || location.pathname.startsWith(route + '/'))
   if (!isKnownProtectedRoute) {
     return <>{children}</>
