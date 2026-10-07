@@ -13,6 +13,14 @@
 // match the full "<ref>.supabase.co" ENDPOINT URL — not the bare ref, which
 // legitimately appears as a getEnvironment() detection string even in a
 // correct prod build.
+//
+// Second guard (release audit 2026-10-06): everything under client/public is
+// copied verbatim into dist/ and from there into the store binaries. Stray
+// files left there untracked (mockups, store artwork, icon sources) would ship
+// to every user, so packaging is refused while `git status` lists untracked
+// files in client/public. Tracked files are the intended set; move the rest
+// out of the tree rather than adding them.
+import { execFileSync } from 'child_process'
 import { readdirSync, readFileSync } from 'fs'
 import { dirname, join, resolve } from 'path'
 import { fileURLToPath } from 'url'
@@ -22,6 +30,36 @@ const STAGING_ENDPOINT = 'ivjkdaylalhsteyyclvl.supabase.co'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const distAssets = resolve(here, '..', 'dist', 'assets')
+const clientRoot = resolve(here, '..')
+const publicDir = resolve(clientRoot, 'public')
+
+let porcelain
+try {
+  porcelain = execFileSync('git', ['status', '--porcelain', '--untracked-files=all', '--', publicDir], {
+    cwd: clientRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+} catch {
+  console.error(
+    '[assert-prod-bundle] FAIL: could not run `git status` for client/public, so untracked files ' +
+      'cannot be ruled out. Package from a git checkout.',
+  )
+  process.exit(1)
+}
+const untracked = porcelain
+  .split('\n')
+  .filter((line) => line.startsWith('?? '))
+  .map((line) => line.slice(3).trim())
+if (untracked.length > 0) {
+  console.error(
+    `[assert-prod-bundle] FAIL: ${untracked.length} untracked file(s) in client/public would ship inside the native binary:\n` +
+      untracked.map((f) => `  - ${f}`).join('\n') +
+      '\n  Move them out of client/public (or commit them if they are meant to ship) and rerun.',
+  )
+  process.exit(1)
+}
+console.log('[assert-prod-bundle] OK: no untracked files in client/public.')
 
 let files
 try {

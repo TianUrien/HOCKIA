@@ -18,6 +18,7 @@ The repository is public.
 | [testing.md](testing.md) | Test suites, commands, what each CI job does, where test credentials come from, known flakes |
 | [security.md](security.md) | Trust boundaries, RLS and grants, SECURITY DEFINER rules, fences, secrets by name, open hardening workstreams |
 | [operations.md](operations.md) | Environments, release runbook, rollback paths, backups, monitoring, known traps |
+| [native-release.md](native-release.md) | Store builds: version numbers, native crash reporting (Sentry Capacitor), symbols (source maps, dSYMs), the ordered release checklist, Sentry verification |
 | [capacity.md](capacity.md) | Workload model for 1,000 registered users, what is measured today, a proposed load-test plan (not run), platform limits to verify |
 | [skills.md](skills.md) | What exists in `.claude/` today, the seven copied project skills (source, commit, size, trigger, removal), the founder-run Trail of Bits plugins, and the 2026-10-02 framework evaluation record |
 | [hooks.md](hooks.md) | The two local Claude Code hooks (secret scan before commit/push, migration lint after edit): what they do, the settings block to register them, test record |
@@ -32,6 +33,7 @@ The repository is public.
 | Adding or changing an RPC, view or edge function that returns people | security.md "Hidden, blocked and frozen profiles" |
 | Changing an edge function | security.md "Edge functions" and operations.md "Edge function deploys" (verify_jwt flags) |
 | Preparing a release to production | operations.md "Release runbook" |
+| Cutting an iOS or Android store build | native-release.md |
 | Something is broken in production | operations.md "Rollback paths" and "Monitoring" |
 | Adding a dependency or a heavy component | standards.md "Bundle budgets" |
 | Writing user-facing copy or status colours | standards.md "Copy and status rules" |

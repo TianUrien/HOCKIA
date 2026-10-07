@@ -157,7 +157,9 @@ redeployed.
    builds use `npm run cap:build` (asserts a production bundle, copies
    `app.html` to `index.html`, syncs iOS and Android); versions live in the
    Xcode project (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) and
-   `android/app/build.gradle`.
+   `android/app/build.gradle`. The full native procedure (versions, crash
+   reporting, symbols, device checks, Sentry verification) is in
+   [native-release.md](native-release.md).
 
 ### 2.5 After the release
 
