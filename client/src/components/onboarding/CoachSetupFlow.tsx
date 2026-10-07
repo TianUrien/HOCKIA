@@ -23,6 +23,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 import { ANY_CATEGORY, CATEGORY_LABELS, COACH_UMPIRE_CATEGORIES, isValidCategoryArray } from '@/lib/hockeyCategories'
 import { cn } from '@/lib/utils'
+import { SetupSignOut } from './SetupSignOut'
 import {
   COACH_CATEGORIES_HINT,
   COACH_PHOTO_HELPER,
@@ -350,7 +351,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
 
   if (step === 1) {
     return (
-      <AuthShell step={{ current: 1, total: 2 }}>
+      <AuthShell step={{ current: 1, total: 2 }} trailing={<SetupSignOut />}>
         <form
           onSubmit={(e) => { e.preventDefault(); void saveAboutYou() }}
           noValidate
@@ -592,6 +593,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
 
         <div className="mt-auto pt-8">
           <Button type="submit" block loading={saving}>Finish</Button>
+          <SetupSignOut placement="footer" />
         </div>
       </form>
     </AuthShell>

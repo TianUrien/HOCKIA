@@ -27,6 +27,7 @@ import { showsClubSetup } from '@/lib/clubSetup'
 import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
 import { legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft } from '@/lib/onboardingV2'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
+import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { Button as UiButton } from '@/components/ui/Button'
 import {
   type PlayingCategory,
@@ -818,6 +819,13 @@ export default function CompleteProfile() {
         throw new Error('Profile role not found')
       }
 
+      // Never write set-up data over a row that was not loaded: with a null
+      // profile this submit would overwrite name / position and null the
+      // avatar of a member whose fetch merely failed (release audit 2026-10-05).
+      if (!profile) {
+        throw new Error('Your profile has not loaded yet. Please try again.')
+      }
+
       // Refresh the session before making auth-dependent calls.
       // Users in iOS WebViews or who spent a long time filling the form
       // may have a stale/expired token by the time they hit submit.
@@ -1094,10 +1102,38 @@ export default function CompleteProfile() {
     )
   }
 
-  if (!userRole) {
+  // A failed profile fetch is not "not onboarded" (release audit 2026-10-05).
+  // With profile null every `!profile?.onboarding_completed` check below read
+  // as true, so a member whose fetch failed (expired token, flaky network,
+  // Landing / DashboardRouter both send that case here) was dropped into
+  // set-up, and step 1 then overwrote their name and position and nulled
+  // their avatar. Offer a retry instead; nothing below mounts without a row.
+  if (!profile && profileStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4" data-testid="profile-load-error">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">We couldn’t load your profile</h2>
+          <p className="text-gray-600 mb-6">Check your connection and try again. Nothing has been changed.</p>
+          <button
+            type="button"
+            onClick={() => void fetchProfile(user.id, { force: true })}
+            className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+          >
+            Retry
+          </button>
+          <SetupSignOut placement="footer" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile || !userRole) {
     // Choose your role (Figma 101:892): every new account lands here — the
     // account-first flow collects no role at sign-up (email or OAuth), so the
     // profile row is created now, from the choice, via handleRoleSelection.
+    // Also the only screen for a signed-in account with NO row (status
+    // 'missing'), whatever a stale pending_role / user_metadata.role says: a
+    // set-up flow must never run against a row that does not exist.
     return <ChooseRoleScreen onSelect={handleRoleSelection} busy={creatingProfile} error={error || null} />
   }
 
@@ -1198,12 +1234,13 @@ export default function CompleteProfile() {
       <div className="relative z-10 w-full max-w-2xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center justify-between gap-3 mb-2">
               <img
                 src="/brand/wordmark/hockia-wordmark-white.svg"
                 alt="HOCKIA"
                 className="h-8"
               />
+              <SetupSignOut className="text-white/80 active:text-white" />
             </div>
             <p className="text-white/90 text-sm">
               Complete your profile to get started
