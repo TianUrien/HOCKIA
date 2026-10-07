@@ -76,10 +76,12 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>HOCKIA needs access to your camera to take a profile photo.</string>
+	<string>HOCKIA uses the camera when you take a photo or record a video for your profile, posts or gallery.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>HOCKIA uses the microphone when you record a video to share.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>HOCKIA needs access to your photo library to choose a profile photo.</string>
+	<string>HOCKIA uses your photo library when you choose photos or videos for your profile, posts or gallery.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>HOCKIA needs permission to save photos to your library.</string>
+	<string>HOCKIA saves photos and videos to your library only when you choose to download them.</string>
 </dict>
 </plist>
