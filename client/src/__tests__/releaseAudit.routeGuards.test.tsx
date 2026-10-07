@@ -19,6 +19,7 @@ const h = vi.hoisted(() => ({
   state: {
     user: null as null | { id: string },
     profile: null as null | { id: string; role: string; onboarding_completed: boolean },
+    profileStatus: 'idle' as 'idle' | 'fetching' | 'missing' | 'loaded' | 'error',
     loading: false,
   },
   rpc: vi.fn(),
@@ -89,6 +90,7 @@ function landingPathFor(path: string): string {
 beforeEach(() => {
   h.state.user = null
   h.state.profile = null
+  h.state.profileStatus = 'idle'
   h.state.loading = false
   h.rpc.mockReset()
   sessionStorage.clear()
@@ -176,6 +178,44 @@ describe('signed in but onboarding not finished × every route in App.tsx', () =
 
   it('a prefix look-alike is not exempt: /terms-of-anything is gated', () => {
     expect(landingPathFor('/terms-of-anything')).toBe('/complete-profile')
+  })
+})
+
+// Release audit 2026-10-05 (finding 2, fixed): a signed-in account with NO
+// profile row yet (brand-new, role not chosen → profileStatus 'missing')
+// could open /home, /search, /messages, /settings before choosing a role.
+describe('signed in with no profile row yet (role not chosen) × every route in App.tsx', () => {
+  const EXEMPT = ['/complete-profile', '/brands/onboarding', '/auth/callback', '/verify-email', '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist', '/reset-password']
+  const exempt = (pattern: string) => EXEMPT.some((p) => pattern === p || pattern.startsWith(`${p}/`))
+
+  beforeEach(() => {
+    h.state.user = { id: 'u1' }
+    h.state.profile = null
+  })
+
+  it("'missing': every non-exempt page sends them to Choose your role", () => {
+    h.state.profileStatus = 'missing'
+    for (const pattern of APP_ROUTES.filter((p) => !exempt(p))) {
+      expect(landingPathFor(sample(pattern)), pattern).toBe('/complete-profile')
+    }
+    for (const path of ['/home', '/search', '/messages', '/settings']) {
+      expect(landingPathFor(path), path).toBe('/complete-profile')
+    }
+  })
+
+  it("'missing': onboarding, auth plumbing, legal pages and password reset stay reachable", () => {
+    h.state.profileStatus = 'missing'
+    for (const pattern of APP_ROUTES.filter(exempt)) {
+      expect(landingPathFor(sample(pattern)), pattern).toBe(sample(pattern))
+    }
+  })
+
+  it("'fetching' is not gated (no redirect flicker mid-fetch); 'error' is left to the pages' retry UI", () => {
+    for (const status of ['fetching', 'error'] as const) {
+      h.state.profileStatus = status
+      expect(landingPathFor('/opportunities'), status).toBe('/opportunities')
+      expect(landingPathFor('/home'), status).toBe('/home')
+    }
   })
 })
 
