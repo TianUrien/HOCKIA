@@ -68,7 +68,7 @@ not throughput.
 | Client error budget (1 %) | `lib/errorBudget.ts` (in-app) |
 | Funnels, retention D7/D15/D30, activation, signings | Founder dashboard SQL services; PostHog |
 | AI usage and zero-result rates | `discovery_events` and `_meta.kind`; `/admin/ai-opinions` |
-| Bundle size | CI budgets (initial-load gzip 480 KB hard, raw 4,800 KB) |
+| Bundle size | CI budgets (initial-load gzip 560 KB hard, raw 4,900 KB) |
 
 Not measured today (verified absence in the repository):
 
