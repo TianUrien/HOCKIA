@@ -3,6 +3,17 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-09 · design agent
+
+- Hockia-UI-UX, Landing v3 (section `122:1885`), built in PR #226 and live:
+  - Landing desktop `124:1908` and mobile `126:2030`; Log in `127:2141` / `127:2204`; Sign up `127:2261` / `127:2304`.
+  - Components: Web v3 / Button `122:1982`, Web v3 / Button on dark `141:534`, Web v3 / Navbar `122:2067` (fixed; Scrolled = floating glass capsule).
+  - Motion spec `139:518`.
+  - New "Hockia / App" tokens: brand/primary-hover, brand/soft-hover, focus/ring, surface/nav, line/strong, space/4/40/80/96, radius/2xl.
+  - The hero is white with the phones whole. Open roles uses real club crests (initials fallback) and the closing panel is the page's only dark-purple moment.
+  - Founder follow-ups mirrored: store badges removed from the closing panel; the app icon sits on its top edge (`148:526` / `148:527`).
+- Hockia-UI-UX page cleaned at the founder's request: the old Web A/B explorations, first-run explorations, loose images and Landing v2 were deleted.
+
 ## 2026-10-05 (B2 handoff) · design agent
 
 - B2 · Club reminders (Backlog `406:19`) scheduled by the founder for build next. The copy in B2.1 `385:586`, B2.2 `385:647` and B2.3 `385:682` is now gender-neutral (first name instead of he/his).
