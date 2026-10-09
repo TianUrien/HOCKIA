@@ -149,10 +149,11 @@ describe('Decline with a kind note (?decline=1)', () => {
   })
 })
 
+import type { NotificationMetadata } from '@/lib/api/notifications'
 // ── notification kinds ─────────────────────────────────────────────────────
 const KINDS: NotificationKind[] = ['applicant_last_call', 'applicants_closing_soon']
 
-function notification(kind: NotificationKind, metadata: Record<string, unknown> = {}): NotificationRecord {
+function notification(kind: NotificationKind, metadata: NotificationMetadata = {}): NotificationRecord {
   return {
     id: 'n1', kind, sourceEntityId: null, metadata, targetUrl: null,
     createdAt: '2026-10-09T12:05:00.000Z', readAt: null, seenAt: null, clearedAt: null,
@@ -180,7 +181,7 @@ describe('B2 notification kinds', () => {
   })
 
   it('route: the applicant (one) → the role’s Applicants (one role) → Opportunities; the push agrees', () => {
-    const cases: [Record<string, unknown>, string][] = [
+    const cases: [NotificationMetadata, string][] = [
       [{ opportunity_id: 'r1', application_id: 'a1' }, '/dashboard/opportunities/r1/applicants/a1'],
       [{ opportunity_id: 'r1' }, '/dashboard/opportunities/r1/applicants'],
       [{}, '/opportunities'],
