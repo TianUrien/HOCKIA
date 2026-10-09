@@ -3,6 +3,84 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-09 · design agent
+
+- Hockia-UI-UX, Landing v3 (section `122:1885`), built in PR #226 and live:
+  - Landing desktop `124:1908` and mobile `126:2030`; Log in `127:2141` / `127:2204`; Sign up `127:2261` / `127:2304`.
+  - Components: Web v3 / Button `122:1982`, Web v3 / Button on dark `141:534`, Web v3 / Navbar `122:2067` (fixed; Scrolled = floating glass capsule).
+  - Motion spec `139:518`.
+  - New "Hockia / App" tokens: brand/primary-hover, brand/soft-hover, focus/ring, surface/nav, line/strong, space/4/40/80/96, radius/2xl.
+  - The hero is white with the phones whole. Open roles uses real club crests (initials fallback) and the closing panel is the page's only dark-purple moment.
+  - Founder follow-ups mirrored: store badges removed from the closing panel; the app icon sits on its top edge (`148:526` / `148:527`).
+- Hockia-UI-UX page cleaned at the founder's request: the old Web A/B explorations, first-run explorations, loose images and Landing v2 were deleted.
+
+## 2026-10-05 (B2 handoff) · design agent
+
+- B2 · Club reminders (Backlog `406:19`) scheduled by the founder for build next. The copy in B2.1 `385:586`, B2.2 `385:647` and B2.3 `385:682` is now gender-neutral (first name instead of he/his).
+
+## 2026-10-05 (landing) · design agent
+
+- Hockia-UI-UX, Web A v2 landing (mirrors code PR #218):
+  - Desktop hero `114:1760`: the outer phones now sit whole inside the stage, left at x 24 (`114:1774`) and right at x 259 (`114:1775`).
+  - Store badges (44 high, 12 gap) sit under the audience line: left-aligned on desktop (`121:1803`), centred on mobile (`121:1841`).
+
+## 2026-10-05 (D6 code review) · design agent
+
+- D6 coach code (PR #214) reviewed. D6.1 `377:186`:
+  - A club viewing a coach sees Shortlist (Primary, Star) + Message.
+  - The "Open to relocating" pill is removed (relocation lives in the Available key fact).
+- Accepted from code:
+  - My roles has an Open | Closed control and a "+" to post a role.
+  - Closed-role pills are grey.
+  - The empty-state line is "N coaching roles were posted on Hockia this year".
+  - The status pill reads "Recruiting" or "Open to coach".
+- Ruling applied: the per-card "Review" is Tonal (a repeated action) on both the coach My roles and the club Opportunities tab.
+- Club profile v2 as a player (`38:99`) matches. On it, Message should use the Secondary style.
+
+## 2026-10-05 (round 2b review) · design agent
+
+- Player round 2b (code PR #213, batches C–E, 25 screens) reviewed from screenshots: approved, no blockers.
+- Accepted from code:
+  - The media link says "Add", not "Replace".
+  - The relationship in Write a reference is a single selected Chip.
+  - Reference cards have two tap targets.
+  - On your own Friends list, "Wrote you a reference" is gold text; public lists use the gold pill.
+  - Edit profile keeps Contact & links and the Role lock row.
+  - In Settings, Open to play is a navigation row and Language has no chevron.
+  - Compose has separate Photo and Video buttons.
+  - "Friends" is a green pill on the profile hero and a disabled Secondary in the member preview.
+- Still to verify: Club profile v2 `38:99` and the profile "request sent" state.
+
+## 2026-10-05 (round 2a review) · design agent
+
+- Player round 2a (code PR #212: Inbox, chat, applications, apply sheets, coach role header) reviewed from screenshots.
+- List item / Request `548:550`: Accept is Tonal Small (a repeated row action), not Primary.
+- List item / Application `551:647`: gains a Position line (four lines as shipped). My applications `101:353` and `115:1382` use day-first dates.
+- Accepted from code:
+  - The chat composer has no camera.
+  - Time and read receipts sit inside the bubbles.
+  - No mutual-friends line for clubs or brands.
+  - "Replied" is grey.
+
+## 2026-10-05 (round 1 review) · design agent
+
+- Player round 1 (code PR #211) reviewed from screenshots. Figma aligned to the accepted code choices:
+  - Own profile Secondary reads "View as club" `582:14981`.
+  - Your week label "roles for you" `539:2665`.
+  - Package item Note tile uses surface/muted `541:413`.
+- Card / Role `541:9107`:
+  - The team pill is soft purple (ruling).
+  - Founder ruling: no button on the card; Applied shows a Neutral "Applied" tag.
+- Not built yet (later): the Opportunities summary line and the "Newest" sort row on `313:1417`.
+
+## 2026-10-05 (review) · design agent
+
+- D5 code review (PR #208 screenshots) against D5.1 `398:83` and D5.2 `398:291`: matches. Follow-ups for code:
+  - Team tag colour (founder ruling).
+  - Status filter pills on role detail follow the soft-purple Chip.
+  - Hide the composer when there are no suggestions.
+  - The send icon (code arrow-up vs Figma paper plane) is accepted as is.
+
 ## 2026-10-05 (late) · design agent
 
 - Whole-file QA pass on the live pages (03, 04, D1–D6):

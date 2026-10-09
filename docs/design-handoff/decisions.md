@@ -4,6 +4,10 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-09 | B2 Club reminders: reminder emails go at 09:00 in the club's country timezone. New-application emails are batched hourly per club (this replaces the immediate per-application email). The old Shortlist / Maybe / Decline email buttons are replaced by one Review link | Founder |
+| 2026-10-06 | Landing v3: white page throughout; the closing panel is the only dark-purple moment (no store badges in it, app icon on its edge); real club crests with an initials fallback; fixed navbar morphs into a glass capsule | Founder |
+| 2026-10-05 | Role cards in the Opportunities list carry no button: the card opens Role detail, where the Message + Apply bar lives. Applied roles show a Neutral "Applied" tag | Founder |
+| 2026-10-05 | Team tags on roles (Men's, Women's, Girls, Boys, Mixed) all use the soft-purple Tag (brand/soft + brand/primary). No pink/blue by gender; replaces the raw hex in `genderPill` | Founder |
 | 2026-10-05 | Selected Chip = soft purple (brand/soft fill, brand/primary text; pressed brand/soft-pressed). Replaces Figma's black and the code's solid purple, so the one Primary stays the only solid-purple shape | Founder |
 | 2026-10-05 | Two text styles join the scale to name existing one-offs: Title XL 28 Bold / 34 (screen titles, profile names) and Figure 26 Semibold / 31 (stat numbers). 24 pt sheet names use Title S (22) | Founder |
 | 2026-10-05 | Coach set-up: "Do you recruit players for a team?" is two option cards, required, nothing preselected (shipped: optional, default "Not right now"). `coach_recruits_for_team` stays boolean; unanswered is client-only | Founder |
