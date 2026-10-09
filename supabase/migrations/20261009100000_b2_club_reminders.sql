@@ -269,13 +269,14 @@ BEGIN
                                      WHERE l.application_id = a.id AND l.kind = 'new_application' AND l.channel = 'email')
              END
     )
+    -- Explicit casts: RETURN QUERY needs the exact declared types (varchar ≠ text).
     SELECT
       pub.id,
-      pub.email,
-      pub.full_name,
+      pub.email::text,
+      pub.full_name::text,
       pub.role::text,
       coalesce(bc.code, nc.code)::text,
-      pub.notify_applications,
+      pub.notify_applications::boolean,
       EXISTS (
         SELECT 1
           FROM public.application_status_history h
@@ -294,22 +295,22 @@ BEGIN
         WHERE b.publisher_id = v_pub AND b.channel = 'email' AND b.batch_kind = 'new_applications'),
       r.app_id,
       r.opp_id,
-      r.title,
+      r.title::text,
       r.opp_position,
       coalesce((SELECT ro.name FROM public.role_organisation(r.opp_id) ro),
-               CASE WHEN pub.role = 'club' THEN pub.full_name END),
+               CASE WHEN pub.role = 'club' THEN pub.full_name END)::text,
       ap.id,
-      ap.full_name,
-      ap.avatar_url,
+      ap.full_name::text,
+      ap.avatar_url::text,
       ap.role::text,
-      ap.position,
-      coalesce(apc.common_name, apc.name, apb.common_name, apb.name),
-      ap.is_blocked,
-      ap.frozen_minor_at,
+      ap.position::text,
+      coalesce(apc.common_name, apc.name, apb.common_name, apb.name)::text,
+      ap.is_blocked::boolean,
+      ap.frozen_minor_at::timestamptz,
       (ap.date_of_birth IS NOT NULL AND NOT public.profile_is_adult(ap.date_of_birth)),
-      r.applied,
-      r.close_at,
-      fit.state,
+      r.applied::timestamptz,
+      r.close_at::timestamptz,
+      fit.state::text,
       EXISTS (SELECT 1 FROM public.club_reminder_log l WHERE l.application_id = r.app_id AND l.kind = 'closing_soon' AND l.channel = 'email'),
       EXISTS (SELECT 1 FROM public.club_reminder_log l WHERE l.application_id = r.app_id AND l.kind = 'last_call'    AND l.channel = 'email'),
       EXISTS (SELECT 1 FROM public.club_reminder_log l WHERE l.application_id = r.app_id AND l.kind = 'closing_soon' AND l.channel = 'push'),
