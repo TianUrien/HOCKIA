@@ -1,6 +1,6 @@
 import { videoLinkSite } from '@/lib/videoUrlValidator'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -32,7 +32,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
+import { canOpenLinkedDecline, DECLINE_DEEP_LINK_PARAM, DECLINE_DEEP_LINK_REASON, wantsDeclineSheet, daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 import { flagForCountryName } from '@/lib/careerCopy'
 import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
@@ -95,6 +95,10 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const [review, setReview] = useState<Review | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [declining, setDeclining] = useState(false)
+  // B2: "Decline with a kind note" in the Last call email (?decline=1).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [linkedDeclineReason, setLinkedDeclineReason] = useState<string | null>(null)
+  const declineLinkHandled = useRef(false)
   const [scrolled, setScrolled] = useState(false)
   const [sheet, setSheet] = useState<'offer' | 'sign' | 'menu' | null>(null)
   const [confirm, setConfirm] = useState<'withdraw_offer' | 'undo_signing' | null>(null)
@@ -331,6 +335,20 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const decidable = review ? isDecidableApplicationStatus(review.status) && !onRoad : false
   // A coach with no club on the role or the profile can't mark a signing yet:
   // the career entry would be named after the coach (coachSigningNeedsClub).
+  // The email deep link opens the Decline sheet once, when the review has
+  // loaded and the application can still be declined; the param is dropped
+  // so Back or a refresh never re-opens it.
+  useEffect(() => {
+    if (!review || declineLinkHandled.current || !wantsDeclineSheet(searchParams)) return
+    declineLinkHandled.current = true
+    const next = new URLSearchParams(searchParams)
+    next.delete(DECLINE_DEEP_LINK_PARAM)
+    setSearchParams(next, { replace: true })
+    if (canOpenLinkedDecline(review.status, decidable)) {
+      setLinkedDeclineReason(DECLINE_DEEP_LINK_REASON)
+      setDeclining(true)
+    }
+  }, [review, decidable, searchParams, setSearchParams])
   const roadAction = review && onRoad ? roadMainAction(review.status) : null
   const mainAction = signingNeedsClub && roadAction === 'mark_signed' ? null : roadAction
   const menu = (review && onRoad ? roadMenu(review.status) : []).filter((item) => !(signingNeedsClub && item === 'mark_signed'))
@@ -621,7 +639,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       />
 
       {p && (
-        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => setDeclining(false)} onSend={decline} />
+        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => { setDeclining(false); setLinkedDeclineReason(null) }} onSend={decline} initialReason={linkedDeclineReason} />
       )}
     </div>
   )

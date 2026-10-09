@@ -286,6 +286,26 @@ export const DECLINE_REASON_CHIPS: { code: string; label: string }[] = [
   { code: 'other', label: 'Other' },
 ]
 
+/**
+ * B2 · club reminders: the Last call email's "Decline with a kind note" opens
+ * the applicant review with `?decline=1`. The Decline sheet opens with a
+ * reason already picked so Hockia AI drafts the note straight away; the club
+ * can change the reason (a new draft) or the note before anything is sent.
+ * Only while the application can still be declined from the decision bar.
+ */
+export const DECLINE_DEEP_LINK_PARAM = 'decline'
+export const DECLINE_DEEP_LINK_REASON = 'other'
+
+export function wantsDeclineSheet(search: URLSearchParams | string): boolean {
+  const params = typeof search === 'string' ? new URLSearchParams(search) : search
+  const value = params.get(DECLINE_DEEP_LINK_PARAM)
+  return value === '1' || value === 'true'
+}
+
+export function canOpenLinkedDecline(status: string | null | undefined, decidable: boolean): boolean {
+  return decidable && status !== 'rejected'
+}
+
 export function decisionToast(firstName: string, status: 'shortlisted' | 'maybe' | 'rejected'): string {
   return status === 'shortlisted' ? `${firstName} shortlisted` : status === 'maybe' ? `${firstName} marked maybe` : `${firstName} declined`
 }

@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
-import { buildPushPayload, isGeneratedHeadline } from '../send-push/push-payload.ts'
+import { buildPushPayload, isGeneratedHeadline, pushAllowed, pushPreferenceColumn } from '../send-push/push-payload.ts'
 
 // The push body mirrors client/src/components/notifications/config.ts
 // (applicationStatusCopy). Keep both in sync.
@@ -114,4 +114,23 @@ Deno.test('the removed-account safety notice opens the notification list', () =>
 
   const other = buildPushPayload('system_announcement', { title: 'New in HOCKIA', summary: 'Hello' }, 'HOCKIA')
   assertEquals(other.url, '/home')
+})
+
+// ── B2 · publisher reminders (20261009100000) ──
+Deno.test('club reminder pushes use the server copy, route like the bell, and obey notify_applications', () => {
+  const opp = '22222222-2222-4222-8222-222222222222'
+  const app = '44444444-4444-4444-8444-444444444444'
+  const last = buildPushPayload('applicant_last_call', {
+    title: 'Last day to answer Ana', summary: 'The application to Midfielder closes tomorrow.',
+    opportunity_id: opp, application_id: app,
+  }, 'x')
+  assertEquals(last.title, 'Last day to answer Ana')
+  assertEquals(last.body, 'The application to Midfielder closes tomorrow.')
+  assertEquals(last.url, `/dashboard/opportunities/${opp}/applicants/${app}`)
+  const soon = buildPushPayload('applicants_closing_soon', { title: '3 players are waiting for Club', summary: "Ana's application closes on Tuesday.", opportunity_id: opp }, 'x')
+  assertEquals(soon.url, `/dashboard/opportunities/${opp}/applicants`)
+  assertEquals(buildPushPayload('applicants_closing_soon', {}, 'x').url, '/opportunities')
+  assertEquals(pushPreferenceColumn('applicant_last_call'), 'notify_applications')
+  assertEquals(pushPreferenceColumn('applicants_closing_soon'), 'notify_applications')
+  assertEquals(pushAllowed('applicant_last_call', { notify_push: true, notify_applications: false }), false)
 })

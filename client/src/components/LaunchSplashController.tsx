@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { armLaunchSplashFailsafe, hideNativeSplash } from '@/lib/launchSplash'
+import { armLaunchSplashFailsafe, hideNativeSplash, releaseBootLaunchCanvas } from '@/lib/launchSplash'
 
 /**
  * Decides, on React's FIRST commit, whether the native launch splash can go.
@@ -11,11 +11,16 @@ import { armLaunchSplashFailsafe, hideNativeSplash } from '@/lib/launchSplash'
  *    (pixel-continuous hand-off) — we only arm the failsafe here;
  *  - otherwise the first frame IS the destination (e.g. a route with no
  *    auth wait), so the native splash is released right away.
+ *
+ * Either way the boot-time violet page canvas (lib/launchSplash) is dropped
+ * here: a mounted NativeLaunchSplash already holds its own (its layout effect
+ * runs before this passive effect), and a real destination brings its own.
  */
 export default function LaunchSplashController() {
   useEffect(() => {
     armLaunchSplashFailsafe()
     if (!document.querySelector('[data-testid="native-launch-splash"]')) hideNativeSplash()
+    releaseBootLaunchCanvas()
   }, [])
   return null
 }

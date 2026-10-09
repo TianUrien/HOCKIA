@@ -115,9 +115,11 @@ describe('club invitation helpers', () => {
     expect(isClubInviteUnavailable(undefined)).toBe(false)
   })
 
-  it('a pending squad invitation lights the Requests dot', () => {
-    expect(computeInboxSegmentDots({ unreadMessages: 0, incomingRequests: 0, clubInvitations: 1, notifications: [] }).requests).toBe(true)
-    expect(computeInboxSegmentDots({ unreadMessages: 0, incomingRequests: 0, clubInvitations: 0, notifications: [] }).requests).toBe(false)
+  it('a NEW (unseen) pending squad invitation lights the Requests dot; a seen one does not', () => {
+    const invite = (readAt: string | null) => ({ id: 'n-1', kind: 'club_invitation_received', sourceEntityId: 'cm-1', readAt, clearedAt: null })
+    expect(computeInboxSegmentDots({ unreadMessages: 0, pendingRequestIds: [], clubInvitationIds: ['cm-1'], notifications: [invite(null)] }).requests).toBe(true)
+    expect(computeInboxSegmentDots({ unreadMessages: 0, pendingRequestIds: [], clubInvitationIds: ['cm-1'], notifications: [invite('2026-10-09T10:00:00Z')] }).requests).toBe(false)
+    expect(computeInboxSegmentDots({ unreadMessages: 0, pendingRequestIds: [], clubInvitationIds: [], notifications: [invite(null)] }).requests).toBe(false)
   })
 })
 

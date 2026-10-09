@@ -10,7 +10,7 @@ import {
 } from '@/hooks/friendshipEdgeCache'
 import {
   computeInboxSegmentDots,
-  countIncomingPendingRequests,
+  incomingPendingRequestIds,
   type InboxSegmentDots,
 } from '@/lib/inboxSegmentDots'
 
@@ -27,7 +27,8 @@ export function useInboxSegmentDots(): InboxSegmentDots {
   const notificationsLoading = useNotificationStore((s) => s.loading)
   const notificationsUserId = useNotificationStore((s) => s.userId)
   const viewerId = useAuthStore((s) => s.profile?.id ?? undefined)
-  const clubInvitations = useMyClubInvitations().invitations.length
+  const { invitations } = useMyClubInvitations()
+  const clubInvitationKey = invitations.map((i) => i.clubMemberId).join(',')
   const [, forceRender] = useState(0)
 
   useEffect(() => {
@@ -39,7 +40,8 @@ export function useInboxSegmentDots(): InboxSegmentDots {
   }, [viewerId])
 
   // A new friend request arrives as a realtime notification; refetch the
-  // edge cache then so the Requests dot appears without a reload.
+  // edge cache then so the Requests dot appears without a reload (the dot
+  // needs both: the pending edge AND its unread notification).
   const newestRequestAt = useMemo(
     () =>
       notifications.reduce(
@@ -58,10 +60,17 @@ export function useInboxSegmentDots(): InboxSegmentDots {
   }, [viewerId, notificationsLoading, notificationsUserId, newestRequestAt])
 
   const { edges } = getFriendshipEdgeState(viewerId)
-  const incomingRequests = countIncomingPendingRequests(edges ? edges.values() : [], viewerId)
+  // Stable string key: the edge Map is mutated in place by the shared cache.
+  const pendingRequestKey = incomingPendingRequestIds(edges ? edges.values() : [], viewerId).join(',')
 
   return useMemo(
-    () => computeInboxSegmentDots({ unreadMessages, incomingRequests, clubInvitations, notifications }),
-    [unreadMessages, incomingRequests, clubInvitations, notifications],
+    () =>
+      computeInboxSegmentDots({
+        unreadMessages,
+        pendingRequestIds: pendingRequestKey ? pendingRequestKey.split(',') : [],
+        clubInvitationIds: clubInvitationKey ? clubInvitationKey.split(',') : [],
+        notifications,
+      }),
+    [unreadMessages, pendingRequestKey, clubInvitationKey, notifications],
   )
 }

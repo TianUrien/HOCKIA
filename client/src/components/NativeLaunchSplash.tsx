@@ -1,5 +1,5 @@
-import { useCallback, type SyntheticEvent } from 'react'
-import { hideNativeSplash, LAUNCH_ARTWORK_URL } from '@/lib/launchSplash'
+import { useCallback, useLayoutEffect, type SyntheticEvent } from 'react'
+import { hideNativeSplash, holdLaunchCanvas, LAUNCH_ARTWORK_URL } from '@/lib/launchSplash'
 
 /**
  * NativeLaunchSplash — in-app continuation of the NATIVE LAUNCH SCREEN.
@@ -21,6 +21,11 @@ import { hideNativeSplash, LAUNCH_ARTWORK_URL } from '@/lib/launchSplash'
  * a launch that lands here, so the hand-off is continuous and never timed.
  */
 export default function NativeLaunchSplash() {
+  // While the artwork is up, the page canvas (html/body) is the artwork's
+  // bottom colour, so the iOS home-indicator band outside this fixed layer is
+  // never white (lib/launchSplash → holdLaunchCanvas). Layout effect: applied
+  // before the browser paints this frame.
+  useLayoutEffect(() => holdLaunchCanvas(), [])
   // `load` fires when the bytes are in, not when the bitmap is ready to
   // paint — releasing the native layer on `load` alone showed one flat-violet
   // frame on slower devices (iPhone SE, simulator burst 2026-08-21). Wait for
