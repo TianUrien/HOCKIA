@@ -7,13 +7,19 @@
 -- Expected values, recorded from the migration:
 --   function                                        definer  anon  authenticated  service_role
 --   handle_opportunity_application_notifications()  yes      no    no             (not asserted)
+--   _fill_waiting_applications(uuid)                yes      no    no             (not asserted)
+--   _restore_filled_applications(uuid)              yes      no    no             (not asserted)   new
+--   handle_opportunity_recruiting_close()           yes      no    no             (not asserted)
 -- "not asserted": the migration neither grants nor revokes service_role.
 -- PUBLIC must hold nothing on any of them. All have search_path=public.
 --
 -- Returns one row per check: status (PASS / FAIL), check, detail. Every row must be PASS.
 
 WITH expected(sig, anon_x, auth_x, service_x) AS (
-  VALUES ('public.handle_opportunity_application_notifications()', false, false, NULL::boolean)
+  VALUES ('public.handle_opportunity_application_notifications()', false, false, NULL::boolean),
+         ('public._fill_waiting_applications(uuid)',                false, false, NULL::boolean),
+         ('public._restore_filled_applications(uuid)',              false, false, NULL::boolean),
+         ('public.handle_opportunity_recruiting_close()',           false, false, NULL::boolean)
 ),
 shape AS (
   SELECT e.*, p.oid, p.prosecdef, p.proacl,
@@ -57,14 +63,23 @@ checks(status, name, detail) AS (
       ('public.handle_opportunity_application_notifications()', 'OLD.status IN (''pending'', ''maybe'')'),
       ('public.handle_opportunity_application_notifications()', 'role_organisation('),
       ('public.handle_opportunity_application_notifications()', 'SET emailed_at = NULL'),
-      ('public.handle_opportunity_application_notifications()', 'application_status_email_queue')
+      ('public.handle_opportunity_application_notifications()', 'application_status_email_queue'),
+      ('public._fill_waiting_applications(uuid)', 'before_filled'),
+      ('public._fill_waiting_applications(uuid)', 'role_organisation('),
+      ('public._fill_waiting_applications(uuid)', '_set_application_status(v_app.id, ''filled'', ''role_filled'')'),
+      ('public._restore_filled_applications(uuid)', 'before_filled'),
+      ('public._restore_filled_applications(uuid)', 'application_status_history'),
+      ('public._restore_filled_applications(uuid)', 'changed_via'' = ''role_filled'''),
+      ('public.handle_opportunity_recruiting_close()', '_fill_waiting_applications(NEW.id)'),
+      ('public.handle_opportunity_recruiting_close()', '_restore_filled_applications(NEW.id)')
     ) AS g(sig, marker)
   UNION ALL
   -- Triggers that must exist and be enabled.
   SELECT CASE WHEN t.oid IS NOT NULL AND t.tgenabled <> 'D' THEN 'PASS' ELSE 'FAIL' END,
          'T1 trigger: ' || x.tbl || '.' || x.tg, coalesce(pg_get_triggerdef(t.oid), 'missing')
     FROM (VALUES
-      ('opportunity_applications', 'opportunity_applications_notify')
+      ('opportunity_applications', 'opportunity_applications_notify'),
+      ('opportunities', 'trg_opportunity_recruiting_close')
     ) AS x(tbl, tg)
     LEFT JOIN pg_trigger t ON t.tgrelid = ('public.' || x.tbl)::regclass AND t.tgname = x.tg AND NOT t.tgisinternal
 )

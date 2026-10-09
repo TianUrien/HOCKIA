@@ -27,8 +27,43 @@
 --     sweep moves to 'no_response', fills move to 'filled', a reopen restores
 --     from 'filled'. None of them moves into 'rejected'.
 --
+-- B · Reopening a role closed as filled gives its applicants back.
+--     Closing a role as filled moves every waiting application (pending,
+--     shortlisted, maybe, offered, accepted) to 'filled' and cancels live
+--     offers (_fill_waiting_applications); reopening restored nothing, although
+--     the close dialog promises "Existing applicants stay attached — you can
+--     reopen it any time". Founder ruling 2026-10-09: on reopen, every
+--     application the close moved to 'filled' goes back to the exact status it
+--     had; the signed player stays signed.
+--       * At fill time the previous status and the club's reason code are now
+--         recorded on the application (metadata.before_filled).
+--       * When a role becomes 'open' again (any writer: desktop, phone, older
+--         apps, renewal links — it is a trigger on opportunities), every
+--         application of it at 'filled' with metadata.changed_via = 'role_filled'
+--         goes back. Previous status, first that exists:
+--           1. metadata.before_filled.status (fills after this migration);
+--           2. the newest application_status_history row into 'filled' with
+--              changed_via = 'role_filled' — its old_status (fills since
+--              20260928120000 already logged it);
+--           3. 'pending'.
+--         Anything outside the waiting statuses also falls back to 'pending'.
+--       * 'offered': the offer that close cancelled (the newest version, still
+--         'cancelled') is live again when its open-until date is today or later;
+--         otherwise the application goes back to 'shortlisted', as the offer
+--         expiry does.
+--       * No new notification. The player's stale "role filled" message for
+--         that application is cleared; the restore itself is silent (the
+--         notification trigger never fires on a move out of 'filled').
+--       * The history row of a restore is old_status 'filled' with the club as
+--         actor; changed_via stays NULL (the CHECK on changed_via is unchanged).
+--         Response metrics only count moves out of 'pending', so a restore is
+--         never counted as a club response.
+--
 -- Each redefined body is the latest definition plus the lines this file needs:
 --   handle_opportunity_application_notifications ← 20260706090000_application_expiry.sql
+--   _fill_waiting_applications                   ← 20261004200000_role_organisation_name.sql
+--   handle_opportunity_recruiting_close          ← 20260928120000_recruiting_server_functions.sql
+-- New: _restore_filled_applications(uuid).
 --
 -- Rollback: supabase/rollbacks/20261009200000_club_flow_fixes.down.sql
 -- Probes:   supabase/tests/security/club_flow_fixes_acl.probe.sql (read-only)
@@ -148,3 +183,202 @@ $$;
 
 -- Trigger function: fires as its owner whatever the grants; nobody calls it directly.
 REVOKE ALL ON FUNCTION public.handle_opportunity_application_notifications() FROM PUBLIC, anon, authenticated;
+
+
+-- ═══ B1 · _fill_waiting_applications ═══
+-- Body = 20261004200000_role_organisation_name.sql + the before_filled lines.
+
+CREATE OR REPLACE FUNCTION public._fill_waiting_applications(p_opportunity_id uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_opp   record;
+  v_app   record;
+  v_count integer := 0;
+BEGIN
+  -- club_name: a club account as before; a coach's role names the organisation it
+  -- recruits for (role_organisation), else the coach.
+  SELECT o.id, o.club_id, o.title, o.position,
+         CASE WHEN p.role = 'club' THEN p.full_name
+              ELSE coalesce((SELECT ro.name FROM public.role_organisation(o.id) ro), p.full_name) END AS club_name
+    INTO v_opp
+    FROM public.opportunities o
+    LEFT JOIN public.profiles p ON p.id = o.club_id
+   WHERE o.id = p_opportunity_id;
+
+  FOR v_app IN
+    SELECT a.id, a.applicant_id, a.status::text AS status, a.metadata->>'status_reason' AS status_reason
+      FROM public.opportunity_applications a
+     WHERE a.opportunity_id = p_opportunity_id
+       AND a.status::text IN ('pending', 'shortlisted', 'maybe', 'offered', 'accepted')
+     FOR UPDATE
+  LOOP
+    UPDATE public.opportunity_offers
+       SET status = 'cancelled', responded_at = timezone('utc', now())
+     WHERE application_id = v_app.id AND status = 'live';
+
+    -- What a reopen restores (_restore_filled_applications). Metadata only, so no
+    -- status history row; _set_application_status keeps this key.
+    UPDATE public.opportunity_applications
+       SET metadata = coalesce(metadata, '{}'::jsonb)
+                      || jsonb_build_object('before_filled',
+                           jsonb_build_object('status', v_app.status, 'status_reason', v_app.status_reason))
+     WHERE id = v_app.id;
+
+    PERFORM public._set_application_status(v_app.id, 'filled', 'role_filled');
+
+    -- Same kind the applicant already gets for shortlisted / rejected, so every app
+    -- version renders it ("<club> updated your application").
+    PERFORM public.enqueue_notification(
+      v_app.applicant_id,
+      v_opp.club_id,
+      'vacancy_application_status'::public.profile_notification_kind,
+      v_app.id,
+      jsonb_build_object(
+        'application_id', v_app.id,
+        'opportunity_id', p_opportunity_id,
+        'vacancy_title', v_opp.title,
+        'club_name', v_opp.club_name,
+        'position', v_opp.position,
+        'status', 'filled'),
+      NULL);
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN v_count;
+END;
+$$;
+
+-- Unchanged, restated (internal: called from the opportunities trigger only).
+REVOKE ALL ON FUNCTION public._fill_waiting_applications(uuid) FROM PUBLIC, anon, authenticated;
+
+
+-- ═══ B2 · _restore_filled_applications (new) ═══
+
+CREATE OR REPLACE FUNCTION public._restore_filled_applications(p_opportunity_id uuid)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_app    record;
+  v_offer  record;
+  v_status text;
+  v_reason text;
+  v_count  integer := 0;
+BEGIN
+  FOR v_app IN
+    SELECT a.id, a.applicant_id, a.metadata
+      FROM public.opportunity_applications a
+     WHERE a.opportunity_id = p_opportunity_id
+       AND a.status::text = 'filled'
+       AND a.metadata->>'changed_via' = 'role_filled'
+     FOR UPDATE
+  LOOP
+    -- 1. recorded at fill time
+    v_status := nullif(v_app.metadata->'before_filled'->>'status', '');
+    v_reason := nullif(v_app.metadata->'before_filled'->>'status_reason', '');
+
+    -- 2. fills before 20261009200000: the history row of that fill
+    IF v_status IS NULL THEN
+      SELECT h.old_status::text INTO v_status
+        FROM public.application_status_history h
+       WHERE h.application_id = v_app.id
+         AND h.new_status::text = 'filled'
+         AND h.changed_via = 'role_filled'
+       ORDER BY h.created_at DESC, h.id DESC
+       LIMIT 1;
+    END IF;
+
+    -- 3. nothing recorded (or not a waiting status): back to unsorted
+    IF v_status IS NULL OR v_status NOT IN ('pending', 'shortlisted', 'maybe', 'offered', 'accepted') THEN
+      v_status := 'pending';
+    END IF;
+
+    -- The offer this close cancelled comes back while it is still in date.
+    IF v_status = 'offered' THEN
+      SELECT f.id, f.status, f.open_until INTO v_offer
+        FROM public.opportunity_offers f
+       WHERE f.application_id = v_app.id
+       ORDER BY f.version DESC
+       LIMIT 1;
+      IF v_offer.id IS NOT NULL AND v_offer.status = 'cancelled'
+         AND v_offer.open_until >= (timezone('utc', now()))::date THEN
+        UPDATE public.opportunity_offers
+           SET status = 'live', responded_at = NULL
+         WHERE id = v_offer.id;
+      ELSE
+        v_status := 'shortlisted';
+      END IF;
+    END IF;
+
+    -- One update (status + metadata) so the history row carries the reason.
+    UPDATE public.opportunity_applications a
+       SET status   = v_status::public.application_status,
+           metadata = (coalesce(a.metadata, '{}'::jsonb) - 'before_filled' - 'changed_via' - 'status_reason')
+                      || CASE WHEN v_reason IS NULL THEN '{}'::jsonb
+                              ELSE jsonb_build_object('status_reason', v_reason) END
+     WHERE a.id = v_app.id;
+
+    -- The "role filled" message is no longer true; no new message replaces it.
+    UPDATE public.profile_notifications
+       SET cleared_at = timezone('utc', now())
+     WHERE recipient_profile_id = v_app.applicant_id
+       AND kind = 'vacancy_application_status'
+       AND source_entity_id = v_app.id
+       AND metadata->>'status' = 'filled'
+       AND cleared_at IS NULL;
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN v_count;
+END;
+$$;
+
+COMMENT ON FUNCTION public._restore_filled_applications(uuid) IS
+  'Reopen of a role closed as filled: every application that close moved to filled goes back to its previous status (metadata.before_filled, else the fill''s history row, else pending). Called from the opportunities trigger only.';
+
+REVOKE ALL ON FUNCTION public._restore_filled_applications(uuid) FROM PUBLIC, anon, authenticated;
+
+
+-- ═══ B3 · handle_opportunity_recruiting_close ═══
+-- Body = 20260928120000_recruiting_server_functions.sql + the reopen branch.
+
+CREATE OR REPLACE FUNCTION public.handle_opportunity_recruiting_close()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Invites expire with the role.
+  IF OLD.status = 'open' AND NEW.status <> 'open' THEN
+    UPDATE public.opportunity_invites
+       SET status = 'expired'
+     WHERE opportunity_id = NEW.id AND status = 'sent';
+  END IF;
+
+  -- Closed as filled → everyone still waiting gets the kind note.
+  IF NEW.status = 'closed' AND NEW.closed_reason = 'filled'
+     AND (OLD.status IS DISTINCT FROM 'closed' OR OLD.closed_reason IS DISTINCT FROM 'filled') THEN
+    PERFORM public._fill_waiting_applications(NEW.id);
+  END IF;
+
+  -- Open again → the applications a close as filled moved to 'filled' go back
+  -- (founder ruling 2026-10-09). Signed / waiting-to-confirm are never touched.
+  IF NEW.status = 'open' AND OLD.status IS DISTINCT FROM 'open' THEN
+    PERFORM public._restore_filled_applications(NEW.id);
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Unchanged, restated. The trigger trg_opportunity_recruiting_close (AFTER UPDATE OF
+-- status, closed_reason, 20260928120000) already fires on a reopen; it is not recreated.
+REVOKE ALL ON FUNCTION public.handle_opportunity_recruiting_close() FROM PUBLIC, anon, authenticated;

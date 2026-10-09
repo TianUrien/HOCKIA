@@ -23,7 +23,11 @@ DECLARE
   v_club_name text;
   o1 uuid; o2 uuid; o3 uuid; o4 uuid; o5 uuid;
   a1 uuid; a2 uuid; a3 uuid; a4 uuid; a5 uuid;
-  v_n int; v_txt text; v_txt2 text; v_id uuid; v_ts timestamptz; v_ok boolean;
+  v_n int; v_txt text; v_txt2 text; v_id uuid; v_ok boolean;
+  v_p uuid[];
+  o6 uuid; o7 uuid;
+  b1 uuid; b2 uuid; b3 uuid; b4 uuid; b5 uuid; b6 uuid; b7 uuid; b8 uuid; l1 uuid; l2 uuid;
+  f4 uuid; f5 uuid; f6 uuid;
   v_out text := '';
 BEGIN
   -- ── fixtures (sys) ─────────────────────────────────────────────────────────────
@@ -183,7 +187,116 @@ BEGIN
   v_out := v_out || E'\n' || format('%s A9 coach role declined → club_name "%s" (organisation "%s")',
     CASE WHEN v_txt = c_org THEN 'PASS' ELSE 'FAIL' END, coalesce(v_txt, 'NULL'), c_org);
 
-  -- @@B@@
+  -- ══ B · reopening a role closed as filled gives its applicants back ══════════
+  -- Seven other players apply to one role (sys inserts, any state); the E2E player
+  -- is the signed one. The roles set no gender and no EU rule, so eligibility never refuses.
+  SELECT array_agg(id) INTO v_p FROM (
+    SELECT id FROM profiles WHERE role = 'player' AND id <> c_player ORDER BY created_at, id LIMIT 7) x;
+  IF coalesce(array_length(v_p, 1), 0) < 7 THEN
+    v_out := v_out || E'\n' || format('FAIL B0 fixtures → only %s other players on this database', coalesce(array_length(v_p, 1), 0));
+  ELSE
+    INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, start_date)
+    VALUES (c_club, 'player', '[PROBE] club flow · fill and reopen', 'Dublin', 'Ireland', 'open', v_today) RETURNING id INTO o6;
+
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[1], 'pending') RETURNING id INTO b1;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[2], 'shortlisted') RETURNING id INTO b2;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status, metadata)
+    VALUES (o6, v_p[3], 'maybe', '{"status_reason": "timing"}'::jsonb) RETURNING id INTO b3;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[4], 'offered') RETURNING id INTO b4;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[5], 'offered') RETURNING id INTO b5;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[6], 'accepted') RETURNING id INTO b6;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o6, v_p[7], 'rejected') RETURNING id INTO b7;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status, signed_at)
+    VALUES (o6, c_player, 'signed', timezone('utc', now())) RETURNING id INTO b8;
+    INSERT INTO opportunity_offers (application_id, opportunity_id, club_id, player_id, version, open_until)
+    VALUES (b4, o6, c_club, v_p[4], 1, v_today + 10) RETURNING id INTO f4;
+    INSERT INTO opportunity_offers (application_id, opportunity_id, club_id, player_id, version, open_until)
+    VALUES (b5, o6, c_club, v_p[5], 1, v_today) RETURNING id INTO f5;
+    INSERT INTO opportunity_offers (application_id, opportunity_id, club_id, player_id, version, open_until, status)
+    VALUES (b6, o6, c_club, v_p[6], 1, v_today + 10, 'accepted') RETURNING id INTO f6;
+
+    -- Close as filled, as the club (closeRolePatch).
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    UPDATE opportunities SET status = 'closed', closed_reason = 'filled' WHERE id = o6;
+    EXECUTE 'RESET ROLE';
+    PERFORM set_config('request.jwt.claims', '', true);
+
+    SELECT string_agg(format('%s:%s<-%s', x.k, a.status, coalesce(a.metadata->'before_filled'->>'status', '-')), ' ' ORDER BY x.k),
+           bool_and(CASE WHEN x.k <= 6 THEN a.status::text = 'filled' AND a.metadata->>'changed_via' = 'role_filled'
+                                            AND a.metadata->'before_filled'->>'status' = x.before
+                         ELSE a.status::text = x.before END)
+      INTO v_txt, v_ok
+      FROM (VALUES (1, b1, 'pending'), (2, b2, 'shortlisted'), (3, b3, 'maybe'), (4, b4, 'offered'),
+                   (5, b5, 'offered'), (6, b6, 'accepted'), (7, b7, 'rejected'), (8, b8, 'signed')) AS x(k, id, before)
+      JOIN opportunity_applications a ON a.id = x.id;
+    v_out := v_out || E'\n' || format('%s B1 close as filled → waiting ones filled with the previous status recorded, rejected / signed untouched → %s',
+      CASE WHEN v_ok THEN 'PASS' ELSE 'FAIL' END, v_txt);
+    SELECT string_agg(status, ',' ORDER BY version) INTO v_txt FROM opportunity_offers WHERE id IN (f4, f5);
+    v_out := v_out || E'\n' || format('%s B2 the live offers were cancelled by the fill → %s',
+      CASE WHEN (SELECT bool_and(status = 'cancelled') FROM opportunity_offers WHERE id IN (f4, f5)) THEN 'PASS' ELSE 'FAIL' END, v_txt);
+
+    -- Time passes: f5's open-until date is now behind us.
+    UPDATE opportunity_offers SET open_until = v_today - 1 WHERE id = f5;
+
+    -- Reopen, as the club (reopenRolePatch).
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    UPDATE opportunities
+       SET status = 'open', closed_reason = NULL, filled_via_hockia = NULL, auto_closed_at = NULL, closed_at = NULL
+     WHERE id = o6;
+    EXECUTE 'RESET ROLE';
+    PERFORM set_config('request.jwt.claims', '', true);
+
+    SELECT string_agg(format('%s:%s', x.k, a.status), ' ' ORDER BY x.k),
+           bool_and(a.status::text = x.want AND NOT (a.metadata ? 'before_filled') AND NOT (a.metadata ? 'changed_via'))
+      INTO v_txt, v_ok
+      FROM (VALUES (1, b1, 'pending'), (2, b2, 'shortlisted'), (3, b3, 'maybe'), (4, b4, 'offered'),
+                   (5, b5, 'shortlisted'), (6, b6, 'accepted'), (7, b7, 'rejected'), (8, b8, 'signed')) AS x(k, id, want)
+      JOIN opportunity_applications a ON a.id = x.id;
+    v_out := v_out || E'\n' || format('%s B3 reopen → exact previous statuses (out-of-date offer → shortlisted), signed stays signed → %s',
+      CASE WHEN v_ok THEN 'PASS' ELSE 'FAIL' END, v_txt);
+
+    SELECT metadata->>'status_reason' INTO v_txt FROM opportunity_applications WHERE id = b3;
+    v_out := v_out || E'\n' || format('%s B4 the club''s reason code comes back with Maybe → %s',
+      CASE WHEN v_txt = 'timing' THEN 'PASS' ELSE 'FAIL' END, coalesce(v_txt, 'NULL'));
+
+    SELECT format('f4=%s f5=%s f6=%s', (SELECT status FROM opportunity_offers WHERE id = f4),
+                  (SELECT status FROM opportunity_offers WHERE id = f5), (SELECT status FROM opportunity_offers WHERE id = f6))
+      INTO v_txt;
+    v_out := v_out || E'\n' || format('%s B5 the in-date offer is live again, the out-of-date one stays cancelled, the accepted one untouched → %s',
+      CASE WHEN v_txt = 'f4=live f5=cancelled f6=accepted' THEN 'PASS' ELSE 'FAIL' END, v_txt);
+
+    -- No new message for the restored players; the stale "role filled" one is cleared.
+    SELECT count(*) FILTER (WHERE pn.cleared_at IS NULL) INTO v_n
+      FROM profile_notifications pn
+     WHERE pn.kind = 'vacancy_application_status' AND pn.source_entity_id IN (b1, b2, b3, b4, b5, b6);
+    v_out := v_out || E'\n' || format('%s B6 restored players: %s visible message(s) about these applications after reopen',
+      CASE WHEN v_n = 0 THEN 'PASS' ELSE 'FAIL' END, v_n);
+
+    SELECT count(*) INTO v_n FROM application_status_history h
+     WHERE h.application_id IN (b1, b2, b3, b4, b5, b6) AND h.old_status::text = 'filled';
+    v_out := v_out || E'\n' || format('%s B7 one history row per restore (old_status filled) → %s of 6',
+      CASE WHEN v_n = 6 THEN 'PASS' ELSE 'FAIL' END, v_n);
+
+    -- Legacy fills (before this migration): no before_filled. With the fill's history
+    -- row → its old_status; with nothing recorded → pending.
+    INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, start_date)
+    VALUES (c_club, 'player', '[PROBE] club flow · legacy fill', 'Dublin', 'Ireland', 'open', v_today) RETURNING id INTO o7;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o7, v_p[1], 'shortlisted') RETURNING id INTO l1;
+    INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o7, v_p[2], 'maybe') RETURNING id INTO l2;
+    UPDATE opportunities SET status = 'closed', closed_reason = 'withdrawn' WHERE id = o7;
+    -- Old fill shape: status + changed_via only (as 20261004200000 wrote it).
+    UPDATE opportunity_applications SET status = 'filled', metadata = '{"changed_via": "role_filled"}'::jsonb WHERE id IN (l1, l2);
+    DELETE FROM application_status_history WHERE application_id = l2;   -- l2: nothing recorded
+    UPDATE opportunities SET status = 'open', closed_reason = NULL, closed_at = NULL WHERE id = o7;
+    SELECT format('l1=%s l2=%s', (SELECT status FROM opportunity_applications WHERE id = l1),
+                  (SELECT status FROM opportunity_applications WHERE id = l2)) INTO v_txt;
+    v_out := v_out || E'\n' || format('%s B8 legacy fills on reopen: from history → shortlisted, nothing recorded → pending → %s',
+      CASE WHEN v_txt = 'l1=shortlisted l2=pending' THEN 'PASS' ELSE 'FAIL' END, v_txt);
+  END IF;
+
+  -- @@C@@
 
   RAISE EXCEPTION 'PROBE RESULTS:%', v_out;
 END
