@@ -18,7 +18,7 @@ const m = vi.hoisted(() => ({
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => m.native } }))
 vi.mock('@capacitor/splash-screen', () => ({ SplashScreen: { hide: m.hide } }))
 
-import { hideNativeSplash, armLaunchSplashFailsafe, warmLaunchArtwork, LAUNCH_ARTWORK_URL, __resetLaunchSplashForTests } from '@/lib/launchSplash'
+import { hideNativeSplash, armLaunchSplashFailsafe, warmLaunchArtwork, LAUNCH_ARTWORK_URL, LAUNCH_CANVAS_COLOR, paintBootLaunchCanvas, __resetLaunchSplashForTests } from '@/lib/launchSplash'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import LaunchSplashController from '@/components/LaunchSplashController'
 
@@ -129,5 +129,42 @@ describe('launch splash hand-off', () => {
     hideNativeSplash(); flushFrames()
     act(() => { vi.advanceTimersByTime(5000) }); flushFrames()
     expect(m.hide).toHaveBeenCalledTimes(1)
+  })
+  describe('launch canvas (no white home-indicator band)', () => {
+    const canvas = () => [document.documentElement.style.backgroundColor, document.body.style.backgroundColor]
+    const VIOLET = 'rgb(123, 57, 236)' // #7b39ec, the artwork's bottom row
+
+    it('is the artwork bottom colour', () => {
+      expect(LAUNCH_CANVAS_COLOR).toBe('#7b39ec')
+    })
+
+    it('boot paint → splash first frame: html+body stay violet while the splash is up, white canvas returns on unmount', () => {
+      paintBootLaunchCanvas()
+      expect(canvas()).toEqual([VIOLET, VIOLET])
+      const { unmount } = render(<div><NativeLaunchSplash /><LaunchSplashController /></div>)
+      expect(canvas()).toEqual([VIOLET, VIOLET]) // controller dropped the boot hold, the splash still holds
+      unmount()
+      expect(canvas()).toEqual(['', ''])
+    })
+
+    it('boot paint → destination first frame: released on the first commit', () => {
+      paintBootLaunchCanvas()
+      render(<div><LaunchSplashController /></div>)
+      expect(canvas()).toEqual(['', ''])
+    })
+
+    it('a splash mounted later in the session holds the canvas only while mounted', () => {
+      const { unmount } = render(<NativeLaunchSplash />)
+      expect(canvas()).toEqual([VIOLET, VIOLET])
+      unmount()
+      expect(canvas()).toEqual(['', ''])
+    })
+
+    it('web: never touches the page canvas', () => {
+      m.native = false
+      paintBootLaunchCanvas()
+      render(<NativeLaunchSplash />)
+      expect(canvas()).toEqual(['', ''])
+    })
   })
 })
