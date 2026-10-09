@@ -58,9 +58,11 @@ interface ApplicantCardProps {
   onStatusChange?: (applicationId: string, status: ApplicationStatus, reason?: string) => void
   isUpdating?: boolean
   referenceInfo?: ApplicantReferenceInfo | null
+  /** Grey tag naming the step for read-only rows (e.g. clubRoadTag: "Offer sent"). */
+  tag?: string | null
 }
 
-export default function ApplicantCard({ application, onStatusChange, isUpdating, referenceInfo }: ApplicantCardProps) {
+export default function ApplicantCard({ application, onStatusChange, isUpdating, referenceInfo, tag }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   // When set, the status menu shows the optional "why?" reason step for that tier.
@@ -208,6 +210,14 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
 
         {/* Actions */}
         <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-2">
+          {tag && (
+            <span
+              className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+              data-testid="applicant-card-tag"
+            >
+              {tag}
+            </span>
+          )}
           {/* Status Pill Dropdown */}
           {onStatusChange && (
             <div className="relative" ref={menuRef}>
