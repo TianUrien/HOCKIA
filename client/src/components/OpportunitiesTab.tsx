@@ -17,9 +17,9 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch } from '@/lib/roleLifecycle'
+import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, isRoleHasSigningError, REOPEN_ROLE_TOAST, reopenRolePatch, ROLE_HAS_SIGNING_MESSAGE } from '@/lib/roleLifecycle'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
-import { countWaitingApplicants } from '@/lib/roleWaiting'
+import { countWaitingApplicants, fetchRolesWithSigning } from '@/lib/roleWaiting'
 import { dayFirst } from '@/lib/dayFirst'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
@@ -38,6 +38,8 @@ interface VacanciesTabProps {
 interface VacancyActionMenuProps {
   vacancy: Vacancy
   disabled?: boolean
+  /** The role has a signing (confirmed or waiting): "Delete permanently" is off. */
+  hasSigning?: boolean
   onEdit: (vacancy: Vacancy) => void
   onDuplicate: (vacancy: Vacancy) => void
   onPublish: (vacancy: Vacancy) => void
@@ -46,7 +48,7 @@ interface VacancyActionMenuProps {
   onDelete: (vacancy: Vacancy) => void
 }
 
-function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, onClose, onReopen, onDelete }: VacancyActionMenuProps) {
+function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDuplicate, onPublish, onClose, onReopen, onDelete }: VacancyActionMenuProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -79,7 +81,7 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
 
   const closeMenu = () => setOpen(false)
 
-  const menuItems: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; tone?: 'danger' | 'primary' }> = []
+  const menuItems: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; tone?: 'danger' | 'primary'; disabled?: boolean; hint?: string }> = []
 
   if (vacancy.status === 'draft') {
     menuItems.push({
@@ -146,7 +148,18 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
     }
   )
 
-  if (vacancy.status === 'closed' || vacancy.status === 'draft') {
+  if ((vacancy.status === 'closed' || vacancy.status === 'draft') && hasSigning) {
+    // A signing must never be erased with its role (founder ruling 2026-10-09);
+    // the server refuses the delete too. The role stays closed instead.
+    menuItems.push({
+      key: 'delete',
+      label: vacancy.status === 'draft' ? 'Delete draft' : 'Delete permanently',
+      icon: <Trash2 className="w-4 h-4 text-gray-400" />,
+      onClick: () => {},
+      disabled: true,
+      hint: ROLE_HAS_SIGNING_MESSAGE
+    })
+  } else if (vacancy.status === 'closed' || vacancy.status === 'draft') {
     menuItems.push({
       key: 'delete',
       label: vacancy.status === 'draft' ? 'Delete draft' : 'Delete permanently',
@@ -172,7 +185,24 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
       </button>
       {open && (
         <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-gray-100 bg-white p-2 shadow-lg ring-1 ring-black/5">
-          {menuItems.map((item) => (
+          {menuItems.map((item) => item.disabled ? (
+            <div key={item.key} className="px-3 py-2">
+              <button
+                type="button"
+                disabled
+                aria-describedby={item.hint ? `menu-hint-${vacancy.id}-${item.key}` : undefined}
+                className="flex w-full cursor-not-allowed items-center gap-3 text-sm font-medium text-left text-gray-400"
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+              {item.hint && (
+                <p id={`menu-hint-${vacancy.id}-${item.key}`} className="mt-1 pl-7 text-xs text-gray-500">
+                  {item.hint}
+                </p>
+              )}
+            </div>
+          ) : (
             <button
               key={item.key}
               type="button"
@@ -204,6 +234,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
   const [applicantCounts, setApplicantCounts] = useState<Record<string, number>>({})
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set())
+  // Closed / draft roles with a signing: "Delete permanently" is off for them.
+  const [rolesWithSigning, setRolesWithSigning] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null)
@@ -282,8 +314,13 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           counts[entry.vacancy.id] = entry.applicantCount
         })
         setApplicantCounts(counts)
+        const deletable = normalized
+          .filter((entry) => entry.vacancy.status === 'closed' || entry.vacancy.status === 'draft')
+          .map((entry) => entry.vacancy.id)
+        setRolesWithSigning(await fetchRolesWithSigning(deletable))
       } else {
         setApplicantCounts({})
+        setRolesWithSigning(new Set())
       }
     } catch (error) {
       logger.error('Error fetching vacancies:', error)
@@ -672,6 +709,15 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       setVacancyToDelete(null)
       addToast('Opportunity deleted.', 'success')
     } catch (error) {
+      if (isRoleHasSigningError(error)) {
+        // Refused by the server: the role has a signing. Keep it, say why.
+        const refusedId = vacancyToDelete.id
+        setRolesWithSigning((prev) => new Set(prev).add(refusedId))
+        setShowDeleteModal(false)
+        setVacancyToDelete(null)
+        addToast(ROLE_HAS_SIGNING_MESSAGE, 'info')
+        return
+      }
       logger.error('Error deleting vacancy:', error)
       reportSupabaseError('vacancies.delete', error, {
         vacancyId: vacancyToDelete?.id
@@ -864,6 +910,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                       <VacancyActionMenu
                         vacancy={vacancy}
                         disabled={Boolean(actionLoading)}
+                        hasSigning={rolesWithSigning.has(vacancy.id)}
                         onEdit={handleEdit}
                         onDuplicate={handleDuplicate}
                         onPublish={handlePublishClick}

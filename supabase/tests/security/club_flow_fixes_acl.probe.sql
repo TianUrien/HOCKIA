@@ -10,6 +10,8 @@
 --   _fill_waiting_applications(uuid)                yes      no    no             (not asserted)
 --   _restore_filled_applications(uuid)              yes      no    no             (not asserted)   new
 --   handle_opportunity_recruiting_close()           yes      no    no             (not asserted)
+--   guard_opportunity_delete_with_signing()         yes      no    no             (not asserted)   new
+--   hard_delete_profile_relations(uuid, integer)    yes      no    no             yes
 -- "not asserted": the migration neither grants nor revokes service_role.
 -- PUBLIC must hold nothing on any of them. All have search_path=public.
 --
@@ -19,7 +21,9 @@ WITH expected(sig, anon_x, auth_x, service_x) AS (
   VALUES ('public.handle_opportunity_application_notifications()', false, false, NULL::boolean),
          ('public._fill_waiting_applications(uuid)',                false, false, NULL::boolean),
          ('public._restore_filled_applications(uuid)',              false, false, NULL::boolean),
-         ('public.handle_opportunity_recruiting_close()',           false, false, NULL::boolean)
+         ('public.handle_opportunity_recruiting_close()',           false, false, NULL::boolean),
+         ('public.guard_opportunity_delete_with_signing()',         false, false, NULL::boolean),
+         ('public.hard_delete_profile_relations(uuid, integer)',    false, false, true)
 ),
 shape AS (
   SELECT e.*, p.oid, p.prosecdef, p.proacl,
@@ -71,7 +75,12 @@ checks(status, name, detail) AS (
       ('public._restore_filled_applications(uuid)', 'application_status_history'),
       ('public._restore_filled_applications(uuid)', 'changed_via'' = ''role_filled'''),
       ('public.handle_opportunity_recruiting_close()', '_fill_waiting_applications(NEW.id)'),
-      ('public.handle_opportunity_recruiting_close()', '_restore_filled_applications(NEW.id)')
+      ('public.handle_opportunity_recruiting_close()', '_restore_filled_applications(NEW.id)'),
+      ('public.guard_opportunity_delete_with_signing()', 'This role has a confirmed signing, so it can''''t be deleted. Close it instead.'),
+      ('public.guard_opportunity_delete_with_signing()', '''signed'', ''signed_pending_confirmation'''),
+      ('public.guard_opportunity_delete_with_signing()', 'hockia.deleting_profile'),
+      ('public.hard_delete_profile_relations(uuid, integer)', 'set_config(''hockia.deleting_profile'', p_user_id::text, true)'),
+      ('public.hard_delete_profile_relations(uuid, integer)', 'DELETE FROM public.profiles WHERE id = p_user_id')
     ) AS g(sig, marker)
   UNION ALL
   -- Triggers that must exist and be enabled.
@@ -79,8 +88,17 @@ checks(status, name, detail) AS (
          'T1 trigger: ' || x.tbl || '.' || x.tg, coalesce(pg_get_triggerdef(t.oid), 'missing')
     FROM (VALUES
       ('opportunity_applications', 'opportunity_applications_notify'),
-      ('opportunities', 'trg_opportunity_recruiting_close')
+      ('opportunities', 'trg_opportunity_recruiting_close'),
+      ('opportunities', 'trg_guard_opportunity_delete_with_signing')
     ) AS x(tbl, tg)
     LEFT JOIN pg_trigger t ON t.tgrelid = ('public.' || x.tbl)::regclass AND t.tgname = x.tg AND NOT t.tgisinternal
+  UNION ALL
+  -- The delete guard is BEFORE DELETE, row level, and sorts before the cleanup trigger.
+  SELECT CASE WHEN pg_get_triggerdef(t.oid) ILIKE '%BEFORE DELETE ON public.opportunities FOR EACH ROW%'
+               AND t.tgname < 'trigger_cleanup_on_opportunity_delete' THEN 'PASS' ELSE 'FAIL' END,
+         'T2 delete guard is BEFORE DELETE FOR EACH ROW and fires first', coalesce(pg_get_triggerdef(t.oid), 'missing')
+    FROM (SELECT 1) one
+    LEFT JOIN pg_trigger t ON t.tgrelid = 'public.opportunities'::regclass
+                          AND t.tgname = 'trg_guard_opportunity_delete_with_signing'
 )
 SELECT status, name AS check, detail FROM checks ORDER BY name;

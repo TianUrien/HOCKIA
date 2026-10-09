@@ -71,3 +71,19 @@ export const REOPEN_ROLE_TOAST = 'Role reopened.'
 
 /** The "not filled" close choice — phone and desktop share it. */
 export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'
+
+/** Applications that make a role undeletable: a confirmed signing (signed) or one
+ *  waiting for the player to confirm. Same list as the BEFORE DELETE trigger
+ *  on opportunities (20261009200000_club_flow_fixes.sql). */
+export const SIGNING_LOCK_STATUSES = ['signed', 'signed_pending_confirmation'] as const
+
+/** Founder copy 2026-10-09: why "Delete permanently" is off for such a role. */
+export const ROLE_HAS_SIGNING_MESSAGE = 'This role has a confirmed signing, so it can’t be deleted. Close it instead.'
+
+/** True when a delete was refused by the server because the role has a signing
+ *  (P0001 from guard_opportunity_delete_with_signing). */
+export function isRoleHasSigningError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const msg = String((err as { message?: unknown }).message ?? '')
+  return /has a confirmed signing, so it can['’]t be deleted/.test(msg)
+}

@@ -28,6 +28,8 @@ DECLARE
   o6 uuid; o7 uuid;
   b1 uuid; b2 uuid; b3 uuid; b4 uuid; b5 uuid; b6 uuid; b7 uuid; b8 uuid; l1 uuid; l2 uuid;
   f4 uuid; f5 uuid; f6 uuid;
+  o8 uuid; o9 uuid; o10 uuid;
+  v_line text; v_state text;
   v_out text := '';
 BEGIN
   -- ── fixtures (sys) ─────────────────────────────────────────────────────────────
@@ -296,7 +298,97 @@ BEGIN
       CASE WHEN v_txt = 'l1=shortlisted l2=pending' THEN 'PASS' ELSE 'FAIL' END, v_txt);
   END IF;
 
-  -- @@C@@
+  -- ══ C · a role with a signing can't be deleted ═══════════════════════════════
+  INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, start_date)
+  VALUES (c_club, 'player', '[PROBE] club flow · signed', 'Dublin', 'Ireland', 'closed', v_today) RETURNING id INTO o8;
+  INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, start_date)
+  VALUES (c_club, 'player', '[PROBE] club flow · waiting to confirm', 'Dublin', 'Ireland', 'closed', v_today) RETURNING id INTO o9;
+  INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, start_date)
+  VALUES (c_club, 'player', '[PROBE] club flow · no signing', 'Dublin', 'Ireland', 'closed', v_today) RETURNING id INTO o10;
+  INSERT INTO opportunity_applications (opportunity_id, applicant_id, status, signed_at)
+  VALUES (o8, c_player, 'signed', timezone('utc', now()));
+  INSERT INTO opportunity_applications (opportunity_id, applicant_id, status, signing_requested_at, signing_close_role)
+  VALUES (o9, c_player, 'signed_pending_confirmation', timezone('utc', now()), true);
+  INSERT INTO opportunity_applications (opportunity_id, applicant_id, status) VALUES (o10, c_player, 'rejected');
+
+  -- C1 / C2 the club deletes a role with a signing → refused with the founder sentence.
+  FOR v_id, v_txt IN SELECT * FROM (VALUES (o8, 'C1 signed'), (o9, 'C2 waiting to confirm')) AS x(id, label) LOOP
+    BEGIN
+      PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+      EXECUTE 'SET LOCAL ROLE authenticated';
+      DELETE FROM opportunities WHERE id = v_id;
+      GET DIAGNOSTICS v_n = ROW_COUNT;
+      v_line := format('FAIL %s: the club deletes the role → deleted %s row(s)', v_txt, v_n);
+      RAISE EXCEPTION 'probe_undo';
+    EXCEPTION WHEN others THEN
+      GET STACKED DIAGNOSTICS v_state = RETURNED_SQLSTATE, v_txt2 = PG_EXCEPTION_DETAIL;
+      IF SQLERRM <> 'probe_undo' THEN
+        v_line := format('%s %s: the club deletes the role → %s %s (%s)',
+          CASE WHEN v_state = 'P0001' AND SQLERRM = 'This role has a confirmed signing, so it can''t be deleted. Close it instead.'
+                    AND v_txt2 = 'role_has_signing' THEN 'PASS' ELSE 'FAIL' END,
+          v_txt, v_state, SQLERRM, coalesce(v_txt2, ''));
+      END IF;
+    END;
+    EXECUTE 'RESET ROLE';
+    PERFORM set_config('request.jwt.claims', '', true);
+    v_out := v_out || E'\n' || v_line;
+  END LOOP;
+
+  -- C3 every caller: the owner (service role / admin paths) is refused too.
+  BEGIN
+    DELETE FROM opportunities WHERE id = o8;
+    v_line := 'FAIL C3 sys deletes a role with a signing → deleted';
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN
+      v_line := format('%s C3 sys deletes a role with a signing → %s', CASE WHEN SQLSTATE = 'P0001' THEN 'PASS' ELSE 'FAIL' END, SQLERRM);
+    END IF;
+  END;
+  v_out := v_out || E'\n' || v_line;
+  SELECT count(*) INTO v_n FROM opportunity_applications WHERE opportunity_id IN (o8, o9);
+  v_out := v_out || E'\n' || format('%s C4 the refused roles keep their signings → %s of 2',
+    CASE WHEN v_n = 2 AND (SELECT count(*) FROM opportunities WHERE id IN (o8, o9)) = 2 THEN 'PASS' ELSE 'FAIL' END, v_n);
+
+  -- C5 a role without a signing is still deleted by the club (undone afterwards).
+  BEGIN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    DELETE FROM opportunities WHERE id = o10;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    v_line := format('%s C5 the club deletes a closed role without a signing → %s row(s)', CASE WHEN v_n = 1 THEN 'PASS' ELSE 'FAIL' END, v_n);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL C5 the club deletes a closed role without a signing → ' || SQLERRM; END IF;
+  END;
+  EXECUTE 'RESET ROLE';
+  PERFORM set_config('request.jwt.claims', '', true);
+  v_out := v_out || E'\n' || v_line;
+
+  -- C6 account deletion (hard_delete_profile_relations sets this marker) lets the
+  -- publisher's roles go, signing or not. Another profile's marker does not.
+  BEGIN
+    PERFORM set_config('hockia.deleting_profile', c_coach::text, true);
+    DELETE FROM opportunities WHERE id = o8;
+    v_line := 'FAIL C6a another profile''s deletion marker → deleted';
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN
+      v_line := format('%s C6a another profile''s deletion marker → %s', CASE WHEN SQLSTATE = 'P0001' THEN 'PASS' ELSE 'FAIL' END, SQLERRM);
+    END IF;
+  END;
+  v_out := v_out || E'\n' || v_line;
+  BEGIN
+    PERFORM set_config('hockia.deleting_profile', c_club::text, true);
+    DELETE FROM opportunities WHERE id = o8;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    v_line := format('%s C6b the publisher deletes their account → role deleted (%s row)', CASE WHEN v_n = 1 THEN 'PASS' ELSE 'FAIL' END, v_n);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL C6b the publisher deletes their account → ' || SQLERRM; END IF;
+  END;
+  PERFORM set_config('hockia.deleting_profile', '', true);
+  v_out := v_out || E'\n' || v_line;
+
 
   RAISE EXCEPTION 'PROBE RESULTS:%', v_out;
 END

@@ -7,7 +7,10 @@
 --   handle_opportunity_application_notifications ← 20260706090000_application_expiry.sql
 --   _fill_waiting_applications                   ← 20261004200000_role_organisation_name.sql
 --   handle_opportunity_recruiting_close          ← 20260928120000_recruiting_server_functions.sql
--- then drops _restore_filled_applications (created by the migration).
+--   hard_delete_profile_relations                ← 202603230400_rename_vacancy_rpcs_to_opportunity.sql
+-- then drops the trigger trg_guard_opportunity_delete_with_signing and the functions
+-- guard_opportunity_delete_with_signing and _restore_filled_applications
+-- (created by the migration). After this, a role with a signing can be deleted again.
 -- Data: metadata.before_filled keys written by fills stay on the applications
 -- (harmless: nothing else reads them); restored applications stay restored.
 -- Grants: the hardening REVOKEs of the migration are kept (nothing calls the
@@ -182,3 +185,53 @@ $$;
 REVOKE ALL ON FUNCTION public.handle_opportunity_recruiting_close() FROM PUBLIC, anon, authenticated;
 
 DROP FUNCTION IF EXISTS public._restore_filled_applications(uuid);
+
+
+-- Delete guard: drop the trigger first, then its function.
+DROP TRIGGER IF EXISTS trg_guard_opportunity_delete_with_signing ON public.opportunities;
+DROP FUNCTION IF EXISTS public.guard_opportunity_delete_with_signing();
+
+
+-- hard_delete_profile_relations: body of 202603230400_rename_vacancy_rpcs_to_opportunity.sql, verbatim.
+
+CREATE OR REPLACE FUNCTION public.hard_delete_profile_relations(
+  p_user_id UUID,
+  p_batch INTEGER DEFAULT 2000
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  result JSONB := '{}'::jsonb;
+  batch_size INTEGER := GREATEST(COALESCE(p_batch, 2000), 100);
+  deleted_profile INTEGER := 0;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RAISE EXCEPTION 'p_user_id_required';
+  END IF;
+
+  result := jsonb_set(result, '{applications}', to_jsonb(public.delete_rows_where_clause('public.opportunity_applications'::regclass, 'applicant_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{vacancies}', to_jsonb(public.delete_rows_where_clause('public.opportunities'::regclass, 'club_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{playingHistory}', to_jsonb(public.delete_rows_where_clause('public.career_history'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{galleryPhotos}', to_jsonb(public.delete_rows_where_clause('public.gallery_photos'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{clubMedia}', to_jsonb(public.delete_rows_where_clause('public.club_media'::regclass, 'club_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{profileComments}', to_jsonb(public.delete_rows_where_clause('public.profile_comments'::regclass, 'profile_id = $1 OR author_profile_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{profileNotifications}', to_jsonb(public.delete_rows_where_clause('public.profile_notifications'::regclass, 'recipient_profile_id = $1 OR actor_profile_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{friendships}', to_jsonb(public.delete_rows_where_clause('public.profile_friendships'::regclass, 'user_one = $1 OR user_two = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{archivedMessages}', to_jsonb(public.delete_rows_where_clause('public.archived_messages'::regclass, 'sender_id = $1 OR conversation_id IN (SELECT id FROM public.conversations WHERE participant_one_id = $1 OR participant_two_id = $1)', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{messages}', to_jsonb(public.delete_rows_where_clause('public.messages'::regclass, 'conversation_id IN (SELECT id FROM public.conversations WHERE participant_one_id = $1 OR participant_two_id = $1)', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{conversations}', to_jsonb(public.delete_rows_where_clause('public.conversations'::regclass, 'participant_one_id = $1 OR participant_two_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{unreadCounters}', to_jsonb(public.delete_rows_where_clause('public.user_unread_counters'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+
+  DELETE FROM public.profiles WHERE id = p_user_id;
+  GET DIAGNOSTICS deleted_profile = ROW_COUNT;
+  result := jsonb_set(result, '{profiles}', to_jsonb(deleted_profile), true);
+
+  RETURN result;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.hard_delete_profile_relations(uuid, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.hard_delete_profile_relations(uuid, integer) TO service_role;

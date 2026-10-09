@@ -59,11 +59,28 @@
 --         Response metrics only count moves out of 'pending', so a restore is
 --         never counted as a club response.
 --
+-- C · A role with a signing can't be deleted.
+--     "Delete permanently" on a closed role deleted it, and its applications
+--     cascade with it, including a confirmed signing (counted as status
+--     'signed', 20261002100000_d4_signings_metric.sql). Founder ruling
+--     2026-10-09: refuse. A BEFORE DELETE trigger on opportunities raises P0001
+--     "This role has a confirmed signing, so it can't be deleted. Close it
+--     instead." (DETAIL role_has_signing) when any application of the role is
+--     'signed' or 'signed_pending_confirmation', for every caller.
+--     Account deletion is the one exception: when a publisher deletes their
+--     account, hard_delete_profile_relations removes everything they own. It
+--     now marks its transaction (hockia.deleting_profile = the profile id) and
+--     the trigger lets that publisher's roles go; a cascade from the profile
+--     row itself (profile already gone) is let through too. A client can't set
+--     the marker: it is transaction-local and set_config is not exposed.
+--
 -- Each redefined body is the latest definition plus the lines this file needs:
 --   handle_opportunity_application_notifications ← 20260706090000_application_expiry.sql
 --   _fill_waiting_applications                   ← 20261004200000_role_organisation_name.sql
 --   handle_opportunity_recruiting_close          ← 20260928120000_recruiting_server_functions.sql
--- New: _restore_filled_applications(uuid).
+--   hard_delete_profile_relations                ← 202603230400_rename_vacancy_rpcs_to_opportunity.sql
+-- New: _restore_filled_applications(uuid), guard_opportunity_delete_with_signing()
+--      + trigger trg_guard_opportunity_delete_with_signing.
 --
 -- Rollback: supabase/rollbacks/20261009200000_club_flow_fixes.down.sql
 -- Probes:   supabase/tests/security/club_flow_fixes_acl.probe.sql (read-only)
@@ -382,3 +399,95 @@ $$;
 -- Unchanged, restated. The trigger trg_opportunity_recruiting_close (AFTER UPDATE OF
 -- status, closed_reason, 20260928120000) already fires on a reopen; it is not recreated.
 REVOKE ALL ON FUNCTION public.handle_opportunity_recruiting_close() FROM PUBLIC, anon, authenticated;
+
+
+-- ═══ C1 · guard_opportunity_delete_with_signing (new) + trigger ═══
+
+CREATE OR REPLACE FUNCTION public.guard_opportunity_delete_with_signing()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- The publisher is deleting their account: everything they own goes.
+  IF current_setting('hockia.deleting_profile', true) = OLD.club_id::text
+     OR NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = OLD.club_id) THEN
+    RETURN OLD;
+  END IF;
+
+  IF EXISTS (SELECT 1
+               FROM public.opportunity_applications a
+              WHERE a.opportunity_id = OLD.id
+                AND a.status::text IN ('signed', 'signed_pending_confirmation')) THEN
+    RAISE EXCEPTION 'This role has a confirmed signing, so it can''t be deleted. Close it instead.'
+      USING ERRCODE = 'P0001', DETAIL = 'role_has_signing';
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+COMMENT ON FUNCTION public.guard_opportunity_delete_with_signing() IS
+  'BEFORE DELETE on opportunities: a role with a signed or waiting-to-confirm application is never deleted (close it instead), except when its publisher deletes their account.';
+
+-- Trigger function: fires as its owner whatever the grants; nobody calls it directly.
+REVOKE ALL ON FUNCTION public.guard_opportunity_delete_with_signing() FROM PUBLIC, anon, authenticated;
+
+-- Named to sort before trigger_cleanup_on_opportunity_delete (BEFORE DELETE triggers
+-- fire in name order), so a refused delete touches nothing.
+DROP TRIGGER IF EXISTS trg_guard_opportunity_delete_with_signing ON public.opportunities;
+CREATE TRIGGER trg_guard_opportunity_delete_with_signing
+  BEFORE DELETE ON public.opportunities
+  FOR EACH ROW EXECUTE FUNCTION public.guard_opportunity_delete_with_signing();
+
+
+-- ═══ C2 · hard_delete_profile_relations ═══
+-- Body = 202603230400_rename_vacancy_rpcs_to_opportunity.sql + the account-deletion marker.
+
+CREATE OR REPLACE FUNCTION public.hard_delete_profile_relations(
+  p_user_id UUID,
+  p_batch INTEGER DEFAULT 2000
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  result JSONB := '{}'::jsonb;
+  batch_size INTEGER := GREATEST(COALESCE(p_batch, 2000), 100);
+  deleted_profile INTEGER := 0;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RAISE EXCEPTION 'p_user_id_required';
+  END IF;
+
+  -- Account deletion: this publisher's roles go even with a signing
+  -- (guard_opportunity_delete_with_signing). Transaction-local.
+  PERFORM set_config('hockia.deleting_profile', p_user_id::text, true);
+
+  result := jsonb_set(result, '{applications}', to_jsonb(public.delete_rows_where_clause('public.opportunity_applications'::regclass, 'applicant_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{vacancies}', to_jsonb(public.delete_rows_where_clause('public.opportunities'::regclass, 'club_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{playingHistory}', to_jsonb(public.delete_rows_where_clause('public.career_history'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{galleryPhotos}', to_jsonb(public.delete_rows_where_clause('public.gallery_photos'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{clubMedia}', to_jsonb(public.delete_rows_where_clause('public.club_media'::regclass, 'club_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{profileComments}', to_jsonb(public.delete_rows_where_clause('public.profile_comments'::regclass, 'profile_id = $1 OR author_profile_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{profileNotifications}', to_jsonb(public.delete_rows_where_clause('public.profile_notifications'::regclass, 'recipient_profile_id = $1 OR actor_profile_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{friendships}', to_jsonb(public.delete_rows_where_clause('public.profile_friendships'::regclass, 'user_one = $1 OR user_two = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{archivedMessages}', to_jsonb(public.delete_rows_where_clause('public.archived_messages'::regclass, 'sender_id = $1 OR conversation_id IN (SELECT id FROM public.conversations WHERE participant_one_id = $1 OR participant_two_id = $1)', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{messages}', to_jsonb(public.delete_rows_where_clause('public.messages'::regclass, 'conversation_id IN (SELECT id FROM public.conversations WHERE participant_one_id = $1 OR participant_two_id = $1)', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{conversations}', to_jsonb(public.delete_rows_where_clause('public.conversations'::regclass, 'participant_one_id = $1 OR participant_two_id = $1', p_user_id, batch_size)), true);
+  result := jsonb_set(result, '{unreadCounters}', to_jsonb(public.delete_rows_where_clause('public.user_unread_counters'::regclass, 'user_id = $1', p_user_id, batch_size)), true);
+
+  DELETE FROM public.profiles WHERE id = p_user_id;
+  GET DIAGNOSTICS deleted_profile = ROW_COUNT;
+  result := jsonb_set(result, '{profiles}', to_jsonb(deleted_profile), true);
+
+  RETURN result;
+END;
+$$;
+
+-- Unchanged, restated (202512101002_harden_admin_function_privileges.sql).
+REVOKE ALL ON FUNCTION public.hard_delete_profile_relations(uuid, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.hard_delete_profile_relations(uuid, integer) TO service_role;
