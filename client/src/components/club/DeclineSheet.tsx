@@ -22,11 +22,14 @@ interface DeclineSheetProps {
   hasName?: boolean
   onCancel: () => void
   onSend: (reason: string, message: string) => void
+  /** Reason picked when the sheet opens (the email deep link, ?decline=1), so
+   *  Hockia AI drafts the note at once. The club can still change it. */
+  initialReason?: string | null
 }
 
 const MAX = 600
 
-export function DeclineSheet({ open, applicationId, firstName, hasName = true, onCancel, onSend }: DeclineSheetProps) {
+export function DeclineSheet({ open, applicationId, firstName, hasName = true, onCancel, onSend, initialReason = null }: DeclineSheetProps) {
   const [reason, setReason] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [edited, setEdited] = useState(false)
@@ -38,7 +41,8 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
 
   useEffect(() => {
     if (!open) { setReason(null); setNote(''); setEdited(false); setAiDraft(null) }
-  }, [open])
+    else if (initialReason && DECLINE_REASON_CHIPS.some((r) => r.code === initialReason)) setReason((r) => r ?? initialReason)
+  }, [open, initialReason])
 
   useEffect(() => {
     if (!open || !reason || edited) return
