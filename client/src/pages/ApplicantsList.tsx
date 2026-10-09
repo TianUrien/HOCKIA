@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock, CheckCircle2, Undo2 } from 'lucide-react'
+import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock, CheckCircle2, Undo2, Handshake } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { isWithdrawnApplicationError, WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { clubRoadTag } from '@/lib/signing'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -27,8 +28,21 @@ interface TierGroup {
 
 const TIER_GROUPS: TierGroup[] = [
   { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-gray-400', statuses: ['pending'] },
-  { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted'] },
+  // offer_declined is only ever a history row (respond_to_offer puts the
+  // application straight back to shortlisted); listed so no status is orphaned.
+  { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted', 'offer_declined'] },
   { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
+  // Past Good fit on the offer / signing road (Club v2 actions, phone only).
+  // Desktop stays v1 (founder ruling): shown for the record with the phone
+  // road's grey tag (clubRoadTag), no status menu; tapping opens the profile.
+  {
+    key: 'offer-signing',
+    label: 'Offer & signing',
+    icon: Handshake,
+    iconClass: 'text-gray-500',
+    statuses: ['offered', 'accepted', 'signed_pending_confirmation', 'signed'],
+    readOnly: true,
+  },
   { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-red-500', statuses: ['rejected'] },
   // The expiry sweep flips un-triaged applications to 'no_response'. Those
   // rows are fetched and were counted in the header, but no tier rendered
@@ -502,6 +516,7 @@ export default function ApplicantsList() {
                         onStatusChange={group.readOnly ? undefined : handleStatusChange}
                         isUpdating={updatingId === application.id}
                         referenceInfo={referenceMap.get(application.applicant_id) ?? null}
+                        tag={group.readOnly ? clubRoadTag(application.status) : null}
                       />
                     ))}
                   </div>
