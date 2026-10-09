@@ -14,6 +14,10 @@ const config: CapacitorConfig = {
   // referrers — without that, this change does nothing.
   android: {
     hostname: 'app.inhockia.com',
+    // WebView canvas before the first web paint = the launch artwork's bottom
+    // colour, so the hand-off from the native splash can never flash white.
+    // Once the page paints, html/body (white in the app) cover it.
+    backgroundColor: '#7b39ec',
   },
   ios: {
     scheme: 'HOCKIA',
@@ -25,7 +29,13 @@ const config: CapacitorConfig = {
     // so there are no installed users to silently sign out.
     hostname: 'app.inhockia.com',
     contentInset: 'automatic',
-    backgroundColor: '#ffffff',
+    // WKWebView + scroll-view colour before the first web paint. Was #ffffff,
+    // which is what showed in the home-indicator band under the launch
+    // artwork. Now the artwork's bottom colour (#7b39ec, its last pixel row).
+    // After the page paints, WebKit repaints the scroll view with the
+    // document's own background (white in the app; violet while the in-app
+    // splash holds the launch canvas — src/lib/launchSplash.ts).
+    backgroundColor: '#7b39ec',
     preferredContentMode: 'mobile',
   },
   plugins: {

@@ -45,6 +45,74 @@ export function warmLaunchArtwork(): void {
   warmed = img // keep a reference so the cache entry is not evicted before use
 }
 
+/**
+ * The artwork's BOTTOM edge colour (sampled from the 1170×2532 export: every
+ * pixel of the last row is #7b39ec; the top edge is #301462, the middle is the
+ * #5929a8 base). Used as the page canvas while the launch artwork is up.
+ */
+export const LAUNCH_CANVAS_COLOR = '#7b39ec'
+
+/**
+ * Launch canvas (white home-indicator strip fix, iOS 1.3.17).
+ *
+ * The iOS WKWebView runs with `ios.contentInset: 'automatic'`, so the scroll
+ * view can inset the web layout viewport by the safe area. The in-app splash is
+ * `position: fixed; inset: 0` — it fills the LAYOUT viewport, not the screen —
+ * and whatever lies outside it (the home-indicator band) shows the page canvas:
+ * WebKit paints the scroll view with the document's background colour, which
+ * globals.css sets to #ffffff. Result: a white strip under the artwork until
+ * the inset settles and the fixed layer grows to the full display.
+ *
+ * Fix: while the launch artwork is (or is about to be) on screen, the canvas
+ * itself — html AND body, inline so it beats globals.css — is the artwork's
+ * bottom colour. Any band outside the fixed layer is then the same violet as
+ * the artwork's last row, so no white can show and nothing visibly shifts when
+ * the layer resizes. Ref-counted holders:
+ *  - the boot paint (main.tsx, before React's first frame), released by
+ *    LaunchSplashController on the first commit;
+ *  - each mounted NativeLaunchSplash, released on unmount.
+ * When the last holder lets go, the inline colours are removed and the app's
+ * own white canvas is back. Web: no-op (the browser owns its chrome).
+ */
+let canvasHolders = 0
+
+function applyLaunchCanvas(on: boolean): void {
+  if (typeof document === 'undefined') return
+  for (const el of [document.documentElement, document.body]) {
+    if (!el) continue
+    if (on) el.style.setProperty('background-color', LAUNCH_CANVAS_COLOR)
+    else el.style.removeProperty('background-color')
+  }
+}
+
+/** Take a hold on the violet launch canvas. Returns the matching release. */
+export function holdLaunchCanvas(): () => void {
+  if (!Capacitor.isNativePlatform()) return () => {}
+  canvasHolders += 1
+  if (canvasHolders === 1) applyLaunchCanvas(true)
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    canvasHolders = Math.max(0, canvasHolders - 1)
+    if (canvasHolders === 0) applyLaunchCanvas(false)
+  }
+}
+
+let releaseBootCanvas: (() => void) | null = null
+
+/** Boot: paint the launch canvas before React renders anything (main.tsx). */
+export function paintBootLaunchCanvas(): void {
+  if (releaseBootCanvas) return
+  releaseBootCanvas = holdLaunchCanvas()
+}
+
+/** First commit happened: drop the boot hold (a mounted splash keeps its own). */
+export function releaseBootLaunchCanvas(): void {
+  releaseBootCanvas?.()
+  releaseBootCanvas = null
+}
+
 let hidden = false
 let failsafe: ReturnType<typeof setTimeout> | null = null
 
@@ -79,6 +147,9 @@ export function armLaunchSplashFailsafe(): void {
 export function __resetLaunchSplashForTests(): void {
   hidden = false
   warmed = null
+  canvasHolders = 0
+  releaseBootCanvas = null
+  applyLaunchCanvas(false)
   if (failsafe) clearTimeout(failsafe)
   failsafe = null
 }

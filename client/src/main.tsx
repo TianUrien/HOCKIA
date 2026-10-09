@@ -7,7 +7,7 @@ import { initSentry } from '@/lib/sentryInit'
 import './globals.css'
 import App from './App.tsx'
 import LaunchSplashController from './components/LaunchSplashController'
-import { warmLaunchArtwork } from './lib/launchSplash'
+import { paintBootLaunchCanvas, warmLaunchArtwork } from './lib/launchSplash'
 import { initWebVitals } from './lib/monitor'
 import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
@@ -104,6 +104,9 @@ export function RootApp() {
 // Native only: have the in-app splash artwork fetched + decoded before the
 // first React frame needs it (see lib/launchSplash).
 warmLaunchArtwork()
+// Native only: the page canvas is the artwork's bottom violet until the first
+// commit (no white home-indicator band under the in-app splash on iOS).
+paintBootLaunchCanvas()
 
 createRoot(document.getElementById('root')!).render(<RootApp />)
 
