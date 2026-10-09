@@ -14,6 +14,7 @@ import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
+import { useMarkInboxRequestsSeen } from '@/hooks/useMarkInboxRequestsSeen'
 import { loadFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { useAuthStore } from '@/lib/auth'
 
@@ -39,10 +40,17 @@ export default function InboxPage() {
   const requests = useFriendRequests()
   const { invitations: clubInvitations } = useMyClubInvitations()
   const clubInvite = useRespondToClubInvite()
-  // A red dot (never a number) on each segment holding something unread —
-  // Requests included (founder ruling 2026-10-03: a dot when requests are
-  // pending, no count).
+  // A red dot (never a number) on each segment holding something NEW. For
+  // Requests that means a request not seen yet (founder spec 2026-10-09,
+  // superseding "a dot while pending"): opening the segment marks the shown
+  // requests seen — they stay pending — and the dot stays off on Messages /
+  // Activity until a new request arrives.
   const dots = useInboxSegmentDots()
+  useMarkInboxRequestsSeen(
+    active === 'requests' && !requests.loading,
+    requests.incoming.map((r) => r.friendshipId),
+    clubInvitations.map((i) => i.clubMemberId),
+  )
 
   // Opening Inbox re-reads the shared friendship edges so the Requests dot
   // (and the tab-bar dot, which shares it) matches the list shown here.
