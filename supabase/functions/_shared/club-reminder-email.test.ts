@@ -94,12 +94,17 @@ Deno.test('Closing soon email: N players waiting, soonest first, fit badges, amb
     row({ applicant_full_name: 'Ben Ito', closes_at: '2026-10-14T08:00:00Z', fit_state: 'yellow' }),
   ], TZ, NOW)
   const email = renderReminderEmail({ lastCall: [], closingSoon: [items[0]], pending: items, baseUrl: BASE })
-  assertEquals(email.subject, '3 players are waiting for your answer')
+  // Subject names the most urgent applicant; the "N players" line is the headline inside.
+  assert(/^[^ ]+'s application closes /.test(email.subject), email.subject)
+  assertStringIncludes(email.html, '3 players are waiting for your answer')
   const order = ['Ana Pérez', 'Ben Ito', 'Late Closer'].map((n) => email.html.indexOf(n))
   assert(order[0] < order[1] && order[1] < order[2], 'soonest-closing first')
-  assertStringIncludes(email.html, '>Strong<')
-  assertStringIncludes(email.html, '>Possible<')
-  assertEquals((email.html.match(/>Strong</g) ?? []).length + (email.html.match(/>Possible</g) ?? []).length, 2)
+  assertStringIncludes(email.html, '>Strong fit<')
+  // Possible fit is neutral (surface/muted, ink-secondary), never yellow (design review 9 Oct).
+  assertStringIncludes(email.html, 'background:#f4f4f7;color:#5b5b6b;font-size:12px;font-weight:600;line-height:18px;">Possible fit<')
+  assertFalse(email.html.includes('#fef7c3'))
+  assertEquals((email.html.match(/>Strong fit</g) ?? []).length + (email.html.match(/>Possible fit</g) ?? []).length, 2)
+  assertStringIncludes(email.html, `href="${BASE}/settings/notifications"`)
   assertStringIncludes(email.html, 'background:#fffaeb;color:#b54708;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes Tuesday')
   assertStringIncludes(email.html, 'background:#f2f4f7;color:#475467;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes 20 Oct')
   assertStringIncludes(email.html, '>Review 3 players<')
@@ -137,7 +142,8 @@ Deno.test('hidden applicants are in neither the rows nor the "N players" count',
     row({ applicant_full_name: 'Ben Ito' }),
   ], NOW)!
   const email = renderReminderEmail({ lastCall: [], closingSoon: plan.email!.closingSoon, pending: plan.pending, baseUrl: BASE })
-  assertEquals(email.subject, '2 players are waiting for your answer')
+  assertFalse(email.subject.includes('Hidden'))
+  assertStringIncludes(email.html, '2 players are waiting for your answer')
   assertFalse(email.html.includes('Hidden'))
   assertFalse(email.text.includes('Hidden'))
   assertStringIncludes(email.html, '>Review 2 players<')

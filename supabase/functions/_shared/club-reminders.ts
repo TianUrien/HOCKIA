@@ -522,14 +522,22 @@ export function lastCallBody(item: Pick<ReminderItem, 'firstName' | 'daysLeft' |
   return `${name} applied on ${shortDate(item.appliedLocal)}. ${when} the application closes on its own and ${who} is told you didn't reply. A short answer either way is better than none.`
 }
 
-/** Day 10 subject: "Ana's application closes on Friday" (one) / "3 players are waiting for your answer". */
+/**
+ * Day 10 subject: always named after the most urgent applicant (design review
+ * 9 Oct: a named subject gets opened) — "Ana's application closes on Friday".
+ * The "N players are waiting" line stays as the headline inside the email.
+ * `pending` is sorted soonest-closing first, so [0] is the most urgent.
+ */
 export function closingSoonSubject(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true): string {
-  if (pending.length === 1) {
-    const i = pending[0]
-    const owner = i.firstName ? `${i.firstName}'s application` : 'An application'
-    return `${owner} closes ${closesPhrase(i.daysLeft, i.closesLocal)}`
-  }
-  return waitingLine(pending.length, allPlayers)
+  const i = pending[0]
+  if (!i) return waitingLine(0, allPlayers)
+  const owner = i.firstName ? `${i.firstName}'s application` : 'An application'
+  return `${owner} closes ${closesPhrase(i.daysLeft, i.closesLocal)}`
+}
+
+/** Day 10 headline inside the email: one applicant → the named line; several → "N players are waiting for your answer". */
+export function closingSoonHeadline(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true): string {
+  return pending.length === 1 ? closingSoonSubject(pending, allPlayers) : waitingLine(pending.length, allPlayers)
 }
 
 /** "3 players are waiting for your answer" / "1 player is waiting for your answer". */
@@ -539,6 +547,8 @@ export function waitingLine(n: number, allPlayers = true): string {
 
 export const DECLINE_HINT = 'Not the right fit? Declining takes one tap, and Hockia AI drafts a kind note you can edit.'
 export const SETTINGS_FOOTER = 'Change emails in Settings → Notifications.'
+/** The footer opens the Notifications screen itself, not the settings hub. */
+export const SETTINGS_FOOTER_PATH = '/settings/notifications'
 
 /** New-applications batch subject. */
 export function newApplicationsSubject(items: Pick<ApplicantItem, 'firstName' | 'roleTitle' | 'opportunityId'>[]): string {

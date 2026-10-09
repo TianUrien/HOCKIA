@@ -30,6 +30,8 @@ import {
   reviewPath,
   reviewTarget,
   SETTINGS_FOOTER,
+  SETTINGS_FOOTER_PATH,
+  closingSoonHeadline,
   waitingLine,
 } from './club-reminders.ts'
 
@@ -59,10 +61,10 @@ function href(baseUrl: string, path: string): string {
 
 function fitBadge(fit: ApplicantItem['fit']): string {
   if (fit === 'strong') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#ecfdf3;color:#067647;font-size:12px;font-weight:600;line-height:18px;">Strong</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#ecfdf3;color:#067647;font-size:12px;font-weight:600;line-height:18px;">Strong fit</span>`
   }
   if (fit === 'possible') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#fef7c3;color:#854a0e;font-size:12px;font-weight:600;line-height:18px;">Possible</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#f4f4f7;color:#5b5b6b;font-size:12px;font-weight:600;line-height:18px;">Possible fit</span>`
   }
   return ''
 }
@@ -132,7 +134,7 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
       </td></tr>
       <tr><td style="padding:16px 22px 22px;border-top:1px solid ${LINE};">
         ${extraFooter ? `<p style="margin:0 0 6px;font-size:12px;color:${INK_3};line-height:18px;">${escapeHtml(extraFooter)}</p>` : ''}
-        <p style="margin:0;font-size:12px;color:#9ca3af;line-height:18px;"><a href="${href(baseUrl, '/settings')}" style="color:${BRAND};text-decoration:none;">${escapeHtml(SETTINGS_FOOTER)}</a></p>
+        <p style="margin:0;font-size:12px;color:#9ca3af;line-height:18px;"><a href="${href(baseUrl, SETTINGS_FOOTER_PATH)}" style="color:${BRAND};text-decoration:none;">${escapeHtml(SETTINGS_FOOTER)}</a></p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -141,7 +143,7 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
 }
 
 function textFooter(baseUrl: string, extra = ''): string[] {
-  return ['', ...(extra ? [extra] : []), `${SETTINGS_FOOTER} ${url(baseUrl, '/settings')}`]
+  return ['', ...(extra ? [extra] : []), `${SETTINGS_FOOTER} ${url(baseUrl, SETTINGS_FOOTER_PATH)}`]
 }
 
 function textRow(item: ApplicantItem | ReminderItem, showRole: boolean): string {
@@ -278,13 +280,13 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
   const showRole = new Set(pending.map((i) => i.opportunityId)).size > 1
   const body = `
         ${eyebrow(org)}
-        ${heading(subject)}
+        ${heading(closingSoonHeadline(pending, allPlayers))}
         ${pending.length > 1 ? '' : `<p style="margin:0 0 4px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(waitingLine(1, allPlayers))}.</p>`}
         ${personTable(pending, { showRole })}
         <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, target), reviewLabel(pending))}</div>
         <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${escapeHtml(DECLINE_HINT)}</p>`
   const text = [
-    subject,
+    closingSoonHeadline(pending, allPlayers),
     pending.length > 1 ? '' : `${waitingLine(1, allPlayers)}.`,
     '',
     ...pending.slice(0, MAX_ROWS).map((i) => textRow(i, showRole)),
