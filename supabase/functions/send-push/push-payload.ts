@@ -3,6 +3,8 @@
  * Mirrors the client-side config at client/src/components/notifications/config.ts.
  */
 
+import { reminderCopyFromMetadata, reminderRouteFromMetadata } from '../_shared/club-reminders.ts'
+
 export interface PushPayload {
   title: string
   body: string
@@ -56,6 +58,8 @@ const PREFERENCE_BY_KIND: Record<string, PushPreferenceColumn> = {
   vacancy_application_status: 'notify_applications',
   vacancy_application_received: 'notify_applications',
   applications_expired: 'notify_applications',
+  applicants_closing_soon: 'notify_applications',
+  applicant_last_call: 'notify_applications',
   opportunity_published: 'notify_opportunities',
   friend_request_received: 'notify_friends',
   friend_request_accepted: 'notify_friends',
@@ -404,6 +408,22 @@ export function buildPushPayload(
         url: '/opportunities',
         // one per sweep day; replace any prior unread expiry push
         tag: 'applications-expired',
+      }
+    }
+
+    // ── B2 · publisher reminders (club-reminders, 20261009100000) ──
+    // The server writes the copy (title / summary, first names only) and the
+    // ids; the tap opens the applicant (one), the role's Applicants (one
+    // role), else Opportunities. Mirrors client config.ts.
+    case 'applicant_last_call':
+    case 'applicants_closing_soon': {
+      const copy = reminderCopyFromMetadata(kind, metadata)
+      return {
+        title: copy.title,
+        body: copy.body,
+        url: reminderRouteFromMetadata(metadata),
+        // One reminder push per publisher per day; a newer one replaces it.
+        tag: kind === 'applicant_last_call' ? 'club-reminder-last-call' : 'club-reminder-closing-soon',
       }
     }
 

@@ -61,8 +61,11 @@ const FULL_METADATA = {
 }
 
 describe('the enum is the source of the list', () => {
-  it('has the 25 kinds this release ships with (update the tests below when one is added)', () => {
-    expect(KINDS.length).toBe(25)
+  it('has the 27 kinds this release ships with (update the tests below when one is added)', () => {
+    // 25 + B2 club reminders (20261009100000): applicants_closing_soon, applicant_last_call.
+    expect(KINDS.length).toBe(27)
+    expect(KINDS).toContain('applicants_closing_soon')
+    expect(KINDS).toContain('applicant_last_call')
     expect(new Set(KINDS).size).toBe(KINDS.length)
   })
 })
@@ -121,6 +124,9 @@ describe('in-app row × every notification kind', () => {
     expect(route('vacancy_application_status')).toBe(`/opportunities/${OPPORTUNITY}`)
     expect(route('vacancy_application_received')).toBe(`/dashboard/opportunities/${OPPORTUNITY}/applicants`)
     expect(route('club_invitation_received')).toBe(`/clubs/id/${ACTOR}`)
+    // B2 reminders: one role → its Applicants (the publisher's view).
+    expect(route('applicants_closing_soon')).toBe(`/dashboard/opportunities/${OPPORTUNITY}/applicants`)
+    expect(route('applicant_last_call')).toBe(`/dashboard/opportunities/${OPPORTUNITY}/applicants`)
   })
 
   it('recruiting_update follows each target the server functions write', () => {

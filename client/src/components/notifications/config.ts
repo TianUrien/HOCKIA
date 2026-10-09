@@ -126,6 +126,18 @@ const opportunityDetailRoute = (notification: NotificationRecord) => {
   return opportunityId ? `/opportunities/${opportunityId}` : '/opportunities'
 }
 
+/** B2 · publisher reminders (club-reminders): the applicant (one), the role's
+ *  Applicants (one role), else Opportunities. MIRRORS
+ *  supabase/functions/_shared/club-reminders.ts reminderRouteFromMetadata, which
+ *  the push uses, so the row and the push open the same screen. */
+export const clubReminderRoute = (notification: NotificationRecord): string => {
+  const opportunityId = getMetadataString(notification, 'opportunity_id')
+  const applicationId = getMetadataString(notification, 'application_id')
+  if (opportunityId && applicationId) return `/dashboard/opportunities/${encodeURIComponent(opportunityId)}/applicants/${encodeURIComponent(applicationId)}`
+  if (opportunityId) return `/dashboard/opportunities/${encodeURIComponent(opportunityId)}/applicants`
+  return '/opportunities'
+}
+
 const defaultConfig: NotificationRenderConfig = {
   icon: Bell,
   badgeText: 'Notification',
@@ -315,6 +327,25 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getDescription: () =>
       "Applications close automatically after a while without an update on HOCKIA — never a reflection on you. Fresh opportunities are open now.",
     getRoute: () => '/opportunities',
+  },
+  // B2 · publisher reminders. The server writes the copy (first names only,
+  // founder wording of 9 Oct 2026) into title / summary; the fallbacks keep a
+  // row readable without metadata. Amber: the publisher is the one to act.
+  applicant_last_call: {
+    icon: Hourglass,
+    badgeText: 'Last call',
+    accentClassName: 'bg-amber-50 text-amber-700',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'Last day to answer an applicant',
+    getDescription: (notification) => getMetadataString(notification, 'summary') || 'An application closes tomorrow.',
+    getRoute: clubReminderRoute,
+  },
+  applicants_closing_soon: {
+    icon: Hourglass,
+    badgeText: 'Closing soon',
+    accentClassName: 'bg-amber-50 text-amber-700',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'Players are waiting for your answer',
+    getDescription: (notification) => getMetadataString(notification, 'summary') || 'Some applications close soon.',
+    getRoute: clubReminderRoute,
   },
   profile_completed: {
     icon: CheckCircle2,

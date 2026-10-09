@@ -5,7 +5,6 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
-import { hashToken, mintRawToken } from '../_shared/action-tokens.ts'
 
 /**
  * ============================================================================
@@ -15,14 +14,16 @@ import { hashToken, mintRawToken } from '../_shared/action-tokens.ts'
  * Triggered by database webhook on INSERT to application_digest_queue
  * (pg_cron runs enqueue_application_digests() Mondays 09:00 UTC).
  *
- * Sends the publisher ONE email listing their pending applications with
- * one-click triage buttons that mirror the in-app dropdown exactly:
- *   ⭐ Good fit → shortlisted   ❓ Maybe → maybe   ✗ Not a fit → rejected
- * Buttons link to the application-action edge fn with single-use tokens.
+ * Sends the publisher ONE email listing their pending applications, each
+ * with a "Review" link to the applicant review in the app. Only sent while
+ * something is waiting (the enqueue only queues publishers with pending
+ * applications, and this function skips when none is still pending).
  *
- * Tokens are minted HERE, at send time (never at enqueue time), so a failed
- * send cannot leave live orphan tokens. Only the displayed rows (max
- * MAX_ROWS) get tokens; the "+N more" overflow routes into the app.
+ * B2 (20261009100000_b2_club_reminders.sql, founder spec 9 Oct 2026): the
+ * one-click Good fit / Maybe / Not a fit token buttons are gone — decisions
+ * happen in the app, where Hockia AI drafts the decline note. No new
+ * email_action_tokens are minted. Links in emails already sent keep working:
+ * the application-action endpoint and the /email-action page are unchanged.
  *
  * Idempotency: one send per (publisher, week) — checked against email_sends
  * via metadata.week_start before sending (webhook double-delivery safe).
@@ -30,15 +31,6 @@ import { hashToken, mintRawToken } from '../_shared/action-tokens.ts'
  */
 
 const MAX_ROWS = 10
-const TOKEN_TTL_DAYS = 14
-const ACTIONS = ['shortlisted', 'maybe', 'rejected'] as const
-type Action = (typeof ACTIONS)[number]
-
-const ACTION_LABEL: Record<Action, string> = {
-  shortlisted: '⭐ Good fit',
-  maybe: '❓ Maybe',
-  rejected: '✗ Not a fit',
-}
 
 interface QueueRecord {
   id: string
@@ -187,7 +179,7 @@ Deno.serve(async (req: Request) => {
         applied_at,
         status,
         opportunity:opportunities (id, title, status, application_deadline),
-        applicant:profiles (id, full_name, position)
+        applicant:profiles (id, full_name, position, is_blocked, frozen_minor_at)
       `)
       .in('id', queueRecord.application_ids ?? [])
       .eq('status', 'pending')
@@ -204,6 +196,9 @@ Deno.serve(async (req: Request) => {
     const todayIso = new Date().toISOString().slice(0, 10)
     const rows: PendingRow[] = (apps ?? [])
       .filter((a: any) =>
+        // Hidden-profile invariant: a banned or frozen applicant is in neither
+        // the rows nor the count.
+        a.applicant && !a.applicant.is_blocked && !a.applicant.frozen_minor_at &&
         a.opportunity?.status === 'open' &&
         (!a.opportunity?.application_deadline || a.opportunity.application_deadline >= todayIso))
       .map((a: any) => ({
@@ -226,37 +221,6 @@ Deno.serve(async (req: Request) => {
     const shown = rows.slice(0, MAX_ROWS)
     const overflow = rows.length - shown.length
 
-    // ── Mint single-use action tokens (send time, displayed rows only) ──
-    // Links land on the APP's public /email-action page (which drives the
-    // application-action JSON API): pages can't be served from *.supabase.co
-    // (the gateway forces text/plain + a sandbox CSP onto HTML there), and
-    // the app domain gives publishers logged-in continuity after acting.
-    const HOCKIA_BASE_URL_FOR_LINKS = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const actionBase = `${HOCKIA_BASE_URL_FOR_LINKS}/email-action`
-    const expiresAt = new Date(nowMs + TOKEN_TTL_DAYS * 86_400_000).toISOString()
-
-    const tokenRows: Array<Record<string, unknown>> = []
-    const linkFor = new Map<string, string>() // `${appId}:${action}` -> URL
-    for (const row of shown) {
-      for (const action of ACTIONS) {
-        const raw = mintRawToken()
-        tokenRows.push({
-          token_hash: await hashToken(raw),
-          application_id: row.id,
-          action,
-          publisher_id: publisher.id,
-          expires_at: expiresAt,
-        })
-        linkFor.set(`${row.id}:${action}`, `${actionBase}?t=${raw}`)
-      }
-    }
-
-    const { error: tokenError } = await supabase.from('email_action_tokens').insert(tokenRows as any)
-    if (tokenError) {
-      await recordFailure(`token mint failed: ${tokenError.message}`)
-      return json(500, { error: 'Failed to mint action tokens' })
-    }
-
     // ── Compose ──
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const firstName = publisher.full_name?.split(' ')[0]?.trim() || 'there'
@@ -265,12 +229,8 @@ Deno.serve(async (req: Request) => {
       ? '1 applicant is waiting for your response on HOCKIA'
       : `${rows.length} applicants are waiting for your response on HOCKIA`
 
-    const btn = (url: string, label: string, solid: boolean) =>
-      `<a href="${url}" style="display:inline-block;padding:8px 14px;margin:2px 6px 2px 0;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;${
-        solid
-          ? 'background:#6d28d9;color:#ffffff;'
-          : 'background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;'
-      }">${label}</a>`
+    const btn = (url: string, label: string) =>
+      `<a href="${url}" style="display:inline-block;padding:8px 14px;margin:2px 6px 2px 0;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:#6d28d9;color:#ffffff;">${label}</a>`
 
     const rowsHtml = shown
       .map((r) => {
@@ -285,6 +245,10 @@ Deno.serve(async (req: Request) => {
         const applicantsUrl = r.opportunity_id
           ? `${HOCKIA_BASE_URL}/dashboard/opportunities/${r.opportunity_id}/applicants`
           : null
+        // B2: one Review link per row (the applicant review), no token buttons.
+        const reviewUrl = r.opportunity_id
+          ? `${HOCKIA_BASE_URL}/dashboard/opportunities/${r.opportunity_id}/applicants/${r.id}`
+          : applicantsUrl
         const nameHtml = profileUrl
           ? `<a href="${profileUrl}" style="color:#111827;text-decoration:none;">${escapeHtml(r.applicant_name)}</a>`
           : escapeHtml(r.applicant_name)
@@ -300,11 +264,7 @@ Deno.serve(async (req: Request) => {
                 : ''
             }</div>
             <div style="font-size:13px;color:#6b7280;margin:2px 0 8px;">${escapeHtml(meta)} · ${titleHtml}</div>
-            <div>
-              ${btn(linkFor.get(`${r.id}:shortlisted`)!, ACTION_LABEL.shortlisted, true)}
-              ${btn(linkFor.get(`${r.id}:maybe`)!, ACTION_LABEL.maybe, false)}
-              ${btn(linkFor.get(`${r.id}:rejected`)!, ACTION_LABEL.rejected, false)}
-            </div>
+            ${reviewUrl ? `<div>${btn(reviewUrl, 'Review')}</div>` : ''}
           </td>
         </tr>`
       })
@@ -328,7 +288,7 @@ Deno.serve(async (req: Request) => {
         <p style="font-size:15px;color:#374151;line-height:1.5;">
           You have <strong>${rows.length} application${rows.length === 1 ? '' : 's'}</strong> waiting for your response
           &mdash; the oldest has been waiting <strong>${oldest} day${oldest === 1 ? '' : 's'}</strong>.
-          Triage them right from this email; each button works once and does exactly what the in-app options do.
+          Open one to answer &mdash; declining takes one tap, and Hockia AI drafts a kind note you can edit.
         </p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowsHtml}</table>
         ${overflow > 0 ? `<p style="font-size:13px;color:#6b7280;">+ ${overflow} more waiting in HOCKIA.</p>` : ''}
@@ -337,8 +297,8 @@ Deno.serve(async (req: Request) => {
         </div>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
           Applicants are notified when you respond &mdash; a quick answer, even a no, beats silence.
-          You receive this weekly summary while you have unanswered applications.
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
+          You receive this weekly summary only while applications are waiting.
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Change emails in Settings &rarr; Notifications.</a>
         </p>
       </td></tr>
     </table>
@@ -394,7 +354,6 @@ Deno.serve(async (req: Request) => {
       publisher: publisher.id,
       pending: rows.length,
       shown: shown.length,
-      tokens: tokenRows.length,
     })
     return json(200, { success: true, pending: rows.length, shown: shown.length })
   } catch (error) {

@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: application, error: applicationError } = await supabase
       .from('opportunity_applications')
-      .select('id, opportunity_id, applicant_id, status')
+      .select('id, opportunity_id, applicant_id, status, applied_at')
       .eq('id', claimedId)
       .maybeSingle()
 
@@ -173,6 +173,32 @@ Deno.serve(async (req: Request) => {
       })
       return new Response(
         JSON.stringify({ message: 'Ignored - application not pending' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ==========================================================================
+    // B2 · BATCHED EMAILS (20261009100000_b2_club_reminders.sql)
+    // ==========================================================================
+    // Once application_response_settings.batched_application_emails_since is
+    // set, applications from that instant are emailed by club-reminders in an
+    // hourly batch (at most one email per publisher per hour) — this immediate
+    // per-application email stands down for them. Applications before the
+    // switch keep this path, so nothing is sent twice or lost at cut-over.
+    // The in-app/push notification (vacancy_application_received) is separate
+    // and unchanged. A failed settings read falls back to the immediate email.
+    const { data: responseSettings } = await supabase
+      .from('application_response_settings')
+      .select('batched_application_emails_since')
+      .limit(1)
+      .maybeSingle()
+    const batchedSince = responseSettings?.batched_application_emails_since ?? null
+    if (batchedSince && application.applied_at && Date.parse(application.applied_at) >= Date.parse(batchedSince)) {
+      logger.info('Batched mode: club-reminders sends this application in the hourly email', {
+        applicationId: application.id,
+      })
+      return new Response(
+        JSON.stringify({ message: 'Ignored - batched by club-reminders' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

@@ -675,6 +675,8 @@ export type Database = {
       }
       application_response_settings: {
         Row: {
+          batched_application_emails_since: string | null
+          club_reminders_enabled: boolean
           digest_enabled: boolean
           expiry_days: number
           hygiene_enabled: boolean
@@ -685,6 +687,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          batched_application_emails_since?: string | null
+          club_reminders_enabled?: boolean
           digest_enabled?: boolean
           expiry_days?: number
           hygiene_enabled?: boolean
@@ -695,6 +699,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          batched_application_emails_since?: string | null
+          club_reminders_enabled?: boolean
           digest_enabled?: boolean
           expiry_days?: number
           hygiene_enabled?: boolean
@@ -8539,6 +8545,65 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      club_reminder_candidates: {
+        Args: { p_mode: string; p_now?: string }
+        Returns: {
+          answered_last_24h: boolean
+          applicant_avatar_url: string
+          applicant_country: string
+          applicant_frozen_minor_at: string
+          applicant_full_name: string
+          applicant_id: string
+          applicant_is_blocked: boolean
+          applicant_known_minor: boolean
+          applicant_position: string
+          applicant_role: string
+          application_id: string
+          applied_at: string
+          closes_at: string
+          email_closing_soon_logged: boolean
+          email_last_call_logged: boolean
+          fit_state: string
+          last_new_applications_email_at: string
+          last_reminder_email_date: string
+          last_reminder_push_date: string
+          opportunity_id: string
+          org_name: string
+          publisher_country_code: string
+          publisher_email: string
+          publisher_full_name: string
+          publisher_id: string
+          publisher_notify_applications: boolean
+          publisher_role: string
+          push_closing_soon_logged: boolean
+          push_last_call_logged: boolean
+          role_position: string
+          role_title: string
+        }[]
+      }
+      club_reminder_claim: {
+        Args: {
+          p_batch_kind: string
+          p_channel: string
+          p_items: Json
+          p_local_date: string
+          p_notification?: Json
+          p_publisher_id: string
+        }
+        Returns: string
+      }
+      club_reminder_finish: {
+        Args: { p_batch_id: string; p_sent: boolean }
+        Returns: undefined
+      }
+      club_reminder_skip: {
+        Args: {
+          p_application_ids: string[]
+          p_local_date: string
+          p_publisher_id: string
+        }
+        Returns: number
+      }
       compute_club_fit: {
         Args: {
           p_opportunity_id: string
@@ -10140,6 +10205,8 @@ export type Database = {
         | "club_invitation_accepted"
         | "applications_expired"
         | "recruiting_update"
+        | "applicants_closing_soon"
+        | "applicant_last_call"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -10361,6 +10428,8 @@ export const Constants = {
         "club_invitation_accepted",
         "applications_expired",
         "recruiting_update",
+        "applicants_closing_soon",
+        "applicant_last_call",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [
