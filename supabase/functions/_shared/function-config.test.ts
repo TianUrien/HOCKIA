@@ -80,3 +80,13 @@ Deno.test('no per-function config.toml files remain (root file is the only sourc
   })
   assertEquals(strays, [], `Move verify_jwt into supabase/config.toml and delete: ${strays.join(', ')}`)
 })
+
+// Cron- and webhook-invoked functions keep the gateway JWT check ON (the caller
+// presents the service-role JWT; the handler also calls assertServiceRole).
+// B2 · club-reminders (20261009100000) is called by pg_cron through pg_net.
+Deno.test('cron-invoked functions pin verify_jwt = true', () => {
+  const pinned = pinnedFunctions(Deno.readTextFileSync(configPath))
+  for (const name of ['club-reminders', 'storage-cleanup', 'notify-application', 'notify-application-digest']) {
+    assertEquals(pinned.get(name), true, `${name} must have verify_jwt = true in supabase/config.toml`)
+  }
+})

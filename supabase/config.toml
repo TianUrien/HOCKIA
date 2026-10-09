@@ -462,6 +462,8 @@ verify_jwt = true
 # the gateway check; every one of these also calls assertServiceRole.
 [functions.admin-market-digest]
 verify_jwt = true
+[functions.club-reminders]
+verify_jwt = true
 [functions.notify-age-gate]
 verify_jwt = true
 [functions.notify-application]
