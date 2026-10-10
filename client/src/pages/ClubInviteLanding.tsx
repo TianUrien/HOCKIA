@@ -52,7 +52,7 @@ export default function ClubInviteLanding() {
 
   const handleSignIn = () => {
     try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ }
-    navigate('/signin')
+    navigate(`/signin?next=${encodeURIComponent(`/invite/club/${token}`)}`)
   }
 
   const handleJoin = async () => {
@@ -125,7 +125,7 @@ export default function ClubInviteLanding() {
         <button type="button" onClick={handleSignIn} className="w-full rounded-xl bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors">
           Sign in to join
         </button>
-        <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate('/signup') }} className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
+        <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate(`/signup?next=${encodeURIComponent(`/invite/club/${token}`)}`) }} className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
           Create an account
         </button>
       </>

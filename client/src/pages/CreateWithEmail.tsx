@@ -10,7 +10,7 @@ import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { getAttributionSnapshot } from '@/lib/attribution'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackSignUp, trackSignUpStart } from '@/lib/analytics'
-import { stashRedirectIntent } from '@/lib/redirectIntent'
+import { POST_AUTH_NEXT_KEY, pendingRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
@@ -65,12 +65,15 @@ export default function CreateWithEmail() {
       }
       trackSignUpStart('email')
       const acq = getAttributionSnapshot()
+      const intent = pendingRedirectIntent(next)
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmed,
         password,
         options: {
           emailRedirectTo: getAuthRedirectUrl(),
-          data: { ...(acq ? { acq } : {}) },
+          // The confirmation link may open in another browser (in-app → Safari),
+          // so the destination travels with the account, not only this tab.
+          data: { ...(acq ? { acq } : {}), ...(intent ? { [POST_AUTH_NEXT_KEY]: intent } : {}) },
         },
       })
       if (signUpError) {
