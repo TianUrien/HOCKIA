@@ -9020,6 +9020,7 @@ export type Database = {
         Args: { p_bucket: string; p_url: string }
         Returns: string
       }
+      facebook_login_enabled: { Args: never; Returns: boolean }
       fetch_club_opportunities_with_counts: {
         Args: {
           p_club_id: string

@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
 
 /**
@@ -128,10 +128,30 @@ export function hideNativeSplash(): void {
   // before the native layer above it goes away.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      void SplashScreen.hide({ fadeOutDuration: 0 }).catch(() => {
-        /* plugin missing or already hidden — nothing to recover */
-      })
+      void SplashScreen.hide({ fadeOutDuration: 0 })
+        .catch(() => {
+          /* plugin missing or already hidden — nothing to recover */
+        })
+        .finally(switchToLightNativeSurface)
     })
+  })
+}
+
+/**
+ * iOS: once the launch artwork is gone, the violet that sits under the web
+ * page (capacitor.config.ts backgroundColor, chosen so the hand-off never
+ * flashes white) has done its job — switch it to white, or it shows as a strip
+ * below pages that exactly fit the screen (the WKWebView's layout viewport is
+ * shorter than the screen with contentInset 'automatic'). Native side:
+ * ios/App/App/MainViewController.swift. Older store builds lack the plugin;
+ * the call then fails quietly.
+ */
+const AppSurface = registerPlugin<{ applyLightSurface(): Promise<void> }>('AppSurface')
+
+function switchToLightNativeSurface(): void {
+  if (Capacitor.getPlatform() !== 'ios') return
+  void AppSurface.applyLightSurface().catch(() => {
+    /* older build without the plugin */
   })
 }
 

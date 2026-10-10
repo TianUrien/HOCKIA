@@ -1,21 +1,17 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# HOCKIA release shrinking rules (R8). Capacitor core ships consumer rules that
+# keep every class extending com.getcapacitor.Plugin (our InstallReferrerPlugin
+# included) and their @PluginMethod methods; Sentry, Firebase Messaging and the
+# AndroidX libraries ship their own. These rules cover what is left.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# The WebView <-> native bridge is called from JavaScript by name.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Readable native stack traces (Sentry / Play Console): keep line numbers, hide
+# the original file names.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Annotations Capacitor reads at runtime to register plugins and permissions.
+-keepattributes *Annotation*

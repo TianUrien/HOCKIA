@@ -254,7 +254,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="post-role-screen">
+    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="post-role-screen">
       <header className="shrink-0">
         <div className="relative flex h-11 items-center justify-between px-4">
           <button type="button" onClick={back} className="flex h-11 items-center gap-0.5 text-body text-hockia-primary" aria-label={copy.back ? `Back to ${copy.back}` : 'Cancel'}>

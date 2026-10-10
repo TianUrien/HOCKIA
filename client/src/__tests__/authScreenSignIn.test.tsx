@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/oauthSignIn', () => ({ startOAuthSignIn: mocks.startOAuthSignIn }))
+vi.mock('@/hooks/useFacebookLoginEnabled', () => ({ useFacebookLoginEnabled: () => false }))
 vi.mock('@/lib/inAppBrowser', () => ({
   supportsReliableOAuth: () => true,
   supportsOAuthProvider: () => true,

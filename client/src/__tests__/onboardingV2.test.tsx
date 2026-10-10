@@ -85,6 +85,7 @@ vi.mock('@/lib/rateLimit', () => ({
   formatRateLimitError: () => 'limited',
 }))
 vi.mock('@/lib/oauthSignIn', () => ({ startOAuthSignIn: vi.fn(async () => undefined) }))
+vi.mock('@/hooks/useFacebookLoginEnabled', () => ({ useFacebookLoginEnabled: () => false }))
 vi.mock('@/lib/inAppBrowser', () => ({
   supportsReliableOAuth: () => true,
   supportsOAuthProvider: () => true,
