@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense, type CSSProperties } from 'react'
+import { dotWindow } from '@/lib/carouselDots'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -152,6 +153,35 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
   useBodyScrollLock(true)
 
   const hasMultiple = images.length > 1
+
+  // Carousel dots sit just under the current photo (Instagram-style), so
+  // their offset follows that photo's rendered height. Videos and anything
+  // without an image fall back to the bottom of the carousel.
+  const [dotsTop, setDotsTop] = useState<number | null>(null)
+  useEffect(() => {
+    if (!hasMultiple) return
+    const container = containerRef.current
+    const slide = trackRef.current?.children[currentIndex] as HTMLElement | undefined
+    const img = slide?.querySelector('img')
+    if (!container || !img) {
+      setDotsTop(null)
+      return
+    }
+    const measure = () => {
+      const box = container.getBoundingClientRect()
+      const rect = img.getBoundingClientRect()
+      if (rect.height === 0) return setDotsTop(null)
+      // 12 px under the photo, never below the carousel's own edge.
+      setDotsTop(Math.min(rect.bottom - box.top + 12, box.height - 18))
+    }
+    measure()
+    img.addEventListener('load', measure)
+    window.addEventListener('resize', measure)
+    return () => {
+      img.removeEventListener('load', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [currentIndex, hasMultiple, containerRef])
   const isFirst = currentIndex === 0
   const isLast = currentIndex === images.length - 1
 
@@ -216,7 +246,9 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
           {images.map((media, i) => (
             <div
               key={media.video_id ?? media.url}
-              className="relative w-full h-full flex-shrink-0 flex items-center justify-center overflow-hidden px-4"
+              // With several photos a 28 px strip stays free at the bottom so
+              // the dots never sit on top of a tall photo.
+              className={`relative w-full h-full flex-shrink-0 flex items-center justify-center overflow-hidden px-4 ${hasMultiple ? 'pb-7' : ''}`}
             >
               {(media.media_type ?? 'image') === 'video' ? (
                 media.video_id ? (
@@ -274,6 +306,13 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
           >
             <ChevronRight className="w-6 h-6" />
           </button>
+        )}
+        {hasMultiple && (
+          <CarouselDots
+            count={images.length}
+            index={currentIndex}
+            style={dotsTop === null ? { bottom: 12 } : { top: dotsTop }}
+          />
         )}
       </div>
 
@@ -334,6 +373,43 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
 }
 
 // ---------------------------------------------------------------------------
+// Carousel dots
+// ---------------------------------------------------------------------------
+// Instagram-style position dots under the photo: they tell the member there
+// is more to swipe. At most 5 show at once; with more photos the window
+// follows the current one and the outer dots shrink to hint "keep going".
+// Decorative (aria-hidden): the "2 of 19" counter in the top bar is the
+// accessible position.
+// ---------------------------------------------------------------------------
+
+function CarouselDots({ count, index, style }: { count: number; index: number; style: CSSProperties }) {
+  const { start, end } = dotWindow(count, index)
+  const dots = []
+  for (let i = start; i < end; i++) {
+    const edge = (i === start && start > 0) || (i === end - 1 && end < count)
+    dots.push(
+      <span
+        key={i}
+        data-active={i === index || undefined}
+        className={`rounded-full transition-all duration-200 motion-reduce:transition-none ${
+          edge ? 'h-1 w-1' : 'h-1.5 w-1.5'
+        } ${i === index ? 'bg-white' : 'bg-white/40'}`}
+      />,
+    )
+  }
+  return (
+    <div
+      aria-hidden="true"
+      data-testid="carousel-dots"
+      className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-center gap-1.5"
+      style={style}
+    >
+      {dots}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Lightbox Image Slide
 // ---------------------------------------------------------------------------
 // Renders the contained image with a LQIP blur-up: a tiny (~24px) cover-fit
@@ -367,7 +443,7 @@ function LightboxImageSlide({
       <img
         src={getImageUrl(media.url, 'lightbox') ?? undefined}
         alt={alt}
-        className={`relative max-w-full max-h-[85vh] object-contain select-none pointer-events-none transition-opacity duration-300 ${lqip && !loaded ? 'opacity-0' : 'opacity-100'}`}
+        className={`relative max-w-full max-h-full object-contain select-none pointer-events-none transition-opacity duration-300 ${lqip && !loaded ? 'opacity-0' : 'opacity-100'}`}
         draggable={false}
         loading={eager ? 'eager' : 'lazy'}
         decoding="async"
