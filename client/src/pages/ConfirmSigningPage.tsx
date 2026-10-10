@@ -64,7 +64,7 @@ export default function ConfirmSigningPage() {
   useDocumentTitle('Signing')
 
   const shell = (children: ReactNode) => (
-    <div className="flex min-h-[100dvh] flex-col bg-white pb-[max(env(safe-area-inset-bottom),1rem)] pt-[env(safe-area-inset-top)]">
+    <div className="flex min-h-app-screen flex-col bg-white pb-[max(env(safe-area-inset-bottom),1rem)] pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6">{children}</div>
     </div>
   )
