@@ -70,7 +70,6 @@ vi.mock('@/components/DateOfBirthPicker', () => ({ default: () => null }))
 vi.mock('@/components/profile/mobile/PlayerLeagueField', () => ({ PlayerLeagueField: () => <p>League</p> }))
 vi.mock('@/components/profile/mobile/LinkClubScreen', () => ({ default: () => <div>link club</div> }))
 vi.mock('@/components', () => ({
-  InAppBrowserWarning: () => null,
   Input: (p: Record<string, unknown>) => <input {...(p as object)} />,
   Button: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
   CountrySelect: () => null,

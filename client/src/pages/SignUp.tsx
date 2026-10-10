@@ -1,7 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { AuthHeading, AuthPage, FormError, TermsLine } from '@/components/auth/authUi'
 import { switchLink } from '@/components/auth/authClasses'
@@ -54,7 +53,6 @@ export default function SignUp() {
         </>
       }
     >
-      <InAppBrowserWarning context="signup" />
       <AuthHeading title="Your game. Your network." subtitle="Free for players, coaches, clubs, umpires and brands." />
       <div className="mt-6 flex flex-col gap-4">
         <FormError>{error}</FormError>

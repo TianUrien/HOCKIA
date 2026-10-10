@@ -16,7 +16,7 @@ import { App, type URLOpenListenerEvent } from '@capacitor/app'
 import { supabase } from './supabase'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
-import { scopesFor } from './oauthSignIn'
+import { scopesFor, type OAuthProvider } from './oauthSignIn'
 
 function breadcrumb(message: string, data?: Record<string, unknown>) {
   Sentry.addBreadcrumb({ category: 'auth.native_oauth', level: 'info', message, data })
@@ -41,10 +41,10 @@ let cancelInFlight: (() => void) | null = null
 /**
  * Start OAuth sign-in for native apps.
  *
- * @param provider - OAuth provider ('apple' | 'google')
+ * @param provider - OAuth provider ('apple' | 'google' | 'facebook')
  * @returns Promise that resolves when auth is complete, or rejects on error
  */
-export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promise<void> {
+export async function signInWithOAuthNative(provider: OAuthProvider): Promise<void> {
   if (!isNativePlatform()) {
     throw new Error('signInWithOAuthNative should only be called on native platforms')
   }

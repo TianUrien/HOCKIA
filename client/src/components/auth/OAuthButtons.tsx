@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { startOAuthSignIn, type OAuthProvider } from '@/lib/oauthSignIn'
-import { supportsReliableOAuth } from '@/lib/inAppBrowser'
+import { detectInAppBrowser, facebookLoginEnabled, supportsOAuthProvider } from '@/lib/inAppBrowser'
 import { stashRedirectIntent } from '@/lib/redirectIntent'
 import { trackLogin, trackSignUpStart } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { SocialButton } from '@/components/ui/SocialButton'
+import { ContinueInBrowser } from './ContinueInBrowser'
 
 /**
  * "Continue with Apple" / "Continue with Google" — the fast path on First run
@@ -17,9 +18,12 @@ import { SocialButton } from '@/components/ui/SocialButton'
  *
  * Funnel: sign-up fires `sign_up_start` (label = provider) at the tap, sign-in
  * fires `login` — the same semantic points as before.
+ *
+ * Inside Instagram / Facebook / other in-app browsers Google refuses to sign
+ * anyone in, so tapping Google there opens ContinueInBrowser (hand the page to
+ * Safari / Chrome) instead of a round-trip that ends on Google's "This browser
+ * or app may not be secure" page. Apple and email carry on in place.
  */
-const OAUTH_WARNING =
-  'This browser may not support Google or Apple sign-in. Please use email below, or open HOCKIA in Safari or Chrome.'
 
 interface OAuthButtonsProps {
   intent: 'signup' | 'signin'
@@ -32,14 +36,14 @@ interface OAuthButtonsProps {
 }
 
 export function OAuthButtons({ intent, next, onError, className, appearance = 'app' }: OAuthButtonsProps) {
-  const [warning, setWarning] = useState<string | null>(null)
+  const [handoff, setHandoff] = useState<{ browserName: string | null; provider: 'Google' | 'Facebook' } | null>(null)
 
   const start = (provider: OAuthProvider) => {
-    if (!supportsReliableOAuth()) {
-      setWarning(OAUTH_WARNING)
+    if (!supportsOAuthProvider(provider)) {
+      setHandoff({ browserName: detectInAppBrowser().browserName, provider: provider === 'facebook' ? 'Facebook' : 'Google' })
       return
     }
-    setWarning(null)
+    setHandoff(null)
     stashRedirectIntent(next)
     if (intent === 'signin') trackLogin(provider)
     else trackSignUpStart(provider)
@@ -60,11 +64,12 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       <SocialButton provider="google" appearance={appearance} onClick={() => start('google')}>
         Continue with Google
       </SocialButton>
-      {warning && (
-        <p className="rounded-[12px] bg-status-warning-soft px-3.5 py-2.5 text-secondary text-status-warning" role="alert">
-          {warning}
-        </p>
+      {facebookLoginEnabled() && (
+        <SocialButton provider="facebook" appearance={appearance} onClick={() => start('facebook')}>
+          Continue with Facebook
+        </SocialButton>
       )}
+      {handoff && <ContinueInBrowser browserName={handoff.browserName} providerLabel={handoff.provider} />}
     </div>
   )
 }

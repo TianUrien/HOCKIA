@@ -12,7 +12,7 @@ import { getAuthRedirectUrl } from './siteUrl'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
 
-export type OAuthProvider = 'apple' | 'google'
+export type OAuthProvider = 'apple' | 'google' | 'facebook'
 
 /**
  * Provider-specific OAuth scopes.
@@ -29,6 +29,8 @@ export type OAuthProvider = 'apple' | 'google'
  */
 export function scopesFor(provider: OAuthProvider): string | undefined {
   if (provider === 'apple') return 'name email'
+  // public_profile is implicit; email needs no Meta App Review.
+  if (provider === 'facebook') return 'email'
   return undefined
 }
 
