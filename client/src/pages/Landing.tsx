@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
-import { InAppBrowserWarning } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
 import StoreBadges from '@/components/StoreBadges'
 import { CrestStrip, RoleCard } from '@/components/landing/RoleCards'
@@ -443,7 +442,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white text-ink-1">
-      <InAppBrowserWarning context="login" />
       <LandingNav onCta={handleCta} />
 
       <main>

@@ -13,7 +13,8 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
-import { registerServiceWorker } from './lib/swUpdate'
+import { isSafeSilentUpdate, registerServiceWorker } from './lib/swUpdate'
+import { hasPersistedSession } from './lib/persistedSession'
 import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
@@ -21,9 +22,20 @@ import { initPostHog } from './lib/posthog'
 
 // Register the service worker (production builds only; the dev server has no
 // /sw.js). Prompt-based updates — the page never reloads on its own on the
-// web: a new version waits until the user taps Reload. See lib/swUpdate.ts.
+// web: a new version waits until the user taps Reload — except a signed-out
+// arrival on Home / Sign up / Log in with nothing typed. See lib/swUpdate.ts.
 if (import.meta.env.PROD) {
-  registerServiceWorker({ isNative: Capacitor.isNativePlatform(), showPrompt: showUpdatePrompt })
+  registerServiceWorker({
+    isNative: Capacitor.isNativePlatform(),
+    showPrompt: showUpdatePrompt,
+    canApplySilently: () =>
+      isSafeSilentUpdate({
+        signedIn: hasPersistedSession(),
+        path: window.location.pathname,
+        sinceLoadMs: performance.now(),
+        doc: document,
+      }),
+  })
 }
 
 const isNativePlatform = Capacitor.isNativePlatform()

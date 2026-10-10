@@ -39,7 +39,6 @@ vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('@/lib/analytics', () => ({ trackSignupCtaClick: vi.fn() }))
 vi.mock('@/lib/nativeUi', () => ({ setStatusBarForBackground: vi.fn() }))
 vi.mock('@/components', () => ({
-  InAppBrowserWarning: () => null,
   PublicNav: () => <nav data-testid="public-nav" />,
 }))
 vi.mock('@/components/HockiaSocials', () => ({ default: () => <div /> }))

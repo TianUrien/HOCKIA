@@ -1,15 +1,19 @@
 import { forwardRef } from 'react'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ComponentType } from 'react'
 import { cn } from '@/lib/utils'
+import facebookLogo from '@/assets/brand/facebook-logo-secondary.png'
 
 /**
  * Button / Social (Figma 535:8381): "Continue with Apple" / "Continue with
  * Google". Large 48, full width, radius 12, label 16 semibold. Apple is the
  * inverse surface with a white logo; Google is white with the default line
  * border and the four-colour logo. Apple sits first per HIG wherever both
- * appear (First run 104:2096, Log in 114:477).
+ * appear (First run 104:2096, Log in 114:477). Facebook (founder ruling
+ * 2026-10-10: third, everywhere; Figma Provider=Facebook 613:68, web
+ * "Social / Facebook" 153:455…470) follows Meta's brand rule — social-facebook fill,
+ * white "f" logo, "Continue with Facebook".
  */
-export type SocialProvider = 'apple' | 'google'
+export type SocialProvider = 'apple' | 'google' | 'facebook'
 
 export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   provider: SocialProvider
@@ -21,11 +25,13 @@ export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 const PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white active:opacity-90',
   google: 'bg-white text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted',
+  facebook: 'bg-social-facebook text-white active:bg-[#145DBF]',
 }
 
 const WEB_PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white hover:bg-[#26262e] active:opacity-90',
   google: 'border-[1.5px] border-line-strong bg-white text-ink-1 hover:bg-surface-subtle active:bg-surface-muted',
+  facebook: 'bg-social-facebook text-white hover:bg-[#166FE5] active:bg-[#145DBF]',
 }
 
 function AppleLogo() {
@@ -47,11 +53,22 @@ function GoogleLogo() {
   )
 }
 
+/** Meta's official Secondary logo (white, transparent "f") from the Facebook
+ *  Brand Asset Pack — the variant for a Facebook-blue surface. Meta's rules:
+ *  never recolour, outline, add effects or crop it; at least 16 px wide;
+ *  clear space ≥ ¼ of its width (the 10 px gap to the label covers it). */
+function FacebookLogo() {
+  return <img src={facebookLogo} alt="" aria-hidden="true" width={20} height={20} className="h-5 w-5" draggable={false} />
+}
+
+const LOGOS: Record<SocialProvider, ComponentType> = { apple: AppleLogo, google: GoogleLogo, facebook: FacebookLogo }
+
 export const SocialButton = forwardRef<HTMLButtonElement, SocialButtonProps>(function SocialButton(
   { provider, appearance = 'app', className, children, type = 'button', ...rest },
   ref,
 ) {
   const web = appearance === 'web'
+  const Logo = LOGOS[provider]
   return (
     <button
       ref={ref}
@@ -68,7 +85,7 @@ export const SocialButton = forwardRef<HTMLButtonElement, SocialButtonProps>(fun
       )}
       {...rest}
     >
-      {provider === 'apple' ? <AppleLogo /> : <GoogleLogo />}
+      <Logo />
       <span>{children}</span>
     </button>
   )

@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
-import { isSafeRedirectPath } from '@/lib/safeRedirect'
+import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
 
 /**
  * AuthCallback - Handles email verification redirect from Supabase
@@ -196,15 +196,10 @@ export default function AuthCallback() {
 
       // Honour redirect saved before OAuth (only for dashboard, not onboarding)
       if (destination === '/dashboard/profile') {
-        try {
-          // startsWith('/') alone lets through //evil.com and /\evil.com —
-          // use the shared same-origin guard instead.
-          const saved = sessionStorage.getItem('hockia-redirect-after-login')
-          if (saved && isSafeRedirectPath(saved)) {
-            destination = saved as typeof destination
-          }
-        } catch { /* noop */ }
-        try { sessionStorage.removeItem('hockia-redirect-after-login') } catch { /* noop */ }
+        // Same-origin guard + one-shot clear live in consumeRedirectIntent
+        // (this tab's stash, else the account's carried destination).
+        const saved = consumeCarriedRedirect(useAuthStore.getState().user)
+        if (saved) destination = saved as typeof destination
       }
 
       if (fallbackRef.current) {
@@ -464,15 +459,10 @@ export default function AuthCallback() {
           
           {/* Show in-app browser specific guidance */}
           {isInAppBrowserIssue && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
-              <p className="text-sm font-medium text-amber-800 mb-2">
-                💡 You're using {browserInfo.browserName}'s browser
-              </p>
-              <p className="text-sm text-amber-700 mb-2">
-                Email verification links often don't work properly in app browsers. Try this:
-              </p>
-              <p className="text-sm text-amber-700 bg-amber-100 rounded p-2">
-                {getExternalBrowserInstructions(browserInfo.browserName)}
+            <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left ring-1 ring-inset ring-gray-200">
+              <p className="mb-1 text-sm font-medium text-gray-900">Try it in your browser</p>
+              <p className="text-sm text-gray-600">
+                {getExternalBrowserInstructions(browserInfo.browserName)} Or use “Copy link” below and paste it into Safari or Chrome.
               </p>
             </div>
           )}
@@ -499,7 +489,7 @@ export default function AuthCallback() {
               }}
               className="w-full px-6 py-3 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
             >
-              Copy Verification Link
+              Copy link
             </button>
           </div>
         </div>
@@ -515,8 +505,8 @@ export default function AuthCallback() {
         
         {/* Show hint if in-app browser detected */}
         {browserInfo.isInAppBrowser && (
-          <p className="text-sm text-amber-600 mt-4 max-w-xs mx-auto">
-            If this takes too long, try opening HOCKIA in Safari or Chrome
+          <p className="text-sm text-gray-500 mt-4 max-w-xs mx-auto">
+            Taking a while? Try opening this page in Safari or Chrome.
           </p>
         )}
       </div>

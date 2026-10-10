@@ -17,8 +17,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
-import { InAppBrowserWarning } from '@/components'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
+import { detectInAppBrowser } from '@/lib/inAppBrowser'
 import { AuthHeading, AuthPage, FormError } from '@/components/auth/authUi'
 import { orDivider, switchLink, webFieldInput, webFieldLabel } from '@/components/auth/authClasses'
 import { webButtonClassName } from '@/components/ui/buttonClasses'
@@ -55,6 +55,7 @@ export default function AuthScreen() {
   const [error, setError] = useState<string | null>(null)
   const [userNotFound, setUserNotFound] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
+  const [inApp] = useState(() => detectInAppBrowser().isInAppBrowser)
   const [cooldown, setCooldown] = useState(0)
 
   useEffect(() => {
@@ -182,6 +183,11 @@ export default function AuthScreen() {
           <p className="mt-2 text-[15px] leading-[21px] text-ink-2">We sent a sign-in link to</p>
           <p className="mt-0.5 break-all text-[15px] font-semibold leading-[21px] text-ink-1">{sentTo}</p>
           <p className="mt-4 text-[13px] leading-[18px] text-ink-3">Tap the link in the email to continue. It expires in 1 hour.</p>
+          {/* Inside Instagram / Facebook the link opens in the phone's browser,
+              not back in this webview — the member is signed in there. */}
+          {inApp && (
+            <p className="mt-2 text-[13px] leading-[18px] text-ink-3">The link opens in your phone’s browser, and you’ll be signed in there.</p>
+          )}
           <div className="mt-4 w-full"><FormError>{error}</FormError></div>
           <div className="mt-6 flex items-center gap-4 text-[15px] leading-[21px]">
             <button type="button" onClick={handleResendLink} disabled={cooldown > 0 || loading} className="h-11 font-semibold text-brand-primary disabled:opacity-40">
@@ -199,7 +205,6 @@ export default function AuthScreen() {
 
   return (
     <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
-      <InAppBrowserWarning context="login" />
       <AuthHeading title="Welcome back" subtitle="Log in to your Hockia profile." />
 
       <div className="mt-6">

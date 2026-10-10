@@ -17,6 +17,7 @@ import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
 import { trackDbEvent, consumeWallIntent } from '@/lib/trackDbEvent'
+import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
 import { getAttributionState, submitSignupAttribution } from '@/lib/attribution'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
@@ -1050,7 +1051,9 @@ export default function CompleteProfile() {
       if (wallAction) {
         trackDbEvent('registration_from_wall', 'profile', user?.id, { action: wallAction, role: userRole })
       }
-      navigate('/dashboard/profile', { replace: true })
+      // A destination picked before sign-up (club invite, the role they
+      // tried to apply to) wins over the default landing.
+      navigate(consumeCarriedRedirect(user) ?? '/dashboard/profile', { replace: true })
 
     } catch (err) {
       captureOnboardingError(err, {
@@ -1153,7 +1156,7 @@ export default function CompleteProfile() {
       // already-onboarded redirect must not win the race.
       setupFinishedRef.current = true
       if (current) useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
-      navigate('/dashboard/profile', { replace: true })
+      navigate(consumeCarriedRedirect(user) ?? '/dashboard/profile', { replace: true })
       void invalidateProfile({ userId: user.id, reason: 'player-setup-complete' })
     }
     return (
@@ -1178,7 +1181,7 @@ export default function CompleteProfile() {
       // Same race guard as the player / club set-ups.
       setupFinishedRef.current = true
       if (current) useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
-      navigate('/dashboard/profile', { replace: true })
+      navigate(consumeCarriedRedirect(user) ?? '/dashboard/profile', { replace: true })
       void invalidateProfile({ userId: user.id, reason: 'coach-setup-complete' })
     }
     return (
@@ -1204,7 +1207,7 @@ export default function CompleteProfile() {
       // /dashboard/profile. Then refetch for real.
       setupFinishedRef.current = true
       useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
-      navigate('/opportunities', { replace: true })
+      navigate(consumeCarriedRedirect(user) ?? '/opportunities', { replace: true })
       void invalidateProfile({ userId: user.id, reason: 'club-setup-complete' })
     }
     return (
