@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils'
  * inverse surface with a white logo; Google is white with the default line
  * border and the four-colour logo. Apple sits first per HIG wherever both
  * appear (First run 104:2096, Log in 114:477). Facebook (founder ruling
- * 2026-10-10: third, everywhere) follows Meta's brand rule — #1877F2 fill,
+ * 2026-10-10: third, everywhere; Figma Provider=Facebook 613:68, web
+ * "Social / Facebook" 153:455…470) follows Meta's brand rule — social-facebook fill,
  * white "f" logo, "Continue with Facebook".
  */
 export type SocialProvider = 'apple' | 'google' | 'facebook'
@@ -23,13 +24,13 @@ export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 const PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white active:opacity-90',
   google: 'bg-white text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted',
-  facebook: 'bg-[#1877F2] text-white active:bg-[#145DBF]',
+  facebook: 'bg-social-facebook text-white active:bg-[#145DBF]',
 }
 
 const WEB_PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white hover:bg-[#26262e] active:opacity-90',
   google: 'border-[1.5px] border-line-strong bg-white text-ink-1 hover:bg-surface-subtle active:bg-surface-muted',
-  facebook: 'bg-[#1877F2] text-white hover:bg-[#166FE5] active:bg-[#145DBF]',
+  facebook: 'bg-social-facebook text-white hover:bg-[#166FE5] active:bg-[#145DBF]',
 }
 
 function AppleLogo() {

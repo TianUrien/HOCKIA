@@ -6,6 +6,7 @@ import { getExternalBrowserInstructions, handoffHref, inAppPlatform, openInExter
 import { cn } from '@/lib/utils'
 
 /**
+ * Figma: "Sign up v3 · Mobile · In-app browser (Google tapped)" 153:475, card 153:510.
  * Shown in place of a failing Google round-trip when the page is open inside
  * Instagram, Facebook or another app's built-in browser (Google refuses
  * embedded webviews). Calm and compact on purpose: it appears only after the
