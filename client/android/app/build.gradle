@@ -41,8 +41,14 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 shrinking + obfuscation (Google Play requirement from Feb 2027;
+            // founder go 2026-10-10). Capacitor's consumer rules keep every
+            // plugin; proguard-rules.pro keeps the web bridge and line numbers.
+            // The AAB carries the mapping file, so Play Console deobfuscates
+            // native crash reports itself.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
