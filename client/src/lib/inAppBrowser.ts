@@ -136,10 +136,27 @@ export function supportsReliableOAuth(): boolean {
  * the member just types the Apple Account password because Face ID / the
  * keychain are not available there. Email works everywhere: the client uses
  * the implicit flow, so confirmation links open in any browser.
+ *
+ * Facebook Login is Meta's own: inside Meta's in-app browsers (Instagram,
+ * Facebook, Messenger, WhatsApp) the member is usually already signed in to
+ * Facebook, so it finishes in place. Meta stopped supporting Facebook Login
+ * in other apps' embedded webviews (Oct 2021), so TikTok, LinkedIn… hand off.
  */
-export function supportsOAuthProvider(provider: 'apple' | 'google'): boolean {
+const META_IN_APP = /^(Instagram|Facebook|WhatsApp)$/
+
+export function supportsOAuthProvider(provider: 'apple' | 'google' | 'facebook'): boolean {
   if (provider === 'apple') return true
+  if (provider === 'facebook') {
+    const info = detectInAppBrowser()
+    return !info.isInAppBrowser || META_IN_APP.test(info.browserName ?? '')
+  }
   return supportsReliableOAuth()
+}
+
+/** Facebook Login switch — on only once the Meta app and the Supabase
+ *  provider are configured for this environment. */
+export function facebookLoginEnabled(): boolean {
+  return (import.meta.env.VITE_ENABLE_FACEBOOK_LOGIN ?? '').toString().toLowerCase() === 'true'
 }
 
 export type InAppPlatform = 'ios' | 'android' | 'other'

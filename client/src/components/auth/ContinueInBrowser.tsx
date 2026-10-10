@@ -23,15 +23,17 @@ import { cn } from '@/lib/utils'
  */
 interface ContinueInBrowserProps {
   browserName: string | null
+  /** The sign-in that has to happen in the system browser. */
+  providerLabel?: 'Google' | 'Facebook'
   className?: string
 }
 
-export function ContinueInBrowser({ browserName, className }: ContinueInBrowserProps) {
+export function ContinueInBrowser({ browserName, providerLabel = 'Google', className }: ContinueInBrowserProps) {
   const [copied, setCopied] = useState(false)
   const platform = inAppPlatform()
   const appName = browserName && !/webview/i.test(browserName) ? browserName : 'This app'
   const browser = platform === 'ios' ? 'Safari' : platform === 'android' ? 'Chrome' : 'your browser'
-  const label = (method: string) => `${browserName ?? 'unknown'}:${platform}:${method}`
+  const label = (method: string) => `${browserName ?? 'unknown'}:${platform}:${providerLabel.toLowerCase()}:${method}`
 
   const open = () => {
     trackEvent({ action: 'inapp_browser_handoff', category: 'auth', label: label('open') })
@@ -65,10 +67,10 @@ export function ContinueInBrowser({ browserName, className }: ContinueInBrowserP
           <Globe className="h-4 w-4" strokeWidth={2} />
         </span>
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-5 text-ink-1">Continue with Google in {browser}</p>
+          <p className="text-[15px] font-semibold leading-5 text-ink-1">Continue with {providerLabel} in {browser}</p>
           <p className="mt-1 text-[14px] leading-5 text-ink-2">
-            {appName} doesn’t allow Google sign-in inside the app. Open this page in {browser} and you’ll pick up right
-            here. Apple and email work here too.
+            {appName} doesn’t allow {providerLabel} sign-in inside the app. Open this page in {browser} and you’ll pick
+            up right here. Apple and email work here too.
           </p>
         </div>
       </div>

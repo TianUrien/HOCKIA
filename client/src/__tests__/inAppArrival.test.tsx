@@ -128,6 +128,45 @@ describe('providers inside Meta in-app browsers', () => {
   })
 })
 
+describe('Facebook Login (behind VITE_ENABLE_FACEBOOK_LOGIN)', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('is hidden while the switch is off', () => {
+    vi.stubEnv('VITE_ENABLE_FACEBOOK_LOGIN', '')
+    setUa(UA.safariIos)
+    render(<OAuthButtons intent="signup" onError={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: /continue with facebook/i })).toBeNull()
+  })
+
+  it('is the third button, after Apple and Google, when on', () => {
+    vi.stubEnv('VITE_ENABLE_FACEBOOK_LOGIN', 'true')
+    setUa(UA.safariIos)
+    render(<OAuthButtons intent="signup" onError={vi.fn()} />)
+    const labels = screen.getAllByRole('button').map((b) => b.textContent)
+    expect(labels).toEqual(['Continue with Apple', 'Continue with Google', 'Continue with Facebook'])
+    fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }))
+    expect(mocks.startOAuthSignIn).toHaveBeenCalledWith('facebook')
+  })
+
+  it.each(['instagramIos', 'facebookAndroid'] as const)('finishes in place inside %s', (key) => {
+    vi.stubEnv('VITE_ENABLE_FACEBOOK_LOGIN', 'true')
+    setUa(UA[key])
+    expect(supportsOAuthProvider('facebook')).toBe(true)
+    render(<OAuthButtons intent="signin" onError={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }))
+    expect(mocks.startOAuthSignIn).toHaveBeenCalledWith('facebook')
+  })
+
+  it('hands off inside a non-Meta in-app browser', () => {
+    vi.stubEnv('VITE_ENABLE_FACEBOOK_LOGIN', 'true')
+    setUa(UA.instagramIos.replace('Instagram 389.0.0.29.87', 'TikTok 37.0.0'))
+    render(<OAuthButtons intent="signin" onError={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }))
+    expect(mocks.startOAuthSignIn).not.toHaveBeenCalled()
+    expect(screen.getByText('Continue with Facebook in Safari')).toBeInTheDocument()
+  })
+})
+
 describe('hand-off URL', () => {
   it('keeps the path and ?next=, drops the fragment', () => {
     expect(handoffHref({ href: 'https://inhockia.com/signup?next=%2Fopportunities%2Fabc#x' })).toBe(

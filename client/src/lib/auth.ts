@@ -671,8 +671,8 @@ export const initializeAuth = () => {
 
     if (event === 'SIGNED_IN' && session?.user) {
       const provider = session.user.app_metadata?.provider
-      const method: 'google' | 'apple' | 'email' =
-        provider === 'google' ? 'google' : provider === 'apple' ? 'apple' : 'email'
+      const method: 'google' | 'apple' | 'facebook' | 'email' =
+        provider === 'google' || provider === 'apple' || provider === 'facebook' ? provider : 'email'
       Sentry.setTag('auth_method', method)
       Sentry.addBreadcrumb({
         category: 'auth',

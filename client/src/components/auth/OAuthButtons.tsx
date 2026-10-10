@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { startOAuthSignIn, type OAuthProvider } from '@/lib/oauthSignIn'
-import { detectInAppBrowser, supportsOAuthProvider } from '@/lib/inAppBrowser'
+import { detectInAppBrowser, facebookLoginEnabled, supportsOAuthProvider } from '@/lib/inAppBrowser'
 import { stashRedirectIntent } from '@/lib/redirectIntent'
 import { trackLogin, trackSignUpStart } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
@@ -36,14 +36,14 @@ interface OAuthButtonsProps {
 }
 
 export function OAuthButtons({ intent, next, onError, className, appearance = 'app' }: OAuthButtonsProps) {
-  const [handoff, setHandoff] = useState<string | null | false>(false)
+  const [handoff, setHandoff] = useState<{ browserName: string | null; provider: 'Google' | 'Facebook' } | null>(null)
 
   const start = (provider: OAuthProvider) => {
     if (!supportsOAuthProvider(provider)) {
-      setHandoff(detectInAppBrowser().browserName)
+      setHandoff({ browserName: detectInAppBrowser().browserName, provider: provider === 'facebook' ? 'Facebook' : 'Google' })
       return
     }
-    setHandoff(false)
+    setHandoff(null)
     stashRedirectIntent(next)
     if (intent === 'signin') trackLogin(provider)
     else trackSignUpStart(provider)
@@ -64,7 +64,12 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       <SocialButton provider="google" appearance={appearance} onClick={() => start('google')}>
         Continue with Google
       </SocialButton>
-      {handoff !== false && <ContinueInBrowser browserName={handoff} />}
+      {facebookLoginEnabled() && (
+        <SocialButton provider="facebook" appearance={appearance} onClick={() => start('facebook')}>
+          Continue with Facebook
+        </SocialButton>
+      )}
+      {handoff && <ContinueInBrowser browserName={handoff.browserName} providerLabel={handoff.provider} />}
     </div>
   )
 }

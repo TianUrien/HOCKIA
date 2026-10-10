@@ -88,6 +88,7 @@ vi.mock('@/lib/oauthSignIn', () => ({ startOAuthSignIn: vi.fn(async () => undefi
 vi.mock('@/lib/inAppBrowser', () => ({
   supportsReliableOAuth: () => true,
   supportsOAuthProvider: () => true,
+  facebookLoginEnabled: () => false,
   detectInAppBrowser: () => ({ isInAppBrowser: false, browserName: null }),
 }))
 vi.mock('@/lib/siteUrl', () => ({ getAuthRedirectUrl: () => 'http://localhost/auth/callback' }))

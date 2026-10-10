@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ComponentType } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -7,9 +7,11 @@ import { cn } from '@/lib/utils'
  * Google". Large 48, full width, radius 12, label 16 semibold. Apple is the
  * inverse surface with a white logo; Google is white with the default line
  * border and the four-colour logo. Apple sits first per HIG wherever both
- * appear (First run 104:2096, Log in 114:477).
+ * appear (First run 104:2096, Log in 114:477). Facebook (founder ruling
+ * 2026-10-10: third, everywhere) follows Meta's brand rule — #1877F2 fill,
+ * white "f" logo, "Continue with Facebook".
  */
-export type SocialProvider = 'apple' | 'google'
+export type SocialProvider = 'apple' | 'google' | 'facebook'
 
 export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   provider: SocialProvider
@@ -21,11 +23,13 @@ export interface SocialButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 const PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white active:opacity-90',
   google: 'bg-white text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted',
+  facebook: 'bg-[#1877F2] text-white active:bg-[#145DBF]',
 }
 
 const WEB_PROVIDER_STYLES: Record<SocialProvider, string> = {
   apple: 'bg-surface-inverse text-white hover:bg-[#26262e] active:opacity-90',
   google: 'border-[1.5px] border-line-strong bg-white text-ink-1 hover:bg-surface-subtle active:bg-surface-muted',
+  facebook: 'bg-[#1877F2] text-white hover:bg-[#166FE5] active:bg-[#145DBF]',
 }
 
 function AppleLogo() {
@@ -47,11 +51,22 @@ function GoogleLogo() {
   )
 }
 
+function FacebookLogo() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z" />
+    </svg>
+  )
+}
+
+const LOGOS: Record<SocialProvider, ComponentType> = { apple: AppleLogo, google: GoogleLogo, facebook: FacebookLogo }
+
 export const SocialButton = forwardRef<HTMLButtonElement, SocialButtonProps>(function SocialButton(
   { provider, appearance = 'app', className, children, type = 'button', ...rest },
   ref,
 ) {
   const web = appearance === 'web'
+  const Logo = LOGOS[provider]
   return (
     <button
       ref={ref}
@@ -68,7 +83,7 @@ export const SocialButton = forwardRef<HTMLButtonElement, SocialButtonProps>(fun
       )}
       {...rest}
     >
-      {provider === 'apple' ? <AppleLogo /> : <GoogleLogo />}
+      <Logo />
       <span>{children}</span>
     </button>
   )
