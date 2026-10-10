@@ -186,6 +186,9 @@ describe('Landing v3 — nav', () => {
     expect(nav.className).toMatch(/\bfixed\b/)
     expect(nav).toHaveAttribute('data-state', 'top')
     expect(bar.className).toMatch(/bg-transparent/)
+    // Solid white behind the top bar so it never floats over an in-app
+    // browser's pull-to-refresh gap.
+    expect(nav.className).toMatch(/\bbg-white\b/)
     expect(bar.className).toMatch(/max-w-\[1280px\]/)
     // The phone capsule's "Create a profile" is hidden at the top.
     expect(within(nav).getByRole('link', { name: 'Create a profile' }).className).toMatch(/\bhidden\b/)
@@ -200,6 +203,7 @@ describe('Landing v3 — nav', () => {
     expect(nav).toHaveAttribute('data-state', 'scrolled')
     expect(bar.className).toMatch(/max-w-\[1040px\]/)
     expect(bar.className).toMatch(/backdrop-blur-\[20px\]/)
+    expect(nav.className).toMatch(/\bbg-transparent\b/)
     expect(bar.className).toMatch(/bg-white\/\[0\.72\]/)
     expect(bar.className).toMatch(/border-line\b/)
     expect(bar.className).toMatch(/motion-reduce:transition-none/)
