@@ -153,8 +153,8 @@ export function supportsOAuthProvider(provider: 'apple' | 'google' | 'facebook')
   return supportsReliableOAuth()
 }
 
-/** Facebook Login switch — on only once the Meta app and the Supabase
- *  provider are configured for this environment. */
+/** Build-time half of the Facebook Login switch (VITE_ENABLE_FACEBOOK_LOGIN,
+ *  used by staging). The runtime half is useFacebookLoginEnabled. */
 export function facebookLoginEnabled(): boolean {
   return (import.meta.env.VITE_ENABLE_FACEBOOK_LOGIN ?? '').toString().toLowerCase() === 'true'
 }
