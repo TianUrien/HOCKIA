@@ -42,7 +42,6 @@ vi.mock('@/lib/logger', () => ({ logger: { debug: vi.fn(), error: vi.fn() } }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('@/lib/analytics', () => ({ trackSignupCtaClick: vi.fn(), trackCtaClick: vi.fn() }))
 vi.mock('@/lib/nativeUi', () => ({ setStatusBarForBackground: vi.fn() }))
-vi.mock('@/components', () => ({ InAppBrowserWarning: () => null }))
 
 const NOW = new Date('2026-10-06T12:00:00Z')
 

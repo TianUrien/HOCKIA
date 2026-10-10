@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Mail } from 'lucide-react'
 import ResendVerificationButton from '@/components/ResendVerificationButton'
-import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
+import { detectInAppBrowser } from '@/lib/inAppBrowser'
 
 /**
  * VerifyEmail - Handles all email verification states
@@ -128,17 +128,15 @@ export default function VerifyEmail() {
               Click the link in the email to verify your account and complete your profile.
             </p>
             
-            {/* In-app browser warning */}
+            {/* In-app browser (Instagram, Facebook…): the email link opens in the
+                phone's own browser, not back here. That is fine — the client
+                uses the implicit flow, so the link signs the member in wherever
+                it opens. Say so calmly instead of warning. */}
             {browserInfo.isInAppBrowser && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 text-left">
-                <p className="text-sm font-medium text-amber-800 mb-2">
-                  ⚠️ Important: You're using {browserInfo.browserName}'s browser
-                </p>
-                <p className="text-sm text-amber-700 mb-2">
-                  When you click the verification link in your email, make sure to open it in Safari or Chrome for it to work properly.
-                </p>
-                <p className="text-sm text-amber-700 bg-amber-100 rounded p-2">
-                  💡 {getExternalBrowserInstructions(browserInfo.browserName)}
+              <div className="mb-4 rounded-xl bg-gray-50 p-4 text-left ring-1 ring-inset ring-gray-200">
+                <p className="text-sm font-medium text-gray-900">The link may open in Safari or Chrome</p>
+                <p className="mt-1 text-sm text-gray-600">
+                  That’s expected: you’ll be signed in there and can carry on. Prefer to stay here? After confirming, come back and log in with your email and password.
                 </p>
               </div>
             )}

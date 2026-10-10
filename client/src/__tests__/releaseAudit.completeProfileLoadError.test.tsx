@@ -74,7 +74,6 @@ vi.mock('@/components/onboarding/PlayerSetupFlow', () => ({ default: () => <div 
 vi.mock('@/components/onboarding/CoachSetupFlow', () => ({ default: () => <div data-testid="coach-setup">COACH SET-UP</div> }))
 vi.mock('@/components/club/ClubSetupFlow', () => ({ default: () => <div data-testid="club-setup">CLUB SET-UP</div> }))
 vi.mock('@/components', () => ({
-  InAppBrowserWarning: () => null,
   Input: (p: Record<string, unknown>) => <input {...(p as object)} />,
   Button: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
   CountrySelect: () => null,

@@ -87,6 +87,7 @@ vi.mock('@/lib/rateLimit', () => ({
 vi.mock('@/lib/oauthSignIn', () => ({ startOAuthSignIn: vi.fn(async () => undefined) }))
 vi.mock('@/lib/inAppBrowser', () => ({
   supportsReliableOAuth: () => true,
+  supportsOAuthProvider: () => true,
   detectInAppBrowser: () => ({ isInAppBrowser: false, browserName: null }),
 }))
 vi.mock('@/lib/siteUrl', () => ({ getAuthRedirectUrl: () => 'http://localhost/auth/callback' }))
@@ -117,7 +118,6 @@ vi.mock('@/components/profile/mobile/PlayerLeagueField', () => ({
   PlayerLeagueField: () => <p>League</p>,
 }))
 vi.mock('@/components', () => ({
-  InAppBrowserWarning: () => null,
   Input: (p: Record<string, unknown>) => <input {...(p as object)} />,
   Button: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
   CountrySelect: () => null,
