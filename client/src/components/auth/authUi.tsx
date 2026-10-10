@@ -30,7 +30,7 @@ interface AuthShellProps {
 
 export function AuthShell({ children, back, title, trailing, step, className }: AuthShellProps) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),16px)]">
+    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),16px)]">
       {(back || title || trailing) && (
         <div className="relative mx-auto flex h-11 w-full max-w-md items-center justify-between px-2">
           {back ? (
@@ -100,7 +100,7 @@ interface AuthPageProps {
 
 export function AuthPage({ children, switchLine, onBack, backLabel = 'Back', className }: AuthPageProps) {
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] md:bg-surface-subtle">
+    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] md:bg-surface-subtle">
       {/* Phone top bar (56) */}
       <div className="relative flex h-14 shrink-0 items-center px-2 md:hidden">
         {onBack ? (

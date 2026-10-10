@@ -131,7 +131,7 @@ export default function RolePostedScreen({ roleId }: Props) {
   const copy = rolePostedCopy(role)
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="role-posted-screen">
+    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="role-posted-screen">
       <div className="flex h-11 shrink-0 items-center justify-end pr-2">
         <IconButton label="Close" onClick={done}>
           <X className="h-6 w-6" strokeWidth={2} />

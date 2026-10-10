@@ -13,9 +13,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  */
 const m = vi.hoisted(() => ({
   native: true,
+  platform: 'ios' as 'ios' | 'android' | 'web',
   hide: vi.fn(() => Promise.resolve()),
+  lightSurface: vi.fn(() => Promise.resolve()),
 }))
-vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => m.native } }))
+vi.mock('@capacitor/core', () => ({
+  Capacitor: { isNativePlatform: () => m.native, getPlatform: () => m.platform },
+  registerPlugin: () => ({ applyLightSurface: m.lightSurface }),
+}))
 vi.mock('@capacitor/splash-screen', () => ({ SplashScreen: { hide: m.hide } }))
 
 import { hideNativeSplash, armLaunchSplashFailsafe, warmLaunchArtwork, LAUNCH_ARTWORK_URL, LAUNCH_CANVAS_COLOR, paintBootLaunchCanvas, __resetLaunchSplashForTests } from '@/lib/launchSplash'
@@ -28,7 +33,9 @@ describe('launch splash hand-off', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame'] })
     m.native = true
+    m.platform = 'ios'
     m.hide.mockClear()
+    m.lightSurface.mockClear()
     __resetLaunchSplashForTests()
   })
   afterEach(() => { vi.useRealTimers() })
@@ -41,6 +48,19 @@ describe('launch splash hand-off', () => {
     flushFrames()
     expect(m.hide).toHaveBeenCalledTimes(1)
     expect(m.hide).toHaveBeenCalledWith({ fadeOutDuration: 0 })
+  })
+
+  it('iOS: once the splash is gone, the violet under the page turns white', async () => {
+    hideNativeSplash(); flushFrames()
+    await act(async () => { await Promise.resolve(); await Promise.resolve() })
+    expect(m.lightSurface).toHaveBeenCalledTimes(1)
+  })
+
+  it('Android keeps its surface (no plugin call)', async () => {
+    m.platform = 'android'
+    hideNativeSplash(); flushFrames()
+    await act(async () => { await Promise.resolve(); await Promise.resolve() })
+    expect(m.lightSurface).not.toHaveBeenCalled()
   })
 
   it('is a no-op on the web', () => {

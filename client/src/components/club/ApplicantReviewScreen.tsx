@@ -357,7 +357,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     : null
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
+    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
       <DetailNavBar
         parent="Applicants"
         title={scrolled && p?.full_name ? p.full_name : undefined}
