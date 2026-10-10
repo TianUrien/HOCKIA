@@ -8,8 +8,10 @@ import { PostComposerModal } from '@/components/home/PostComposerModal'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { SmoothImage } from '@/components/ui/SmoothImage'
+import ProfileCover from '@/components/profile/ProfileCover'
 import { PostTile } from './ProfileLongScroll'
 import { useClubProfileScrollData, type ClubOpenRole } from '@/hooks/useClubProfileScrollData'
+import { useClubMedia } from '@/hooks/useClubMedia'
 import { useCountries } from '@/hooks/useCountries'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useAuthStore } from '@/lib/auth'
@@ -133,6 +135,9 @@ export default function ClubProfileScreen({
   const owner = !readOnly
   const isVisitorView = readOnly && !isOwnProfile
   const data = useClubProfileScrollData(profile.id, profile.current_world_club_id ?? null, owner)
+  // Owner only: the same club-media pipeline as Manage media — the new photo
+  // goes first, which makes it the cover.
+  const media = useClubMedia(owner ? profile.id : null)
   const friendship = useFriendship(profile.id)
   const { countries } = useCountries()
   const [tab, setTab] = useState<Tab>('about')
@@ -162,6 +167,12 @@ export default function ClubProfileScreen({
   const hasCover = data.photos.length > 0
   const glass = hasCover ? 'bg-black/40 text-white' : 'bg-white/90 text-ink-1 shadow-sm'
   const GLASS = `flex h-9 w-9 items-center justify-center rounded-full backdrop-blur ${glass}`
+
+  const uploadCover = async (file: File): Promise<boolean> => {
+    const { added } = await media.add([file])
+    if (added > 0) { data.refresh(); setCoverIndex(0) }
+    return added > 0
+  }
 
   const share = async () => {
     const url = publicProfileShareUrl(profile.role, profile.id, profile.username)
@@ -213,47 +224,60 @@ export default function ClubProfileScreen({
 
   return (
     <section data-testid="club-profile-screen" className="bg-white">
-      {/* Cover — the club's photos, swipeable, with the page dots */}
-      <div className="relative h-[220px] w-full overflow-hidden bg-gradient-to-b from-hockia-soft to-white">
-        {hasCover && (
-          <div
-            className="flex h-full w-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            onScroll={(e) => setCoverIndex(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}
-          >
-            {data.photos.map((p, i) => (
-              <div key={p.id} className="h-full w-full shrink-0 snap-start">
-                <SmoothImage src={getImageUrl(p.url, 'lightbox') ?? p.url} alt={p.caption ?? ''} eager={i === 0} priority={i === 0} className="object-cover" />
+      {/* Cover — the club's photos, swipeable, with the page dots. Empty:
+          owner gets the "Add a cover photo" state, visitors a default cover. */}
+      <ProfileCover
+        owner={owner}
+        role="club"
+        hasCover={hasCover}
+        coverKey={data.photos[0]?.url ?? null}
+        heightClassName="h-[220px]"
+        avatarOverlap={44}
+        onUpload={owner ? uploadCover : undefined}
+        overlays={(
+          <>
+            {hasCover && <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/15" aria-hidden="true" />}
+            {data.photos.length > 1 && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center gap-1" aria-hidden="true">
+                {data.photos.map((p, i) => <span key={p.id} className={cn('h-1.5 w-1.5 rounded-full', i === coverIndex ? 'bg-white' : 'bg-white/45')} />)}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
-        {hasCover && <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/15" aria-hidden="true" />}
-        {data.photos.length > 1 && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-2.5 flex justify-center gap-1" aria-hidden="true">
-            {data.photos.map((p, i) => <span key={p.id} className={cn('h-1.5 w-1.5 rounded-full', i === coverIndex ? 'bg-white' : 'bg-white/45')} />)}
-          </div>
-        )}
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)]">
-          {owner ? <span /> : (
-            <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))} aria-label="Back" className={GLASS}>
-              <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} />
-            </button>
-          )}
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
-              <Share className="h-[20px] w-[20px]" strokeWidth={1.6} />
-            </button>
-            {owner && (
-              <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className={GLASS}>
-                <Settings className="h-[20px] w-[20px]" strokeWidth={1.6} />
+        topBar={(
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)]">
+            {owner ? <span /> : (
+              <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))} aria-label="Back" className={GLASS}>
+                <ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} />
               </button>
             )}
-            {isVisitorView && (
-              <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} triggerClassName={GLASS} iconClassName="h-[20px] w-[20px]" />
-            )}
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
+                <Share className="h-[20px] w-[20px]" strokeWidth={1.6} />
+              </button>
+              {owner && (
+                <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className={GLASS}>
+                  <Settings className="h-[20px] w-[20px]" strokeWidth={1.6} />
+                </button>
+              )}
+              {isVisitorView && (
+                <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} triggerClassName={GLASS} iconClassName="h-[20px] w-[20px]" />
+              )}
+            </div>
           </div>
+        )}
+      >
+        <div
+          className="flex h-full w-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={(e) => setCoverIndex(Math.round(e.currentTarget.scrollLeft / Math.max(1, e.currentTarget.clientWidth)))}
+        >
+          {data.photos.map((p, i) => (
+            <div key={p.id} className="h-full w-full shrink-0 snap-start">
+              <SmoothImage src={getImageUrl(p.url, 'lightbox') ?? p.url} alt={p.caption ?? ''} eager={i === 0} priority={i === 0} className="object-cover" />
+            </div>
+          ))}
         </div>
-      </div>
+      </ProfileCover>
 
       {/* Identity */}
       <div className="px-5 pb-4">
