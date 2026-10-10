@@ -141,8 +141,12 @@ export function LandingNav({ onCta }: { onCta: (cta: 'create_profile', place: st
     <nav
       aria-label="Primary"
       data-state={scrolled ? 'scrolled' : 'top'}
-      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[padding] duration-[240ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none ${
-        scrolled ? 'px-3 pt-[calc(env(safe-area-inset-top)+12px)] lg:px-0' : 'px-0'
+      // At the top the bar is solid white (the hero is white, so it reads the
+      // same): when someone pulls down inside Instagram / Facebook's browser,
+      // the page rubber-bands and a see-through bar would float over the
+      // app's own content behind it. Scrolled, only the pill is drawn.
+      className={`fixed inset-x-0 top-0 z-40 pt-[env(safe-area-inset-top)] transition-[padding,background-color] duration-[240ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none ${
+        scrolled ? 'bg-transparent px-3 pt-[calc(env(safe-area-inset-top)+12px)] lg:px-0' : 'bg-white px-0'
       }`}
     >
       <div
