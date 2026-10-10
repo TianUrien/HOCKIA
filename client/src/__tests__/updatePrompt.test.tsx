@@ -9,7 +9,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 
 import UpdatePrompt from '@/components/UpdatePrompt'
-import { registerServiceWorker, type WorkboxLike } from '@/lib/swUpdate'
+import { isSafeSilentUpdate, registerServiceWorker, type WorkboxLike } from '@/lib/swUpdate'
 
 describe('UpdatePrompt', () => {
   it('shows the neutral message with Reload and Dismiss', () => {
@@ -112,5 +112,42 @@ describe('service-worker update flow (web)', () => {
     const wb = fakeWorkbox()
     registerServiceWorker({ isNative: false, showPrompt: vi.fn(), createWorkbox: () => wb })
     expect(wb.register).toHaveBeenCalledWith({ immediate: true })
+  })
+})
+
+describe('silent update for a signed-out arrival (founder ruling 2026-10-10)', () => {
+  it('applies a waiting version without the prompt when it is safe', () => {
+    const wb = fakeWorkbox()
+    const reload = vi.fn()
+    const showPrompt = vi.fn()
+    registerServiceWorker({ isNative: false, showPrompt, reload, createWorkbox: () => wb, canApplySilently: () => true })
+    wb.fire('waiting')
+    expect(showPrompt).not.toHaveBeenCalled()
+    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1)
+    wb.fire('controlling', { isUpdate: true })
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  const base = { signedIn: false, path: '/', sinceLoadMs: 1500 }
+  it('is safe only signed out, on Home / Sign up / Log in, right after arrival', () => {
+    document.body.innerHTML = ''
+    expect(isSafeSilentUpdate({ ...base, doc: document })).toBe(true)
+    expect(isSafeSilentUpdate({ ...base, path: '/signin', doc: document })).toBe(true)
+    expect(isSafeSilentUpdate({ ...base, signedIn: true, doc: document })).toBe(false)
+    expect(isSafeSilentUpdate({ ...base, path: '/signup/email', doc: document })).toBe(false)
+    expect(isSafeSilentUpdate({ ...base, path: '/dashboard/profile', doc: document })).toBe(false)
+    expect(isSafeSilentUpdate({ ...base, sinceLoadMs: 30_000, doc: document })).toBe(false)
+  })
+
+  it('is never safe once something has been typed or a field is focused', () => {
+    document.body.innerHTML = '<input type="email" />'
+    const input = document.querySelector('input') as HTMLInputElement
+    expect(isSafeSilentUpdate({ ...base, path: '/signin', doc: document })).toBe(true)
+    input.value = 'me@'
+    expect(isSafeSilentUpdate({ ...base, path: '/signin', doc: document })).toBe(false)
+    input.value = ''
+    input.focus()
+    expect(isSafeSilentUpdate({ ...base, path: '/signin', doc: document })).toBe(false)
+    document.body.innerHTML = ''
   })
 })

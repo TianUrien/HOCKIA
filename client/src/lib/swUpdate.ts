@@ -16,6 +16,12 @@ import { logger } from '@/lib/logger'
  * deploy shows the prompt instead of serving old code indefinitely. Update
  * checks run on load, every 15 minutes while visible, and on return to the tab.
  *
+ * Exception (founder ruling 2026-10-10): a SIGNED-OUT visitor who has just
+ * arrived on Home / Sign up / Log in and typed nothing gets the waiting
+ * version applied silently (see `canApplySilently`). Nothing can be lost
+ * there, and a returning visitor from Instagram should see today's page,
+ * not a stale copy with an update prompt on top.
+ *
  * Native (Capacitor) keeps its previous behaviour: the bundle only changes
  * with a store build, so a waiting worker is applied straight away (no prompt).
  */
@@ -37,6 +43,34 @@ export interface ServiceWorkerUpdateOptions {
   reload?: () => void
   createWorkbox?: () => WorkboxLike
   doc?: Document
+  /** True when applying right now cannot lose anything (signed-out arrival,
+   *  nothing typed). Checked when a waiting version is found. */
+  canApplySilently?: () => boolean
+}
+
+/** Pages a signed-out visitor arrives on, where a silent update is safe. */
+const SILENT_UPDATE_PATHS = new Set(['/', '/signup', '/signin'])
+/** Only right after arrival — never under someone who is reading. */
+const SILENT_UPDATE_WINDOW_MS = 10_000
+
+/** Default `canApplySilently` for the web build. */
+export function isSafeSilentUpdate({
+  signedIn,
+  path,
+  sinceLoadMs,
+  doc,
+}: {
+  signedIn: boolean
+  path: string
+  sinceLoadMs: number
+  doc: Document
+}): boolean {
+  if (signedIn || !SILENT_UPDATE_PATHS.has(path) || sinceLoadMs > SILENT_UPDATE_WINDOW_MS) return false
+  const active = doc.activeElement
+  if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return false
+  return !Array.from(doc.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')).some(
+    (field) => field.type !== 'hidden' && field.value.trim() !== '',
+  )
 }
 
 /**
@@ -49,6 +83,7 @@ export function registerServiceWorker({
   reload = () => window.location.reload(),
   createWorkbox = () => new Workbox(SW_URL, { scope: '/' }) as unknown as WorkboxLike,
   doc = typeof document !== 'undefined' ? document : undefined,
+  canApplySilently = () => false,
 }: ServiceWorkerUpdateOptions): WorkboxLike | null {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null
 
@@ -64,6 +99,11 @@ export function registerServiceWorker({
   wb.addEventListener('waiting', () => {
     if (isNative) {
       logger.info('[PWA] New version waiting — applying (native)')
+      apply()
+      return
+    }
+    if (canApplySilently()) {
+      logger.info('[PWA] New version waiting — applying (signed-out arrival)')
       apply()
       return
     }
