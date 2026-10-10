@@ -14,7 +14,7 @@ read from the environment (`client/.env`, gitignored) and are never printed.
 | Item | iOS | Android |
 |---|---|---|
 | Version numbers | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `client/ios/App/App.xcodeproj/project.pbxproj` — **both** the Debug and the Release configuration | `versionName` and `versionCode` in `client/android/app/build.gradle` |
-| Next build | **1.3.17 (28)** | **1.18 (20)** |
+| Next build | **1.3.18 (29)** | **1.19 (21)** |
 | Web bundle | `client/dist` copied by `npx cap sync` to `ios/App/App/public` (gitignored) | same, to `android/app/src/main/assets/public` (gitignored) |
 | Native plugins | `client/ios/App/CapApp-SPM/Package.swift` (SPM, no CocoaPods, no `.xcworkspace`) | `client/android/capacitor.settings.gradle` + `app/capacitor.build.gradle` |
 | Crash reporting | `SentryCapacitor` product from `@sentry/capacitor` (pulls `getsentry/sentry-cocoa` 9.28.0, exact) | `:sentry-capacitor` project (pulls `io.sentry:sentry-android` 8.50.1) |
@@ -236,3 +236,16 @@ did not include this binary's UUID.
   icon splash regardless of the in-app artwork.
 - Installed apps pin their bundle: before any breaking server change, raise
   `app_version_requirements.min_version` and wait for adoption.
+
+## Changes in 1.3.18 (29) / 1.19 (21) — 2026-10-10
+
+Source: PRs #247–#249.
+
+- **Android R8.** Release builds have `minifyEnabled true` and `shrinkResources true`. Rules live in `client/android/app/proguard-rules.pro`; Capacitor's consumer rules keep every plugin.
+  - The signed AAB carries `mapping.txt`, so Play Console deobfuscates native crashes.
+  - Sentry native Java frames stay obfuscated until a mapping upload is wired.
+  - Before uploading, install the signed build on a real Android phone. Check launch, sign-in, the in-app browser (Google), camera upload and push.
+- **iOS `MainViewController`.** It replaces `CAPBridgeViewController` in `Main.storyboard` and registers the `AppSurface` plugin. After the native splash hides, the plugin turns the web view surface white.
+  - Why: with `contentInset: 'automatic'` the layout viewport is 12 pt shorter than the screen.
+- **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
+- **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
