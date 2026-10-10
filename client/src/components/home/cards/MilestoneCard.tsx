@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Image, CheckCircle, Shield, Video } from 'lucide-react'
 import { StorageImage } from '@/components'
+import { MediaLightbox } from '../MediaLightbox'
 import { FeedCard, FeedCardAction, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { MilestoneAchievedFeedItem, MilestoneType } from '@/types/homeFeed'
 
@@ -19,6 +20,7 @@ const MILESTONE_CONFIG: Record<MilestoneType, { icon: typeof Image; label: strin
 
 export function MilestoneCard({ item }: MilestoneCardProps) {
   const [mediaError, setMediaError] = useState(false)
+  const [viewerOpen, setViewerOpen] = useState(false)
   const config = MILESTONE_CONFIG[item.milestone_type]
 
   // Unknown milestone type — don't render
@@ -43,16 +45,40 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
 
       {item.milestone_type === 'first_gallery_image' && item.image_url && (
         <FeedCardMedia>
-          <StorageImage
-            src={item.image_url}
-            imageSize="feed-full"
-            alt="Gallery"
-            className="h-full w-full object-cover"
-            containerClassName="aspect-[4/3]"
-            fallbackClassName="h-48"
-            onImageError={() => setMediaError(true)}
-          />
+          {/* Tap to enlarge in the photo viewer; the profile stays on the
+              name, the avatar and "View profile". */}
+          <button
+            type="button"
+            onClick={() => setViewerOpen(true)}
+            aria-label="View photo"
+            className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-ring"
+          >
+            <StorageImage
+              src={item.image_url}
+              imageSize="feed-full"
+              alt="Gallery"
+              className="h-full w-full object-cover"
+              containerClassName="aspect-[4/3]"
+              fallbackClassName="h-48"
+              onImageError={() => setMediaError(true)}
+            />
+          </button>
         </FeedCardMedia>
+      )}
+
+      {viewerOpen && item.image_url && (
+        <MediaLightbox
+          images={[{ url: item.image_url, media_type: 'image', order: 0 }]}
+          initialIndex={0}
+          onClose={() => setViewerOpen(false)}
+          author={{
+            id: item.profile_id,
+            name: item.full_name,
+            avatarUrl: item.avatar_url,
+            role: item.role,
+            profilePath,
+          }}
+        />
       )}
 
       <FeedCardFooter>

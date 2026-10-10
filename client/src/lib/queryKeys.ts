@@ -18,6 +18,11 @@ export const qk = {
   /** gallery_photos count for a profile — shared by every strength hook
    *  (player/coach/umpire) and MediaCard's player/coach tile. */
   galleryCount: (profileId: string | null) => ['gallery', 'count', profileId] as const,
+  /** One member's gallery photos added on one UTC day — the full set behind a
+   *  Home "Added N new photos" card (media_added rollup, see
+   *  generate_media_added_feed_item). Under the 'gallery' prefix so gallery
+   *  invalidations refresh it too. */
+  activityPhotos: (uploaderId: string, day: string) => ['gallery', 'day', uploaderId, day] as const,
   /** club_media count for a club profile (MediaCard's club tile). */
   clubMediaCount: (clubId: string | null) => ['club-media', 'count', clubId] as const,
   /** career_history entry counts grouped by entry_type (JourneyCard). */
