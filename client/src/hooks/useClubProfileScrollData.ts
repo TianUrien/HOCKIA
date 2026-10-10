@@ -102,7 +102,11 @@ export function useClubProfileScrollData(clubId: string | null | undefined, worl
           .select('id, file_url, caption')
           .eq('club_id', clubId)
           .order('is_featured', { ascending: false })
-          .order('order_index', { ascending: true })
+          // Same order as Manage media (useClubMedia): higher order_index =
+          // first = the cover. Ascending showed the LAST photo as the cover,
+          // so a newly added cover never appeared.
+          .order('order_index', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(6),
         supabase.rpc('get_club_members', { p_profile_id: clubId, p_limit: 12, p_offset: 0 }),
         supabase

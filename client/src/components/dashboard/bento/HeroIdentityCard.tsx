@@ -14,6 +14,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useCoverPhoto } from '@/hooks/useCoverPhoto'
+import { useGalleryPhotos } from '@/hooks/useGalleryPhotos'
+import ProfileCover from '@/components/profile/ProfileCover'
 import { getInitials } from '@/lib/utils'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
@@ -115,11 +117,15 @@ export default function HeroIdentityCard({
   const { user } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const coverPhoto = useCoverPhoto(profile.id)
+  const isOwnerView = !readOnly
+  // Owner only: the gallery pipeline Manage media uses — the new photo goes
+  // to the top of the gallery, which is the cover. Once loaded it is also the
+  // live source of the owner's cover (useCoverPhoto caches per session).
+  const gallery = useGalleryPhotos(isOwnerView ? profile.id : null)
   const friendship = useFriendship(profile.id)
   const [signIn, setSignIn] = useState<'connect' | null>(null)
 
   const isVisitorView = readOnly && !isOwnProfile
-  const isOwnerView = !readOnly
   const role = (profile.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire' | 'brand'
   const isCoach = role === 'coach'
   const full = profile as Partial<Profile>
@@ -204,7 +210,12 @@ export default function HeroIdentityCard({
     </button>
   )
 
-  const coverUrl = coverPhoto ? getImageUrl(coverPhoto, 'lightbox') ?? coverPhoto : null
+  const coverSource = isOwnerView ? gallery.photos[0]?.url ?? coverPhoto : coverPhoto
+  const coverUrl = coverSource ? getImageUrl(coverSource, 'lightbox') ?? coverSource : null
+  const uploadCover = async (file: File): Promise<boolean> => {
+    const { added } = await gallery.add([file])
+    return added > 0
+  }
   // Phone profile over a cover photo: Glass icon buttons (black 40 %, blur,
   // white icon). Without a photo the cover is a pale gradient, where white
   // icons would vanish, so the solid white chips stay — as on desktop.
@@ -212,25 +223,26 @@ export default function HeroIdentityCard({
 
   return (
     <section data-testid="hero-identity-card" className="-mx-4 md:mx-0 md:overflow-hidden md:rounded-2xl md:border md:border-gray-200/80 md:bg-white md:shadow-sm">
-      {/* Cover */}
-      <div className="relative h-[236px] w-full overflow-hidden bg-gradient-to-b from-hockia-soft to-white">
-        {coverUrl && <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" decoding="async" />}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/35 to-transparent" aria-hidden="true" />
+      {/* Cover — owner: "Add a cover photo" empty state or the "Change cover"
+          pill; visitor: the photo or the default cover, never an edit prompt. */}
+      <ProfileCover
+        owner={isOwnerView}
+        role={role}
+        hasCover={Boolean(coverUrl)}
+        coverKey={coverUrl}
+        heightClassName="h-[236px]"
+        avatarOverlap={52}
+        onUpload={isOwnerView ? uploadCover : undefined}
+        overlays={coverUrl ? <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/35 to-transparent" aria-hidden="true" /> : null}
+        topBar={(
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-3">
-          {glass ? (
-            isOwnerView ? (
-              <IconButton variant="glass" label="Change cover photo" onClick={onEdit}>
-                <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
-              </IconButton>
-            ) : (
-              <IconButton variant="glass" label="Back" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))}>
-                <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
-              </IconButton>
-            )
-          ) : isOwnerView ? (
-            <button type="button" onClick={onEdit} aria-label="Change cover photo" className={GLASS}>
-              <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            </button>
+          {isOwnerView ? (
+            // The cover itself carries the edit affordance now (empty state / Change cover).
+            <span />
+          ) : glass ? (
+            <IconButton variant="glass" label="Back" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))}>
+              <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
+            </IconButton>
           ) : (
             <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))} aria-label="Back" className={GLASS}>
               <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
@@ -264,7 +276,10 @@ export default function HeroIdentityCard({
             {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
-      </div>
+        )}
+      >
+        {coverUrl && <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" decoding="async" />}
+      </ProfileCover>
 
       {/* Identity */}
       <div className="px-5">

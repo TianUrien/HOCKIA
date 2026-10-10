@@ -18,6 +18,8 @@ vi.mock('@/hooks/useClubProfileScrollData', () => ({
     worldClub: null, viewsThisWeek: null, refresh: vi.fn(),
   }),
 }))
+// The owner cover upload reuses useClubMedia (it loads club_media on mount).
+vi.mock('@/hooks/useClubMedia', () => ({ useClubMedia: () => ({ photos: [], loading: false, busy: false, add: vi.fn(), remove: vi.fn(), reorder: vi.fn(), reload: vi.fn() }) }))
 vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn(), auth: { getSession: vi.fn() } } }))
 vi.mock('@/hooks/useFriendship', () => ({
   useFriendship: () => ({ status: 'none', isFriend: false, loading: false, sendRequest: vi.fn(), acceptRequest: vi.fn(), removeFriend: vi.fn() }),
