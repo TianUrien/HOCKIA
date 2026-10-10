@@ -10,8 +10,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest'
-import { render, fireEvent } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { render, fireEvent, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 // The @/components barrel transitively imports lib/supabase, which throws at
 // import time without env vars — CI's unit job has none (locally they come
@@ -26,6 +26,16 @@ vi.mock('@/lib/supabase', () => {
   })
   return { supabase: { from: () => chain, rpc: () => chain, auth: { getSession: async () => ({ data: { session: null }, error: null }) } } }
 })
+
+// The full set behind the card (fetched when the viewer opens) is driven by
+// the test: undefined = still loading.
+const fullSet = vi.hoisted(() => ({ data: undefined as string[] | undefined, enabledCalls: [] as boolean[] }))
+vi.mock('@/hooks/useActivityPhotos', () => ({
+  useActivityPhotos: (_u: string, _d: string, enabled: boolean) => {
+    fullSet.enabledCalls.push(enabled)
+    return { data: enabled ? fullSet.data : undefined }
+  },
+}))
 
 import { MediaAddedCard } from '@/components/home/cards/MediaAddedCard'
 import type { MediaAddedFeedItem } from '@/types/homeFeed'
@@ -56,8 +66,11 @@ const tileImgs = (container: HTMLElement) =>
 
 function renderCard(overrides: Partial<MediaAddedFeedItem> = {}) {
   return render(
-    <MemoryRouter>
-      <MediaAddedCard item={{ ...item, ...overrides }} />
+    <MemoryRouter initialEntries={['/home']}>
+      <Routes>
+        <Route path="/home" element={<MediaAddedCard item={{ ...item, ...overrides }} />} />
+        <Route path="*" element={<p>left home</p>} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -86,5 +99,47 @@ describe('MediaAddedCard dead tiles', () => {
     }
     expect(tileImgs(container)).toHaveLength(0)
     expect(container.querySelector('.grid')).toBeNull()
+  })
+})
+
+describe('MediaAddedCard photo viewer (Home)', () => {
+  const many = Array.from({ length: 19 }, (_, i) => `https://x.supabase.co/storage/v1/object/public/gallery/u1/p${i}.jpeg`)
+  const nineteen = { count: 19, sample_urls: many.slice(0, 4) }
+
+  it('tapping a photo opens the viewer on that photo and never leaves Home', () => {
+    fullSet.data = undefined
+    renderCard(nineteen)
+    fireEvent.click(screen.getByRole('button', { name: 'View photo 2 of 19' }))
+    expect(screen.queryByText('left home')).toBeNull()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('2 of 4')).toBeInTheDocument() // samples until the full set loads
+  })
+
+  it('the +N tile opens the viewer and the full set lets you browse all N', () => {
+    fullSet.data = many
+    renderCard(nineteen)
+    expect(screen.getByText('+15')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'View all 19 photos' }))
+    expect(screen.getByText('4 of 19')).toBeInTheDocument()
+  })
+
+  it('loads the full set only once the viewer is open', () => {
+    fullSet.enabledCalls = []
+    renderCard(nineteen)
+    expect(fullSet.enabledCalls.every((e) => e === false)).toBe(true)
+  })
+
+  it('closing returns to the card', () => {
+    fullSet.data = many
+    renderCard(nineteen)
+    fireEvent.click(screen.getByRole('button', { name: 'View photo 1 of 19' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'View photo 1 of 19' })).toBeInTheDocument()
+  })
+
+  it('the profile stays on the name / avatar link', () => {
+    renderCard(nineteen)
+    expect(screen.getAllByRole('link').some((a) => a.getAttribute('href')?.includes('u1'))).toBe(true)
   })
 })

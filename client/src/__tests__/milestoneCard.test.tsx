@@ -20,7 +20,8 @@ vi.mock('@/components', () => ({
   ),
 }))
 
-vi.mock('@/lib/utils', () => ({
+vi.mock('@/lib/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/utils')>()),
   getTimeAgo: () => '2d ago',
 }))
 
@@ -114,4 +115,19 @@ describe('MilestoneCard', () => {
     expect(container.firstChild).toBeNull()
   })
 
+})
+
+describe('MilestoneCard photo viewer', () => {
+  it('tapping the first-gallery photo opens the viewer; "View profile" still links out', () => {
+    render(
+      <MilestoneCard
+        item={{ ...baseMilestone, milestone_type: 'first_gallery_image', image_url: 'https://x.supabase.co/storage/v1/object/public/gallery/p1/a.jpeg' }}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'View photo' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByText('View profile').closest('a')).toHaveAttribute('href', expect.stringContaining('p1'))
+  })
 })
