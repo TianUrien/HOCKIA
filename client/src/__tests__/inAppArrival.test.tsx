@@ -26,6 +26,11 @@ vi.mock('@/lib/analytics', () => ({
   trackSignUpStart: vi.fn(),
   trackEvent: mocks.trackEvent,
 }))
+// The runtime half of the Facebook switch is covered in facebookLoginSwitch
+// tests; here the button follows the build flag only.
+vi.mock('@/hooks/useFacebookLoginEnabled', () => ({
+  useFacebookLoginEnabled: () => (import.meta.env.VITE_ENABLE_FACEBOOK_LOGIN ?? '') === 'true',
+}))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), debug: vi.fn() } }))
 
 import { OAuthButtons } from '@/components/auth/OAuthButtons'

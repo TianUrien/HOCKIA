@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { startOAuthSignIn, type OAuthProvider } from '@/lib/oauthSignIn'
-import { detectInAppBrowser, facebookLoginEnabled, supportsOAuthProvider } from '@/lib/inAppBrowser'
+import { detectInAppBrowser, supportsOAuthProvider } from '@/lib/inAppBrowser'
+import { useFacebookLoginEnabled } from '@/hooks/useFacebookLoginEnabled'
 import { stashRedirectIntent } from '@/lib/redirectIntent'
 import { trackLogin, trackSignUpStart } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
@@ -36,6 +37,7 @@ interface OAuthButtonsProps {
 }
 
 export function OAuthButtons({ intent, next, onError, className, appearance = 'app' }: OAuthButtonsProps) {
+  const showFacebook = useFacebookLoginEnabled()
   const [handoff, setHandoff] = useState<{ browserName: string | null; provider: 'Google' | 'Facebook' } | null>(null)
 
   const start = (provider: OAuthProvider) => {
@@ -64,7 +66,7 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       <SocialButton provider="google" appearance={appearance} onClick={() => start('google')}>
         Continue with Google
       </SocialButton>
-      {facebookLoginEnabled() && (
+      {showFacebook && (
         <SocialButton provider="facebook" appearance={appearance} onClick={() => start('facebook')}>
           Continue with Facebook
         </SocialButton>
