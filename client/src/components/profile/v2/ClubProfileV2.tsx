@@ -216,6 +216,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const friendsHere = atClub.people.length
   const socialText = [friendsHereLabel(friendsHere), data.memberCount > 0 ? `${data.memberCount} ${data.memberCount === 1 ? 'member' : 'members'}` : null].filter(Boolean).join(' · ')
   const pending = health.totals.pending
+  // One primary per screen: applicants to review own it, else the next step does.
+  const toReview = recruiting && pending > 0
   const views = data.viewsThisWeek ?? 0
 
   return (
@@ -250,15 +252,15 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
             previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players and coaches see', onSelect: props.onViewPublic }]}
           />
           {stepCopy && step && (
-            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
+            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
           )}
           <div className="px-4">
-            <div className="flex flex-col gap-3 rounded-[24px] bg-hockia-soft p-4" data-testid="club-recruiting-card">
+            <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', toReview ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid="club-recruiting-card">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-hockia-primary"><Briefcase className="h-5 w-5" strokeWidth={1.8} /></span>
+                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-hockia-primary', toReview ? 'bg-white' : 'bg-hockia-soft')}><Briefcase className="h-5 w-5" strokeWidth={1.8} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                    {recruiting ? (pending > 0 ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : 'No applicants to review') : 'Not recruiting right now'}
+                    {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
                   </span>
                   <span className="block truncate text-secondary text-ink-2">
                     {recruiting
@@ -268,10 +270,13 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
                 </span>
               </div>
               <div className="flex gap-2.5">
-                {recruiting && (
+                {toReview && (
                   <button type="button" onClick={props.onOpenRoles} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
                 )}
-                <button type="button" onClick={props.onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', recruiting ? 'bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
+                <button type="button" onClick={props.onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : stepCopy ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
+                {recruiting && !toReview && (
+                  <button type="button" onClick={props.onOpenRoles} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View roles</button>
+                )}
               </div>
             </div>
           </div>

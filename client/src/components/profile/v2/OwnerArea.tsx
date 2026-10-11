@@ -58,7 +58,7 @@ function Ring({ pct }: { pct: number }) {
 }
 
 /** The ONE primary card: the next step (ring + copy + CTA), or a role-specific card (applicants …). */
-export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual }: {
+export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual, secondary = false }: {
   pct?: number | null
   title: string
   subtitle: string
@@ -66,19 +66,21 @@ export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual }: {
   onAction: () => void
   /** Replaces the ring (e.g. applicant faces). */
   visual?: ReactNode
+  /** Another card owns the screen's one primary button: white pill, brand text. */
+  secondary?: boolean
 }) {
   return (
     <div className="px-4 pt-3">
       <SquircleBox className="flex items-center gap-3 bg-hockia-soft px-4 py-3.5" >
         {visual ?? (typeof pct === 'number' ? <Ring pct={pct} /> : null)}
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body font-semibold text-ink-1">{title}</span>
+          <span className="block line-clamp-2 text-body font-semibold text-ink-1">{title}</span>
           <span className="block line-clamp-2 text-secondary text-ink-2">{subtitle}</span>
         </span>
         <button
           type="button"
           onClick={onAction}
-          className="flex h-11 min-w-[58px] shrink-0 items-center justify-center rounded-full bg-hockia-primary px-4 text-[14px] font-semibold text-white transition-transform duration-300 active:scale-[0.97]"
+          className={cn('flex h-11 min-w-[58px] shrink-0 items-center justify-center rounded-full px-4 text-[14px] font-semibold transition-transform duration-300 active:scale-[0.97]', secondary ? 'bg-white text-hockia-primary' : 'bg-hockia-primary text-white')}
           data-testid="profile-primary-cta"
         >
           {cta}
