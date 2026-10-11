@@ -8992,6 +8992,8 @@ export type Database = {
           p_content?: string
           p_images?: Json
           p_person_profile_id: string
+          p_role_label?: string
+          p_season?: string
         }
         Returns: Json
       }
@@ -9451,6 +9453,7 @@ export type Database = {
           viewer_id: string
         }[]
       }
+      get_new_members: { Args: { p_limit?: number }; Returns: Json }
       get_my_pulse: {
         Args: { p_limit?: number }
         Returns: {
