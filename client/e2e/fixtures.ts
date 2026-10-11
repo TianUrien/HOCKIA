@@ -385,23 +385,26 @@ export class QuestionsPage extends HockiaPage {
  */
 export class HomeFeedPage extends HockiaPage {
   async openHomeFeed() {
-    // Home is two tabs since the V2 redesign (Pulse default / Feed). The
-    // composer + community feed live on the Feed tab — deep-link straight to
-    // it so these feed-centric specs land where that content renders.
-    await this.page.goto('/home?tab=feed')
+    // Home v1 (Figma t24oVt… page 02): one screen — Next step, people, feed.
+    await this.page.goto('/home')
     await this.waitForLoadingToComplete()
   }
 
+  /** Home v1: "+" New post in the phone header, "New post" beside search on desktop. */
+  newPostButton() {
+    return this.page.locator('[data-testid="header-new-post"]:visible, button:has-text("New post"):visible').first()
+  }
+
   async expectPostComposerVisible() {
-    await expect(this.page.getByText("What's new?")).toBeVisible({ timeout: 10000 })
+    await expect(this.newPostButton()).toBeVisible({ timeout: 10000 })
   }
 
   async expectPostComposerHidden() {
-    await expect(this.page.getByText("What's new?")).not.toBeVisible({ timeout: 5000 })
+    await expect(this.newPostButton()).not.toBeVisible({ timeout: 5000 })
   }
 
   async openPostComposer() {
-    await this.page.getByText("What's new?").click()
+    await this.newPostButton().click()
   }
 
   async fillPostContent(content: string) {
