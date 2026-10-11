@@ -49,6 +49,7 @@ import type { CommunityFiltersState } from './communityFilters'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useOwnLeague } from '@/hooks/useScouting'
 import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
+import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { contextFitTarget, keepAdultPlayers, type ContextLike } from '@/lib/findPlayers'
 import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
 
@@ -280,6 +281,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const clubRankByFit = !!clubFitTarget && !(ownLeague && ownLeague.band === null)
 
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
+  // Members in a block relationship with the viewer (either side). The server
+  // already leaves them out of the grid and the count (community_search_members,
+  // 20261011100000); this set hides them the moment a block happens elsewhere
+  // (ProfileActionMenu → notifyBlockListChanged) and keys the queries below so
+  // the server's count refreshes too. Also covers the profiles-table fallback
+  // search, which doesn't go through the RPC.
+  const { blockedIds } = useBlockedUsers()
+  const blockKey = useMemo(() => [...blockedIds].sort().join(','), [blockedIds])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
   const [previewMember, setPreviewMember] = useState<Profile | null>(null)
@@ -328,7 +337,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         const me = isAnon ? null : currentUserProfile
         const meInScope = !!me?.id && !!me.full_name?.trim() && (!roleFilter || roleFilter === me.role)
         const count = await queryClient.fetchQuery({
-          queryKey: qk.communityCount(roleFilter ?? 'all', meInScope ? `search-total:${me?.id}` : 'search-total'),
+          queryKey: qk.communityCount(roleFilter ?? 'all', `${meInScope ? `search-total:${me?.id}` : 'search-total'}|blocks:${blockKey}`),
           staleTime: 30_000,
           retry: false,
           // The count comes from the same server search as the grid
@@ -372,7 +381,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [authLoading, isAnon, roleFilter, onTotalCountChange, currentUserProfile])
+  }, [authLoading, isAnon, roleFilter, onTotalCountChange, currentUserProfile, blockKey])
 
   // Fetch members from Supabase. Critical: measure() is INSIDE
   // requestCache.dedupe so the module-level dedupe controls whether
@@ -413,7 +422,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_open_opportunity_type: filters.clubOpportunityType ?? undefined,
       p_limit: 500,
     }
-    const queryKey = qk.communityMembers(viewerScope, JSON.stringify(rpcParams))
+    const queryKey = qk.communityMembers(viewerScope, `${JSON.stringify(rpcParams)}|blocks:${blockKey}`)
     const seq = ++fetchSeqRef.current
     const isLatest = () => seq === fetchSeqRef.current
 
@@ -515,7 +524,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
   }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
       filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
-      filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive])
+      filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive, blockKey])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
@@ -689,6 +698,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // The viewer never appears in their own Community lists (round 6).
     if (currentUserProfile?.id) {
       result = result.filter(m => m.id !== currentUserProfile.id)
+    }
+    // Never anyone in a block relationship with the viewer.
+    if (blockedIds.size > 0) {
+      result = result.filter(m => !blockedIds.has(m.id))
     }
     if (filters.role !== 'all') {
       result = result.filter(m => m.role === filters.role)
@@ -944,7 +957,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
+  }, [allMembers, blockedIds, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
