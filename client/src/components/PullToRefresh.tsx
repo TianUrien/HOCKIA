@@ -16,6 +16,10 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const touchStartY = useRef(0)
   const isPulling = useRef(false)
   const armed = useRef(false)
+  // The spacer opens at the top of the page, which sits under the fixed app
+  // header — so the indicator is drawn fixed, just below the header, inside
+  // the gap the pull reveals. (Measured at touch start; 0 without a header.)
+  const [headerBottom, setHeaderBottom] = useState(0)
 
   // Skip pull-to-refresh when the body is scroll-locked — this is the
   // convention modals use to prevent underlying scroll, and we should respect
@@ -29,6 +33,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     if (window.scrollY <= 0 && !isRefreshing) {
       touchStartY.current = e.touches[0].clientY
       isPulling.current = true
+      const header = document.querySelector('header.fixed')
+      setHeaderBottom(header ? Math.max(0, header.getBoundingClientRect().bottom) : 0)
     }
   }, [isRefreshing])
 
@@ -97,15 +103,19 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     <>
       {showIndicator && (
         <div
-          className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
+          className="overflow-hidden transition-[height] duration-200 ease-out"
           style={{ height: isRefreshing ? 48 : pullDistance }}
           aria-hidden="true"
         >
           {/* A field-hockey ball rolls with the pull, spins while loading,
               then the row springs closed. */}
           <span
-            className="flex items-center justify-center"
-            style={{ opacity: progress, transform: `scale(${0.6 + progress * 0.4})` }}
+            className="pointer-events-none fixed left-1/2 z-40 flex items-center justify-center"
+            style={{
+              top: headerBottom + (isRefreshing ? 48 : pullDistance) / 2 - 7,
+              opacity: progress,
+              transform: `translateX(-50%) scale(${0.6 + progress * 0.4})`,
+            }}
           >
             <span className={isRefreshing ? 'hockia-ball-spin' : undefined} style={isRefreshing ? undefined : { transform: `rotate(${pullDistance * 4}deg)` }}>
               <HockeyBall />
