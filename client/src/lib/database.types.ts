@@ -2584,6 +2584,108 @@ export type Database = {
           },
         ]
       }
+      feed_congrats: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_congrats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_congrats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_congrats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_item_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          deleted_at: string | null
+          feed_item_id: string
+          id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          deleted_at?: string | null
+          feed_item_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          deleted_at?: string | null
+          feed_item_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_item_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_item_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_item_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_item_comments_feed_item_id_fkey"
+            columns: ["feed_item_id"]
+            isOneToOne: false
+            referencedRelation: "home_feed_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gallery_photos: {
         Row: {
           alt_text: string | null
@@ -2628,6 +2730,8 @@ export type Database = {
           author_country_id: number | null
           author_profile_id: string | null
           author_role: string | null
+          comment_count: number
+          comments_enabled: boolean
           created_at: string
           deleted_at: string | null
           id: string
@@ -2641,6 +2745,8 @@ export type Database = {
           author_country_id?: number | null
           author_profile_id?: string | null
           author_role?: string | null
+          comment_count?: number
+          comments_enabled?: boolean
           created_at?: string
           deleted_at?: string | null
           id?: string
@@ -2654,6 +2760,8 @@ export type Database = {
           author_country_id?: number | null
           author_profile_id?: string | null
           author_role?: string | null
+          comment_count?: number
+          comments_enabled?: boolean
           created_at?: string
           deleted_at?: string | null
           id?: string
@@ -5956,6 +6064,7 @@ export type Database = {
         Row: {
           author_id: string
           comment_count: number
+          comments_enabled: boolean
           content: string
           created_at: string
           deleted_at: string | null
@@ -5970,6 +6079,7 @@ export type Database = {
         Insert: {
           author_id: string
           comment_count?: number
+          comments_enabled?: boolean
           content: string
           created_at?: string
           deleted_at?: string | null
@@ -5984,6 +6094,7 @@ export type Database = {
         Update: {
           author_id?: string
           comment_count?: number
+          comments_enabled?: boolean
           content?: string
           created_at?: string
           deleted_at?: string | null
@@ -8279,6 +8390,15 @@ export type Database = {
         Args: { p_is_test: boolean; p_profile_id: string }
         Returns: Json
       }
+      admin_takedown_content: {
+        Args: {
+          p_admin_note?: string
+          p_content_id: string
+          p_content_type: string
+          p_report_id?: string
+        }
+        Returns: Json
+      }
       admin_toggle_email_template_active: {
         Args: { p_is_active: boolean; p_template_id: string }
         Returns: undefined
@@ -8739,6 +8859,10 @@ export type Database = {
         Returns: Json
       }
       create_club_invite_link: { Args: never; Returns: Json }
+      create_feed_item_comment: {
+        Args: { p_content: string; p_feed_item_id: string }
+        Returns: Json
+      }
       create_post_comment: {
         Args: { p_content: string; p_post_id: string }
         Returns: Json
@@ -8898,6 +9022,10 @@ export type Database = {
       declare_date_of_birth: { Args: { p_dob: string }; Returns: Json }
       delete_brand_post: { Args: { p_post_id: string }; Returns: Json }
       delete_brand_product: { Args: { p_product_id: string }; Returns: Json }
+      delete_feed_item_comment: {
+        Args: { p_comment_id: string }
+        Returns: Json
+      }
       delete_message: {
         Args: { p_message_id: string }
         Returns: {
@@ -9062,6 +9190,7 @@ export type Database = {
         Returns: string
       }
       facebook_login_enabled: { Args: never; Returns: boolean }
+      feed_item_engageable: { Args: { p_item_type: string }; Returns: boolean }
       fetch_club_opportunities_with_counts: {
         Args: {
           p_club_id: string
@@ -9253,6 +9382,10 @@ export type Database = {
         Returns: Json
       }
       get_home_feed_new_count: { Args: { p_since: string }; Returns: number }
+      get_home_feed_v2: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       get_landing_stats: {
         Args: never
         Returns: {
@@ -9272,6 +9405,10 @@ export type Database = {
         }[]
       }
       get_market_moves: { Args: { p_limit?: number }; Returns: Json }
+      get_feed_item_comments: {
+        Args: { p_feed_item_id: string; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       get_friends_in_common: {
         Args: { p_member_ids: string[] }
         Returns: {
@@ -9408,6 +9545,19 @@ export type Database = {
         }[]
       }
       get_opportunity_alerts: { Args: never; Returns: number }
+      get_people_you_may_know: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          base_location: string
+          full_name: string
+          id: string
+          mutual_count: number
+          position: string
+          reason: string
+          role: string
+        }[]
+      }
       get_post_comments: {
         Args: { p_limit?: number; p_offset?: number; p_post_id: string }
         Returns: Json
@@ -9846,6 +9996,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      remove_signing_tag: { Args: { p_post_id: string }; Returns: Json }
       report_user: {
         Args: {
           p_category?: string
@@ -10021,8 +10172,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_feed_item_comments_enabled: {
+        Args: { p_enabled: boolean; p_feed_item_id: string }
+        Returns: Json
+      }
       set_open_to_play: {
         Args: { p_available_from?: string; p_duration?: string; p_open: boolean }
+        Returns: Json
+      }
+      set_post_comments_enabled: {
+        Args: { p_enabled: boolean; p_post_id: string }
         Returns: Json
       }
       set_profile_comment_status: {
@@ -10092,6 +10251,10 @@ export type Database = {
           p_viewport?: string
         }
         Returns: string
+      }
+      toggle_congrats: {
+        Args: { p_target_id: string; p_target_type: string }
+        Returns: Json
       }
       toggle_post_like: { Args: { p_post_id: string }; Returns: Json }
       touch_profile_activity: { Args: never; Returns: undefined }
@@ -10256,6 +10419,9 @@ export type Database = {
         | "recruiting_update"
         | "applicants_closing_soon"
         | "applicant_last_call"
+        | "signing_tagged"
+        | "feed_item_comment_received"
+        | "congrats_received"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -10479,6 +10645,9 @@ export const Constants = {
         "recruiting_update",
         "applicants_closing_soon",
         "applicant_last_call",
+        "signing_tagged",
+        "feed_item_comment_received",
+        "congrats_received",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [
