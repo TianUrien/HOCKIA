@@ -35,6 +35,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
   }, [activeTab])
 
   return (
+    <div className="relative">
     <div
       role="tablist"
       aria-label="Member type"
@@ -52,7 +53,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
               aria-selected={active}
               onClick={() => navigate(pathWithSearch(s.path, query))}
               className={`flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-semibold transition-colors ${
-                active ? 'bg-brand-soft text-brand-primary lg:bg-ink-1 lg:text-white' : 'bg-surface-grouped text-ink-1 active:bg-gray-200'
+                active ? 'bg-brand-soft text-brand-primary lg:bg-ink-1 lg:text-white' : 'bg-surface-grouped text-ink-2 active:bg-gray-200 lg:text-ink-1'
               }`}
             >
               {s.label}
@@ -60,6 +61,9 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
           )
         })}
       </div>
+    </div>
+      {/* The row scrolls sideways: a fade on the right edge says so (Figma Community P1). */}
+      <span aria-hidden="true" className="pointer-events-none absolute -right-4 top-0 h-full w-8 bg-gradient-to-r from-white/0 to-white md:hidden" />
     </div>
   )
 }
