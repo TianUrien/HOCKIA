@@ -16,6 +16,7 @@ export type FeedItemType =
   | 'open_to_play_confirmed'
   | 'role_filled'
   | 'career_move'
+  | 'members_digest'
 
 export type MilestoneType =
   | 'first_gallery_image'
@@ -34,6 +35,14 @@ interface BaseFeedItem {
    *  club_responded / role_filled may reference a coach's profile.
    *  Optional: absent on cached pre-migration payloads. */
   author_role?: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | null
+  /** get_home_feed_v2 (Home v1): engagement on items that allow it —
+   *  user posts, and feed items feed_item_engageable() admits (references).
+   *  Absent/null elsewhere. */
+  comment_count?: number | null
+  comments_enabled?: boolean | null
+  congrats_count?: number | null
+  has_congrats?: boolean | null
+  author_profile_id?: string | null
 }
 
 // --- Individual feed item types ---
@@ -136,11 +145,18 @@ export interface TransferMetadata {
 }
 
 export interface SigningMetadata {
-  person_name: string
-  person_role: 'player' | 'coach'
+  /** Null once the tagged member removed their tag (Figma H16): the card
+   *  falls back to a plain club post. */
+  person_name: string | null
+  person_role: 'player' | 'coach' | null
   person_avatar_url: string | null
-  person_profile_id: string
+  person_profile_id: string | null
   person_position: string | null
+  /** Home v1 (20261011150500): written by create_signing_post. */
+  club_name?: string | null
+  club_avatar_url?: string | null
+  signing_role?: string | null
+  season?: string | null
 }
 
 /**
@@ -278,6 +294,15 @@ export interface RoleFilledFeedItem extends BaseFeedItem {
   club_avatar_url: string | null
 }
 
+/** Home v1: one weekly row per ISO week, only when ≥4 visible members joined
+ *  (get_home_feed_v2). `members` = up to 6 faces for the mosaic. */
+export interface MembersDigestFeedItem extends BaseFeedItem {
+  item_type: 'members_digest'
+  week_start: string
+  member_count: number
+  members: Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>
+}
+
 // Union type for all feed items
 export type HomeFeedItem =
   | MemberJoinedFeedItem
@@ -293,3 +318,4 @@ export type HomeFeedItem =
   | OpenToPlayConfirmedFeedItem
   | RoleFilledFeedItem
   | CareerMoveFeedItem
+  | MembersDigestFeedItem
