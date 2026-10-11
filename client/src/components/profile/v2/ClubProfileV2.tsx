@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Briefcase, Check, Lock, MessageCircle, UserPlus } from 'lucide-react'
+import { Check, Lock, MessageCircle, UserPlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -11,13 +11,11 @@ import { useFriendship } from '@/hooks/useFriendship'
 import { useFriendsAtClub } from '@/hooks/useFriendsAtClub'
 import { useClubCrestColors } from '@/hooks/useClubCrestColors'
 import { useRolesHealth } from '@/hooks/useRolesHealth'
-import { useClubProfileScrollData, type ClubOpenRole } from '@/hooks/useClubProfileScrollData'
+import { useClubProfileScrollData } from '@/hooks/useClubProfileScrollData'
 import { friendsHereLabel } from '@/lib/communityCard'
-import { roleTitle } from '@/lib/homeEngagement'
 import { positionLabel } from '@/lib/identity'
-import { genderPill } from '@/lib/opportunityCopy'
 import { publicProfileShareUrl } from '@/lib/profileShare'
-import { nextStepPart, NEXT_STEP_COPY, roleStatusLine, type CompletenessPart } from '@/lib/profileV2'
+import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -29,9 +27,9 @@ import { cn } from '@/lib/utils'
 import { ClubHero } from './ClubHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
-import { OwnerButtons, PrimaryCard } from './OwnerArea'
+import { OwnerButtons, PrimaryCard, RecruitingCard } from './OwnerArea'
 import { ProfileActionBar, type ActionBarButton } from './ProfileActionBar'
-import { CommentsPreview, FacesRow, PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
+import { CommentsPreview, FacesRow, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
 
 /**
  * Profile v2 — club, phone (Figma PR6 public 106:255 / PR7 own 107:302).
@@ -82,25 +80,6 @@ function DetailRow({ label, value, onClick, href, tone }: { label: string; value
     <div className="flex items-center gap-3 border-b border-line py-3 text-[14px] leading-[19px]">
       <span className="flex-1 text-ink-2">{label}</span>
       {href ? <a href={href} target="_blank" rel="noopener noreferrer" className="min-w-0">{v}</a> : onClick ? <button type="button" onClick={onClick} className="min-w-0">{v}</button> : v}
-    </div>
-  )
-}
-
-function RoleRow({ role, cta, onOpen }: { role: ClubOpenRole; cta: string; onOpen: () => void }) {
-  const title = roleTitle(role.position, null, role.title)
-  const team = genderPill(role.gender)?.label ?? null
-  const status = roleStatusLine(role.deadline, role.createdAt)
-  return (
-    <div className="flex w-full items-center gap-3 rounded-[20px] bg-surface-subtle py-3 pl-3.5 pr-3" data-testid="club-role-row">
-      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-hockia-soft text-hockia-primary"><Briefcase className="h-[22px] w-[22px]" strokeWidth={1.8} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{title}</span>
-          {team && <span className="block truncate text-secondary text-ink-2">{team}</span>}
-          {status && <span className="block truncate text-caption text-hockia-primary">{status}</span>}
-        </span>
-      </button>
-      <button type="button" onClick={onOpen} className="flex h-11 shrink-0 items-center rounded-full border border-line bg-white px-4 text-[14px] font-semibold text-ink-1">{cta}</button>
     </div>
   )
 }
@@ -254,32 +233,15 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
           {stepCopy && step && (
             <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
           )}
-          <div className="px-4">
-            <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', toReview ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid="club-recruiting-card">
-              <div className="flex items-center gap-3">
-                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-hockia-primary', toReview ? 'bg-white' : 'bg-hockia-soft')}><Briefcase className="h-5 w-5" strokeWidth={1.8} /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                    {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
-                  </span>
-                  <span className="block truncate text-secondary text-ink-2">
-                    {recruiting
-                      ? `${openRoles.length} open ${openRoles.length === 1 ? 'role' : 'roles'} · ${[...new Set(openRoles.map((r) => positionLabel(r.position) || r.title))].slice(0, 2).join(', ')}`
-                      : 'Post a role and players can apply'}
-                  </span>
-                </span>
-              </div>
-              <div className="flex gap-2.5">
-                {toReview && (
-                  <button type="button" onClick={props.onOpenRoles} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
-                )}
-                <button type="button" onClick={props.onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : stepCopy ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
-                {recruiting && !toReview && (
-                  <button type="button" onClick={props.onOpenRoles} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View roles</button>
-                )}
-              </div>
-            </div>
-          </div>
+          <RecruitingCard
+            pending={pending}
+            openRoleCount={openRoles.length}
+            roleNames={openRoles.map((r) => positionLabel(r.position) || r.title)}
+            hasNextStep={Boolean(stepCopy)}
+            onReview={props.onOpenRoles}
+            onPostRole={props.onPostRole}
+            testId="club-recruiting-card"
+          />
           <div className="px-4">
             <button type="button" onClick={() => setViewers(true)} className="flex w-full items-center gap-3 rounded-[16px] border border-line px-3.5 py-3 text-left" data-testid="club-views-row">
               <span className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1 tabular-nums">{views}</span>

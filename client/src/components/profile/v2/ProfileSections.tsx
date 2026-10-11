@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
-import { ChevronRight, Copy, Play } from 'lucide-react'
+import { Briefcase, ChevronRight, Copy, Play } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
@@ -9,6 +9,10 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { cn } from '@/lib/utils'
+import { roleTitle } from '@/lib/homeEngagement'
+import { genderPill } from '@/lib/opportunityCopy'
+import { roleStatusLine } from '@/lib/profileV2'
+import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 
 const CommentsTab = lazy(() => import('@/components/CommentsTab'))
 
@@ -203,5 +207,25 @@ export function CommentsPreview({ profileId, profileRole, owner }: { profileId: 
         </div>
       </BottomSheet>
     </Section>
+  )
+}
+
+/** Open-role row (PR6 / PR8): briefcase tile, role, team, status line, Apply / Manage. */
+export function RoleRow({ role, cta, onOpen }: { role: ClubOpenRole; cta: string; onOpen: () => void }) {
+  const title = roleTitle(role.position, null, role.title)
+  const team = genderPill(role.gender)?.label ?? null
+  const status = roleStatusLine(role.deadline, role.createdAt)
+  return (
+    <div className="flex w-full items-center gap-3 rounded-[20px] bg-surface-subtle py-3 pl-3.5 pr-3" data-testid="club-role-row">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-hockia-soft text-hockia-primary"><Briefcase className="h-[22px] w-[22px]" strokeWidth={1.8} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{title}</span>
+          {team && <span className="block truncate text-secondary text-ink-2">{team}</span>}
+          {status && <span className="block truncate text-caption text-hockia-primary">{status}</span>}
+        </span>
+      </button>
+      <button type="button" onClick={onOpen} className="flex h-11 shrink-0 items-center rounded-full border border-line bg-white px-4 text-[14px] font-semibold text-ink-1">{cta}</button>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Eye, Lock, Pencil } from 'lucide-react'
+import { Briefcase, ChevronRight, Eye, Lock, Pencil } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { SquircleBox } from '@/components/home/v1/primitives'
 import { cn } from '@/lib/utils'
@@ -91,8 +91,14 @@ export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual, secon
 }
 
 /** Private stats (🔒 only you). Hidden until there is data (spec: stats hidden until there's data). */
-export function PrivateStats({ stats }: { stats: Array<{ value: number; label: string }> }) {
-  if (stats.every((s) => s.value === 0)) return null
+export function PrivateStats({ stats, emptyText }: { stats: Array<{ value: number; label: string }>; /** PR25: one quiet line instead of nothing while every stat is 0. */ emptyText?: string }) {
+  if (stats.every((s) => s.value === 0)) {
+    return emptyText ? (
+      <p className="flex items-center gap-1 px-4 pt-3 text-caption text-ink-3" data-testid="profile-private-stats-empty">
+        <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> {emptyText}
+      </p>
+    ) : null
+  }
   return (
     <div className="px-4 pt-3" data-testid="profile-private-stats">
       <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
@@ -106,6 +112,52 @@ export function PrivateStats({ stats }: { stats: Array<{ value: number; label: s
       <Link to="/pulse" className={cn('mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3')}>
         <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Your activity <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
       </Link>
+    </div>
+  )
+}
+
+/**
+ * Recruiting card (Figma PR7 / PR12, owner only) for clubs and recruiting
+ * coaches. One primary per screen: with applicants to review it owns the
+ * filled button; otherwise it goes white and the next-step card keeps it.
+ * No review CTA when there is nothing to review.
+ */
+export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep, onReview, onPostRole, testId }: {
+  pending: number
+  openRoleCount: number
+  roleNames: string[]
+  hasNextStep: boolean
+  onReview: () => void
+  onPostRole: () => void
+  testId?: string
+}) {
+  const recruiting = openRoleCount > 0
+  const toReview = recruiting && pending > 0
+  const names = [...new Set(roleNames.filter(Boolean))].slice(0, 2).join(', ')
+  return (
+    <div className="px-4">
+      <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', toReview ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid={testId ?? 'recruiting-card'}>
+        <div className="flex items-center gap-3">
+          <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-hockia-primary', toReview ? 'bg-white' : 'bg-hockia-soft')}><Briefcase className="h-5 w-5" strokeWidth={1.8} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+              {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
+            </span>
+            <span className="block truncate text-secondary text-ink-2">
+              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'role' : 'roles'}${names ? ` · ${names}` : ''}` : 'Post a role and players can apply'}
+            </span>
+          </span>
+        </div>
+        <div className="flex gap-2.5">
+          {toReview && (
+            <button type="button" onClick={onReview} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
+          )}
+          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
+          {recruiting && !toReview && (
+            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View roles</button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
