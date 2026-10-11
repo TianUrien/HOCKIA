@@ -22,9 +22,9 @@ test.describe('@smoke player', () => {
     // The Bento Grid is the landing view (no tab strip). Verify the
     // owner variant renders + at least one of its cards.
     if (isPhone(page)) {
-      // Phone: one long scroll under the identity block, no bento.
-      await expect(page.getByTestId('profile-long-scroll')).toBeVisible({ timeout: 10000 })
-      await expect(page.getByTestId('profile-career-section')).toBeVisible({ timeout: 10000 })
+      // Phone: Profile v2 (full-bleed hero + section anchors), no bento.
+      await expect(page.getByTestId('profile-v2')).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('profile-section-career')).toBeVisible({ timeout: 10000 })
     } else {
       await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
       await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })

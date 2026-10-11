@@ -42,6 +42,8 @@ export interface ClubRole {
   id: string
   title: string
   gender: string | null
+  /** Profile v2 fit pill: "Strong fit · Defender, Women's". Absent on applications. */
+  position?: string | null
 }
 
 export interface ClubViewApplication {
@@ -120,13 +122,13 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
     queryFn: async (): Promise<ClubRole[]> => {
       const { data, error } = await supabase
         .from('opportunities')
-        .select('id, title, gender')
+        .select('id, title, gender, position')
         .eq('club_id', viewerId as string)
         .eq('status', 'open')
         .eq('opportunity_type', kind)
         .order('published_at', { ascending: false })
       if (error) throw error
-      return (data ?? []).map((r) => ({ id: r.id, title: r.title, gender: r.gender ?? null }))
+      return (data ?? []).map((r) => ({ id: r.id, title: r.title, gender: r.gender ?? null, position: (r as { position?: string | null }).position ?? null }))
     },
   })
 

@@ -307,16 +307,19 @@ jobs:
           # Budget bumped 4900KB → 5000KB on 2026-10-11 (founder-approved) — the
           # photo-first Community grid, member preview and crest colours took raw
           # to 4942KB (almost all lazy). First-load gate is unchanged (481KB).
+          # Budget bumped 5000KB → 5200KB on 2026-10-11 (founder-approved) — the
+          # Profile v2 player screen took raw to 5019KB. First-load gate is
+          # unchanged (483KB). Old per-role profile screens retire in later phases.
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5017600 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5000KB ($(( TOTAL_KB * 100 / 5000 ))%)"
+          if [ "$TOTAL_JS" -gt 5222400 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5200KB ($(( TOTAL_KB * 100 / 5200 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.0MB
-          if [ "$TOTAL_JS" -gt 5120000 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5000KB"
+          # Secondary gate: raw total must stay under 5.2MB
+          if [ "$TOTAL_JS" -gt 5324800 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5200KB"
             exit 1
           fi
 
