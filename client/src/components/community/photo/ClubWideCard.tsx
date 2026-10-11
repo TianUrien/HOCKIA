@@ -27,6 +27,9 @@ interface ClubWideCardProps {
   priority?: boolean
 }
 
+/** Spec: the cover is the best photo at least 600 px wide (Figma Community 26:1020). */
+const MIN_COVER_WIDTH = 600
+
 export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null, recruiting, onOpen, priority = false }: ClubWideCardProps) {
   const [coverFailed, setCoverFailed] = useState(false)
   const [crestFailed, setCrestFailed] = useState(false)
@@ -53,21 +56,29 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
             priority={priority}
             className="object-cover"
             onError={() => setCoverFailed(true)}
+            // A small upload (often the logo saved as media) blows up blurry
+            // across the card: below the spec's 600 px it reads as no cover
+            // and the card takes the crest variant instead.
+            onLoad={(e) => { if (e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < MIN_COVER_WIDTH) setCoverFailed(true) }}
           />
-          <span className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(180deg, rgba(26,10,69,0) 25%, rgba(26,10,69,0.9) 100%)' }} />
+          <span className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(180deg, rgba(26,10,69,0.35) 0%, rgba(26,10,69,0) 30%, rgba(26,10,69,0) 45%, rgba(26,10,69,0.9) 100%)' }} />
         </span>
       ) : (
         <span aria-hidden="true" className="absolute inset-0">
           <img src={pitchHorizontal} alt="" width={361} height={196} className="absolute inset-0 h-full w-full" />
           {cover === 'crest' && crestSrc ? (
-            <img
-              src={crestSrc}
-              alt=""
-              className="absolute right-[23px] top-[26px] h-[108px] w-[108px] object-contain drop-shadow-[0_8px_20px_rgba(0,0,0,0.3)]"
-              loading={priority ? 'eager' : 'lazy'}
-              decoding="async"
-              onError={() => setCrestFailed(true)}
-            />
+            // Many crests are JPEGs with a white square around them: a white
+            // rounded tile makes that square look intended on the colour.
+            <span className="absolute right-[23px] top-[26px] flex h-[108px] w-[108px] items-center justify-center overflow-hidden rounded-[24px] bg-white p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
+              <img
+                src={crestSrc}
+                alt=""
+                className="h-full w-full object-contain"
+                loading={priority ? 'eager' : 'lazy'}
+                decoding="async"
+                onError={() => setCrestFailed(true)}
+              />
+            </span>
           ) : (
             <span className="absolute right-[29px] top-8 flex h-24 w-24 items-center justify-center rounded-full border border-white/35 bg-white/[0.14] text-[36px] font-bold text-white/90">
               {initialsOf(name)}
@@ -77,7 +88,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
       )}
 
       {recruiting && (
-        <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 py-[5px] pl-2 pr-2.5 backdrop-blur-[6px]">
+        <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] py-[5px] pl-2 pr-2.5 backdrop-blur-[6px]">
           <img src={recruitingDot} alt="" width={7} height={7} />
           <span className="text-[12px] font-semibold leading-4 text-white">Recruiting now</span>
         </span>

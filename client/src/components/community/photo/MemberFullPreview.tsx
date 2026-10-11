@@ -455,7 +455,9 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, onB
             <span aria-hidden="true" className="absolute inset-0">
               <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
               {isClub && crest ? (
-                <img src={crest} alt="" className="absolute left-1/2 top-[29%] h-[150px] w-[150px] -translate-x-1/2 object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.3)]" />
+                <span className="absolute left-1/2 top-[29%] flex h-[150px] w-[150px] -translate-x-1/2 items-center justify-center overflow-hidden rounded-[32px] bg-white p-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.3)]">
+                  <img src={crest} alt="" className="h-full w-full object-contain" />
+                </span>
               ) : brandLogo ? (
                 <span className="absolute left-1/2 top-[33%] flex h-[140px] w-[140px] -translate-x-1/2 items-center justify-center overflow-hidden rounded-[28px] bg-white p-4">
                   <img src={getImageUrl(brandLogo, 'avatar-lg') ?? brandLogo} alt="" className="h-full w-full object-contain" />
