@@ -47,9 +47,8 @@ describe('evidence line (DEV NOTE 332:742)', () => {
     expect(evidenceLine({ fullMatches: 1, highlights: 4, career: 0, lastActiveAt: null }, NOW)?.text).toBe('1 full match · 4 highlights')
     expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 1, lastActiveAt: null }, NOW)).toEqual({ kind: 'career', text: '1 career entry' })
   })
-  it('falls back to "Active N days ago" when there is no evidence', () => {
-    expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 0, lastActiveAt: '2026-09-26T10:00:00Z' }, NOW)).toEqual({ kind: 'active', text: 'Active yesterday' })
-    expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 0, lastActiveAt: '2026-09-15T12:00:00Z' }, NOW)?.text).toBe('Active 12 days ago')
+  it('shows no activity line when there is no evidence (ruling 2026-10-11)', () => {
+    expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 0, lastActiveAt: '2026-09-26T10:00:00Z' }, NOW)).toBeNull()
     expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 0, lastActiveAt: null }, NOW)).toBeNull()
   })
 })
@@ -260,7 +259,7 @@ describe('Find players screen (D1.9)', () => {
     expect(screen.getAllByText('Possible fit')).toHaveLength(1)
     expect(screen.getByText('Midfielder · Men\'s')).toBeTruthy()
     expect(screen.getByText('2 full matches')).toBeTruthy()
-    expect(screen.getByText('Active yesterday')).toBeTruthy()
+    expect(screen.queryByText(/^Active /)).toBeNull()
   })
 
   it('applicants show Applied instead of +; ✓ removes; + adds to the active role list', () => {

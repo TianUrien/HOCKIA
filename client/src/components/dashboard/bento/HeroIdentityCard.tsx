@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Check, ChevronLeft, Eye, MapPin, MessageCircle, Pencil, Plus, Settings, Share, Shield, Sparkles, Star, Target, UserPlus } from 'lucide-react'
-import { Avatar, DualNationalityDisplay, LastActivePill, VerifiedBadge } from '@/components'
+import { Avatar, DualNationalityDisplay, VerifiedBadge } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { IconButton } from '@/components/ui/IconButton'
 import { MetaPill } from '@/components/ui/MetaPill'
@@ -308,8 +308,6 @@ export default function HeroIdentityCard({
                 {isAvailable ? availabilityLabel : 'Recruiting'}
               </span>
             ))}
-            {/* "Active today" — Settings › Privacy › show_last_active drives it (DEV NOTE). */}
-            <LastActivePill lastActiveAt={full.last_active_at ?? null} showLastActive={full.show_last_active ?? null} />
           </div>
         </div>
 

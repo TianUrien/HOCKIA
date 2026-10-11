@@ -562,51 +562,14 @@ describe('PlayerDashboard (Bento Grid)', () => {
     })
   })
 
-  // ── LastActivePill prop-flow regression guard ──────────────────────
-  // Catches the "select clause forgets show_last_active" regression
-  // (Batch 8 staging QA) — verifies the value flows through PlayerDashboard
-  // and HeroIdentityCard into the LastActivePill props.
-  //
-  // 2026-05-27: ScoutingCard now owns the visitor-view activity surface
-  // (Zone 1 status line), so HeroIdentityCard hides LastActivePill in
-  // the visitor view. The regression guard still matters — the
-  // show_last_active column still has to flow through the SELECT — so
-  // we assert it via the owner view where Hero still renders the pill.
-
-  it('passes show_last_active=false through to LastActivePill', () => {
+  // No activity / last-seen pill on profiles (founder ruling 2026-10-11).
+  it('never renders the last-active pill, even with recent activity', () => {
     renderDashboard({
       readOnly: false,
       profileOverrides: {
-        ...({ show_last_active: false, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
+        ...({ show_last_active: true, last_active_at: new Date().toISOString() } as Record<string, unknown>),
       },
     })
-
-    const pill = screen.getByTestId('last-active-pill')
-    expect(pill.getAttribute('data-show-last-active')).toBe('false')
-    expect(pill.getAttribute('data-last-active-at')).toBe('2026-05-08T12:00:00Z')
-  })
-
-  it('passes show_last_active=true through to LastActivePill', () => {
-    renderDashboard({
-      readOnly: false,
-      profileOverrides: {
-        ...({ show_last_active: true, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
-      },
-    })
-
-    const pill = screen.getByTestId('last-active-pill')
-    expect(pill.getAttribute('data-show-last-active')).toBe('true')
-  })
-
-  it('falls through to null (graceful default) when show_last_active is missing from the profile', () => {
-    renderDashboard({
-      readOnly: false,
-      profileOverrides: {
-        ...({ last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
-      },
-    })
-
-    const pill = screen.getByTestId('last-active-pill')
-    expect(pill.getAttribute('data-show-last-active')).toBe('null')
+    expect(screen.queryByTestId('last-active-pill')).toBeNull()
   })
 })

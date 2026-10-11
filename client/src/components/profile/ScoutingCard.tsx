@@ -126,7 +126,6 @@ const EMPTY_COUNTS: EvidenceCounts = {
   galleryPhotos: 0,
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
 
 export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardProps) {
   const navigate = useNavigate()
@@ -310,29 +309,15 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // ONLY a positive signal. The role's OWN flag drives it (player→open_to_play,
   // coach→open_to_coach) via the single-source availabilityLabel; when the
   // person hasn't opted in we show NO headline at all — never a negative
-  // "not currently open" state (which reads as discouraging). Active-today
-  // upgrades to "Available now"; otherwise the role-specific "Open to play/coach".
+  // "not currently open" state (which reads as discouraging). No activity /
+  // last-seen signal on profiles (founder ruling 2026-10-11).
   const availLabel = availabilityLabel(profile.role, profile)
-  const lastActiveMs = profile.last_active_at
-    ? Date.now() - new Date(profile.last_active_at).getTime()
-    : null
-  const showActivity = profile.show_last_active !== false && lastActiveMs !== null
-  const isActiveToday = showActivity && lastActiveMs! < DAY_MS
 
   const status = (() => {
     if (!availLabel) return null // positive-or-hidden — no negative state
-    if (isActiveToday) {
-      return {
-        label: 'AVAILABLE NOW',
-        sub: `${availLabel} · Active today`,
-        dotClass: 'bg-emerald-500',
-        wrapperClass: 'bg-emerald-50 border-emerald-100',
-        labelClass: 'text-emerald-800',
-      }
-    }
     return {
       label: availLabel.toUpperCase(),
-      sub: showActivity ? activityBucketSub(lastActiveMs!) : 'Availability set',
+      sub: 'Availability set',
       dotClass: 'bg-emerald-500',
       wrapperClass: 'bg-emerald-50 border-emerald-100',
       labelClass: 'text-emerald-800',
@@ -634,11 +619,3 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   )
 }
 
-/** Bucket a last_active_at age into a recruiter-friendly sub-line. */
-function activityBucketSub(ms: number): string {
-  if (ms < 7 * DAY_MS) return 'Active this week'
-  if (ms < 30 * DAY_MS) return 'Active this month'
-  // Match LastActivePill's silence threshold — past 30 days we don't
-  // claim activity. Keep the sub-line neutral.
-  return 'Activity quiet — last sign-in over a month ago'
-}
