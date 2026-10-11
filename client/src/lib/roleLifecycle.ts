@@ -87,3 +87,26 @@ export function isRoleHasSigningError(err: unknown): boolean {
   const msg = String((err as { message?: unknown }).message ?? '')
   return /has a confirmed signing, so it can['’]t be deleted/.test(msg)
 }
+
+/**
+ * Application deadline rule (founder ruling 11 Oct 2026; enforced in the
+ * database by 20261011160000): an open role's deadline is between today and
+ * two years ahead. `min` / `max` feed the date picker; `deadlineError` the
+ * inline message. Dates are YYYY-MM-DD, local calendar day.
+ */
+export function deadlineBounds(now = new Date()): { min: string; max: string } {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const day = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const max = new Date(now)
+  max.setFullYear(max.getFullYear() + 2)
+  return { min: day(now), max: day(max) }
+}
+
+export function deadlineError(value: string | null | undefined, now = new Date()): string | null {
+  if (!value) return null
+  const { min, max } = deadlineBounds(now)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Enter a valid date.'
+  if (value < min) return 'The deadline can’t be in the past.'
+  if (value > max) return 'The deadline must be within 2 years.'
+  return null
+}
