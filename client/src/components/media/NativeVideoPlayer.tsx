@@ -35,6 +35,11 @@ interface NativeVideoPlayerProps {
    *  we never show them the recruiters-only gated message, and we retry
    *  the token once if the first call races their session auth. */
   isOwner?: boolean
+  /** Home v1 feed chrome (Figma 60:268 / 60:337): the frame's aspect + radius,
+   *  a glass play button, a label chip (HIGHLIGHT / FULL MATCH) top left and
+   *  the duration bottom right. Tap plays inline with sound — never autoplay
+   *  (founder ruling 11 Oct: Cloudflare bills per minute delivered). */
+  feed?: { label: string; frameClassName: string; playSize?: number }
 }
 
 function formatDuration(s?: number | null): string | null {
@@ -55,6 +60,7 @@ export default function NativeVideoPlayer({
   title,
   durationSeconds,
   isOwner = false,
+  feed,
 }: NativeVideoPlayerProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const [hlsUrl, setHlsUrl] = useState<string | null>(null)
@@ -185,7 +191,7 @@ export default function NativeVideoPlayer({
   const duration = formatDuration(durationSeconds)
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-black aspect-video">
+    <div ref={containerRef} className={`relative w-full overflow-hidden bg-black ${feed ? feed.frameClassName : 'rounded-xl aspect-video'}`}>
       {state === 'playing' && nativeHls && hlsUrl ? (
         // Native HTML5 player (Safari/iOS/WKWebView) — owns its own touch
         // gestures, fixing the iOS "page scrolls instead of controlling
@@ -245,7 +251,7 @@ export default function NativeVideoPlayer({
           <span
             className="absolute inset-0 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40"
             aria-hidden="true"
-            style={signedThumb ? { background: 'rgba(0,0,0,0.30)' } : undefined}
+            style={signedThumb ? { background: feed ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.30)' } : undefined}
           />
           {state === 'loading' ? (
             <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
@@ -258,6 +264,23 @@ export default function NativeVideoPlayer({
               {canRetry && (
                 <span className="relative rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white">
                   Tap to retry
+                </span>
+              )}
+            </>
+          ) : feed ? (
+            <>
+              <span
+                className="relative flex items-center justify-center rounded-full border border-white/50 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[20px] backdrop-saturate-[1.8] transition-transform duration-300 group-active:scale-[0.97]"
+                style={{ width: feed.playSize ?? 64, height: feed.playSize ?? 64 }}
+              >
+                <Play className="ml-1 h-[40%] w-[40%] fill-white text-white" />
+              </span>
+              <span className="absolute left-4 top-4 rounded-full bg-black/40 px-2.5 py-[5px] text-caption font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[20px]">
+                {feed.label}
+              </span>
+              {duration && (
+                <span className="absolute bottom-4 right-4 rounded-full bg-black/40 px-2.5 py-[5px] text-caption font-semibold tabular-nums text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[20px]">
+                  {duration}
                 </span>
               )}
             </>

@@ -1195,6 +1195,16 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
     onThumbError()
   }
 
+  if (item.status === 'removed') {
+    // Admin takedown (20261011150700): only the owner sees the tile.
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">
+        <AlertCircle className="h-6 w-6 text-gray-400" />
+        <span className="text-xs">Removed for breaking the community rules</span>
+      </div>
+    )
+  }
+
   if (item.status === 'errored') {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">

@@ -304,6 +304,18 @@ export function buildPushPayload(
       }
     }
 
+    case 'content_removed': {
+      // Neutral notice (admin takedown, Figma A1): no reporter, no admin.
+      const type = getString(metadata, 'content_type')
+      const what = type === 'post' ? 'post' : type === 'video' ? 'video' : type === 'feed_item' ? 'post' : 'comment'
+      return {
+        title: 'Hockia',
+        body: `Your ${what} was removed for breaking the community rules`,
+        url: '/home',
+        tag: 'removed',
+      }
+    }
+
     // ── Messages ──
     case 'message_received': {
       const conversationId = getString(metadata, 'conversation_id')

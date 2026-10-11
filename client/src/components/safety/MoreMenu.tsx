@@ -13,6 +13,8 @@ export interface MoreMenuItem {
   onSelect: () => void
   destructive?: boolean
   disabled?: boolean
+  /** Second line under the label in the phone sheet (Figma H16 "Remove my tag"). */
+  description?: string
 }
 
 interface MoreMenuProps {
@@ -111,10 +113,15 @@ export function MoreMenu({ items, label = 'More actions', title, triggerClassNam
                   type="button"
                   disabled={item.disabled}
                   onClick={() => select(item)}
-                  className={cn('flex h-[52px] w-full items-center gap-3 px-4 text-left text-body disabled:opacity-50', item.destructive ? 'text-hockia-danger' : 'text-ink-1')}
+                  className={cn('flex min-h-[52px] w-full items-center gap-3 px-4 text-left text-body disabled:opacity-50', item.description && 'py-2.5', item.destructive ? 'text-hockia-danger' : 'text-ink-1')}
                 >
                   {item.icon}
-                  {item.label}
+                  {item.description ? (
+                    <span className="min-w-0">
+                      <span className="block">{item.label}</span>
+                      <span className="block text-secondary text-ink-2">{item.description}</span>
+                    </span>
+                  ) : item.label}
                 </button>
               ))}
             </div>

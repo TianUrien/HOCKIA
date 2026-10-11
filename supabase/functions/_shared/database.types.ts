@@ -8378,11 +8378,17 @@ export type Database = {
         Args: { p_is_test: boolean; p_profile_id: string }
         Returns: Json
       }
+      admin_content_preview: {
+        Args: { p_content_id: string; p_content_type: string }
+        Returns: Json
+      }
+      admin_restore_content: { Args: { p_takedown_id: string }; Returns: Json }
       admin_takedown_content: {
         Args: {
           p_admin_note?: string
           p_content_id: string
           p_content_type: string
+          p_notify_author?: boolean
           p_report_id?: string
         }
         Returns: Json
@@ -10398,6 +10404,7 @@ export type Database = {
         | "applicants_closing_soon"
         | "applicant_last_call"
         | "signing_tagged"
+        | "content_removed"
         | "feed_item_comment_received"
         | "congrats_received"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
@@ -10624,6 +10631,7 @@ export const Constants = {
         "applicants_closing_soon",
         "applicant_last_call",
         "signing_tagged",
+        "content_removed",
         "feed_item_comment_received",
         "congrats_received",
       ],

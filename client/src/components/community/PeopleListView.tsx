@@ -55,6 +55,7 @@ import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/community
 import { recruiterDisplayTier } from '@/lib/recruiterVerdict'
 import type { FitState } from '@/lib/clubRecruiting'
 import { MemberPhotoGrid } from './photo/MemberPhotoGrid'
+import { PROFILES_SELECT } from '@/lib/communitySelect'
 
 export interface Profile {
   id: string
@@ -136,9 +137,6 @@ export interface Profile {
   // Phase 2 (2b') — dedicated umpire availability flag (drives the card chip).
   available_for_appointments?: boolean | null
 }
-
-const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, coach_recruits_for_team, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)

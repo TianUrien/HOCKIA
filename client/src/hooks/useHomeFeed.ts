@@ -20,6 +20,9 @@ export interface UseHomeFeedFilters {
   /** Single server-side item-type filter (get_home_feed p_item_type),
    *  e.g. 'opportunity_posted' for the Opportunities chip. */
   itemType?: string
+  /** Home v1: read get_home_feed_v2 (members digest, public full matches,
+   *  congrats + comment fields). Never combined with the filters above. */
+  v2?: boolean
 }
 
 interface UseHomeFeedResult {
@@ -34,6 +37,8 @@ interface UseHomeFeedResult {
   updateItemLike: (postId: string, liked: boolean, likeCount: number) => void
   removeItem: (feedItemId: string) => void
   prependItem: (item: HomeFeedItem) => void
+  /** Merge fields into one item in this feed's cache (congrats, comment counts). */
+  patchItem: (feedItemId: string, patch: Partial<HomeFeedItem>) => void
   newCount: number
   showNewItems: () => Promise<void>
   dismissNewItems: () => void
@@ -46,6 +51,7 @@ const NEW_ITEMS_CHECK_COOLDOWN = 5_000 // minimum 5s between checks
 // avoids cache misses when callers pass the same selection in different orders.
 function stableFilterKey(filters: UseHomeFeedFilters | undefined): string {
   if (!filters) return ''
+  if (filters.v2) return 'v2'
   const countryIds = (filters.countryIds ?? []).slice().sort((a, b) => a - b).join(',')
   const roles = (filters.roles ?? []).slice().sort().join(',')
   return `c:${countryIds}|r:${roles}|t:${filters.itemType ?? ''}`
@@ -79,6 +85,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
   )
   const rpcItemType = filters?.itemType ?? null
   const hasFilters = rpcCountryIds !== null || rpcRoles !== null || rpcItemType !== null
+  const rpcName = filters?.v2 ? 'get_home_feed_v2' : 'get_home_feed'
 
   const query = useInfiniteQuery<FeedPage>({
     queryKey,
@@ -97,7 +104,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
         p_limit: DEFAULT_LIMIT,
         p_offset: offset,
       }
-      if (hasFilters) {
+      if (hasFilters && !filters?.v2) {
         rpcParams.p_country_ids = rpcCountryIds
         rpcParams.p_roles = rpcRoles
         if (rpcItemType) rpcParams.p_item_type = rpcItemType
@@ -105,7 +112,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
 
       const { data, error } = await withTimeout(
 
-        async () => await supabase.rpc('get_home_feed', rpcParams),
+        async () => await supabase.rpc(rpcName, rpcParams as { p_limit: number; p_offset: number }),
         10_000
       )
 
@@ -273,18 +280,34 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     // ALWAYS the unfiltered cache (audit F1): composing under a chip must
     // not write into a filtered key (type-violating item / silently hidden
     // post). HomeFeed snaps the chip back to All on post-created.
-    queryClient.setQueryData<InfiniteData<FeedPage>>(['home-feed', ''], (old) => {
-      if (!old || old.pages.length === 0) return old
-      const [firstPage, ...rest] = old.pages
+    // Home v1 reads the v2 key; write both so either surface shows the post.
+    for (const key of [['home-feed', ''], ['home-feed', 'v2']]) {
+      queryClient.setQueryData<InfiniteData<FeedPage>>(key, (old) => {
+        if (!old || old.pages.length === 0) return old
+        const [firstPage, ...rest] = old.pages
+        return {
+          ...old,
+          pages: [
+            { items: [item, ...firstPage.items], total: firstPage.total + 1 },
+            ...rest.map(p => ({ ...p, total: p.total + 1 })),
+          ],
+        }
+      })
+    }
+  }, [queryClient])
+
+  const patchItem = useCallback((feedItemId: string, patch: Partial<HomeFeedItem>) => {
+    queryClient.setQueryData<InfiniteData<FeedPage>>(queryKey, (old) => {
+      if (!old) return old
       return {
         ...old,
-        pages: [
-          { items: [item, ...firstPage.items], total: firstPage.total + 1 },
-          ...rest.map(p => ({ ...p, total: p.total + 1 })),
-        ],
+        pages: old.pages.map(page => ({
+          ...page,
+          items: page.items.map(item => (item.feed_item_id === feedItemId ? ({ ...item, ...patch } as HomeFeedItem) : item)),
+        })),
       }
     })
-  }, [queryClient])
+  }, [queryClient, queryKey])
 
   // Map query error to string for backward compatibility
   let errorStr: string | null = null
@@ -311,9 +334,9 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
         hasFilters,
         pagesLoaded: pages.length,
       },
-      { feature: 'home_feed', rpc: 'get_home_feed' }
+      { feature: 'home_feed', rpc: rpcName }
     )
-  }, [query.error, rpcCountryIds, rpcRoles, rpcItemType, hasFilters, pages.length])
+  }, [query.error, rpcCountryIds, rpcRoles, rpcItemType, hasFilters, pages.length, rpcName])
 
   return {
     items,
@@ -327,6 +350,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     updateItemLike,
     removeItem,
     prependItem,
+    patchItem,
     newCount,
     showNewItems,
     dismissNewItems,

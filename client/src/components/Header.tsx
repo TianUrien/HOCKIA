@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search } from 'lucide-react'
+import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
@@ -13,8 +13,10 @@ function NavDot({ className }: { className: string }) {
 }
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
- *  screen, founder ruling 2026-09-19) drop the app header below lg. */
-export default function Header({ mobileHidden = false }: { mobileHidden?: boolean } = {}) {
+ *  screen, founder ruling 2026-09-19) drop the app header below lg.
+ *  `onNewPost`: Home v1 (Figma 60:131) — the violet wordmark, "+" New post
+ *  and Search on phones. */
+export default function Header({ mobileHidden = false, onNewPost }: { mobileHidden?: boolean; onNewPost?: () => void } = {}) {
   const {
     user,
     profile,
@@ -88,7 +90,7 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
               aria-label="HOCKIA — go home"
             >
               <img
-                src="/brand/wordmark/hockia-wordmark-black.svg"
+                src={onNewPost ? '/brand/wordmark/hockia-wordmark-violet.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
                 alt=""
                 className="h-8"
               />
@@ -120,6 +122,17 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                   data-testid="header-hockia-ai"
                 >
                   <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
+                </button>
+              )}
+              {onNewPost && (
+                <button
+                  type="button"
+                  onClick={onNewPost}
+                  className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
+                  aria-label="New post"
+                  data-testid="header-new-post"
+                >
+                  <SquarePlus className="w-6 h-6" strokeWidth={1.8} />
                 </button>
               )}
               {/* Search v2 (founder rulings 2026-10-03): the icon opens the
