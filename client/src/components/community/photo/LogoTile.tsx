@@ -20,8 +20,11 @@ interface LogoTileProps {
 
 export function LogoTile({ src, name, className, initialsClassName = 'text-[15px]', eager = false, onError }: LogoTileProps) {
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
+  // The caller may place the tile (absolute …); otherwise it anchors its own
+  // initials layer. Never both: CSS order would let `relative` win.
+  const positioned = /(^|\s)(absolute|fixed|sticky)(\s|$)/.test(className)
   return (
-    <span className={cn('relative flex items-center justify-center overflow-hidden bg-white', className)}>
+    <span className={cn(positioned ? '' : 'relative', 'flex items-center justify-center overflow-hidden bg-white', className)}>
       {state !== 'ready' && (
         <span aria-hidden="true" className={cn('absolute inset-0 flex items-center justify-center font-bold text-ink-1/40', state === 'loading' && 'animate-pulse', initialsClassName)}>
           {initialsOf(name)}

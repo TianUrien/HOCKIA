@@ -3,7 +3,7 @@ import { LogoTile } from './LogoTile'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
-import { cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
+import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import monogramRing from '@/assets/community/monogram-ring.svg'
 import { FitPill } from './FitPill'
@@ -32,7 +32,7 @@ interface MemberPhotoCardProps {
   priority?: boolean
 }
 
-const SCRIM = 'linear-gradient(180deg, rgba(15,15,20,0) 40%, rgba(15,15,20,0.45) 72%, rgba(15,15,20,0.82) 100%)'
+const SCRIM = CARD_SCRIM
 
 export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
   const [failed, setFailed] = useState<string | null>(null)
@@ -50,7 +50,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
       onClick={onOpen}
       aria-label={[name, roleLine, placeLine, fitLabel].filter(Boolean).join(', ') + '. Tap to preview.'}
       data-testid="member-tile"
-      className={`${pending ? 'bg-line ' : ''}relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-[20px] px-3 pb-3 pt-2.5 text-left transition-transform duration-100 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
+      className={`${pending ? 'bg-line ' : ''}relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-[20px] px-3 pb-3 pt-2.5 text-left ${PRESS} focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
       style={src ? undefined : { backgroundImage: pending ? SCRIM : `${SCRIM}, ${roleGradient(member.role)}` }}
     >
       {pending ? null : src ? (
@@ -82,6 +82,8 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
         </span>
       )}
 
+      {/* 0.5 pt inside hairline (finish pass) — above the photo, below the text. */}
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[20px] ${HAIRLINE_ON_PHOTO}`} />
       <span className="relative flex w-full min-w-0 flex-col gap-0.5">
         {fitLabel && fit && (
           <span className="mb-1">

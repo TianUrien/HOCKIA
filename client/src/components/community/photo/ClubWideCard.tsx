@@ -1,11 +1,12 @@
-import { useState } from 'react'
-import { LogoTile } from './LogoTile'
+import { useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
-import { CLUB_BRAND_GRADIENT, clubCover, crestGradient, initialsOf } from '@/lib/communityCard'
+import { CLUB_BRAND_GRADIENT, CLUB_COVER_SCRIM, GLASS, HAIRLINE_ON_PHOTO, LIGHT_SHADOW, PRESS, clubCover, crestGradient, initialsOf } from '@/lib/communityCard'
+import { useSquircle } from '@/lib/squircle'
 import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import recruitingDot from '@/assets/community/recruiting-dot.svg'
+import { LogoTile } from './LogoTile'
 
 /**
  * Card / Club wide (Figma 12:41): clubs always span both columns (founder
@@ -37,6 +38,9 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
   const crest = crestUrl && !crestFailed ? crestUrl : null
   const cover = clubCover(coverUrl && !coverFailed ? coverUrl : null, crest)
   const crestSrc = crest ? getImageUrl(crest, 'avatar-lg') ?? crest : null
+  // Continuous corners on this large surface (finish pass, spec 26:1046).
+  const ref = useRef<HTMLButtonElement>(null)
+  useSquircle(ref, 24)
 
   return (
     <button
@@ -44,7 +48,8 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
       onClick={onOpen}
       aria-label={`${name}, ${meta}. Tap to preview.`}
       data-testid="member-tile"
-      className="relative flex h-[196px] w-full flex-col justify-end gap-1 overflow-hidden rounded-[24px] px-4 pb-4 text-left transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2"
+      ref={ref}
+      className={`relative flex h-[196px] w-full flex-col justify-end gap-1 overflow-hidden rounded-[24px] px-4 pb-4 text-left ${PRESS} focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
       style={cover === 'photo' ? undefined : { backgroundImage: cover === 'crest' ? crestGradient(crestColor) : CLUB_BRAND_GRADIENT }}
     >
       {cover === 'photo' && coverUrl ? (
@@ -62,7 +67,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
             // and the card takes the crest variant instead.
             onLoad={(e) => { if (e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < MIN_COVER_WIDTH) setCoverFailed(true) }}
           />
-          <span className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(180deg, rgba(26,10,69,0.35) 0%, rgba(26,10,69,0) 30%, rgba(26,10,69,0) 45%, rgba(26,10,69,0.9) 100%)' }} />
+          <span className="absolute inset-0" style={{ backgroundImage: CLUB_COVER_SCRIM }} />
         </span>
       ) : (
         <span aria-hidden="true" className="absolute inset-0">
@@ -75,7 +80,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
               name={name}
               eager={priority}
               onError={() => setCrestFailed(true)}
-              className="absolute right-[23px] top-[26px] h-[108px] w-[108px] rounded-[24px] p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.3)]"
+              className={`absolute right-[23px] top-[26px] h-[108px] w-[108px] rounded-[24px] p-2.5 ${LIGHT_SHADOW}`}
               initialsClassName="text-[32px]"
             />
           ) : (
@@ -87,12 +92,13 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
       )}
 
       {recruiting && (
-        <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] py-[5px] pl-2 pr-2.5 backdrop-blur-[6px]">
+        <span className={`absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] py-[5px] pl-2 pr-2.5 ${GLASS}`}>
           <img src={recruitingDot} alt="" width={7} height={7} />
           <span className="text-[12px] font-semibold leading-4 text-white">Recruiting now</span>
         </span>
       )}
 
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[24px] ${HAIRLINE_ON_PHOTO}`} />
       <span className="relative flex w-full items-center gap-3">
         {cover === 'photo' && crestSrc && (
           <LogoTile src={crestSrc} name={name} className="h-11 w-11 shrink-0 rounded-[12px] p-1" initialsClassName="text-[14px]" />

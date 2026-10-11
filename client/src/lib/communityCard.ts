@@ -256,3 +256,36 @@ export function friendsHereLabel(n: number): string | null {
   if (n <= 0) return null
   return n === 1 ? '1 of your friends plays here' : `${n} of your friends play here`
 }
+
+/**
+ * Eased photo scrim (finish pass): 7 stops on a cubic ease-in-out between two
+ * positions, so the dark-to-clear edge never shows a band. `from`/`to` are
+ * percentages down the image; alpha runs fromAlpha → toAlpha.
+ */
+export function easedScrim(from: number, to: number, fromAlpha: number, toAlpha: number, rgb = '15, 15, 20'): string[] {
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
+  return Array.from({ length: 7 }, (_, i) => {
+    const t = i / 6
+    const alpha = fromAlpha + (toAlpha - fromAlpha) * ease(t)
+    return `rgba(${rgb}, ${alpha.toFixed(3)}) ${(from + (to - from) * t).toFixed(1)}%`
+  })
+}
+
+/** linear-gradient(180deg, …) from one or more eased segments. */
+export function scrimGradient(...segments: string[][]): string {
+  return `linear-gradient(180deg, ${segments.flat().join(', ')})`
+}
+
+/** Person cards: clear to 40 %, then eased to 82 % ink at the bottom (Card / Member photo). */
+export const CARD_SCRIM = scrimGradient(easedScrim(40, 100, 0, 0.82))
+/** Preview photo: a light top shade for the controls, clear middle, eased bottom for the name. */
+export const PHOTO_SCRIM = scrimGradient(easedScrim(0, 18, 0.45, 0), easedScrim(55, 100, 0, 0.85))
+/** Club cover: purple-tinted, eased (Card / Club wide). */
+export const CLUB_COVER_SCRIM = scrimGradient(easedScrim(0, 30, 0.35, 0, '26, 10, 69'), easedScrim(45, 100, 0, 0.9, '26, 10, 69'))
+
+/** Finish pass tokens. */
+export const HAIRLINE_ON_PHOTO = 'shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.10)]'
+export const LIGHT_SHADOW = 'shadow-[0_1px_2px_rgba(15,15,20,0.06),0_10px_28px_rgba(15,15,20,0.10)]'
+export const GLASS = 'backdrop-blur-[20px] backdrop-saturate-[1.8] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]'
+/** Press: 0.97 with a light spring. */
+export const PRESS = 'transition-transform duration-300 ease-[cubic-bezier(0.34,1.36,0.64,1)] active:scale-[0.97]'

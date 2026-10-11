@@ -22,6 +22,8 @@ import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
+import { hapticLight, hapticSelection } from '@/lib/haptics'
+import { useSquircle } from '@/lib/squircle'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { resolveConversationRoute } from '@/lib/startConversation'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -30,7 +32,7 @@ import { logger } from '@/lib/logger'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { brandCategoryLabel, coachSpecialtyLabel, positionLabel } from '@/lib/identity'
 import {
-  availableLabel, CLUB_BRAND_GRADIENT, displayPlace, placeLabel, crestGradient, friendsHereLabel, friendsSinceLabel,
+  availableLabel, CLUB_BRAND_GRADIENT, displayPlace, placeLabel, PHOTO_SCRIM, GLASS, PRESS, LIGHT_SHADOW, crestGradient, friendsHereLabel, friendsSinceLabel,
   inCommonCountLabel, initialsOf, rolePreviewGradient, teamLabel,
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
@@ -69,8 +71,7 @@ interface MemberFullPreviewProps {
   onBlocked?: (member: Profile) => void
 }
 
-const PHOTO_SCRIM = 'linear-gradient(180deg, rgba(15,15,20,0.45) 0%, rgba(15,15,20,0) 18%, rgba(15,15,20,0) 55%, rgba(15,15,20,0.85) 100%)'
-const GLASS_BUTTON = 'flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white backdrop-blur-[8px]'
+const GLASS_BUTTON = `flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white ${GLASS} ${PRESS}`
 const UNDER_18_MESSAGE = 'Under-18 accounts can’t message clubs or coaches.'
 
 function profilePath(m: Profile): string {
@@ -148,6 +149,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   useEffect(() => { setPhotoIndex(0) }, [member.id])
 
   useEffect(() => { onNestedModal?.(signIn !== null || rolePicker) }, [signIn, rolePicker, onNestedModal])
+  // Continuous top corners on the summary panel (finish pass).
+  const panelRef = useRef<HTMLDivElement>(null)
+  useSquircle(panelRef, { tl: 28, tr: 28 })
 
   useEffect(() => {
     trackDbEvent('profile_preview', 'profile', member.id, { viewed_role: member.role, source: 'community' })
@@ -181,6 +185,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
 
   const message = async () => {
     if (!requireMember('message') || !user) return
+    void hapticLight()
     setSending(true)
     try {
       const route = await resolveConversationRoute(user.id, member.id)
@@ -288,6 +293,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const fitLabel = fitChipLabel(fitState)
   const fitPillText = fitLabel && recruiterView.fitRole ? `${fitLabel} for ${recruiterView.fitRole.title}` : fitLabel
   const onShortlist = () => {
+    void hapticLight()
     if (recruiterView.roles.length === 0) void recruiterView.shortlistDefault()
     else if (recruiterView.roles.length === 1) void recruiterView.shortlistForRole(recruiterView.roles[0])
     else setRolePicker(true)
@@ -296,8 +302,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   // Inside the narrower deck card the labels stay on one line ("See open roles").
   // Deck card (Figma correction 2026-10-11): real type sizes, buttons 48 high.
   const btnSize = framed ? 'h-12 gap-1.5 px-2.5 text-[15px]' : 'h-[52px] gap-2 px-4 text-[16px]'
-  const primary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-hockia-primary ${btnSize} font-semibold text-white transition-opacity active:opacity-80 disabled:opacity-60`
-  const secondary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border-[1.5px] border-line bg-white ${btnSize} font-semibold text-ink-1 transition-colors active:bg-surface-muted disabled:text-ink-4`
+  const primary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-hockia-primary ${btnSize} font-semibold text-white ${PRESS} disabled:opacity-60`
+  const secondary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border-[1.5px] border-line bg-white ${btnSize} font-semibold text-ink-1 ${PRESS} active:bg-surface-muted disabled:text-ink-4`
   const muted = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-surface-muted ${btnSize} font-semibold text-ink-2`
 
   const messageButton = (variant: 'primary' | 'secondary') => (
@@ -386,7 +392,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       <>
         <button
           type="button"
-          onClick={() => { if (requireMember('connect')) void friendship.sendRequest() }}
+          onClick={() => { if (requireMember('connect')) { void hapticLight(); void friendship.sendRequest() } }}
           disabled={friendship.mutating || friendship.loading}
           className={primary}
           data-testid="member-preview-friend"
@@ -432,7 +438,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             <span aria-hidden="true" className="absolute inset-0">
               <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
               {isClub && crest ? (
-                <LogoTile src={crest} name={name} eager className="absolute left-1/2 top-[29%] h-[150px] w-[150px] -translate-x-1/2 rounded-[32px] p-3.5 shadow-[0_10px_24px_rgba(0,0,0,0.3)]" initialsClassName="text-[44px]" />
+                <LogoTile src={crest} name={name} eager className={`absolute left-1/2 top-[29%] h-[150px] w-[150px] -translate-x-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
               ) : brandLogo ? (
                 <LogoTile src={getImageUrl(brandLogo, 'avatar-lg') ?? brandLogo} name={name} eager className="absolute left-1/2 top-[33%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
               ) : (
@@ -480,7 +486,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             )}
             {fitPillText && fitState && <FitPill state={fitState} label={fitPillText} />}
             {!fitPillText && friendship.isIncomingRequest && !recruiterActions && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] backdrop-blur-[6px]">
+              <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
                 <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />
                 <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
               </span>
@@ -491,7 +497,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         </div>
 
         {/* Summary panel */}
-        <div className="relative -mt-6 flex shrink-0 flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
+        <div ref={panelRef} className="relative -mt-6 flex shrink-0 flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
           <div aria-hidden="true" className="flex justify-center">
             <span className="h-[5px] w-9 rounded-[3px] bg-line" />
           </div>
@@ -650,6 +656,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     const next = index + dir
     if (next < 0 || next > members.length) return
     trackEvent({ action: 'community_deck_swipe', category: 'community', label: dir > 0 ? 'next' : 'previous' })
+    void hapticSelection()
     stopHint()
     if (reduce) { setIndex(next); return }
     setAnimating(true)
@@ -756,9 +763,9 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
         >
           {index > 0 && <PeekCard member={members[index - 1]} side="left" width={cardWidth} />}
           {index + 1 < members.length ? <PeekCard member={members[index + 1]} side="right" width={cardWidth} /> : index < members.length && <PeekEnd side="right" width={cardWidth} />}
-          <div key={reduce ? index : 'card'} className={`absolute inset-0 flex flex-col overflow-hidden rounded-[24px] bg-white ${reduce ? 'animate-fade-in' : ''}`} data-testid="member-deck-card">
+          <DeckCard animateIn={reduce} key={reduce ? index : 'card'}>
             {body ?? <DeckEnd onAdjustFilters={() => { onClose(); deck.onAdjustFilters?.() }} onBack={onClose} />}
-          </div>
+          </DeckCard>
         </div>
         {hint && (
           <div className="pointer-events-none absolute left-1/2 top-[30%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-lg animate-fade-in" role="status">
@@ -773,7 +780,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
         <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous member" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
           <ChevronLeft className="h-5 w-5" strokeWidth={2} />
         </button>
-        <p className="min-w-[72px] text-center text-[13px] font-semibold leading-[18px] text-white/90">{Math.min(index + 1, members.length)} of {members.length}</p>
+        <p className="min-w-[72px] text-center text-[13px] font-semibold leading-[18px] tabular-nums text-white/90">{Math.min(index + 1, members.length)} of {members.length}</p>
         <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label="Next member" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
           <ChevronRight className="h-5 w-5" strokeWidth={2} />
         </button>
@@ -800,6 +807,18 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   )
 
   return createPortal(overlay, document.body)
+}
+
+/** The active deck card: continuous corners, white 8 % inside hairline (finish pass). */
+function DeckCard({ children, animateIn }: { children: React.ReactNode; animateIn: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useSquircle(ref, 24)
+  return (
+    <div ref={ref} className={`absolute inset-0 flex flex-col overflow-hidden rounded-[24px] bg-white ${animateIn ? 'animate-fade-in' : ''}`} data-testid="member-deck-card">
+      {children}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[24px] shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.08)]" />
+    </div>
+  )
 }
 
 /** A neighbour card peeking beside the active one (94 %, photo + name only). */
