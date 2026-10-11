@@ -255,6 +255,17 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const playsAt = fact(facts, isCoach ? 'coaches_at' : 'plays_at')
   const available = fact(facts, 'available')
   const passport = fact(facts, 'passport')
+  // Available follows the role's own open flag (Figma review 11 Oct): off →
+  // visitors see no tile (Passport takes the row), the owner a quiet line;
+  // on → "Open to coach" + the date for coaches, the player's season line.
+  const openFlag = isCoach ? profile.open_to_coach === true : profile.open_to_play === true
+  const availableTile: { value: string; detail: string | null; tone?: 'positive' | 'muted' } | null = !available
+    ? null
+    : !openFlag
+      ? (owner ? { value: 'Not looking right now', detail: null, tone: 'muted' } : null)
+      : isCoach
+        ? { value: 'Open to coach', detail: !available.missing && available.value !== 'Open to coach' ? available.value : null, tone: 'positive' }
+        : { value: available.value, detail: available.detail, tone: 'positive' }
   const skills = isCoach ? [] : (profile.specialist_skills ?? []).filter(Boolean)
   const friendCount = profile.accepted_friend_count ?? 0
   const friendsPreview = useQuery({
@@ -341,7 +352,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const coachRoles = coachRolesQ.data ?? []
   const coachHealth = useRolesHealth(owner && isCoach && (recruitsForTeam || coachRoles.length > 0))
 
-  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'roles' ? isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) : a.id === 'videos' ? (owner && !isCoach) || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : true))
+  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'roles' ? isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) : a.id === 'videos' ? (owner && !isCoach) || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : a.id === 'references' ? owner || referenceCount > 0 : a.id === 'about' ? owner || Boolean(bio) || Boolean(relocation) : true))
 
   // ⋯ (report / block) — in the hero and again in the compact header, so it
   // stays reachable after scrolling (PR10).
@@ -431,13 +442,12 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             onClick={profile.current_world_club_id ? () => navigate(`/world/clubs/${profile.current_world_club_id}`) : undefined}
           />
         )}
-        {(available || passport) && (
+        {(availableTile || passport) && (
           <div className="flex gap-2.5">
-            {available && <FactTile label="Available" value={available.value} detail={available.detail} tone={profile.open_to_play ? 'positive' : available.missing ? 'muted' : undefined} />}
+            {availableTile && <FactTile label="Available" value={availableTile.value} detail={availableTile.detail} tone={availableTile.tone} />}
             {passport && <FactTile label="Passport" value={passport.value} detail={passport.detail} tone={passport.missing ? 'muted' : undefined} />}
           </div>
         )}
-        {isCoach && category && <div className="flex flex-wrap gap-2"><Chip>{category}</Chip></div>}
         {!isCoach && (skills.length > 0 || (confirmed.data?.length ?? 0) > 0 || showSelfDeclared) && (
           <div className="flex flex-wrap gap-2">
             {skills.map((s) => <Chip key={s}>🎯 {humanizeToken(s)}</Chip>)}
@@ -498,6 +508,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       )}
 
       {/* References (gold = trust) */}
+      {(owner || referenceCount > 0) && (
       <Section id="references" title="References" action={referenceCount > 0 ? `See all ${referenceCount}` : owner ? 'Ask for one' : null} onAction={props.onOpenReferences}>
         {referenceCount === 0 && !refsLoading && (owner
           ? dashed('Ask for a reference', props.onOpenReferences)
@@ -523,6 +534,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           })}
         </div>
       </Section>
+
+      )}
 
       {/* Career */}
       {(owner || careerCount > 0) && (
@@ -559,7 +572,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       {profileId && <CommentsPreview profileId={profileId} profileRole={profile.role} owner={owner} />}
 
       {/* About */}
-      {(owner || bio || category || relocation) && (
+      {(owner || bio || relocation) && (
         <Section id="about" title="About" action={owner ? 'Edit' : null} onAction={() => props.onEdit('about')}>
           <div className="px-4">
             {bio ? (
@@ -569,7 +582,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               </>
             ) : owner ? (step?.key === 'bio' ? <p className="text-body text-ink-3">No bio yet</p> : dashed('Write a short bio', () => props.onEdit('about'))) : null}
             <div className="mt-2 divide-y divide-line">
-              {category && <DetailRow label="Team" value={category} />}
               {relocation && <DetailRow label="Relocation" value={relocation} />}
             </div>
           </div>

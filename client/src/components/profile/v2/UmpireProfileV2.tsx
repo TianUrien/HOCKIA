@@ -224,6 +224,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
 
   const anchors = ANCHORS.filter((a) => (
     a.id === 'appointments' ? owner || apptCount > 0
+      : a.id === 'references' ? owner || referenceCount > 0
+      : a.id === 'about' ? owner || Boolean(bio) || languages.length > 0
       : a.id === 'posts' ? owner || tiles.length > 0
         : true
   ))
@@ -275,7 +277,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
         )}
         <div className="flex gap-2.5">
           <FactTile label="Level" value={level ?? (owner ? 'Add level' : 'Not set')} detail={level && since ? `Since ${since}` : null} tone={level ? undefined : 'muted'} />
-          <FactTile label="Available" value={available ? 'For appointments' : 'Not right now'} detail={available ? 'Open to new tournaments' : null} tone={available ? 'positive' : 'muted'} />
+          <FactTile label="Available" value={available ? 'For appointments' : 'Not right now'} detail={available ? 'Open to tournaments' : null} tone={available ? 'positive' : 'muted'} />
         </div>
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
       </section>
@@ -291,6 +293,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
       )}
 
       {/* References (gold = trust) */}
+      {(owner || referenceCount > 0) && (
       <Section id="references" title="References" action={referenceCount > 0 ? `See all ${referenceCount}` : owner ? 'Ask for one' : null} onAction={() => props.onOpenSection('references')}>
         {referenceCount === 0 && !refsLoading && <p className="px-4 text-row leading-[21px] text-ink-2">No references yet. Players, coaches and clubs who are friends on Hockia can write one.</p>}
         <div className="flex flex-col gap-3 px-4">
@@ -314,6 +317,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
           })}
         </div>
       </Section>
+
+      )}
 
       {/* Posts & photos */}
       {(owner || tiles.length > 0) && (
