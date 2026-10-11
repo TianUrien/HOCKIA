@@ -83,7 +83,7 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28" data-testid="open-to-play-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28" data-testid="open-to-play-screen">
       <CancelSaveBar title="Open to play" onCancel={onDone} onSave={() => void save()} saving={saving} saveDisabled={!showSwitch} />
 
       <div className="flex flex-col gap-3 px-5 pt-3">

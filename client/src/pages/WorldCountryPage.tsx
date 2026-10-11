@@ -513,7 +513,7 @@ export default function WorldCountryPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-48 mb-8" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -536,7 +536,7 @@ export default function WorldCountryPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">
@@ -578,7 +578,7 @@ export default function WorldCountryPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12 max-w-md mx-auto">
             <img
               src={`https://flagcdn.com/w160/${notInDirectory.code.toLowerCase()}.png`}
@@ -609,7 +609,7 @@ export default function WorldCountryPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
             <p className="text-gray-500">Country not found</p>
             <Link to="/world" className="text-blue-600 hover:underline mt-2 inline-block">
@@ -625,7 +625,7 @@ export default function WorldCountryPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+      <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
         {/* Back Button */}
         <button
           type="button"

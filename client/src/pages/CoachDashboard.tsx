@@ -585,7 +585,7 @@ export default function CoachDashboard({
 
       {/* Own profile on phone: the hero cover carries Share + Settings (as for
           players), so there is no separate Profile title row above it. */}
-      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : 'pt-[max(env(safe-area-inset-top),1rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : 'pt-[calc(env(safe-area-inset-top)+1rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {readOnly && !isOwnProfile && (
           <button
             type="button"

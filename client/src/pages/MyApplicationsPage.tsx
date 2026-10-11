@@ -84,7 +84,7 @@ export default function MyApplicationsPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header mobileHidden />
-      <main className="mx-auto max-w-2xl pb-24 pt-[env(safe-area-inset-top)] lg:pt-24">
+      <main className="mx-auto max-w-2xl pb-24 pt-[calc(env(safe-area-inset-top)+0.5rem)] lg:pt-24">
         <DetailNavBar parent={backLabelFrom(location.state, 'Opportunities')} title="My applications" fallbackPath="/opportunities" />
         <h1 className="hidden px-5 pb-2 text-title text-ink-1 lg:block">My applications</h1>
 

@@ -91,7 +91,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const open = (a: Applicant) => navigate(`/dashboard/opportunities/${roleId}/applicants/${a.applicationId}`, { state: { from: location.pathname } })
 
   return (
-    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="applicants-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="applicants-screen">
       <DetailNavBar
         parent={home.label}
         fallbackPath={home.path}

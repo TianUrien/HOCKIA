@@ -90,7 +90,7 @@ export function YourWeekScreen() {
   const tilesLoading = vis.loading || roles.loading || apps.loading
 
   return (
-    <div className="min-h-screen bg-white" data-testid="your-week-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)]" data-testid="your-week-screen">
       <DetailNavBar parent={backLabelFrom(location.state, 'Home')} fallbackPath="/home" />
 
       <div className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-8">

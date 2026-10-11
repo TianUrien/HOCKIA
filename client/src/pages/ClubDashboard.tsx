@@ -569,7 +569,7 @@ export default function ClubDashboard({
       )}
 
       {!isLeagueLeaf && !isLinkLeaf && !isSquadLeaf && !isMediaLeaf && (
-      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {isPhone && isLanding ? (
           <div className="-mx-4 md:-mx-6">
             <Suspense fallback={<div className="min-h-screen bg-white" />}>

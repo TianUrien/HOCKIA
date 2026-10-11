@@ -106,7 +106,7 @@ export default function WorldPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+      <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
         {/* Page Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F3F0FA] rounded-2xl mb-4">

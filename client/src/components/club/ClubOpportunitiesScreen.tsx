@@ -296,7 +296,7 @@ export default function ClubOpportunitiesScreen() {
   const data = useClubRoles(profile?.id)
   const postRole = () => navigate('/dashboard/opportunities/new')
   return (
-    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="club-opportunities-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="club-opportunities-screen">
       <LargeTitleBar
         title="Opportunities"
         trailing={(

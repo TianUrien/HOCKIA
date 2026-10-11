@@ -330,7 +330,7 @@ export default function CommunityPage() {
       <Header mobileHidden />
 
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="max-w-7xl mx-auto px-4 md:px-6 pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24 pb-12">
+        <main className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-24 pb-12">
           {/* Title row: "Community" + the filters button (members only).
               The badge shows how many filters are narrowing the grid. */}
           <div className="mb-2 flex items-center justify-between lg:mb-3">
