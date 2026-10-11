@@ -493,7 +493,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           </div>
 
           {/* Identity */}
-          <div className="pointer-events-none absolute inset-x-5 bottom-[calc(24px+18px)] flex flex-col items-start gap-1.5">
+          <div data-preview-identity="" className="pointer-events-none absolute inset-x-5 bottom-[calc(24px+18px)] flex flex-col items-start gap-1.5">
             {isClub && current && crest && (
               <LogoTile src={crest} name={name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
             )}
@@ -656,11 +656,17 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   // ── Gestures: sideways = members (deck), down = close.
   const [hint, setHint] = useState(false)
   const hintTimers = useRef<number[]>([])
-  const stopHint = useCallback(() => {
+  // "Seen" is recorded only once the hint has really been shown — finished,
+  // or swiped past — never on an unmount (React runs effects twice in dev).
+  const markHintSeen = useCallback(() => {
+    try { window.localStorage.setItem(DECK_HINT_KEY, '1') } catch { /* private mode */ }
+  }, [])
+  const stopHint = useCallback((seen = false) => {
+    if (seen && hintTimers.current.length > 0) markHintSeen()
     hintTimers.current.forEach((t) => window.clearTimeout(t))
     hintTimers.current = []
     setHint(false)
-  }, [])
+  }, [markHintSeen])
   const start = useRef<{ x: number; y: number; axis: 'x' | 'y' | null } | null>(null)
   const moved = useRef(false)
   const [dy, setDy] = useState(0)
@@ -692,7 +698,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     if (next < 0 || next > members.length) return
     trackEvent({ action: 'community_deck_swipe', category: 'community', label: dir > 0 ? 'next' : 'previous' })
     void hapticSelection()
-    stopHint()
+    stopHint(true)
     if (reduce) { setIndex(next); return }
     animating.current = true
     setFocusIndex(next)
@@ -723,7 +729,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
       else { start.current = null; return }
     }
     moved.current = true
-    if (hintTimers.current.length > 0) stopHint()
+    if (hintTimers.current.length > 0) stopHint(true)
     if (s0.axis === 'x') {
       // Resist past the first member.
       const edge = (index === 0 && mx > 0) || (atEnd && mx < 0)
@@ -750,22 +756,45 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   }
 
   // ── First-open nudge (P20), once per device.
+  // Placed in the photo: its vertical centre, but always clear of the name
+  // block (16 pt above it) and of the close / ⋯ row and progress bars
+  // (never above 16 pt under the close button).
+  const hintRef = useRef<HTMLDivElement>(null)
+  const [hintTop, setHintTop] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    if (!hint) return
+    const card = stripRef.current?.querySelector('[data-testid="member-deck-card"]') as HTMLElement | null
+    const photo = card?.querySelector('[data-preview-scroll] > div') as HTMLElement | null
+    const identity = card?.querySelector('[data-preview-identity]') as HTMLElement | null
+    const hintH = hintRef.current?.offsetHeight ?? 44
+    if (!card || !photo) return
+    const cardTop = card.getBoundingClientRect().top
+    const containerTop = stripRef.current!.parentElement!.getBoundingClientRect().top
+    const offset = cardTop - containerTop
+    const belowClose = 24 + 44 + 16 // close row top + button + gap
+    const centre = photo.offsetHeight / 2 - hintH / 2
+    const aboveName = identity ? identity.getBoundingClientRect().top - cardTop - 16 - hintH : centre
+    setHintTop(offset + Math.max(belowClose, Math.min(centre, aboveName)))
+  }, [hint, index])
+  // Depends on "is this a deck", never on the deck object (rebuilt on every
+  // grid render — a re-run would cancel the hint the moment it shows).
+  const isDeck = Boolean(deck)
   useEffect(() => {
-    if (!deck || members.length < 2) return
+    if (!isDeck || members.length < 2) return
     let seen = false
     try { seen = window.localStorage.getItem(DECK_HINT_KEY) === '1' } catch { /* private mode */ }
     if (seen) return
-    try { window.localStorage.setItem(DECK_HINT_KEY, '1') } catch { /* private mode */ }
     setHint(true)
+    const done = () => { markHintSeen(); hintTimers.current = []; setHint(false) }
     hintTimers.current = reduce
-      ? [window.setTimeout(() => setHint(false), 2600)]
+      ? [window.setTimeout(done, 2600)]
       : [
           window.setTimeout(() => setX(-40, 'settle'), 500),
           window.setTimeout(() => setX(0, 'spring'), 500 + 260 + 300),
-          window.setTimeout(() => { hintTimers.current = []; setHint(false) }, 2800),
+          window.setTimeout(done, 2800),
         ]
-    return stopHint
-  }, [deck, members.length, reduce, stopHint, setX])
+    return () => stopHint()
+  }, [isDeck, members.length, reduce, stopHint, setX, markHintSeen])
 
   const dragging = start.current?.axis != null
   const renderBody = (m: Profile, active: boolean) => (
@@ -836,7 +865,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
           })}
         </div>
         {hint && (
-          <div className="pointer-events-none absolute left-1/2 top-[30%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-lg animate-fade-in" role="status">
+          <div ref={hintRef} className="pointer-events-none absolute left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-lg animate-fade-in" style={{ top: hintTop ?? 84 }} role="status">
             <ArrowLeft className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} aria-hidden="true" />
             <span className="whitespace-nowrap text-[15px] font-semibold text-ink-1">Swipe for the next member</span>
           </div>
