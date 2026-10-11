@@ -169,11 +169,12 @@ export default {
       },
       // Figma "Hockia / Space & Radius" wins (founder ruling 2026-10-02):
       // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·
-      // sheet = radius/xl 20 (was 22).
+      // sheet = radius/2xl 28 (founder ruling 2026-10-11: every bottom sheet,
+      // app-wide; was radius/xl 20).
       borderRadius: {
         tile: `${r.sm}px`,
         card: `${r.lg}px`,
-        sheet: `${r.xl}px`,
+        sheet: `${r['2xl']}px`,
         // radius/2xl 28: the landing closing panel and the web auth card.
         panel: `${r['2xl']}px`,
       },

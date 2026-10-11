@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useSquircle } from '@/lib/squircle'
 
 interface BottomSheetProps {
   open: boolean
@@ -14,7 +16,8 @@ interface BottomSheetProps {
 }
 
 /**
- * Half-sheet from the bottom (Figma "sheet": 22px top radius, grab handle,
+ * Half-sheet from the bottom (Figma "sheet": 28 pt continuous top corners —
+ * founder ruling 2026-10-11 — grab handle,
  * scrim). Used by Share, Apply, Filters and Member preview. Full width on
  * phones; on wider screens it floats centred with the same shape so desktop
  * keeps one visual language.
@@ -23,6 +26,9 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className }: B
   const panelRef = useRef<HTMLDivElement>(null)
   useFocusTrap({ containerRef: panelRef, isActive: open })
   useBodyScrollLock(open)
+  // Continuous corners: top only on phones, all four where it floats centred.
+  const floating = useMediaQuery('(min-width: 640px)')
+  useSquircle(panelRef, floating ? 28 : { tl: 28, tr: 28 }, 0.6, open)
 
   useEffect(() => {
     if (!open) return

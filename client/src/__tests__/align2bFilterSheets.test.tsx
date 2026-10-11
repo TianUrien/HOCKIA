@@ -105,8 +105,10 @@ describe('CommunityFiltersDrawer', () => {
     const forward = screen.getByRole('button', { name: 'Forward' })
     expect(forward.getAttribute('aria-pressed')).toBe('true')
     expect(forward.className).toContain('bg-brand-soft')
-    expect(screen.getByRole('button', { name: 'Players' }).getAttribute('aria-pressed')).toBe('true')
-    expect(screen.getByRole('button', { name: 'Coaches' }).className).toContain('bg-surface-grouped')
+    // Phone sheet (Figma P13): Availability · Position · Team — role lives in the grid chips.
+    expect(screen.getByRole('button', { name: 'Open to play' }).className).toContain('bg-surface-grouped')
+    expect(screen.getByRole('button', { name: 'Women’s' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.queryByRole('button', { name: 'Clubs' })).toBeNull()
   })
 
   it('the Primary button shows the live member count and closes the sheet', () => {
@@ -129,8 +131,9 @@ describe('CommunityFiltersDrawer', () => {
 
   it('the EU passport toggle is a switch row that writes the filter', () => {
     const s = state()
-    render(<CommunityFiltersDrawer state={s} resultCount={10} onSelectRole={vi.fn()} />)
-    fireEvent.click(screen.getByRole('switch', { name: 'Only members with an EU passport' }))
+    render(<CommunityFiltersDrawer state={s} resultCount={10} euCount={69} onSelectRole={vi.fn()} />)
+    expect(screen.getByText('69 members hold one')).toBeTruthy()
+    fireEvent.click(screen.getByRole('switch', { name: 'Only EU passport holders' }))
     expect(s.updateFilter).toHaveBeenCalledWith('euOnly', true)
   })
 
@@ -140,7 +143,12 @@ describe('CommunityFiltersDrawer', () => {
     render(<CommunityFiltersDrawer state={s} resultCount={10} onSelectRole={onSelectRole} />)
     fireEvent.click(screen.getByRole('button', { name: 'Defender' }))
     expect(s.togglePosition).toHaveBeenCalledWith('defender')
-    fireEvent.click(screen.getByRole('button', { name: 'Clubs' }))
-    expect(onSelectRole).toHaveBeenCalledWith('club')
+    fireEvent.click(screen.getByRole('button', { name: 'Women’s' }))
+    expect(s.updateFilter).toHaveBeenCalledWith('categories', ['adult_women'])
+    fireEvent.click(screen.getByRole('button', { name: 'Open to play' }))
+    expect(s.updateFilter).toHaveBeenCalledWith('availability', 'play')
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(s.clearFilters).toHaveBeenCalled()
+    expect(onSelectRole).toHaveBeenCalledWith('all')
   })
 })
