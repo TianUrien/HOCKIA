@@ -7,6 +7,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useMemberAges } from '@/hooks/useMemberAges'
 import { useMemberPhotosBatch } from '@/hooks/useMemberPhotos'
 import { useOpenRolePositions } from '@/hooks/useOpenRoleCounts'
+import { useClubCrestColors } from '@/hooks/useClubCrestColors'
 import { notifyBlockListChanged } from '@/hooks/useBlockedUsers'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
@@ -54,6 +55,8 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
   const photoIds = useMemo(() => members.filter((m) => m.role !== 'brand').map((m) => m.id), [members])
   const ages = useMemberAges(personIds)
   const batch = useMemberPhotosBatch(photoIds)
+  const clubs = useMemo(() => members.filter((m) => m.role === 'club'), [members])
+  const crestColors = useClubCrestColors(clubs)
   const [preview, setPreview] = useState<Profile | null>(null)
   const [blocked, setBlocked] = useState<BlockedToast | null>(null)
 
@@ -110,7 +113,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
                   meta={meta}
                   coverUrl={batch.isPending(m.id) ? null : cover}
                   crestUrl={m.avatar_url}
-                  crestColor={(m as { crest_color?: string | null }).crest_color ?? null}
+                  crestColor={crestColors.get(m.id) ?? null}
                   recruiting={recruiting}
                   onOpen={() => open(m)}
                   priority={i < 3}
@@ -143,6 +146,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
             member={preview}
             age={ages.get(preview.id) ?? null}
             fit={fitById?.get(preview.id) ?? null}
+            crestColor={crestColors.get(preview.id) ?? null}
             onClose={() => setPreview(null)}
             onBlocked={(m) => setBlocked({ member: m, at: Date.now() })}
           />

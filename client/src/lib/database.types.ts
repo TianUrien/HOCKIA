@@ -1467,6 +1467,35 @@ export type Database = {
           },
         ]
       }
+      club_crest_colors: {
+        Row: {
+          color: string
+          crest_url: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          crest_url: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          crest_url?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_crest_colors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_media: {
         Row: {
           alt_text: string | null

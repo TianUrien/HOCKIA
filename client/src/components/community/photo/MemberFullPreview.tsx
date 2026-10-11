@@ -59,6 +59,8 @@ interface MemberFullPreviewProps {
   age?: number | null
   /** Recruiters only: the fit for the active "Ranked for" role. */
   fit?: FitState | null
+  /** Clubs: the crest colour for a club without photos (Cover=Crest). */
+  crestColor?: string | null
   /** The block went through: close and let the grid offer Undo. */
   onBlocked?: (member: Profile) => void
 }
@@ -92,7 +94,7 @@ function passportText(passports: Country[]): string | null {
   return [flags, passports.some((c) => isEuCountryCode(c.code)) ? 'EU' : null].filter(Boolean).join(' ')
 }
 
-export function MemberFullPreview({ member, onClose, age = null, fit = null, onBlocked }: MemberFullPreviewProps) {
+export function MemberFullPreview({ member, onClose, age = null, fit = null, crestColor = null, onBlocked }: MemberFullPreviewProps) {
   const { user, profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -414,7 +416,7 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, onB
   // ── Photo area background when there is no photo to show
   const crest = isClub && member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-xl') ?? member.avatar_url : null
   const noPhotoBackground = isClub
-    ? (crest ? crestGradient((member as { crest_color?: string | null }).crest_color ?? null) : CLUB_BRAND_GRADIENT)
+    ? (crest ? crestGradient(crestColor) : CLUB_BRAND_GRADIENT)
     : rolePreviewGradient(member.role)
   const brandLogo = isBrand ? member.brand_logo_url ?? member.avatar_url : null
 
