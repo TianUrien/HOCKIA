@@ -22,6 +22,8 @@ import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { hapticLight, hapticSelection } from '@/lib/haptics'
 import { useSquircle } from '@/lib/squircle'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
@@ -145,6 +147,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     return [...new Set(list)]
   }, [isPerson, member.avatar_url, gallery.data])
   const [photoIndex, setPhotoIndex] = useState(0)
+  // The photo on screen once decoded (a preloaded one shows at once, a late one fades in).
+  const [shownSrc, setShownSrc] = useState<string | null>(null)
   const [failed, setFailed] = useState<Set<string>>(() => new Set())
   const shown = photos.filter((p) => !failed.has(p))
   const current = shown[Math.min(photoIndex, Math.max(shown.length - 1, 0))] ?? null
@@ -420,20 +424,26 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         {/* Photo area */}
         <div
           className={`relative w-full shrink-0 grow overflow-hidden ${framed ? 'min-h-[min(410px,52dvh)]' : 'min-h-[min(520px,61dvh)]'}`}
-          style={current ? undefined : { backgroundImage: noPhotoBackground }}
+          // The member's colour sits behind the photo, so a photo still on its
+          // way never shows as a white gap.
+          style={{ backgroundImage: noPhotoBackground }}
         >
           {current ? (
             <>
               <img
                 key={current}
+                ref={(el) => { if (el?.complete && el.naturalWidth > 0) setShownSrc(current) }}
                 src={getImageUrl(current, 'feed-full') ?? current}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${shownSrc === current ? 'opacity-100' : 'opacity-0'}`}
                 decoding="async"
                 onError={() => setFailed((s) => new Set(s).add(current))}
                 // Clubs: a small media upload (often the logo) goes blurry at
                 // this size; below the spec's 600 px it is skipped, like the card.
-                onLoad={(e) => { if (isClub && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < 600) setFailed((s) => new Set(s).add(current)) }}
+                onLoad={(e) => {
+                  if (isClub && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < 600) setFailed((s) => new Set(s).add(current))
+                  else setShownSrc(current)
+                }}
               />
               <span aria-hidden="true" className="absolute inset-0" style={{ backgroundImage: PHOTO_SCRIM }} />
             </>
@@ -634,9 +644,13 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   // Warm the neighbours' photos so a swipe lands on a loaded card.
   useEffect(() => {
     if (!deck) return
-    const near = [members[index - 1], members[index + 1], members[index + 2]].filter((m): m is Profile => Boolean(m))
-    void prefetchMemberPhotos(near.map((m) => m.id))
+    // Three members each way: their data, then their first photo downloaded
+    // and decoded, so a card is complete before it ever slides into view.
+    const near = [-3, -2, -1, 1, 2, 3].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
     void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
+    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+      for (const m of near) preloadImage(firstPhotoOf(m))
+    })
   }, [deck, index, members])
 
   // ── Gestures: sideways = members (deck), down = close.
@@ -769,7 +783,9 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     />
   )
   // The previous, current and next slot (the end card is the slot after the last member).
-  const windowSlots = deck ? [index - 1, index, index + 1].filter((k) => k >= 0 && k <= members.length) : []
+  // Two cards built on each side: after a swipe the new neighbour is already
+  // rendered (photo included) one slot further out, never mounted in view.
+  const windowSlots = deck ? [index - 2, index - 1, index, index + 1, index + 2].filter((k) => k >= 0 && k <= members.length) : []
   const body = member ? (
     <MemberPreviewBody
       key={member.id}
@@ -898,6 +914,26 @@ function DeckCard({ children, animateIn, offset, focused, active, side }: { chil
       </div>
     </div>
   )
+}
+
+/** The photo a member's card opens on: the avatar for people, the first media photo for clubs. */
+function firstPhotoOf(m: Profile): string | null {
+  if (m.role === 'brand') return null
+  if (m.role !== 'club' && m.avatar_url) return m.avatar_url
+  return queryClient.getQueryData<string[]>(qk.memberPhotos(m.id))?.[0] ?? null
+}
+
+const preloaded = new Set<string>()
+/** Download and decode an image ahead of time (same URL the card uses). */
+function preloadImage(raw: string | null) {
+  if (!raw || typeof Image === 'undefined') return
+  const src = getImageUrl(raw, 'feed-full') ?? raw
+  if (preloaded.has(src)) return
+  preloaded.add(src)
+  const img = new Image()
+  img.decoding = 'async'
+  img.src = src
+  void img.decode?.().catch(() => undefined)
 }
 
 /** Past the last member (Figma P21). */
