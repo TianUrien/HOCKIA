@@ -59,7 +59,7 @@ export const NEXT_STEP_COPY: Record<string, { title: string; subtitle: string; c
   appointments: { title: 'Add your first appointment', subtitle: 'Your officiating record', cta: 'Add', action: { kind: 'edit' } },
   country: { title: 'Add your country', subtitle: 'Shown on your profile', cta: 'Add', action: { kind: 'edit' } },
   year_founded: { title: 'Add the year founded', subtitle: 'Shown in About', cta: 'Add', action: { kind: 'edit' } },
-  contact: { title: 'Add a website or public email', subtitle: 'So people can reach you', cta: 'Add', action: { kind: 'edit' } },
+  contact: { title: 'Add a website or email', subtitle: 'So players can reach you', cta: 'Add', action: { kind: 'edit' } },
   media: { title: 'Add club photos', subtitle: 'Players look at the club first', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
   posts: { title: 'Write your first post', subtitle: 'Share club news', cta: 'Post', action: { kind: 'route', to: '/home' } },
   links: { title: 'Add your website or Instagram', subtitle: 'Where athletes find you', cta: 'Add', action: { kind: 'edit' } },

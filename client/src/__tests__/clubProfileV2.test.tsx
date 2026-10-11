@@ -107,3 +107,15 @@ describe('ClubProfileV2 · squad rail', () => {
     expect(faces).toEqual(['ELEmmettCoach', 'LFLucíaDefender']) // initials circle + first name + line
   })
 })
+
+describe('ClubProfileV2 · one primary per screen', () => {
+  it('with nothing to review: no Review applicants, View roles instead', async () => {
+    const mod = await import('@/hooks/useRolesHealth')
+    vi.spyOn(mod, 'useRolesHealth').mockReturnValue({ roles: [], totals: { openRoles: 1, pending: 0, newApplicants: 0 }, loading: false, failed: false })
+    openRoles = [role('r1')]; members = []
+    renderScreen()
+    expect(screen.getByText('No new applicants')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Review applicants' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'View roles' })).toBeTruthy()
+  })
+})
