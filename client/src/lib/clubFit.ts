@@ -20,13 +20,14 @@
  *                                  level_band_global is curated)
  *   gender_match           30%  — player playing_category fits the
  *                                 club's target team category
- *   availability           20%  — open_to_X (60%) + recency_30d (40%)
- *   recency                10%  — recency_30d on profile_updated_at
+ *   availability           30%  — open_to_X flag
+ *
+ * Activity / last-seen is never part of fit (founder ruling 2026-10-11);
+ * `recency` stays in the components shape at 0 for older readers.
  *
  * Missing data NEVER raises confidence. Examples:
  *   - Player without playing_category   → gender_match = 0
  *   - Player without current_world_club → competition_proximity = 0
- *   - Player without last_active_at     → availability recency = 0
  *
  * Thresholds: green ≥ 0.66, yellow ≥ 0.40, grey otherwise.
  */
@@ -116,7 +117,6 @@ export interface FitCandidateFields {
   specialist_skills?: string[] | null
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
 const DEFAULT_TIER_DISTANCE_CAP = 4
 
 // Base weights — used when the scope has NO target position (the common
@@ -125,8 +125,7 @@ const DEFAULT_TIER_DISTANCE_CAP = 4
 const WEIGHTS = {
   competition_proximity: 0.4,
   gender_match: 0.3,
-  availability: 0.2,
-  recency: 0.1,
+  availability: 0.3,
 } as const
 
 // Position-aware weights — used ONLY when the scope carries a
@@ -137,8 +136,7 @@ const WEIGHTS = {
 const WEIGHTS_WITH_POSITION = {
   competition_proximity: 0.30, // 0.40 × 0.75
   gender_match: 0.225,         // 0.30 × 0.75
-  availability: 0.15,          // 0.20 × 0.75
-  recency: 0.075,              // 0.10 × 0.75
+  availability: 0.225,         // 0.30 × 0.75
   position_match: 0.25,
 } as const
 
@@ -184,20 +182,6 @@ function positionMatch(
   if (primary && primary.trim().toLowerCase() === t) return 1
   if (secondary && secondary.trim().toLowerCase() === t) return 0.5
   return 0
-}
-
-/**
- * Recency factor for activity timestamps: 1.0 within 30d, linear to
- * 0 at 90d, 0 beyond. Matches the spec's recency_30d helper.
- */
-function recency30d(timestamp: string | null | undefined): number {
-  if (!timestamp) return 0
-  const ms = Date.now() - new Date(timestamp).getTime()
-  if (Number.isNaN(ms) || ms < 0) return 0
-  if (ms <= 30 * DAY_MS) return 1
-  if (ms >= 90 * DAY_MS) return 0
-  // Linear ramp 30d→90d.
-  return 1 - (ms - 30 * DAY_MS) / (60 * DAY_MS)
 }
 
 /** Clamp x to [0, 1]. */
@@ -361,41 +345,18 @@ export function computeClubFit(
     pushReason("Your team's league level isn't set — level comparison unavailable.")
   }
 
-  // Availability — open flag (60%) + recency_30d on last_active (40%).
+  // Availability — the open flag only (no activity signal, ruling 2026-10-11).
   const isOpen =
     Boolean(candidate.open_to_play) ||
     Boolean(candidate.open_to_coach) ||
     Boolean(candidate.open_to_opportunities)
-  const activeFactor = recency30d(candidate.last_active_at)
-  const availability = clamp01(0.6 * (isOpen ? 1 : 0) + 0.4 * activeFactor)
-  if (isOpen && activeFactor >= 0.99) {
-    pushReason('Open to opportunities and active recently.', 'positive')
-  } else if (isOpen) {
-    pushReason('Open to opportunities (less recent activity).', 'positive')
-  } else if (activeFactor >= 0.99) {
-    pushReason('Recently active (not flagged open to opportunities).')
+  const availability = isOpen ? 1 : 0
+  if (isOpen) {
+    pushReason('Open to opportunities.', 'positive')
   } else {
     pushReason('Not currently flagged open to opportunities.', 'caveat')
   }
-
-  // Recency — profile freshness signal. Profiles updated within 30d
-  // count for full credit; we use last_active_at as a proxy when
-  // profile_updated_at isn't available in the candidate row. Kept neutral
-  // for the verdict — "last active" is context, not a selling point.
-  const recency = recency30d(candidate.last_active_at)
-  // F7 fix: the spec calls for one bullet per weighted component
-  // (4 total). Availability already includes a recency factor, but
-  // the standalone recency weight (10%) also deserves its own
-  // bullet so the popover always shows 4 explanations.
-  if (recency >= 0.99) {
-    pushReason('Active on HOCKIA within the last 30 days.')
-  } else if (recency > 0) {
-    pushReason('Last active 30–90 days ago — profile partially fresh.')
-  } else if (candidate.last_active_at) {
-    pushReason('Last active over 90 days ago.')
-  } else {
-    pushReason('Activity recency unknown.')
-  }
+  const recency = 0
 
   // Role match — position + specialist specialism. Both are SOFT signals
   // (float matches up, never a hard filter). The position_match component
@@ -503,14 +464,12 @@ export function computeClubFit(
         WEIGHTS_WITH_POSITION.competition_proximity * competition_proximity +
           WEIGHTS_WITH_POSITION.gender_match * gender_match +
           WEIGHTS_WITH_POSITION.availability * availability +
-          WEIGHTS_WITH_POSITION.recency * recency +
           WEIGHTS_WITH_POSITION.position_match * position_match,
       )
     : clamp01(
         WEIGHTS.competition_proximity * competition_proximity +
           WEIGHTS.gender_match * gender_match +
-          WEIGHTS.availability * availability +
-          WEIGHTS.recency * recency,
+          WEIGHTS.availability * availability,
       )
 
   let state: ClubFitState
