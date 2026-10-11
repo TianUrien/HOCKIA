@@ -112,13 +112,13 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
           <span
             className="pointer-events-none fixed left-1/2 z-40 flex items-center justify-center"
             style={{
-              top: headerBottom + (isRefreshing ? 48 : pullDistance) / 2 - 7,
+              top: headerBottom + (isRefreshing ? 48 : pullDistance) / 2 - 10,
               opacity: progress,
               transform: `translateX(-50%) scale(${0.6 + progress * 0.4})`,
             }}
           >
             <span className={isRefreshing ? 'hockia-ball-spin' : undefined} style={isRefreshing ? undefined : { transform: `rotate(${pullDistance * 4}deg)` }}>
-              <HockeyBall />
+              <HockeyBall spinning={isRefreshing} />
             </span>
           </span>
         </div>
@@ -129,16 +129,14 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   )
 }
 
-/** 12 pt dimpled ball (white, ink hairline) — reads on white and grey grounds. */
-function HockeyBall() {
+/** 20 pt ball with one seam so the roll reads (Figma review 11 Oct): ink
+ *  secondary while pulling, brand at 70 % while it spins. */
+function HockeyBall({ spinning }: { spinning: boolean }) {
+  const ink = spinning ? 'rgba(108, 43, 217, 0.7)' : '#5b5b6b'
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="7" r="6.25" fill="white" stroke="#6f6f7c" strokeWidth="1" />
-      <circle cx="4.6" cy="5" r="0.9" fill="#aeaeb2" />
-      <circle cx="8.4" cy="4.2" r="0.9" fill="#aeaeb2" />
-      <circle cx="9.6" cy="8" r="0.9" fill="#aeaeb2" />
-      <circle cx="6" cy="9.4" r="0.9" fill="#aeaeb2" />
-      <circle cx="7" cy="6.6" r="0.7" fill="#6c2bd9" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="8.75" fill="white" stroke={ink} strokeWidth="1.5" />
+      <path d="M4.2 5.6c3.2 2 3.2 6.8 0 8.8M15.8 5.6c-3.2 2-3.2 6.8 0 8.8" stroke={ink} strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   )
 }
