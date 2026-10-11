@@ -21,6 +21,7 @@ import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { NewSigningArt } from './v1/NewSigningArt'
 import { signingDetail } from '@/lib/homeEngagement'
+import { seasonLabel } from '@/lib/signing'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 
 interface PostComposerModalProps {
@@ -1113,8 +1114,7 @@ export function PostComposerModal({
                       <input
                         value={signingSeason}
                         onChange={(e) => setSigningSeason(e.target.value.slice(0, 20))}
-                        placeholder={String(new Date().getFullYear() + 1)}
-                        inputMode="numeric"
+                        placeholder={seasonLabel(null)}
                         className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
                       />
                     </label>
