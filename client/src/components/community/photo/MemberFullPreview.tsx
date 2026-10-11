@@ -496,9 +496,11 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             <span className="h-[5px] w-9 rounded-[3px] bg-line" />
           </div>
           {facts.length > 0 && (
-            <div className="flex gap-2" data-testid="member-preview-rows">
-              {facts.map((f) => (
-                <div key={f.label} className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-[14px] bg-surface-muted px-3 py-2.5">
+            // Narrow deck cards (< 360 pt, Figma sizing audit): the first fact
+            // on its own row, the other two side by side — no mid-word breaks.
+            <div className={framed && facts.length === 3 ? 'grid grid-cols-2 gap-2' : 'flex gap-2'} data-testid="member-preview-rows">
+              {facts.map((f, i) => (
+                <div key={f.label} className={`flex min-w-0 flex-1 flex-col gap-0.5 rounded-[12px] bg-surface-muted px-3 py-2.5 ${framed && facts.length === 3 && i === 0 ? 'col-span-2' : ''}`}>
                   <span className="line-clamp-2 break-words text-[11px] font-semibold uppercase leading-[14px] text-ink-3">{f.label}</span>
                   <span className="line-clamp-2 break-words text-[14px] font-semibold leading-[19px] text-ink-1">{f.value}</span>
                 </div>
@@ -754,7 +756,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
         >
           {index > 0 && <PeekCard member={members[index - 1]} side="left" width={cardWidth} />}
           {index + 1 < members.length ? <PeekCard member={members[index + 1]} side="right" width={cardWidth} /> : index < members.length && <PeekEnd side="right" width={cardWidth} />}
-          <div key={reduce ? index : 'card'} className={`absolute inset-0 flex flex-col overflow-hidden rounded-[22px] bg-white ${reduce ? 'animate-fade-in' : ''}`} data-testid="member-deck-card">
+          <div key={reduce ? index : 'card'} className={`absolute inset-0 flex flex-col overflow-hidden rounded-[24px] bg-white ${reduce ? 'animate-fade-in' : ''}`} data-testid="member-deck-card">
             {body ?? <DeckEnd onAdjustFilters={() => { onClose(); deck.onAdjustFilters?.() }} onBack={onClose} />}
           </div>
         </div>

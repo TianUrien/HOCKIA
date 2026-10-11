@@ -1325,7 +1325,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             </span>
             <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">Couldn’t load members</h3>
             <p className="mt-2 text-row text-ink-2">Check your connection and try again.</p>
-            <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-12 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
+            <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
               Try again
             </button>
           </div>

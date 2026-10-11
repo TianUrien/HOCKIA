@@ -114,6 +114,8 @@ export function displayPlace(location: string | null | undefined, countryId: num
     // "Melbourne VIC" → "Melbourne"; "Golden Grove SA" → "Golden Grove".
     city = first.replace(/\s+[A-Z]{2,3}$/, '').trim() || null
     if (city && city.length < 3) city = null // two-letter stubs are codes, not cities
+    // "kisumu" → "Kisumu": only a city typed all lowercase is touched.
+    if (city && city === city.toLowerCase()) city = city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase())
   }
   return { city, country: country ? country.common_name || country.name : null, flag: country?.flag_emoji ?? null }
 }

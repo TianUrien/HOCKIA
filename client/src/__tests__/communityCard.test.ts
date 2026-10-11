@@ -68,6 +68,8 @@ describe('Display place (spec 26:1046)', () => {
     expect(placeLabel(displayPlace('Italy', null, countries))).toBe('🇮🇹 Italy')
     expect(placeLabel(displayPlace(null, 4, countries))).toBe('🇦🇷 Argentina')
     expect(placeLabel(displayPlace('Delran', null, countries))).toBe('Delran')
+    expect(placeLabel(displayPlace('kisumu', null, countries))).toBe('Kisumu')
+    expect(placeLabel(displayPlace('san miguel de tucuman, Argentina', null, countries))).toBe('🇦🇷 San Miguel De Tucuman')
   })
 })
 

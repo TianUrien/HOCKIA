@@ -498,7 +498,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>
