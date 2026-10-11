@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
+import { useNavChrome } from '@/lib/navChrome'
 
 interface NavItem {
   id: string
@@ -32,6 +33,8 @@ export default function MobileBottomNav() {
   const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
+  // A screen with its own bottom bar (Profile v2 action bar) hides this one.
+  const chromeHidden = useNavChrome((st) => st.hideTabBar > 0)
 
   // Keyboard detection (iOS): a large visual-viewport shrink means the
   // keyboard is up and the bar would float above it.
@@ -78,7 +81,7 @@ export default function MobileBottomNav() {
     setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
   }, [location.pathname, location.search])
 
-  if (isHidden || isKeyboardOpen) return null
+  if (isHidden || isKeyboardOpen || chromeHidden) return null
 
   // While the session resolves, `user` is null for everyone — rendering the
   // guest bar would flash "Join" at a signed-in member. Wait it out.

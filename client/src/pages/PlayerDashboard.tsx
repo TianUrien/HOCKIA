@@ -24,7 +24,6 @@ import RecruitmentVisibilityWidget from '@/components/dashboard/bento/Recruitmen
 import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
-import ProfileLongScroll from '@/components/profile/mobile/ProfileLongScroll'
 import { FullMatchPrivacyNotice } from '@/components/home/FullMatchPrivacyNotice'
 import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
@@ -62,6 +61,8 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { RECRUITER_MINOR_MESSAGE, recruiterCannotStartWith } from '@/lib/recruiterMinor'
 import type { KeyFactAction, KeyFactsViewer } from '@/lib/keyFacts'
 import type { ChecklistKey } from '@/lib/openToPlayScreen'
+import PlayerProfileV2 from '@/components/profile/v2/PlayerProfileV2'
+import { roleTitle } from '@/lib/homeEngagement'
 
 // D2 owner leaves — lazy so they stay out of the profile chunk until opened.
 const PassportsPermitsScreen = lazy(() => import('@/components/profile/mobile/PassportsPermitsScreen'))
@@ -781,6 +782,79 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           />
         )}
 
+        {/* Phone: Profile v2 (Figma t24oVt… PR1 / PR2 / PR4; spec 132:1000) —
+            one scroll from the full-bleed hero to About, with the club-view
+            cards and recruiter actions kept. Desktop keeps the bento for now. */}
+        {isPhone && showPhoneScroll ? (
+          <div className="-mx-4 !mt-0 md:-mx-6 lg:hidden">
+            <PlayerProfileV2
+              profile={profile}
+              readOnly={readOnly}
+              isOwnProfile={isOwnProfile}
+              facts={keyFacts.facts}
+              currentClubLogo={currentClubLogo}
+              recruiter={viewAsClub
+                ? { enabled: true, preview: true, shortlisted: false }
+                : {
+                    enabled: clubView.enabled,
+                    fit: clubView.fit,
+                    fitRoleTitle: clubView.fitRole ? roleTitle(clubView.fitRole.position ?? null, clubView.fitRole.gender, clubView.fitRole.title) : null,
+                    shortlisted: clubView.shortlisted,
+                    busy: clubView.busy,
+                    onShortlist: handleShortlist,
+                  }}
+              clubViewSlot={(clubView.application || (clubView.fit && clubView.fitRole)) ? (
+                <div className="flex flex-col gap-2.5 pt-1">
+                  {clubView.application && (
+                    <AppliedToCard
+                      application={clubView.application}
+                      onOpen={() => navigate(`/dashboard/opportunities/${clubView.application?.role.id}/applicants/${clubView.application?.id}`)}
+                    />
+                  )}
+                  {clubView.fit && clubView.fitRole && (
+                    <FitForRoleCard fit={clubView.fit} role={clubView.fitRole} player={profile} leagueSelfReported={keyFacts.league?.source === 'self_reported'} />
+                  )}
+                </div>
+              ) : null}
+              onMessage={handleSendMessage}
+              sendingMessage={sendingMessage}
+              onEdit={(field) => openEdit(field as EditField | undefined)}
+              onOpenSection={(section) => {
+                if (section === 'passports' || section === 'open-to-play' || section === 'media') openOwnerLeaf(section)
+                else handleTabChange(section as never)
+              }}
+              onOpenReferences={openReferencesLeaf}
+              onOpenReference={(id) => { setOpenReferenceId(id); openReferencesLeaf() }}
+              onViewPublic={handleViewPublic}
+              onViewAsClub={handleViewAsClub}
+              onVideoCounts={onVideoCounts}
+            />
+            {clubView.enabled && (
+              <>
+                <ShortlistRoleSheet
+                  open={rolePicker}
+                  roles={clubView.roles}
+                  shortlistedRoleIds={clubView.shortlistedRoleIds}
+                  appliedRoleId={clubView.application?.role.id ?? null}
+                  onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
+                  onClose={() => setRolePicker(false)}
+                />
+                <UndoToast />
+                {inviteOpen && (
+                  <Suspense fallback={null}>
+                    <InviteSheet
+                      open={inviteOpen}
+                      player={{ id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url, role: profile.role, position: profile.position, secondary_position: profile.secondary_position }}
+                      activeRoleId={clubView.fitRole?.id ?? null}
+                      onClose={() => setInviteOpen(false)}
+                    />
+                  </Suspense>
+                )}
+              </>
+            )}
+          </div>
+        ) : (
+          <>
         {/* Hero — identity surface. Owner sees edit; visitor sees
             Message + Connect. Recruitment-readiness signals live in
             RecruitmentVisibilityWidget below for owner + landing. */}
@@ -833,60 +907,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             </div>
           ) : null}
         />
-
-        {/* Phone: Figma Profile own / public — one long scroll under the
-            identity block. The bento / portfolio body below is desktop-only
-            on the landing view; section pages keep their own surface. */}
-        {isPhone && showPhoneScroll && (
-          <div className="-mx-4 md:-mx-6 lg:hidden">
-            <ProfileLongScroll
-              profile={profile}
-              readOnly={readOnly}
-              onEdit={() => openEdit()}
-              onOpenVideos={() => handleTabChange('videos')}
-              onManageVideos={() => handleTabChange('media')}
-              onOpenReferences={openReferencesLeaf}
-              onOpenReference={(id) => { setOpenReferenceId(id); openReferencesLeaf() }}
-              onOpenCareer={() => handleTabChange('journey')}
-              onOpenPhotos={() => handleTabChange('gallery')}
-              onOpenPosts={() => handleTabChange('posts')}
-              onOpenFriends={() => handleTabChange('friends')}
-              onEditSkills={() => openEdit('skills')}
-              onVideoCounts={onVideoCounts}
-              topSlot={clubView.application ? (
-                <AppliedToCard
-                  application={clubView.application}
-                  onOpen={() => navigate(`/dashboard/opportunities/${clubView.application?.role.id}/applicants/${clubView.application?.id}`)}
-                />
-              ) : null}
-              afterVideosSlot={clubView.fit && clubView.fitRole ? (
-                <FitForRoleCard fit={clubView.fit} role={clubView.fitRole} player={profile} leagueSelfReported={keyFacts.league?.source === 'self_reported'} />
-              ) : null}
-            />
-            {clubView.enabled && (
-              <>
-                <ShortlistRoleSheet
-                  open={rolePicker}
-                  roles={clubView.roles}
-                  shortlistedRoleIds={clubView.shortlistedRoleIds}
-                  appliedRoleId={clubView.application?.role.id ?? null}
-                  onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
-                  onClose={() => setRolePicker(false)}
-                />
-                <UndoToast />
-                {inviteOpen && (
-                  <Suspense fallback={null}>
-                    <InviteSheet
-                      open={inviteOpen}
-                      player={{ id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url, role: profile.role, position: profile.position, secondary_position: profile.secondary_position }}
-                      activeRoleId={clubView.fitRole?.id ?? null}
-                      onClose={() => setInviteOpen(false)}
-                    />
-                  </Suspense>
-                )}
-              </>
-            )}
-          </div>
+          </>
         )}
 
         {!(isPhone && showPhoneScroll) && (
