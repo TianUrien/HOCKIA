@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search, Users } from 'lucide-react'
 import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
@@ -52,6 +52,9 @@ import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { contextFitTarget, keepAdultPlayers, type ContextLike } from '@/lib/findPlayers'
 import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
+import { recruiterDisplayTier } from '@/lib/recruiterVerdict'
+import type { FitState } from '@/lib/clubRecruiting'
+import { MemberPhotoGrid } from './photo/MemberPhotoGrid'
 
 export interface Profile {
   id: string
@@ -295,6 +298,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // For recruiter candidate evaluation: track the member + their match score for the lightweight preview sheet
   const [candidatePreview, setCandidatePreview] = useState<{ member: Profile } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // The member read failed (not an expired session): the phone grid shows
+  // "Couldn't load members · Try again" (Figma Community P6).
+  const [loadError, setLoadError] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [page, setPage] = usePageState('community-page', 1)
   const [hasMore, setHasMore] = useState(true)
@@ -316,6 +322,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Responsive page size — reacts to viewport changes
   const isMobile = useMediaQuery('(max-width: 767px)')
   const pageSize = isMobile ? 12 : 24
+  // Photo-first Community (Figma New Hockia 2 · Community handoff v1) is the
+  // phone layout; desktop keeps the unified card grid.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
 
   // Total count for the current role + test-visibility scope. Runs
   // once per scope change (cheap head query). Drives the "N members"
@@ -431,11 +440,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     const cachedState = queryClient.getQueryState<Profile[]>(queryKey)
     if (cachedState?.data !== undefined && Date.now() - cachedState.dataUpdatedAt < 30_000) {
       setBaseMembers(cachedState.data)
+      setLoadError(false)
       setIsLoading(false)
       return
     }
 
     setIsLoading(true)
+    setLoadError(false)
     try {
       const members = await queryClient.fetchQuery({
         queryKey,
@@ -518,6 +529,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         logger.debug('[PeopleListView] fetchMembers: session expired mid-fetch (ignored)')
       } else {
         logger.error('Error fetching members:', error)
+        if (isLatest()) setLoadError(true)
       }
     } finally {
       if (isLatest()) setIsLoading(false)
@@ -1240,6 +1252,25 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Full profile in club mode; back returns here (D1.16 back label).
   const openProfile = (path: string) => navigate(path, { state: { from: `${location.pathname}${location.search}` } })
 
+  // Phone photo cards: the fit pill for recruiters — the server fit in club
+  // view, else the verdict tier of an active scope (Excellent/Good → Strong
+  // fit, Possible → Possible fit, nothing below).
+  const fitById = useMemo(() => {
+    const map = new Map<string, FitState | null>()
+    if (!isPhone) return map
+    if (clubView) {
+      for (const [id, f] of clubFit.fit) map.set(id, f.state)
+      return map
+    }
+    for (const source of [matchById, coachMatchById]) {
+      for (const [id, { verdict }] of source) {
+        const tier = recruiterDisplayTier(verdict)
+        map.set(id, tier === 'excellent' || tier === 'good' ? 'green' : tier === 'possible' ? 'yellow' : null)
+      }
+    }
+    return map
+  }, [isPhone, clubView, clubFit.fit, matchById, coachMatchById])
+
   const isBusy = isLoading || isSearching || authLoading
   const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
@@ -1257,7 +1288,57 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           </span>
         </div>
       )}
-      {showSkeletons ? (
+      {isPhone ? (
+        showSkeletons ? (
+          <div className="grid grid-cols-2 gap-3" aria-busy="true" aria-label="Loading members">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex aspect-[3/4] flex-col justify-end gap-1.5 rounded-[20px] bg-surface-muted p-3" data-testid="member-tile-skeleton">
+                <span className="h-2.5 w-[64%] rounded-full bg-line" />
+                <span className="h-2.5 w-[46%] rounded-full bg-line" />
+                <span className="h-2.5 w-[37%] rounded-full bg-line" />
+              </div>
+            ))}
+          </div>
+        ) : (!isBusy && loadError && displayedMembers.length === 0) ? (
+          <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center" role="alert">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-ink-2">
+              <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
+            </span>
+            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">Couldn’t load members</h3>
+            <p className="mt-2 text-row text-ink-2">Check your connection and try again.</p>
+            <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-12 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
+              Try again
+            </button>
+          </div>
+        ) : (!isBusy && displayedMembers.length === 0) ? (
+          <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+              <Search className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
+            </span>
+            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed ? 'No members match' : 'No members yet'}</h3>
+            <p className="mt-2 text-row text-ink-2">
+              {isNarrowed ? 'Try a different search or fewer filters. New members join every week.' : 'New members join every week.'}
+            </p>
+            {isNarrowed && (
+              <button type="button" onClick={clearFilters} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-line bg-white px-6 text-row font-semibold text-ink-1">
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className={['mb-6 transition-opacity duration-300 ease-out', isReshaping ? 'opacity-40' : 'opacity-100'].join(' ')}>
+              <MemberPhotoGrid members={displayedMembers} fitById={fitById} />
+            </div>
+            {hasMore && <div ref={sentinelRef} className="h-1" />}
+            {hasMore && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
+              </div>
+            )}
+          </>
+        )
+      ) : showSkeletons ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(15)].map((_, i) => (
             <MemberTileSkeleton key={i} />

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryClient } from '@/lib/queryClient'
@@ -47,3 +48,44 @@ export function useMemberPhotos(profileId: string | null | undefined) {
     queryFn: async () => (await fetchPhotos([profileId as string])).get(profileId as string) ?? [],
   })
 }
+
+const BATCH = 60
+
+/**
+ * Photos for a whole page of grid cards in one call per 60 members. Seeds the
+ * per-member cache too, so the preview opens on photos already loaded.
+ * `isPending(id)` is true while that member's photos are still loading (the
+ * card then waits instead of flashing the avatar and swapping to the gallery
+ * photo). Loading the next page keeps the photos already on screen.
+ */
+export function useMemberPhotosBatch(profileIds: string[]): { photos: Map<string, string[]>; isPending: (id: string) => boolean } {
+  const key = useMemo(() => [...new Set(profileIds)].sort(), [profileIds])
+  const { data, isFetching } = useQuery({
+    queryKey: ['gallery', 'member-photos-batch', key],
+    enabled: key.length > 0,
+    staleTime: STALE_MS,
+    placeholderData: (previous) => previous,
+    queryFn: async () => {
+      const out = new Map<string, string[]>()
+      const cached = key.filter((id) => queryClient.getQueryState(qk.memberPhotos(id))?.status === 'success')
+      for (const id of cached) out.set(id, queryClient.getQueryData<string[]>(qk.memberPhotos(id)) ?? [])
+      const missing = key.filter((id) => !out.has(id))
+      for (let i = 0; i < missing.length; i += BATCH) {
+        try {
+          const map = await fetchPhotos(missing.slice(i, i + BATCH))
+          for (const [id, urls] of map) {
+            out.set(id, urls)
+            queryClient.setQueryData(qk.memberPhotos(id), urls)
+          }
+        } catch {
+          /* a failed page falls back to avatars; the preview retries per member */
+        }
+      }
+      return out
+    },
+  })
+  const photos = data ?? EMPTY
+  return { photos, isPending: (id: string) => isFetching && !photos.has(id) }
+}
+
+const EMPTY = new Map<string, string[]>()

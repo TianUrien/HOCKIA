@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { rememberCrestColor } from '@/hooks/useClubCrestColors'
 import { Camera, Check, ChevronDown } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import CountrySelect from '@/components/CountrySelect'
@@ -90,6 +91,8 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       const previous = profile?.avatar_url ?? null
       const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
       if (updateError) throw updateError
+      // Community club card colour (Cover=Crest), from the crest just uploaded.
+      rememberCrestColor(user.id, publicUrl, optimized)
       // The old file goes only once the row points at the new one (incident 2026-07-30).
       if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'club-setup:replace-crest' })
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded', role: 'club' })

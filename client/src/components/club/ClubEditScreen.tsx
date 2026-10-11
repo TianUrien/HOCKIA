@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { rememberCrestColor } from '@/hooks/useClubCrestColors'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -208,6 +209,8 @@ export default function ClubEditScreen() {
       const previous = profile.avatar_url
       const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
       if (updateError) throw updateError
+      // Community club card colour (Cover=Crest), from the crest just uploaded.
+      rememberCrestColor(user.id, publicUrl, optimized)
       // Drop the old file only once the row points at the new one (incident 2026-07-30).
       if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'edit-club:replace-crest' })
       invalidateProfile({ userId: user.id, reason: 'edit-club-crest' })

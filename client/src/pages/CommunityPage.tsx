@@ -319,6 +319,18 @@ export default function CommunityPage() {
     }
   }, [scopedRole, chipRoleFilter, showEveryone])
 
+  // Phone: the large title collapses into a compact centred bar once it has
+  // scrolled away (Figma Community P2 — inset + 44, blur, 1 px hairline).
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const [compactHeader, setCompactHeader] = useState(false)
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el || !isPhone || typeof IntersectionObserver === 'undefined') { setCompactHeader(false); return }
+    const io = new IntersectionObserver(([entry]) => setCompactHeader(!entry.isIntersecting), { threshold: 0 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [isPhone])
+
   const handleRefresh = useCallback(async () => {
     setRefreshKey(k => k + 1)
   }, [])
@@ -329,24 +341,40 @@ export default function CommunityPage() {
           opens on its own title row, like Profile. Desktop keeps it. */}
       <Header mobileHidden />
 
+      {isPhone && (
+        <div
+          aria-hidden={!compactHeader}
+          className={`fixed inset-x-0 top-0 z-30 border-b border-line bg-surface-base/[0.92] pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-opacity duration-150 ${compactHeader ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+          data-testid="community-compact-header"
+        >
+          <p className="flex h-11 items-center justify-center text-[17px] font-semibold text-ink-1">Community</p>
+        </div>
+      )}
+
       <PullToRefresh onRefresh={handleRefresh}>
         <main className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-24 pb-12">
           {/* Title row: "Community" + the filters button (members only).
               The badge shows how many filters are narrowing the grid. */}
           <div className="mb-2 flex items-center justify-between lg:mb-3">
-            <h1 className="text-large-title text-ink-1 lg:text-[22px] lg:leading-7">Community</h1>
+            <h1 ref={titleRef} className="text-large-title text-ink-1 lg:text-[22px] lg:leading-7">Community</h1>
             {isMembers && (
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
                 aria-expanded={showFilters}
                 aria-label={activeFilterChips.length > 0 ? `Filters, ${activeFilterChips.length} active` : 'Filters'}
-                className="relative -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-1 transition-colors hover:bg-gray-200/60"
+                className={isPhone
+                  ? `relative flex h-11 w-11 items-center justify-center rounded-full text-ink-1 transition-colors ${activeFilterChips.length > 0 ? 'bg-hockia-soft' : 'bg-surface-muted'} active:bg-surface-muted-pressed`
+                  : 'relative -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-1 transition-colors hover:bg-gray-200/60'}
               >
-                <SlidersHorizontal className="h-6 w-6" strokeWidth={1.8} />
-                {activeFilterChips.length > 0 && (
+                <SlidersHorizontal className={isPhone ? 'h-[22px] w-[22px]' : 'h-6 w-6'} strokeWidth={1.8} />
+                {activeFilterChips.length > 0 && (isPhone ? (
+                  <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-hockia-primary px-1 text-[11px] font-semibold leading-none text-white ring-2 ring-white">
+                    {activeFilterChips.length}
+                  </span>
+                ) : (
                   <span aria-hidden="true" className="absolute right-2 top-2 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />
-                )}
+                ))}
               </button>
             )}
           </div>
@@ -455,7 +483,7 @@ export default function CommunityPage() {
               {clubView ? <ClubViewPlayersHeader sort={sort} onSort={setSort} /> : (
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-center justify-between gap-3">
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
-                  {isNarrowed ? 'Matching members' : 'All members'}
+                  {isNarrowed ? 'Matching members' : activeTab === 'all' || !isPhone ? 'All members' : TITLE_BY_TAB[activeTab]}
                   {(() => {
                     const displayed = isNarrowed ? filteredCount : totalCount
                     if (displayed === null) return null
@@ -468,7 +496,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+                    className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>
