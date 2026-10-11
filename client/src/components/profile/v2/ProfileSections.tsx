@@ -126,7 +126,7 @@ export function PostsPhotosGrid({ tiles }: { tiles: GridTile[] }) {
           {t.kind === 'post' && t.url && <BlurImage src={getImageUrl(t.url, 'gallery') ?? t.url} lqip={getLqipUrl(t.url)} className="h-full w-full" />}
           {t.kind === 'post' && !t.url && (
             <span className="flex h-full w-full items-center p-2.5 text-left">
-              <span className="line-clamp-5 text-secondary font-semibold text-hockia-primary">“{t.text}”</span>
+              <span className="line-clamp-4 overflow-hidden text-secondary font-semibold text-hockia-primary [overflow-wrap:anywhere]">“{t.text}”</span>
             </span>
           )}
           {t.kind === 'reel' && (t.poster ? <BlurImage src={t.poster} className="h-full w-full" /> : <span className="block h-full w-full bg-gradient-to-br from-ink-1 to-ink-2" />)}
@@ -187,6 +187,7 @@ export function CommentsPreview({ profileId, profileRole, owner }: { profileId: 
             </div>
           </div>
         ))}
+        {!owner && count === 0 && <p className="text-secondary text-ink-3">No comments yet</p>}
         {!owner && (
           <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-2.5 text-left" data-testid="profile-write-comment">
             <FaceCircle url={viewer?.avatar_url} name={viewer?.full_name ?? initialsOf(null)} role={viewer?.role} size="avatar-sm" initialsClassName="text-[11px]" className="h-8 w-8" />
