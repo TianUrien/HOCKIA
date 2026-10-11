@@ -651,7 +651,9 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   const moved = useRef(false)
   const [dy, setDy] = useState(0)
   const cardWidth = typeof window !== 'undefined' ? Math.min(310, window.innerWidth - 83) : 310
-  const slot = cardWidth + 10
+  // Cards sit 4 pt apart; neighbours shrink toward the current card, so a
+  // generous edge of each (~37 pt on a 393 pt phone) peeks out at rest.
+  const slot = cardWidth + 4
   // The row of cards moves under the finger directly (no re-render per
   // touchmove); React only re-renders when a swipe lands.
   const stripRef = useRef<HTMLDivElement>(null)
@@ -806,6 +808,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
                 key={isEnd ? 'end' : members[k].id}
                 offset={(k - index) * slot}
                 focused={k === focusIndex}
+                side={k < focusIndex ? 'left' : k > focusIndex ? 'right' : 'center'}
                 active={isActive}
                 animateIn={reduce && isActive}
               >
@@ -859,21 +862,40 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
 }
 
 /** The active deck card: continuous corners, white 8 % inside hairline (finish pass). */
-function DeckCard({ children, animateIn, offset, focused, active }: { children: React.ReactNode; animateIn: boolean; offset: number; focused: boolean; active: boolean }) {
+const DECK_EASE = 'cubic-bezier(0.22, 0.9, 0.3, 1)'
+
+/**
+ * One card of the deck. The outer layer places it (slot, scale, depth shadow);
+ * the inner layer carries the continuous corners — a clip would cut the shadow.
+ * Neighbours sit at 94 %, shrunk toward the current card so their near edge
+ * stays close, dimmed a little as if behind it; the focused card is full
+ * size, lifted by a soft shadow onto them.
+ */
+function DeckCard({ children, animateIn, offset, focused, active, side }: { children: React.ReactNode; animateIn: boolean; offset: number; focused: boolean; active: boolean; side: 'left' | 'center' | 'right' }) {
   const ref = useRef<HTMLDivElement>(null)
   useSquircle(ref, 24)
   return (
     <div
-      ref={ref}
       inert={!active}
       aria-hidden={!active || undefined}
-      className={`absolute inset-y-0 w-full flex flex-col overflow-hidden rounded-[24px] bg-white transition-[transform,opacity] duration-[260ms] ease-[cubic-bezier(0.22,0.9,0.3,1)] ${animateIn ? 'animate-fade-in' : ''}`}
-      // Neighbours sit one slot over at 94 %; the focused card is full size.
-      style={{ left: offset, transform: focused ? 'scale(1)' : 'scale(0.94)', opacity: focused ? 1 : 0.9 }}
+      className={`absolute inset-y-0 w-full ${animateIn ? 'animate-fade-in' : ''}`}
+      style={{
+        left: offset,
+        zIndex: focused ? 2 : 1,
+        // Shrink toward the current card: a 94 % card moved 3 % of its width
+        // inward. One transform per state, so changes animate without jumps.
+        transform: focused ? 'translate3d(0, 0, 0) scale(1)' : `translate3d(${side === 'left' ? 3 : -3}%, 0, 0) scale(0.94)`,
+        filter: focused ? 'drop-shadow(0 18px 36px rgba(0, 0, 0, 0.45))' : 'none',
+        transition: `transform 260ms ${DECK_EASE}, filter 260ms ${DECK_EASE}`,
+      }}
       data-testid={active ? 'member-deck-card' : undefined}
     >
-      {children}
-      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[24px] shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.08)]" />
+      <div ref={ref} className="flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white">
+        {children}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[24px] shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.08)]" />
+        {/* Depth: neighbours read as sitting behind the current card. */}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[24px] bg-surface-inverse transition-opacity duration-[260ms]" style={{ opacity: focused ? 0 : 0.28 }} />
+      </div>
     </div>
   )
 }
