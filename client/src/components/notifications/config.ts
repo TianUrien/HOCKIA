@@ -11,9 +11,11 @@ import {
   Heart,
   Hourglass,
   Megaphone,
+  PartyPopper,
   MessageCircle,
   MessageSquare,
   RefreshCcw,
+  ShieldAlert,
   ShieldCheck,
   UserCheck,
   UserPlus,
@@ -23,6 +25,10 @@ import {
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { formatRelationshipType } from '@/lib/utils'
 import { positionLabel } from '@/lib/identity'
+
+/** "comment" / "post" / "video" for the content_removed notice. */
+const removedLabel = (type: string | null): string =>
+  type === 'post' || type === 'feed_item' ? 'post' : type === 'video' ? 'video' : 'comment'
 
 export type NotificationRenderConfig = {
   icon: LucideIcon
@@ -181,6 +187,45 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} commented on your post`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
+    getRoute: () => '/home',
+  },
+  feed_item_comment_received: {
+    icon: MessageCircle,
+    badgeText: 'Reference comment',
+    accentClassName: 'bg-surface-grouped text-ink-2',
+    getTitle: (notification) => `${getActorName(notification)} commented on your reference`,
+    getDescription: (notification) => getMetadataString(notification, 'snippet'),
+    getRoute: () => '/home',
+  },
+  congrats_received: {
+    icon: PartyPopper,
+    badgeText: 'Congrats',
+    accentClassName: 'bg-gold-soft text-gold',
+    getTitle: (notification) => {
+      const count = Number((notification.metadata as Record<string, unknown> | null)?.count ?? 1)
+      const others = count - 1
+      return others > 0
+        ? `${getActorName(notification)} and ${others} ${others === 1 ? 'other' : 'others'} congratulated you`
+        : `${getActorName(notification)} congratulated you`
+    },
+    getDescription: () => null,
+    getRoute: () => '/home',
+  },
+  signing_tagged: {
+    icon: PartyPopper,
+    badgeText: 'New signing',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
+    getTitle: (notification) => `${getMetadataString(notification, 'club_name') ?? getActorName(notification)} posted your signing 🎉`,
+    getDescription: () => 'Tap to see the post. You can remove your tag from its ⋯ menu.',
+    getRoute: () => '/home',
+  },
+  content_removed: {
+    icon: ShieldAlert,
+    badgeText: 'Community rules',
+    accentClassName: 'bg-surface-grouped text-ink-2',
+    // Neutral notice (Figma A1): never the reporter, never the admin.
+    getTitle: (notification) => `Your ${removedLabel(getMetadataString(notification, 'content_type'))} was removed for breaking the community rules`,
+    getDescription: () => null,
     getRoute: () => '/home',
   },
   profile_comment_reply: {

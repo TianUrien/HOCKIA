@@ -713,3 +713,46 @@ html {
     animation: none !important;
   }
 }
+
+/* ── Home v1 motion (Figma "Motion spec · Home v1" 95:1012) ──────────────────
+   Durations fast 150 / base 250 / slow 400 ms. Standard ease (.2,0,0,1),
+   exit (.4,0,1,1). Transform + opacity only. Reduce Motion: 150 ms cross-fade,
+   no confetti (handled per component). */
+@keyframes hockia-step-in {
+  from { opacity: 0; transform: translate3d(24px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hockia-step-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translate3d(-24px, 0, 0); }
+}
+@keyframes hockia-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); }
+  70% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+@keyframes hockia-count-roll {
+  from { opacity: 0; transform: translate3d(0, 60%, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hockia-confetti {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)) scale(0.6); }
+}
+@keyframes hockia-ball-spin {
+  to { transform: rotate(360deg); }
+}
+.hockia-step-in { animation: hockia-step-in 250ms cubic-bezier(.2, 0, 0, 1) 50ms both; }
+.hockia-step-out { animation: hockia-step-out 150ms cubic-bezier(.4, 0, 1, 1) both; }
+.hockia-pop { animation: hockia-pop 420ms cubic-bezier(.2, 0, 0, 1); }
+.hockia-count-roll { display: inline-block; animation: hockia-count-roll 250ms cubic-bezier(.2, 0, 0, 1) both; }
+.hockia-ball-spin { animation: hockia-ball-spin 600ms linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hockia-step-in { animation: hockia-fade-in 150ms linear both; }
+  .hockia-step-out { animation: hockia-fade-out 150ms linear both; }
+  .hockia-pop, .hockia-count-roll { animation: none; }
+  .hockia-ball-spin { animation-duration: 1800ms; }
+}
+@keyframes hockia-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hockia-fade-out { from { opacity: 1; } to { opacity: 0; } }

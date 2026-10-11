@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
@@ -13,8 +13,47 @@ function NavDot({ className }: { className: string }) {
 }
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
- *  screen, founder ruling 2026-09-19) drop the app header below lg. */
-export default function Header({ mobileHidden = false }: { mobileHidden?: boolean } = {}) {
+ *  screen, founder ruling 2026-09-19) drop the app header below lg.
+ *  `onNewPost`: Home v1 (Figma 60:131) — the violet wordmark, "+" New post
+ *  and Search on phones. */
+/**
+ * Home v1 motion (95:1012 §1): on phones the header slides away when the page
+ * scrolls down > 8 pt and returns on any scroll up > 4 pt; always shown within
+ * 48 pt of the top. Transform only, one passive listener, rAF-throttled.
+ * Reduce Motion: the header stays put.
+ */
+function useHideOnScroll(enabled: boolean) {
+  const [hidden, setHidden] = useState(false)
+  const [edge, setEdge] = useState(0)
+  useEffect(() => {
+    if (!enabled || typeof window === 'undefined') return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    let last = window.scrollY
+    let anchor = last // where the current scroll direction started
+    let dir = 0
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        const y = Math.max(0, window.scrollY)
+        setEdge(Math.min(1, y / 24))
+        const d = Math.sign(y - last)
+        if (d !== 0 && d !== dir) { dir = d; anchor = last }
+        if (y <= 48) setHidden(false)
+        else if (dir > 0 && y - anchor > 8) setHidden(true)
+        else if (dir < 0 && anchor - y > 4) setHidden(false)
+        last = y
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(frame) }
+  }, [enabled])
+  return { hidden: enabled && hidden, edge: enabled ? edge : 0 }
+}
+
+export default function Header({ mobileHidden = false, onNewPost, hideOnScroll = false }: { mobileHidden?: boolean; onNewPost?: () => void; hideOnScroll?: boolean } = {}) {
+  const { hidden, edge } = useHideOnScroll(hideOnScroll)
   const {
     user,
     profile,
@@ -73,9 +112,19 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
   // iOS/WKWebView doesn't tear or flicker it during momentum scroll — the
   // bottom nav already does this; the header was the missing half.
   return (
+    <>
+    {hideOnScroll && (
+      // Scroll edge under the status bar: blur 20 + surface 80 %, fading in over the first 24 pt.
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[49] h-[env(safe-area-inset-top)] bg-white/80 backdrop-blur-[20px] lg:hidden"
+        style={{ opacity: edge }}
+      />
+    )}
     <header
       ref={headerRef}
-      className={`${mobileHidden ? 'hidden lg:block ' : ''}fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]`}
+      className={`${mobileHidden ? 'hidden lg:block ' : ''}fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)] [backface-visibility:hidden] transition-transform duration-[250ms] ease-[cubic-bezier(.2,0,0,1)] lg:!transform-none`}
+      style={{ transform: hidden ? 'translate3d(0, -100%, 0)' : 'translate3d(0, 0, 0)' }}
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
@@ -88,7 +137,7 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
               aria-label="HOCKIA — go home"
             >
               <img
-                src="/brand/wordmark/hockia-wordmark-black.svg"
+                src={onNewPost ? '/brand/wordmark/hockia-wordmark-violet.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
                 alt=""
                 className="h-8"
               />
@@ -120,6 +169,17 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                   data-testid="header-hockia-ai"
                 >
                   <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
+                </button>
+              )}
+              {onNewPost && (
+                <button
+                  type="button"
+                  onClick={onNewPost}
+                  className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
+                  aria-label="New post"
+                  data-testid="header-new-post"
+                >
+                  <SquarePlus className="w-6 h-6" strokeWidth={1.8} />
                 </button>
               )}
               {/* Search v2 (founder rulings 2026-10-03): the icon opens the
@@ -276,5 +336,6 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
         {/* Mobile Menu - Hidden, navigation handled by MobileBottomNav */}
       </nav>
     </header>
+    </>
   )
 }

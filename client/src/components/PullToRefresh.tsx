@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
-import { hapticSuccess } from '@/lib/haptics'
+import { hapticLight, hapticSuccess } from '@/lib/haptics'
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>
   children: React.ReactNode
 }
 
-const THRESHOLD = 80
+// Motion 95:1012 §5: threshold 72 pt with a light haptic as it's crossed.
+const THRESHOLD = 72
 const MAX_PULL = 120
 
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
@@ -15,6 +15,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const touchStartY = useRef(0)
   const isPulling = useRef(false)
+  const armed = useRef(false)
+  // The spacer opens at the top of the page, which sits under the fixed app
+  // header — so the indicator is drawn fixed, just below the header, inside
+  // the gap the pull reveals. (Measured at touch start; 0 without a header.)
+  const [headerBottom, setHeaderBottom] = useState(0)
 
   // Skip pull-to-refresh when the body is scroll-locked — this is the
   // convention modals use to prevent underlying scroll, and we should respect
@@ -28,6 +33,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     if (window.scrollY <= 0 && !isRefreshing) {
       touchStartY.current = e.touches[0].clientY
       isPulling.current = true
+      const header = document.querySelector('header.fixed')
+      setHeaderBottom(header ? Math.max(0, header.getBoundingClientRect().bottom) : 0)
     }
   }, [isRefreshing])
 
@@ -51,6 +58,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     }
 
     const distance = Math.min(deltaY * 0.5, MAX_PULL)
+    if (distance >= THRESHOLD && !armed.current) { armed.current = true; void hapticLight() }
+    if (distance < THRESHOLD) armed.current = false
     setPullDistance(distance)
   }, [isRefreshing])
 
@@ -94,23 +103,40 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     <>
       {showIndicator && (
         <div
-          className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
+          className="overflow-hidden transition-[height] duration-200 ease-out"
           style={{ height: isRefreshing ? 48 : pullDistance }}
+          aria-hidden="true"
         >
-          <div
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md border border-gray-100"
+          {/* A field-hockey ball rolls with the pull, spins while loading,
+              then the row springs closed. */}
+          <span
+            className="pointer-events-none fixed left-1/2 z-40 flex items-center justify-center"
             style={{
+              top: headerBottom + (isRefreshing ? 48 : pullDistance) / 2 - 10,
               opacity: progress,
-              transform: `scale(${0.5 + progress * 0.5}) rotate(${pullDistance * 3}deg)`,
+              transform: `translateX(-50%) scale(${0.6 + progress * 0.4})`,
             }}
           >
-            <Loader2
-              className={`w-4 h-4 text-hockia-primary ${isRefreshing ? 'animate-spin' : ''}`}
-            />
-          </div>
+            <span className={isRefreshing ? 'hockia-ball-spin' : undefined} style={isRefreshing ? undefined : { transform: `rotate(${pullDistance * 4}deg)` }}>
+              <HockeyBall spinning={isRefreshing} />
+            </span>
+          </span>
         </div>
       )}
+      {isRefreshing && <span className="sr-only" role="status">Refreshing</span>}
       {children}
     </>
+  )
+}
+
+/** 20 pt ball with one seam so the roll reads (Figma review 11 Oct): ink
+ *  secondary while pulling, brand at 70 % while it spins. */
+function HockeyBall({ spinning }: { spinning: boolean }) {
+  const ink = spinning ? 'rgba(108, 43, 217, 0.7)' : '#5b5b6b'
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="8.75" fill="white" stroke={ink} strokeWidth="1.5" />
+      <path d="M4.2 5.6c3.2 2 3.2 6.8 0 8.8M15.8 5.6c-3.2 2-3.2 6.8 0 8.8" stroke={ink} strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
   )
 }

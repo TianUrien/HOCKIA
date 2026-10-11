@@ -44,7 +44,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
   // Club (author) path
   const clubPath = profilePathForRole(item.author_role, item.author_id)
   // Signed person path — routed by their role (player or coach).
-  const personPath = profilePathForRole(meta.person_role, meta.person_profile_id)
+  const personPath = profilePathForRole(meta.person_role, meta.person_profile_id ?? '')
 
   const sortedImages = useMemo(
     () => item.images ? [...item.images].sort((a, b) => a.order - b.order) : [],

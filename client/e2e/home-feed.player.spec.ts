@@ -4,11 +4,10 @@ test.describe('@smoke home feed player', () => {
   test('home feed shows post composer for authenticated player', async ({ page, homeFeedPage }) => {
     await homeFeedPage.openHomeFeed()
 
-    // Post composer should be visible
+    // Home v1: the New post entry ("+" in the phone header) is visible.
     await homeFeedPage.expectPostComposerVisible()
-
-    // The camera sits beside the prompt (Figma Home: "What's new?" + camera).
-    await expect(page.getByLabel('Add a photo or video')).toBeVisible()
+    // …and the Next step card leads the screen.
+    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 10000 })
   })
 
   test('player can open and close post composer modal', async ({ page, homeFeedPage }) => {
