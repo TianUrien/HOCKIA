@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -104,10 +104,12 @@ interface MemberPreviewBodyProps extends MemberFullPreviewProps {
   framed?: boolean
   /** A sheet or prompt opened on top: the shell pauses its focus trap. */
   onNestedModal?: (open: boolean) => void
+  /** False for the neighbours peeking in the deck: rendered, not counted as a preview. */
+  active?: boolean
 }
 
 /** The preview's content — photo area, summary panel and action bar — for one member. */
-function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal }: MemberPreviewBodyProps) {
+function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true }: MemberPreviewBodyProps) {
   const { user, profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -148,15 +150,16 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const current = shown[Math.min(photoIndex, Math.max(shown.length - 1, 0))] ?? null
   useEffect(() => { setPhotoIndex(0) }, [member.id])
 
-  useEffect(() => { onNestedModal?.(signIn !== null || rolePicker) }, [signIn, rolePicker, onNestedModal])
+  useEffect(() => { if (active) onNestedModal?.(signIn !== null || rolePicker) }, [active, signIn, rolePicker, onNestedModal])
   // Continuous top corners on the summary panel (finish pass).
   const panelRef = useRef<HTMLDivElement>(null)
   useSquircle(panelRef, { tl: 28, tr: 28 })
 
   useEffect(() => {
+    if (!active) return
     trackDbEvent('profile_preview', 'profile', member.id, { viewed_role: member.role, source: 'community' })
     trackEvent({ action: 'community_preview_open', category: 'community', label: member.role })
-  }, [member.id, member.role])
+  }, [active, member.id, member.role])
 
   const stepPhoto = (dir: 1 | -1) => {
     if (shown.length < 2) return
@@ -423,7 +426,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             <>
               <img
                 key={current}
-                src={getImageUrl(current, 'lightbox') ?? current}
+                src={getImageUrl(current, 'feed-full') ?? current}
                 alt=""
                 className="absolute inset-0 h-full w-full object-cover"
                 decoding="async"
@@ -646,31 +649,49 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
   }, [])
   const start = useRef<{ x: number; y: number; axis: 'x' | 'y' | null } | null>(null)
   const moved = useRef(false)
-  const [dx, setDx] = useState(0)
   const [dy, setDy] = useState(0)
-  const [animating, setAnimating] = useState(false)
   const cardWidth = typeof window !== 'undefined' ? Math.min(310, window.innerWidth - 83) : 310
+  const slot = cardWidth + 10
+  // The row of cards moves under the finger directly (no re-render per
+  // touchmove); React only re-renders when a swipe lands.
+  const stripRef = useRef<HTMLDivElement>(null)
+  const dragX = useRef(0)
+  const animating = useRef(false)
+  // While a swipe lands, the incoming card already grows to full size.
+  const [focusIndex, setFocusIndex] = useState(index)
+  const setX = useCallback((x: number, motion: 'none' | 'settle' | 'spring' = 'none') => {
+    dragX.current = x
+    const el = stripRef.current
+    if (!el) return
+    el.style.transition = motion === 'none' ? 'none' : motion === 'settle' ? 'transform 260ms cubic-bezier(0.22, 0.9, 0.3, 1)' : 'transform 420ms cubic-bezier(0.34, 1.4, 0.64, 1)'
+    el.style.transform = `translate3d(${x}px, 0, 0)`
+  }, [])
+  // After the index moves, put the row back at rest in the same frame: the
+  // landed card is the same element, now one slot over — no visible jump.
+  useLayoutEffect(() => { setX(0); setFocusIndex(index) }, [index, setX])
 
   const go = useCallback((dir: 1 | -1) => {
-    if (!deck || animating) return
+    if (!deck || animating.current) return
     const next = index + dir
     if (next < 0 || next > members.length) return
     trackEvent({ action: 'community_deck_swipe', category: 'community', label: dir > 0 ? 'next' : 'previous' })
     void hapticSelection()
     stopHint()
     if (reduce) { setIndex(next); return }
-    setAnimating(true)
-    setDx(-dir * (cardWidth + 10))
+    animating.current = true
+    setFocusIndex(next)
+    setX(-dir * slot, 'settle')
     window.setTimeout(() => {
+      animating.current = false
       setIndex(next)
-      setAnimating(false)
-      setDx(0)
-    }, 220)
-  }, [deck, animating, index, members.length, reduce, cardWidth, stopHint])
+    }, 260)
+  }, [deck, index, members.length, reduce, slot, stopHint, setX])
 
+  const startTime = useRef(0)
   const onTouchStart = (e: React.TouchEvent) => {
-    if (animating) return
+    if (animating.current) return
     start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, axis: null }
+    startTime.current = performance.now()
     moved.current = false
   }
   const onTouchMove = (e: React.TouchEvent) => {
@@ -690,7 +711,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     if (s0.axis === 'x') {
       // Resist past the first member.
       const edge = (index === 0 && mx > 0) || (atEnd && mx < 0)
-      setDx(edge ? mx / 3 : mx)
+      setX(edge ? mx / 3 : mx)
     } else setDy(Math.max(0, my))
   }
   const onTouchEnd = () => {
@@ -698,9 +719,12 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     start.current = null
     if (!s0?.axis) return
     if (s0.axis === 'x') {
-      if (dx <= -SWIPE_DISTANCE && !atEnd) go(1)
-      else if (dx >= SWIPE_DISTANCE && index > 0) go(-1)
-      else setDx(0)
+      // A quick flick counts as much as a long drag.
+      const x = dragX.current
+      const flick = Math.abs(x) > 30 && Math.abs(x) / Math.max(performance.now() - startTime.current, 1) > 0.5
+      if ((x <= -SWIPE_DISTANCE || (flick && x < 0)) && !atEnd) go(1)
+      else if ((x >= SWIPE_DISTANCE || (flick && x > 0)) && index > 0) go(-1)
+      else setX(0, 'spring')
     } else if (dy > 110) onClose()
     else setDy(0)
   }
@@ -720,14 +744,30 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
     hintTimers.current = reduce
       ? [window.setTimeout(() => setHint(false), 2600)]
       : [
-          window.setTimeout(() => setDx(-40), 500),
-          window.setTimeout(() => setDx(0), 500 + 250 + 300),
+          window.setTimeout(() => setX(-40, 'settle'), 500),
+          window.setTimeout(() => setX(0, 'spring'), 500 + 260 + 300),
           window.setTimeout(() => { hintTimers.current = []; setHint(false) }, 2800),
         ]
     return stopHint
-  }, [deck, members.length, reduce, stopHint])
+  }, [deck, members.length, reduce, stopHint, setX])
 
   const dragging = start.current?.axis != null
+  const renderBody = (m: Profile, active: boolean) => (
+    <MemberPreviewBody
+      key={m.id}
+      member={m}
+      onClose={onClose}
+      age={deck?.ageOf?.(m.id) ?? null}
+      fit={deck?.fitOf?.(m.id) ?? null}
+      crestColor={deck?.crestOf?.(m.id) ?? null}
+      onBlocked={onBlocked}
+      framed
+      onNestedModal={active ? setNested : undefined}
+      active={active}
+    />
+  )
+  // The previous, current and next slot (the end card is the slot after the last member).
+  const windowSlots = deck ? [index - 1, index, index + 1].filter((k) => k >= 0 && k <= members.length) : []
   const body = member ? (
     <MemberPreviewBody
       key={member.id}
@@ -757,15 +797,24 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
 
       <div className="relative mt-1.5 min-h-0 w-full flex-1" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd} onClickCapture={onClickCapture}>
         {/* Neighbours peeking (94 %), and the active card */}
-        <div
-          className="absolute inset-y-0 left-1/2"
-          style={{ width: cardWidth, marginLeft: -cardWidth / 2, transform: `translateX(${dx}px)`, transition: dragging ? 'none' : `transform ${hint && dx !== 0 ? 0.25 : 0.22}s ${dx === 0 && hint ? 'cubic-bezier(0.34,1.56,0.64,1)' : 'ease-out'}` }}
-        >
-          {index > 0 && <PeekCard member={members[index - 1]} side="left" width={cardWidth} />}
-          {index + 1 < members.length ? <PeekCard member={members[index + 1]} side="right" width={cardWidth} /> : index < members.length && <PeekEnd side="right" width={cardWidth} />}
-          <DeckCard animateIn={reduce} key={reduce ? index : 'card'}>
-            {body ?? <DeckEnd onAdjustFilters={() => { onClose(); deck.onAdjustFilters?.() }} onBack={onClose} />}
-          </DeckCard>
+        <div ref={stripRef} className="absolute inset-y-0 left-1/2 will-change-transform" style={{ width: cardWidth, marginLeft: -cardWidth / 2 }}>
+          {windowSlots.map((k) => {
+            const isEnd = k === members.length
+            const isActive = k === index
+            return (
+              <DeckCard
+                key={isEnd ? 'end' : members[k].id}
+                offset={(k - index) * slot}
+                focused={k === focusIndex}
+                active={isActive}
+                animateIn={reduce && isActive}
+              >
+                {isEnd
+                  ? <DeckEnd onAdjustFilters={() => { onClose(); deck.onAdjustFilters?.() }} onBack={onClose} />
+                  : renderBody(members[k], isActive)}
+              </DeckCard>
+            )
+          })}
         </div>
         {hint && (
           <div className="pointer-events-none absolute left-1/2 top-[30%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-lg animate-fade-in" role="status">
@@ -810,40 +859,23 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
 }
 
 /** The active deck card: continuous corners, white 8 % inside hairline (finish pass). */
-function DeckCard({ children, animateIn }: { children: React.ReactNode; animateIn: boolean }) {
+function DeckCard({ children, animateIn, offset, focused, active }: { children: React.ReactNode; animateIn: boolean; offset: number; focused: boolean; active: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   useSquircle(ref, 24)
   return (
-    <div ref={ref} className={`absolute inset-0 flex flex-col overflow-hidden rounded-[24px] bg-white ${animateIn ? 'animate-fade-in' : ''}`} data-testid="member-deck-card">
+    <div
+      ref={ref}
+      inert={!active}
+      aria-hidden={!active || undefined}
+      className={`absolute inset-y-0 w-full flex flex-col overflow-hidden rounded-[24px] bg-white transition-[transform,opacity] duration-[260ms] ease-[cubic-bezier(0.22,0.9,0.3,1)] ${animateIn ? 'animate-fade-in' : ''}`}
+      // Neighbours sit one slot over at 94 %; the focused card is full size.
+      style={{ left: offset, transform: focused ? 'scale(1)' : 'scale(0.94)', opacity: focused ? 1 : 0.9 }}
+      data-testid={active ? 'member-deck-card' : undefined}
+    >
       {children}
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[24px] shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.08)]" />
     </div>
   )
-}
-
-/** A neighbour card peeking beside the active one (94 %, photo + name only). */
-function PeekCard({ member, side, width }: { member: Profile; side: 'left' | 'right'; width: number }) {
-  const gallery = useMemberPhotos(member.role === 'brand' ? null : member.id)
-  const isPerson = member.role !== 'club' && member.role !== 'brand'
-  const photo = (isPerson ? member.avatar_url : null) ?? gallery.data?.[0] ?? null
-  const offset = side === 'left' ? -(width * 0.94 + 10) : width + 10
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute top-[3%] h-[94%] overflow-hidden rounded-[21px] bg-white opacity-90"
-      style={{ width: width * 0.94, left: offset }}
-    >
-      <div className="relative h-[61%] w-full" style={photo ? undefined : { backgroundImage: rolePreviewGradient(member.role) }}>
-        {photo && <img src={getImageUrl(photo, 'gallery') ?? photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />}
-        <span className="absolute inset-0" style={{ backgroundImage: PHOTO_SCRIM }} />
-      </div>
-    </div>
-  )
-}
-
-function PeekEnd({ side, width }: { side: 'left' | 'right'; width: number }) {
-  const offset = side === 'left' ? -(width * 0.94 + 10) : width + 10
-  return <div aria-hidden="true" className="absolute top-[3%] h-[94%] rounded-[21px] bg-white opacity-90" style={{ width: width * 0.94, left: offset }} />
 }
 
 /** Past the last member (Figma P21). */
