@@ -1,5 +1,5 @@
-import { getImageUrl } from '@/lib/imageUrl'
-import { initialsOf } from '@/lib/communityCard'
+import { AVAILABLE_RING, NEW_RING } from '@/lib/homeEngagement'
+import { FaceCircle } from './FaceCircle'
 import { cn } from '@/lib/utils'
 import { SectionHeader } from './primitives'
 import { useHomeV1 } from './homeV1Context'
@@ -31,12 +31,11 @@ export function PeopleRow({ kind, className }: { kind: PeopleKind; className?: s
   }
 
   return (
-    <section className={cn('flex flex-col gap-2.5 pb-[18px]', className)} data-testid={`home-people-${kind}`}>
+    <section className={cn('flex flex-col gap-2 pb-4', className)} data-testid={`home-people-${kind}`}>
       <SectionHeader title={copy.title} action="See all" to={copy.to} />
       <div className="flex gap-3.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {faces.map((f, i) => {
           const first = (f.full_name ?? '').trim().split(/\s+/)[0] || 'Member'
-          const src = f.avatar_url ? getImageUrl(f.avatar_url, 'avatar-md') : null
           return (
             <button
               key={f.id}
@@ -47,14 +46,10 @@ export function PeopleRow({ kind, className }: { kind: PeopleKind; className?: s
             >
               <span
                 className="flex h-[68px] w-[68px] items-center justify-center rounded-full p-[2px]"
-                style={{ backgroundImage: kind === 'available' ? 'linear-gradient(135deg, #22a559 25%, #157a3f 75%)' : 'linear-gradient(135deg, #a854f7 25%, #6b2bd9 75%)' }}
+                style={{ backgroundImage: kind === 'available' ? AVAILABLE_RING : NEW_RING }}
               >
                 <span className="flex h-full w-full items-center justify-center rounded-full bg-white p-[2px]">
-                  {src ? (
-                    <img src={src} alt="" loading={i < 6 ? 'eager' : 'lazy'} decoding="async" className="h-full w-full rounded-full object-cover" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center rounded-full bg-hockia-soft text-[18px] font-bold text-hockia-primary">{initialsOf(f.full_name)}</span>
-                  )}
+                  <FaceCircle url={f.avatar_url} name={f.full_name} role={f.role} initialsClassName="text-[18px]" className="h-full w-full" />
                 </span>
               </span>
               <span className="max-w-full truncate text-caption text-ink-2">{first}</span>
@@ -68,7 +63,7 @@ export function PeopleRow({ kind, className }: { kind: PeopleKind; className?: s
 
 export function PeopleRowSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('flex flex-col gap-2.5 pb-[18px]', className)} aria-hidden="true">
+    <div className={cn('flex flex-col gap-2 pb-4', className)} aria-hidden="true">
       <div className="mx-4 h-[21px] w-[150px] animate-pulse rounded-full bg-surface-muted" />
       <div className="flex gap-3.5 overflow-hidden px-4">
         {Array.from({ length: 6 }, (_, i) => (

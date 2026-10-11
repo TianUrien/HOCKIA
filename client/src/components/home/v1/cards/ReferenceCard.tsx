@@ -41,7 +41,7 @@ export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
   const receiverPath = profilePathForRole(item.role, item.profile_id)
 
   return (
-    <article className="flex flex-col gap-2.5 px-4 pb-[18px] pt-4" data-testid="home-reference-card">
+    <article className="flex flex-col gap-2 p-4" data-testid="home-reference-card">
       <SquircleBox className="flex flex-col gap-3.5 bg-gold-soft px-5 pb-[18px] pt-5 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
         {quote && <p className="text-[20px] font-semibold leading-6 tracking-[-0.08px] text-ink-1">“{quote}”</p>}
         <div className="flex items-center gap-2.5">

@@ -1,5 +1,6 @@
-import { getImageUrl } from '@/lib/imageUrl'
-import { initialsOf } from '@/lib/communityCard'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
+import { BlurImage } from '../BlurImage'
+import { initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
 import { SectionHeader } from '../primitives'
 import { useHomeV1 } from '../homeV1Context'
@@ -21,8 +22,8 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
   const open = (i: number) => openDeckByIds(ids, i, `${item.member_count} joined this week`)
 
   return (
-    <article className="flex flex-col gap-2.5 pb-[18px] pt-3.5" data-testid="home-digest-card">
-      <SectionHeader title={`${item.member_count} joined this week`} action="Swipe through" onAction={() => open(0)} className="!px-4" />
+    <article className="flex flex-col gap-2 py-4" data-testid="home-digest-card">
+      <SectionHeader title={`${item.member_count} joined this week`} action="Swipe through" onAction={() => open(0)} />
       <div className="grid grid-cols-3 gap-2 px-4">
         {faces.map((m, i) => {
           const more = showMore && i === 5
@@ -36,9 +37,9 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
               className="relative aspect-[115/116] overflow-hidden rounded-2xl bg-surface-muted transition-transform duration-300 active:scale-[0.97]"
             >
               {src ? (
-                <img src={src} alt="" loading="lazy" decoding="async" className={cn('h-full w-full object-cover', more && 'scale-110 blur-[5px]')} />
+                <BlurImage src={src} lqip={getLqipUrl(m.avatar_url)} className="h-full w-full" imgClassName={cn(more && 'scale-110 blur-[5px]')} />
               ) : (
-                <span className="flex h-full w-full items-center justify-center bg-hockia-soft text-[22px] font-bold text-hockia-primary">{initialsOf(m.full_name)}</span>
+                <span className="flex h-full w-full items-center justify-center text-[22px] font-semibold text-white" style={{ backgroundImage: roleGradient((m.role as CommunityRole) || 'player') }}>{initialsOf(m.full_name)}</span>
               )}
               {more && (
                 <span className="absolute inset-0 flex items-center justify-center bg-[rgba(15,15,20,0.42)] text-title tabular-nums text-white">+{extra}</span>

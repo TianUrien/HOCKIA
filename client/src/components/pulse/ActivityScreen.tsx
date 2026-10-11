@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils'
 import { useNextStep, type NextStep } from '@/components/home/v1/useNextStep'
 import { SquircleBox } from '@/components/home/v1/primitives'
 import { WhoLookedAtYou } from './WhoLookedAtYou'
+import { FaceCircle } from '@/components/home/v1/FaceCircle'
+import { AVAILABLE_RING } from '@/lib/homeEngagement'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
 const TIP_KEYS = new Set(['photo', 'complete', 'crest', 'umpire'])
@@ -31,7 +33,7 @@ export function ActivityScreen() {
   const location = useLocation()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
-  const { steps, loading, run, dismiss } = useNextStep()
+  const { steps, loading, run, dismiss, markDone } = useNextStep()
   const vis = useWeeklyVisibility(Boolean(profile), false)
   const viewers = useWeekViewers(profile?.role === 'player' || profile?.role === 'coach')
   const refs = useTrustedReferences(profile?.id ?? '')
@@ -53,7 +55,7 @@ export function ActivityScreen() {
   }
   const confirm = async (s: NextStep) => {
     setBusy(s.key)
-    await run(s)
+    if (await run(s)) markDone(s.key)
     setBusy(null)
   }
   const notNow = (s: NextStep) => dismiss(s)
@@ -170,12 +172,35 @@ function Stack({ visual }: { visual: NextStep['visual'] }) {
   if (visual.kind === 'icon') {
     return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[18px]" aria-hidden="true">{visual.icon === 'user' ? '👤' : visual.icon === 'chart' ? '📈' : visual.icon === 'camera' ? '📷' : '🏑'}</span>
   }
+  if (visual.kind === 'faces') {
+    const people = visual.people.slice(0, 3)
+    // One available player: their face in the green "Available now" ring (H3 review).
+    if (people.length === 1) {
+      const p = people[0]
+      return (
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-[2px]" style={{ backgroundImage: AVAILABLE_RING }} aria-hidden="true">
+          <span className="flex h-full w-full items-center justify-center rounded-full bg-white p-[2px]">
+            <FaceCircle url={p.url} name={p.name} role={p.role} size="avatar-sm" initialsClassName="text-[13px]" className="h-full w-full" />
+          </span>
+        </span>
+      )
+    }
+    return (
+      <span className="relative h-10 shrink-0" style={{ width: 40 + (people.length - 1) * 20 }} aria-hidden="true">
+        {people.map((p, i) => (
+          <span key={i} className="absolute top-0" style={{ left: i * 20 }}>
+            <FaceCircle url={p.url} name={p.name} role={p.role} size="avatar-sm" initialsClassName="text-[13px]" className="h-10 w-10 ring-2 ring-white" />
+          </span>
+        ))}
+      </span>
+    )
+  }
   const urls = visual.urls.slice(0, 3)
   return (
-    <span className="relative h-10 shrink-0" style={{ width: 40 + (urls.length - 1) * 16 }} aria-hidden="true">
+    <span className="relative h-10 shrink-0" style={{ width: 40 + (urls.length - 1) * 20 }} aria-hidden="true">
       {urls.map((u, i) => (
-        <span key={i} className={cn('absolute top-0 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-white', visual.kind === 'crests' && 'p-1')} style={{ left: i * 16 }}>
-          {u ? <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className={cn('h-full w-full', visual.kind === 'crests' ? 'object-contain' : 'object-cover')} /> : <span className="h-full w-full bg-hockia-soft" />}
+        <span key={i} className={cn('absolute top-0 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-2 ring-white')} style={{ left: i * 20 }}>
+          {u ? <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className="h-full w-full object-contain" /> : <span className="h-full w-full bg-hockia-soft" />}
         </span>
       ))}
     </span>

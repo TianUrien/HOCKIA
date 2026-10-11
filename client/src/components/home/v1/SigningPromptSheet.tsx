@@ -102,7 +102,7 @@ export function SigningPromptSheet() {
   }
 
   return (
-    <BottomSheet open onClose={notNow} ariaLabel="Signing confirmed">
+    <BottomSheet open onClose={notNow} ariaLabel="Signing confirmed" initialFocus="panel">
       <div className="px-4 pb-4 pt-1" data-testid="signing-prompt-sheet">
         <h2 className="text-[22px] font-bold leading-7 text-ink-1">Signing confirmed</h2>
         <p className="mt-1.5 text-[15px] leading-5 text-ink-2">Share it with the community? {first} is tagged and gets notified.</p>
@@ -118,7 +118,7 @@ export function SigningPromptSheet() {
           type="button"
           onClick={() => void post()}
           disabled={posting}
-          className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-[17px] font-semibold text-white disabled:opacity-60"
+          className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-[17px] font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2 disabled:opacity-60"
         >
           {posting && <Loader2 className="h-4 w-4 animate-spin" />} Post New Signing
         </button>

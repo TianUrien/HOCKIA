@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
-import { hapticSuccess } from '@/lib/haptics'
+import { hapticLight, hapticSuccess } from '@/lib/haptics'
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>
   children: React.ReactNode
 }
 
-const THRESHOLD = 80
+// Motion 95:1012 §5: threshold 72 pt with a light haptic as it's crossed.
+const THRESHOLD = 72
 const MAX_PULL = 120
 
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
@@ -15,6 +15,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const touchStartY = useRef(0)
   const isPulling = useRef(false)
+  const armed = useRef(false)
 
   // Skip pull-to-refresh when the body is scroll-locked — this is the
   // convention modals use to prevent underlying scroll, and we should respect
@@ -51,6 +52,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
     }
 
     const distance = Math.min(deltaY * 0.5, MAX_PULL)
+    if (distance >= THRESHOLD && !armed.current) { armed.current = true; void hapticLight() }
+    if (distance < THRESHOLD) armed.current = false
     setPullDistance(distance)
   }, [isRefreshing])
 
@@ -96,21 +99,36 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
         <div
           className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
           style={{ height: isRefreshing ? 48 : pullDistance }}
+          aria-hidden="true"
         >
-          <div
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md border border-gray-100"
-            style={{
-              opacity: progress,
-              transform: `scale(${0.5 + progress * 0.5}) rotate(${pullDistance * 3}deg)`,
-            }}
+          {/* A field-hockey ball rolls with the pull, spins while loading,
+              then the row springs closed. */}
+          <span
+            className="flex items-center justify-center"
+            style={{ opacity: progress, transform: `scale(${0.6 + progress * 0.4})` }}
           >
-            <Loader2
-              className={`w-4 h-4 text-hockia-primary ${isRefreshing ? 'animate-spin' : ''}`}
-            />
-          </div>
+            <span className={isRefreshing ? 'hockia-ball-spin' : undefined} style={isRefreshing ? undefined : { transform: `rotate(${pullDistance * 4}deg)` }}>
+              <HockeyBall />
+            </span>
+          </span>
         </div>
       )}
+      {isRefreshing && <span className="sr-only" role="status">Refreshing</span>}
       {children}
     </>
+  )
+}
+
+/** 12 pt dimpled ball (white, ink hairline) — reads on white and grey grounds. */
+function HockeyBall() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="6.25" fill="white" stroke="#6f6f7c" strokeWidth="1" />
+      <circle cx="4.6" cy="5" r="0.9" fill="#aeaeb2" />
+      <circle cx="8.4" cy="4.2" r="0.9" fill="#aeaeb2" />
+      <circle cx="9.6" cy="8" r="0.9" fill="#aeaeb2" />
+      <circle cx="6" cy="9.4" r="0.9" fill="#aeaeb2" />
+      <circle cx="7" cy="6.6" r="0.7" fill="#6c2bd9" />
+    </svg>
   )
 }

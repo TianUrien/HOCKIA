@@ -53,7 +53,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header onNewPost={openComposer} />
+      <Header onNewPost={openComposer} hideOnScroll />
 
       <PullToRefresh onRefresh={handleRefresh}>
         <main className="mx-auto max-w-2xl pt-under-header pb-24 md:pb-10">

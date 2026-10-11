@@ -21,7 +21,7 @@ export function RolesRail({ className }: { className?: string }) {
   if (!talent || loading || items.length === 0) return null
 
   return (
-    <section className={className ?? 'flex flex-col gap-2.5 pb-[18px] pt-4'} data-testid="home-roles-rail">
+    <section className={className ?? 'flex flex-col gap-2 py-4'} data-testid="home-roles-rail">
       <SectionHeader title="Roles for you" action="See all" to="/opportunities" />
       <div className="flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.slice(0, 10).map((o) => (

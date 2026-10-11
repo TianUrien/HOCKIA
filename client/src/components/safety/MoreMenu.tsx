@@ -125,7 +125,7 @@ export function MoreMenu({ items, label = 'More actions', title, triggerClassNam
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body text-ink-2">Cancel</button>
+            <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">Cancel</button>
           </div>
         </BottomSheet>
       ) : (

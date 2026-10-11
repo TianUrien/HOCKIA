@@ -169,3 +169,7 @@ export function roleTitle(position: string | null, gender: string | null, fallba
   const team = opportunityGenderToTeamLabel(gender).replace(/ Team$/, '')
   return [positionLabel(position) || null, team || null].filter(Boolean).join(' · ') || fallback
 }
+
+/** People-row rings (Figma 60:164): brand for new members, green for available now. */
+export const NEW_RING = 'linear-gradient(135deg, #a854f7 25%, #6b2bd9 75%)'
+export const AVAILABLE_RING = 'linear-gradient(135deg, #22a559 25%, #157a3f 75%)'

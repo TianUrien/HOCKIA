@@ -27,31 +27,32 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
   }
 
   const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    neutral: 'bg-surface-grouped border-line text-ink-1',
+    success: 'lg:bg-green-50 lg:border-green-200 lg:text-green-800',
+    error: 'lg:bg-red-50 lg:border-red-200 lg:text-red-800',
+    info: 'lg:bg-blue-50 lg:border-blue-200 lg:text-blue-800',
+    neutral: 'lg:bg-surface-grouped lg:border-line lg:text-ink-1',
   }
 
   const iconColors = {
-    success: 'text-green-600',
-    error: 'text-red-600',
-    info: 'text-blue-600',
-    neutral: 'text-ink-2',
+    success: 'text-green-400 lg:text-green-600',
+    error: 'text-red-400 lg:text-red-600',
+    info: 'text-blue-300 lg:text-blue-600',
+    neutral: 'text-white/70 lg:text-ink-2',
   }
 
   const Icon = icons[type]
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-slide-up ${colors[type]}`}
+      // Phones: the dark 14-radius toast (ink on white icons); desktop keeps the tinted card.
+      className={`pointer-events-auto flex w-full max-w-[361px] items-center gap-3 rounded-[14px] bg-ink-1 py-3 pl-4 pr-3 text-white shadow-lg animate-slide-up lg:max-w-none lg:items-start lg:rounded-lg lg:border lg:p-4 ${colors[type]}`}
       role="alert"
     >
-      <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${iconColors[type]}`} />
-      <p className="flex-1 text-sm font-medium">{message}</p>
+      <Icon className={`w-5 h-5 flex-shrink-0 lg:mt-0.5 ${iconColors[type]}`} />
+      <p className="flex-1 text-[15px] leading-5 lg:text-sm lg:font-medium">{message}</p>
       <button
         onClick={onClose}
-        className="flex-shrink-0 hover:opacity-70 transition-opacity"
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center opacity-70 transition-opacity hover:opacity-100 lg:h-auto lg:w-auto"
         aria-label="Close notification"
       >
         <X className="w-4 h-4" />

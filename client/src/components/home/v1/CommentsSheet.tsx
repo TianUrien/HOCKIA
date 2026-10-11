@@ -125,8 +125,9 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
 
   return (
     <>
-      <BottomSheet open onClose={onClose} ariaLabel="Comments" className="h-[88dvh]">
-        <div className="flex min-h-0 flex-1 flex-col">
+      <BottomSheet open onClose={onClose} ariaLabel="Comments" className="min-h-[55dvh]">
+        {/* Fills the sheet (≥ 55 % on open, grows with the thread) so the composer sits at the bottom. */}
+        <div className="flex h-full min-h-[calc(55dvh-24px)] flex-col">
           <h2 className="px-4 pb-2 pt-1 text-body font-semibold tabular-nums text-ink-1">
             {total === 1 ? '1 comment' : `${total} comments`}
           </h2>
@@ -211,7 +212,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
               )}
               {isOwner && <ActionRow label={enabled ? 'Turn off comments for this post' : 'Turn on comments for this post'} onClick={() => void toggleEnabled()} />}
             </div>
-            <button type="button" onClick={() => setActionsFor(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body text-ink-2">Cancel</button>
+            <button type="button" onClick={() => setActionsFor(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">Cancel</button>
           </div>
         )}
       </BottomSheet>

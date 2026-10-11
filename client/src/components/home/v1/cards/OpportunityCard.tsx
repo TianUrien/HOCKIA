@@ -27,7 +27,7 @@ export function OpportunityCard({ item }: { item: OpportunityPostedFeedItem }) {
   const where = [clubName, [country?.flag_emoji, item.location_country].filter(Boolean).join(' ') || item.location_city].filter(Boolean).join(' · ')
 
   return (
-    <article className="px-4 pb-[18px] pt-4" data-testid="home-opportunity-card">
+    <article className="p-4" data-testid="home-opportunity-card">
       <RoleCoverCard
         size="feed"
         chip="OPEN ROLE"

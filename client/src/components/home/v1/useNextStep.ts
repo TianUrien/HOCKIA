@@ -26,7 +26,7 @@ import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
  */
 export type NextStepVisual =
   | { kind: 'crests'; urls: Array<string | null> }
-  | { kind: 'faces'; urls: Array<string | null> }
+  | { kind: 'faces'; people: Array<{ url: string | null; name: string | null; role: string | null }> }
   | { kind: 'icon'; icon: 'camera' | 'check' | 'chart' | 'stick' | 'user' }
 
 export interface NextStep {
@@ -143,7 +143,7 @@ export function useNextStep() {
           title: plural(fits.length, 'player available', 'players available'),
           subtitle: 'Open to play · fit your team',
           cta: 'See',
-          visual: { kind: 'faces', urls: fits.slice(0, 3).map((m) => m.avatar_url) },
+          visual: { kind: 'faces', people: fits.slice(0, 3).map((m) => ({ url: m.avatar_url, name: m.full_name, role: m.role })) },
           to: '/community',
         })
       }
@@ -193,7 +193,6 @@ export function useNextStep() {
         const now = new Date().toISOString()
         setProfile({ ...profile, availability_confirmed_at: now, last_meaningful_update_at: now })
       }
-      setDone((prev) => new Set(prev).add(step.key))
       return true
     } catch (err) {
       logger.error('[useNextStep] confirm availability failed', err)
@@ -208,5 +207,8 @@ export function useNextStep() {
     setDone((prev) => new Set(prev).add(step.key))
   }, [pulse])
 
-  return { steps, loading, run, dismiss }
+  /** Take a resolved card out (after its exit animation). */
+  const markDone = useCallback((key: string) => setDone((prev) => new Set(prev).add(key)), [])
+
+  return { steps, loading, run, dismiss, markDone }
 }

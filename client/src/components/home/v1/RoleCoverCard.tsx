@@ -1,7 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useMemberPhotos } from '@/hooks/useMemberPhotos'
-import { getImageUrl } from '@/lib/imageUrl'
-import { CARD_SCRIM, CLUB_BRAND_GRADIENT, HAIRLINE_ON_PHOTO, PRESS } from '@/lib/communityCard'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
+import { BlurImage } from './BlurImage'
+import { CARD_SCRIM, CLUB_BRAND_GRADIENT, HAIRLINE_ON_PHOTO, PRESS, crestGradient } from '@/lib/communityCard'
+import { useClubCrestColors } from '@/hooks/useClubCrestColors'
+import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { LogoTile } from '@/components/community/photo/LogoTile'
 import { cn } from '@/lib/utils'
 import { GlassChip, SquircleBox } from './primitives'
@@ -29,26 +32,32 @@ export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, siz
   const [small, setSmall] = useState<ReadonlySet<string>>(new Set())
   const cover = (photos.data ?? []).find((u) => !small.has(u)) ?? null
   const feed = size === 'feed'
+  // No cover → the Community club-card rule (26:1046): the crest's colour,
+  // faint pitch lines, the crest; brand purple only without a crest colour.
+  const crestClubs = useMemo(() => (clubId && crestUrl ? [{ id: clubId, avatar_url: crestUrl }] : []), [clubId, crestUrl])
+  const crestColors = useClubCrestColors(crestClubs)
+  const crestColor = clubId ? crestColors.get(clubId) ?? null : null
+  const background = cover ? undefined : crestColor ? crestGradient(crestColor) : CLUB_BRAND_GRADIENT
 
   return (
     <SquircleBox
       radius={feed ? 24 : 20}
       className={cn('relative shrink-0 overflow-hidden bg-ink-1', HAIRLINE_ON_PHOTO, PRESS, feed ? 'h-[236px] w-full' : 'h-[150px] w-[220px]')}
-      style={cover ? undefined : { backgroundImage: CLUB_BRAND_GRADIENT }}
+      style={background ? { backgroundImage: background } : undefined}
     >
       <button type="button" onClick={onOpen} aria-label={`${title}, ${clubName}`} className="absolute inset-0 text-left">
         {cover && (
-          <img
+          <BlurImage
             src={getImageUrl(cover, 'feed-full') ?? cover}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 h-full w-full object-cover"
+            lqip={getLqipUrl(cover)}
+            color={crestColor}
+            className="absolute inset-0 h-full w-full"
             // Spec (Community 26:1020): a cover is at least 600 px wide.
             onLoad={(e) => { if (e.currentTarget.naturalWidth < 600) setSmall((p) => new Set(p).add(cover)) }}
             onError={() => setSmall((p) => new Set(p).add(cover))}
           />
         )}
+        {!cover && <img src={pitchHorizontal} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full opacity-60" />}
         <span aria-hidden="true" className="absolute inset-0" style={{ backgroundImage: CARD_SCRIM }} />
       </button>
       {chip && <GlassChip className={cn('absolute', feed ? 'left-4 top-4' : 'left-3 top-3')}>{chip}</GlassChip>}

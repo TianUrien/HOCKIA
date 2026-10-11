@@ -118,7 +118,7 @@ export function HomeV1Feed({ prependItemRef, header }: {
             <button
               type="button"
               onClick={() => { void showNewItems().then(() => topRef.current?.scrollIntoView({ behavior: 'smooth' })) }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white shadow-lg"
+              className="inline-flex h-9 animate-slideDown items-center gap-1.5 rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white shadow-lg"
             >
               <ArrowUp className="h-4 w-4" /> {newCount === 1 ? '1 new post' : `${newCount > 99 ? '99+' : newCount} new posts`}
             </button>
@@ -232,7 +232,7 @@ function FeedItem({ item, onLikeUpdate, onDelete }: {
 function FirstPostSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-3.5">
+      <div className="flex items-center gap-2.5 px-4 pb-2 pt-4">
         <div className="h-9 w-9 animate-pulse rounded-full bg-surface-muted" />
         <div className="flex flex-col gap-1.5">
           <div className="h-3 w-[120px] animate-pulse rounded-full bg-surface-muted" />
