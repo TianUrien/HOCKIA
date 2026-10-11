@@ -245,11 +245,7 @@ export function fitRows(c: FitComponents, ctx: {
     key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,
     detail: (c.availability ?? 0) >= 0.6 ? 'Marked available' : 'Not marked available right now',
   }
-  const d = ctx.lastActiveDays
-  const active: FitRow = {
-    key: 'active', label: 'Active', ok: (c.recency ?? 0) > 0,
-    detail: d === null ? 'No recent activity' : d <= 0 ? 'On Hockia today' : d === 1 ? 'On Hockia yesterday' : d <= 30 ? `On Hockia ${d} days ago` : 'Not on Hockia in the last month',
-  }
+  // No "Active" row (founder ruling 2026-10-11: activity recency is never shown on profiles).
   const prox = c.competition_proximity ?? 0
   let levelDetail: string
   // Neutral wording — no pronouns on any club surface (founder ruling 2026-09-26).
@@ -270,7 +266,7 @@ export function fitRows(c: FitComponents, ctx: {
   }
   const level: FitRow = { key: 'level', label: 'Level', ok: prox >= 0.75, detail: levelDetail }
   const position = fitPositionRow(c)
-  return position ? [position, category, open, active, level] : [category, open, active, level]
+  return position ? [position, category, open, level] : [category, open, level]
 }
 
 /** Short chip labels for the nine reason codes (Decline sheet, Figma 326:528). */
