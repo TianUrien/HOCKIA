@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
+import { BlurImage } from './BlurImage'
 import { initialsOf } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
 import { SquircleBox } from './primitives'
@@ -53,7 +54,7 @@ export function NewSigningArt({ personName, personAvatarUrl, clubName, clubCrest
       <div className="relative h-[140px] w-[260px]" role="img" aria-label={`${personName} and ${clubName}`}>
         <span className={cn(CIRCLE, 'left-0')}>
           {photo ? (
-            <img src={photo} alt="" className="h-full w-full object-cover" decoding="async" onError={() => setPhotoFailed(true)} />
+            <BlurImage src={photo} lqip={getLqipUrl(personAvatarUrl)} eager className="h-full w-full" onError={() => setPhotoFailed(true)} />
           ) : (
             <Initials name={personName} />
           )}

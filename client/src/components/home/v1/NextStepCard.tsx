@@ -5,6 +5,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { hapticLight } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { SquircleBox } from './primitives'
+import { FaceCircle } from './FaceCircle'
 import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
 
 /**
@@ -14,11 +15,14 @@ import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
  * Announces as one button with its CTA (spec Accessibility).
  */
 export function NextStepCard({ onCompose }: { onCompose: () => void }) {
-  const { steps, loading, run } = useNextStep()
+  const { steps, loading, run, markDone } = useNextStep()
   const navigate = useNavigate()
   const trackRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
+  // Motion 95:1012 §3: the resolved card leaves (−24 pt, 150 ms), the next enters (+24 pt, 250 ms).
+  const [leaving, setLeaving] = useState<string | null>(null)
+  const [entering, setEntering] = useState<string | null>(null)
 
   if (loading && steps.length <= 1) return <NextStepSkeleton />
   if (steps.length === 0) return null
@@ -29,8 +33,18 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
     if (step.action === 'compose') { onCompose(); return }
     if (step.action === 'confirm_availability') {
       setBusy(step.key)
-      await run(step)
+      const i = steps.indexOf(step)
+      const ok = await run(step)
       setBusy(null)
+      if (ok) {
+        setLeaving(step.key)
+        window.setTimeout(() => {
+          setLeaving(null)
+          markDone(step.key)
+          // The next card takes this slot; the last one hands over to "Your week".
+          setEntering(steps[i + 1]?.key ?? 'week')
+        }, 150)
+      }
       return
     }
     if (step.to) navigate(step.to)
@@ -49,8 +63,10 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
         className="flex w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {steps.map((step, i) => (
-          <div key={step.key} className="w-full shrink-0 snap-center" aria-hidden={i !== active || undefined}>
-            <SquircleBox className="bg-gradient-to-r from-hockia-primary to-[#3e1696]">
+          <div key={step.key} className="w-full shrink-0 snap-center" aria-hidden={i !== active || undefined} onAnimationEnd={() => entering === step.key && setEntering(null)}>
+            <SquircleBox
+              className={cn('bg-gradient-to-r from-hockia-primary to-[#3e1696]', leaving === step.key && 'hockia-step-out', entering === step.key && 'hockia-step-in')}
+            >
               <button
                 type="button"
                 onClick={() => void act(step)}
@@ -74,7 +90,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
       {steps.length > 1 && (
         <div className="flex items-center gap-[5px]" aria-label={`${active + 1} of ${steps.length}`}>
           {steps.map((s, i) => (
-            <span key={s.key} className={cn('h-1.5 rounded-[3px] transition-all duration-300', i === active ? 'w-4 bg-hockia-primary' : 'w-1.5 bg-ink-4')} />
+            <span key={s.key} className={cn('h-1.5 rounded-[3px] transition-[width,background-color] duration-[250ms] ease-[cubic-bezier(.2,0,0,1)]', i === active ? 'w-4 bg-hockia-primary' : 'w-1.5 bg-ink-4')} />
           ))}
         </div>
       )}
@@ -93,20 +109,24 @@ function Visual({ visual }: { visual: NextStepVisual }) {
       </span>
     )
   }
+  if (visual.kind === 'faces') {
+    const people = visual.people.slice(0, 3)
+    return (
+      <span className="relative h-14 shrink-0" style={{ width: 40 + (people.length - 1) * 20 }} aria-hidden="true">
+        {people.map((p, i) => (
+          <span key={i} className="absolute top-2" style={{ left: i * 20 }}>
+            <FaceCircle url={p.url} name={p.name} role={p.role} size="avatar-sm" initialsClassName="text-[13px]" className="h-10 w-10 ring-2 ring-white" />
+          </span>
+        ))}
+      </span>
+    )
+  }
   const urls = visual.urls.slice(0, 3)
   return (
     <span className="relative h-14 shrink-0" style={{ width: 40 + (urls.length - 1) * 20 }} aria-hidden="true">
       {urls.map((u, i) => (
-        <span
-          key={i}
-          className={cn('absolute top-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-white', visual.kind === 'crests' && 'p-1')}
-          style={{ left: i * 20 }}
-        >
-          {u ? (
-            <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className={cn('h-full w-full', visual.kind === 'crests' ? 'object-contain' : 'object-cover')} />
-          ) : (
-            <span className="h-full w-full bg-hockia-soft" />
-          )}
+        <span key={i} className="absolute top-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-2 ring-white" style={{ left: i * 20 }}>
+          {u ? <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className="h-full w-full object-contain" /> : <span className="h-full w-full bg-hockia-soft" />}
         </span>
       ))}
     </span>

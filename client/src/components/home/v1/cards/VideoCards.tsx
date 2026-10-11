@@ -33,7 +33,7 @@ export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
   const age = formatActivityAge(item.created_at)
 
   return (
-    <article className="pb-[18px] pt-3.5" data-testid={full ? 'home-full-match-card' : 'home-highlight-card'}>
+    <article className="py-4" data-testid={full ? 'home-full-match-card' : 'home-highlight-card'}>
       <PostHeader
         authorId={item.uploader_id}
         name={item.uploader_name}

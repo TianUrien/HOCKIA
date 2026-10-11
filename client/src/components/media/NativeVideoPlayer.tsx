@@ -66,6 +66,9 @@ export default function NativeVideoPlayer({
   const [hlsUrl, setHlsUrl] = useState<string | null>(null)
   const [iframeUrl, setIframeUrl] = useState<string | null>(null)
   const [signedThumb, setSignedThumb] = useState<string | null>(null)
+  // Feed blur-up (Motion spec 95:1012 §2): a 24 px poster, blurred, until the real one decodes.
+  const [lqipThumb, setLqipThumb] = useState<string | null>(null)
+  const [thumbLoaded, setThumbLoaded] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   // Transient failures (404 deleted / 409 processing / 5xx / network) are
   // retryable; the recruiters-only gate is not.
@@ -129,6 +132,7 @@ export default function NativeVideoPlayer({
         setHlsUrl(data.hls)
         if (data.iframe) setIframeUrl(data.iframe)
         setSignedThumb(sizedThumbnail(data.thumbnail, 1280, 720))
+        setLqipThumb(sizedThumbnail(data.thumbnail, 24))
       } catch (err) {
         if (cancelled) return
         const code = err instanceof PlaybackTokenError ? err.status : null
@@ -229,13 +233,17 @@ export default function NativeVideoPlayer({
               on a requireSignedURLs asset, so we must NOT paint it (even
               briefly) — the branded gradient covers the gap until the
               signed URL from the token fn arrives. object-cover cropped. */}
+          {feed && lqipThumb && !thumbLoaded ? (
+            <img src={lqipThumb} alt="" aria-hidden="true" decoding="async" className="absolute inset-0 h-full w-full scale-110 object-cover blur-[20px]" />
+          ) : null}
           {signedThumb ? (
             <img
               src={signedThumb}
               alt=""
               aria-hidden="true"
               decoding="async"
-              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-150"
+              onLoad={() => setThumbLoaded(true)}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity ${feed ? `duration-[250ms] ${thumbLoaded ? 'opacity-100' : 'opacity-0'}` : 'duration-150'}`}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none'
                 // The token minted but Cloudflare has no such asset (404): the

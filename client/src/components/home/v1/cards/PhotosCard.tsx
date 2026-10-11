@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
+import { BlurImage } from '../BlurImage'
 import { useActivityPhotos } from '@/hooks/useActivityPhotos'
 import { formatActivityAge } from '@/lib/inboxTime'
 import { profilePathForRole } from '@/lib/feedPaths'
@@ -48,7 +49,7 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
   const dots = Array.from({ length: Math.min(n, MAX_DOTS) }, (_, i) => dotStart + i)
 
   return (
-    <article className="pb-[18px] pt-3.5" data-testid="home-photos-card">
+    <article className="py-4" data-testid="home-photos-card">
       <PostHeader
         authorId={item.uploader_id}
         name={item.uploader_name}
@@ -72,12 +73,11 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
               aria-label={`Photo ${i + 1} of ${n}`}
               className={cn('relative aspect-[361/460] shrink-0 snap-start overflow-hidden bg-surface-muted', n > 1 ? 'w-[calc(100%-32px)]' : 'w-full')}
             >
-              <img
-                src={getImageUrl(u, 'feed-full') ?? undefined}
-                alt=""
-                loading={i < 2 ? 'eager' : 'lazy'}
-                decoding="async"
-                className="h-full w-full object-cover"
+              <BlurImage
+                src={getImageUrl(u, 'feed-full') ?? u}
+                lqip={getLqipUrl(u)}
+                eager={i < 2}
+                className="h-full w-full"
                 onError={() => setFailed((prev) => new Set(prev).add(u))}
               />
             </button>

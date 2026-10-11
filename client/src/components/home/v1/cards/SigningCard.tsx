@@ -56,7 +56,7 @@ export function SigningCard({ item }: { item: UserPostFeedItem }) {
   }
 
   return (
-    <article className="pb-[18px] pt-4" data-testid="home-signing-card">
+    <article className="py-4" data-testid="home-signing-card">
       <PostHeader
         authorId={item.author_id}
         name={item.author_name}

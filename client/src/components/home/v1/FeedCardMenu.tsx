@@ -76,7 +76,7 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
       items.push({
         key: 'untag',
         label: 'Remove my tag',
-        description: `The post stays as a ${authorName ?? 'club'} post without your name and photo.`,
+        description: 'The post stays up without your name and photo.',
         destructive: true,
         onSelect: onRemoveTag,
       })

@@ -21,7 +21,7 @@ export function EndOfFeed() {
         <p className="text-secondary text-ink-2">New signings and highlights will show up here.</p>
       </div>
       <PeopleRow kind="pymk" />
-      {clubSide ? <PeopleRow kind="available" /> : <RolesRail className="flex flex-col gap-2.5 pb-[18px]" />}
+      {clubSide ? <PeopleRow kind="available" /> : <RolesRail className="flex flex-col gap-2 pb-4" />}
     </section>
   )
 }

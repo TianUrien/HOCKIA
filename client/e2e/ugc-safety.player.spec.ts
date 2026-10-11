@@ -151,9 +151,10 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
     // Click the first post menu
     await postOptions.first().click()
 
-    // Should show either Report (other's post) or Edit/Delete (own post)
-    const reportBtn = page.getByText('Report', { exact: true })
-    const editBtn = page.getByText('Edit post')
+    // Should show either Report (other's post) or Edit/Delete (own post).
+    // Home v1 cards (Figma H10) say "Report post" / "Delete post".
+    const reportBtn = page.getByText(/^Report( post)?$/).first()
+    const editBtn = page.getByText(/^(Edit|Delete) post$/).first()
 
     const hasReport = await reportBtn.isVisible({ timeout: 3000 }).catch(() => false)
     const hasEdit = await editBtn.isVisible({ timeout: 1000 }).catch(() => false)

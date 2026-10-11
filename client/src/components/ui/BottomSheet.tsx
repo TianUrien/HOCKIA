@@ -13,6 +13,10 @@ interface BottomSheetProps {
   ariaLabel: string
   children: ReactNode
   className?: string
+  /** 'panel': focus the sheet itself on open, not its first button — for
+   *  sheets that open by themselves (no tap), so no focus ring shows on the
+   *  primary action. Keyboard users still Tab straight into it. */
+  initialFocus?: 'first' | 'panel'
 }
 
 /**
@@ -22,9 +26,9 @@ interface BottomSheetProps {
  * phones; on wider screens it floats centred with the same shape so desktop
  * keeps one visual language.
  */
-export function BottomSheet({ open, onClose, ariaLabel, children, className }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, ariaLabel, children, className, initialFocus = 'first' }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null)
-  useFocusTrap({ containerRef: panelRef, isActive: open })
+  useFocusTrap({ containerRef: panelRef, isActive: open, initialFocusRef: initialFocus === 'panel' ? panelRef : undefined })
   useBodyScrollLock(open)
   // Continuous corners: top only on phones, all four where it floats centred.
   const floating = useMediaQuery('(min-width: 640px)')
