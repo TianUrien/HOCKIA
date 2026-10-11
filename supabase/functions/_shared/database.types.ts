@@ -9231,6 +9231,14 @@ export type Database = {
         }[]
       }
       get_market_moves: { Args: { p_limit?: number }; Returns: Json }
+      get_member_photos: {
+        Args: { p_per_member?: number; p_profile_ids: string[] }
+        Returns: {
+          ord: number
+          profile_id: string
+          url: string
+        }[]
+      }
       get_message_recipient: {
         Args: { p_conversation_id: string; p_sender_id: string }
         Returns: string

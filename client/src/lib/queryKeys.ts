@@ -70,6 +70,10 @@ export const qk = {
   /** Filtered community member pool (PeopleListView.fetchMembers). */
   communityMembers: (viewerScope: string, paramsJson: string) =>
     ['community', 'members', viewerScope, paramsJson] as const,
+  /** First photos (max 5) of one member for the Community preview / swipe
+   *  deck (get_member_photos). Per member so prefetching the next cards reuses
+   *  the cache; under 'gallery' so gallery invalidations refresh it. */
+  memberPhotos: (profileId: string) => ['gallery', 'member-photos', profileId] as const,
   /** Free-text community search page (PeopleListView.performServerSearch). */
   communitySearch: (viewerScope: string, roleKey: string, query: string) =>
     ['community', 'search', viewerScope, roleKey, query] as const,
