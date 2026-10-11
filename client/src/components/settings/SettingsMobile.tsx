@@ -365,7 +365,7 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
 
       <SettingsGroup label="Visibility">
         <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them — and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
-        <SettingsRow title="Show when I was last active" subtitle="“Active today” on your profile and in Chat." trailing={<SettingsSwitch label="Show when I was last active" checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
+        <SettingsRow title="Show when I was last active" subtitle="“Active today” in Chat." trailing={<SettingsSwitch label="Show when I was last active" checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
         {/* Clubs set their contact email under Settings › Club (D1.22). */}
         {profile?.role !== 'club' && (
           <SettingsRow title="Show my contact email" subtitle="Off: clubs see it only once they reply to your application." trailing={<SettingsSwitch label="Show my contact email" checked={read('contact_email_public', false)} disabled={busy === 'contact_email_public'} onChange={() => void toggle('contact_email_public', false)} />} />

@@ -7,7 +7,6 @@ import {
   Avatar,
   CountryDisplay,
   FriendshipButton,
-  LastActivePill,
   RoleBadge,
   SocialLinksDisplay,
   TierBadge,
@@ -109,8 +108,6 @@ export default function ClubHeroCard({
   const friendCount = profile.accepted_friend_count ?? 0
   const isVerified = (profile as { is_verified?: boolean }).is_verified
   const verifiedAt = (profile as { verified_at?: string | null }).verified_at ?? null
-  const lastActiveAt = (profile as { last_active_at?: string | null }).last_active_at ?? null
-  const showLastActive = (profile as { show_last_active?: boolean | null }).show_last_active ?? null
   const publicContact = derivePublicContactEmail(profile)
 
   const leagues: string[] = []
@@ -324,7 +321,6 @@ export default function ClubHeroCard({
                 <TierBadge tier={calculateTier(completionPercentage)} />
               )
             )}
-            <LastActivePill lastActiveAt={lastActiveAt} showLastActive={showLastActive} />
             <SocialLinksDisplay
               links={profile.social_links as SocialLinks | null | undefined}
               iconSize="sm"
