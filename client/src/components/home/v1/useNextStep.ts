@@ -201,5 +201,12 @@ export function useNextStep() {
     }
   }, [pulse, profile, setProfile])
 
-  return { steps, loading, run }
+  /** "Not now" on the check-in (Your activity): dismiss the Pulse item. */
+  const dismiss = useCallback(async (step: NextStep) => {
+    const pulseId = step.key.split(':')[1]
+    if (pulseId) await pulse.markDismissed(pulseId)
+    setDone((prev) => new Set(prev).add(step.key))
+  }, [pulse])
+
+  return { steps, loading, run, dismiss }
 }

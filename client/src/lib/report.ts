@@ -27,7 +27,7 @@ export const REPORT_REASONS = [
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value']
 
-export type ReportSubject = 'profile' | 'post' | 'comment' | 'chat' | 'role' | 'feed_item' | 'feed_item_comment'
+export type ReportSubject = 'profile' | 'post' | 'comment' | 'chat' | 'role' | 'feed_item' | 'feed_item_comment' | 'video'
 
 export const REPORT_NOTE_MAX = 800
 
@@ -35,7 +35,7 @@ export interface ReportPayload {
   p_target_id: string
   p_reason: string
   p_category: ReportReason
-  p_content_type: 'user' | 'post' | 'comment' | 'feed_item' | 'feed_item_comment'
+  p_content_type: 'user' | 'post' | 'comment' | 'feed_item' | 'feed_item_comment' | 'video'
   p_content_id: string | null
 }
 
@@ -47,6 +47,7 @@ const SUBJECT_TAG: Record<ReportSubject, string | null> = {
   role: 'Role',
   feed_item: null,
   feed_item_comment: null,
+  video: null,
 }
 
 /** Builds the report_user arguments. The note is optional: without one the
@@ -65,7 +66,7 @@ export function buildReportPayload(o: {
   // Home v1 (20261011150200): reference cards and their comments are their
   // own content types so admins can take them down.
   const contentType =
-    o.subject === 'post' || o.subject === 'comment' || o.subject === 'feed_item' || o.subject === 'feed_item_comment'
+    o.subject === 'post' || o.subject === 'comment' || o.subject === 'feed_item' || o.subject === 'feed_item_comment' || o.subject === 'video'
       ? o.subject
       : 'user'
   return {

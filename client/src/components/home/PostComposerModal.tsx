@@ -19,6 +19,8 @@ import { PostMediaUploader, type UploadedMedia } from './PostMediaUploader'
 import { Chip } from '@/components/ui/Chip'
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { NewSigningArt } from './v1/NewSigningArt'
+import { signingDetail } from '@/lib/homeEngagement'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 
 interface PostComposerModalProps {
@@ -126,6 +128,9 @@ export function PostComposerModal({
   const [personResults, setPersonResults] = useState<PersonSearchResult[]>([])
   const [isSearchingPeople, setIsSearchingPeople] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+  // Home v1 New signing (Figma H11b): the card's role and season lines.
+  const [signingRole, setSigningRole] = useState('')
+  const [signingSeason, setSigningSeason] = useState('')
   const personSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Cleanup search timeouts on unmount (uploads survive modal close via global store)
@@ -219,6 +224,8 @@ export function PostComposerModal({
     // immediately re-fire (with stale mode === 'transfer' from prior
     // session) and clobber the post-mode draft we just loaded.
     lastModeRef.current = 'post'
+    setSigningRole('')
+    setSigningSeason('')
     setClubSearch('')
     setClubResults([])
     setSelectedClub(null)
@@ -602,7 +609,8 @@ export function PostComposerModal({
           const result = await createSigningPost(
             selectedPerson.id,
             content.trim() || null,
-            postMedia
+            postMedia,
+            { role: signingRole, season: signingSeason },
           )
 
           if (!result.success) {
@@ -617,6 +625,10 @@ export function PostComposerModal({
               person_avatar_url: selectedPerson.avatar_url,
               person_profile_id: selectedPerson.id,
               person_position: selectedPerson.position,
+              club_name: profile.full_name,
+              club_avatar_url: profile.avatar_url,
+              signing_role: signingRole.trim() || null,
+              season: signingSeason.trim() || null,
             }
 
             const newItem: UserPostFeedItem = {
@@ -635,6 +647,9 @@ export function PostComposerModal({
               has_liked: false,
               post_type: 'signing',
               metadata: signingMetadata,
+              comments_enabled: true,
+              congrats_count: 0,
+              has_congrats: false,
             }
             onPostCreated(newItem)
           }
@@ -825,7 +840,7 @@ export function PostComposerModal({
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id, kind])
+  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id, kind, signingRole, signingSeason])
 
   if (!isOpen) return null
 
@@ -896,7 +911,7 @@ export function PostComposerModal({
                   data-testid="composer-submit"
                 >
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {isEdit ? 'Save' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Post'}
+                  {isEdit ? 'Save' : mode === 'transfer' && !isClubRole ? 'Announce' : kind === 'question' && mode === 'post' ? 'Ask' : 'Post'}
                 </button>
               </>
             ) : (
@@ -947,11 +962,18 @@ export function PostComposerModal({
                 {/* Transfers are career events, not posts (founder 2026-09-20):
                     the milestone reaches the feed from Career entry. The
                     transfer/signing form stays in the code but is never offered. */}
-                {([
-                  ['post', 'Post'],
-                  ['question', 'Question'],
-                ] as const).map(([value, label]) => {
-                  const active = mode === 'post' && kind === value
+                {(isClubRole
+                  // Clubs post New signings (Figma H11b; ruling 11 Oct: only clubs).
+                  ? ([['post', 'Post'], ['question', 'Question'], ['signing', 'New signing']] as const)
+                  : ([['post', 'Post'], ['question', 'Question']] as const)
+                ).map(([value, label]) => {
+                  const active = value === 'signing' ? mode === 'transfer' : mode === 'post' && kind === value
+                  const select = () => {
+                    setError(null)
+                    if (value === 'signing') { setMode('transfer'); return }
+                    setMode('post')
+                    setKind(value)
+                  }
                   if (isPhone) {
                     // Post | Question = Chips (selected soft purple).
                     return (
@@ -962,10 +984,7 @@ export function PostComposerModal({
                         role="radio"
                         aria-checked={active}
                         aria-pressed={undefined}
-                        onClick={() => {
-                          setMode('post')
-                          setKind(value)
-                        }}
+                        onClick={select}
                       />
                     )
                   }
@@ -975,10 +994,7 @@ export function PostComposerModal({
                       type="button"
                       role="radio"
                       aria-checked={active}
-                      onClick={() => {
-                        setMode('post')
-                        setKind(value)
-                      }}
+                      onClick={select}
                       className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1'}`}
                     >
                       {value === 'question' && <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />}
@@ -1066,32 +1082,50 @@ export function PostComposerModal({
                   </>
                 )}
 
-                {/* Selected person display */}
+                {/* Figma H11b: the tagged member, Role, Season, then the card as it
+                    will appear. Tagging is 18+ (search + a server guard). */}
                 {selectedPerson && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <Avatar
-                      src={selectedPerson.avatar_url}
-                      initials={selectedPerson.full_name?.slice(0, 2) || '?'}
-                      size="sm"
-                      role={selectedPerson.role}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{selectedPerson.full_name}</p>
-                        <RoleBadge role={selectedPerson.role} />
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">
-                        {[positionLabel(selectedPerson.position), selectedPerson.current_club].filter(Boolean).join(' · ')}
-                      </p>
-                    </div>
+                  <div className="space-y-2.5">
                     <button
                       type="button"
                       onClick={() => setSelectedPerson(null)}
-                      className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      aria-label="Remove selected person"
+                      className="flex w-full items-center gap-3 rounded-2xl bg-surface-muted px-3.5 py-2.5 text-left"
+                      aria-label={`Tagged ${selectedPerson.full_name}. Tap to change`}
                     >
-                      <X className="w-4 h-4" />
+                      <Avatar src={selectedPerson.avatar_url} initials={selectedPerson.full_name?.slice(0, 2) || '?'} size="sm" role={selectedPerson.role} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-micro font-semibold uppercase text-ink-3">Signing (tag a member)</span>
+                        <span className="block truncate text-body text-ink-1">{selectedPerson.full_name}</span>
+                      </span>
+                      <X className="h-4 w-4 shrink-0 text-ink-3" aria-hidden="true" />
                     </button>
+                    <label className="block rounded-2xl bg-surface-muted px-3.5 py-2.5">
+                      <span className="block text-micro font-semibold uppercase text-ink-3">Role</span>
+                      <input
+                        value={signingRole}
+                        onChange={(e) => setSigningRole(e.target.value.slice(0, 60))}
+                        placeholder={[positionLabel(selectedPerson.position), "Women's 1st team"].filter(Boolean).join(' · ')}
+                        className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
+                      />
+                    </label>
+                    <label className="block rounded-2xl bg-surface-muted px-3.5 py-2.5">
+                      <span className="block text-micro font-semibold uppercase text-ink-3">Season</span>
+                      <input
+                        value={signingSeason}
+                        onChange={(e) => setSigningSeason(e.target.value.slice(0, 20))}
+                        placeholder={String(new Date().getFullYear() + 1)}
+                        inputMode="numeric"
+                        className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
+                      />
+                    </label>
+                    <p className="pt-1.5 text-micro font-semibold uppercase text-ink-3">Preview</p>
+                    <NewSigningArt
+                      personName={selectedPerson.full_name}
+                      personAvatarUrl={selectedPerson.avatar_url}
+                      clubName={profile?.full_name ?? 'Your club'}
+                      clubCrestUrl={profile?.avatar_url ?? null}
+                      detail={signingDetail({ signing_role: signingRole, person_position: selectedPerson.position, season: signingSeason })}
+                    />
                   </div>
                 )}
               </div>
@@ -1301,8 +1335,8 @@ export function PostComposerModal({
               </div>
             )}
 
-            {/* Textarea */}
-            <div>
+            {/* Textarea — not on a club's New signing (H11b: the card is the post). */}
+            <div className={mode === 'transfer' && isClubRole ? 'hidden' : undefined}>
               <textarea
                 ref={textareaRef}
                 value={content}
@@ -1338,6 +1372,7 @@ export function PostComposerModal({
                 play video and their RPCs reject Cloudflare video items — so
                 in transfer mode the button never appears. Also hidden while
                 the video_posts_enabled launch flag is off. */}
+            {!(mode === 'transfer' && isClubRole) && (
             <PostMediaUploader
               media={media}
               onAddImage={handleMediaAddImage}
@@ -1350,10 +1385,11 @@ export function PostComposerModal({
               allowVideo={mode !== 'transfer' && videoPostsEnabled}
               quiet={isPhone}
             />
+            )}
 
             {/* Submit — the nav pill is the primary control on the phone; this
                 full-width button stays for announcements and wide screens. */}
-            {(mode === 'transfer' || isEdit) && (
+            {((mode === 'transfer' && !(isClubRole && isPhone)) || isEdit) && (
             <button
               type="button"
               onClick={handleSubmit}

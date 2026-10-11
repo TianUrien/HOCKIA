@@ -61,10 +61,11 @@ const FULL_METADATA = {
 }
 
 describe('the enum is the source of the list', () => {
-  it('has the 30 kinds this release ships with (update the tests below when one is added)', () => {
+  it('has the 31 kinds this release ships with (update the tests below when one is added)', () => {
     // 25 + B2 club reminders (20261009100000): applicants_closing_soon, applicant_last_call.
     // + Home v1 (20261011150100): congrats_received, feed_item_comment_received, signing_tagged.
-    expect(KINDS.length).toBe(30)
+    // + admin takedown notice (20261011150600): content_removed.
+    expect(KINDS.length).toBe(31)
     expect(KINDS).toContain('signing_tagged')
     expect(KINDS).toContain('applicants_closing_soon')
     expect(KINDS).toContain('applicant_last_call')

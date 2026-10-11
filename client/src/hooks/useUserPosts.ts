@@ -216,7 +216,8 @@ export function useUserPosts() {
   const createSigningPost = useCallback(async (
     personProfileId: string,
     content?: string | null,
-    images?: PostImage[] | null
+    images?: PostImage[] | null,
+    details?: { role?: string | null; season?: string | null }
   ): Promise<PostResult> => {
     try {
       const { data, error } = await withTimeout(
@@ -225,6 +226,9 @@ export function useUserPosts() {
           p_person_profile_id: personProfileId,
           p_content: (content || null) as string | undefined,
           p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
+          // Home v1 (H11b): the card's "role · season" line.
+          ...(details?.role?.trim() ? { p_role_label: details.role.trim() } : {}),
+          ...(details?.season?.trim() ? { p_season: details.season.trim() } : {}),
         }),
         15_000
       )

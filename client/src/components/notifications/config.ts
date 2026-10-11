@@ -15,6 +15,7 @@ import {
   MessageCircle,
   MessageSquare,
   RefreshCcw,
+  ShieldAlert,
   ShieldCheck,
   UserCheck,
   UserPlus,
@@ -24,6 +25,10 @@ import {
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { formatRelationshipType } from '@/lib/utils'
 import { positionLabel } from '@/lib/identity'
+
+/** "comment" / "post" / "video" for the content_removed notice. */
+const removedLabel = (type: string | null): string =>
+  type === 'post' || type === 'feed_item' ? 'post' : type === 'video' ? 'video' : 'comment'
 
 export type NotificationRenderConfig = {
   icon: LucideIcon
@@ -212,6 +217,15 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => `${getMetadataString(notification, 'club_name') ?? getActorName(notification)} posted your signing 🎉`,
     getDescription: () => 'Tap to see the post. You can remove your tag from its ⋯ menu.',
+    getRoute: () => '/home',
+  },
+  content_removed: {
+    icon: ShieldAlert,
+    badgeText: 'Community rules',
+    accentClassName: 'bg-surface-grouped text-ink-2',
+    // Neutral notice (Figma A1): never the reporter, never the admin.
+    getTitle: (notification) => `Your ${removedLabel(getMetadataString(notification, 'content_type'))} was removed for breaking the community rules`,
+    getDescription: () => null,
     getRoute: () => '/home',
   },
   profile_comment_reply: {

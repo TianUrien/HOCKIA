@@ -8,6 +8,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { formatAdminDateTime } from '../utils/formatDate'
 import {
+  Ban,
   RefreshCw,
   AlertTriangle,
   Flag,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { ContentPreviewLine, TakedownConfirm, type ContentPreview } from '../components/ReportTakedown'
 
 const PAGE_SIZE = 25
 
@@ -85,7 +87,15 @@ const CONTENT_TYPE_ICONS: Record<string, React.ReactNode> = {
   user: <User className="w-3.5 h-3.5" />,
   post: <FileText className="w-3.5 h-3.5" />,
   comment: <MessageSquare className="w-3.5 h-3.5" />,
+  profile_comment: <MessageSquare className="w-3.5 h-3.5" />,
+  feed_item: <FileText className="w-3.5 h-3.5" />,
+  feed_item_comment: <MessageSquare className="w-3.5 h-3.5" />,
+  video: <FileText className="w-3.5 h-3.5" />,
 }
+
+/** Content admin_takedown_content can remove (20261011150700). */
+const TAKEDOWN_TYPES = new Set(['post', 'comment', 'profile_comment', 'feed_item', 'feed_item_comment', 'video'])
+const previewKey = (r: { content_type: string | null; content_id: string | null }) => `${r.content_type}:${r.content_id}`
 
 export function AdminReports() {
   const [reports, setReports] = useState<Report[]>([])
@@ -151,6 +161,57 @@ export function AdminReports() {
     } catch (err) {
       logger.error('[AdminReports] Failed to resolve report:', err)
       setError(err instanceof Error ? err.message : 'Failed to update report')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  // Figma A1: the preview line + removed state for every row with content.
+  const [previews, setPreviews] = useState<Map<string, ContentPreview>>(new Map())
+  const [confirming, setConfirming] = useState<Report | null>(null)
+  const loadPreviews = useCallback(async (rows: Report[]) => {
+    const targets = [...new Map(rows.filter((r) => r.content_type && r.content_id && TAKEDOWN_TYPES.has(r.content_type)).map((r) => [previewKey(r), r])).values()]
+    const results = await Promise.all(targets.map(async (r) => {
+      const { data } = await supabase.rpc('admin_content_preview', { p_content_type: r.content_type as string, p_content_id: r.content_id as string })
+      return [previewKey(r), data as unknown as ContentPreview] as const
+    }))
+    setPreviews(new Map(results.filter(([, p]) => p?.found)))
+  }, [])
+  useEffect(() => { void loadPreviews(reports) }, [reports, loadPreviews])
+
+  // Hides the content for everyone, resolves every report on it (30-day restore).
+  const handleTakedown = async (report: Report, notifyAuthor: boolean) => {
+    if (!report.content_type || !report.content_id) return
+    setActionLoading(report.id)
+    try {
+      const { error: rpcError } = await supabase.rpc('admin_takedown_content', {
+        p_content_type: report.content_type,
+        p_content_id: report.content_id,
+        p_report_id: report.id,
+        p_notify_author: notifyAuthor,
+      })
+      if (rpcError) throw rpcError
+      setConfirming(null)
+      await fetchReports()
+    } catch (err) {
+      logger.error('[AdminReports] Takedown failed:', err)
+      setError(err instanceof Error ? err.message : 'Failed to remove the content')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleRestore = async (report: Report, takedownId: string) => {
+    setActionLoading(report.id)
+    try {
+      const { data, error: rpcError } = await supabase.rpc('admin_restore_content', { p_takedown_id: takedownId })
+      if (rpcError) throw rpcError
+      const res = data as { success?: boolean; error?: string } | null
+      if (!res?.success) throw new Error(res?.error ?? 'Failed to restore')
+      await loadPreviews(reports)
+    } catch (err) {
+      logger.error('[AdminReports] Restore failed:', err)
+      setError(err instanceof Error ? err.message : 'Failed to restore the content')
     } finally {
       setActionLoading(null)
     }
@@ -299,6 +360,9 @@ export function AdminReports() {
                       <span className="inline-flex items-center gap-1 text-xs text-gray-400">
                         <Clock className="w-3 h-3" />
                         {formatAdminDateTime(report.created_at)}
+                        {(previews.get(previewKey(report))?.report_count ?? 0) > 1 && (
+                          <> · {previews.get(previewKey(report))?.report_count} reports</>
+                        )}
                       </span>
                     </div>
 
@@ -306,6 +370,10 @@ export function AdminReports() {
                     <p className="mt-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                       {report.reason}
                     </p>
+
+                    {previews.get(previewKey(report)) && (
+                      <ContentPreviewLine preview={previews.get(previewKey(report)) as ContentPreview} contentType={report.content_type} />
+                    )}
 
                     {/* Reviewer info */}
                     {report.reviewed_at && (
@@ -315,9 +383,40 @@ export function AdminReports() {
                     )}
                   </div>
 
-                  {/* Actions */}
-                  {report.status === 'pending' && (
+                  {/* Actions (Figma A1): Remove content first; removed → Restore. */}
+                  {(() => {
+                    const p = previews.get(previewKey(report))
+                    if (!p?.takedown_id) return null
+                    return (
+                      <div className="flex-shrink-0 flex flex-col items-stretch gap-1.5 w-[150px]">
+                        <span className="text-xs font-semibold text-red-600">Removed for everyone</span>
+                        {p.restorable && (
+                          <button
+                            onClick={() => void handleRestore(report, p.takedown_id as string)}
+                            disabled={actionLoading === report.id}
+                            className="px-3 py-1.5 text-xs font-medium text-gray-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                            data-testid="admin-report-restore"
+                          >
+                            Restore content
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()}
+                  {!previews.get(previewKey(report))?.takedown_id && (report.status === 'pending' || previews.has(previewKey(report))) && (
                     <div className="flex-shrink-0 flex flex-col gap-1.5">
+                      {previews.has(previewKey(report)) && (
+                        <button
+                          onClick={() => setConfirming(report)}
+                          disabled={actionLoading === report.id}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                          data-testid="admin-report-takedown"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          Remove content
+                        </button>
+                      )}
+                      {report.status === 'pending' && (<>
                       <button
                         onClick={() => handleResolve(report.id, 'resolved')}
                         disabled={actionLoading === report.id}
@@ -345,6 +444,7 @@ export function AdminReports() {
                         <XCircle className="w-3.5 h-3.5" />
                         Dismiss
                       </button>
+                      </>)}
                     </div>
                   )}
                 </div>
@@ -382,6 +482,15 @@ export function AdminReports() {
           </div>
         )}
       </div>
+      {confirming && (
+        <TakedownConfirm
+          contentType={confirming.content_type}
+          reportCount={previews.get(previewKey(confirming))?.report_count ?? 1}
+          busy={actionLoading === confirming.id}
+          onCancel={() => setConfirming(null)}
+          onConfirm={(notify) => void handleTakedown(confirming, notify)}
+        />
+      )}
     </div>
   )
 }

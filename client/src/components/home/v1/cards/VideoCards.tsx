@@ -46,7 +46,7 @@ export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
             authorId={item.uploader_id}
             authorName={item.uploader_name}
             sharePath={shareProfile(item)}
-            report={{ subject: 'profile', contentId: null }}
+            report={{ subject: 'video', contentId: item.video_id }}
           />
         }
       />

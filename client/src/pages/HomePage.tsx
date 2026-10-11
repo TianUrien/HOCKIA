@@ -8,6 +8,7 @@ import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeV1Feed } from '@/components/home/v1/HomeV1Feed'
 import { NextStepCard } from '@/components/home/v1/NextStepCard'
 import { PeopleRow } from '@/components/home/v1/PeopleRow'
+import { SigningPromptSheet } from '@/components/home/v1/SigningPromptSheet'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
@@ -78,6 +79,9 @@ export default function HomePage() {
           />
         </main>
       </PullToRefresh>
+
+      {/* H14: clubs, after a player confirms a signing. */}
+      <SigningPromptSheet />
 
       {composing && (
         <Suspense fallback={null}>
