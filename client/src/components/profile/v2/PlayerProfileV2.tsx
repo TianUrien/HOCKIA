@@ -14,9 +14,11 @@ import { useWeeklyVisibility } from '@/hooks/useWeeklyVisibility'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { useProfileScrollData, type ScrollVideo } from '@/hooks/useProfileScrollData'
+import { useRolesHealth } from '@/hooks/useRolesHealth'
+import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 import { isRecruiterProfile, fullMatchVisibilityOf, canViewLinkedHighlight } from '@/lib/recruiter'
 import { displayPlace, placeLabel } from '@/lib/communityCard'
-import { humanizeToken } from '@/lib/identity'
+import { humanizeToken, positionLabel } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { RELOCATION_LABEL } from '@/lib/candidateIntent'
 import { careerSpan, flagForCountryName, isCurrentEntry } from '@/lib/careerCopy'
@@ -37,9 +39,9 @@ import { cn } from '@/lib/utils'
 import { ProfileHero } from './ProfileHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
-import { OwnerButtons, PrimaryCard, PrivateStats } from './OwnerArea'
+import { OwnerButtons, PrimaryCard, PrivateStats, RecruitingCard } from './OwnerArea'
 import { ProfileActionBar, type ActionBarButton } from './ProfileActionBar'
-import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
+import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
 
 /**
  * Profile v2 — player, phone (Figma t24oVt… PR1 public 97:4 · PR2 own 101:46 ·
@@ -79,10 +81,14 @@ export interface PlayerProfileV2Props {
   onViewPublic: () => void
   onViewAsClub: () => void
   onVideoCounts?: (counts: { total: number; highlights: number; fullMatches: number }) => void
+  /** Coach (PR8 / PR12): roles this coach posted → Post a role / Review applicants. */
+  onPostRole?: () => void
+  onOpenRoles?: () => void
 }
 
 const ANCHORS_PUBLIC = [
   { id: 'overview', label: 'Overview' },
+  { id: 'roles', label: 'Open roles' },
   { id: 'videos', label: 'Videos' },
   { id: 'references', label: 'References' },
   { id: 'career', label: 'Career' },
@@ -118,8 +124,18 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const positions = [profile.position, profile.secondary_position]
     .filter((v, i, self): v is string => Boolean(v) && self.indexOf(v) === i)
     .map((p) => humanizeToken(p) ?? p)
-  const category = categoryToDisplay(profile.playing_category) || null
-  const roleLine = [...positions, category].filter(Boolean).join(' · ') || 'Player'
+  // Coach (PR8): same scroll as the player, with coach facts and the roles
+  // the coach posted; no Videos section unless the coach has videos.
+  const isCoach = profile.role === 'coach'
+  const coachSpec = isCoach ? fact(facts, 'specialization') : undefined
+  const coachCats = isCoach ? fact(facts, 'categories') : undefined
+  const category = isCoach
+    ? (coachCats && !coachCats.missing ? coachCats.value : null)
+    : categoryToDisplay(profile.playing_category) || null
+  const roleLine = isCoach
+    ? [coachSpec && !coachSpec.missing ? coachSpec.value : 'Coach', category].filter(Boolean).join(' · ')
+    : [...positions, category].filter(Boolean).join(' · ') || 'Player'
+  const recruitsForTeam = isCoach && Boolean((profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team)
   const place = useMemo(() => {
     const p = displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)
     // placeLabel already leads with the flag: "🇬🇧 London".
@@ -236,10 +252,10 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const showSelfDeclared = selfDeclared && !(confirmed.data ?? []).some((b) => sameBrandName(b.name, selfDeclared)) && viewer?.role !== 'brand'
 
   // ── Overview facts ──────────────────────────────────────────────────────
-  const playsAt = fact(facts, 'plays_at')
+  const playsAt = fact(facts, isCoach ? 'coaches_at' : 'plays_at')
   const available = fact(facts, 'available')
   const passport = fact(facts, 'passport')
-  const skills = (profile.specialist_skills ?? []).filter(Boolean)
+  const skills = isCoach ? [] : (profile.specialist_skills ?? []).filter(Boolean)
   const friendCount = profile.accepted_friend_count ?? 0
   const friendsPreview = useQuery({
     queryKey: ['profile-friend-faces', profileId],
@@ -305,7 +321,27 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     ? [{ key: 'friend', label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend', onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]
     : []
 
-  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'videos' ? owner || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : true))
+  // ── Coach: open roles this coach posted ─────────────────────────────────
+  const coachRolesQ = useQuery({
+    queryKey: ['coach-open-roles', profileId],
+    enabled: isCoach && Boolean(profileId),
+    staleTime: 60_000,
+    queryFn: async (): Promise<ClubOpenRole[]> => {
+      const { data: rows, error } = await supabase
+        .from('opportunities')
+        .select('id, title, position, gender, opportunity_type, start_date, duration_text, created_at, application_deadline')
+        .eq('club_id', profileId as string)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(12)
+      if (error) throw error
+      return (rows ?? []).map((r) => ({ id: r.id, title: r.title, position: r.position, gender: r.gender, opportunityType: r.opportunity_type, startDate: r.start_date, durationText: r.duration_text, deadline: r.application_deadline, createdAt: r.created_at }))
+    },
+  })
+  const coachRoles = coachRolesQ.data ?? []
+  const coachHealth = useRolesHealth(owner && isCoach && (recruitsForTeam || coachRoles.length > 0))
+
+  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'roles' ? isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) : a.id === 'videos' ? (owner && !isCoach) || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : true))
 
   // ⋯ (report / block) — in the hero and again in the compact header, so it
   // stays reachable after scrolling (PR10).
@@ -343,6 +379,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           role="player"
           owner={owner}
           fitPill={fitPill}
+          badge={recruitsForTeam ? 'Recruiting players' : null}
           onBack={back}
           onShare={() => void share()}
           onCamera={() => props.onOpenSection('media')}
@@ -363,6 +400,19 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           {stepCopy && step && (
             <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
           )}
+          {isCoach && (recruitsForTeam || coachRoles.length > 0) && props.onPostRole && (
+            <div className="pt-3">
+              <RecruitingCard
+                pending={coachHealth.totals.pending}
+                openRoleCount={coachRoles.length}
+                roleNames={coachRoles.map((r) => positionLabel(r.position) || r.title)}
+                hasNextStep={Boolean(stepCopy)}
+                onReview={props.onOpenRoles ?? (() => navigate('/opportunities'))}
+                onPostRole={props.onPostRole}
+                testId="coach-recruiting-card"
+              />
+            </div>
+          )}
           <PrivateStats stats={stats} />
         </>
       )}
@@ -374,7 +424,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         {playsAt && !playsAt.missing && (
           <FactTile
             full
-            label="Plays at"
+            label={isCoach ? 'Coaches at' : 'Plays at'}
             value={playsAt.value}
             detail={playsAt.detail}
             leading={<EntityAvatar src={props.currentClubLogo} name={playsAt.value} role="club" size={40} />}
@@ -387,7 +437,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             {passport && <FactTile label="Passport" value={passport.value} detail={passport.detail} tone={passport.missing ? 'muted' : undefined} />}
           </div>
         )}
-        {(skills.length > 0 || (confirmed.data?.length ?? 0) > 0 || showSelfDeclared) && (
+        {isCoach && category && <div className="flex flex-wrap gap-2"><Chip>{category}</Chip></div>}
+        {!isCoach && (skills.length > 0 || (confirmed.data?.length ?? 0) > 0 || showSelfDeclared) && (
           <div className="flex flex-wrap gap-2">
             {skills.map((s) => <Chip key={s}>🎯 {humanizeToken(s)}</Chip>)}
             {(confirmed.data ?? []).map((b) => (
@@ -407,7 +458,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       </section>
 
       {/* Videos: highlights + full matches (reels live in the grid) */}
-      {(owner || shownVideoCount > 0) && (
+      {((owner && !isCoach) || shownVideoCount > 0) && (
         <Section id="videos" title="Videos" action={shownVideoCount > 0 ? `See all ${shownVideoCount}` : null} onAction={() => props.onOpenSection('videos')}>
           {videoTotal === 0 && !data.loading && dashed('Add a highlight', () => props.onOpenSection('media'))}
           {shownVideoCount > 0 && (
@@ -429,11 +480,28 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         </Section>
       )}
 
+      {/* Coach: open roles (PR8 / PR12) */}
+      {isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) && (
+        <Section
+          id="roles"
+          title={coachRoles.length > 0 ? `Open roles · ${coachRoles.length}` : 'Open roles'}
+          action={owner && props.onPostRole ? '+ Post a role' : coachRoles.length > 2 ? 'See all' : null}
+          onAction={owner && props.onPostRole ? props.onPostRole : () => navigate('/opportunities')}
+        >
+          <div className="flex flex-col gap-2.5 px-4">
+            {coachRoles.slice(0, owner ? 3 : 2).map((r) => (
+              <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => navigate(`/opportunities/${r.id}`)} />
+            ))}
+            {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open roles right now.</p>}
+          </div>
+        </Section>
+      )}
+
       {/* References (gold = trust) */}
       <Section id="references" title="References" action={referenceCount > 0 ? `See all ${referenceCount}` : owner ? 'Ask for one' : null} onAction={props.onOpenReferences}>
         {referenceCount === 0 && !refsLoading && (owner
           ? dashed('Ask for a reference', props.onOpenReferences)
-          : <p className="px-4 text-row leading-[21px] text-ink-2">No references yet. Coaches and teammates who are friends on Hockia can write one.</p>)}
+          : <p className="px-4 text-row leading-[21px] text-ink-2">{isCoach ? 'No references yet. Clubs, players and coaches who are friends on Hockia can write one.' : 'No references yet. Coaches and teammates who are friends on Hockia can write one.'}</p>)}
         <div className="flex flex-col gap-3 px-4">
           {acceptedReferences.slice(0, 1).map((r) => {
             const p = r.profile

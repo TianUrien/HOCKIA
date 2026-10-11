@@ -48,6 +48,7 @@ import { useProfileKeyFacts } from '@/hooks/useProfileKeyFacts'
 import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
 import { KeyFactsGrid } from '@/components/profile/KeyFactsGrid'
 import { ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
+import PlayerProfileV2 from '@/components/profile/v2/PlayerProfileV2'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { RECRUITER_MINOR_MESSAGE, recruiterCannotStartWith } from '@/lib/recruiterMinor'
 import type { KeyFactsViewer } from '@/lib/keyFacts'
@@ -586,6 +587,52 @@ export default function CoachDashboard({
       {/* Own profile on phone: the hero cover carries Share + Settings (as for
           players), so there is no separate Profile title row above it. */}
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : 'pt-[calc(env(safe-area-inset-top)+1rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
+        {isPhone && isLanding ? (
+          // Profile v2 — coach, phone (Figma PR8 public / PR12 own).
+          <div className="-mx-4 !mt-0 md:-mx-6 lg:hidden">
+            <PlayerProfileV2
+              profile={profile as unknown as PlayerProfileShape}
+              readOnly={readOnly}
+              isOwnProfile={isOwnProfile}
+              facts={keyFacts.facts}
+              currentClubLogo={currentClubLogo}
+              recruiter={viewAsClub
+                ? { enabled: true, preview: true, shortlisted: false }
+                : {
+                    enabled: clubView.enabled,
+                    fit: clubView.fit,
+                    shortlisted: clubView.shortlisted,
+                    busy: clubView.busy,
+                    onShortlist: () => {
+                      if (clubView.roles.length === 0) void clubView.shortlistDefault()
+                      else if (clubView.roles.length === 1) void clubView.shortlistForRole(clubView.roles[0])
+                      else setRolePicker(true)
+                    },
+                  }}
+              onMessage={handleSendMessage}
+              sendingMessage={sendingMessage}
+              onEdit={() => setShowEditModal(true)}
+              onOpenSection={(section) => (section === 'open-to-play' || section === 'passports' ? setShowEditModal(true) : handleTabChange(section as never))}
+              onOpenReferences={handleReferencesClick}
+              onOpenReference={() => handleReferencesClick()}
+              onViewPublic={handleViewPublic}
+              onViewAsClub={() => navigate(`/coaches/${profile.username ? profile.username : `id/${profile.id}`}?view=club`)}
+              onPostRole={() => void handleCreateOpportunity()}
+              onOpenRoles={handleManageOpportunities}
+            />
+            {clubView.enabled && (
+              <ShortlistRoleSheet
+                open={rolePicker}
+                roles={clubView.roles}
+                shortlistedRoleIds={clubView.shortlistedRoleIds}
+                appliedRoleId={clubView.application?.role.id ?? null}
+                onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
+                onClose={() => setRolePicker(false)}
+              />
+            )}
+          </div>
+        ) : (
+        <>
         {readOnly && !isOwnProfile && (
           <button
             type="button"
@@ -1001,6 +1048,8 @@ export default function CoachDashboard({
               )}
             </div>
           </div>
+        )}
+        </>
         )}
       </main>
 

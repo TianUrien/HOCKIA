@@ -31,6 +31,10 @@ export interface ProfileHeroProps {
   moreMenu?: ReactNode
   onCamera?: () => void
   onSettings?: () => void
+  /** Glass pill above the name, e.g. "Recruiting players" (coach_recruits_for_team). */
+  badge?: string | null
+  /** Owner with a gap in the role line: "Add your umpire level →" opens the editor. */
+  roleLineAction?: (() => void) | null
 }
 
 const SCRIM =
@@ -38,7 +42,7 @@ const SCRIM =
 
 const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS)
 
-export function ProfileHero({ photos, name, age, roleLine, place, instagram, role, owner, fitPill, onBack, onShare, moreMenu, onCamera, onSettings }: ProfileHeroProps) {
+export function ProfileHero({ photos, name, age, roleLine, place, instagram, role, owner, fitPill, onBack, onShare, moreMenu, onCamera, onSettings, badge, roleLineAction }: ProfileHeroProps) {
   const [index, setIndex] = useState(0)
   const count = photos.length
   useEffect(() => { if (index >= count) setIndex(0) }, [count, index])
@@ -67,8 +71,14 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
           <BlurImage key={current} src={getImageUrl(current, 'lightbox') ?? current} lqip={getLqipUrl(current)} eager className="h-full w-full" />
         </div>
       )}
-      {!current && (
+      {!current && !owner && (
         <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-[88px] font-bold text-white/25">{initialsOf(name)}</span>
+      )}
+      {!current && owner && (
+        // PR25: a new profile gets the dashed photo target in the hero itself.
+        <button type="button" onClick={onCamera} className="absolute left-1/2 top-[34%] z-10 flex h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-white/50 bg-white/10 text-[13px] font-semibold text-white" data-testid="profile-hero-add-photos">
+          <Camera className="h-6 w-6" strokeWidth={1.6} /> Add photos
+        </button>
       )}
       <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: SCRIM }} aria-hidden="true" />
 
@@ -95,6 +105,11 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
       )}
 
       <div className="pointer-events-none absolute inset-x-4 bottom-6 flex flex-col gap-1.5">
+        {badge && (
+          <span className={cn('mb-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] px-2.5 py-[5px] text-caption font-semibold text-white', GLASS)} data-testid="profile-hero-badge">
+            <span className="h-[7px] w-[7px] rounded-full bg-[#a78bfa]" aria-hidden="true" /> {badge}
+          </span>
+        )}
         {fitPill && (
           <span className={cn('mb-1 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-semibold uppercase tracking-[0.02em] text-white', fitPill.tone === 'green' ? 'bg-[#15803d]' : 'bg-[#b45309]')} data-testid="profile-fit-pill">
             <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" /> {fitPill.label}
@@ -103,7 +118,9 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
         <h1 className="text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-white" data-testid="profile-hero-name">
           {name}{typeof age === 'number' ? `, ${age}` : ''}
         </h1>
-        {roleLine && <p className="truncate text-[15px] leading-5 text-white/90">{roleLine}</p>}
+        {roleLineAction ? (
+          <button type="button" onClick={roleLineAction} className="pointer-events-auto w-fit truncate text-left text-[15px] leading-5 text-white/90">{roleLine} →</button>
+        ) : roleLine && <p className="truncate text-[15px] leading-5 text-white/90">{roleLine}</p>}
         {(place || instagram) && (
           <div className="flex items-center gap-2.5">
             {place && <p className="truncate text-secondary text-white/85">{place}</p>}
