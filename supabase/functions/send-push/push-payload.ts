@@ -269,6 +269,41 @@ export function buildPushPayload(
       }
     }
 
+    case 'feed_item_comment_received': {
+      const snippet = getString(metadata, 'snippet')
+      const itemId = getString(metadata, 'feed_item_id')
+      return {
+        title: 'New Comment',
+        body: snippet ? `${actorName}: ${snippet}` : `${actorName} commented on your reference`,
+        url: '/home',
+        tag: itemId ? `feed-comment-${itemId}` : 'feed-comment',
+      }
+    }
+    case 'congrats_received': {
+      const count = typeof metadata?.count === 'number' ? metadata.count : 1
+      const targetId = getString(metadata, 'target_id')
+      const others = count - 1
+      return {
+        title: 'Congrats 👏',
+        body: others > 0
+          ? `${actorName} and ${others} ${others === 1 ? 'other' : 'others'} congratulated you`
+          : `${actorName} congratulated you`,
+        url: '/home',
+        // One push per item, updated as more people tap Congrats.
+        tag: targetId ? `congrats-${targetId}` : 'congrats',
+      }
+    }
+    case 'signing_tagged': {
+      const club = getString(metadata, 'club_name') ?? actorName
+      const postId = getString(metadata, 'post_id')
+      return {
+        title: 'New signing 🎉',
+        body: `${club} posted your signing`,
+        url: '/home',
+        tag: postId ? `signing-${postId}` : 'signing',
+      }
+    }
+
     // ── Messages ──
     case 'message_received': {
       const conversationId = getString(metadata, 'conversation_id')
