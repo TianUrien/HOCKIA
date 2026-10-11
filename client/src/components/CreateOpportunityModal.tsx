@@ -20,6 +20,7 @@ import { COACH_TEAM_HINT, isYouthGender, playerRoleGender, YOUTH_PLAYER_ROLE_MES
 import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS, levelSoughtFromBand } from '@/lib/opportunityIntent'
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { assessPostingQuality } from '@/lib/opportunityQuality'
+import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -535,6 +536,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         newErrors.availability_required = 'Set a start date before marking it must-have.'
       if (formData.specialists_required && !(formData.specialist_skills_wanted?.length))
         newErrors.specialists_required = 'Add a specialist skill before marking it must-have.'
+    }
+
+    // Deadline: only when the club set or changed it (an old role keeps its
+    // past date on edits; the database enforces the rule for open roles).
+    if (formData.application_deadline && formData.application_deadline !== (editingVacancy?.application_deadline ?? null)) {
+      const deadlineMsg = deadlineError(formData.application_deadline)
+      if (deadlineMsg) newErrors.application_deadline = deadlineMsg
     }
 
     setErrors(newErrors)
@@ -1286,10 +1294,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 <input
                   id={applicationDeadlineFieldId}
                   type="date"
+                  min={deadlineBounds().min}
+                  max={deadlineBounds().max}
                   value={formData.application_deadline || ''}
                   onChange={(e) => handleInputChange('application_deadline', e.target.value || null)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  aria-invalid={errors.application_deadline ? true : undefined}
+                  aria-describedby={errors.application_deadline ? `${applicationDeadlineFieldId}-error` : undefined}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
+                    errors.application_deadline ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.application_deadline && (
+                  <p id={`${applicationDeadlineFieldId}-error`} className="mt-1 text-sm text-red-600">{errors.application_deadline}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
