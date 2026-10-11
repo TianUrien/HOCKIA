@@ -46,13 +46,16 @@ export interface AnchorItem { id: string; label: string }
  * Sticky section anchors (chips 34 visual / 44 hit). The chip for the section
  * under the header is the dark one; tapping scrolls to that section.
  */
-export function SectionAnchors({ items }: { items: AnchorItem[] }) {
+export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /** Change it when sections mount late (data loaded) so they get observed. */ refreshKey?: string | number | boolean }) {
   const [active, setActive] = useState(items[0]?.id ?? null)
   const rowRef = useRef<HTMLDivElement>(null)
   const ids = items.map((i) => i.id).join(',')
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
+    // At the top of the page the first chip is the current one, whatever
+    // section briefly sat in the band while the page was still loading.
+    if (window.scrollY < 40 && items[0]) setActive(items[0].id)
     const els = items.map((i) => document.getElementById(i.id)).filter((e): e is HTMLElement => Boolean(e))
     const io = new IntersectionObserver(
       (entries) => {
@@ -64,12 +67,12 @@ export function SectionAnchors({ items }: { items: AnchorItem[] }) {
     els.forEach((el) => io.observe(el))
     return () => io.disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids])
+  }, [ids, refreshKey])
 
   // Keep the active chip in view in the row.
   useEffect(() => {
     const chip = rowRef.current?.querySelector<HTMLElement>(`[data-anchor="${active}"]`)
-    chip?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+    chip?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: 'smooth' })
   }, [active])
 
   const go = (id: string) => {

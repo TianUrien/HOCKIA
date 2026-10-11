@@ -367,7 +367,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         </>
       )}
 
-      <SectionAnchors items={anchors} />
+      <SectionAnchors items={anchors} refreshKey={data.loading} />
 
       {/* Overview */}
       <section id="overview" className="scroll-mt-[120px] flex flex-col gap-2.5 px-4 pt-3" data-testid="profile-section-overview">
