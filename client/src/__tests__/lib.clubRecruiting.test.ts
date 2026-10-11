@@ -60,9 +60,8 @@ describe('club recruiting copy', () => {
       roleGender: 'Men', playerCategoryLabel: 'Adult men', firstName: 'Leandro', lastActiveDays: 2,
       playerClub: 'Old Lions', playerLeagueKnown: false, clubLeagueKnown: true,
     })
-    expect(rows.map((r) => r.ok)).toEqual([true, true, true, false])
-    expect(rows[2].detail).toBe('On Hockia 2 days ago')
-    expect(rows[3].detail).toBe('Can’t compare yet — Club: Old Lions has no league on Hockia.')
+    expect(rows.map((r) => r.ok)).toEqual([true, true, false])
+    expect(rows[2].detail).toBe('Can’t compare yet — Club: Old Lions has no league on Hockia.')
     expect(rows.some((r) => /%/.test(r.detail))).toBe(false)
   })
 
@@ -71,7 +70,7 @@ describe('club recruiting copy', () => {
       roleGender: 'Men', playerCategoryLabel: 'Adult men', firstName: 'Leandro', lastActiveDays: 2,
       playerClub: 'Old Lions', playerLeagueKnown: false, playerLeagueSelfReported: true, clubLeagueKnown: true,
     })
-    expect(rows[3].detail).toBe('Can’t compare yet — league is self-reported')
+    expect(rows[2].detail).toBe('Can’t compare yet — league is self-reported')
     expect(rows.some((r) => /\b(his|her|him|himself|herself)\b/i.test(r.detail))).toBe(false)
   })
 

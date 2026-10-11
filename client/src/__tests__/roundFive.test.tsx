@@ -116,8 +116,8 @@ describe('fit: Position row', () => {
   })
   it('comes first when the role has a position; absent otherwise (old cache rows too)', () => {
     const withPos = fitRows({ gender_match: 1, position_match: 0, role_position: 'goalkeeper', candidate_position: 'forward' }, ctx)
-    expect(withPos.map((r) => r.key)).toEqual(['position', 'category', 'open', 'active', 'level'])
-    expect(fitRows({ gender_match: 1 }, ctx).map((r) => r.key)).toEqual(['category', 'open', 'active', 'level'])
+    expect(withPos.map((r) => r.key)).toEqual(['position', 'category', 'open', 'level'])
+    expect(fitRows({ gender_match: 1 }, ctx).map((r) => r.key)).toEqual(['category', 'open', 'level'])
   })
   it('gender-neutral copy (no pronouns)', () => {
     const all = [0, 0.5, 1].map((m) => fitPositionRow({ position_match: m, role_position: 'goalkeeper', candidate_position: 'forward' })?.detail ?? '').join(' ')
