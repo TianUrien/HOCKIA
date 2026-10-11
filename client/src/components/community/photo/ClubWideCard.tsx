@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LogoTile } from './LogoTile'
 import { ChevronRight } from 'lucide-react'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
@@ -69,16 +70,14 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
           {cover === 'crest' && crestSrc ? (
             // Many crests are JPEGs with a white square around them: a white
             // rounded tile makes that square look intended on the colour.
-            <span className="absolute right-[23px] top-[26px] flex h-[108px] w-[108px] items-center justify-center overflow-hidden rounded-[24px] bg-white p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
-              <img
-                src={crestSrc}
-                alt=""
-                className="h-full w-full object-contain"
-                loading={priority ? 'eager' : 'lazy'}
-                decoding="async"
-                onError={() => setCrestFailed(true)}
-              />
-            </span>
+            <LogoTile
+              src={crestSrc}
+              name={name}
+              eager={priority}
+              onError={() => setCrestFailed(true)}
+              className="absolute right-[23px] top-[26px] h-[108px] w-[108px] rounded-[24px] p-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.3)]"
+              initialsClassName="text-[32px]"
+            />
           ) : (
             <span className="absolute right-[29px] top-8 flex h-24 w-24 items-center justify-center rounded-full border border-white/35 bg-white/[0.14] text-[36px] font-bold text-white/90">
               {initialsOf(name)}
@@ -96,9 +95,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
 
       <span className="relative flex w-full items-center gap-3">
         {cover === 'photo' && crestSrc && (
-          <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white p-1">
-            <img src={crestSrc} alt="" className="h-9 w-9 object-contain" loading="lazy" decoding="async" />
-          </span>
+          <LogoTile src={crestSrc} name={name} className="h-11 w-11 shrink-0 rounded-[12px] p-1" initialsClassName="text-[14px]" />
         )}
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[17px] font-semibold leading-[22px] text-white">{name}</span>

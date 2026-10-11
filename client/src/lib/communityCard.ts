@@ -78,13 +78,59 @@ export function cityOf(location: string | null | undefined): string | null {
   return city ? city : null
 }
 
+type CountryLike = { id: number; code: string; name: string; common_name: string | null; flag_emoji: string | null }
+
+/** Country names people type that differ from the countries table. */
+const COUNTRY_ALIASES: Record<string, string> = { uk: 'GB', 'united kingdom': 'GB', england: 'GB', scotland: 'GB', wales: 'GB', usa: 'US', 'united states': 'US', holland: 'NL' }
+
+const POSTCODE = /^(?=.*\d)[A-Za-z0-9 -]{2,9}$/ // "BR3 3BP", "1425", "SW1A 1AA"
+
+export interface DisplayPlace {
+  /** The city or locality, never a postcode or a region string. */
+  city: string | null
+  /** The country name, shown when there is no city. */
+  country: string | null
+  flag: string | null
+}
+
+/**
+ * Where a member is, for cards and the preview (Figma spec 26:1046): the city
+ * from the location text, the flag of the country. Postcodes ("BR3 3BP"),
+ * regions ("Metropolitan City of Rome Capital") and state codes ("VIC") are
+ * dropped; with no city, the country name stands in.
+ */
+export function displayPlace(location: string | null | undefined, countryId: number | null | undefined, countries: CountryLike[]): DisplayPlace {
+  const segments = (location ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+  const matchCountry = (seg: string): CountryLike | undefined => {
+    const key = seg.toLowerCase()
+    const alias = COUNTRY_ALIASES[key]
+    return countries.find((c) => (alias ? c.code === alias : c.name.toLowerCase() === key || c.common_name?.toLowerCase() === key))
+  }
+  let country = typeof countryId === 'number' ? countries.find((c) => c.id === countryId) : undefined
+  if (!country) for (const seg of [...segments].reverse()) { country = matchCountry(seg); if (country) break }
+  const first = segments[0]
+  let city: string | null = null
+  if (first && !POSTCODE.test(first) && !matchCountry(first)) {
+    // "Melbourne VIC" → "Melbourne"; "Golden Grove SA" → "Golden Grove".
+    city = first.replace(/\s+[A-Z]{2,3}$/, '').trim() || null
+    if (city && city.length < 3) city = null // two-letter stubs are codes, not cities
+  }
+  return { city, country: country ? country.common_name || country.name : null, flag: country?.flag_emoji ?? null }
+}
+
+/** "🇮🇹 Rome" — or "🇮🇹 Italy" with no city; null when nothing is known. */
+export function placeLabel(place: DisplayPlace, withCountry = false): string | null {
+  const where = place.city ? (withCountry && place.country ? `${place.city}, ${place.country}` : place.city) : place.country
+  const out = [place.flag, where].filter(Boolean).join(' ')
+  return out || null
+}
+
 /**
  * Card line 3: "22 · 🇦🇷 Buenos Aires". The age is the server age (hidden when
  * unknown); the flag is the country the member is based in; either half can
  * be missing. Null when there is nothing to say.
  */
-export function cardPlaceLine(age: number | null | undefined, flag: string | null | undefined, location: string | null | undefined): string | null {
-  const place = [flag || null, cityOf(location)].filter(Boolean).join(' ')
+export function cardPlaceLine(age: number | null | undefined, place: string | null | undefined): string | null {
   const parts = [typeof age === 'number' ? String(age) : null, place || null].filter(Boolean)
   return parts.length > 0 ? parts.join(' · ') : null
 }
@@ -162,16 +208,15 @@ export function clubMetaLine(opts: {
   recruiting: boolean
   positions: string[]
   league: string | null
-  flag: string | null
-  location: string | null
+  /** placeLabel() of the club ("🇮🇹 Rome"). */
+  place: string | null
 }): string {
   if (opts.recruiting) {
     const roles = opts.positions.map((p) => (p === 'coach' ? 'Coach' : positionLabel(p) ?? p)).filter(Boolean)
     const unique = [...new Set(roles)]
     return unique.length > 0 ? `Recruiting · ${unique.join(', ')}` : 'Recruiting'
   }
-  const place = [opts.flag, opts.location?.trim() || null].filter(Boolean).join(' ')
-  return [opts.league, place || null].filter(Boolean).join(' · ') || 'Club'
+  return [opts.league, opts.place].filter(Boolean).join(' · ') || 'Club'
 }
 
 /**

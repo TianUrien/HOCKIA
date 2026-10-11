@@ -168,6 +168,8 @@ interface PeopleListViewProps {
   onFilteredCountChange?: (n: number) => void
   /** Count of players-with-video in the current pool — drives "Has video (N)". */
   onVideoCountChange?: (n: number) => void
+  /** Members in the current pool holding an EU passport — "N members hold one" (P13). */
+  onEuCountChange?: (n: number) => void
   /** True when an active recruiting scope is reshaping the grid (the
    *  focused, role-hard-filtered view — NOT the "Show everyone" escape).
    *  Phase 2D: gates the EU-eligibility hard filter so it applies only in
@@ -198,7 +200,7 @@ const memberEvidence = (m: Profile) =>
     current_world_club_id: m.current_world_club_id ?? null,
   })
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, onEuCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   const navigate = useNavigate()
   const location = useLocation()
@@ -1154,6 +1156,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     onVideoCountChange?.(filteredMembers.filter(hasVideoMember).length)
   }, [filteredMembers, onVideoCountChange])
 
+  // EU passport holders in the current pool (a passport on file, either
+  // nationality an EU state) — the filters sheet's "N members hold one".
+  useEffect(() => {
+    onEuCountChange?.(filteredMembers.filter((m) =>
+      (typeof m.nationality_country_id === 'number' && euCountryIds.has(m.nationality_country_id)) ||
+      (typeof m.nationality2_country_id === 'number' && euCountryIds.has(m.nationality2_country_id)),
+    ).length)
+  }, [filteredMembers, euCountryIds, onEuCountChange])
+
   // Update displayed members when filter (or sort) changes. Sort
   // changes shouldn't truncate to first page — QA flagged that
   // flipping the sort dropdown momentarily hid the 13th card until
@@ -1271,6 +1282,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return map
   }, [isPhone, clubView, clubFit.fit, matchById, coachMatchById])
 
+  // The deck's top label (Figma P18): what this list is · how it's sorted.
+  const ROLE_TITLE = { player: 'Players', coach: 'Coaches', club: 'Clubs', brand: 'Brands', umpire: 'Umpires' } as const
+  const SORT_LABEL = { newest: 'Newest', completeness: 'Most complete', evidence: 'Strongest evidence' } as const
+  const deckContextLabel = [
+    isNarrowed ? 'Matching members' : roleFilter ? ROLE_TITLE[roleFilter] : 'All members',
+    clubView && sort === 'newest' ? 'Best fit' : SORT_LABEL[sort as keyof typeof SORT_LABEL] ?? 'Newest',
+  ].join(' · ')
+
   const isBusy = isLoading || isSearching || authLoading
   const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
@@ -1328,7 +1347,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         ) : (
           <>
             <div className={['mb-6 transition-opacity duration-300 ease-out', isReshaping ? 'opacity-40' : 'opacity-100'].join(' ')}>
-              <MemberPhotoGrid members={displayedMembers} fitById={fitById} />
+              <MemberPhotoGrid
+                members={displayedMembers}
+                fitById={fitById}
+                deckMembers={filteredMembers}
+                contextLabel={deckContextLabel}
+                onAdjustFilters={() => state.setShowFilters(true)}
+              />
             </div>
             {hasMore && <div ref={sentinelRef} className="h-1" />}
             {hasMore && (

@@ -147,6 +147,7 @@ export default function CommunityPage() {
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filteredCount, setFilteredCount] = useState<number | null>(null)
   const [videoCount, setVideoCount] = useState<number | null>(null)
+  const [euCount, setEuCount] = useState<number | null>(null)
   const [searchLoading] = useState(false)
 
   // Determine active tab from URL param — default to 'all' (open ecosystem view)
@@ -442,6 +443,7 @@ export default function CommunityPage() {
                 state={filtersState}
                 resultCount={isNarrowed ? filteredCount : totalCount}
                 videoCount={videoCount}
+                euCount={euCount}
                 onSelectRole={(role) => navigate(pathWithSearch(roleToPath(role), searchQuery))}
               />
 
@@ -546,6 +548,7 @@ export default function CommunityPage() {
                   onTotalCountChange={setTotalCount}
                   onFilteredCountChange={setFilteredCount}
                   onVideoCountChange={setVideoCount}
+                  onEuCountChange={setEuCount}
                   scopeReshaping={scopeReshaping}
                   clubView={clubView}
                   recruiterDirectProfiles={isPhone && isRecruiterViewer}

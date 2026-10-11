@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   availableLabel, cardPlaceLine, cardRoleLine, clubCover, clubMetaLine, crestGradient,
-  CLUB_BRAND_GRADIENT, friendsHereLabel, inCommonCountLabel, initialsOf, type CardMember,
+  CLUB_BRAND_GRADIENT, displayPlace, friendsHereLabel, placeLabel, inCommonCountLabel, initialsOf, type CardMember,
 } from '@/lib/communityCard'
 
 const base: CardMember = { id: 'm1', full_name: 'Leandro Bica', role: 'player', avatar_url: null }
@@ -16,10 +16,10 @@ describe('Community photo card lines (Figma 6:100)', () => {
   })
 
   it('place line hides an unknown age or place', () => {
-    expect(cardPlaceLine(22, '🇦🇷', 'Buenos Aires, Argentina')).toBe('22 · 🇦🇷 Buenos Aires')
-    expect(cardPlaceLine(null, '🇦🇷', 'Buenos Aires')).toBe('🇦🇷 Buenos Aires')
-    expect(cardPlaceLine(31, null, null)).toBe('31')
-    expect(cardPlaceLine(null, null, null)).toBeNull()
+    expect(cardPlaceLine(22, '🇦🇷 Buenos Aires')).toBe('22 · 🇦🇷 Buenos Aires')
+    expect(cardPlaceLine(null, '🇦🇷 Buenos Aires')).toBe('🇦🇷 Buenos Aires')
+    expect(cardPlaceLine(31, null)).toBe('31')
+    expect(cardPlaceLine(null, null)).toBeNull()
   })
 
   it('initials skip brackets and numbers', () => {
@@ -38,14 +38,36 @@ describe('Club wide card (Figma 12:41)', () => {
   })
 
   it('meta lists open roles without counts, else league · place', () => {
-    expect(clubMetaLine({ recruiting: true, positions: ['defender', 'forward', 'defender'], league: 'D1', flag: null, location: null })).toBe('Recruiting · Defender, Forward')
-    expect(clubMetaLine({ recruiting: true, positions: ['coach'], league: null, flag: null, location: null })).toBe('Recruiting · Coach')
-    expect(clubMetaLine({ recruiting: false, positions: [], league: 'Serie A Elite', flag: '🇮🇹', location: 'Rome, Italy' })).toBe('Serie A Elite · 🇮🇹 Rome, Italy')
+    expect(clubMetaLine({ recruiting: true, positions: ['defender', 'forward', 'defender'], league: 'D1', place: null })).toBe('Recruiting · Defender, Forward')
+    expect(clubMetaLine({ recruiting: true, positions: ['coach'], league: null, place: null })).toBe('Recruiting · Coach')
+    expect(clubMetaLine({ recruiting: false, positions: [], league: 'Serie A Elite', place: '🇮🇹 Rome, Italy' })).toBe('Serie A Elite · 🇮🇹 Rome, Italy')
   })
 
   it('crest colour gradient falls back to brand until a colour is stored', () => {
     expect(crestGradient(null)).toBe(CLUB_BRAND_GRADIENT)
     expect(crestGradient('#2f7fb5')).toContain('rgb(47, 127, 181)')
+  })
+})
+
+describe('Display place (spec 26:1046)', () => {
+  const countries = [
+    { id: 1, code: 'IT', name: 'Italy', common_name: null, flag_emoji: '🇮🇹' },
+    { id: 2, code: 'GB', name: 'United Kingdom', common_name: null, flag_emoji: '🇬🇧' },
+    { id: 3, code: 'AU', name: 'Australia', common_name: null, flag_emoji: '🇦🇺' },
+    { id: 4, code: 'AR', name: 'Argentina', common_name: null, flag_emoji: '🇦🇷' },
+  ]
+  it('keeps the city, drops regions, postcodes and state codes', () => {
+    expect(placeLabel(displayPlace('Roma, Metropolitan City of Rome Capital, Italy', null, countries))).toBe('🇮🇹 Roma')
+    expect(placeLabel(displayPlace('Roma, Metropolitan City of Rome Capital, Italy', null, countries), true)).toBe('🇮🇹 Roma, Italy')
+    expect(placeLabel(displayPlace('BR3 3BP', 2, countries))).toBe('🇬🇧 United Kingdom')
+    expect(placeLabel(displayPlace('BR3 3BP', null, countries))).toBeNull()
+    expect(placeLabel(displayPlace('Melbourne VIC, Australia', null, countries))).toBe('🇦🇺 Melbourne')
+    expect(placeLabel(displayPlace('London, UK', null, countries))).toBe('🇬🇧 London')
+  })
+  it('falls back to the country name when there is no city', () => {
+    expect(placeLabel(displayPlace('Italy', null, countries))).toBe('🇮🇹 Italy')
+    expect(placeLabel(displayPlace(null, 4, countries))).toBe('🇦🇷 Argentina')
+    expect(placeLabel(displayPlace('Delran', null, countries))).toBe('Delran')
   })
 })
 
