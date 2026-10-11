@@ -78,13 +78,61 @@ export function cityOf(location: string | null | undefined): string | null {
   return city ? city : null
 }
 
+type CountryLike = { id: number; code: string; name: string; common_name: string | null; flag_emoji: string | null }
+
+/** Country names people type that differ from the countries table. */
+const COUNTRY_ALIASES: Record<string, string> = { uk: 'GB', 'united kingdom': 'GB', england: 'GB', scotland: 'GB', wales: 'GB', usa: 'US', 'united states': 'US', holland: 'NL' }
+
+const POSTCODE = /^(?=.*\d)[A-Za-z0-9 -]{2,9}$/ // "BR3 3BP", "1425", "SW1A 1AA"
+
+export interface DisplayPlace {
+  /** The city or locality, never a postcode or a region string. */
+  city: string | null
+  /** The country name, shown when there is no city. */
+  country: string | null
+  flag: string | null
+}
+
+/**
+ * Where a member is, for cards and the preview (Figma spec 26:1046): the city
+ * from the location text, the flag of the country. Postcodes ("BR3 3BP"),
+ * regions ("Metropolitan City of Rome Capital") and state codes ("VIC") are
+ * dropped; with no city, the country name stands in.
+ */
+export function displayPlace(location: string | null | undefined, countryId: number | null | undefined, countries: CountryLike[]): DisplayPlace {
+  const segments = (location ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+  const matchCountry = (seg: string): CountryLike | undefined => {
+    const key = seg.toLowerCase()
+    const alias = COUNTRY_ALIASES[key]
+    return countries.find((c) => (alias ? c.code === alias : c.name.toLowerCase() === key || c.common_name?.toLowerCase() === key))
+  }
+  let country = typeof countryId === 'number' ? countries.find((c) => c.id === countryId) : undefined
+  if (!country) for (const seg of [...segments].reverse()) { country = matchCountry(seg); if (country) break }
+  const first = segments[0]
+  let city: string | null = null
+  if (first && !POSTCODE.test(first) && !matchCountry(first)) {
+    // "Melbourne VIC" → "Melbourne"; "Golden Grove SA" → "Golden Grove".
+    city = first.replace(/\s+[A-Z]{2,3}$/, '').trim() || null
+    if (city && city.length < 3) city = null // two-letter stubs are codes, not cities
+    // "kisumu" → "Kisumu": only a city typed all lowercase is touched.
+    if (city && city === city.toLowerCase()) city = city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase())
+  }
+  return { city, country: country ? country.common_name || country.name : null, flag: country?.flag_emoji ?? null }
+}
+
+/** "🇮🇹 Rome" — or "🇮🇹 Italy" with no city; null when nothing is known. */
+export function placeLabel(place: DisplayPlace, withCountry = false): string | null {
+  const where = place.city ? (withCountry && place.country ? `${place.city}, ${place.country}` : place.city) : place.country
+  const out = [place.flag, where].filter(Boolean).join(' ')
+  return out || null
+}
+
 /**
  * Card line 3: "22 · 🇦🇷 Buenos Aires". The age is the server age (hidden when
  * unknown); the flag is the country the member is based in; either half can
  * be missing. Null when there is nothing to say.
  */
-export function cardPlaceLine(age: number | null | undefined, flag: string | null | undefined, location: string | null | undefined): string | null {
-  const place = [flag || null, cityOf(location)].filter(Boolean).join(' ')
+export function cardPlaceLine(age: number | null | undefined, place: string | null | undefined): string | null {
   const parts = [typeof age === 'number' ? String(age) : null, place || null].filter(Boolean)
   return parts.length > 0 ? parts.join(' · ') : null
 }
@@ -162,16 +210,15 @@ export function clubMetaLine(opts: {
   recruiting: boolean
   positions: string[]
   league: string | null
-  flag: string | null
-  location: string | null
+  /** placeLabel() of the club ("🇮🇹 Rome"). */
+  place: string | null
 }): string {
   if (opts.recruiting) {
     const roles = opts.positions.map((p) => (p === 'coach' ? 'Coach' : positionLabel(p) ?? p)).filter(Boolean)
     const unique = [...new Set(roles)]
     return unique.length > 0 ? `Recruiting · ${unique.join(', ')}` : 'Recruiting'
   }
-  const place = [opts.flag, opts.location?.trim() || null].filter(Boolean).join(' ')
-  return [opts.league, place || null].filter(Boolean).join(' · ') || 'Club'
+  return [opts.league, opts.place].filter(Boolean).join(' · ') || 'Club'
 }
 
 /**
@@ -209,3 +256,36 @@ export function friendsHereLabel(n: number): string | null {
   if (n <= 0) return null
   return n === 1 ? '1 of your friends plays here' : `${n} of your friends play here`
 }
+
+/**
+ * Eased photo scrim (finish pass): 7 stops on a cubic ease-in-out between two
+ * positions, so the dark-to-clear edge never shows a band. `from`/`to` are
+ * percentages down the image; alpha runs fromAlpha → toAlpha.
+ */
+export function easedScrim(from: number, to: number, fromAlpha: number, toAlpha: number, rgb = '15, 15, 20'): string[] {
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
+  return Array.from({ length: 7 }, (_, i) => {
+    const t = i / 6
+    const alpha = fromAlpha + (toAlpha - fromAlpha) * ease(t)
+    return `rgba(${rgb}, ${alpha.toFixed(3)}) ${(from + (to - from) * t).toFixed(1)}%`
+  })
+}
+
+/** linear-gradient(180deg, …) from one or more eased segments. */
+export function scrimGradient(...segments: string[][]): string {
+  return `linear-gradient(180deg, ${segments.flat().join(', ')})`
+}
+
+/** Person cards: clear to 40 %, then eased to 82 % ink at the bottom (Card / Member photo). */
+export const CARD_SCRIM = scrimGradient(easedScrim(40, 100, 0, 0.82))
+/** Preview photo: a light top shade for the controls, clear middle, eased bottom for the name. */
+export const PHOTO_SCRIM = scrimGradient(easedScrim(0, 18, 0.45, 0), easedScrim(55, 100, 0, 0.85))
+/** Club cover: purple-tinted, eased (Card / Club wide). */
+export const CLUB_COVER_SCRIM = scrimGradient(easedScrim(0, 30, 0.35, 0, '26, 10, 69'), easedScrim(45, 100, 0, 0.9, '26, 10, 69'))
+
+/** Finish pass tokens. */
+export const HAIRLINE_ON_PHOTO = 'shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.10)]'
+export const LIGHT_SHADOW = 'shadow-[0_1px_2px_rgba(15,15,20,0.06),0_10px_28px_rgba(15,15,20,0.10)]'
+export const GLASS = 'backdrop-blur-[20px] backdrop-saturate-[1.8] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]'
+/** Press: 0.97 with a light spring. */
+export const PRESS = 'transition-transform duration-300 ease-[cubic-bezier(0.34,1.36,0.64,1)] active:scale-[0.97]'

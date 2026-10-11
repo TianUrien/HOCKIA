@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { LogoTile } from './LogoTile'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
-import { cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
+import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import monogramRing from '@/assets/community/monogram-ring.svg'
 import { FitPill } from './FitPill'
@@ -24,22 +25,23 @@ interface MemberPhotoCardProps {
    *  no-photo colours (or the avatar) before the gallery photo lands. */
   pending?: boolean
   age?: number | null
-  flag?: string | null
+  /** placeLabel(): "🇦🇷 Buenos Aires" (city only, never a postcode). */
+  place?: string | null
   fit?: FitState | null
   onOpen: () => void
   priority?: boolean
 }
 
-const SCRIM = 'linear-gradient(180deg, rgba(15,15,20,0) 40%, rgba(15,15,20,0.45) 72%, rgba(15,15,20,0.82) 100%)'
+const SCRIM = CARD_SCRIM
 
-export function MemberPhotoCard({ member, photoUrl, pending = false, age, flag, fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
+export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
   const [failed, setFailed] = useState<string | null>(null)
   const name = member.full_name?.trim() || 'HOCKIA member'
   const isBrand = member.role === 'brand'
   const brandLogo = isBrand ? member.brand_logo_url ?? member.avatar_url : null
   const src = !isBrand && photoUrl && failed !== photoUrl ? photoUrl : null
   const roleLine = cardRoleLine(member)
-  const placeLine = cardPlaceLine(age, flag, member.base_location)
+  const placeLine = cardPlaceLine(age, place)
   const fitLabel = fitChipLabel(fit)
 
   return (
@@ -48,7 +50,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, flag, 
       onClick={onOpen}
       aria-label={[name, roleLine, placeLine, fitLabel].filter(Boolean).join(', ') + '. Tap to preview.'}
       data-testid="member-tile"
-      className={`${pending ? 'bg-line ' : ''}relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-[20px] px-3 pb-3 pt-2.5 text-left transition-transform duration-100 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
+      className={`${pending ? 'bg-line ' : ''}relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-[20px] px-3 pb-3 pt-2.5 text-left ${PRESS} focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
       style={src ? undefined : { backgroundImage: pending ? SCRIM : `${SCRIM}, ${roleGradient(member.role)}` }}
     >
       {pending ? null : src ? (
@@ -69,9 +71,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, flag, 
           <img src={pitchVertical} alt="" width={174} height={230.229} className="absolute inset-0 h-full w-full" />
           <span className="absolute left-1/2 top-[21.5%] flex h-[88px] w-[88px] -translate-x-1/2 items-center justify-center">
             {brandLogo ? (
-              <span className="flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-[20px] bg-white p-2.5">
-                <img src={getImageUrl(brandLogo, 'avatar-md') ?? brandLogo} alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
-              </span>
+              <LogoTile src={getImageUrl(brandLogo, 'avatar-md') ?? brandLogo} name={name} eager={priority} className="h-[88px] w-[88px] rounded-[20px] p-2.5" initialsClassName="text-[28px]" />
             ) : (
               <>
                 <img src={monogramRing} alt="" width={88} height={88} className="absolute inset-0" />
@@ -82,6 +82,8 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, flag, 
         </span>
       )}
 
+      {/* 0.5 pt inside hairline (finish pass) — above the photo, below the text. */}
+      <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[20px] ${HAIRLINE_ON_PHOTO}`} />
       <span className="relative flex w-full min-w-0 flex-col gap-0.5">
         {fitLabel && fit && (
           <span className="mb-1">

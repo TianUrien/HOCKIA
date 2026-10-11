@@ -9272,6 +9272,17 @@ export type Database = {
         }[]
       }
       get_market_moves: { Args: { p_limit?: number }; Returns: Json }
+      get_friends_in_common: {
+        Args: { p_member_ids: string[] }
+        Returns: {
+          avatar_url: string
+          friend_id: string
+          full_name: string
+          member_id: string
+          role: string
+          total: number
+        }[]
+      }
       get_member_photos: {
         Args: { p_per_member?: number; p_profile_ids: string[] }
         Returns: {

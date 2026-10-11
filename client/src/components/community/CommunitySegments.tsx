@@ -52,7 +52,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
               role="tab"
               aria-selected={active}
               onClick={() => navigate(pathWithSearch(s.path, query))}
-              className={`flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-semibold transition-colors ${
+              className={`relative flex h-8 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-semibold transition-colors after:absolute after:inset-x-0 after:-inset-y-1.5 after:content-[''] ${
                 active ? 'bg-brand-soft text-brand-primary lg:bg-ink-1 lg:text-white' : 'bg-surface-grouped text-ink-2 active:bg-gray-200 lg:text-ink-1'
               }`}
             >

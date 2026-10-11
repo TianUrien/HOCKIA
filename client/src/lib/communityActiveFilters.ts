@@ -1,4 +1,5 @@
 import type { CommunityFilters, SortOption } from '@/components/community/communityFilters'
+import { teamLabel } from '@/lib/communityCard'
 import { CATEGORY_LABELS } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 
@@ -56,7 +57,7 @@ export function getActiveFilterChips(
     chips.push({ id: `coachSpec:${spec}`, label, onRemove: () => update('coachSpecializations', filters.coachSpecializations.filter((s) => s !== spec)) })
   }
   for (const cat of filters.categories) {
-    chips.push({ id: `category:${cat}`, label: CATEGORY_LABELS[cat] ?? cat, onRemove: () => update('categories', filters.categories.filter((c) => c !== cat)) })
+    chips.push({ id: `category:${cat}`, label: teamLabel(cat) ?? CATEGORY_LABELS[cat] ?? cat, onRemove: () => update('categories', filters.categories.filter((c) => c !== cat)) })
   }
   for (const off of filters.officiatingSpecializations) {
     chips.push({ id: `officiating:${off}`, label: titleCase(off), onRemove: () => update('officiatingSpecializations', filters.officiatingSpecializations.filter((o) => o !== off)) })

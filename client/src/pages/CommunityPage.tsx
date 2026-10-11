@@ -147,6 +147,7 @@ export default function CommunityPage() {
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filteredCount, setFilteredCount] = useState<number | null>(null)
   const [videoCount, setVideoCount] = useState<number | null>(null)
+  const [euCount, setEuCount] = useState<number | null>(null)
   const [searchLoading] = useState(false)
 
   // Determine active tab from URL param — default to 'all' (open ecosystem view)
@@ -442,6 +443,7 @@ export default function CommunityPage() {
                 state={filtersState}
                 resultCount={isNarrowed ? filteredCount : totalCount}
                 videoCount={videoCount}
+                euCount={euCount}
                 onSelectRole={(role) => navigate(pathWithSearch(roleToPath(role), searchQuery))}
               />
 
@@ -487,7 +489,7 @@ export default function CommunityPage() {
                   {(() => {
                     const displayed = isNarrowed ? filteredCount : totalCount
                     if (displayed === null) return null
-                    return <span className="font-semibold text-gray-500"> · {displayed.toLocaleString()}</span>
+                    return <span className="font-semibold tabular-nums text-gray-500"> · {displayed.toLocaleString()}</span>
                   })()}
                 </h2>
                 <label className="relative flex flex-shrink-0 items-center text-[13px] font-semibold text-hockia-primary">
@@ -496,7 +498,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>
@@ -546,6 +548,7 @@ export default function CommunityPage() {
                   onTotalCountChange={setTotalCount}
                   onFilteredCountChange={setFilteredCount}
                   onVideoCountChange={setVideoCount}
+                  onEuCountChange={setEuCount}
                   scopeReshaping={scopeReshaping}
                   clubView={clubView}
                   recruiterDirectProfiles={isPhone && isRecruiterViewer}

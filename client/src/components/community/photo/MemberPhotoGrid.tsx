@@ -8,11 +8,12 @@ import { useMemberAges } from '@/hooks/useMemberAges'
 import { useMemberPhotosBatch } from '@/hooks/useMemberPhotos'
 import { useOpenRolePositions } from '@/hooks/useOpenRoleCounts'
 import { useClubCrestColors } from '@/hooks/useClubCrestColors'
+import { prefetchFriendsInCommon } from '@/hooks/useFriendsInCommonBatch'
 import { notifyBlockListChanged } from '@/hooks/useBlockedUsers'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { rememberBlockedPair } from '@/lib/publicProfileCache'
-import { clubMetaLine } from '@/lib/communityCard'
+import { clubMetaLine, displayPlace, placeLabel } from '@/lib/communityCard'
 import type { FitState } from '@/lib/clubRecruiting'
 import type { Profile } from '../PeopleListView'
 import { MemberPhotoCard } from './MemberPhotoCard'
@@ -36,6 +37,12 @@ interface MemberPhotoGridProps {
   fitById?: Map<string, FitState | null>
   /** Recruiters with Club v2 off-phone rules: open the full profile instead. */
   openProfile?: (member: Profile) => boolean
+  /** The whole filtered list the deck swipes through (the grid shows a page of it). */
+  deckMembers?: Profile[]
+  /** "All members · Newest" — the deck's top label. */
+  contextLabel?: string
+  /** End of the deck → open the filters. */
+  onAdjustFilters?: () => void
 }
 
 interface BlockedToast {
@@ -45,7 +52,7 @@ interface BlockedToast {
 
 const UNDO_MS = 5000
 
-export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGridProps) {
+export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, contextLabel = 'All members', onAdjustFilters }: MemberPhotoGridProps) {
   const { countries } = useCountries()
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
@@ -54,14 +61,16 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
   const personIds = useMemo(() => members.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id), [members])
   const photoIds = useMemo(() => members.filter((m) => m.role !== 'brand').map((m) => m.id), [members])
   const ages = useMemberAges(personIds)
+  // Friends in common for the page in one call, so the deck opens on them.
+  useEffect(() => { void prefetchFriendsInCommon(personIds) }, [personIds])
   const batch = useMemberPhotosBatch(photoIds)
   const clubs = useMemo(() => members.filter((m) => m.role === 'club'), [members])
   const crestColors = useClubCrestColors(clubs)
   const [preview, setPreview] = useState<Profile | null>(null)
   const [blocked, setBlocked] = useState<BlockedToast | null>(null)
 
-  const flagOf = useCallback(
-    (id: number | null | undefined) => (typeof id === 'number' ? countries.find((c) => c.id === id)?.flag_emoji ?? null : null),
+  const placeOf = useCallback(
+    (m: Profile, withCountry = false) => placeLabel(displayPlace(m.base_location, m.base_country_id, countries), withCountry),
     [countries],
   )
 
@@ -91,6 +100,9 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
     if (openProfile?.(m)) return
     setPreview(m)
   }
+  // Every card opens the deck (Figma P18): the full filtered list, starting here.
+  const deckList = deckMembers && deckMembers.length > 0 ? deckMembers : members
+  const deckStart = preview ? Math.max(0, deckList.findIndex((m) => m.id === preview.id)) : 0
 
   return (
     <>
@@ -103,8 +115,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
               recruiting,
               positions: positions.get(m.id) ?? [],
               league: getPlayerLeagueName(m.current_world_club_id, null),
-              flag: flagOf(m.base_country_id),
-              location: m.base_location,
+              place: placeOf(m, true),
             })
             return (
               <div key={m.id} className="col-span-2">
@@ -131,7 +142,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
               photoUrl={photo}
               pending={pending}
               age={ages.get(m.id) ?? null}
-              flag={flagOf(m.base_country_id)}
+              place={placeOf(m)}
               fit={fitById?.get(m.id) ?? null}
               onOpen={() => open(m)}
               priority={i < 4}
@@ -147,6 +158,15 @@ export function MemberPhotoGrid({ members, fitById, openProfile }: MemberPhotoGr
             age={ages.get(preview.id) ?? null}
             fit={fitById?.get(preview.id) ?? null}
             crestColor={crestColors.get(preview.id) ?? null}
+            deck={{
+              members: deckList,
+              startIndex: deckStart,
+              contextLabel,
+              ageOf: (id) => ages.get(id) ?? null,
+              fitOf: (id) => fitById?.get(id) ?? null,
+              crestOf: (id) => crestColors.get(id) ?? null,
+              onAdjustFilters,
+            }}
             onClose={() => setPreview(null)}
             onBlocked={(m) => setBlocked({ member: m, at: Date.now() })}
           />
