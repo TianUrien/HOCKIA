@@ -83,6 +83,12 @@ export function sameBrandName(a: string | null | undefined, b: string | null | u
 }
 
 /** "12 profile views" style label with the right plural. */
+/** Self-declared sponsor as typed; " player" only when the text doesn't already say player / athlete. */
+export function sponsorLabel(text: string): string {
+  const t = text.trim()
+  return /\b(player|athlete)$/i.test(t) ? t : `${t} player`
+}
+
 export function countLabel(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`
 }

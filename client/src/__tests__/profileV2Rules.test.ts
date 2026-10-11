@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { instagramHandle, nextStepPart, sameBrandName } from '@/lib/profileV2'
+import { instagramHandle, nextStepPart, sameBrandName, sponsorLabel } from '@/lib/profileV2'
 
 describe('next step (ruling 11 Oct)', () => {
   it('starts with the photo while it is missing, whatever the weights', () => {
@@ -43,5 +43,14 @@ describe('sponsor match', () => {
     expect(sameBrandName('Grays Hockey', 'graysHOCKEY')).toBe(true)
     expect(sameBrandName('Grays', 'Gryphon')).toBe(false)
     expect(sameBrandName('', '')).toBe(false)
+  })
+})
+
+describe('self-declared sponsor label', () => {
+  it('never doubles player / athlete', () => {
+    expect(sponsorLabel('Grays Player')).toBe('Grays Player')
+    expect(sponsorLabel('Adidas athlete')).toBe('Adidas athlete')
+    expect(sponsorLabel('Osaka')).toBe('Osaka player')
+    expect(sponsorLabel('Playerz')).toBe('Playerz player')
   })
 })

@@ -23,14 +23,14 @@ import { careerSpan, flagForCountryName, isCurrentEntry } from '@/lib/careerCopy
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import { dayFirst } from '@/lib/dayFirst'
-import { instagramHandle, nextStepPart, NEXT_STEP_COPY, sameBrandName, type CompletenessPart } from '@/lib/profileV2'
+import { sponsorLabel, instagramHandle, nextStepPart, NEXT_STEP_COPY, sameBrandName, type CompletenessPart } from '@/lib/profileV2'
 import type { KeyFact } from '@/lib/keyFacts'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { SquircleBox } from '@/components/home/v1/primitives'
 import { GLASS } from '@/lib/communityCard'
-import { ProfileVideoTile, LockedVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
+import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { VideoAccessSheets, type VideoBlock } from '@/components/profile/mobile/VideoAccessSheets'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import { cn } from '@/lib/utils'
@@ -192,7 +192,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const lockedHighlights = owner ? 0 : access.lockedHighlights
   const [videoBlock, setVideoBlock] = useState<VideoBlock>(null)
   const [player, setPlayer] = useState<ScrollVideo | null>(null)
-  const showLocked = () => setVideoBlock(signedIn ? 'locked' : 'join')
   const openVideo = (v: ScrollVideo, locked: boolean) => {
     if (!signedIn && !owner) setVideoBlock('join')
     else if (locked && !canWatchLocked) setVideoBlock('locked')
@@ -203,6 +202,15 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const highlightCount = data.highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
   const videoTotal = highlightCount + fullMatchCount
+  // Only what this viewer can play is shown (Figma review 11 Oct): locked
+  // tiles are a dead grey row for most visitors. Signed-out tiles stay — they
+  // ask to join, which is the point.
+  const canPlay = (locked: boolean) => !locked || canWatchLocked
+  const shownHighlights = data.highlights.filter((v) => canPlay(v.visibility === 'recruiters'))
+  const shownFullMatches = data.fullMatches.filter((v) => canPlay(lockFullMatches || v.visibility === 'recruiters'))
+  const shownLinked = Boolean(linkedHighlight && canOpenLinkedHighlight)
+  const shownVideoCount = shownHighlights.length + (shownLinked ? 1 : 0) + shownFullMatches.length + data.fullGameLinks.length
+  const videosHiddenFromViewer = !owner && shownVideoCount < videoTotal
   const { onVideoCounts } = props
   useEffect(() => {
     if (!data.loading) onVideoCounts?.({ total: videoTotal + data.reels.length, highlights: highlightCount, fullMatches: fullMatchCount })
@@ -297,7 +305,20 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     ? [{ key: 'friend', label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend', onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]
     : []
 
-  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'videos' ? owner || videoTotal > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : true))
+  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'videos' ? owner || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : true))
+
+  // ⋯ (report / block) — in the hero and again in the compact header, so it
+  // stays reachable after scrolling (PR10).
+  const moreMenu = (triggerClassName: string) => (visitor && profileId ? (
+    <ProfileActionMenu
+      targetId={profileId}
+      targetName={name}
+      actionName={name.split(/\s+/)[0]}
+      leadingItems={leadingMenuItems}
+      triggerClassName={triggerClassName}
+      iconClassName="h-[22px] w-[22px]"
+    />
+  ) : null)
 
   const dashed = (text: string, onClick: () => void) => (
     <div className="px-4">
@@ -309,7 +330,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   return (
     <div className="bg-white pb-8" data-testid="profile-v2">
-      <CompactHeader name={name} visible={compact} owner={owner} onBack={back} onShare={() => void share()} />
+      <CompactHeader name={name} avatarUrl={profile.avatar_url} visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
       <div ref={heroRef}>
         <ProfileHero
@@ -326,16 +347,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           onShare={() => void share()}
           onCamera={() => props.onOpenSection('media')}
           onSettings={() => navigate('/settings')}
-          moreMenu={visitor && profileId ? (
-            <ProfileActionMenu
-              targetId={profileId}
-              targetName={name}
-              actionName={name.split(/\s+/)[0]}
-              leadingItems={leadingMenuItems}
-              triggerClassName={cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS)}
-              iconClassName="h-[22px] w-[22px]"
-            />
-          ) : null}
+          moreMenu={moreMenu(cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS))}
         />
       </div>
 
@@ -386,34 +398,32 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                 </Chip>
               </button>
             ))}
-            {showSelfDeclared && <Chip><span data-testid="sponsor-self-declared">{selfDeclared} player</span></Chip>}
+            {showSelfDeclared && <Chip><span data-testid="sponsor-self-declared">{sponsorLabel(selfDeclared)}</span></Chip>}
           </div>
         )}
+        {videosHiddenFromViewer && shownVideoCount === 0 && <p className="text-secondary text-ink-3" data-testid="profile-videos-clubs-only">Videos are shared with clubs</p>}
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
         {props.clubViewSlot}
       </section>
 
       {/* Videos: highlights + full matches (reels live in the grid) */}
-      {(owner || videoTotal > 0) && (
-        <Section id="videos" title="Videos" action={videoTotal > 0 ? `See all ${videoTotal}` : null} onAction={() => props.onOpenSection('videos')}>
+      {(owner || shownVideoCount > 0) && (
+        <Section id="videos" title="Videos" action={shownVideoCount > 0 ? `See all ${shownVideoCount}` : null} onAction={() => props.onOpenSection('videos')}>
           {videoTotal === 0 && !data.loading && dashed('Add a highlight', () => props.onOpenSection('media'))}
-          {videoTotal > 0 && (
+          {shownVideoCount > 0 && (
             <div className="flex snap-x scroll-pl-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {data.highlights.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
-              {linkedHighlight && canOpenLinkedHighlight && (
+              {shownHighlights.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
+              {shownLinked && linkedHighlight && (
                 <VideoCard title="Linked highlight">
                   <a href={linkedHighlight} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               )}
-              {linkedHighlight && !canOpenLinkedHighlight && <VideoCard title="Highlight"><LockedVideoTile label="Highlight" onOpen={showLocked} className="h-[158px] w-[280px]" /></VideoCard>}
-              {Array.from({ length: lockedHighlights }, (_, i) => <VideoCard key={`lh-${i}`} title="Highlight"><LockedVideoTile label="Highlight" onOpen={showLocked} className="h-[158px] w-[280px]" /></VideoCard>)}
-              {data.fullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
+              {shownFullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {data.fullGameLinks.map((l) => (
                 <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}>
                   <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               ))}
-              {Array.from({ length: lockedFull }, (_, i) => <VideoCard key={`lf-${i}`} title="Full match"><LockedVideoTile onOpen={showLocked} className="h-[158px] w-[280px]" /></VideoCard>)}
             </div>
           )}
         </Section>
@@ -489,7 +499,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                 <p className={cn('whitespace-pre-line text-body text-ink-1', !bioOpen && 'line-clamp-3')}>{bio}</p>
                 {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">More</button>}
               </>
-            ) : owner ? dashed('Write a short bio', () => props.onEdit('about')) : null}
+            ) : owner ? (step?.key === 'bio' ? <p className="text-body text-ink-3">No bio yet</p> : dashed('Write a short bio', () => props.onEdit('about'))) : null}
             <div className="mt-2 divide-y divide-line">
               {category && <DetailRow label="Team" value={category} />}
               {relocation && <DetailRow label="Relocation" value={relocation} />}
