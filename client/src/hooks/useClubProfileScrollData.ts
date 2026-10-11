@@ -37,6 +37,8 @@ export type ClubOpenRole = {
   opportunityType: string | null
   startDate: string | null
   durationText: string | null
+  deadline?: string | null
+  createdAt?: string | null
 }
 
 export type ClubWorldLink = {
@@ -107,7 +109,7 @@ export function useClubProfileScrollData(clubId: string | null | undefined, worl
         supabase.rpc('get_club_members', { p_profile_id: clubId, p_limit: 12, p_offset: 0 }),
         supabase
           .from('opportunities')
-          .select('id, title, position, gender, opportunity_type, start_date, duration_text, created_at')
+          .select('id, title, position, gender, opportunity_type, start_date, duration_text, created_at, application_deadline')
           .eq('club_id', clubId)
           .eq('status', 'open')
           .order('created_at', { ascending: false })
@@ -153,8 +155,8 @@ export function useClubProfileScrollData(clubId: string | null | undefined, worl
           currentClub: m.current_club,
         })),
         memberCount: memberRows[0]?.total_count ?? 0,
-        openRoles: ((roles.data ?? []) as Array<{ id: string; title: string; position: string | null; gender: string | null; opportunity_type: string | null; start_date: string | null; duration_text: string | null }>).map((r) => ({
-          id: r.id, title: r.title, position: r.position, gender: r.gender, opportunityType: r.opportunity_type, startDate: r.start_date, durationText: r.duration_text,
+        openRoles: ((roles.data ?? []) as Array<{ id: string; title: string; position: string | null; gender: string | null; opportunity_type: string | null; start_date: string | null; duration_text: string | null; created_at: string | null; application_deadline: string | null }>).map((r) => ({
+          id: r.id, title: r.title, position: r.position, gender: r.gender, opportunityType: r.opportunity_type, startDate: r.start_date, durationText: r.duration_text, deadline: r.application_deadline, createdAt: r.created_at,
         })),
         posts: Array.isArray(postsPayload?.items) ? postsPayload!.items : [],
         postCount: postsPayload?.total ?? 0,

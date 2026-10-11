@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { instagramHandle, nextStepPart, sameBrandName, sponsorLabel } from '@/lib/profileV2'
+import { instagramHandle, nextStepPart, sameBrandName, sponsorLabel, roleStatusLine } from '@/lib/profileV2'
 
 describe('next step (ruling 11 Oct)', () => {
   it('starts with the photo while it is missing, whatever the weights', () => {
@@ -52,5 +52,17 @@ describe('self-declared sponsor label', () => {
     expect(sponsorLabel('Adidas athlete')).toBe('Adidas athlete')
     expect(sponsorLabel('Osaka')).toBe('Osaka player')
     expect(sponsorLabel('Playerz')).toBe('Playerz player')
+  })
+})
+
+describe('open-role status line', () => {
+  const now = new Date('2026-10-11T15:00:00Z')
+  it('counts down the last 30 days, then says New for fresh roles', () => {
+    expect(roleStatusLine('2026-10-11', null, now)).toBe('Closes today')
+    expect(roleStatusLine('2026-10-12', null, now)).toBe('Closes tomorrow')
+    expect(roleStatusLine('2026-10-23', null, now)).toBe('Closes in 12 days')
+    expect(roleStatusLine('2027-01-01', '2026-10-09T00:00:00Z', now)).toBe('New')
+    expect(roleStatusLine('2027-01-01', '2026-09-01T00:00:00Z', now)).toBeNull()
+    expect(roleStatusLine(null, null, now)).toBeNull()
   })
 })
