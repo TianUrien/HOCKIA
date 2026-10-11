@@ -287,7 +287,7 @@ export default function UmpireDashboard({
     <div className="min-h-screen bg-gray-50">
       <Header mobileHidden={!readOnly} />
       {readOnly && isOwnProfile && <PublicViewBanner />}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 ${readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-24'} pb-12">
         {!readOnly && <ProfileTopBar />}
         {readOnly && (
           <button

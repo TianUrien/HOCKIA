@@ -393,7 +393,7 @@ export default function ApplicantsList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-gray-50 pt-[env(safe-area-inset-top)] pb-16">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur border-b border-gray-100">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6">

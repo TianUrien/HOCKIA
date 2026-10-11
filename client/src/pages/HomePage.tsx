@@ -37,7 +37,7 @@ export default function HomePage() {
       <Header />
 
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="mx-auto max-w-2xl pt-20 pb-24">
+        <main className="mx-auto max-w-2xl pt-under-header pb-24">
           {/* The mobile header carries the search icon; on desktop the
               resting pill stays where it was. One instance either way. */}
           <div className="px-4 pt-3 md:px-6">

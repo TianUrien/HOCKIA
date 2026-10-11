@@ -28,7 +28,12 @@ const config: CapacitorConfig = {
     // — same Vincent-style symptom we hit on Android. iOS isn't live yet,
     // so there are no installed users to silently sign out.
     hostname: 'app.inhockia.com',
-    contentInset: 'automatic',
+    // 'never': the page handles the safe areas itself (viewport-fit=cover +
+    // env(safe-area-inset-*), see globals.css). 'automatic' made the scroll
+    // view add its own top inset on top of that: measured on an iPhone 16
+    // (2026-10-11), the web viewport shrank from 852 to 793 pt after the
+    // first navigation, pushing every screen 59 pt further down.
+    contentInset: 'never',
     // WKWebView + scroll-view colour before the first web paint. Was #ffffff,
     // which is what showed in the home-indicator band under the launch
     // artwork. Now the artwork's bottom colour (#7b39ec, its last pixel row).

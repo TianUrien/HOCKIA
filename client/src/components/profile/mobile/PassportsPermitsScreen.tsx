@@ -222,7 +222,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28" data-testid="passports-permits-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28" data-testid="passports-permits-screen">
       <CancelSaveBar title="Passports & permits" onCancel={onDone} onSave={() => void save()} saving={saving} />
 
       <div className="flex flex-col gap-3 px-5 pt-3">

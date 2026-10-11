@@ -116,7 +116,7 @@ export default function FindPlayersScreen() {
   const limitReason = allowance.reached ? inviteLimitReason(allowance.limit) : null
 
   return (
-    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="find-players-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="find-players-screen">
       <DetailNavBar
         parent="Opportunities"
         fallbackPath="/opportunities"

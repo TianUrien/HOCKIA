@@ -548,7 +548,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 md:px-6 pt-24 pb-32">
+      <main className="max-w-2xl mx-auto px-4 md:px-6 pt-under-header-lg pb-32">
         {/* Back Button */}
         <button
           onClick={() => navigate('/dashboard/profile')}

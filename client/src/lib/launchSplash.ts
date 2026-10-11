@@ -1,5 +1,6 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { setStatusBarForBackground } from './nativeUi'
 
 /**
  * Native launch-splash hand-off.
@@ -149,6 +150,14 @@ export function hideNativeSplash(): void {
 const AppSurface = registerPlugin<{ applyLightSurface(): Promise<void> }>('AppSurface')
 
 function switchToLightNativeSurface(): void {
+  // The app below the splash is white: dark status-bar icons (Info.plist
+  // starts them white for the violet launch artwork). The welcome screen at
+  // '/' sets its own; any other entry (signed-in launch, deep link) gets dark
+  // ones here. Without this they stayed white on white once the web view ran
+  // under the status bar (contentInset 'never').
+  if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+    void setStatusBarForBackground('light-bg')
+  }
   if (Capacitor.getPlatform() !== 'ios') return
   void AppSurface.applyLightSurface().catch(() => {
     /* older build without the plugin */

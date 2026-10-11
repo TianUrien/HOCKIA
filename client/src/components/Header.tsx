@@ -40,13 +40,14 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
       }
 
       const root = document.documentElement
+      // offsetHeight already includes the header's own safe-area padding
+      // (pt-[env(safe-area-inset-top)]), so it IS the offset content needs.
+      // (It used to add --app-safe-area-top on top, which is an unresolved
+      // env() string here — the sum was either NaN or a double inset.)
       const headerHeight = headerRef.current.offsetHeight
-      const safeAreaTop = parseFloat(
-        getComputedStyle(root).getPropertyValue('--app-safe-area-top') || '0'
-      )
 
       root.style.setProperty('--app-header-height', `${headerHeight}px`)
-      root.style.setProperty('--app-header-offset', `${headerHeight + safeAreaTop}px`)
+      root.style.setProperty('--app-header-offset', `${headerHeight}px`)
     }
 
     updateHeaderMetrics()

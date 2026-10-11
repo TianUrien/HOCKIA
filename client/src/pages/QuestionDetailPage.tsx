@@ -122,7 +122,7 @@ export default function QuestionDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="max-w-3xl mx-auto px-4 md:px-6 pt-24 pb-12">
+        <main className="max-w-3xl mx-auto px-4 md:px-6 pt-under-header-lg pb-12">
           <div className="animate-pulse">
             <div className="h-6 bg-gray-200 rounded w-24 mb-6" />
             <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -143,7 +143,7 @@ export default function QuestionDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="max-w-3xl mx-auto px-4 md:px-6 pt-24 pb-12">
+        <main className="max-w-3xl mx-auto px-4 md:px-6 pt-under-header-lg pb-12">
           <Link
             to="/community/questions"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
@@ -168,7 +168,7 @@ export default function QuestionDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <main className="max-w-3xl mx-auto px-4 md:px-6 pt-24 pb-12">
+      <main className="max-w-3xl mx-auto px-4 md:px-6 pt-under-header-lg pb-12">
         <Breadcrumbs
           className="mb-6"
           items={[

@@ -283,7 +283,7 @@ export default function WorldProvincePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-64 mb-8" />
             <div className="flex gap-3 mb-6">
@@ -312,7 +312,7 @@ export default function WorldProvincePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">Unable to load region data</p>
@@ -341,7 +341,7 @@ export default function WorldProvincePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6 text-center">
+        <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6 text-center">
           <p className="text-gray-600">Region not found</p>
           <button
             type="button"
@@ -358,7 +358,7 @@ export default function WorldProvincePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+      <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
         {/* Back Button */}
         <button
           type="button"
