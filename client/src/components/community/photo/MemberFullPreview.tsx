@@ -431,10 +431,10 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, cre
       className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white animate-slide-in-up"
       style={{ transform: dragY > 0 ? `translateY(${dragY}px)` : undefined, transition: dragging ? 'none' : 'transform 0.2s ease-out' }}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
         {/* Photo area */}
         <div
-          className="relative h-[min(520px,61dvh)] w-full overflow-hidden"
+          className="relative min-h-[min(520px,61dvh)] w-full shrink-0 grow overflow-hidden"
           style={current ? undefined : { backgroundImage: noPhotoBackground }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -450,6 +450,9 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, cre
                 className="absolute inset-0 h-full w-full object-cover"
                 decoding="async"
                 onError={() => setFailed((s) => new Set(s).add(current))}
+                // Clubs: a small media upload (often the logo) goes blurry at
+                // this size; below the spec's 600 px it is skipped, like the card.
+                onLoad={(e) => { if (isClub && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < 600) setFailed((s) => new Set(s).add(current)) }}
               />
               <span aria-hidden="true" className="absolute inset-0" style={{ backgroundImage: PHOTO_SCRIM }} />
             </>
@@ -522,7 +525,7 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, cre
         </div>
 
         {/* Summary panel */}
-        <div className="relative -mt-6 flex flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
+        <div className="relative -mt-6 flex shrink-0 flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
           <div aria-hidden="true" className="flex justify-center">
             <span className="h-[5px] w-9 rounded-[3px] bg-line" />
           </div>
@@ -531,7 +534,7 @@ export function MemberFullPreview({ member, onClose, age = null, fit = null, cre
               {facts.map((f) => (
                 <div key={f.label} className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-[14px] bg-surface-muted px-3 py-2.5">
                   <span className="truncate text-[11px] font-semibold uppercase leading-[14px] text-ink-3">{f.label}</span>
-                  <span className="truncate text-[14px] font-semibold leading-[19px] text-ink-1">{f.value}</span>
+                  <span className="line-clamp-2 break-words text-[14px] font-semibold leading-[19px] text-ink-1">{f.value}</span>
                 </div>
               ))}
             </div>
