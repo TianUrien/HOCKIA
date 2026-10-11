@@ -1455,6 +1455,35 @@ export type Database = {
           },
         ]
       }
+      club_crest_colors: {
+        Row: {
+          color: string
+          crest_url: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          crest_url: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          crest_url?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_crest_colors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_media: {
         Row: {
           alt_text: string | null
@@ -9231,6 +9260,14 @@ export type Database = {
         }[]
       }
       get_market_moves: { Args: { p_limit?: number }; Returns: Json }
+      get_member_photos: {
+        Args: { p_per_member?: number; p_profile_ids: string[] }
+        Returns: {
+          ord: number
+          profile_id: string
+          url: string
+        }[]
+      }
       get_message_recipient: {
         Args: { p_conversation_id: string; p_sender_id: string }
         Returns: string

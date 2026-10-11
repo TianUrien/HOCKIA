@@ -36,7 +36,7 @@ export default function ShortlistsIndexPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-3xl mx-auto px-4 pt-24 pb-12 text-center">
+        <div className="max-w-3xl mx-auto px-4 pt-under-header-lg pb-12 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to manage shortlists</h1>
           <p className="text-gray-600 mb-6">Group players you're scouting and triage them later.</p>
           <button
@@ -66,7 +66,7 @@ export default function ShortlistsIndexPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-3xl mx-auto px-4 pt-20 pb-12">
+      <div className="max-w-3xl mx-auto px-4 pt-under-header pb-12">
         <button
           type="button"
           onClick={() => navigate(-1)}

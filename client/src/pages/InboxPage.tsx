@@ -72,7 +72,7 @@ export default function InboxPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header mobileHidden />
-      <main className="mx-auto max-w-2xl pb-24 pt-[max(env(safe-area-inset-top),0.5rem)] lg:pt-24">
+      <main className="mx-auto max-w-2xl pb-24 pt-[calc(env(safe-area-inset-top)+0.5rem)] lg:pt-24">
         <LargeTitleBar title="Inbox" trailing={newMessageButton} />
         <div className="hidden items-center justify-between px-5 pb-2 lg:flex">
           <h1 className="text-title text-ink-1">Inbox</h1>

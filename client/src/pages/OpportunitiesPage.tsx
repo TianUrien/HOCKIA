@@ -589,7 +589,7 @@ export default function OpportunitiesPage() {
       <div className="min-h-screen bg-white lg:bg-gray-50">
         <Header mobileHidden />
 
-        <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[env(safe-area-inset-top)] pb-24 lg:px-4 lg:pt-24 lg:pb-12">
+        <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-24 lg:px-4 lg:pt-24 lg:pb-12">
           {/* Phone header (Figma Opportunities v2): large title, one filters
               button, a search pill, and Open roles | Applied. */}
           <div className="lg:hidden">

@@ -66,7 +66,7 @@ export default function ShortlistDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-3xl mx-auto px-4 pt-24 pb-12 text-center">
+        <div className="max-w-3xl mx-auto px-4 pt-under-header-lg pb-12 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view shortlist</h1>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function ShortlistDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-3xl mx-auto px-4 pt-20 pb-12">
+      <div className="max-w-3xl mx-auto px-4 pt-under-header pb-12">
         <Link
           to="/dashboard/shortlists"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"

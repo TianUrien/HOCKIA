@@ -54,7 +54,7 @@ export default function PulsePage() {
     <div className="min-h-screen bg-[#F4F4F6]">
       <Header />
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="mx-auto max-w-2xl pt-20 pb-24">
+        <main className="mx-auto max-w-2xl pt-under-header pb-24">
           <div className="flex items-center gap-1 px-2 pb-2 pt-2 md:px-4">
             <button
               type="button"

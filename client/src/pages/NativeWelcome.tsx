@@ -78,6 +78,10 @@ export default function NativeWelcome() {
   useEffect(() => {
     void setStatusBarForBackground(showWelcome ? 'light-bg' : 'dark-bg')
   }, [showWelcome])
+  // Leaving for the (white) app: dark icons again. The violet launch canvas
+  // above needs white ones, and with the web view under the status bar
+  // (contentInset 'never') nothing else would switch them back.
+  useEffect(() => () => void setStatusBarForBackground('light-bg'), [])
 
   // ── Redirect already-authenticated users out (same contract as Landing) ──
   useEffect(() => {

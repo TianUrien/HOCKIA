@@ -104,7 +104,7 @@ export default function ShortlistScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="shortlist-screen">
+    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="shortlist-screen">
       <DetailNavBar parent={parent} fallbackPath="/opportunities" />
       <div className="px-5 pb-3 pt-0.5">
         <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">Shortlist</h1>

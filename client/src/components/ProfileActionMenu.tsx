@@ -22,6 +22,11 @@ interface ProfileActionMenuProps {
   /** Trigger styling for the host (glass circle on a cover, plain in a nav bar). */
   triggerClassName?: string
   iconClassName?: string
+  /** "Report Leandro" / "Block Leandro" (Figma Community P12) instead of the bare verbs. */
+  actionName?: string
+  /** Replaces the default after a block (toast + navigate back): the Community
+   *  preview closes itself and offers Undo instead (Figma P26). */
+  onBlocked?: () => void
 }
 
 /**
@@ -32,7 +37,7 @@ interface ProfileActionMenuProps {
  * - Toast feedback after block/unblock
  * - Navigate away after blocking (profile becomes unavailable)
  */
-export default function ProfileActionMenu({ targetId, targetName, leadingItems = [], showBlock = true, triggerClassName, iconClassName }: ProfileActionMenuProps) {
+export default function ProfileActionMenu({ targetId, targetName, leadingItems = [], showBlock = true, triggerClassName, iconClassName, actionName, onBlocked }: ProfileActionMenuProps) {
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
@@ -87,6 +92,10 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
       // friendship-edge cache so any mounted card stops showing stale
       // "Friends"/"Pending" (Apple 1.2: a block must read as immediate).
       invalidateFriendshipEdges()
+      if (onBlocked) {
+        onBlocked()
+        return
+      }
       addToast(`${targetName} has been blocked`, 'success')
       // Navigate away — this profile is now unavailable to us
       navigate(-1)
@@ -121,11 +130,11 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
     }
   }
 
-  const items: MoreMenuItem[] = [...leadingItems, report.item]
+  const items: MoreMenuItem[] = [...leadingItems, actionName ? { ...report.item, label: `Report ${actionName}` } : report.item]
   if (showBlock) {
     items.push(blocked
-      ? { key: 'unblock', label: 'Unblock', icon: <ShieldCheck className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, onSelect: () => setShowUnblockConfirm(true) }
-      : { key: 'block', label: 'Block', icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, destructive: true, onSelect: () => setShowBlockConfirm(true) })
+      ? { key: 'unblock', label: actionName ? `Unblock ${actionName}` : 'Unblock', icon: <ShieldCheck className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, onSelect: () => setShowUnblockConfirm(true) }
+      : { key: 'block', label: actionName ? `Block ${actionName}` : 'Block', icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, destructive: true, onSelect: () => setShowBlockConfirm(true) })
   }
 
   return (
