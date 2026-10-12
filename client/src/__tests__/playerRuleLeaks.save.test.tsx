@@ -85,14 +85,12 @@ vi.mock('@/components', () => ({
 vi.mock('@/components/ProfileActionMenu', () => ({ default: () => null }))
 vi.mock('@/components/profile/ShareProfileButton', () => ({ default: () => null }))
 vi.mock('@/components/dashboard/bento/CompletionArc', () => ({ default: () => null }))
-for (const card of ['CoachPostedOpportunitiesCard', 'CoachApplicationsCard', 'BasicInfoCard', 'JourneyCard', 'MediaCard', 'AboutMeCard', 'CommunityCard']) {
-  vi.doMock(`@/components/dashboard/bento/${card}`, () => ({ default: () => <div data-testid={card} /> }))
-}
+vi.doMock('@/components/dashboard/bento/AboutMeCard', () => ({ default: () => <div data-testid="AboutMeCard" /> }))
 
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
 
-// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+// ScoutingCard counts uploaded videos (useProfileVideos); keep it inert here.
 vi.mock('@/hooks/useProfileVideos', () => ({
   useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
 }))
