@@ -57,7 +57,7 @@ export function ClubHero(props: ClubHeroProps) {
   const crest = crestUrl ? getImageUrl(crestUrl, 'avatar-md') ?? crestUrl : null
 
   return (
-    <section className="relative h-[480px] w-full overflow-hidden bg-ink-1 xl:h-[640px]" data-testid="club-hero" style={current ? undefined : { backgroundImage: crestGradient(crestColor) }}>
+    <section className={cn('relative h-[480px] w-full overflow-hidden bg-ink-1', current ? 'xl:h-[640px]' : 'lg:h-[450px] xl:h-[600px]')} data-testid="club-hero" style={current ? undefined : { backgroundImage: crestGradient(crestColor) }}>
       {current ? (
         <div className="absolute inset-0" onClick={tap} aria-hidden="true">
           <BlurImage key={current} src={getImageUrl(current, 'lightbox') ?? current} lqip={getLqipUrl(current)} eager className="h-full w-full" />
