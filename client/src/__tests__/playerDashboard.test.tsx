@@ -174,6 +174,16 @@ vi.mock('@/hooks/useClubViewOfPlayer', () => ({
 }))
 // This suite asserts the DESKTOP body; the phone tree mounts only under 1024px.
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }))
+
+// The landing is Profile v2 on every screen size (Phase 5); its own tests
+// cover the screen, so the dashboard tests only need the mount + props.
+vi.mock('@/components/profile/v2/PlayerProfileV2', () => ({
+  default: (p: { readOnly: boolean; onMessage: () => void }) => (
+    <div data-testid={p.readOnly ? 'profile-v2-visitor' : 'profile-v2-owner'}>
+      {p.readOnly && <button type="button" onClick={p.onMessage}>Message</button>}
+    </div>
+  ),
+}))
 vi.mock('@/components/home/FullMatchPrivacyNotice', () => ({ FullMatchPrivacyNotice: () => null }))
 vi.mock('@/components/profile/mobile/ManageMediaScreen', () => ({
   default: () => <div data-testid="manage-media-screen" />,
@@ -383,28 +393,16 @@ beforeEach(() => {
 })
 
 describe('PlayerDashboard (Bento Grid)', () => {
-  it('renders the owner Bento Grid on the default /dashboard/profile route', () => {
+  it('renders Profile v2 (owner) on the default /dashboard/profile route', () => {
     renderDashboard()
-    expect(screen.getByTestId('player-bento-grid-owner')).toBeInTheDocument()
-    expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
+    expect(screen.getByTestId('profile-v2-owner')).toBeInTheDocument()
+    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
   })
 
-  it('renders the public PORTFOLIO (all sections inline, no tiles) on the public profile route', () => {
-    // Public-profile redesign: visitors get one continuous scrollable
-    // page — every section mounted inline — instead of the Bento tiles
-    // that navigated to sub-screens. The Bento Grid is owner-only now.
+  it('renders Profile v2 (visitor) on the public profile landing', () => {
     renderDashboard({ readOnly: true })
+    expect(screen.getByTestId('profile-v2-visitor')).toBeInTheDocument()
     expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
-    expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
-    expect(screen.getByTestId('public-references')).toBeInTheDocument()
-    expect(screen.getByTestId('media-tab')).toBeInTheDocument()
-    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
-    expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
-    // Reconciled Connections design: the full list never renders inline —
-    // the portfolio carries the ConnectionsPreview strip instead.
-    expect(screen.getByTestId('connections-preview')).toBeInTheDocument()
-    expect(screen.queryByTestId('friends-tab')).not.toBeInTheDocument()
   })
 
   it('does not render the standalone NextStepCard (its content moved into Hero progress section)', () => {
@@ -442,12 +440,12 @@ describe('PlayerDashboard (Bento Grid)', () => {
     })
   })
 
-  it('owner "Back to dashboard" button on a section page returns to the Bento Grid', async () => {
+  it('owner "Back to dashboard" button on a section page returns to the landing', async () => {
     const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile/journey' })
     expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /back to dashboard/i }))
-    expect(await screen.findByTestId('player-bento-grid-owner')).toBeInTheDocument()
+    expect(await screen.findByTestId('profile-v2-owner')).toBeInTheDocument()
     expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
     expect(locationHistory.at(-1)).toBe('/dashboard/profile')
   })

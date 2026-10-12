@@ -28,7 +28,8 @@ import { ClubHero } from './ClubHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, RecruitingCard } from './OwnerArea'
-import { ProfileActionBar, type ActionBarButton } from './ProfileActionBar'
+import { type ActionBarButton } from './ProfileActionBar'
+import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
 
 /**
@@ -203,7 +204,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
     <div className="bg-white pb-8" data-testid="club-profile-v2">
       <CompactHeader name={name} avatarUrl={profile.avatar_url} role="club" visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
-      <div ref={heroRef}>
+      <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
         <ClubHero
           photos={coverPhotos}
           crestUrl={profile.avatar_url ?? null}
@@ -222,7 +223,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
           onEditCrest={props.onEdit}
           onSettings={() => navigate('/settings')}
         />
-      </div>
+      </div>}>
 
       {owner && (
         <div className="flex flex-col gap-3">
@@ -346,7 +347,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
         </div>
       </Section>
 
-      <ProfileActionBar buttons={buttons} />
+      </ProfileLayout>
 
       <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title="Sign in to connect with this club" action="connect" />
       {owner && (

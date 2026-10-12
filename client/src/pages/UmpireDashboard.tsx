@@ -287,11 +287,11 @@ export default function UmpireDashboard({
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${activeTab === 'profile' ? 'bg-white' : 'bg-gray-50'}`}>
       <Header mobileHidden={!readOnly || isPhone} />
       {readOnly && isOwnProfile && <PublicViewBanner />}
-      <main className={`max-w-4xl mx-auto px-4 sm:px-6 ${isPhone && activeTab === 'profile' ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12`}>
-        {isPhone && activeTab === 'profile' ? (
+      <main className={`${activeTab === 'profile' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 sm:px-6 ${activeTab === 'profile' ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12`}>
+        {activeTab === 'profile' ? (
           // Profile v2 — umpire, phone (Figma PR23 / PR25 empty state).
           <div className="-mx-4 sm:-mx-6">
             <UmpireProfileV2
@@ -626,7 +626,8 @@ export default function UmpireDashboard({
                 Network View scroll); activeTab gate for owners. The Profile
                 block already renders References, Gallery, and Posts inline
                 for visitors, so those don't need separate sections. */}
-            {(activeTab === 'profile' || readOnly) && (
+            {/* The landing is Profile v2 now; visitors on a section still get this block. */}
+            {readOnly && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (
                   <section>

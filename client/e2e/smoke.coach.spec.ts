@@ -9,9 +9,8 @@ test.describe('@smoke coach', () => {
     // Coach name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // Bento Grid landing (May 2026 Coach redesign) replaced the tab
-    // strip with cards. Coach owners see the owner-variant grid.
-    await expect(page.getByTestId('coach-bento-grid-owner')).toBeVisible({ timeout: 10000 })
+    // Profile v2 landing (coach mode of the person profile).
+    await expect(page.getByTestId('profile-v2')).toBeVisible({ timeout: 10000 })
   })
 
   test('coach public profile is accessible', async ({ page }) => {

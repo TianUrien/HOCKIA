@@ -83,9 +83,12 @@ export default function BrandProfilePage() {
   })
 
   // Phone: Profile v2 (Figma PR9) once the brand is loaded and cleared.
-  if (isMobile && brand && blockChecked && !isBlockedProfile) {
+  if (brand && blockChecked && !isBlockedProfile) {
     const canAct = Boolean(user) && profile?.role !== 'brand' && !isOwnBrand
     return (
+      <>
+      {!isMobile && <Header />}
+      <div className="lg:pt-24">
       <BrandProfileV2
         brand={brand}
         owner={false}
@@ -100,6 +103,9 @@ export default function BrandProfilePage() {
         canMessage={canAct}
         onMessage={() => navigate(`/messages?new=${brand.profile_id}`, { state: { messageOrigin: 'Profile' } })}
       />
+      <PublicProfileFooterCTA />
+      </div>
+      </>
     )
   }
 

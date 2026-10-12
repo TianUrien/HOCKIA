@@ -537,13 +537,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const viewAsClub = readOnly && isOwnProfile && searchParams.get('view') === 'club'
   const keyFactsViewer: KeyFactsViewer = !readOnly ? 'owner' : viewAsClub || isRecruitingViewer(authProfile) ? 'recruiter' : 'public'
   const d2 = isPhone && activeTab === 'profile'
-  const keyFacts = useProfileKeyFacts({ profile, viewer: keyFactsViewer, videoCounts, enabled: d2 })
+  // Profile v2 runs on phone and desktop (Phase 5), so facts load on any landing.
+  const keyFacts = useProfileKeyFacts({ profile, viewer: keyFactsViewer, videoCounts, enabled: activeTab === 'profile' })
   // Desktop never mounts the phone long scroll that reports videoCounts, so
   // it counts the same tiles itself (highlights + full matches + reels +
   // locked recruiters-only tiles) instead of full_game_video_count.
   const desktopVideoTotal = useProfileVideoTotal(profile, { own: !readOnly, enabled: !isPhone })
   const heroVideoTotal = isPhone ? videoTotal : desktopVideoTotal
-  const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
+  const clubView = useClubViewOfPlayer(readOnly && !isOwnProfile && profile ? profile : null)
   const [rolePicker, setRolePicker] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const { countries: allCountries } = useCountries()
@@ -680,7 +681,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'gallery' ? 'gallery' : activeTab === 'media' ? (readOnly ? 'videos' : 'media') : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
-    <div className="min-h-screen bg-white lg:bg-gray-50">
+    <div className={`min-h-screen bg-white ${isLanding ? '' : 'lg:bg-gray-50'}`}>
       {/* Figma Profile v2/v3: the cover carries share · gear (owner) or back · share (visitor) — no app header on the phone. */}
       <Header mobileHidden />
 
@@ -744,7 +745,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
       {!(isPhone && phoneLeaf) && !d2Leaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 pt-0 lg:pt-24 pb-12 space-y-5 md:space-y-6${phoneLeaf ? ' hidden lg:block' : ''}`}>
-        {readOnly && !isOwnProfile && (
+        {readOnly && !isOwnProfile && !showPhoneScroll && (
           <button
             type="button"
             onClick={() => handleBack()}
@@ -785,8 +786,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {/* Phone: Profile v2 (Figma t24oVt… PR1 / PR2 / PR4; spec 132:1000) —
             one scroll from the full-bleed hero to About, with the club-view
             cards and recruiter actions kept. Desktop keeps the bento for now. */}
-        {isPhone && showPhoneScroll ? (
-          <div className="-mx-4 !mt-0 md:-mx-6 lg:hidden">
+        {showPhoneScroll ? (
+          <div className="-mx-4 !mt-0 md:-mx-6">
             <PlayerProfileV2
               profile={profile}
               readOnly={readOnly}
@@ -910,7 +911,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </>
         )}
 
-        {!(isPhone && showPhoneScroll) && (
+        {!showPhoneScroll && (
         <div className={showPhoneScroll ? 'hidden space-y-5 md:space-y-6 lg:block' : 'space-y-5 md:space-y-6'}>
         {/* One-time full-match privacy notice (desktop v1 banner). Players
             answer it once; renders nothing afterwards. */}

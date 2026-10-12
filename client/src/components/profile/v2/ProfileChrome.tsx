@@ -85,8 +85,8 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
 
   return (
     <nav
-      className="sticky z-30 bg-white/95 backdrop-blur-[20px]"
-      style={{ top: `calc(env(safe-area-inset-top) + ${COMPACT_HEADER_PX}px)` }}
+      // Phone: under the compact header; desktop: under the app header.
+      className="sticky top-[calc(env(safe-area-inset-top)+52px)] z-30 bg-white/95 backdrop-blur-[20px] lg:top-[77px]"
       aria-label="Profile sections"
       data-testid="profile-anchors"
     >
