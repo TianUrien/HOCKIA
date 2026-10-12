@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { Profile, Vacancy } from '@/lib/supabase'
+import type { Vacancy } from '@/lib/supabase'
 
 /**
  * Staging audit round 3: closed roles open for signed-in members, "Message
@@ -48,7 +48,6 @@ vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: 
 import { OpportunityDetailMobile } from '@/components/opportunities/OpportunityDetailMobile'
 import OpportunityDetailView from '@/components/OpportunityDetailView'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
-import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import { playerVideoChecklist } from '@/lib/playerVideoChecklist'
 
 const vacancy = {
@@ -222,12 +221,4 @@ describe('desktop checklist counts uploaded videos', () => {
     expect(playerVideoChecklist({}, [{ kind: 'reel' }])).toEqual({ hasHighlight: false, hasFullMatch: false })
   })
 
-  it('"How clubs see you" ticks Highlight video for an uploaded highlight with no legacy link', async () => {
-    playerVideos = [{ id: 'v1', title: 'Highlights', kind: 'highlight', visibility: 'public', durationSeconds: 60 }]
-    const profile = { id: 'player-1', role: 'player', highlight_video_url: null, full_game_video_count: 0, accepted_reference_count: 0 } as unknown as Profile
-    render(<RecruitmentVisibilityWidget profile={profile} onAction={() => {}} />)
-    await waitFor(() => expect(screen.getByText(/1 of 5 added/i)).toBeTruthy())
-    const row = screen.getByText('Highlight video').closest('li') as HTMLElement
-    expect(row.textContent).toContain('Added')
-  })
 })

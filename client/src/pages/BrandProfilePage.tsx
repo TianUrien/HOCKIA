@@ -6,11 +6,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Loader2, Store, MessageCircle, UserPlus, UserCheck, Award } from 'lucide-react'
+import { ArrowLeft, Loader2, Store } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Header, Button, Avatar, ProfileSnapshot } from '@/components'
-import type { Profile } from '@/lib/supabase'
-import { BrandHeader, ProductCard, BrandPostCard } from '@/components/brands'
+import { Header, Button } from '@/components'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { useBrand } from '@/hooks/useBrand'
 import { useBrandProducts } from '@/hooks/useBrandProducts'
@@ -24,22 +22,22 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackProfileView, trackPublicProfileViewed } from '@/lib/analytics'
 import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
-import ShareProfileButton from '@/components/profile/ShareProfileButton'
-import Skeleton from '@/components/Skeleton'
-import ProfileActionMenu from '@/components/ProfileActionMenu'
 
 export default function BrandProfilePage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const isMobile = useMediaQuery('(max-width: 1023px)')
-  const { user, profile } = useAuthStore()
+  const { user, profile, loading: authLoading } = useAuthStore()
   const { brand, isLoading, error } = useBrand(slug)
   const [isBlockedProfile, setIsBlockedProfile] = useState(false)
-  const [blockChecked, setBlockChecked] = useState(false)
-  const { products, isLoading: productsLoading } = useBrandProducts(brand?.id)
-  const { posts, isLoading: postsLoading } = useBrandPosts(brand?.id)
+  // Which brand+viewer pair the block check has finished for. Derived, so a
+  // newly loaded brand is never shown before its own check ran (no one-frame
+  // flash for someone who blocked it).
+  const [checkedKey, setCheckedKey] = useState<string | null>(null)
+  const { products } = useBrandProducts(brand?.id)
+  const { posts } = useBrandPosts(brand?.id)
   const { isFollowing, followerCount, toggleFollow, isToggling } = useFollowBrand(brand?.id)
-  const { ambassadors, total: ambassadorTotal, isLoading: ambassadorsLoading } = useBrandAmbassadorsPublic(brand?.id)
+  const { ambassadors, total: ambassadorTotal } = useBrandAmbassadorsPublic(brand?.id)
 
   // Block check — must complete before rendering profile.
   //
@@ -51,18 +49,22 @@ export default function BrandProfilePage() {
   //
   // Guarded, and the result is now assigned rather than only ever set to
   // true — a sticky `true` from a previous brand hid an unrelated one.
+  const blockKey = `${brand?.profile_id ?? 'none'}|${user?.id ?? 'anon'}`
+  // Wait for the session: before auth hydrates the viewer looks anonymous,
+  // which would open the gate for someone who blocked (or was blocked by) the brand.
+  const blockChecked = !authLoading && checkedKey === blockKey
   useEffect(() => {
     let cancelled = false
-    setBlockChecked(false)
     setIsBlockedProfile(false)
-    if (!brand || !user) { setBlockChecked(true); return }
+    if (authLoading) return
+    if (!brand || !user) { setCheckedKey(blockKey); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
       .then(({ data }: { data: boolean }) => { if (!cancelled) setIsBlockedProfile(Boolean(data)) })
-      .catch(() => { /* fail closed: leave isBlockedProfile false, gate opens below */ })
-      .finally(() => { if (!cancelled) setBlockChecked(true) })
+      .catch(() => { /* fails open (unchanged): an RPC error shows the profile rather than a dead page */ })
+      .finally(() => { if (!cancelled) setCheckedKey(blockKey) })
     return () => { cancelled = true }
-  }, [brand?.profile_id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [brand?.profile_id, user?.id, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track brand profile view (skip if brand owner)
   const isOwnBrand = profile?.role === 'brand' && brand?.profile_id === user?.id
@@ -181,208 +183,6 @@ export default function BrandProfilePage() {
           </div>
         )}
 
-        {/* Brand Profile */}
-        {brand && !isBlockedProfile && (
-          <>
-            {/* Header */}
-            <BrandHeader brand={brand} />
-
-            {/* Content */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-              {/* Owner share — brand profiles use slug, not username */}
-              {isOwnBrand && brand?.slug && (
-                <div className="flex flex-wrap gap-3 mb-6">
-                  <ShareProfileButton
-                    profile={{ role: 'brand', username: brand.slug, id: brand.profile_id }}
-                  />
-                </div>
-              )}
-              {/* Action Buttons */}
-              {user && profile?.role !== 'brand' && (
-                <div className="flex flex-wrap gap-3 mb-6">
-                  {brand && (
-                    <Link to={`/messages?new=${brand.profile_id}`} state={{ messageOrigin: 'Profile' }}>
-                      <Button className="gap-2">
-                        <MessageCircle className="w-4 h-4" />
-                        Send Message
-                      </Button>
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={toggleFollow}
-                    disabled={isToggling}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isFollowing
-                        ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200'
-                        : 'bg-[#E11D48]/10 text-[#be123c] hover:bg-[#E11D48]/20 border border-[#E11D48]/20'
-                    }`}
-                  >
-                    {isFollowing ? (
-                      <UserCheck className="w-4 h-4" />
-                    ) : (
-                      <UserPlus className="w-4 h-4" />
-                    )}
-                    {isFollowing ? 'Following' : 'Follow'}
-                    {followerCount > 0 && (
-                      <span className="text-xs opacity-70">{followerCount}</span>
-                    )}
-                  </button>
-                  {brand && <ProfileActionMenu targetId={brand.profile_id} targetName={brand.name ?? 'this brand'} />}
-                </div>
-              )}
-
-              {/* Profile Snapshot — Phase 1A.3. Public-side signal block.
-                  Public mode hides missing signals, so visitors only see
-                  what's actually present on the brand profile. Owner
-                  nationality is threaded from useBrand so the Country
-                  signal can render publicly. */}
-              <div className="mb-6">
-                <ProfileSnapshot
-                  profile={{
-                    id: brand.profile_id,
-                    role: 'brand',
-                    nationality_country_id: brand.nationality_country_id,
-                    nationality: brand.nationality,
-                  } as unknown as Profile}
-                  mode="public"
-                  brand={{
-                    logo_url: brand.logo_url,
-                    bio: brand.bio,
-                    website_url: brand.website_url,
-                    instagram_url: brand.instagram_url,
-                  }}
-                  brandProductCount={products.length}
-                  brandAmbassadorCount={ambassadorTotal}
-                  brandPostCount={posts.length}
-                />
-              </div>
-
-              {/* About Section */}
-              {brand.bio && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                    About
-                  </h2>
-                  <p className="text-gray-600 whitespace-pre-wrap">
-                    {brand.bio}
-                  </p>
-                </div>
-              )}
-
-              {/* Brand Ambassadors */}
-              {!ambassadorsLoading && ambassadors.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-[#be123c]" />
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        Brand Ambassadors
-                      </h2>
-                    </div>
-                    {ambassadorTotal > 0 && (
-                      <span className="text-sm text-gray-500">{ambassadorTotal}</span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {ambassadors.map(ambassador => (
-                      <Link
-                        key={ambassador.player_id}
-                        to={`/players/id/${ambassador.player_id}`}
-                        className="flex flex-col items-center text-center p-3 rounded-xl hover:bg-gray-50 transition-colors"
-                      >
-                        <Avatar
-                          src={ambassador.avatar_url}
-                          initials={ambassador.full_name?.slice(0, 2) || '?'}
-                          size="lg"
-                          // Ambassadors are linked via player_id; the
-                          // brand_ambassadors table FK guarantees they're
-                          // players. Hardcode role to render the blue
-                          // player-tinted placeholder when no avatar.
-                          role="player"
-                        />
-                        <p className="text-sm font-semibold text-gray-900 mt-2 truncate w-full">
-                          {ambassador.full_name || 'Unknown'}
-                        </p>
-                        {ambassador.position && (
-                          <p className="text-xs text-gray-500 truncate w-full">
-                            {ambassador.position.charAt(0).toUpperCase() + ambassador.position.slice(1)}
-                          </p>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Latest Updates (brand posts) */}
-              {!postsLoading && posts.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    Latest Updates
-                  </h2>
-                  <div className="space-y-4">
-                    {posts.slice(0, 3).map(post => (
-                      <BrandPostCard
-                        key={post.id}
-                        post={post}
-                        brandName={brand.name}
-                        brandSlug={brand.slug}
-                        brandLogoUrl={brand.logo_url}
-                        brandIsVerified={brand.is_verified}
-                      />
-                    ))}
-                  </div>
-                  {posts.length > 3 && (
-                    <div className="mt-4 text-center">
-                      <Link
-                        to={`/marketplace`}
-                        className="text-sm font-medium text-hockia-primary hover:text-[#6b1fd4]"
-                      >
-                        View all updates
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Products & Services */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Products & Services
-                </h2>
-
-                {productsLoading ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {[1, 2].map(i => (
-                      <div key={i} className="rounded-xl border border-gray-200 overflow-hidden">
-                        <Skeleton width="100%" height={180} />
-                        <div className="p-4 space-y-2">
-                          <Skeleton width="60%" height={20} />
-                          <Skeleton width="100%" height={16} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : products.length === 0 ? (
-                  <p className="text-gray-500 text-sm">
-                    This brand hasn't added any products yet.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {products.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        brandWebsiteUrl={brand.website_url}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
         <PublicProfileFooterCTA />
       </div>
     </>

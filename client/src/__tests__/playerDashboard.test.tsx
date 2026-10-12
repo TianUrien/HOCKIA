@@ -61,7 +61,6 @@ vi.mock('@/components', () => ({
   WelcomeValueCard: () => <div data-testid="welcome-value-card" />,
   FreshnessCard: () => <div data-testid="freshness-card" />,
   RecentlyConnectedCard: () => <div data-testid="recently-connected-card" />,
-  ProfileSnapshot: () => <div data-testid="profile-snapshot" />,
   CategoryConfirmationBanner: () => null,
   CountryDisplay: ({ fallbackText, className }: { countryId?: number | null; fallbackText?: string | null; showNationality?: boolean; className?: string }) => (
     <span data-testid="country-display" className={className}>{fallbackText}</span>
@@ -196,14 +195,6 @@ vi.mock('@/components/profile/mobile/VideosScreen', () => ({
 }))
 vi.mock('@/components/profile/mobile/CareerScreen', () => ({
   default: () => <div data-testid="career-screen" />,
-}))
-
-vi.mock('@/components/dashboard/bento/PlayerBentoGrid', () => ({
-  default: ({ readOnly }: { readOnly: boolean }) => (
-    <div data-testid={readOnly ? 'player-bento-grid-visitor' : 'player-bento-grid-owner'}>
-      Bento Grid ({readOnly ? 'visitor' : 'owner'})
-    </div>
-  ),
 }))
 
 // May 2026 Community redesign — stub PlayerCommunityHub / PublicCommunityView
@@ -396,13 +387,11 @@ describe('PlayerDashboard (Bento Grid)', () => {
   it('renders Profile v2 (owner) on the default /dashboard/profile route', () => {
     renderDashboard()
     expect(screen.getByTestId('profile-v2-owner')).toBeInTheDocument()
-    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
   })
 
   it('renders Profile v2 (visitor) on the public profile landing', () => {
     renderDashboard({ readOnly: true })
     expect(screen.getByTestId('profile-v2-visitor')).toBeInTheDocument()
-    expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
   })
 
   it('does not render the standalone NextStepCard (its content moved into Hero progress section)', () => {
@@ -422,7 +411,6 @@ describe('PlayerDashboard (Bento Grid)', () => {
   it('renders section content when the owner deep-links to a section route', async () => {
     renderDashboard({ initialPath: '/dashboard/profile/friends' })
     // Bento Grid hides; section content shows
-    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
     // The PR2-deleted tab strip is fully gone — section navigation now
     // happens via card CTAs from the Bento landing.
@@ -510,7 +498,6 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
     expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
     // Bento Grid is hidden on section pages.
-    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
   })
 
   it('the visitor /community URL renders the portfolio with the social sections inline', () => {

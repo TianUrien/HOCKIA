@@ -17,25 +17,18 @@ import CommentsTab from '@/components/CommentsTab'
 import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
-import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import AboutMeCard from '@/components/dashboard/bento/AboutMeCard'
 import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
-import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
-import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
-import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
-import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import CoachCommunityHub from '@/components/community/CoachCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useCoachProfileStrength } from '@/hooks/useCoachProfileStrength'
-import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
@@ -413,23 +406,6 @@ export default function CoachDashboard({
     [activeTab, navigate, readOnly, routeParams.id, routeParams.username, searchParams],
   )
 
-  // Bucket-action dispatcher for RecruitmentVisibilityWidget. The coach
-  // 5-item set only emits edit-profile + tab actions (no add-video);
-  // anything unexpected falls through to opening the edit modal so the
-  // user always lands somewhere useful.
-  const handleVisibilityAction = (bucket: ProfileStrengthBucket) => {
-    switch (bucket.action.type) {
-      case 'edit-profile':
-        setShowEditModal(true)
-        break
-      case 'tab':
-        handleTabChange(bucket.action.tab as TabType)
-        break
-      default:
-        setShowEditModal(true)
-    }
-  }
-
   // PUBLIC PORTFOLIO deep links — visitor /:section URLs scroll to the
   // inline section anchor (mirror of PlayerDashboard; /friends and profile
   // excluded — no map entry → null → hook no-ops). Must stay ABOVE the
@@ -567,12 +543,6 @@ export default function CoachDashboard({
     handleTabChange('opportunities')
   }
 
-  // CoachApplicationsCard CTAs — both land on /opportunities (the
-  // marketplace). "View applications" appends ?applied=mine so the
-  // page can filter to only the coach's own applications; the
-  // marketplace also shows "you applied" badges inline.
-  const handleBrowseOpportunities = () => navigate('/opportunities')
-  const handleViewApplications = () => navigate('/opportunities?applied=mine')
 
   const isLanding = activeTab === 'profile'
 
@@ -667,12 +637,6 @@ export default function CoachDashboard({
           />
         )}
 
-        {/* Coaches without a current world club id get a one-time
-            nudge to link their club. Owner-only; doesn't appear on
-            visitor views. ClubLinkPrompt reads auth/profile state
-            internally — no props needed. */}
-        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => setShowEditModal(true)} />}
-
         {/* No recruiting-context chip on a coach's own profile (round 4):
             it scopes search results, so it lives on Community / Saved. */}
 
@@ -726,42 +690,6 @@ export default function CoachDashboard({
             onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
             onClose={() => setRolePicker(false)}
           />
-        )}
-
-        {/* G.10 — private 5-item recruitment-readiness checklist for
-            coaches. Same component as PlayerDashboard; the widget
-            branches on profile.role to pick coach-specific items. */}
-        {!readOnly && isLanding && (
-          <RecruitmentVisibilityWidget
-            profile={profile as Profile}
-            onAction={handleVisibilityAction}
-          />
-        )}
-
-        {/* Matching Increment #2 — dismissible recruitment-preferences nudge. */}
-        {!readOnly && isLanding && (
-          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
-        )}
-
-        {/* Recruitment gateway — coach owner, own landing only. Mirrors the
-            Club Dashboard placement so the primary recurring recruiter action
-            (post a role / check applicants) is reachable above "Who Viewed
-            Your Profile" without scrolling past the profile cards. The hook
-            shares CoachPostedOpportunitiesCard's cache key — no extra query
-            for recruiter coaches; non-recruiters see the empty-state CTA and
-            handleCreateOpportunity flips coach_recruits_for_team on first use. */}
-        {!readOnly && isLanding && (
-          <RecruitmentSummaryCard
-            ownerId={profile.id}
-            onCreateOpportunity={() => void handleCreateOpportunity()}
-            onManageOpportunities={handleManageOpportunities}
-          />
-        )}
-
-        {!readOnly && isLanding && (
-          <div id="profile-viewers" className="scroll-mt-20">
-            <ProfileViewersSection />
-          </div>
         )}
 
         {/* ScoutingCard — visitor-only recruitment decision surface.
@@ -909,20 +837,6 @@ export default function CoachDashboard({
             </div>
             )}
           </div>
-        ) : isLanding ? (
-          <CoachBentoGrid
-            // Same cast rationale as the Hero — Coach and Player share
-            // shape but TypeScript's structural check on the optional
-            // 'position' field needs an explicit acknowledgement.
-            profile={profile as unknown as import('@/pages/PlayerDashboard').PlayerProfileShape}
-            readOnly={readOnly}
-            onOpenTab={handleTabChange}
-            onEdit={() => setShowEditModal(true)}
-            onCreateOpportunity={handleCreateOpportunity}
-            onManageOpportunities={handleManageOpportunities}
-            onBrowseOpportunities={handleBrowseOpportunities}
-            onViewApplications={handleViewApplications}
-          />
         ) : (
           <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-24">
             <div className="p-6 md:p-8 min-h-screen">

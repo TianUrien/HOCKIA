@@ -85,17 +85,12 @@ vi.mock('@/components', () => ({
 vi.mock('@/components/ProfileActionMenu', () => ({ default: () => null }))
 vi.mock('@/components/profile/ShareProfileButton', () => ({ default: () => null }))
 vi.mock('@/components/dashboard/bento/CompletionArc', () => ({ default: () => null }))
-for (const card of ['CoachPostedOpportunitiesCard', 'CoachApplicationsCard', 'BasicInfoCard', 'JourneyCard', 'MediaCard', 'AboutMeCard', 'CommunityCard']) {
-  vi.doMock(`@/components/dashboard/bento/${card}`, () => ({ default: () => <div data-testid={card} /> }))
-}
-vi.mock('@/components/dashboard/bento/SavedCandidatesCard', () => ({
-  default: () => <div data-testid="saved-candidates-card" />,
-}))
+vi.doMock('@/components/dashboard/bento/AboutMeCard', () => ({ default: () => <div data-testid="AboutMeCard" /> }))
 
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
 
-// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+// ScoutingCard counts uploaded videos (useProfileVideos); keep it inert here.
 vi.mock('@/hooks/useProfileVideos', () => ({
   useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
 }))
@@ -152,34 +147,6 @@ describe('ScoutingCard — Save is recruiter-only', () => {
     setViewer('coach', true)
     renderCard()
     expect(await screen.findByText('Saved')).toBeInTheDocument()
-  })
-})
-
-describe('CoachBentoGrid — Saved Candidates tile only for recruiting coaches', () => {
-  const coachProfile = (recruits: boolean) => ({
-    id: 'viewer-1',
-    role: 'coach',
-    full_name: 'Sam Coach',
-    coach_recruits_for_team: recruits,
-  })
-
-  it('hidden for a coach who only looks for a role, shown for a recruiting coach', async () => {
-    const { default: CoachBentoGrid } = await import('@/components/dashboard/bento/CoachBentoGrid')
-    const props = { onOpenTab: () => undefined, onEdit: () => undefined, onCreateOpportunity: () => undefined, onManageOpportunities: () => undefined, onViewOpportunities: () => undefined }
-    const { rerender } = render(
-      <MemoryRouter>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <CoachBentoGrid {...(props as any)} profile={coachProfile(false) as any} readOnly={false} />
-      </MemoryRouter>,
-    )
-    expect(screen.queryByTestId('saved-candidates-card')).not.toBeInTheDocument()
-    rerender(
-      <MemoryRouter>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <CoachBentoGrid {...(props as any)} profile={coachProfile(true) as any} readOnly={false} />
-      </MemoryRouter>,
-    )
-    expect(screen.getByTestId('saved-candidates-card')).toBeInTheDocument()
   })
 })
 

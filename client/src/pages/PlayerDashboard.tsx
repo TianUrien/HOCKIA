@@ -20,11 +20,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import AboutMeCard from '@/components/dashboard/bento/AboutMeCard'
 import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
-import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
-import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
-import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
-import { FullMatchPrivacyNotice } from '@/components/home/FullMatchPrivacyNotice'
 import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
@@ -34,14 +30,12 @@ import ManageMediaScreen from '@/components/profile/mobile/ManageMediaScreen'
 import GalleryScreen from '@/components/profile/mobile/GalleryScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
-import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { Navigate, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
-import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { useProfileStrength } from '@/hooks/useProfileStrength'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
@@ -441,75 +435,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     [activeTab, navigate, readOnly, routeParams.id, routeParams.username, searchParams],
   )
 
-  // Scroll-and-flash request from a bucket action. The actual scroll
-  // runs inside a useEffect below so React's commit phase has finished
-  // before we look up the DOM node — rAF inside the click handler was
-  // racing the route-change re-render on some viewports and silently
-  // missing the element. Nonce forces the effect to re-fire on every
-  // click even when the target id is unchanged.
-  const [pendingScrollFlash, setPendingScrollFlash] = useState<{ testid: string; nonce: number } | null>(null)
-
-  useEffect(() => {
-    if (!pendingScrollFlash) return
-    let cancelled = false
-
-    // Two-phase: immediate rAF (typical case), then a 250ms retry to
-    // cover viewports where the OpportunitiesCard mounts asynchronously
-    // (the AvailabilityToggleStrip fetches its own state on mount).
-    const performScroll = () => {
-      if (cancelled) return
-      const el = document.querySelector<HTMLElement>(
-        `[data-testid="${pendingScrollFlash.testid}"]`,
-      )
-      if (!el) return
-      try {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } catch {
-        // Browsers without smooth-scroll support — fall through silently.
-      }
-      if (!el.classList.contains('flash-highlight')) {
-        el.classList.add('flash-highlight')
-        window.setTimeout(() => el.classList.remove('flash-highlight'), 1600)
-      }
-    }
-
-    const rafId = window.requestAnimationFrame(performScroll)
-    const settleTimeoutId = window.setTimeout(performScroll, 250)
-
-    return () => {
-      cancelled = true
-      window.cancelAnimationFrame(rafId)
-      window.clearTimeout(settleTimeoutId)
-    }
-  }, [pendingScrollFlash])
-
-  // Handler for profile strength bucket actions. Fires when the user
-  // taps an action button inside the Hero's "Full checklist" accordion.
-  const handleProfileStrengthAction = (bucket: ProfileStrengthBucket) => {
-    switch (bucket.action.type) {
-      case 'edit-profile':
-        openEdit()
-        break
-      case 'tab': {
-        const targetTab = bucket.action.tab as TabType
-        handleTabChange(targetTab)
-        // Availability lands the user on the Bento Grid (same view they
-        // came from). Schedule a scroll-and-flash on the
-        // OpportunitiesCard so the click doesn't feel like a no-op.
-        if (bucket.id === 'availability') {
-          setPendingScrollFlash({ testid: 'opportunities-card', nonce: Date.now() })
-        }
-        break
-      }
-      case 'add-video':
-        if (activeTab !== 'profile') {
-          handleTabChange('profile')
-        }
-        setShowAddVideoModal(true)
-        break
-    }
-  }
-
   // PUBLIC PORTFOLIO deep links: on the visitor view every section is
   // inline, so a /:section URL (old tile links, shares, notifications)
   // scrolls to the section's anchor instead of swapping the page. The
@@ -655,8 +580,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     trackReferenceBadgeClick('player', profile.accepted_reference_count ?? 0)
     handleTabChange('references')
   }
-
-  const handleViewOpportunities = () => navigate('/opportunities')
 
   // The Profile tab IS the Bento Grid landing page. Section pages keep
   // their existing UIs as deep-link destinations from card CTAs. PR2 will
@@ -912,47 +835,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         )}
 
         {!showPhoneScroll && (
-        <div className={showPhoneScroll ? 'hidden space-y-5 md:space-y-6 lg:block' : 'space-y-5 md:space-y-6'}>
-        {/* One-time full-match privacy notice (desktop v1 banner). Players
-            answer it once; renders nothing afterwards. */}
-        {!readOnly && isLanding && <FullMatchPrivacyNotice variant="banner" />}
-
-        {/* G.10 — private 5-item recruitment-readiness checklist.
-            Owner-only on the landing view; replaces the legacy
-            "Profile complete %" arc that used to sit in HeroIdentityCard. */}
-        {!readOnly && isLanding && (
-          <RecruitmentVisibilityWidget
-            profile={profile as Profile}
-            onAction={handleProfileStrengthAction}
-          />
-        )}
-
-        {/* Matching Increment #2 — dismissible nudge to add recruitment
-            preferences (Interested lens). Self-hides once set or dismissed. */}
-        {!readOnly && isLanding && (
-          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => openEdit('relocation')} />
-        )}
-
-        {/* Club-link recovery nudge — owner-only. Shows when the player has a
-            free-text current_club but no linked world club, and now also
-            offers an "add it to the directory" path (World Phase 0) when no
-            match exists, so players whose club/country World hasn't mapped yet
-            (e.g. Scotland) can still contribute it. Opens the profile edit
-            modal, which hosts WorldClubSearch + its add-to-directory flow. */}
-        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => openEdit('club')} />}
-
-        {/* "Who viewed your profile" — owner-only engagement nudge that
-            sits between the Hero and the Bento Grid. Same placement
-            pattern as Coach/Club/Brand dashboards. The `profile-viewers`
-            anchor + scroll-mt are required for the existing notification
-            deep-link `?tab=profile&section=viewers` to land correctly
-            (wired via useTabDeepLinkScroll + PLAYER_SECTION_ANCHORS). */}
-        {!readOnly && isLanding && (
-          <div id="profile-viewers" className="scroll-mt-20">
-            <ProfileViewersSection />
-          </div>
-        )}
-
+        <div className="space-y-5 md:space-y-6">
         {/* ScoutingCard — visitor-only recruitment decision surface.
             Three zones: availability headline, career evidence (no
             duplication with the Hero), pinned actions. Replaces the
@@ -1108,16 +991,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             </div>
             )}
           </div>
-        ) : isLanding ? (
-          // Landing view — the Bento Grid. Each card lives in its own
-          // white container; no outer card wrapper needed here.
-          <PlayerBentoGrid
-            profile={profile}
-            readOnly={readOnly}
-            onOpenTab={handleTabChange}
-            onEdit={() => openEdit()}
-            onViewOpportunities={handleViewOpportunities}
-          />
         ) : (
           // Section page — content surface with no tab strip. PR2 removed
           // the strip; users navigate via card CTAs from /dashboard/profile
