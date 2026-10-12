@@ -439,7 +439,7 @@ export default function BrandDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${activeTab === 'overview' ? 'bg-white' : 'bg-gray-50'}`}>
       <Header mobileHidden />
 
       <main data-testid="brand-dashboard" className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-under-header-lg pb-12">

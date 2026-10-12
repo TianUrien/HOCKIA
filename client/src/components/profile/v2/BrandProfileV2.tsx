@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, Check, ChevronLeft, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronLeft, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
@@ -18,6 +18,8 @@ import { positionLabel } from '@/lib/identity'
 import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import VerifiedBadge from '@/components/VerifiedBadge'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { cn } from '@/lib/utils'
@@ -139,6 +141,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const compact = useScrolledPast(heroRef)
   const [bioOpen, setBioOpen] = useState(false)
   const [partnersBusy, setPartnersBusy] = useState(false)
+  const [viewersOpen, setViewersOpen] = useState(false)
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
   const countryName = country ? (country.common_name ?? country.name) : null
@@ -234,7 +237,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       {/* Hero */}
       <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
-        <section className={cn('relative w-full overflow-hidden bg-ink-1 lg:h-[480px] xl:h-[640px]', cover ? 'h-[480px]' : 'h-[360px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
+        <section className={cn('relative w-full overflow-hidden bg-ink-1', cover ? 'h-[480px] xl:h-[640px]' : 'h-[360px] lg:h-[450px] xl:h-[600px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
           {cover
             ? <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />
             // No cover (as the other roles): brand gradient + faint pitch lines, shorter hero.
@@ -331,7 +334,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 </div>
               ))}
             </div>
-            <p className="mt-2 flex items-center gap-1 text-caption text-ink-3"><Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days</p>
+            <button type="button" onClick={() => setViewersOpen(true)} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
+              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+            </button>
           </div>
 
           {/* Open to partners */}
@@ -440,6 +445,11 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       </Section>
 
       </ProfileLayout>
+      {owner && (
+        <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel="Profile views">
+          <div className="px-1 pb-4"><ProfileViewersSection /></div>
+        </BottomSheet>
+      )}
     </div>
   )
 }
