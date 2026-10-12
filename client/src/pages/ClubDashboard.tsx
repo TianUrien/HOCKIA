@@ -37,7 +37,7 @@ import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 // Club v2 phone screens: own chunks, so desktop never downloads them.
-const ClubProfileScreen = lazy(() => import('@/components/profile/mobile/ClubProfileScreen'))
+const ClubProfileV2 = lazy(() => import('@/components/profile/v2/ClubProfileV2'))
 const ClubLeagueScreen = lazy(() => import('@/components/profile/mobile/ClubLeagueScreen'))
 const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 // Squad — own (Figma 04 Club D1.15): phone leaf for the owner; desktop keeps the v1 Members tab.
@@ -538,7 +538,7 @@ export default function ClubDashboard({
   const leafBack = () => (fromEdit ? navigate(editPath) : fromSettings ? navigate('/settings') : handleTabChange('profile'))
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isLanding ? 'bg-white' : 'bg-gray-50'}`}>
       {/* Phone landing: the cover carries share · gear (owner) or back · share
           (visitor) — no app header there, like the player screen. */}
       <Header mobileHidden={!readOnly || isLanding} />
@@ -570,10 +570,10 @@ export default function ClubDashboard({
 
       {!isLeagueLeaf && !isLinkLeaf && !isSquadLeaf && !isMediaLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
-        {isPhone && isLanding ? (
-          <div className="-mx-4 md:-mx-6">
+        {isLanding ? (
+          <div className="-mx-4 !mt-0 md:-mx-6">
             <Suspense fallback={<div className="min-h-screen bg-white" />}>
-            <ClubProfileScreen
+            <ClubProfileV2
               profile={profile}
               readOnly={readOnly}
               isOwnProfile={isOwnProfile}
@@ -582,13 +582,12 @@ export default function ClubDashboard({
               onViewPublic={handleViewPublic}
               onMessage={() => void handleSendMessage()}
               sendingMessage={sendingMessage}
-              onOpenFriends={() => handleTabChange('friends')}
               onOpenSquad={() => handleTabChange('members')}
               // Phone only: the Club v2 Opportunities screen (OpportunitiesEntry), not the v1 tab.
               onOpenRoles={() => navigate('/opportunities')}
               onPostRole={handleCreateOpportunity}
-              onOpenClubLeague={() => handleTabChange('league')}
               onOpenPosts={() => handleTabChange('posts')}
+              onOpenMedia={() => handleTabChange('media')}
             />
             </Suspense>
           </div>

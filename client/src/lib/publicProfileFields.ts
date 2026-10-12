@@ -151,6 +151,10 @@ export const PUBLIC_UMPIRE_FIELDS_LIST = [
   'last_officiated_at',
   'umpire_appointment_count',
   'accepted_reference_count',
+  // Profile v2 umpire (PR23): Available fact, friends row, flag + city.
+  'available_for_appointments',
+  'accepted_friend_count',
+  'base_country_id',
   // LastActivePill / Snapshot read these. last_active_at + show_last_active
   // both required for the per-user opt-out to work on umpire profiles.
   'last_active_at',

@@ -80,7 +80,8 @@ export function activeLine(lastActiveAt: string | null | undefined, now = new Da
 
 /**
  * Evidence line (DEV NOTE 332:742): only non-zero counts — "2 full matches",
- * "6 highlights · 7 career", "1 career entry"; with none, "Active N days ago".
+ * "6 highlights · 7 career", "1 career entry"; with none, nothing — no
+ * activity / last-seen line on profiles (founder ruling 2026-10-11).
  */
 export function evidenceLine(e: { fullMatches: number; highlights: number; career: number; lastActiveAt: string | null }, now = new Date()): { kind: 'video' | 'career' | 'active'; text: string } | null {
   const parts: string[] = []
@@ -90,8 +91,8 @@ export function evidenceLine(e: { fullMatches: number; highlights: number; caree
     parts.push(parts.length === 0 ? (e.career === 1 ? '1 career entry' : `${e.career} career entries`) : `${e.career} career`)
   }
   if (parts.length) return { kind: e.fullMatches > 0 || e.highlights > 0 ? 'video' : 'career', text: parts.join(' · ') }
-  const active = activeLine(e.lastActiveAt, now)
-  return active ? { kind: 'active', text: active } : null
+  void now
+  return null
 }
 
 /**

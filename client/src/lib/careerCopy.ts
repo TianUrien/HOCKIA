@@ -33,10 +33,24 @@ export function isCurrentEntry(e: Dated, now = new Date()): boolean {
   return e.startDate ? !e.endDate && !startsLater(e.startDate, now) : /present|now|current/i.test(e.years ?? '')
 }
 
+/** Free-text years ("2024 - 2025", "2019-present") in the profile's form: en dash, "2024 – 25", "2019 – now". */
+export function tidyYears(text: string | null | undefined): string | null {
+  const t = text?.trim()
+  if (!t) return null
+  const range = t.match(/^(\d{4})\s*[-–—]\s*(\d{4})$/)
+  if (range) {
+    const [, a, b] = range
+    return a.slice(0, 2) === b.slice(0, 2) && a !== b ? `${a} – ${b.slice(2)}` : a === b ? a : `${a} – ${b}`
+  }
+  const open = t.match(/^(\d{4})\s*[-–—]\s*(present|now|current)$/i)
+  if (open) return `${open[1]} – now`
+  return t
+}
+
 export function careerSpan(e: Dated, now = new Date()): string | null {
   const start = parts(e.startDate)
   const end = parts(e.endDate)
-  if (!start) return e.years?.trim() || null
+  if (!start) return tidyYears(e.years)
   const from = `${MONTH[start.m]} ${start.y}`
   if (!end && startsLater(e.startDate, now)) return `From ${from}`
   if (!end) return `${from} – now`

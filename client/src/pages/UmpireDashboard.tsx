@@ -60,6 +60,8 @@ import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import MediaTab from '@/components/MediaTab'
+import UmpireProfileV2 from '@/components/profile/v2/UmpireProfileV2'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -128,6 +130,7 @@ export default function UmpireDashboard({
   const profile = (profileData ?? authProfile) as UmpireProfileShape | null
   const navigate = useNavigate()
   const { addToast } = useToastStore()
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const [searchParams, setSearchParams] = useSearchParams()
   const [showEditModal, setShowEditModal] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
@@ -284,10 +287,26 @@ export default function UmpireDashboard({
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header mobileHidden={!readOnly} />
+    <div className={`min-h-screen ${activeTab === 'profile' ? 'bg-white' : 'bg-gray-50'}`}>
+      <Header mobileHidden={!readOnly || isPhone} />
       {readOnly && isOwnProfile && <PublicViewBanner />}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 ${readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-24'} pb-12">
+      <main className={`${activeTab === 'profile' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 sm:px-6 ${activeTab === 'profile' ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12`}>
+        {activeTab === 'profile' ? (
+          // Profile v2 — umpire, phone (Figma PR23 / PR25 empty state).
+          <div className="-mx-4 sm:-mx-6">
+            <UmpireProfileV2
+              profile={profile}
+              readOnly={readOnly}
+              isOwnProfile={isOwnProfile}
+              onEdit={() => setShowEditModal(true)}
+              onMessage={() => void handleSendMessage()}
+              sendingMessage={sendingMessage}
+              onViewPublic={() => navigate(`/umpires/id/${profile.id}?view=public`)}
+              onOpenSection={(section) => handleTabChange(section)}
+            />
+          </div>
+        ) : (
+        <>
         {!readOnly && <ProfileTopBar />}
         {readOnly && (
           <button
@@ -607,7 +626,8 @@ export default function UmpireDashboard({
                 Network View scroll); activeTab gate for owners. The Profile
                 block already renders References, Gallery, and Posts inline
                 for visitors, so those don't need separate sections. */}
-            {(activeTab === 'profile' || readOnly) && (
+            {/* The landing is Profile v2 now; visitors on a section still get this block. */}
+            {readOnly && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (
                   <section>
@@ -796,6 +816,8 @@ export default function UmpireDashboard({
             )}
           </div>
         </div>
+        </>
+        )}
       </main>
 
       {!readOnly && (

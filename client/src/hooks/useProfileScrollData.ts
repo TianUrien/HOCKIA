@@ -43,7 +43,7 @@ export type ScrollCareerEntry = {
   signedViaHockia: boolean
 }
 
-export type ScrollPhoto = { id: string; url: string; caption: string | null }
+export type ScrollPhoto = { id: string; url: string; caption: string | null; createdAt?: string | null }
 
 export type ProfileScrollData = {
   loading: boolean
@@ -119,10 +119,10 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
           .limit(4),
         supabase
           .from('gallery_photos')
-          .select('id, photo_url, caption')
+          .select('id, photo_url, caption, created_at')
           .eq('user_id', profileId)
           .order('order_index', { ascending: false })
-          .limit(3),
+          .limit(6),
         supabase.from('gallery_photos').select('id', { count: 'exact', head: true }).eq('user_id', profileId),
         supabase.rpc('get_profile_posts', { p_profile_id: profileId, p_limit: 6, p_offset: 0 }),
       ])
@@ -156,7 +156,7 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
           worldClub: r.world_club ? { id: r.world_club.id, club_name: r.world_club.club_name, avatar_url: r.world_club.avatar_url, flag: r.world_club.country?.flag_emoji ?? null } : null,
           signedViaHockia: r.signed_via_hockia === true,
         })),
-        photos: ((photos.data ?? []) as Array<{ id: string; photo_url: string; caption: string | null }>).map((p) => ({ id: p.id, url: p.photo_url, caption: p.caption })),
+        photos: ((photos.data ?? []) as Array<{ id: string; photo_url: string; caption: string | null; created_at?: string | null }>).map((p) => ({ id: p.id, url: p.photo_url, caption: p.caption, createdAt: p.created_at ?? null })),
         photoCount: photoCount.count ?? 0,
         posts: Array.isArray(postsPayload?.items) ? postsPayload!.items : [],
         postCount: postsPayload?.total ?? 0,

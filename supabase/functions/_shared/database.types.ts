@@ -1115,6 +1115,7 @@ export type Database = {
           bio: string | null
           category: string
           country_id: number | null
+          cover_url: string | null
           created_at: string | null
           deleted_at: string | null
           follower_count: number
@@ -1122,6 +1123,7 @@ export type Database = {
           instagram_url: string | null
           logo_url: string | null
           name: string
+          open_to_partners: boolean
           profile_id: string
           search_vector: unknown
           slug: string
@@ -1133,6 +1135,7 @@ export type Database = {
           bio?: string | null
           category?: string
           country_id?: number | null
+          cover_url?: string | null
           created_at?: string | null
           deleted_at?: string | null
           follower_count?: number
@@ -1140,6 +1143,7 @@ export type Database = {
           instagram_url?: string | null
           logo_url?: string | null
           name: string
+          open_to_partners?: boolean
           profile_id: string
           search_vector?: unknown
           slug: string
@@ -1151,6 +1155,7 @@ export type Database = {
           bio?: string | null
           category?: string
           country_id?: number | null
+          cover_url?: string | null
           created_at?: string | null
           deleted_at?: string | null
           follower_count?: number
@@ -1158,6 +1163,7 @@ export type Database = {
           instagram_url?: string | null
           logo_url?: string | null
           name?: string
+          open_to_partners?: boolean
           profile_id?: string
           search_vector?: unknown
           slug?: string
@@ -9313,6 +9319,7 @@ export type Database = {
           p_category?: string
           p_limit?: number
           p_offset?: number
+          p_open_to_partners?: boolean
           p_search?: string
         }
         Returns: Json
@@ -9431,6 +9438,7 @@ export type Database = {
       get_my_ambassador_invitations: { Args: never; Returns: Json }
       get_my_brand: { Args: never; Returns: Json }
       get_my_brand_analytics: { Args: { p_days?: number }; Returns: Json }
+      get_my_product_tap_stats: { Args: { p_days?: number }; Returns: Json }
       get_my_profile_completeness: { Args: never; Returns: Json }
       get_my_profile_view_stats: { Args: { p_days?: number }; Returns: Json }
       get_my_profile_viewers: {
@@ -10268,9 +10276,11 @@ export type Database = {
         Args: {
           p_bio?: string
           p_category?: string
+          p_cover_url?: string
           p_instagram_url?: string
           p_logo_url?: string
           p_name?: string
+          p_open_to_partners?: boolean
           p_website_url?: string
         }
         Returns: Json

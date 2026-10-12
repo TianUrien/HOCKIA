@@ -961,15 +961,13 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Show Last Active — opt-out for the LastActivePill on
-                    profile headers. When off, no viewer sees an "Active
-                    today / this week / this month" indicator on the user's
-                    public profile, regardless of viewer auth. */}
+                {/* Show Last Active — opt-out for the "Active today" hint in
+                    Chat (profiles never show activity, ruling 2026-10-11). */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
                     <p className="text-gray-900 font-medium text-sm">Show Last Active</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      When enabled, signed-in members see a small pill showing roughly when you were last active ("Active today / this week / this month"). Turn off to hide this from your public profile.
+                      When enabled, people you chat with see “Active today” in the conversation header. Turn off to hide it.
                     </p>
                   </div>
                   <button

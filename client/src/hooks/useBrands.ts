@@ -35,6 +35,9 @@ export interface Brand {
   website_url: string | null
   instagram_url: string | null
   is_verified: boolean
+  /** Profile v2 (20261012120000): cover photo + "Looking for ambassadors". */
+  cover_url?: string | null
+  open_to_partners?: boolean
   created_at: string
   /** Most recent product or post date, falls back to created_at */
   last_activity_at: string
@@ -43,6 +46,8 @@ export interface Brand {
 export interface BrandsQueryParams {
   category?: BrandCategory | null
   search?: string | null
+  /** Only brands looking for ambassadors (brands.open_to_partners). */
+  openToPartners?: boolean
   limit?: number
   offset?: number
 }
@@ -80,6 +85,8 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
         p_search: (params.search ?? null) as string | undefined,
         p_limit: limit,
         p_offset: currentOffset,
+        // Sent only when on, so a server without the parameter still answers.
+        ...(params.openToPartners ? { p_open_to_partners: true } : {}),
       })
 
       if (rpcError) {
@@ -103,7 +110,7 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
     } finally {
       setIsLoading(false)
     }
-  }, [params.category, params.search, limit, offset])
+  }, [params.category, params.search, params.openToPartners, limit, offset])
 
   const refetch = useCallback(async () => {
     setOffset(0)
@@ -120,7 +127,7 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
   useEffect(() => {
     setOffset(0)
     fetchBrands(true)
-  }, [params.category, params.search]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.category, params.search, params.openToPartners]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     brands,

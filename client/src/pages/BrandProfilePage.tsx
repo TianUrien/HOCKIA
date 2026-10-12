@@ -18,6 +18,7 @@ import { useBrandPosts } from '@/hooks/useBrandPosts'
 import { useFollowBrand } from '@/hooks/useFollowBrand'
 import { useBrandAmbassadorsPublic } from '@/hooks/useBrandAmbassadorsPublic'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import BrandProfileV2 from '@/components/profile/v2/BrandProfileV2'
 import { useAuthStore } from '@/lib/auth'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackProfileView, trackPublicProfileViewed } from '@/lib/analytics'
@@ -80,6 +81,33 @@ export default function BrandProfilePage() {
     description: brand?.bio ?? null,
     canonicalUrl: brand?.slug ? `https://inhockia.com/brands/${brand.slug}` : undefined,
   })
+
+  // Phone: Profile v2 (Figma PR9) once the brand is loaded and cleared.
+  if (brand && blockChecked && !isBlockedProfile) {
+    const canAct = Boolean(user) && profile?.role !== 'brand' && !isOwnBrand
+    return (
+      <>
+      {!isMobile && <Header />}
+      <div className="lg:pt-24">
+      <BrandProfileV2
+        brand={brand}
+        owner={false}
+        products={products}
+        posts={posts}
+        ambassadors={ambassadors}
+        ambassadorTotal={ambassadorTotal}
+        followerCount={followerCount}
+        isFollowing={isFollowing}
+        followBusy={isToggling}
+        onFollow={user ? toggleFollow : () => navigate('/signup')}
+        canMessage={canAct}
+        onMessage={() => navigate(`/messages?new=${brand.profile_id}`, { state: { messageOrigin: 'Profile' } })}
+      />
+      <PublicProfileFooterCTA />
+      </div>
+      </>
+    )
+  }
 
   return (
     <>

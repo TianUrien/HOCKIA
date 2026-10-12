@@ -131,14 +131,12 @@ describe('computeClubFit', () => {
     expect(result.components.availability).toBeGreaterThanOrEqual(0.99)
   })
 
-  it('availability is partial when open but inactive', () => {
-    const result = computeClubFit(womensClub, {
-      ...baseFemalePlayer,
-      last_active_at: fortyDaysAgo,
-    })
-    // open contributes 0.6, recency at 40d ≈ 0.83 contributes 0.4*0.83 ≈ 0.33
-    expect(result.components.availability).toBeGreaterThan(0.5)
-    expect(result.components.availability).toBeLessThan(0.95)
+  it('activity never moves fit — open counts in full whatever last_active_at says (ruling 2026-10-11)', () => {
+    const stale = computeClubFit(womensClub, { ...baseFemalePlayer, last_active_at: fortyDaysAgo })
+    const fresh = computeClubFit(womensClub, { ...baseFemalePlayer, last_active_at: new Date().toISOString() })
+    expect(stale.components.availability).toBe(1)
+    expect(stale.score).toBe(fresh.score)
+    expect(stale.reasons.some((r) => /active/i.test(r))).toBe(false)
   })
 
   it('availability is 0 when closed and inactive', () => {

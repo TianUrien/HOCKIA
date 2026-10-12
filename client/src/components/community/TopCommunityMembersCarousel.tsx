@@ -283,7 +283,7 @@ const ROLE_TITLE_DEFAULT: Record<string, string> = {
 }
 
 const CRITERION_SUBTITLE_DEFAULT: Record<string, string> = {
-  availability_activity: 'Open to opportunities and recently active.',
+  availability_activity: 'Open to opportunities.',
   completeness: 'Most complete profiles on HOCKIA.',
   recently_joined: 'Recently joined HOCKIA.',
 }

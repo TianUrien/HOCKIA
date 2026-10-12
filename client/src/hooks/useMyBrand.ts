@@ -42,6 +42,9 @@ export interface UpdateBrandInput {
   website_url?: string
   instagram_url?: string
   category?: string
+  /** '' clears the cover. */
+  cover_url?: string
+  open_to_partners?: boolean
 }
 
 export function useMyBrand(): UseMyBrandResult {
@@ -129,6 +132,8 @@ export function useMyBrand(): UseMyBrandResult {
         p_website_url: (data.website_url ?? null) as string | undefined,
         p_instagram_url: (data.instagram_url ?? null) as string | undefined,
         p_category: (data.category ?? null) as string | undefined,
+        ...(data.cover_url !== undefined ? { p_cover_url: data.cover_url } : {}),
+        ...(data.open_to_partners !== undefined ? { p_open_to_partners: data.open_to_partners } : {}),
       })
 
       if (rpcError) {

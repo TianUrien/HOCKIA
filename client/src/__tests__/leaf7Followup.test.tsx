@@ -40,13 +40,6 @@ vi.mock('@/components/ApplyToOpportunityModal', () => ({
 vi.mock('@/components/SignInPromptModal', () => ({ default: () => null }))
 
 // Public club profile · Squad tab.
-const clubMembers = vi.hoisted(() => ({ current: [] as unknown[] }))
-vi.mock('@/hooks/useClubProfileScrollData', () => ({
-  useClubProfileScrollData: () => ({
-    loading: false, photos: [], members: clubMembers.current, memberCount: clubMembers.current.length, openRoles: [], posts: [], postCount: 0,
-    worldClub: null, viewsThisWeek: null, refresh: vi.fn(),
-  }),
-}))
 vi.mock('@/hooks/useFriendship', () => ({
   useFriendship: () => ({ status: 'none', isFriend: false, loading: false, sendRequest: vi.fn(), acceptRequest: vi.fn(), removeFriend: vi.fn() }),
 }))
@@ -67,8 +60,6 @@ import NotificationsDrawer from '@/components/NotificationsDrawer'
 import { getNotificationConfig } from '@/components/notifications/config'
 import type { MyClubInvitation } from '@/lib/clubInvitations'
 import OpportunityPreviewModal from '@/components/OpportunityPreviewModal'
-import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
-import type { ClubProfileShape } from '@/pages/ClubDashboard'
 import type { Vacancy } from '@/lib/supabase'
 
 const note = (overrides: Partial<NotificationRecord> = {}): NotificationRecord => ({
@@ -281,33 +272,6 @@ describe('Apply sheet from the feed card overlay', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Apply now' }))
     expect(applyProps.current).toMatchObject({ clubName: 'CASI', clubLogo: 'w/casi.png', league: 'Metro A' })
-  })
-})
-
-describe('public club profile · Squad tab', () => {
-  it('coach rows carry the specialty, same line as Squad', () => {
-    clubMembers.current = [
-      { id: 'c1', fullName: 'E2E Test Coach', avatarUrl: null, role: 'coach', position: null, secondaryPosition: null, coachSpecialization: 'head_coach', coachSpecializationCustom: null, currentClub: null },
-      { id: 'p1', fullName: 'E2E Test Player', avatarUrl: null, role: 'player', position: 'midfielder', secondaryPosition: 'defender', coachSpecialization: null, coachSpecializationCustom: null, currentClub: null },
-    ]
-    const profile = {
-      id: 'club-1', role: 'club', full_name: 'E2E Test FC', avatar_url: null, base_location: 'London', nationality: null,
-      nationality_country_id: null, club_bio: null, club_history: null, website: null, year_founded: null, email: 'c@x.io',
-      contact_email: null, contact_email_public: false,
-    } as unknown as ClubProfileShape
-    const noop = vi.fn()
-    render(
-      <MemoryRouter>
-        <ClubProfileScreen
-          profile={profile} readOnly isOwnProfile={false}
-          onEdit={noop} onViewPublic={noop} onMessage={noop} onOpenFriends={noop} onOpenSquad={noop}
-          onOpenRoles={noop} onPostRole={noop} onOpenClubLeague={noop} onOpenPosts={noop}
-        />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByRole('tab', { name: 'Squad' }))
-    expect(screen.getByText('Coach · Head coach')).toBeTruthy()
-    expect(screen.getByText('Player · Midfielder · Defender')).toBeTruthy()
   })
 })
 

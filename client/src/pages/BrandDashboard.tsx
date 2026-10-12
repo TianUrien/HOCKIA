@@ -21,7 +21,6 @@ import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostC
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import { useBrandProfileStrength, type ProfileStrengthBucket as BrandStrengthBucket } from '@/hooks/useBrandProfileStrength'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { useBrandProducts } from '@/hooks/useBrandProducts'
 import type { BrandProduct, CreateProductInput, UpdateProductInput } from '@/hooks/useBrandProducts'
 import { useBrandPosts } from '@/hooks/useBrandPosts'
@@ -36,6 +35,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getTimeAgo, getInitials } from '@/lib/utils'
 import Skeleton from '@/components/Skeleton'
+import BrandProfileV2 from '@/components/profile/v2/BrandProfileV2'
 
 type TabType = 'overview' | 'products' | 'posts' | 'ambassadors' | 'followers'
 
@@ -88,7 +88,7 @@ export default function BrandDashboard() {
   const [isDeletingPost, setIsDeletingPost] = useState(false)
 
   // Analytics
-  const { analytics, isLoading: analyticsLoading } = useBrandAnalytics(30)
+  const { analytics } = useBrandAnalytics(30)
 
   // Ambassadors
   const {
@@ -373,6 +373,8 @@ export default function BrandDashboard() {
         website_url: data.website_url || undefined,
         instagram_url: data.instagram_url || undefined,
         category: data.category,
+        cover_url: data.cover_url,
+        open_to_partners: data.open_to_partners,
       })
 
       if (!result.success) {
@@ -437,10 +439,39 @@ export default function BrandDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${activeTab === 'overview' ? 'bg-white' : 'bg-gray-50'}`}>
       <Header mobileHidden />
 
       <main data-testid="brand-dashboard" className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-under-header-lg pb-12">
+        {activeTab === 'overview' ? (
+          // Profile v2 — brand own, phone (Figma PR13).
+          <div className="-mx-4 -mt-[calc(env(safe-area-inset-top)+0.75rem)] md:-mx-6 lg:mt-0">
+            <BrandProfileV2
+              brand={brand}
+              owner
+              products={products}
+              posts={posts}
+              ambassadors={acceptedAmbassadors.map((a) => ({ player_id: a.player_id, full_name: a.full_name, avatar_url: a.avatar_url, position: a.position, role: a.role }))}
+              ambassadorTotal={acceptedAmbassadors.length}
+              followerCount={analytics?.follower_count ?? 0}
+              pendingInvites={pendingAmbassadors.map((a) => ({ full_name: a.full_name, avatar_url: a.avatar_url }))}
+              onEdit={() => setShowEditModal(true)}
+              onViewPublic={() => navigate(`/brands/${brand.slug}`)}
+              onInvite={() => setShowAddAmbassadorModal(true)}
+              onViewInvites={() => handleTabChange('ambassadors')}
+              onAddProduct={() => setShowAddProductModal(true)}
+              onEditProduct={(p) => { setEditingProduct(p); setShowAddProductModal(true) }}
+              onPostUpdate={() => setShowAddPostModal(true)}
+              onTogglePartners={async (next) => {
+                const res = await updateBrand({ open_to_partners: next })
+                if (!res.success) addToast(res.error ?? 'Could not save', 'error')
+                else await refetchBrand()
+              }}
+              onOpenTab={(tab) => handleTabChange(tab)}
+            />
+          </div>
+        ) : (
+        <>
         <ProfileTopBar />
         {/* Profile Card */}
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm mb-6 animate-fade-in overflow-visible">
@@ -585,129 +616,7 @@ export default function BrandDashboard() {
           </div>
 
           <div className="p-6 md:p-8">
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-              <div className="space-y-8 animate-fade-in">
-                {/* Analytics Cards */}
-                {!analyticsLoading && analytics && (
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <Eye className="w-4 h-4" />
-                        <span className="text-xs font-medium">Profile Views</span>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.profile_views}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Last 30 days
-                        {analytics.profile_views_previous > 0 && (
-                          <span className={analytics.profile_views >= analytics.profile_views_previous ? 'text-emerald-600' : 'text-red-500'}>
-                            {' '}({analytics.profile_views >= analytics.profile_views_previous ? '+' : ''}
-                            {Math.round(((analytics.profile_views - analytics.profile_views_previous) / analytics.profile_views_previous) * 100)}%)
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <Users className="w-4 h-4" />
-                        <span className="text-xs font-medium">Followers</span>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.follower_count}</p>
-                      <p className="text-xs text-gray-500 mt-1">Total</p>
-                    </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <Package className="w-4 h-4" />
-                        <span className="text-xs font-medium">Products</span>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.product_count}</p>
-                      <p className="text-xs text-gray-500 mt-1">Published</p>
-                    </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <FileText className="w-4 h-4" />
-                        <span className="text-xs font-medium">Posts</span>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.post_count}</p>
-                      <p className="text-xs text-gray-500 mt-1">Published</p>
-                    </div>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <Award className="w-4 h-4" />
-                        <span className="text-xs font-medium">Ambassadors</span>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.ambassador_count}</p>
-                      <p className="text-xs text-gray-500 mt-1">Active</p>
-                    </div>
-                  </div>
-                )}
-
-                <ProfileViewersSection />
-
-                {/* Brand Info Section */}
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Brand Information</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
-                      <p className="text-gray-900 font-medium">{brand.name}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                      <p className="text-gray-900">{getCategoryLabel(brand.category) || 'Not specified'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                      {brand.website_url ? (
-                        <a
-                          href={brand.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-                        >
-                          {brand.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <p className="text-gray-500 italic">Not specified</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
-                      {brand.instagram_url ? (
-                        <a
-                          href={brand.instagram_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-                        >
-                          {brand.instagram_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <p className="text-gray-500 italic">Not specified</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* About Section */}
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
-                  {brand.bio ? (
-                    <p className="text-gray-700 whitespace-pre-wrap">{brand.bio}</p>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                      <p className="text-gray-500 mb-4">Add a description to tell people about your brand.</p>
-                      <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
-                        Add Description
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Overview is Profile v2 (BrandProfileV2) on every screen size. */}
 
             {/* Products Tab */}
             {activeTab === 'products' && (
@@ -1122,6 +1031,8 @@ export default function BrandDashboard() {
             )}
           </div>
         </div>
+        </>
+        )}
       </main>
 
       {/* Edit Brand Modal */}
