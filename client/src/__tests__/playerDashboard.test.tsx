@@ -61,7 +61,6 @@ vi.mock('@/components', () => ({
   WelcomeValueCard: () => <div data-testid="welcome-value-card" />,
   FreshnessCard: () => <div data-testid="freshness-card" />,
   RecentlyConnectedCard: () => <div data-testid="recently-connected-card" />,
-  ProfileSnapshot: () => <div data-testid="profile-snapshot" />,
   CategoryConfirmationBanner: () => null,
   CountryDisplay: ({ fallbackText, className }: { countryId?: number | null; fallbackText?: string | null; showNationality?: boolean; className?: string }) => (
     <span data-testid="country-display" className={className}>{fallbackText}</span>
@@ -196,14 +195,6 @@ vi.mock('@/components/profile/mobile/VideosScreen', () => ({
 }))
 vi.mock('@/components/profile/mobile/CareerScreen', () => ({
   default: () => <div data-testid="career-screen" />,
-}))
-
-vi.mock('@/components/dashboard/bento/PlayerBentoGrid', () => ({
-  default: ({ readOnly }: { readOnly: boolean }) => (
-    <div data-testid={readOnly ? 'player-bento-grid-visitor' : 'player-bento-grid-owner'}>
-      Bento Grid ({readOnly ? 'visitor' : 'owner'})
-    </div>
-  ),
 }))
 
 // May 2026 Community redesign — stub PlayerCommunityHub / PublicCommunityView

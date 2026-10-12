@@ -90,7 +90,6 @@ vi.mock('@/hooks/useInboxSegmentDots', () => ({ useInboxSegmentDots: () => ({ me
 
 import OpportunityPreviewModal from '@/components/OpportunityPreviewModal'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
-import MediaCard from '@/components/dashboard/bento/MediaCard'
 import { OpportunityPostedCard } from '@/components/home/cards/OpportunityPostedCard'
 import Header from '@/components/Header'
 import { PlayerHero } from '@/components/home/pulse/PlayerHero'
@@ -226,16 +225,6 @@ describe('desktop media counts include uploaded videos', () => {
     expect(playerMediaCounts({ highlight_video_url: null, full_game_video_count: 0 }, [])).toEqual({ highlights: 0, fullMatches: 0 })
     expect(playerMediaCounts({ highlight_video_url: 'https://youtu.be/x', full_game_video_count: 1 }, [{ kind: 'highlight' }, { kind: 'highlight' }, { kind: 'full_match' }, { kind: 'reel' }]))
       .toEqual({ highlights: 3, fullMatches: 2 })
-  })
-
-  it('the bento Media card shows uploaded highlights with no legacy link', () => {
-    profileVideos = [
-      { id: 'v1', title: 'A', kind: 'highlight', visibility: 'public', durationSeconds: 30 },
-      { id: 'v2', title: 'B', kind: 'highlight', visibility: 'public', durationSeconds: 30 },
-    ]
-    render(<MediaCard profile={{ id: 'player-1', highlight_video_url: null, full_game_video_count: 0 }} readOnly={false} onManageMedia={() => {}} />)
-    const tile = screen.getByText('Highlights').parentElement as HTMLElement
-    expect(tile.textContent).toContain('2')
   })
 
   it('the scouting card media line reads the same counts', () => {
