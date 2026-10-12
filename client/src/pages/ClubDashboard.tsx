@@ -15,11 +15,8 @@ import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
-import ClubBentoGrid from '@/components/dashboard/bento/ClubBentoGrid'
 import ClubBasicInfoCard from '@/components/dashboard/bento/ClubBasicInfoCard'
 import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
-import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -650,24 +647,6 @@ export default function ClubDashboard({
           </div>
         )}
 
-        {/* Recruitment gateway — club-only, owner-only. Sits right under the
-            hero so posting/managing roles is reachable without scrolling
-            past the profile cards (the full Posted Opportunities tile stays
-            lower as the detailed management surface). */}
-        {!readOnly && isLanding && (
-          <RecruitmentSummaryCard
-            ownerId={profile.id}
-            onCreateOpportunity={handleCreateOpportunity}
-            onManageOpportunities={() => handleTabChange('opportunities')}
-          />
-        )}
-
-        {!readOnly && isLanding && (
-          <div id="profile-viewers" className="scroll-mt-20">
-            <ProfileViewersSection />
-          </div>
-        )}
-
         {readOnly && activeTab !== 'friends' ? (
           // ── PUBLIC PORTFOLIO ─────────────────────────────────────────
           // Same continuous-scroll visitor page as Player/CoachDashboard
@@ -768,15 +747,6 @@ export default function ClubDashboard({
             </div>
             )}
           </div>
-        ) : isLanding ? (
-          <ClubBentoGrid
-            profile={profile as Parameters<typeof ClubBentoGrid>[0]['profile']}
-            readOnly={readOnly}
-            onOpenTab={handleTabChange}
-            onEdit={() => setShowEditModal(true)}
-            onCreateOpportunity={handleCreateOpportunity}
-            onManageOpportunities={() => handleTabChange('opportunities')}
-          />
         ) : (
           <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-24">
             <div className="p-6 md:p-8 min-h-screen">
