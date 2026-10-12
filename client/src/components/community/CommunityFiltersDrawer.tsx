@@ -130,6 +130,16 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
             </section>
           )}
 
+          {filters.role === 'brand' && (
+            <SwitchCardRow
+              title="Looking for ambassadors"
+              description="Brands open to new partners"
+              checked={filters.brandOpenToPartners}
+              onChange={() => updateFilter('brandOpenToPartners', !filters.brandOpenToPartners)}
+              testId="community-filter-partners"
+            />
+          )}
+
           {showEu && (
             <SwitchCardRow
               title="Only EU passport holders"

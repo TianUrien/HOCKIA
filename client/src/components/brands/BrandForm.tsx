@@ -10,7 +10,7 @@ import { Input, Button } from '@/components'
 import CountrySelect from '@/components/CountrySelect'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { optimizeAvatarImage, optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
@@ -42,6 +42,10 @@ export interface BrandFormData {
   logo_url: string
   website_url: string
   instagram_url: string
+  /** Profile v2 (edit only): the cover at the top of the brand page; '' = none. */
+  cover_url?: string
+  /** "Looking for ambassadors" (edit only). */
+  open_to_partners?: boolean
 }
 
 const CATEGORY_OPTIONS: { value: BrandCategory; label: string }[] = [
@@ -157,6 +161,8 @@ export function BrandForm({
             logo_url: parsed.logo_url || brand?.logo_url || '',
             website_url: parsed.website_url || brand?.website_url || '',
             instagram_url: parsed.instagram_url || brand?.instagram_url || '',
+            cover_url: parsed.cover_url ?? brand?.cover_url ?? '',
+            open_to_partners: parsed.open_to_partners ?? brand?.open_to_partners ?? false,
           }
         }
       } catch {
@@ -172,6 +178,8 @@ export function BrandForm({
       logo_url: brand?.logo_url || '',
       website_url: brand?.website_url || '',
       instagram_url: brand?.instagram_url || '',
+      cover_url: brand?.cover_url ?? '',
+      open_to_partners: brand?.open_to_partners ?? false,
     }
   }
 
@@ -258,6 +266,29 @@ export function BrandForm({
     }, 350)
     return () => window.clearTimeout(handle)
   }, [formData.slug, brand])
+
+  const coverInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const handleCoverUpload = useCallback(async (file: File) => {
+    if (!user) return
+    setUploadingCover(true)
+    try {
+      const validation = validateImage(file, { maxFileSizeMB: 15 })
+      if (!validation.valid) throw new Error(validation.error)
+      const optimized = await optimizeImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.85 })
+      const ext = optimized.type === 'image/png' ? 'png' : 'jpg'
+      const fileName = `${user.id}/brand-cover-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, optimized, { contentType: optimized.type, upsert: true, cacheControl: '31536000' })
+      if (uploadError) throw uploadError
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      setFormData((prev) => ({ ...prev, cover_url: urlData.publicUrl }))
+    } catch (err) {
+      logger.error('[BrandForm] Error uploading cover:', err)
+      setError(err instanceof Error ? err.message : 'Failed to upload cover')
+    } finally {
+      setUploadingCover(false)
+    }
+  }, [user])
 
   const handleLogoUpload = useCallback(async (file: File) => {
     if (!user) return
@@ -461,6 +492,57 @@ export function BrandForm({
           aria-label="Upload brand logo"
         />
       </div>
+
+      {/* Cover (edit only — Figma PR22): one photo, tap to change */}
+      {brand && (
+        <div>
+          <span className="mb-2 block text-sm font-medium text-gray-700">Cover photo</span>
+          <button
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            disabled={uploadingCover}
+            className="relative flex h-32 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-100 hover:border-indigo-400"
+            data-testid="brand-cover-upload"
+          >
+            {uploadingCover ? (
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            ) : formData.cover_url ? (
+              <img src={formData.cover_url} alt="Brand cover" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex flex-col items-center gap-1 text-sm text-gray-500"><Camera className="h-7 w-7 text-gray-400" /> Add a cover photo</span>
+            )}
+          </button>
+          <p className="mt-1.5 text-xs text-gray-500">Tap the cover to change it. It shows at the top of your brand page.</p>
+          {formData.cover_url && (
+            <button type="button" onClick={() => setFormData((prev) => ({ ...prev, cover_url: '' }))} className="mt-1 text-xs font-medium text-red-600">Remove cover</button>
+          )}
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleCoverUpload(f); e.target.value = '' }}
+            className="hidden"
+            aria-label="Upload brand cover"
+          />
+        </div>
+      )}
+
+      {/* Partnerships (edit only) */}
+      {brand && (
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3">
+          <span>
+            <span className="block text-sm font-medium text-gray-900">Open to partners</span>
+            <span className="block text-xs text-gray-500">Players and clubs see you’re looking for ambassadors</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(formData.open_to_partners)}
+            onChange={(e) => setFormData((prev) => ({ ...prev, open_to_partners: e.target.checked }))}
+            className="h-5 w-5 accent-[#15803d]"
+            data-testid="brand-form-partners"
+          />
+        </label>
+      )}
 
       {/* Brand Name */}
       <div>

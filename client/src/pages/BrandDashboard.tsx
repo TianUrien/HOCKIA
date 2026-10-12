@@ -36,6 +36,8 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getTimeAgo, getInitials } from '@/lib/utils'
 import Skeleton from '@/components/Skeleton'
+import BrandProfileV2 from '@/components/profile/v2/BrandProfileV2'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 type TabType = 'overview' | 'products' | 'posts' | 'ambassadors' | 'followers'
 
@@ -52,6 +54,7 @@ export default function BrandDashboard() {
   const { user, profile } = useAuthStore()
   const { brand, isLoading: brandLoading, updateBrand, refetch: refetchBrand } = useMyBrand()
   const { addToast } = useToastStore()
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [activeTab, setActiveTab] = useState<TabType>(() => {
@@ -373,6 +376,8 @@ export default function BrandDashboard() {
         website_url: data.website_url || undefined,
         instagram_url: data.instagram_url || undefined,
         category: data.category,
+        cover_url: data.cover_url,
+        open_to_partners: data.open_to_partners,
       })
 
       if (!result.success) {
@@ -441,6 +446,35 @@ export default function BrandDashboard() {
       <Header mobileHidden />
 
       <main data-testid="brand-dashboard" className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-under-header-lg pb-12">
+        {isPhone && activeTab === 'overview' ? (
+          // Profile v2 — brand own, phone (Figma PR13).
+          <div className="-mx-4 -mt-[calc(env(safe-area-inset-top)+0.75rem)] md:-mx-6">
+            <BrandProfileV2
+              brand={brand}
+              owner
+              products={products}
+              posts={posts}
+              ambassadors={acceptedAmbassadors.map((a) => ({ player_id: a.player_id, full_name: a.full_name, avatar_url: a.avatar_url, position: a.position, role: a.role }))}
+              ambassadorTotal={acceptedAmbassadors.length}
+              followerCount={analytics?.follower_count ?? 0}
+              pendingInvites={pendingAmbassadors.map((a) => ({ full_name: a.full_name, avatar_url: a.avatar_url }))}
+              onEdit={() => setShowEditModal(true)}
+              onViewPublic={() => navigate(`/brands/${brand.slug}`)}
+              onInvite={() => setShowAddAmbassadorModal(true)}
+              onViewInvites={() => handleTabChange('ambassadors')}
+              onAddProduct={() => setShowAddProductModal(true)}
+              onEditProduct={(p) => { setEditingProduct(p); setShowAddProductModal(true) }}
+              onPostUpdate={() => setShowAddPostModal(true)}
+              onTogglePartners={async (next) => {
+                const res = await updateBrand({ open_to_partners: next })
+                if (!res.success) addToast(res.error ?? 'Could not save', 'error')
+                else await refetchBrand()
+              }}
+              onOpenTab={(tab) => handleTabChange(tab)}
+            />
+          </div>
+        ) : (
+        <>
         <ProfileTopBar />
         {/* Profile Card */}
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm mb-6 animate-fade-in overflow-visible">
@@ -1122,6 +1156,8 @@ export default function BrandDashboard() {
             )}
           </div>
         </div>
+        </>
+        )}
       </main>
 
       {/* Edit Brand Modal */}

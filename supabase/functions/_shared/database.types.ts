@@ -9319,6 +9319,7 @@ export type Database = {
           p_category?: string
           p_limit?: number
           p_offset?: number
+          p_open_to_partners?: boolean
           p_search?: string
         }
         Returns: Json
@@ -10275,9 +10276,11 @@ export type Database = {
         Args: {
           p_bio?: string
           p_category?: string
+          p_cover_url?: string
           p_instagram_url?: string
           p_logo_url?: string
           p_name?: string
+          p_open_to_partners?: boolean
           p_website_url?: string
         }
         Returns: Json

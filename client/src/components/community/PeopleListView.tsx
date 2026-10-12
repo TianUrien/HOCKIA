@@ -17,6 +17,7 @@ import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
@@ -704,6 +705,21 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const clubFitIds = useMemo(() => (clubView ? allMembers.filter((m) => m.role === 'player').map((m) => m.id) : []), [clubView, allMembers])
   const clubFit = useCommunityClubFit(clubFitIds, clubFitTarget ? clubCtx?.id ?? null : null, clubView)
 
+  // Brands looking for ambassadors (brands.open_to_partners) — one read of the
+  // brand list while the switch is on; member rows match on the profile id.
+  const partnersQ = useQuery({
+    queryKey: ['brands-open-to-partners'],
+    enabled: filters.brandOpenToPartners,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_brands', { p_open_to_partners: true, p_limit: 500, p_offset: 0 })
+      if (error) throw error
+      const rows = ((data as unknown as { brands?: Array<{ profile_id?: string | null }> })?.brands ?? [])
+      return new Set(rows.map((r) => r.profile_id).filter((id): id is string => Boolean(id)))
+    },
+  })
+  const partnerBrandIds = useMemo(() => partnersQ.data ?? new Set<string>(), [partnersQ.data])
+
   const filteredMembers = useMemo(() => {
     let result = allMembers
 
@@ -720,6 +736,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
     if (filters.brandCategory) {
       result = result.filter(m => m.role === 'brand' && m.brand_category === filters.brandCategory)
+    }
+    if (filters.brandOpenToPartners) {
+      result = result.filter(m => m.role === 'brand' && partnerBrandIds.has(m.id))
     }
     if (filters.position.length > 0) {
       result = result.filter(m =>
@@ -969,7 +988,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, blockedIds, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
+  }, [allMembers, blockedIds, filters, partnerBrandIds, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.

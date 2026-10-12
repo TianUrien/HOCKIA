@@ -92,6 +92,8 @@ export interface CommunityFilters {
   evidenceEnoughOnly: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
+  /** Brands tab: only brands with open_to_partners ("Looking for ambassadors"). */
+  brandOpenToPartners: boolean
   /** Club "Open opportunities" — null = off; 'any' = has any open opportunity;
    * 'player'/'coach' = split by opportunity_type. Server-side via the RPC
    * (p_open_opportunity_type). Club tab only. */
@@ -112,6 +114,7 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   evidenceEnoughOnly: false,
   availability: 'all',
   brandCategory: null,
+  brandOpenToPartners: false,
   clubOpportunityType: null,
 })
 
@@ -178,7 +181,7 @@ export function useCommunityFiltersState(
         next.hasVideo = false
         next.evidenceEnoughOnly = false
         next.clubOpportunityType = null
-        if (value !== 'brand') next.brandCategory = null
+        if (value !== 'brand') { next.brandCategory = null; next.brandOpenToPartners = false }
       }
       return next
     })
@@ -203,6 +206,7 @@ export function useCommunityFiltersState(
     return (
       filters.role !== expectedRole ||
       filters.brandCategory !== null ||
+      filters.brandOpenToPartners ||
       filters.clubOpportunityType !== null ||
       filters.position.length > 0 ||
       filters.coachSpecializations.length > 0 ||
