@@ -3,6 +3,7 @@ import { ChevronRight, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { SheetActions } from '@/components/settings/settingsUi'
+import CountrySelect from '@/components/CountrySelect'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -20,12 +21,11 @@ import { cn } from '@/lib/utils'
  * the top, then grouped rows: Brand (name · role locked · category ·
  * country) · About (bio) · Partnerships (Open to partners) · Links (website
  * · Instagram). Each row opens a sheet and saves only that field through
- * update_brand. The country is set when the brand is created; there is no
- * write for it yet, so it shows read-only.
+ * update_brand (country since 20261012140000).
  */
-type Field = 'name' | 'category' | 'bio' | 'website' | 'instagram'
+type Field = 'name' | 'category' | 'country' | 'bio' | 'website' | 'instagram'
 
-const TITLE: Record<Field, string> = { name: 'Brand name', category: 'Category', bio: 'Bio', website: 'Website', instagram: 'Instagram' }
+const TITLE: Record<Field, string> = { name: 'Brand name', category: 'Category', country: 'Country', bio: 'Bio', website: 'Website', instagram: 'Instagram' }
 const BIO_MAX = 1000
 const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
 
@@ -66,9 +66,11 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<'logo' | 'cover' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [countryDraft, setCountryDraft] = useState<number | null>(null)
 
   const open = (field: Field) => {
     setError(null)
+    setCountryDraft(brand.country_id ?? null)
     setDraft(field === 'name' ? brand.name : field === 'category' ? brand.category : field === 'bio' ? brand.bio ?? '' : field === 'website' ? brand.website_url ?? '' : brand.instagram_url ?? '')
     setEditing(field)
   }
@@ -88,6 +90,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
     switch (editing) {
       case 'name': return v ? void persist({ name: v }) : setError('The brand name is required.')
       case 'category': return void persist({ category: v })
+      case 'country': return countryDraft ? void persist({ country_id: countryDraft }) : setError('Choose a country.')
       case 'bio': return v.length > BIO_MAX ? setError(`Keep it under ${BIO_MAX} characters.`) : void persist({ bio: v })
       case 'website':
       case 'instagram': {
@@ -166,7 +169,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
         <Row label="Brand name" value={brand.name} onClick={() => open('name')} />
         <Row label="Role" value="Brand" locked />
         <Row label="Category" value={categoryLabel} onClick={() => open('category')} />
-        <Row label="Country" value={countryValue} locked />
+        <Row label="Country" value={countryValue} onClick={() => open('country')} />
       </Group>
 
       <Group label="About">
@@ -209,6 +212,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
                   {BRAND_CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
               )}
+              {editing === 'country' && <CountrySelect appearance="field" label="Country" value={countryDraft} onChange={(id) => setCountryDraft(id)} />}
               {editing === 'bio' && <textarea autoFocus value={draft} maxLength={BIO_MAX} rows={7} onChange={(e) => setDraft(e.target.value)} aria-label="Bio" placeholder="What you make and who it’s for." className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" />}
               {editing === 'website' && <input autoFocus type="url" inputMode="url" autoCapitalize="none" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="yourbrand.com" aria-label="Website" className={input} />}
               {editing === 'instagram' && <input autoFocus type="url" inputMode="url" autoCapitalize="none" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="instagram.com/yourbrand" aria-label="Instagram" className={input} />}

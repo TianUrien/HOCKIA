@@ -10301,6 +10301,7 @@ export type Database = {
         Args: {
           p_bio?: string
           p_category?: string
+          p_country_id?: number
           p_cover_url?: string
           p_instagram_url?: string
           p_logo_url?: string
