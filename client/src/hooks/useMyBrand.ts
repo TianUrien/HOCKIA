@@ -45,6 +45,8 @@ export interface UpdateBrandInput {
   /** '' clears the cover. */
   cover_url?: string
   open_to_partners?: boolean
+  /** Brand edit screen: the country the brand operates from. */
+  country_id?: number
 }
 
 export function useMyBrand(): UseMyBrandResult {
@@ -134,6 +136,7 @@ export function useMyBrand(): UseMyBrandResult {
         p_category: (data.category ?? null) as string | undefined,
         ...(data.cover_url !== undefined ? { p_cover_url: data.cover_url } : {}),
         ...(data.open_to_partners !== undefined ? { p_open_to_partners: data.open_to_partners } : {}),
+        ...(data.country_id !== undefined ? { p_country_id: data.country_id } : {}),
       })
 
       if (rpcError) {

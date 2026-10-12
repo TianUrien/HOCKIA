@@ -378,6 +378,7 @@ export default function BrandDashboard() {
         category: data.category,
         cover_url: data.cover_url,
         open_to_partners: data.open_to_partners,
+        country_id: data.country_id ?? undefined,
       })
 
       if (!result.success) {
