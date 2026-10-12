@@ -66,3 +66,14 @@ describe('open-role status line', () => {
     expect(roleStatusLine(null, null, now)).toBeNull()
   })
 })
+
+describe('career years in free text', () => {
+  it('uses an en dash and the short second year, like the dated spans', async () => {
+    const { tidyYears } = await import('@/lib/careerCopy')
+    expect(tidyYears('2024 - 2025')).toBe('2024 – 25')
+    expect(tidyYears('2019-present')).toBe('2019 – now')
+    expect(tidyYears('1998 - 2003')).toBe('1998 – 2003')
+    expect(tidyYears('2021')).toBe('2021')
+    expect(tidyYears('  ')).toBeNull()
+  })
+})
