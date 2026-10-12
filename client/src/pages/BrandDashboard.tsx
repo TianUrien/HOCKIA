@@ -36,6 +36,8 @@ import { logger } from '@/lib/logger'
 import { getTimeAgo, getInitials } from '@/lib/utils'
 import Skeleton from '@/components/Skeleton'
 import BrandProfileV2 from '@/components/profile/v2/BrandProfileV2'
+import BrandEditScreen from '@/components/brands/BrandEditScreen'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 type TabType = 'overview' | 'products' | 'posts' | 'ambassadors' | 'followers'
 
@@ -52,6 +54,7 @@ export default function BrandDashboard() {
   const { user, profile } = useAuthStore()
   const { brand, isLoading: brandLoading, updateBrand, refetch: refetchBrand } = useMyBrand()
   const { addToast } = useToastStore()
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [activeTab, setActiveTab] = useState<TabType>(() => {
@@ -1036,7 +1039,20 @@ export default function BrandDashboard() {
       </main>
 
       {/* Edit Brand Modal */}
-      {showEditModal && (
+      {/* Phone: the Edit profile screen (Figma PR22); desktop keeps the form dialog. */}
+      {showEditModal && isPhone && brand && (
+        <BrandEditScreen
+          brand={brand}
+          onClose={() => setShowEditModal(false)}
+          onPreview={() => { setShowEditModal(false); navigate(`/brands/${brand.slug}`) }}
+          onSave={async (patch) => {
+            const res = await updateBrand(patch)
+            if (res.success) await refetchBrand()
+            return res
+          }}
+        />
+      )}
+      {showEditModal && !isPhone && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowEditModal(false)} />
