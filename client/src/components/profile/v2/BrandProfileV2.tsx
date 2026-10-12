@@ -21,6 +21,7 @@ import VerifiedBadge from '@/components/VerifiedBadge'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { cn } from '@/lib/utils'
+import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard } from './OwnerArea'
@@ -232,17 +233,21 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       {/* Hero */}
       <div ref={heroRef}>
-        <section className="relative h-[480px] w-full overflow-hidden bg-ink-1" data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
-          {cover && <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />}
+        <section className={cn('relative w-full overflow-hidden bg-ink-1', cover ? 'h-[480px]' : 'h-[360px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
+          {cover
+            ? <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />
+            // No cover (as the other roles): brand gradient + faint pitch lines, shorter hero.
+            : <img src={pitchHorizontal} alt="" aria-hidden="true" className="absolute inset-x-0 top-[60px] h-[200px] w-full" />}
           {!cover && owner && (
-            <button type="button" onClick={props.onEdit} className="absolute left-1/2 top-[34%] z-10 flex h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-white/50 bg-white/10 text-[13px] font-semibold text-white" data-testid="brand-hero-add-cover">
+            <button type="button" onClick={props.onEdit} className="absolute left-1/2 top-[38%] z-10 flex h-[104px] w-[104px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-white/50 bg-white/10 text-[13px] font-semibold text-white" data-testid="brand-hero-add-cover">
               <Camera className="h-6 w-6" strokeWidth={1.6} /> Add a cover
             </button>
           )}
           <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: SCRIM }} aria-hidden="true" />
           <div className="absolute inset-x-4 top-[max(env(safe-area-inset-top),12px)] flex items-center justify-between pt-1">
             {owner
-              ? <button type="button" onClick={props.onEdit} aria-label="Edit cover" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+              // With no cover the "Add a cover" circle is the one camera action.
+              ? (cover ? <button type="button" onClick={props.onEdit} aria-label="Edit cover" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button> : <span />)
               : <button type="button" onClick={back} aria-label="Back" className={GLASS_BTN}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => void share()} aria-label="Share brand" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
@@ -315,9 +320,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           <div className="px-4" data-testid="brand-private-stats">
             <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
               {[
-                { value: vis.visibility?.views_7d ?? 0, label: 'profile views' },
+                { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
                 { value: searches.summary?.total ?? 0, label: 'in searches' },
-                { value: taps.data?.total ?? 0, label: 'taps to your store' },
+                { value: taps.data?.total ?? 0, label: (taps.data?.total ?? 0) === 1 ? 'tap to your store' : 'taps to your store' },
               ].map((s) => (
                 <div key={s.label} className="flex flex-1 flex-col items-center py-3">
                   <span className="text-title tabular-nums text-ink-1">{s.value}</span>
@@ -354,9 +359,10 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       <SectionAnchors items={anchors} />
 
-      {!owner && (
+      {/* Public: zero counts are hidden (owners see them in their private stats). */}
+      {!owner && (props.followerCount > 0 || props.ambassadorTotal > 0 || brand.is_verified) && (
         <div className="flex gap-4 px-4 pt-3 text-secondary" data-testid="brand-follow-stats">
-          <span className="font-semibold text-ink-1">{props.followerCount} {props.followerCount === 1 ? 'follower' : 'followers'}</span>
+          {props.followerCount > 0 && <span className="font-semibold text-ink-1">{props.followerCount} {props.followerCount === 1 ? 'follower' : 'followers'}</span>}
           {props.ambassadorTotal > 0 && <span className="font-semibold text-ink-1">{props.ambassadorTotal} {props.ambassadorTotal === 1 ? 'ambassador' : 'ambassadors'}</span>}
           {brand.is_verified && <span className="text-ink-2">✓ Verified brand</span>}
         </div>
