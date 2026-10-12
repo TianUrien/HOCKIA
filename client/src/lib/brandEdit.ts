@@ -54,18 +54,25 @@ export function validateBrandUrl(rawValue: string): string | null {
 }
 
 const IG_HANDLE = /^[A-Za-z0-9._]{1,30}$/
+// First path segments that are Instagram pages, not accounts (post / reel / story links).
+const IG_RESERVED = new Set(['p', 'reel', 'reels', 'stories', 'explore', 'accounts', 'tv', 'direct'])
+// A bare value that is clearly a website, not a handle (dotted handles stay valid).
+const LOOKS_LIKE_SITE = /^(www\.|instagram\.com$)|\.(com|net|org|io|app|store|shop|info|biz)$/i
 
 /**
  * Instagram input → a stored link. Accepts "@brand", "brand", "brand.official",
- * "instagram.com/brand" or a full URL (share params dropped). Anything that
- * isn't an Instagram handle or link is an error, so a website can't land in
- * the Instagram field. Empty clears it.
+ * "instagram.com/brand", mobile / short links and full URLs (share params
+ * dropped). Post / reel / story links and website addresses are errors, so
+ * neither lands in the Instagram field. Empty clears it.
  */
 export function normalizeInstagram(raw: string): { url: string; error: null } | { url: null; error: string } {
   const value = raw.trim()
   if (!value) return { url: '', error: null }
-  const fromUrl = value.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/@?([^/?#\s]+)/i)
-  const handle = fromUrl ? fromUrl[1] : /[/:]/.test(value) ? null : value.replace(/^@/, '')
+  const fromUrl = value.match(/^(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/@?([^/?#\s]+)/i)
+  if (fromUrl && IG_RESERVED.has(fromUrl[1].toLowerCase())) {
+    return { url: null, error: 'That’s a post link. Use your profile link or @handle.' }
+  }
+  const handle = fromUrl ? fromUrl[1] : /[/:]/.test(value) || LOOKS_LIKE_SITE.test(value.replace(/^@/, '')) ? null : value.replace(/^@/, '')
   if (!handle || !IG_HANDLE.test(handle)) return { url: null, error: 'Enter an Instagram handle (@yourbrand) or link.' }
   return { url: `https://instagram.com/${handle}`, error: null }
 }

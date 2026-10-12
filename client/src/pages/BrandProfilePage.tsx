@@ -27,7 +27,7 @@ export default function BrandProfilePage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const isMobile = useMediaQuery('(max-width: 1023px)')
-  const { user, profile } = useAuthStore()
+  const { user, profile, loading: authLoading } = useAuthStore()
   const { brand, isLoading, error } = useBrand(slug)
   const [isBlockedProfile, setIsBlockedProfile] = useState(false)
   // Which brand+viewer pair the block check has finished for. Derived, so a
@@ -50,18 +50,21 @@ export default function BrandProfilePage() {
   // Guarded, and the result is now assigned rather than only ever set to
   // true — a sticky `true` from a previous brand hid an unrelated one.
   const blockKey = `${brand?.profile_id ?? 'none'}|${user?.id ?? 'anon'}`
-  const blockChecked = checkedKey === blockKey
+  // Wait for the session: before auth hydrates the viewer looks anonymous,
+  // which would open the gate for someone who blocked (or was blocked by) the brand.
+  const blockChecked = !authLoading && checkedKey === blockKey
   useEffect(() => {
     let cancelled = false
     setIsBlockedProfile(false)
+    if (authLoading) return
     if (!brand || !user) { setCheckedKey(blockKey); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
       .then(({ data }: { data: boolean }) => { if (!cancelled) setIsBlockedProfile(Boolean(data)) })
-      .catch(() => { /* fail closed: leave isBlockedProfile false, gate opens below */ })
+      .catch(() => { /* fails open (unchanged): an RPC error shows the profile rather than a dead page */ })
       .finally(() => { if (!cancelled) setCheckedKey(blockKey) })
     return () => { cancelled = true }
-  }, [brand?.profile_id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [brand?.profile_id, user?.id, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track brand profile view (skip if brand owner)
   const isOwnBrand = profile?.role === 'brand' && brand?.profile_id === user?.id
