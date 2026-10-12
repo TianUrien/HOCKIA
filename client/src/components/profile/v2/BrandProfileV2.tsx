@@ -15,6 +15,7 @@ import { hasAnalyticsConsent } from '@/lib/cookieConsent'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { GLASS, initialsOf } from '@/lib/communityCard'
 import { positionLabel } from '@/lib/identity'
+import { instagramHandleOf } from '@/lib/brandEdit'
 import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import VerifiedBadge from '@/components/VerifiedBadge'
@@ -149,9 +150,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const category = categoryLabel(brand.category)
   const cover = brand.cover_url ?? null
   const logo = brand.logo_url ? getImageUrl(brand.logo_url, 'avatar-md') ?? brand.logo_url : null
-  const instagram = brand.instagram_url?.trim()
-    ? brand.instagram_url.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/.*$/, '') || null
-    : null
+  const instagram = instagramHandleOf(brand.instagram_url)
   const bio = brand.bio?.trim() || null
 
   const share = async () => {

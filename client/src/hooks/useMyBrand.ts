@@ -5,7 +5,7 @@
  * Used on the Brand dashboard and onboarding pages.
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -54,6 +54,11 @@ export function useMyBrand(): UseMyBrandResult {
   const [brand, setBrand] = useState<BrandDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Once the brand has loaded, a refetch (after a save) keeps it on screen:
+  // no loading flag (the dashboard swaps to a skeleton on it, tearing down
+  // the phone edit screen mid-save) and no reset to null on a failed
+  // refetch (the dashboard sends a brand-less owner to onboarding).
+  const loadedRef = useRef(false)
 
   const fetchMyBrand = useCallback(async () => {
     if (!user || profile?.role !== 'brand') {
@@ -63,7 +68,7 @@ export function useMyBrand(): UseMyBrandResult {
     }
 
     try {
-      setIsLoading(true)
+      if (!loadedRef.current) setIsLoading(true)
       setError(null)
 
       const { data, error: rpcError } = await supabase.rpc('get_my_brand')
@@ -73,10 +78,11 @@ export function useMyBrand(): UseMyBrandResult {
       }
 
       setBrand(data as BrandDetail | null)
+      loadedRef.current = data != null
     } catch (err) {
       logger.error('[useMyBrand] Error fetching brand:', err)
       setError(err instanceof Error ? err.message : 'Failed to load brand')
-      setBrand(null)
+      if (!loadedRef.current) setBrand(null)
     } finally {
       setIsLoading(false)
     }

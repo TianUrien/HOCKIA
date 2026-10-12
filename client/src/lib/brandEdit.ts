@@ -52,3 +52,27 @@ export function validateBrandUrl(rawValue: string): string | null {
   }
   return null
 }
+
+const IG_HANDLE = /^[A-Za-z0-9._]{1,30}$/
+
+/**
+ * Instagram input → a stored link. Accepts "@brand", "brand", "brand.official",
+ * "instagram.com/brand" or a full URL (share params dropped). Anything that
+ * isn't an Instagram handle or link is an error, so a website can't land in
+ * the Instagram field. Empty clears it.
+ */
+export function normalizeInstagram(raw: string): { url: string; error: null } | { url: null; error: string } {
+  const value = raw.trim()
+  if (!value) return { url: '', error: null }
+  const fromUrl = value.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/@?([^/?#\s]+)/i)
+  const handle = fromUrl ? fromUrl[1] : /[/:]/.test(value) ? null : value.replace(/^@/, '')
+  if (!handle || !IG_HANDLE.test(handle)) return { url: null, error: 'Enter an Instagram handle (@yourbrand) or link.' }
+  return { url: `https://instagram.com/${handle}`, error: null }
+}
+
+/** "@handle" from a stored Instagram link or handle; null when it isn't one. */
+export function instagramHandleOf(stored: string | null | undefined): string | null {
+  if (!stored?.trim()) return null
+  const r = normalizeInstagram(stored)
+  return r.url ? r.url.replace('https://instagram.com/', '') : null
+}

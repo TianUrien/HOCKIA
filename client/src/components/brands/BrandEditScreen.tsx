@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
 import { optimizeAvatarImage, optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { getImageUrl } from '@/lib/imageUrl'
-import { BRAND_CATEGORY_OPTIONS, validateBrandUrl } from '@/lib/brandEdit'
+import { BRAND_CATEGORY_OPTIONS, instagramHandleOf, normalizeInstagram, validateBrandUrl } from '@/lib/brandEdit'
 import type { BrandDetail } from '@/hooks/useBrand'
 import type { UpdateBrandInput } from '@/hooks/useMyBrand'
 import { cn } from '@/lib/utils'
@@ -67,6 +67,16 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
   const [uploading, setUploading] = useState<'logo' | 'cover' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [countryDraft, setCountryDraft] = useState<number | null>(null)
+  const [quickBusy, setQuickBusy] = useState(false)
+
+  // One-tap saves (partners switch, remove cover): one at a time, and say so when they fail.
+  const quickSave = async (patch: UpdateBrandInput) => {
+    if (quickBusy) return
+    setQuickBusy(true)
+    const res = await onSave(patch)
+    setQuickBusy(false)
+    if (!res.success) addToast(res.error ?? 'Could not save that. Please try again.', 'error')
+  }
 
   const open = (field: Field) => {
     setError(null)
@@ -92,12 +102,15 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
       case 'category': return void persist({ category: v })
       case 'country': return countryDraft ? void persist({ country_id: countryDraft }) : setError('Choose a country.')
       case 'bio': return v.length > BIO_MAX ? setError(`Keep it under ${BIO_MAX} characters.`) : void persist({ bio: v })
-      case 'website':
-      case 'instagram': {
+      case 'website': {
         const urlError = validateBrandUrl(v)
         if (urlError) return setError(urlError)
-        const value = v && !/^https?:\/\//i.test(v) ? `https://${v}` : v
-        return void persist(editing === 'website' ? { website_url: value } : { instagram_url: value })
+        return void persist({ website_url: v && !/^https?:\/\//i.test(v) ? `https://${v}` : v })
+      }
+      case 'instagram': {
+        const ig = normalizeInstagram(v)
+        if (ig.error !== null) return setError(ig.error)
+        return void persist({ instagram_url: ig.url })
       }
       default: return undefined
     }
@@ -129,7 +142,8 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
   const countryValue = country ? [country.flag_emoji, country.common_name ?? country.name].filter(Boolean).join(' ') : null
   const categoryLabel = BRAND_CATEGORY_OPTIONS.find((c) => c.value === brand.category)?.label ?? null
   const host = (u: string | null) => (u ? u.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : null)
-  const instagram = brand.instagram_url ? `@${brand.instagram_url.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/.*$/, '')}` : null
+  const igHandle = instagramHandleOf(brand.instagram_url)
+  const instagram = igHandle ? `@${igHandle}` : null
   const logo = brand.logo_url ? getImageUrl(brand.logo_url, 'avatar-md') ?? brand.logo_url : null
 
   return (
@@ -160,7 +174,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
           {uploading === 'cover' ? 'Uploading…' : brand.cover_url ? <img src={getImageUrl(brand.cover_url, 'feed-full') ?? brand.cover_url} alt="" className="h-full w-full object-cover" /> : 'Add a cover photo'}
         </button>
         <p className="text-caption text-ink-3">Tap the cover to change it. It shows at the top of your brand page.</p>
-        {brand.cover_url && <button type="button" onClick={() => void onSave({ cover_url: '' })} className="self-start text-caption font-semibold text-red-600">Remove cover</button>}
+        {brand.cover_url && <button type="button" onClick={() => void quickSave({ cover_url: '' })} disabled={quickBusy} className="self-start text-caption font-semibold text-red-600">Remove cover</button>}
         <input ref={logoRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { void upload('logo', e.target.files?.[0]); e.target.value = '' }} />
         <input ref={coverRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { void upload('cover', e.target.files?.[0]); e.target.value = '' }} />
       </div>
@@ -186,7 +200,8 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
               role="switch"
               aria-checked={Boolean(brand.open_to_partners)}
               aria-label="Open to partners"
-              onClick={() => void onSave({ open_to_partners: !brand.open_to_partners })}
+              disabled={quickBusy}
+              onClick={() => void quickSave({ open_to_partners: !brand.open_to_partners })}
               className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', brand.open_to_partners ? 'bg-[#15803d]' : 'bg-gray-300')}
               data-testid="brand-edit-partners"
             >
@@ -215,7 +230,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
               {editing === 'country' && <CountrySelect appearance="field" label="Country" value={countryDraft} onChange={(id) => setCountryDraft(id)} />}
               {editing === 'bio' && <textarea autoFocus value={draft} maxLength={BIO_MAX} rows={7} onChange={(e) => setDraft(e.target.value)} aria-label="Bio" placeholder="What you make and who it’s for." className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" />}
               {editing === 'website' && <input autoFocus type="url" inputMode="url" autoCapitalize="none" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="yourbrand.com" aria-label="Website" className={input} />}
-              {editing === 'instagram' && <input autoFocus type="url" inputMode="url" autoCapitalize="none" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="instagram.com/yourbrand" aria-label="Instagram" className={input} />}
+              {editing === 'instagram' && <input autoFocus autoCapitalize="none" autoCorrect="off" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="@yourbrand" aria-label="Instagram" className={input} />}
               {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
               <SheetActions onCancel={() => setEditing(null)} onSave={() => void save()} saving={saving} />
             </div>

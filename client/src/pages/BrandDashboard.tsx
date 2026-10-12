@@ -469,7 +469,6 @@ export default function BrandDashboard() {
               onTogglePartners={async (next) => {
                 const res = await updateBrand({ open_to_partners: next })
                 if (!res.success) addToast(res.error ?? 'Could not save', 'error')
-                else await refetchBrand()
               }}
               onOpenTab={(tab) => handleTabChange(tab)}
             />
@@ -1046,11 +1045,8 @@ export default function BrandDashboard() {
           brand={brand}
           onClose={() => setShowEditModal(false)}
           onPreview={() => { setShowEditModal(false); navigate(`/brands/${brand.slug}`) }}
-          onSave={async (patch) => {
-            const res = await updateBrand(patch)
-            if (res.success) await refetchBrand()
-            return res
-          }}
+          // updateBrand already refetches the brand.
+          onSave={(patch) => updateBrand(patch)}
         />
       )}
       {showEditModal && !isPhone && (

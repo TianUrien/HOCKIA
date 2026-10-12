@@ -30,7 +30,10 @@ export default function BrandProfilePage() {
   const { user, profile } = useAuthStore()
   const { brand, isLoading, error } = useBrand(slug)
   const [isBlockedProfile, setIsBlockedProfile] = useState(false)
-  const [blockChecked, setBlockChecked] = useState(false)
+  // Which brand+viewer pair the block check has finished for. Derived, so a
+  // newly loaded brand is never shown before its own check ran (no one-frame
+  // flash for someone who blocked it).
+  const [checkedKey, setCheckedKey] = useState<string | null>(null)
   const { products } = useBrandProducts(brand?.id)
   const { posts } = useBrandPosts(brand?.id)
   const { isFollowing, followerCount, toggleFollow, isToggling } = useFollowBrand(brand?.id)
@@ -46,16 +49,17 @@ export default function BrandProfilePage() {
   //
   // Guarded, and the result is now assigned rather than only ever set to
   // true — a sticky `true` from a previous brand hid an unrelated one.
+  const blockKey = `${brand?.profile_id ?? 'none'}|${user?.id ?? 'anon'}`
+  const blockChecked = checkedKey === blockKey
   useEffect(() => {
     let cancelled = false
-    setBlockChecked(false)
     setIsBlockedProfile(false)
-    if (!brand || !user) { setBlockChecked(true); return }
+    if (!brand || !user) { setCheckedKey(blockKey); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
       .then(({ data }: { data: boolean }) => { if (!cancelled) setIsBlockedProfile(Boolean(data)) })
       .catch(() => { /* fail closed: leave isBlockedProfile false, gate opens below */ })
-      .finally(() => { if (!cancelled) setBlockChecked(true) })
+      .finally(() => { if (!cancelled) setCheckedKey(blockKey) })
     return () => { cancelled = true }
   }, [brand?.profile_id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -14,7 +14,7 @@ import { optimizeAvatarImage, optimizeImage, validateImage } from '@/lib/imageOp
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
-import { BRAND_CATEGORY_OPTIONS as CATEGORY_OPTIONS, validateBrandUrl } from '@/lib/brandEdit'
+import { BRAND_CATEGORY_OPTIONS as CATEGORY_OPTIONS, normalizeInstagram, validateBrandUrl } from '@/lib/brandEdit'
 import type { BrandDetail } from '@/hooks/useBrand'
 
 interface BrandFormProps {
@@ -382,18 +382,17 @@ export function BrandForm({
       setError('Please fix the website URL before saving.')
       return
     }
-    const instagramValidation = validateBrandUrl(formData.instagram_url)
-    if (instagramValidation) {
-      setInstagramError(instagramValidation)
-      setError('Please fix the Instagram URL before saving.')
+    const ig = normalizeInstagram(formData.instagram_url)
+    if (ig.error !== null) {
+      setInstagramError(ig.error)
+      setError('Please fix the Instagram handle before saving.')
       return
     }
-
     try {
       // formData.category was narrowed to BrandCategory by the empty-string
       // check above; cast to satisfy the onSubmit signature (which still
       // requires the strict BrandCategory union).
-      await onSubmit({ ...formData, category: formData.category as BrandCategory })
+      await onSubmit({ ...formData, instagram_url: ig.url, category: formData.category as BrandCategory })
       clearDraft() // Clear saved draft on successful submission
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save brand')
@@ -648,13 +647,11 @@ export function BrandForm({
             if (instagramError) setInstagramError(null)
           }}
           onBlur={(e) => {
-            const value = e.target.value.trim()
-            if (value && !value.startsWith('http://') && !value.startsWith('https://')) {
-              setFormData(prev => ({ ...prev, instagram_url: `https://${value}` }))
-            }
-            setInstagramError(validateBrandUrl(value))
+            const ig = normalizeInstagram(e.target.value)
+            if (ig.url) setFormData(prev => ({ ...prev, instagram_url: ig.url }))
+            setInstagramError(ig.error)
           }}
-          placeholder="instagram.com/yourbrand"
+          placeholder="@yourbrand or instagram.com/yourbrand"
         />
         {instagramError && (
           <p className="mt-1 text-xs text-red-600">{instagramError}</p>
