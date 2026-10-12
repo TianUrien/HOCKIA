@@ -150,8 +150,9 @@ test.describe('@smoke player', () => {
       page.getByRole('heading', { name: /e2e test brand/i })
     ).toBeVisible({ timeout: 20000 })
 
-    // "Send Message" button should be visible (brand messaging is now enabled)
-    const messageLink = page.getByRole('link', { name: /send message/i })
+    // Profile v2: Follow + Message bar (fixed on phone, under the card on
+    // desktop). Only the visible one counts.
+    const messageLink = page.getByRole('button', { name: /^message$/i }).locator('visible=true').first()
     await expect(messageLink).toBeVisible({ timeout: 10000 })
 
     await messageLink.click()
@@ -167,7 +168,7 @@ test.describe('@smoke player', () => {
       page.getByRole('heading', { name: /e2e test brand/i })
     ).toBeVisible({ timeout: 20000 })
 
-    await page.getByRole('link', { name: /send message/i }).click()
+    await page.getByRole('button', { name: /^message$/i }).locator('visible=true').first().click()
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
     const composer = page.getByPlaceholder(/^message$|type a message/i)
