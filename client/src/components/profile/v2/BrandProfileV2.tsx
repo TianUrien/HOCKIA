@@ -25,7 +25,8 @@ import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard } from './OwnerArea'
-import { ProfileActionBar, type ActionBarButton } from './ProfileActionBar'
+import { type ActionBarButton } from './ProfileActionBar'
+import { ProfileLayout } from './ProfileLayout'
 import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
 
 /**
@@ -232,8 +233,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       <CompactHeader name={brand.name} avatarUrl={brand.logo_url} role="brand" visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
       {/* Hero */}
-      <div ref={heroRef}>
-        <section className={cn('relative w-full overflow-hidden bg-ink-1', cover ? 'h-[480px]' : 'h-[360px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
+      <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
+        <section className={cn('relative w-full overflow-hidden bg-ink-1 lg:h-[480px] xl:h-[640px]', cover ? 'h-[480px]' : 'h-[360px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
           {cover
             ? <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />
             // No cover (as the other roles): brand gradient + faint pitch lines, shorter hero.
@@ -248,7 +249,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             {owner
               // With no cover the "Add a cover" circle is the one camera action.
               ? (cover ? <button type="button" onClick={props.onEdit} aria-label="Edit cover" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button> : <span />)
-              : <button type="button" onClick={back} aria-label="Back" className={GLASS_BTN}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
+              : <button type="button" onClick={back} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => void share()} aria-label="Share brand" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
               {owner
@@ -280,7 +281,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             </span>
           )}
         </section>
-      </div>
+      </div>}>
 
       {owner && (
         <div className="flex flex-col gap-3">
@@ -438,7 +439,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
         </div>
       </Section>
 
-      <ProfileActionBar buttons={buttons} />
+      </ProfileLayout>
     </div>
   )
 }

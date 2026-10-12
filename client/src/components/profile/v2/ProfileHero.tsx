@@ -65,7 +65,7 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
 
   const current = photos[index] ?? null
   return (
-    <section className="relative h-[540px] w-full overflow-hidden bg-ink-1" data-testid="profile-hero" style={current ? undefined : { backgroundImage: roleGradient(role) }}>
+    <section className="relative h-[540px] w-full overflow-hidden bg-ink-1 lg:h-[480px] xl:h-[640px]" data-testid="profile-hero" style={current ? undefined : { backgroundImage: roleGradient(role) }}>
       {current && (
         <div className="absolute inset-0" onClick={tap} aria-hidden="true">
           <BlurImage key={current} src={getImageUrl(current, 'lightbox') ?? current} lqip={getLqipUrl(current)} eager className="h-full w-full" />
@@ -86,7 +86,7 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
         {owner ? (
           <button type="button" onClick={onCamera} aria-label="Change photos" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         ) : (
-          <button type="button" onClick={onBack} aria-label="Back" className={GLASS_BTN}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
+          <button type="button" onClick={onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
         )}
         <div className="flex items-center gap-2">
           <button type="button" onClick={onShare} aria-label="Share profile" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>

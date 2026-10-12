@@ -42,9 +42,8 @@ test.describe('@smoke club', () => {
     // Club name should render as H1
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
 
-    // Bento Grid landing (May 2026 Club redesign) replaced the tab strip
-    // with cards. Club owners see the owner-variant grid.
-    await expect(page.getByTestId('club-bento-grid-owner')).toBeVisible({ timeout: 10_000 })
+    // Profile v2 landing (club).
+    await expect(page.getByTestId('club-profile-v2')).toBeVisible({ timeout: 10_000 })
   })
 
   test('club can open applicants page for seeded vacancy', async ({ page }) => {
@@ -78,7 +77,7 @@ test.describe('@smoke club', () => {
     // Owner viewing own public profile sees the Share button instead of
     // Message (which is hidden because messaging yourself is a no-op).
     await expect(
-      page.getByTestId('share-profile-button')
+      page.getByRole('button', { name: 'Share profile' }).first()
     ).toBeVisible({ timeout: 10000 })
 
     // Conversely, the Message button must NOT appear when viewing own profile

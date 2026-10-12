@@ -32,7 +32,8 @@ import { ProfileHero } from './ProfileHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, PrivateStats } from './OwnerArea'
-import { ProfileActionBar, type ActionBarButton } from './ProfileActionBar'
+import { type ActionBarButton } from './ProfileActionBar'
+import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
 
 /**
@@ -234,7 +235,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
     <div className="bg-white pb-8" data-testid="umpire-profile-v2">
       <CompactHeader name={name} avatarUrl={profile.avatar_url} role="umpire" visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
-      <div ref={heroRef}>
+      <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
         <ProfileHero
           photos={photos}
           name={name}
@@ -250,7 +251,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
           onSettings={() => navigate('/settings')}
           moreMenu={moreMenu(cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS))}
         />
-      </div>
+      </div>}>
 
       {owner && (
         <>
@@ -349,7 +350,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
         </Section>
       )}
 
-      <ProfileActionBar buttons={buttons} />
+      </ProfileLayout>
       <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title="Sign in to connect" action="connect" />
       {photoIndex !== null && (
         <MediaLightbox

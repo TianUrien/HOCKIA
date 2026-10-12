@@ -450,8 +450,8 @@ export default function CoachDashboard({
   const d2 = isPhone && activeTab === 'profile'
   const viewAsClub = readOnly && isOwnProfile && searchParams.get('view') === 'club'
   const keyFactsViewer: KeyFactsViewer = !readOnly ? 'owner' : viewAsClub || isRecruitingViewer(authProfile) ? 'recruiter' : 'public'
-  const keyFacts = useProfileKeyFacts({ profile: profile as unknown as PlayerProfileShape | null, viewer: keyFactsViewer, videoCounts: null, enabled: d2 })
-  const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
+  const keyFacts = useProfileKeyFacts({ profile: profile as unknown as PlayerProfileShape | null, viewer: keyFactsViewer, videoCounts: null, enabled: activeTab === 'profile' })
+  const clubView = useClubViewOfPlayer(readOnly && !isOwnProfile && profile ? profile : null)
   const [rolePicker, setRolePicker] = useState(false)
 
   if (!profile) return null
@@ -577,7 +577,7 @@ export default function CoachDashboard({
   const isLanding = activeTab === 'profile'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isLanding ? 'bg-white' : 'bg-gray-50'}`}>
       {/* Phone: no app header on a profile, own or public — the cover carries
           back · share (visitor) or share · gear (owner), as on the player profile. */}
       <Header mobileHidden />
@@ -587,9 +587,9 @@ export default function CoachDashboard({
       {/* Own profile on phone: the hero cover carries Share + Settings (as for
           players), so there is no separate Profile title row above it. */}
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : 'pt-[calc(env(safe-area-inset-top)+1rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
-        {isPhone && isLanding ? (
+        {isLanding ? (
           // Profile v2 — coach, phone (Figma PR8 public / PR12 own).
-          <div className="-mx-4 !mt-0 md:-mx-6 lg:hidden">
+          <div className="-mx-4 !mt-0 md:-mx-6">
             <PlayerProfileV2
               profile={profile as unknown as PlayerProfileShape}
               readOnly={readOnly}

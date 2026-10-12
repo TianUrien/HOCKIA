@@ -538,7 +538,7 @@ export default function ClubDashboard({
   const leafBack = () => (fromEdit ? navigate(editPath) : fromSettings ? navigate('/settings') : handleTabChange('profile'))
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isLanding ? 'bg-white' : 'bg-gray-50'}`}>
       {/* Phone landing: the cover carries share · gear (owner) or back · share
           (visitor) — no app header there, like the player screen. */}
       <Header mobileHidden={!readOnly || isLanding} />
@@ -570,7 +570,7 @@ export default function ClubDashboard({
 
       {!isLeagueLeaf && !isLinkLeaf && !isSquadLeaf && !isMediaLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[calc(env(safe-area-inset-top)+0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
-        {isPhone && isLanding ? (
+        {isLanding ? (
           <div className="-mx-4 !mt-0 md:-mx-6">
             <Suspense fallback={<div className="min-h-screen bg-white" />}>
             <ClubProfileV2

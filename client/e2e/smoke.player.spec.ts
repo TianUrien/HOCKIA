@@ -9,7 +9,7 @@ async function getE2EVacancyCard(page: import('@playwright/test').Page) {
 }
 
 // The 2026-09 redesign gives phones their own profile and opportunities
-// screens (Figma 03 Player); desktop keeps the bento dashboard for now.
+// screens (Figma 03 Player); the profile is Profile v2 on desktop too.
 const isPhone = (page: import('@playwright/test').Page) => (page.viewportSize()?.width ?? 1280) < 1024
 
 test.describe('@smoke player', () => {
@@ -19,16 +19,10 @@ test.describe('@smoke player', () => {
     // Profile name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // The Bento Grid is the landing view (no tab strip). Verify the
-    // owner variant renders + at least one of its cards.
-    if (isPhone(page)) {
-      // Phone: Profile v2 (full-bleed hero + section anchors), no bento.
-      await expect(page.getByTestId('profile-v2')).toBeVisible({ timeout: 10000 })
-      await expect(page.getByTestId('profile-section-career')).toBeVisible({ timeout: 10000 })
-    } else {
-      await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
-      await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })
-    }
+    // Profile v2 on every screen size (phone: full-bleed hero; desktop:
+    // photo card + sections column, Figma PR24).
+    await expect(page.getByTestId('profile-v2')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('profile-section-career')).toBeVisible({ timeout: 10000 })
 
     // PR2 — section pages are now their own routes; legacy ?tab=X URLs
     // redirect on mount. Both should land on the journey section page.
