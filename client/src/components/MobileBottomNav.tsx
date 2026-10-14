@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
 import { useNavChrome } from '@/lib/navChrome'
+import { ANDROID_CHROME } from '@/lib/platformChrome'
 
 interface NavItem {
   id: string
@@ -19,12 +20,23 @@ interface NavItem {
   dot?: boolean
 }
 
+// iOS tab (Figma 02 Components): 26px icon, 10px label, purple = selected.
+const TAB_IOS = 'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors'
+// Android destination (Figma P14 24:1186): 64 tall, 24px icon inside a 64×32
+// pill that fills brand-soft when selected, 11px semibold label.
+const TAB_ANDROID = 'flex h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors'
+const TAB_FOCUS = 'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hockia-primary focus-visible:rounded-xl'
+
 /**
  * Tab bar v3 (Figma 02 Components / 03 Player): Home · Community ·
  * Opportunities · Inbox · Profile. No Clubs tab — clubs are members,
  * reached through Search and the Community role filter — and no floating
  * Hockia AI button — the assistant lives inside Search (founder rulings
  * 2026-09-20). 26px icons, 10px medium labels, purple = the selected tab.
+ *
+ * In the Android app the same five destinations wear the Material 3
+ * navigation bar from Figma P14 (24:1184): an 80 pt bar on surface-subtle,
+ * a brand-soft pill behind the selected icon, labels in ink.
  */
 export default function MobileBottomNav() {
   const { user, profile, location, isActive, handleNavigate } = useNavigation()
@@ -90,7 +102,26 @@ export default function MobileBottomNav() {
   // Signed in but no profile yet = mid-signup; no bar until onboarding ends.
   if (user && !profile) return null
 
+  // The icon (plus the unread dot) sits in a 26 pt box on iOS, or inside the
+  // Material pill on Android. `selected` paints the pill; the icon and label
+  // colours follow the platform.
+  const iconSlot = (node: React.ReactNode, selected: boolean) =>
+    ANDROID_CHROME ? (
+      <span className={cn('flex h-8 w-16 items-center justify-center rounded-full transition-colors', selected && 'bg-hockia-soft')}>
+        <span className="relative flex h-6 w-6 items-center justify-center">{node}</span>
+      </span>
+    ) : (
+      <span className="relative flex h-[26px] w-[26px] items-center justify-center">{node}</span>
+    )
 
+  const tabClassName = (selected: boolean) =>
+    cn(
+      ANDROID_CHROME ? TAB_ANDROID : TAB_IOS,
+      TAB_FOCUS,
+      selected ? (ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary') : 'text-ink-2',
+    )
+
+  const labelClassName = cn('hidden min-[360px]:inline', ANDROID_CHROME ? 'text-micro font-semibold' : 'text-tab')
 
   const renderTab = (item: NavItem, active: boolean) => {
     const Icon = item.icon
@@ -110,23 +141,29 @@ export default function MobileBottomNav() {
         }}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
-        className={cn(
-          'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hockia-primary focus-visible:rounded-xl',
-          active ? 'text-hockia-primary' : 'text-ink-2',
-        )}
+        className={tabClassName(active)}
       >
-        <span className="relative flex h-[26px] w-[26px] items-center justify-center">
-          <Icon className="h-[26px] w-[26px]" strokeWidth={active ? 2.2 : 1.85} />
-          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
-        </span>
+        {iconSlot(
+          <>
+            <Icon
+              className={cn(ANDROID_CHROME ? 'h-6 w-6' : 'h-[26px] w-[26px]', ANDROID_CHROME && active && 'text-hockia-primary')}
+              strokeWidth={active ? 2.2 : 1.85}
+            />
+            {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
+          </>,
+          active,
+        )}
         {/* Labels hide below 360px where five 10px labels no longer share a row. */}
-        <span className="hidden text-tab min-[360px]:inline">{item.label}</span>
+        <span className={labelClassName}>{item.label}</span>
       </button>
     )
   }
 
-  const barClassName =
-    'lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]'
+  const barClassName = cn(
+    'lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]',
+    ANDROID_CHROME ? 'bg-surface-subtle' : 'bg-white',
+  )
+  const rowClassName = ANDROID_CHROME ? 'flex h-20 items-center px-2' : 'flex items-stretch px-1.5'
 
   // ── Guest exploration bar ────────────────────────────────────────────────
   // Guests keep a bar on the public explore surface (Community, Opportunities
@@ -149,7 +186,7 @@ export default function MobileBottomNav() {
       <>
         <div className="h-20 lg:hidden" aria-hidden="true" />
         <nav className={barClassName} aria-label="Explore Hockia">
-          <div className="flex items-stretch px-1.5">
+          <div className={rowClassName}>
             {guestItems.map((item) => renderTab(item, isActive(item.path)))}
             {/* Conversion slot: a filled pill reads as an action, so the two
                 areas stay legible as "places". Log in lives in the header. */}
@@ -160,13 +197,16 @@ export default function MobileBottomNav() {
                 trackSignupCtaClick('guest_nav')
                 handleNavigate('/signup')
               }}
-              className="flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] text-hockia-primary active:scale-95"
+              className={cn(ANDROID_CHROME ? TAB_ANDROID : TAB_IOS, 'text-hockia-primary active:scale-95')}
               aria-label="Create a profile"
             >
-              <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-hockia-primary">
-                <UserPlus className="h-[15px] w-[15px] text-white" strokeWidth={2.5} />
-              </span>
-              <span className="hidden text-tab font-semibold min-[360px]:inline">Join</span>
+              {iconSlot(
+                <span className={cn('flex items-center justify-center rounded-full bg-hockia-primary', ANDROID_CHROME ? 'h-6 w-6' : 'h-[26px] w-[26px]')}>
+                  <UserPlus className="h-[15px] w-[15px] text-white" strokeWidth={2.5} />
+                </span>,
+                false,
+              )}
+              <span className={cn(labelClassName, 'font-semibold')}>Join</span>
             </button>
           </div>
         </nav>
@@ -203,31 +243,34 @@ export default function MobileBottomNav() {
       <div className="h-20 lg:hidden" aria-hidden="true" />
 
       <nav className={barClassName} aria-label="Main">
-        <div className="flex items-stretch px-1.5">
+        <div className={rowClassName}>
           {navItems.map((item) => renderTab(item, isActive(item.path) || (item.id === 'inbox' && isActive('/messages')) || (item.id === 'opportunities' && onClubRecruiting)))}
 
-          {/* Profile = the member's own avatar (Figma tab/Profile). */}
+          {/* Profile = the member's own avatar (Figma tab/Profile). On iOS
+              the selected avatar wears a purple ring; on Android the pill
+              behind it is the indicator (Figma P14 24:1212). */}
           <button
             type="button"
             onClick={() => handleNavigate('/dashboard/profile')}
             aria-label="Profile"
             aria-current={onProfile ? 'page' : undefined}
-            className={cn(
-              'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors',
-              onProfile ? 'text-hockia-primary' : 'text-ink-2',
-            )}
+            className={tabClassName(onProfile)}
           >
-            <span className="flex h-[26px] w-[26px] items-center justify-center">
+            {iconSlot(
               <Avatar
                 src={profile?.avatar_url}
                 initials={initials}
                 size="sm"
                 loading="eager"
                 role={profile?.role}
-                className={cn('!h-[26px] !w-[26px]', onProfile && 'ring-2 ring-hockia-primary ring-offset-1')}
-              />
-            </span>
-            <span className="hidden text-tab min-[360px]:inline">Profile</span>
+                className={cn(
+                  ANDROID_CHROME ? '!h-6 !w-6' : '!h-[26px] !w-[26px]',
+                  onProfile && !ANDROID_CHROME && 'ring-2 ring-hockia-primary ring-offset-1',
+                )}
+              />,
+              onProfile,
+            )}
+            <span className={labelClassName}>Profile</span>
           </button>
         </div>
       </nav>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Check, ChevronDown, ChevronLeft, Lock, MapPin, Sparkles } from 'lucide-react'
+import { Calendar, Check, ChevronDown, Lock, MapPin, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -23,6 +23,8 @@ import {
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { Chips, HardnessPill, Muted, Section, Segments } from './roleFormUi'
 import { cn } from '@/lib/utils'
+import { BackGlyph } from '@/components/ui/BackGlyph'
+import { ANDROID_CHROME } from '@/lib/platformChrome'
 
 /**
  * Post a role (Figma 04 Club 330:318 The role → 330:431 The offer →
@@ -258,8 +260,8 @@ export default function PostRoleScreen({ draftId }: Props) {
       <header className="shrink-0">
         <div className="relative flex h-11 items-center justify-between px-4">
           <button type="button" onClick={back} className="flex h-11 items-center gap-0.5 text-body text-hockia-primary" aria-label={copy.back ? `Back to ${copy.back}` : 'Cancel'}>
-            {copy.back && <ChevronLeft className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
-            {copy.back ?? 'Cancel'}
+            {copy.back && <BackGlyph className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
+            {copy.back && ANDROID_CHROME ? null : (copy.back ?? 'Cancel')}
           </button>
           <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
           {editing ? <span aria-hidden="true" /> : (

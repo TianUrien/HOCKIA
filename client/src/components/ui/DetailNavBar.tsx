@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BackGlyph } from '@/components/ui/BackGlyph'
+import { ANDROID_CHROME } from '@/lib/platformChrome'
 
 interface DetailNavBarProps {
   /** Name of the screen the chevron returns to ("Opportunities", "Home"). */
@@ -53,12 +54,13 @@ export function DetailNavBar({
         type="button"
         onClick={back}
         aria-label={`Back to ${parent}`}
-        className="flex h-11 shrink-0 items-center pr-2 text-body text-hockia-primary"
+        className={cn('flex h-11 shrink-0 items-center pr-2 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}
       >
         <span className="flex h-11 w-11 items-center justify-center">
-          <ChevronLeft className="h-6 w-6" strokeWidth={2} />
+          <BackGlyph className="h-6 w-6" strokeWidth={2} />
         </span>
-        {title && !showParent ? null : <span className={cn('truncate', wideParent ? 'max-w-[120px]' : title ? 'max-w-[96px]' : 'max-w-[200px]')}>{parent}</span>}
+        {/* The parent's name beside the arrow is an iOS convention; Material shows the arrow alone. */}
+        {ANDROID_CHROME || (title && !showParent) ? null : <span className={cn('truncate', wideParent ? 'max-w-[120px]' : title ? 'max-w-[96px]' : 'max-w-[200px]')}>{parent}</span>}
       </button>
       {title && wideParent ? (
         // Long parent label (Figma 327:318 "‹ Applicants  Leandro Bica  •••"):

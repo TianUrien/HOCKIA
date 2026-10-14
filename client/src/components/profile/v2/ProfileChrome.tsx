@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { COMPACT_HEADER_PX } from './profileChromeHooks'
-import { ChevronLeft, Share } from 'lucide-react'
+import { Share } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
  * Compact header (Figma PR10 / PR11): once the hero has scrolled away, a white
@@ -29,7 +30,7 @@ export function CompactHeader({ name, avatarUrl, role = 'player', visible, owner
     >
       <div className="flex items-center gap-1 px-2" style={{ height: COMPACT_HEADER_PX }}>
         {!owner ? (
-          <button type="button" onClick={onBack} aria-label="Back" tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><ChevronLeft className="h-6 w-6" strokeWidth={1.8} /></button>
+          <button type="button" onClick={onBack} aria-label="Back" tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><BackGlyph className="h-6 w-6" strokeWidth={1.8} /></button>
         ) : <span className="w-3" />}
         <FaceCircle url={avatarUrl} name={name} role={role} size="avatar-sm" initialsClassName="text-[11px]" className="mr-1.5 h-[30px] w-[30px] shrink-0" />
         <p className="min-w-0 flex-1 truncate text-body font-semibold text-ink-1">{name}</p>
