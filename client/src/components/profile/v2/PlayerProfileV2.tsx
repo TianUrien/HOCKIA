@@ -254,6 +254,17 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   // ── Overview facts ──────────────────────────────────────────────────────
   const playsAt = fact(facts, isCoach ? 'coaches_at' : 'plays_at')
+  // "Plays at" opens the club's own profile when the club has claimed its
+  // directory entry; the directory page otherwise (QA F6).
+  const claimedClub = useQuery({
+    queryKey: ['world-club-claimed', profile.current_world_club_id],
+    enabled: Boolean(profile.current_world_club_id),
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data: row } = await supabase.from('world_clubs').select('claimed_profile_id').eq('id', profile.current_world_club_id as string).maybeSingle()
+      return (row?.claimed_profile_id as string | null | undefined) ?? null
+    },
+  })
   const available = fact(facts, 'available')
   const passport = fact(facts, 'passport')
   // Available follows the role's own open flag (Figma review 11 Oct): off →
@@ -266,7 +277,10 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       ? (owner ? { value: 'Not looking right now', detail: null, tone: 'muted' } : null)
       : isCoach
         ? { value: 'Open to coach', detail: !available.missing && available.value !== 'Open to coach' ? available.value : null, tone: 'positive' }
-        : { value: available.value, detail: available.detail, tone: 'positive' }
+        // Open but no dates yet: say so, never "Not given" in green (QA F2).
+        : available.missing
+          ? { value: 'Open to play', detail: owner ? 'Add when you’re available' : null, tone: 'positive' }
+          : { value: available.value, detail: available.detail, tone: 'positive' }
   const skills = isCoach ? [] : (profile.specialist_skills ?? []).filter(Boolean)
   const friendCount = profile.accepted_friend_count ?? 0
   const friendsPreview = useQuery({
@@ -440,7 +454,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             value={playsAt.value}
             detail={playsAt.detail}
             leading={<EntityAvatar src={props.currentClubLogo} name={playsAt.value} role="club" size={40} />}
-            onClick={profile.current_world_club_id ? () => navigate(`/world/clubs/${profile.current_world_club_id}`) : undefined}
+            onClick={profile.current_world_club_id ? () => navigate(claimedClub.data ? `/clubs/id/${claimedClub.data}` : `/world/clubs/${profile.current_world_club_id}`) : undefined}
           />
         )}
         {(availableTile || passport) && (
@@ -504,6 +518,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => navigate(`/opportunities/${r.id}`)} />
             ))}
             {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open roles right now.</p>}
+            {owner && coachRoles.length > 3 && (
+              <button type="button" onClick={props.onOpenRoles ?? (() => navigate('/opportunities'))} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary" data-testid="coach-roles-see-all">See all {coachRoles.length} roles</button>
+            )}
           </div>
         </Section>
       )}
