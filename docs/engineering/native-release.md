@@ -14,7 +14,7 @@ read from the environment (`client/.env`, gitignored) and are never printed.
 | Item | iOS | Android |
 |---|---|---|
 | Version numbers | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `client/ios/App/App.xcodeproj/project.pbxproj` — **both** the Debug and the Release configuration | `versionName` and `versionCode` in `client/android/app/build.gradle` |
-| Next build | **1.3.20 (32)** | **1.20 (22)** — 1.19 (21) was the last Android build |
+| Next build | **1.3.20 (32)** | **1.21 (23)** |
 | Web bundle | `client/dist` copied by `npx cap sync` to `ios/App/App/public` (gitignored) | same, to `android/app/src/main/assets/public` (gitignored) |
 | Native plugins | `client/ios/App/CapApp-SPM/Package.swift` (SPM, no CocoaPods, no `.xcworkspace`) | `client/android/capacitor.settings.gradle` + `app/capacitor.build.gradle` |
 | Crash reporting | `SentryCapacitor` product from `@sentry/capacitor` (pulls `getsentry/sentry-cocoa` 9.28.0, exact) | `:sentry-capacitor` project (pulls `io.sentry:sentry-android` 8.50.1) |
@@ -265,3 +265,9 @@ upload). Sentry release `native@<sha of the build-31 archive>`.
 
 - **Safe areas (#252).** `ios.contentInset` is `'never'`: the page pads its own safe areas. Fixes the blank band above every screen measured on an iPhone 16.
 - **Web code since 1.3.18:** Community redesign, Home v1, Profile v2 and its QA fixes. No native plugin or package changes.
+
+## Changes in Android 1.20 (22) — 2026-10-14
+
+Source: main after #301 (same web code as iOS 1.3.19 build 31). First Android build since 1.19 (21) on
+2026-10-10, so it carries everything in between: Community redesign, Home v1, Profile v2 and the
+messenger fixes (#297). R8 stays on; the signed AAB carries `mapping.txt`.
