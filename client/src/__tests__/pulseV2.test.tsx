@@ -247,10 +247,12 @@ describe('what happened — amber rule', () => {
   it('every line kind is grey; inbox-only kinds are left out; old rows drop off', () => {
     const now = new Date()
     const old = new Date(now.getTime() - 10 * 86_400_000).toISOString()
+    // Fixed times: two `new Date()` defaults a millisecond apart flipped the order on slow runners.
+    const hoursAgo = (h: number) => new Date(now.getTime() - h * 3_600_000).toISOString()
     const list = [
-      notification({ id: 'a', kind: 'vacancy_application_status', metadata: { opportunity_title: 'Forward', club_name: 'Club B' } }),
-      notification({ id: 'b', kind: 'friend_request_received' }),
-      notification({ id: 'c', kind: 'reference_request_accepted', actor: { id: 'x', fullName: 'Dana', role: 'coach', username: null, avatarUrl: null, baseLocation: null } }),
+      notification({ id: 'a', kind: 'vacancy_application_status', createdAt: hoursAgo(1), metadata: { opportunity_title: 'Forward', club_name: 'Club B' } }),
+      notification({ id: 'b', kind: 'friend_request_received', createdAt: hoursAgo(2) }),
+      notification({ id: 'c', kind: 'reference_request_accepted', createdAt: hoursAgo(3), actor: { id: 'x', fullName: 'Dana', role: 'coach', username: null, avatarUrl: null, baseLocation: null } }),
       notification({ id: 'd', kind: 'applications_expired', createdAt: old, metadata: { count: 2 } }),
     ]
     const lines = happenedTimeline(list, new Map(), { now })
