@@ -17,6 +17,7 @@ import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
 import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
 import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from '@/lib/recruiterMinor'
+import { mergeFetchedMessages, olderMessagesCursorFilter } from '@/lib/chatThread'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
@@ -81,6 +82,9 @@ export function useChat({
   const messagesRef = useRef<ChatMessage[]>([])
   const fetchMessagesPromiseRef = useRef<Promise<Message[]> | null>(null)
   const oldestLoadedCursorRef = useRef<MessageCursor | null>(null)
+  // The conversation the on-screen messages belong to: a refetch for the same
+  // thread (realtime reconnect) merges quietly instead of showing the skeleton.
+  const loadedForRef = useRef<string | null>(null)
   const pendingReadIdsRef = useRef(new Set<string>())
   const readFlushTimeoutRef = useRef<number | null>(null)
   const unmountedRef = useRef(false)
@@ -184,13 +188,17 @@ export function useChat({
       return fetchMessagesPromiseRef.current
     }
 
-    setLoading(true)
+    // A refetch of the thread already on screen (realtime reconnect) folds the
+    // newest page in without the skeleton: unmounting the list threw the
+    // reader back to the bottom and dropped the older pages they had loaded.
+    const silent = loadedForRef.current === conversation.id && messagesRef.current.length > 0
+    if (!silent) setLoading(true)
     const pendingFetch = (async () => {
       try {
         Sentry.addBreadcrumb({
           category: 'supabase',
           message: 'Fetch recent messages',
-          data: { conversationId: conversation.id },
+          data: { conversationId: conversation.id, silent },
           level: 'info'
         })
         const { data, error } = await supabase
@@ -209,14 +217,19 @@ export function useChat({
           status: 'delivered' as const
         }))
         logger.debug('Fetched messages:', fetched)
-        syncMessagesState(fetched)
-        oldestLoadedCursorRef.current = fetched[0]
-          ? {
-              sentAt: fetched[0].sent_at,
-              messageId: fetched[0].id
-            }
-          : null
-        setHasMoreMessages((data ?? []).length === MESSAGES_PAGE_SIZE)
+        if (silent) {
+          syncMessagesState(prev => mergeFetchedMessages(prev, fetched))
+        } else {
+          syncMessagesState(fetched)
+          oldestLoadedCursorRef.current = fetched[0]
+            ? {
+                sentAt: fetched[0].sent_at,
+                messageId: fetched[0].id
+              }
+            : null
+          setHasMoreMessages((data ?? []).length === MESSAGES_PAGE_SIZE)
+        }
+        loadedForRef.current = conversation.id
         return fetched
       } catch (error) {
         logger.error('Error fetching messages:', error)
@@ -226,8 +239,10 @@ export function useChat({
           feature: 'messaging_chat',
           operation: 'fetch_messages'
         })
-        syncMessagesState([])
-        setHasMoreMessages(false)
+        if (!silent) {
+          syncMessagesState([])
+          setHasMoreMessages(false)
+        }
         return [] as Message[]
       } finally {
         setLoading(false)
@@ -253,11 +268,7 @@ export function useChat({
     setIsLoadingMore(true)
 
     try {
-      const encodeValue = (value: string) => encodeURIComponent(value)
-      const cursorFilter = [
-        `sent_at.lt.${encodeValue(cursor.sentAt)}`,
-        `and(sent_at.eq.${encodeValue(cursor.sentAt)},id.lt.${encodeValue(cursor.messageId)})`
-      ].join(',')
+      const cursorFilter = olderMessagesCursorFilter(cursor)
 
       Sentry.addBreadcrumb({
         category: 'supabase',

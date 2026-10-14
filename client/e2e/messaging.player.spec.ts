@@ -146,3 +146,50 @@ test.describe('Messaging - Mobile', () => {
     ).toBeVisible({ timeout: 20000 })
   })
 })
+
+// The thread with E2E Test FC holds well over 50 messages on staging, so it
+// always overflows and always has an older page to load.
+const LONG_THREAD_CLUB = 'e2e-test-fc'
+
+async function openLongThread(page: import('@playwright/test').Page) {
+  await page.goto(`/clubs/${LONG_THREAD_CLUB}`)
+  await expect(page.getByRole('heading', { level: 1, name: /e2e test fc/i })).toBeVisible({ timeout: 20000 })
+  await page.getByRole('button', { name: 'Message', exact: true }).click()
+  const list = page.getByTestId('chat-message-list')
+  await expect(list).toBeVisible({ timeout: 20000 })
+  await expect(list.locator('[data-message-id]').first()).toBeVisible({ timeout: 20000 })
+  // The thread opens at the bottom.
+  await expect.poll(() => list.evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight), { timeout: 10000 }).toBeLessThan(10)
+  return list
+}
+
+test.describe('Messaging - Thread scrolling', () => {
+  test('a wheel tick up stays up (no snap back to the newest message)', async ({ page }) => {
+    const list = await openLongThread(page)
+    const box = await list.boundingBox()
+    if (!box) throw new Error('message list has no box')
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.wheel(0, -100)
+    await expect.poll(() => list.evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight), { timeout: 5000 }).toBeGreaterThan(50)
+    // Regression (2026-10-14): a rebuilt "stay pinned" observer scrolled the reader back down ~30 ms later.
+    await page.waitForTimeout(1000)
+    expect(await list.evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight)).toBeGreaterThan(50)
+  })
+
+  test('scrolling to the top loads an older page and keeps the reader in place', async ({ page }) => {
+    const list = await openLongThread(page)
+    const before = await list.locator('[data-message-id]').count()
+    const firstId = await list.locator('[data-message-id]').first().getAttribute('data-message-id')
+    await list.evaluate(el => { el.scrollTop = 0 })
+    // Regression (2026-10-14): the cursor was percent-encoded twice, Postgres returned 400 and no thread could load past its newest 50 messages.
+    await expect.poll(() => list.locator('[data-message-id]').count(), { timeout: 20000 }).toBeGreaterThan(before)
+    await page.waitForTimeout(500)
+    const y = await list.evaluate((el, id) => {
+      const row = el.querySelector(`[data-message-id="${id}"]`)
+      return row ? row.getBoundingClientRect().top - el.getBoundingClientRect().top : null
+    }, firstId)
+    // The message that was first is still near the top edge, not a page further down.
+    expect(y).not.toBeNull()
+    expect(Math.abs((y as number) - 64)).toBeLessThan(40)
+  })
+})
