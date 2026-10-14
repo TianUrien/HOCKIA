@@ -14,7 +14,7 @@ read from the environment (`client/.env`, gitignored) and are never printed.
 | Item | iOS | Android |
 |---|---|---|
 | Version numbers | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `client/ios/App/App.xcodeproj/project.pbxproj` — **both** the Debug and the Release configuration | `versionName` and `versionCode` in `client/android/app/build.gradle` |
-| Next build | **1.3.20 (31)** | **1.20 (22)** — 1.19 (21) was the last Android build |
+| Next build | **1.3.20 (32)** | **1.20 (22)** — 1.19 (21) was the last Android build |
 | Web bundle | `client/dist` copied by `npx cap sync` to `ios/App/App/public` (gitignored) | same, to `android/app/src/main/assets/public` (gitignored) |
 | Native plugins | `client/ios/App/CapApp-SPM/Package.swift` (SPM, no CocoaPods, no `.xcworkspace`) | `client/android/capacitor.settings.gradle` + `app/capacitor.build.gradle` |
 | Crash reporting | `SentryCapacitor` product from `@sentry/capacitor` (pulls `getsentry/sentry-cocoa` 9.28.0, exact) | `:sentry-capacitor` project (pulls `io.sentry:sentry-android` 8.50.1) |
@@ -250,7 +250,7 @@ Source: PRs #247–#249.
 - **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
 - **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
 
-## Changes in iOS 1.3.19 (30) — 2026-10-14
+## Changes in iOS 1.3.19 (31) — 2026-10-14
 
 Source: main after release #293. iOS only (founder, 2026-10-14); Android stays on 1.19 (21).
 
