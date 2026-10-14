@@ -252,7 +252,16 @@ Source: PRs #247–#249.
 
 ## Changes in iOS 1.3.19 (31) — 2026-10-14
 
-Source: main after release #293. iOS only (founder, 2026-10-14); Android stays on 1.19 (21).
+Source: main after release #298. iOS only (founder, 2026-10-14); Android stays on 1.19 (21).
+Build 30 (main 53037a0d) was uploaded and submitted before the messenger fixes landed; it was pulled
+from review and replaced by build 31 (same version — App Store Connect needs a new build number per
+upload). Sentry release `native@<sha of the build-31 archive>`.
+
+- **Messenger (#297).** Scrolling up no longer snaps back to the newest message; older pages load;
+  replies arrive live. The last one needed migration `20261014160000` (messages and conversations in
+  the `supabase_realtime` publication), applied on staging and production the same day — a realtime
+  subscription on a table outside that publication is rejected server-side with "Unable to subscribe
+  to changes", silently from the user's point of view.
 
 - **Safe areas (#252).** `ios.contentInset` is `'never'`: the page pads its own safe areas. Fixes the blank band above every screen measured on an iPhone 16.
 - **Web code since 1.3.18:** Community redesign, Home v1, Profile v2 and its QA fixes. No native plugin or package changes.
