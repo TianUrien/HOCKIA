@@ -107,17 +107,25 @@ export default function ChatWindowV2({
     anchorRef.current = container.scrollHeight
   }, [])
 
+  const handleReachBottom = useCallback(() => {
+    setPendingNewMessagesCount(0)
+    markConversationAsRead()
+  }, [markConversationAsRead])
+
+  const handleScrollMetrics = useCallback((metrics: { distanceFromBottom: number }) => {
+    setDistanceFromBottom(metrics.distanceFromBottom)
+  }, [])
+
   const { scrollToBottom, getDistanceFromBottom } = useChatScrollController({
     hasMore: hasMoreMessages,
     isLoadingMore,
     loadOlderMessages,
-    onReachBottom: () => {
-      setPendingNewMessagesCount(0)
-      markConversationAsRead()
-    },
+    onReachBottom: handleReachBottom,
     onBeforeLoadOlder: handleBeforeLoadOlder,
     scrollContainerRef,
-    onScrollMetricsChange: metrics => setDistanceFromBottom(metrics.distanceFromBottom)
+    onScrollMetricsChange: handleScrollMetrics,
+    // The container only exists once the skeleton is gone.
+    ready: !loading
   })
 
   const scrollToBottomSmooth = useCallback(() => {
@@ -166,14 +174,22 @@ export default function ChatWindowV2({
   // that load after the first paint (D3 invite cards: a 260px placeholder,
   // then the real card) pushed the bottom away without a scroll, so the
   // thread opened short of the latest message and the next send had to
-  // travel the whole gap. Only follows when the reader was at the bottom
-  // (last measured distance), never while older messages are being prepended.
+  // travel the whole gap. Only follows when the content GREW and the reader
+  // was at the bottom (last measured distance), never while older messages
+  // are being prepended. A ResizeObserver fires once on observe() and on
+  // every shrink too; acting on those scrolled the reader back down after
+  // every wheel tick in a short thread (the "can't scroll up" bug, 2026-10-14).
   const threadMounted = !loading && messages.length > 0
   useEffect(() => {
     if (!threadMounted) return
     const content = scrollContainerRef.current?.firstElementChild
     if (!content || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(() => {
+    let lastHeight = content.getBoundingClientRect().height
+    const observer = new ResizeObserver(entries => {
+      const height = entries[0]?.contentRect.height ?? content.getBoundingClientRect().height
+      const grew = height > lastHeight
+      lastHeight = height
+      if (!grew) return
       if (!initialScrollDoneRef.current || anchorRef.current !== null) return
       if (getDistanceFromBottom() <= 120) scrollToBottom('auto')
     })
