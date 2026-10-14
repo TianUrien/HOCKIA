@@ -50,6 +50,9 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
   const [active, setActive] = useState(items[0]?.id ?? null)
   const rowRef = useRef<HTMLDivElement>(null)
   const ids = items.map((i) => i.id).join(',')
+  // A tapped chip stays the current one while its smooth scroll runs, so
+  // sections passing through the band don't steal the highlight (QA F1).
+  const pinnedUntil = useRef(0)
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
@@ -60,12 +63,21 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
     const io = new IntersectionObserver(
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (Date.now() < pinnedUntil.current) return
         if (visible[0]) setActive(visible[0].target.id)
       },
       { rootMargin: '-120px 0px -55% 0px' },
     )
     els.forEach((el) => io.observe(el))
-    return () => io.disconnect()
+    // At the very bottom the last section can't reach the band (it's too
+    // short to scroll up to the top), so the last chip becomes current.
+    const onScroll = () => {
+      if (Date.now() < pinnedUntil.current) return
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
+      if (atBottom && items.length) setActive(items[items.length - 1].id)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { io.disconnect(); window.removeEventListener('scroll', onScroll) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ids, refreshKey])
 
@@ -79,6 +91,7 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
     const el = document.getElementById(id)
     if (!el) return
     const top = el.getBoundingClientRect().top + window.scrollY - (COMPACT_HEADER_PX + 60)
+    pinnedUntil.current = Date.now() + 1000
     window.scrollTo({ top, behavior: 'smooth' })
     setActive(id)
   }

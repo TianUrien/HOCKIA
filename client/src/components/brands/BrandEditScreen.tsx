@@ -15,6 +15,7 @@ import { BRAND_CATEGORY_OPTIONS, instagramHandleOf, normalizeInstagram, validate
 import type { BrandDetail } from '@/hooks/useBrand'
 import type { UpdateBrandInput } from '@/hooks/useMyBrand'
 import { cn } from '@/lib/utils'
+import { useQueuedToggle } from '@/hooks/useQueuedToggle'
 
 /**
  * Edit profile — brand, phone (Figma PR22 130:1226). Logo and one cover at
@@ -69,7 +70,13 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
   const [countryDraft, setCountryDraft] = useState<number | null>(null)
   const [quickBusy, setQuickBusy] = useState(false)
 
-  // One-tap saves (partners switch, remove cover): one at a time, and say so when they fail.
+  const partners = useQueuedToggle(
+    Boolean(brand.open_to_partners),
+    async (next) => (await onSave({ open_to_partners: next })).success,
+    () => addToast('Could not save that. Please try again.', 'error'),
+  )
+
+  // One-tap saves (remove cover): one at a time, and say so when they fail.
   const quickSave = async (patch: UpdateBrandInput) => {
     if (quickBusy) return
     setQuickBusy(true)
@@ -198,14 +205,13 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
             <button
               type="button"
               role="switch"
-              aria-checked={Boolean(brand.open_to_partners)}
+              aria-checked={partners.value}
               aria-label="Open to partners"
-              disabled={quickBusy}
-              onClick={() => void quickSave({ open_to_partners: !brand.open_to_partners })}
-              className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', brand.open_to_partners ? 'bg-[#15803d]' : 'bg-gray-300')}
+              onClick={partners.toggle}
+              className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', partners.value ? 'bg-[#15803d]' : 'bg-gray-300')}
               data-testid="brand-edit-partners"
             >
-              <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', brand.open_to_partners ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
+              <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
             </button>
           }
         />
