@@ -310,6 +310,10 @@ html {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
+    /* ChatWindowV2 re-anchors the reader itself when an older page is
+       prepended; Chrome's own scroll anchoring on top of that moved the
+       thread by a second page. */
+    overflow-anchor: none;
       /* Use auto to prevent browser-initiated smooth scrolling */
     scroll-behavior: auto;
     /* GPU acceleration for smooth scrolling */
