@@ -24,6 +24,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { cn } from '@/lib/utils'
+import { useQueuedToggle } from '@/hooks/useQueuedToggle'
 import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
@@ -141,7 +142,6 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const heroRef = useRef<HTMLDivElement>(null)
   const compact = useScrolledPast(heroRef)
   const [bioOpen, setBioOpen] = useState(false)
-  const [partnersBusy, setPartnersBusy] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
@@ -168,8 +168,10 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   // A product tap: counted (consent-gated, never the brand's own), then the store.
   const openProduct = (p: BrandProduct) => {
     if (owner) { props.onEditProduct?.(p); return }
+    // Only a tap that actually opens the store counts (QA F7).
+    if (!p.external_url) return
     if (hasAnalyticsConsent()) trackDbEvent('brand_product_click', 'brand_product', p.id, { brand_id: brand.id })
-    if (p.external_url) window.open(/^https?:\/\//i.test(p.external_url) ? p.external_url : `https://${p.external_url}`, '_blank', 'noopener,noreferrer')
+    window.open(/^https?:\/\//i.test(p.external_url) ? p.external_url : `https://${p.external_url}`, '_blank', 'noopener,noreferrer')
   }
 
   // ── Own: next step, stats, taps ─────────────────────────────────────────
@@ -202,11 +204,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   // One primary per screen: invites waiting own it; else the next step does.
   const invitesPrimary = pending.length > 0 || !stepCopy
 
-  const togglePartners = async () => {
-    if (!props.onTogglePartners || partnersBusy) return
-    setPartnersBusy(true)
-    try { await props.onTogglePartners(!brand.open_to_partners) } finally { setPartnersBusy(false) }
-  }
+  // Each tap shows at once; saves run one after another (QA F4).
+  const partners = useQueuedToggle(Boolean(brand.open_to_partners), async (next) => { await props.onTogglePartners?.(next) })
 
   // ── Updates grid ────────────────────────────────────────────────────────
   const tiles: GridTile[] = useMemo(() => props.posts.map((post) => ({
@@ -236,7 +235,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       {/* Hero */}
       <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
-        <section className={cn('relative w-full overflow-hidden bg-ink-1', cover ? 'h-[480px] xl:h-[640px]' : 'h-[360px] lg:h-[450px] xl:h-[600px]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
+        <section className={cn('relative w-full overflow-hidden bg-ink-1', cover ? 'h-[480px] lg:h-[min(480px,max(400px,calc(100dvh-200px)))] xl:h-[min(640px,max(400px,calc(100dvh-200px)))]' : 'h-[360px] lg:h-[min(450px,max(400px,calc(100dvh-200px)))] xl:h-[min(600px,max(400px,calc(100dvh-200px)))]')} data-testid="brand-hero" style={cover ? undefined : { backgroundImage: BRAND_GRADIENT }}>
           {cover
             ? <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />
             // No cover (as the other roles): brand gradient + faint pitch lines, shorter hero.
@@ -348,14 +347,13 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               <button
                 type="button"
                 role="switch"
-                aria-checked={Boolean(brand.open_to_partners)}
+                aria-checked={partners.value}
                 aria-label="Open to partners"
-                disabled={partnersBusy}
-                onClick={() => void togglePartners()}
-                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', brand.open_to_partners ? 'bg-[#15803d]' : 'bg-gray-300')}
+                onClick={partners.toggle}
+                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', partners.value ? 'bg-[#15803d]' : 'bg-gray-300')}
                 data-testid="brand-partners-switch"
               >
-                <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', brand.open_to_partners ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
+                <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
               </button>
             </div>
           </div>

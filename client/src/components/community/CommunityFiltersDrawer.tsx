@@ -84,7 +84,9 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
     updateFilter('categories', filters.categories.includes(value) ? filters.categories.filter((c) => c !== value) : [...filters.categories, value])
   const showTeams = filters.role !== 'club' && filters.role !== 'brand'
   const showEu = filters.role !== 'club' && filters.role !== 'brand'
-  const showLabel = count === null ? 'Show members' : count === 1 ? 'Show 1 member' : `Show ${count.toLocaleString()} members`
+  // Brands / clubs tabs count brands / clubs, not members (QA copy nit).
+  const noun = filters.role === 'brand' ? ['brand', 'brands'] : filters.role === 'club' ? ['club', 'clubs'] : ['member', 'members']
+  const showLabel = count === null ? `Show ${noun[1]}` : count === 1 ? `Show 1 ${noun[0]}` : `Show ${count.toLocaleString()} ${noun[1]}`
 
   if (isPhone) {
     return (
