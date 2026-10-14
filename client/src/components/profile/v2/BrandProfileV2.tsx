@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, Check, ChevronLeft, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
@@ -32,6 +32,7 @@ import { OwnerButtons, PrimaryCard } from './OwnerArea'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -250,7 +251,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             {owner
               // With no cover the "Add a cover" circle is the one camera action.
               ? (cover ? <button type="button" onClick={props.onEdit} aria-label="Edit cover" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button> : <span />)
-              : <button type="button" onClick={back} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
+              : <button type="button" onClick={back} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => void share()} aria-label="Share brand" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
               {owner

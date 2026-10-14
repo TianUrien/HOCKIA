@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { IconButton } from '@/components/ui/IconButton'
 import { webButtonClassName } from '@/components/ui/buttonClasses'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
  * Pieces shared by the account-first auth and onboarding screens (Figma 04
@@ -36,7 +36,7 @@ export function AuthShell({ children, back, title, trailing, step, className }: 
           {back ? (
             // Nav bar back = Ghost icon button 44 (Figma 459:171) with the chevron.
             <IconButton label={`Back to ${back.parent}`} tone="brand" onClick={back.onBack}>
-              <ChevronLeft className="h-6 w-6" strokeWidth={2} />
+              <BackGlyph className="h-6 w-6" strokeWidth={2} />
             </IconButton>
           ) : (
             <span className="w-11" />
@@ -105,7 +105,7 @@ export function AuthPage({ children, switchLine, onBack, backLabel = 'Back', cla
       <div className="relative flex h-14 shrink-0 items-center px-2 md:hidden">
         {onBack ? (
           <IconButton label={backLabel} tone="brand" onClick={onBack}>
-            <ChevronLeft className="h-6 w-6" strokeWidth={2} />
+            <BackGlyph className="h-6 w-6" strokeWidth={2} />
           </IconButton>
         ) : (
           <span className="w-11" />

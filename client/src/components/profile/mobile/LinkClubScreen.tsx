@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Info, Search, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Info, Search, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import CountrySelect from '@/components/CountrySelect'
@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils'
 import { searchClubsInCountry, type LinkClubMatch } from '@/lib/linkClubSearch'
 import type { ClubProfileShape } from '@/pages/ClubDashboard'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
+import { BackGlyph } from '@/components/ui/BackGlyph'
+import { ANDROID_CHROME } from '@/lib/platformChrome'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -180,7 +182,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
       <div className="flex h-11 items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
         {onboarding ? (
           <button type="button" onClick={onCancel} disabled={saving || finishing} aria-label="Back to About your club" className="-ml-2 flex w-[120px] items-center text-left text-body text-hockia-primary disabled:opacity-60">
-            <ChevronLeft className="h-6 w-6" strokeWidth={2} /> Back
+            <BackGlyph className="h-6 w-6" strokeWidth={2} />{!ANDROID_CHROME && ' Back'}
           </button>
         ) : (
           <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">Cancel</button>

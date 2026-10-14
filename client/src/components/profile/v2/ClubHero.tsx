@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Camera, ChevronLeft, Settings, Share } from 'lucide-react'
+import { Camera, Settings, Share } from 'lucide-react'
 import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { GLASS, crestGradient, initialsOf } from '@/lib/communityCard'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import VerifiedBadge from '@/components/VerifiedBadge'
 import { cn } from '@/lib/utils'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
  * Club hero (Figma PR6 106:256 / PR7 107:303): the club's cover photos
@@ -71,7 +72,7 @@ export function ClubHero(props: ClubHeroProps) {
         {owner ? (
           <button type="button" onClick={props.onEditCover} aria-label="Edit cover photos" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         ) : (
-          <button type="button" onClick={props.onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
+          <button type="button" onClick={props.onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
         )}
         <div className="flex items-center gap-2">
           <button type="button" onClick={props.onShare} aria-label="Share profile" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
