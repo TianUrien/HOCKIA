@@ -44,8 +44,7 @@ import type {
   DevicePlatformFilter,
   DeviceUsersResult,
   CohortRetentionRow,
-  ResponseTimeStats,
-} from '../types'
+  ResponseTimeStats, ActivitySeriesPoint } from '../types'
 
 // Helper to call RPC functions that aren't in generated types yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2635,4 +2634,24 @@ export async function sendRemovedAccountNotice(profileId: string): Promise<numbe
   })
   if (error) throw new Error(`Failed to send the safety notice: ${error.message}`)
   return typeof data === 'number' ? data : 0
+}
+
+/**
+ * Daily member activity for the admin charts: messages, conversations
+ * started, applications, roles posted, friendships, posts (test accounts
+ * excluded). `days` is clamped server-side to 1–365.
+ */
+export async function getActivitySeries(days = 30): Promise<ActivitySeriesPoint[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('admin_get_activity_series', { p_days: days })
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+    day: String(r.day),
+    messages: Number(r.messages) || 0,
+    conversations: Number(r.conversations) || 0,
+    applications: Number(r.applications) || 0,
+    opportunities: Number(r.opportunities) || 0,
+    friendships: Number(r.friendships) || 0,
+    posts: Number(r.posts) || 0,
+  }))
 }

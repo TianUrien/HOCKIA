@@ -18,6 +18,10 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { TrendAreaCard } from '../components/charts/TrendAreaCard'
+import { DonutChartCard } from '../components/charts/DonutChartCard'
+import { StackedBarsCard } from '../components/charts/StackedBarsCard'
+import { SERIES_COLORS, shortDay, toWeekly } from '../lib/adminCharts'
 import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
@@ -108,6 +112,10 @@ export function AdminEngagement() {
     if (diffDays < 7) return `${diffDays} days ago`
     return formatAdminDate(date)
   }
+
+  // Chart rows: one per day with an axis label; minutes rolled into weeks.
+  const trendRows = trends.map((t) => ({ ...t, label: shortDay(t.date) }))
+  const weeklyMinutes = toWeekly(trends, 'date', ['total_minutes'])
 
   // Table columns
   const columns: Column<UserEngagementItem>[] = [
@@ -201,7 +209,6 @@ export function AdminEngagement() {
   ]
 
   // Calculate trend chart data
-  const maxActiveUsers = Math.max(...trends.map(t => t.active_users), 1)
 
   if (error) {
     return (
@@ -305,50 +312,45 @@ export function AdminEngagement() {
         />
       </div>
 
-      {/* Activity Trend Chart */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Daily Active Users</h2>
-        
-        {isLoading ? (
-          <div className="h-40 bg-gray-100 rounded-lg animate-pulse" />
-        ) : (
-          <div className="h-40 flex items-end gap-1">
-            {trends.map((day, index) => {
-              const height = (day.active_users / maxActiveUsers) * 100
-              const isToday = index === trends.length - 1
-              // Calculate bar height as percentage - inline style needed for dynamic data visualization
-              const barStyle = { height: `${Math.max(height, 2)}%` }
-              
-              return (
-                <div
-                  key={day.date}
-                  className="flex-1 group relative h-full flex flex-col justify-end"
-                  title={`${day.date}: ${day.active_users} users, ${formatTime(day.total_minutes)}`}
-                >
-                  <div
-                    className={`w-full rounded-t transition-all ${
-                      isToday ? 'bg-purple-600' : 'bg-purple-300 hover:bg-purple-400'
-                    }`}
-                    style={barStyle}
-                  />
-                  {/* Tooltip on hover */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                      <div>{formatAdminDate(day.date)}</div>
-                      <div>{day.active_users} users</div>
-                      <div>{formatTime(day.total_minutes)}</div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-        
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
-          <span>{trends[0]?.date ? formatAdminDate(trends[0].date) : ''}</span>
-          <span>Today</span>
+      {/* Activity trend — daily actives and minutes, one chart each, plus
+          how much of the base is active and how long a session runs. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <TrendAreaCard
+            title={`Daily active users (${daysFilter}d)`}
+            hint="Members with at least one session that day."
+            rows={trendRows}
+            series={[{ key: 'active_users', label: 'Active users', color: SERIES_COLORS[0] }]}
+            loading={isLoading}
+          />
         </div>
+        <DonutChartCard
+          title="Active in the last 30 days"
+          hint="Members with a session in the last 30 days, against everyone else."
+          slices={[
+            { label: 'Active', value: summary?.total_active_users_30d ?? 0, color: SERIES_COLORS[0] },
+            { label: 'Inactive', value: Math.max(0, (summary?.total_users ?? 0) - (summary?.total_active_users_30d ?? 0)), color: SERIES_COLORS[6] },
+          ]}
+          centerLabel="members"
+          total={summary?.total_users ?? 0}
+          loading={isLoading}
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <StackedBarsCard
+          title={`Time in the app per week (${daysFilter}d)`}
+          hint="Minutes all members spent in HOCKIA, summed per Monday-start week."
+          rows={weeklyMinutes}
+          series={[{ key: 'total_minutes', label: 'Minutes', color: SERIES_COLORS[1] }]}
+          loading={isLoading}
+        />
+        <TrendAreaCard
+          title={`Sessions per day (${daysFilter}d)`}
+          hint="App opens that lasted long enough to count as a session."
+          rows={trendRows}
+          series={[{ key: 'total_sessions', label: 'Sessions', color: SERIES_COLORS[2] }]}
+          loading={isLoading}
+        />
       </div>
 
       {/* Filters */}

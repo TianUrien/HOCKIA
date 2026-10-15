@@ -30,7 +30,7 @@ export function useAdminStats(): UseAdminStatsResult {
     queryFn: async () => {
       const [stats, signupTrends, topCountries] = await Promise.all([
         getDashboardStats(),
-        getSignupTrends(30),
+        getSignupTrends(90),
         getTopCountries(10),
       ])
       return { stats, signupTrends, topCountries }

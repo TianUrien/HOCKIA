@@ -44,6 +44,7 @@ import { HealthSignals } from '../components/HealthSignals'
 import { RetentionSignals } from '../components/RetentionSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
 import { EngagementOverview } from '../components/EngagementOverview'
+import { OverviewCharts } from '../components/OverviewCharts'
 import { InfoTip } from '../components/InfoTip'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
@@ -237,6 +238,11 @@ export function AdminOverview() {
       <EngagementOverview ccStats={ccStats} days={daysFilter} loading={ccLoading} />
 
       {/* ============================================================= */}
+      {/* THE PICTURE — members, activity, reach as charts               */}
+      {/* ============================================================= */}
+      <OverviewCharts stats={stats} signupTrends={signupTrends} topCountries={topCountries} days={daysFilter} loading={isLoading} />
+
+      {/* ============================================================= */}
       {/* HEALTH SIGNALS                                                 */}
       {/* ============================================================= */}
       <HealthSignals stats={ccStats} loading={ccLoading} />
@@ -289,36 +295,6 @@ export function AdminOverview() {
           {/* User Metrics */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Users</h2>
-            {/* Role split donut — %-of-total, all 5 roles. A computed
-                "Other roles" remainder (total_users minus the 5 roles) keeps
-                the donut centre equal to the Total Users card and absorbs any
-                roleless / incomplete users; it hides itself when 0. */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
-              <CategoryBreakdownChart
-                segments={[
-                  { label: 'Players', value: stats?.total_players ?? 0, color: '#8b5cf6' },
-                  { label: 'Coaches', value: stats?.total_coaches ?? 0, color: '#3b82f6' },
-                  { label: 'Clubs', value: stats?.total_clubs ?? 0, color: '#f59e0b' },
-                  { label: 'Brands', value: stats?.total_brands ?? 0, color: '#e11d48' },
-                  { label: 'Umpires', value: stats?.total_umpires ?? 0, color: '#6366f1' },
-                  {
-                    label: 'Other roles',
-                    value: Math.max(
-                      0,
-                      (stats?.total_users ?? 0) -
-                        ((stats?.total_players ?? 0) +
-                          (stats?.total_coaches ?? 0) +
-                          (stats?.total_clubs ?? 0) +
-                          (stats?.total_brands ?? 0) +
-                          (stats?.total_umpires ?? 0)),
-                    ),
-                    color: '#94a3b8',
-                  },
-                ]}
-                centerLabel="Users"
-                loading={isLoading}
-              />
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <StatCard
                 label="Total Users"
