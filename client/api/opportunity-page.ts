@@ -33,8 +33,10 @@ async function fetchShell(origin: string): Promise<string> {
 type Lookup = { row: PublicOpportunityRow | null; why: string }
 
 async function fetchRole(id: string): Promise<Lookup> {
-  const base = process.env.VITE_SUPABASE_URL
-  const key = process.env.VITE_SUPABASE_ANON_KEY
+  // Trimmed: a trailing newline in a pasted secret turns into "Bearer …\n"
+  // and a 401 (the Stream signing key failed exactly this way in September).
+  const base = (process.env.VITE_SUPABASE_URL ?? '').trim().replace(/\/+$/, '')
+  const key = (process.env.VITE_SUPABASE_ANON_KEY ?? '').trim()
   if (!base || !key) return { row: null, why: 'no-env' }
   try {
     const res = await fetch(`${base}/rest/v1/public_opportunities?id=eq.${id}&select=*&limit=1`, {
