@@ -12,6 +12,7 @@ import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
 import CookieConsent from '@/components/CookieConsent'
+import { RouteMeta } from './components/RouteMeta'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
@@ -383,6 +384,7 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ProfileImagePreviewProvider>
+          <RouteMeta />
           <ToastContainer />
           <UploadIndicator />
           <InstallPrompt />
