@@ -26,9 +26,18 @@ export const GROUP_LABEL: Record<string, string> = {
   direct: 'Direct', unknown: 'Unknown', other: 'Other', internal: 'Internal',
 }
 
+/** Referrer hosts that are really a known app, shown by name instead of package id. */
+const REFERRAL_HOST_LABEL: Record<string, string> = {
+  'com.google.android.googlequicksearchbox': 'Google app (Android)',
+  'com.google.android.gm': 'Gmail app (Android)',
+}
+
 export function displaySource(source: string | null | undefined): string {
   if (!source) return '—'
-  if (source.startsWith('referral:')) return source.slice('referral:'.length)
+  if (source.startsWith('referral:')) {
+    const host = source.slice('referral:'.length)
+    return REFERRAL_HOST_LABEL[host] ?? host
+  }
   return SOURCE_LABEL[source] ?? source.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 

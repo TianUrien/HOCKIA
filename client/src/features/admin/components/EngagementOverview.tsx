@@ -5,7 +5,8 @@
  *   1. Engagement    — DAU / WAU / MAU as absolute numbers with ⓘ explainers
  *   2. Growth        — New users, Activation rate, Profile completion (abs + %)
  *   3. Community     — Weekly contributors, Browsers vs Contributors, Content (7d)
- *   4. North Star    — the real-connection outcomes HOCKIA exists to create
+ *   4. North Star    — the recruiting loop as a funnel, plus the two outcomes
+ *                      that sit outside it (players contacted, roles filled)
  *
  * Every metric carries an <InfoTip> so the dashboard needs no analytics
  * background to read. Data: admin_get_engagement_overview + the existing
@@ -17,6 +18,8 @@ import { Image as ImageIcon, Video, FileText, Briefcase, MessagesSquare } from '
 import { InfoTip } from './InfoTip'
 import { getEngagementOverview, type EngagementOverview as EngagementData } from '../api/adminApi'
 import type { CommandCenterStats } from '../types'
+import { RecruitingFunnelCard } from './RecruitingFunnelCard'
+import { shortDay } from '../lib/adminCharts'
 
 interface EngagementOverviewProps {
   ccStats: CommandCenterStats | null
@@ -104,7 +107,8 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
   // Single source for the WAU/MAU ratio: the command-center RPC. Computing
   // it client-side too risked showing two slightly different roundings of
   // the same number on one page.
-  const stickiness = ccStats?.wau_mau_ratio ?? 0
+  const stickiness = ccStats?.wau_mau_ratio ?? null
+  const dauDay = ccStats?.dau_date ? shortDay(ccStats.dau_date) : 'yesterday'
 
   const browsers = Math.max(0, (data?.wau ?? wau) - (data?.contributors_7d ?? 0))
   const contributorPct = data?.contributor_pct ?? 0
@@ -122,21 +126,21 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <MetricTile
           label="Daily Active Users"
-          info={<InfoTip metric="dau" interpretation={`${dau} people used HOCKIA today. For a weekly-rhythm sport, daily spikes matter less than the weekly habit.`} />}
+          info={<InfoTip metric="dau" interpretation={`${dau} people used HOCKIA on ${dauDay}, the last complete day. Today is never counted while it is still running. For a weekly-rhythm sport, daily spikes matter less than the weekly habit.`} />}
           value={dau.toLocaleString()}
-          sub="active today"
+          sub={`active ${dauDay} · last complete day`}
         />
         <MetricTile
           label="Weekly Active Users"
-          info={<InfoTip metric="wau" interpretation={`${wau} people were active this week — ${stickiness}% of everyone active this month came back within 7 days.`} />}
+          info={<InfoTip metric="wau" interpretation={`${wau} people were active in the last 7 complete days${stickiness !== null ? ` — ${stickiness}% of everyone active this month came back within 7 days` : ''}.`} />}
           value={wau.toLocaleString()}
-          sub={`${stickiness}% of monthly actives returned this week`}
+          sub={stickiness !== null ? `${stickiness}% of monthly actives returned this week` : 'last 7 complete days'}
         />
         <MetricTile
           label="Monthly Active Users"
-          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used HOCKIA in the last 30 days — the product's current reach.`} />}
+          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used HOCKIA in the last 30 complete days — the product's current reach.`} />}
           value={mau.toLocaleString()}
-          sub="active in the last 30 days"
+          sub="active in the last 30 complete days"
         />
       </div>
 
@@ -154,10 +158,10 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           }
         />
         <MetricTile
-          label="Activation Rate"
+          label="Activation (profile completed)"
           info={<InfoTip metric="activation" value={data?.activation_pct} interpretation={`Of the ${data?.activation_cohort ?? 0} people who joined in the last ${days} days, ${data?.activation_activated ?? 0} completed onboarding, added a photo and set their position — ready to be found and contacted.`} />}
           value={`${data?.activation_pct ?? 0}%`}
-          sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users activated`}
+          sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users · onboarding + photo + position`}
         />
         <MetricTile
           label="Profile Completion"
@@ -207,51 +211,26 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
         />
       </div>
 
-      {/* ── 4. NORTH STAR — REAL CONNECTIONS ──────────────────────────── */}
-      <SectionHeading title="North Star — Real Connections" hint="the outcomes HOCKIA exists to create" />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <MetricTile
-          accent="purple"
-          label="Players Contacted"
-          info={<InfoTip metric="playersContacted" interpretation={`${ns?.players_contacted ?? 0} players were contacted first by a club or coach in the last ${days} days (${ns?.club_conversations ?? 0} conversations started).`} />}
-          value={ns?.players_contacted ?? 0}
-          sub={`${ns?.club_conversations ?? 0} club-started chats`}
-        />
-        <MetricTile
-          accent="purple"
-          label="Applications"
-          info={<InfoTip metric="applications" interpretation={`${ns?.applications ?? 0} applications submitted to real opportunities in the last ${days} days.`} />}
-          value={ns?.applications ?? 0}
-          sub={`last ${days} days`}
-        />
-        <MetricTile
-          accent="purple"
-          label="Shortlists"
-          info={<InfoTip metric="shortlists" interpretation={`Clubs shortlisted ${ns?.shortlists ?? 0} applicants in the last ${days} days — the strongest pre-hire signal.`} />}
-          value={ns?.shortlists ?? 0}
-          sub={`last ${days} days`}
-        />
-        <MetricTile
-          accent="purple"
-          label="Club Invites"
-          info={<InfoTip metric="invites" interpretation={`Clubs created ${ns?.invites_sent ?? 0} invite links in the last ${days} days; ${ns?.invite_joins ?? 0} members have joined through invite links.`} />}
-          value={ns?.invites_sent ?? 0}
-          sub={`${ns?.invite_joins ?? 0} joins via invites`}
-        />
-        <MetricTile
-          accent="purple"
-          label="Signings via HOCKIA"
-          info={<InfoTip metric="signings" interpretation={`${ns?.signings_period ?? 0} signings confirmed by both sides in the last ${days} days (${ns?.signings_all_time ?? 0} all-time). This is HOCKIA's north star.`} />}
-          value={ns?.signings_period ?? 0}
-          sub={`${ns?.signings_all_time ?? 0} all-time`}
-        />
-        <MetricTile
-          accent="purple"
-          label="Opportunities Filled"
-          info={<InfoTip metric="filled" interpretation={`${ns?.filled_period ?? 0} positions filled in the last ${days} days (${ns?.filled_all_time ?? 0} all-time). This is the end of the funnel everything else feeds.`} />}
-          value={ns?.filled_period ?? 0}
-          sub={`${ns?.filled_all_time ?? 0} all-time`}
-        />
+      {/* ── 4. NORTH STAR — THE RECRUITING LOOP ───────────────────────── */}
+      <SectionHeading title="North Star — Real Connections" hint="the recruiting loop, from a role posted to a signing" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <RecruitingFunnelCard days={days} />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+          <MetricTile
+            accent="purple"
+            label="Players Contacted"
+            info={<InfoTip metric="playersContacted" interpretation={`${ns?.players_contacted ?? 0} players were contacted first by a club or coach in the last ${days} days (${ns?.club_conversations ?? 0} conversations started). Outside the funnel: a message, not an application.`} />}
+            value={ns?.players_contacted ?? 0}
+            sub={`${ns?.club_conversations ?? 0} club-started chats`}
+          />
+          <MetricTile
+            accent="purple"
+            label="Opportunities Filled"
+            info={<InfoTip metric="filled" interpretation={`${ns?.filled_period ?? 0} positions filled in the last ${days} days (${ns?.filled_all_time ?? 0} all-time). This is the end of the funnel everything else feeds.`} />}
+            value={ns?.filled_period ?? 0}
+            sub={`${ns?.filled_all_time ?? 0} all-time · ${ns?.signings_all_time ?? 0} signings all-time`}
+          />
+        </div>
       </div>
 
       <p className="flex items-center gap-2 text-[11px] text-gray-400">

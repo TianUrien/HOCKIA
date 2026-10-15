@@ -29,10 +29,10 @@ function getProfileCompletionStatus(pct: number): 'green' | 'yellow' | 'red' {
 }
 
 function getRoleBalanceStatus(stats: CommandCenterStats): 'green' | 'yellow' | 'red' {
-  const { player, coach, club, brand } = stats.role_distribution
-  const total = player + coach + club + brand
+  const { player, coach, club, brand, umpire = 0 } = stats.role_distribution
+  const total = player + coach + club + brand + umpire
   if (total === 0) return 'red'
-  const maxPct = Math.max(player, coach, club, brand) / total * 100
+  const maxPct = Math.max(player, coach, club, brand, umpire) / total * 100
   if (maxPct > 85) return 'red'
   if (maxPct > 70) return 'yellow'
   return 'green'
@@ -69,23 +69,23 @@ export function HealthSignals({ stats, loading }: HealthSignalsProps) {
   const signals: Signal[] = [
     {
       label: 'WAU/MAU',
-      value: `${stats.wau_mau_ratio}%`,
-      status: getWauMauStatus(stats.wau_mau_ratio),
+      value: stats.wau_mau_ratio === null ? '—' : `${stats.wau_mau_ratio}%`,
+      status: getWauMauStatus(stats.wau_mau_ratio ?? 0),
       tooltip: 'Weekly to Monthly active ratio. Green: >=25%, Yellow: >=15%',
     },
     {
       label: 'Profile Complete',
-      value: `${stats.profile_completion_pct}%`,
-      status: getProfileCompletionStatus(stats.profile_completion_pct),
+      value: stats.profile_completion_pct === null ? '—' : `${stats.profile_completion_pct}%`,
+      status: getProfileCompletionStatus(stats.profile_completion_pct ?? 0),
       tooltip: 'Users with avatar + bio. Green: >=50%, Yellow: >=30%',
     },
     {
       label: 'Role Balance',
       value: (() => {
-        const { player, coach, club, brand } = stats.role_distribution
-        const total = player + coach + club + brand
+        const { player, coach, club, brand, umpire = 0 } = stats.role_distribution
+        const total = player + coach + club + brand + umpire
         if (total === 0) return '—'
-        const maxPct = Math.round(Math.max(player, coach, club, brand) / total * 100)
+        const maxPct = Math.round(Math.max(player, coach, club, brand, umpire) / total * 100)
         return `${maxPct}% max`
       })(),
       status: getRoleBalanceStatus(stats),

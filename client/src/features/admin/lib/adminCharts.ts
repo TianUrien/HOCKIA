@@ -31,7 +31,9 @@ export interface WeeklyRow {
   week: string
   /** "6 Oct" style label for the axis. */
   label: string
-  [key: string]: string | number
+  /** True for the week that contains today: still filling, so it reads low. */
+  partial: boolean
+  [key: string]: string | number | boolean
 }
 
 /** The Monday on or before `d`, as an ISO date (UTC, no time). */
@@ -51,14 +53,15 @@ export function shortDay(iso: string): string {
  * date field; every key in `sumKeys` is summed. Weeks come back in order and
  * the current, partial week is kept (the chart marks it).
  */
-export function toWeekly<T extends object>(rows: readonly T[], dateKey: keyof T, sumKeys: readonly (keyof T)[]): WeeklyRow[] {
+export function toWeekly<T extends object>(rows: readonly T[], dateKey: keyof T, sumKeys: readonly (keyof T)[], today: string = new Date().toISOString().slice(0, 10)): WeeklyRow[] {
+  const currentWeek = weekStart(today)
   const byWeek = new Map<string, WeeklyRow>()
   for (const row of rows) {
     const iso = String(row[dateKey])
     const week = weekStart(iso)
     let acc = byWeek.get(week)
     if (!acc) {
-      acc = { week, label: shortDay(week) }
+      acc = { week, label: shortDay(week), partial: week === currentWeek }
       for (const k of sumKeys) acc[String(k)] = 0
       byWeek.set(week, acc)
     }
@@ -67,7 +70,18 @@ export function toWeekly<T extends object>(rows: readonly T[], dateKey: keyof T,
   return [...byWeek.values()].sort((a, b) => (a.week < b.week ? -1 : 1))
 }
 
-/** Share of a part in a whole as a whole-number percent, 0 when the whole is 0. */
-export function share(part: number, whole: number): number {
-  return whole > 0 ? Math.round((part / whole) * 100) : 0
+/** Share of a part in a whole as a whole-number percent; null when the whole is 0 (shown as "—", never as 0%). */
+export function share(part: number, whole: number): number | null {
+  return whole > 0 ? Math.round((part / whole) * 100) : null
+}
+
+/** "42%" or "—" for a share that has no denominator. */
+export function shareLabel(part: number, whole: number): string {
+  const s = share(part, whole)
+  return s === null ? '—' : `${s}%`
+}
+
+/** Drop the row for `today` (a partial day) from a daily series. */
+export function completeDaysOnly<T extends { day: string }>(rows: readonly T[], today: string = new Date().toISOString().slice(0, 10)): T[] {
+  return rows.filter((r) => r.day < today)
 }

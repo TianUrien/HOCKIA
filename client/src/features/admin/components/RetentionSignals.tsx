@@ -120,7 +120,7 @@ export function RetentionCard({
                 title="Change vs the preceding equal-length signup period"
               >
                 {delta > 0 ? <TrendingUp className="w-3 h-3" /> : delta < 0 ? <TrendingDown className="w-3 h-3" /> : null}
-                {delta > 0 ? '+' : ''}{delta} pts
+                {delta > 0 ? '+' : ''}{delta} pts <span className="font-normal text-gray-400">vs previous period</span>
               </span>
             )}
           </div>
