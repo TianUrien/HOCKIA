@@ -29,6 +29,22 @@ async function fetchShell(origin: string): Promise<string> {
   return res.text()
 }
 
+/** The project ref in a Supabase URL (public: it is in every client bundle). */
+function projectRef(base: string): string {
+  return base.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] ?? 'other'
+}
+
+/** The project ref an anon JWT was issued for, or the key family for non-JWT keys. Never the key itself. */
+function keyRef(key: string): string {
+  if (key.startsWith('sb_publishable_')) return 'publishable'
+  try {
+    const payload = JSON.parse(atob(key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return `${payload.ref ?? '?'}:${payload.role ?? '?'}`
+  } catch {
+    return 'not-a-jwt'
+  }
+}
+
 /** Why a role was not served, for the HTML comment crawl checks read. */
 type Lookup = { row: PublicOpportunityRow | null; why: string }
 
@@ -44,7 +60,7 @@ async function fetchRole(id: string): Promise<Lookup> {
       // (sb_publishable_…) key is not a JWT, so sending it as Bearer is a 401.
       headers: { apikey: key, accept: 'application/json' },
     })
-    if (!res.ok) return { row: null, why: `rest-${res.status}` }
+    if (!res.ok) return { row: null, why: `rest-${res.status} url=${projectRef(base)} key=${keyRef(key)}` }
     const rows = (await res.json()) as PublicOpportunityRow[]
     return { row: rows[0] ?? null, why: rows[0] ? 'ok' : 'not-public' }
   } catch (err) {
