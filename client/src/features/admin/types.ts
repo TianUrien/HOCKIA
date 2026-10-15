@@ -2010,3 +2010,14 @@ export interface ResponseTimeStats {
   tier_week: number
   tier_two_weeks: number
 }
+
+/** One day of member activity (admin_get_activity_series). */
+export interface ActivitySeriesPoint {
+  day: string
+  messages: number
+  conversations: number
+  applications: number
+  opportunities: number
+  friendships: number
+  posts: number
+}
