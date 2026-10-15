@@ -40,7 +40,9 @@ async function fetchRole(id: string): Promise<Lookup> {
   if (!base || !key) return { row: null, why: 'no-env' }
   try {
     const res = await fetch(`${base}/rest/v1/public_opportunities?id=eq.${id}&select=*&limit=1`, {
-      headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json' },
+      // apikey only: the gateway maps it to the anon role. A publishable
+      // (sb_publishable_…) key is not a JWT, so sending it as Bearer is a 401.
+      headers: { apikey: key, accept: 'application/json' },
     })
     if (!res.ok) return { row: null, why: `rest-${res.status}` }
     const rows = (await res.json()) as PublicOpportunityRow[]
