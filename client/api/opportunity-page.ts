@@ -29,16 +29,24 @@ async function fetchShell(origin: string): Promise<string> {
   return res.text()
 }
 
-async function fetchRole(id: string): Promise<PublicOpportunityRow | null> {
+/** Why a role was not served, for the HTML comment crawl checks read. */
+type Lookup = { row: PublicOpportunityRow | null; why: string }
+
+async function fetchRole(id: string): Promise<Lookup> {
   const base = process.env.VITE_SUPABASE_URL
   const key = process.env.VITE_SUPABASE_ANON_KEY
-  if (!base || !key) return null
-  const res = await fetch(`${base}/rest/v1/public_opportunities?id=eq.${id}&select=*&limit=1`, {
-    headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json' },
-  })
-  if (!res.ok) return null
-  const rows = (await res.json()) as PublicOpportunityRow[]
-  return rows[0] ?? null
+  if (!base || !key) return { row: null, why: 'no-env' }
+  try {
+    const res = await fetch(`${base}/rest/v1/public_opportunities?id=eq.${id}&select=*&limit=1`, {
+      headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json' },
+    })
+    if (!res.ok) return { row: null, why: `rest-${res.status}` }
+    const rows = (await res.json()) as PublicOpportunityRow[]
+    return { row: rows[0] ?? null, why: rows[0] ? 'ok' : 'not-public' }
+  } catch (err) {
+    console.error('[opportunity-page] lookup failed', err instanceof Error ? err.message : String(err))
+    return { row: null, why: 'fetch-error' }
+  }
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -60,12 +68,13 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(renderNoindexHtml(shell), { status: 404, headers: { ...HTML, 'cache-control': 'public, s-maxage=60' } })
   }
 
-  const row = await fetchRole(id).catch(() => null)
+  const { row, why } = await fetchRole(id)
   if (!row) {
     // Exists-but-closed and unknown look the same to the public view: both
     // are noindex. Status stays 200 so an owner previewing a draft or a
-    // closed role still gets the app.
-    return new Response(renderNoindexHtml(shell), { status: 200, headers: { ...HTML, 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' } })
+    // closed role still gets the app. The comment says why, for checks.
+    const html = renderNoindexHtml(shell).replace('</head>', `<!-- opportunity-page: ${why} -->\n</head>`)
+    return new Response(html, { status: 200, headers: { ...HTML, 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' } })
   }
 
   const html = renderOpportunityHtml(shell, row, siteUrlFor(host))
