@@ -11,7 +11,7 @@ interface TrendAreaCardProps {
   title: string
   hint?: string
   /** One row per day; `label` is the x-axis text. */
-  rows: Array<Record<string, string | number>>
+  rows: Array<Record<string, string | number | boolean>>
   series: TrendSeries[]
   loading?: boolean
   height?: number

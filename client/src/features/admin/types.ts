@@ -85,6 +85,7 @@ export interface SignupTrend {
   coaches: number
   clubs: number
   brands: number
+  umpires: number
 }
 
 export interface TopCountry {
@@ -351,21 +352,64 @@ export interface CommandCenterStats {
   mau: number
   wau: number
   dau: number
-  wau_mau_ratio: number
+  /** The day DAU counts: the last complete day (yesterday). */
+  dau_date: string
+  wau_mau_ratio: number | null
   live_opportunities: number
   live_opportunities_prev: number
   applications_period: number
   applications_prev: number
-  application_conversion: number
-  profile_completion_pct: number
+  /** Unique (member, role) pairs that viewed a role in the period. */
+  view_pairs: number
+  /** Of those pairs, how many went on to apply to that role. */
+  applied_pairs: number
+  /** applied_pairs ÷ view_pairs × 100; null when nobody viewed a role. */
+  application_conversion: number | null
+  profile_completion_pct: number | null
   role_distribution: {
     player: number
     coach: number
     club: number
+    umpire: number
     brand: number
   }
-  d7_retention: number
+  d7_retention: number | null
   generated_at: string
+}
+
+// ── Recruiting loop funnel (admin_get_recruiting_funnel) ──
+export interface RecruitingFunnelStep {
+  key: 'posted' | 'viewed' | 'applied' | 'shortlisted' | 'invited' | 'offered' | 'signed'
+  label: string
+  /** Things: roles, applications, invites, offers, signings. */
+  count: number
+  /** Distinct people (or clubs) behind the count. */
+  people: number
+  unit: string
+  people_unit: string
+}
+
+export interface RecruitingFunnel {
+  period_days: number
+  steps: RecruitingFunnelStep[]
+  medians: {
+    role_to_first_application_hours: number | null
+    invite_response_hours: number | null
+    offer_response_hours: number | null
+    roles_with_application: number
+    applications_without_reply: number
+  }
+  generated_at: string
+}
+
+// ── Sign-ups by first-touch channel group per week (admin_get_signups_by_channel_week) ──
+export interface ChannelWeekRow {
+  /** ISO date of the Monday that starts the week. */
+  week: string
+  channel_group: string
+  signups: number
+  /** Sign-ups whose channel was measured (UTM, referrer, install referrer, deep link), not inferred. */
+  measured: number
 }
 
 export interface RetentionCohort {

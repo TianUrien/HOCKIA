@@ -1,5 +1,5 @@
 import { ChartCard } from './ChartCard'
-import { share } from '../../lib/adminCharts'
+import { shareLabel } from '../../lib/adminCharts'
 import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 export interface RankedBar {
@@ -44,7 +44,7 @@ export function RankedBarsCard({ title, hint, bars, total, limit = 8, loading, a
               </div>
             </div>
             <span className="text-right tabular-nums text-gray-900">{b.value.toLocaleString()}</span>
-            <span className="text-right tabular-nums text-xs text-gray-500">{share(b.value, whole)}%</span>
+            <span className="text-right tabular-nums text-xs text-gray-500">{shareLabel(b.value, whole)}</span>
           </li>
         ))}
       </ul>

@@ -45,6 +45,7 @@ import { RetentionSignals } from '../components/RetentionSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
 import { EngagementOverview } from '../components/EngagementOverview'
 import { OverviewCharts } from '../components/OverviewCharts'
+import { AcquisitionCharts } from '../components/AcquisitionCharts'
 import { InfoTip } from '../components/InfoTip'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
@@ -194,7 +195,7 @@ export function AdminOverview() {
           value={ccStats?.total_users ?? 0}
           change={userChange}
           changePct={userChangePct}
-          subtitle={`DAU ${ccStats?.dau ?? 0} · WAU ${ccStats?.wau ?? 0} · MAU ${ccStats?.mau ?? 0}`}
+          subtitle={`DAU ${ccStats?.dau ?? 0} (yesterday) · WAU ${ccStats?.wau ?? 0} · MAU ${ccStats?.mau ?? 0}`}
           loading={ccLoading}
         />
         <CommandCenterKPICard
@@ -209,7 +210,9 @@ export function AdminOverview() {
           value={ccStats?.applications_period ?? 0}
           change={appsChange}
           changePct={appsChangePct}
-          subtitle={`${ccStats?.application_conversion ?? 0}% view-to-apply`}
+          subtitle={ccStats?.application_conversion === null || ccStats?.application_conversion === undefined
+            ? 'view-to-apply: no role views yet'
+            : `${ccStats.application_conversion}% of viewers applied (${ccStats.applied_pairs} of ${ccStats.view_pairs} member·role pairs)`}
           loading={ccLoading}
         />
         <div className="relative">
@@ -241,6 +244,11 @@ export function AdminOverview() {
       {/* THE PICTURE — members, activity, reach as charts               */}
       {/* ============================================================= */}
       <OverviewCharts stats={stats} signupTrends={signupTrends} topCountries={topCountries} days={daysFilter} loading={isLoading} />
+
+      {/* ============================================================= */}
+      {/* ACQUISITION — where new members come from (13 weeks)          */}
+      {/* ============================================================= */}
+      <AcquisitionCharts days={91} />
 
       {/* ============================================================= */}
       {/* HEALTH SIGNALS                                                 */}

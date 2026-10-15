@@ -94,6 +94,7 @@ export function NotificationCtrCard({ days = 30 }: { days?: number }) {
         <Bell className="w-4 h-4 text-purple-500" />
         <h3 className="text-sm font-semibold text-gray-700">Notification CTR (last {days}d)</h3>
       </div>
+      <p className="text-xs text-gray-500 -mt-2 mb-3">Clicked = distinct notifications opened, counted only among those sent in the window, so a rate can never pass 100%.</p>
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 text-gray-500 text-xs uppercase tracking-wider">
@@ -109,8 +110,8 @@ export function NotificationCtrCard({ days = 30 }: { days?: number }) {
               <td className="py-2 text-gray-700 text-xs">{humanKind(r.kind)}</td>
               <td className="py-2 text-right text-gray-500 font-mono text-xs">{r.sent_count}</td>
               <td className="py-2 text-right text-gray-700 font-mono text-xs">{r.click_count}</td>
-              <td className={`py-2 text-right font-semibold text-xs ${r.ctr_pct < 5 ? 'text-red-600' : r.ctr_pct < 20 ? 'text-amber-600' : 'text-green-600'}`}>
-                {r.ctr_pct}%
+              <td className={`py-2 text-right font-semibold text-xs ${(r.ctr_pct ?? 0) < 5 ? 'text-red-600' : (r.ctr_pct ?? 0) < 20 ? 'text-amber-600' : 'text-green-600'}`}>
+                {r.ctr_pct ?? 0}%
               </td>
             </tr>
           ))}

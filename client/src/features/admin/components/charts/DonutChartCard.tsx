@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { ChartCard } from './ChartCard'
-import { share } from '../../lib/adminCharts'
+import { shareLabel } from '../../lib/adminCharts'
 
 export interface DonutSlice {
   label: string
@@ -52,7 +52,7 @@ export function DonutChartCard({ title, hint, slices, centerLabel, total, loadin
               <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} aria-hidden="true" />
               <span className="min-w-0 flex-1 truncate text-gray-700">{s.label}</span>
               <span className="tabular-nums text-gray-900">{s.value.toLocaleString()}</span>
-              <span className="w-10 text-right tabular-nums text-xs text-gray-500">{share(s.value, whole)}%</span>
+              <span className="w-10 text-right tabular-nums text-xs text-gray-500">{shareLabel(s.value, whole)}</span>
             </li>
           ))}
         </ul>
@@ -67,7 +67,7 @@ function SliceTip({ active, payload, whole }: { active?: boolean; payload?: Arra
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm">
       <div className="font-medium text-gray-900">{name}</div>
-      <div className="text-gray-600 tabular-nums">{value.toLocaleString()} · {share(value, whole)}%</div>
+      <div className="text-gray-600 tabular-nums">{value.toLocaleString()} · {shareLabel(value, whole)}</div>
     </div>
   )
 }

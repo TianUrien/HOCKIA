@@ -19,7 +19,7 @@ import { DonutChartCard } from './charts/DonutChartCard'
 import { StackedBarsCard } from './charts/StackedBarsCard'
 import { TrendAreaCard } from './charts/TrendAreaCard'
 import { RankedBarsCard } from './charts/RankedBarsCard'
-import { ROLE_COLORS, ROLE_LABELS, SERIES_COLORS, shortDay, toWeekly } from '../lib/adminCharts'
+import { ROLE_COLORS, ROLE_LABELS, SERIES_COLORS, completeDaysOnly, shortDay, toWeekly } from '../lib/adminCharts'
 
 interface OverviewChartsProps {
   stats: DashboardStats | null
@@ -45,12 +45,28 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
     queryFn: () => getActivitySeries(days),
     staleTime: 5 * 60 * 1000,
   })
-  const activityRows = (activity.data ?? []).map((d) => ({ ...d, label: shortDay(d.day) }))
+  // Today is a partial day: drop it so the last point never reads as a drop.
+  const activityRows = completeDaysOnly(activity.data ?? []).map((d) => ({ ...d, label: shortDay(d.day) }))
 
   // Sign-ups: the 90-day daily trend rolled into Monday-start weeks, by role.
-  const weeklySignups = toWeekly(signupTrends, 'date', ['players', 'coaches', 'clubs', 'brands'])
+  const weeklySignups = toWeekly(signupTrends, 'date', ['players', 'coaches', 'clubs', 'umpires', 'brands'])
   // Applications and roles posted: daily activity rolled into weeks.
-  const weeklyActivity = toWeekly(activity.data ?? [], 'day', ['applications', 'opportunities'])
+  const weeklyActivity = toWeekly(completeDaysOnly(activity.data ?? []), 'day', ['applications', 'opportunities'])
+
+  // Push: the stats RPC splits subscribers by the four original roles; umpires
+  // and anything else are the remainder, named as such rather than hidden.
+  const pushNamed = (stats?.push_subscribers_player ?? 0) + (stats?.push_subscribers_coach ?? 0) + (stats?.push_subscribers_club ?? 0) + (stats?.push_subscribers_brand ?? 0)
+  const pushOther = Math.max(0, (stats?.push_subscribers ?? 0) - pushNamed)
+  // Devices: members with no device recorded are the gap between all members
+  // and the three platforms; shown, so the donut's total is the member total.
+  const deviceKnown = (stats?.device_users_ios ?? 0) + (stats?.device_users_android ?? 0) + (stats?.device_users_desktop ?? 0)
+  const deviceNone = Math.max(0, (stats?.total_users ?? 0) - deviceKnown)
+  // Countries: an empty country is "Unknown"; merge any duplicates that produces.
+  const countryBars = Object.entries(topCountries.reduce<Record<string, number>>((acc, c) => {
+    const label = c.country?.trim() ? c.country : 'Unknown'
+    acc[label] = (acc[label] ?? 0) + c.user_count
+    return acc
+  }, {})).map(([label, value]) => ({ label, value, ...(label === 'Unknown' ? { color: '#d1d5db' } : {}) }))
 
   const roleSlices = [
     { label: ROLE_LABELS.player, value: stats?.total_players ?? 0, color: ROLE_COLORS.player },
@@ -83,6 +99,7 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
             { key: 'players', label: 'Players', color: ROLE_COLORS.player },
             { key: 'coaches', label: 'Coaches', color: ROLE_COLORS.coach },
             { key: 'clubs', label: 'Clubs', color: ROLE_COLORS.club },
+            { key: 'umpires', label: 'Umpires', color: ROLE_COLORS.umpire },
             { key: 'brands', label: 'Brands', color: ROLE_COLORS.brand },
           ]}
           loading={loading}
@@ -93,7 +110,7 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <TrendAreaCard
           title={`Messages and conversations per day (${days}d)`}
-          hint="Messages sent, and new conversations opened."
+          hint="Messages sent, and new conversations opened. Complete days only (today is left out)."
           rows={activityRows}
           series={[
             { key: 'messages', label: 'Messages', color: SERIES_COLORS[0] },
@@ -103,7 +120,7 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
         />
         <StackedBarsCard
           title={`Applications and roles per week (${days}d)`}
-          hint="Applications sent by members, and roles posted by clubs and coaches."
+          hint="Applications sent by members, and roles posted by clubs and coaches. The lighter bar is the current, partial week."
           rows={weeklyActivity}
           series={[
             { key: 'applications', label: 'Applications', color: SERIES_COLORS[0] },
@@ -113,8 +130,8 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
           loading={activity.isLoading}
         />
         <DonutChartCard
-          title="Roles by status"
-          hint="All roles ever posted."
+          title="Roles by status (all-time)"
+          hint="Every role ever posted, whatever the period filter says."
           slices={[
             { label: 'Open', value: stats?.open_vacancies ?? 0, color: SERIES_COLORS[3] },
             { label: 'Closed', value: stats?.closed_vacancies ?? 0, color: SERIES_COLORS[6] },
@@ -129,13 +146,15 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <DonutChartCard
           title="Devices"
-          hint="Members by the device they last used."
+          hint="Members by the device they last used; the centre is all members."
           slices={[
             { label: 'iOS', value: stats?.device_users_ios ?? 0, color: SERIES_COLORS[1] },
             { label: 'Android', value: stats?.device_users_android ?? 0, color: SERIES_COLORS[3] },
             { label: 'Desktop', value: stats?.device_users_desktop ?? 0, color: SERIES_COLORS[0] },
+            { label: 'No device recorded', value: deviceNone, color: '#d1d5db' },
           ]}
-          centerLabel="devices"
+          centerLabel="members"
+          total={stats?.total_users ?? 0}
           loading={loading}
         />
         <DonutChartCard
@@ -146,6 +165,7 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
             { label: ROLE_LABELS.coach, value: stats?.push_subscribers_coach ?? 0, color: ROLE_COLORS.coach },
             { label: ROLE_LABELS.club, value: stats?.push_subscribers_club ?? 0, color: ROLE_COLORS.club },
             { label: ROLE_LABELS.brand, value: stats?.push_subscribers_brand ?? 0, color: ROLE_COLORS.brand },
+            { label: 'Umpires & other', value: pushOther, color: ROLE_COLORS.umpire },
           ]}
           centerLabel="subscribed"
           total={stats?.push_subscribers ?? 0}
@@ -154,7 +174,7 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
         <RankedBarsCard
           title="Top countries"
           hint="Members by country; share of all members."
-          bars={topCountries.map((c) => ({ label: c.country, value: c.user_count }))}
+          bars={countryBars}
           total={stats?.total_users ?? 0}
           loading={loading}
         />

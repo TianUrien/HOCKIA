@@ -66,8 +66,8 @@ export function classifyMetric(explainer: MetricExplainer, value: number): Bench
 export const METRIC_INFO = {
   dau: {
     title: 'Daily Active Users (DAU)',
-    measures: 'How many distinct people used HOCKIA today.',
-    formula: 'Users with any activity recorded today (opening the app, browsing, messaging). Test accounts excluded.',
+    measures: 'How many distinct people used HOCKIA on the last complete day (yesterday).',
+    formula: 'Users with any activity recorded yesterday (opening the app, browsing, messaging). Today is left out while it is still running. Test accounts excluded.',
     why: 'Shows the size of the daily habit. For a weekly-rhythm sport product, a low DAU with healthy WAU is normal — hockey life runs week to week, not hour to hour.',
   },
   wau: {
@@ -141,8 +141,8 @@ export const METRIC_INFO = {
     why: 'Pure growth, separated from engagement: this is the top of the funnel, before anyone has formed a habit.',
   },
   activation: {
-    title: 'Activation Rate',
-    measures: 'Of this period’s new signups, how many completed the minimum setup to become a usable member.',
+    title: 'Activation (profile completed)',
+    measures: 'Of this period’s new signups, how many completed the minimum setup to become a usable member. ("Activated · first real action" in the registration funnel and "Activation by Role" count a first value-action instead — different definitions, named on each card.)',
     formula: 'New users who finished onboarding AND uploaded a profile photo AND (for players) set a position ÷ all new users in the period.',
     why: 'Signups without activation are empty shells — they can’t be discovered, matched, or contacted. This measures how well onboarding converts interest into a real member.',
     unit: '%',
