@@ -14,7 +14,7 @@ read from the environment (`client/.env`, gitignored) and are never printed.
 | Item | iOS | Android |
 |---|---|---|
 | Version numbers | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `client/ios/App/App.xcodeproj/project.pbxproj` — **both** the Debug and the Release configuration | `versionName` and `versionCode` in `client/android/app/build.gradle` |
-| Next build | **1.3.20 (32)** | **1.21 (23)** |
+| Next build | **1.3.20 (33)** | **1.21 (23)** |
 | Web bundle | `client/dist` copied by `npx cap sync` to `ios/App/App/public` (gitignored) | same, to `android/app/src/main/assets/public` (gitignored) |
 | Native plugins | `client/ios/App/CapApp-SPM/Package.swift` (SPM, no CocoaPods, no `.xcworkspace`) | `client/android/capacitor.settings.gradle` + `app/capacitor.build.gradle` |
 | Crash reporting | `SentryCapacitor` product from `@sentry/capacitor` (pulls `getsentry/sentry-cocoa` 9.28.0, exact) | `:sentry-capacitor` project (pulls `io.sentry:sentry-android` 8.50.1) |
@@ -250,12 +250,19 @@ Source: PRs #247–#249.
 - **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
 - **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
 
-## Changes in iOS 1.3.19 (31) — 2026-10-14
+## Changes in iOS 1.3.19 (32) — 2026-10-15
 
 Source: main after release #298. iOS only (founder, 2026-10-14); Android stays on 1.19 (21).
 Build 30 (main 53037a0d) was uploaded and submitted before the messenger fixes landed; it was pulled
 from review and replaced by build 31 (same version — App Store Connect needs a new build number per
-upload). Sentry release `native@<sha of the build-31 archive>`.
+upload). Build 31 was then REJECTED by App Review (2.1a): it crashed at launch on iPadOS 27.0 and
+iOS 27.0.1. Cause: the archive was made with Xcode 27, and the iOS 27 SDK refuses to launch an app that
+still uses the app-delegate-only lifecycle ("Application failed to launch: UIScene lifecycle adoption",
+reproduced on an iOS 27 simulator). Build 32 adopts UIScene: `SceneDelegate.swift` forwarding to
+Capacitor's `SceneDelegateProxy` (Capacitor ≥ 8.5), `UIApplicationSceneManifest` in Info.plist (replaces
+`UIMainStoryboardFile`), and `configurationForConnecting` in AppDelegate. Verified on iOS 27 iPhone 17
+Pro Max and iPad Air 11-inch simulators, plus the `hockia://` deep link. **From now on: every archive made
+with Xcode 27+ needs this; test a store build on an iOS 27 simulator before uploading.**
 
 - **Messenger (#297).** Scrolling up no longer snaps back to the newest message; older pages load;
   replies arrive live. The last one needed migration `20261014160000` (messages and conversations in
