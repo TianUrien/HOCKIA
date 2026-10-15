@@ -124,8 +124,13 @@ function truncate(s: string, max: number): string {
   return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`
 }
 
+/** Role titles are typed by clubs: trim and collapse the whitespace they carry. */
+function clean(s: string | null | undefined): string {
+  return (s ?? '').replace(/\s+/g, ' ').trim()
+}
+
 export function pageTitle(row: PublicOpportunityRow): string {
-  return `${row.title} at ${organisationName(row)} | HOCKIA`
+  return `${clean(row.title)} at ${organisationName(row)} | HOCKIA`
 }
 
 export function metaDescription(row: PublicOpportunityRow): string {
@@ -164,7 +169,7 @@ export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Rec
   return {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
-    title: row.title,
+    title: clean(row.title),
     description: parts.join(' '),
     datePosted,
     ...(row.application_deadline ? { validThrough: `${row.application_deadline}T23:59:59Z` } : {}),
