@@ -85,6 +85,8 @@ Deno.serve(async (req: Request) => {
         id,
         updated_at,
         created_at,
+        published_at,
+        application_deadline,
         club:profiles!opportunities_club_id_fkey(
           onboarding_completed,
           is_test_account
@@ -98,12 +100,21 @@ Deno.serve(async (req: Request) => {
       throw error
     }
 
+    // Founder rule (15 Oct 2026): an open role with no application deadline
+    // stops being advertised 90 days after it was posted (same cut-off as
+    // the role page's JobPosting, client/src/lib/seo/opportunityHead.ts).
+    const STALE_OPEN_ROLE_DAYS = 90
+    const staleBefore = Date.now() - STALE_OPEN_ROLE_DAYS * 86_400_000
+    const isStale = (opp: any) =>
+      !opp.application_deadline && new Date(opp.published_at ?? opp.created_at).getTime() < staleBefore
+
     // Filter to only include opportunities from valid clubs
     const validOpportunities = (opportunities || []).filter((opp: any) => {
       const club = opp.club
       return club && 
              club.onboarding_completed === true && 
-             (club.is_test_account === false || club.is_test_account === null)
+             (club.is_test_account === false || club.is_test_account === null) &&
+             !isStale(opp)
     })
 
     const today = formatDate(new Date())

@@ -12,7 +12,7 @@
  * Browsers with the service worker installed never reach this function
  * (navigateFallback serves app.html from cache); crawlers always do.
  */
-import { fromPublicApi, renderNoindexHtml, renderOpportunityHtml, type PublicApiOpportunity, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
+import { fromPublicApi, isStaleOpenRole, renderNoindexHtml, renderOpportunityHtml, type PublicApiOpportunity, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
 
 export const config = { runtime: 'edge' }
 
@@ -55,7 +55,11 @@ async function fetchRole(id: string, clientIp: string | null): Promise<Lookup> {
     if (res.status === 404) return { row: null, why: 'not-public' }
     if (!res.ok) return { row: null, why: `api-${res.status}` }
     const body = (await res.json()) as { data?: PublicApiOpportunity }
-    return body.data ? { row: fromPublicApi(body.data), why: 'ok' } : { row: null, why: 'empty' }
+    if (!body.data) return { row: null, why: 'empty' }
+    const row = fromPublicApi(body.data)
+    // 90 days with no deadline: still open inside HOCKIA, no longer advertised.
+    if (isStaleOpenRole(row)) return { row: null, why: 'stale-90d' }
+    return { row, why: 'ok' }
   } catch (err) {
     console.error('[opportunity-page] lookup failed', err instanceof Error ? err.message : String(err))
     return { row: null, why: 'fetch-error' }

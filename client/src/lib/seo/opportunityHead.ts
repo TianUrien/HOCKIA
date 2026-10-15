@@ -135,6 +135,22 @@ export function metaDescription(row: PublicOpportunityRow): string {
   return truncate(lead + body, 160)
 }
 
+/**
+ * Founder rule (15 Oct 2026, via the Analytics session): an open role with
+ * NO application deadline stops being advertised to Google 90 days after it
+ * was posted. It drops out of the sitemap and its page is served noindex
+ * without a JobPosting; inside HOCKIA the role stays open. Roles with a
+ * deadline keep validThrough = the deadline and expire through that.
+ */
+export const STALE_OPEN_ROLE_DAYS = 90
+
+export function isStaleOpenRole(row: Pick<PublicOpportunityRow, 'application_deadline' | 'published_at' | 'created_at'>, now: Date = new Date()): boolean {
+  if (row.application_deadline) return false
+  const posted = new Date(row.published_at ?? row.created_at).getTime()
+  if (Number.isNaN(posted)) return false
+  return now.getTime() - posted > STALE_OPEN_ROLE_DAYS * 86_400_000
+}
+
 /** schema.org/JobPosting for one open role. `siteUrl` has no trailing slash. */
 export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Record<string, unknown> {
   const datePosted = (row.published_at ?? row.created_at).slice(0, 10)

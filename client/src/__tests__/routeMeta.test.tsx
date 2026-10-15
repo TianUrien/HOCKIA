@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canonicalFor, resolveRouteMeta } from '@/lib/seo/routeMeta'
 import { applyRouteMeta } from '@/lib/seo/applyRouteMeta'
-import { buildJobPosting, fromPublicApi, metaDescription, renderNoindexHtml, renderOpportunityHtml, renderStaticHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
+import { buildJobPosting, fromPublicApi, isStaleOpenRole, metaDescription, renderNoindexHtml, renderOpportunityHtml, renderStaticHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
 
 describe('routeMeta', () => {
   it('canonical is the apex site, no query, no trailing slash', () => {
@@ -99,5 +99,18 @@ describe('renderStaticHtml', () => {
     expect(html).not.toContain('href="https://inhockia.com/"')
     expect(html).not.toContain('name="robots"')
     expect(html.match(/<meta name="description"/g)).toHaveLength(1)
+  })
+})
+
+describe('isStaleOpenRole (90-day rule)', () => {
+  const now = new Date('2026-10-15T12:00:00Z')
+  const base = { application_deadline: null, published_at: null, created_at: '2026-07-20T12:00:00Z' }
+  it('a role with no deadline is stale after 90 days from when it was posted', () => {
+    expect(isStaleOpenRole({ ...base, published_at: '2026-07-17T11:59:00Z' }, now)).toBe(true) // 90 days + 1 min
+    expect(isStaleOpenRole({ ...base, published_at: '2026-07-17T12:01:00Z' }, now)).toBe(false) // just under 90 days
+    expect(isStaleOpenRole(base, now)).toBe(false) // created_at used when never published: 87 days
+  })
+  it('a role with a deadline is never stale here: validThrough carries the deadline', () => {
+    expect(isStaleOpenRole({ ...base, published_at: '2026-01-01T00:00:00Z', application_deadline: '2026-02-01' }, now)).toBe(false)
   })
 })
