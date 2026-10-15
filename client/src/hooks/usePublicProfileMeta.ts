@@ -49,6 +49,8 @@ export function usePublicProfileMeta(input: PublicProfileMetaInput): void {
     ogDesc?.setAttribute('content', desc)
     const ogUrl = document.querySelector('meta[property="og:url"]')
     if (canonicalUrl) ogUrl?.setAttribute('content', canonicalUrl)
+    const canonicalTag = document.querySelector('link[rel="canonical"]')
+    if (canonicalUrl) canonicalTag?.setAttribute('href', canonicalUrl)
 
     const twTitle = document.querySelector('meta[name="twitter:title"]')
     twTitle?.setAttribute('content', title)

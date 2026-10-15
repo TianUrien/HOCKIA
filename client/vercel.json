@@ -11,6 +11,21 @@
     },
     {
       "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "staging.inhockia.com"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
       "headers": [
         {
           "key": "X-Content-Type-Options",
@@ -47,6 +62,10 @@
     {
       "source": "/api/sitemap.xml",
       "destination": "https://xtertgftujnebubxgqit.supabase.co/functions/v1/sitemap"
+    },
+    {
+      "source": "/opportunities/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+      "destination": "/api/opportunity-page?id=:id"
     },
     {
       "source": "/:path*",
