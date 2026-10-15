@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartCard } from './ChartCard'
 
 export interface BarSeries {
@@ -10,8 +10,8 @@ export interface BarSeries {
 interface StackedBarsCardProps {
   title: string
   hint?: string
-  /** One row per bar; `label` is the x-axis text, series keys hold the numbers. */
-  rows: Array<Record<string, string | number>>
+  /** One row per bar; `label` is the x-axis text, series keys hold the numbers; `partial` marks a period in progress. */
+  rows: Array<Record<string, string | number | boolean>>
   series: BarSeries[]
   /** Stack the series (default) or draw them side by side. */
   stacked?: boolean
@@ -35,7 +35,10 @@ export function StackedBarsCard({ title, hint, rows, series, stacked = true, loa
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: '#f5f3ff' }} />
           {series.length > 1 && <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />}
           {series.map((s, i) => (
-            <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} stackId={stacked ? 'a' : undefined} radius={i === series.length - 1 || !stacked ? [4, 4, 0, 0] : [0, 0, 0, 0]} maxBarSize={28} />
+            <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} stackId={stacked ? 'a' : undefined} radius={i === series.length - 1 || !stacked ? [4, 4, 0, 0] : [0, 0, 0, 0]} maxBarSize={28}>
+              {/* A period still in progress (this week) is drawn lighter so it doesn't read as a drop. */}
+              {rows.map((r, j) => <Cell key={j} fillOpacity={r.partial ? 0.4 : 1} />)}
+            </Bar>
           ))}
         </BarChart>
       </ResponsiveContainer>

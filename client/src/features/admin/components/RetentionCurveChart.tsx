@@ -47,9 +47,11 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
   const periods = ['D7', 'D15', 'D30', 'D90']
   const pctKeys = ['d7_pct', 'd15_pct', 'd30_pct', 'd90_pct'] as const
 
+  // The four most recent cohorts, oldest first, so the legend reads left to right in time.
+  const shown = [...cohorts].sort((a, b) => (a.signup_month < b.signup_month ? 1 : -1)).slice(0, 4).reverse()
   const chartData = periods.map((period, i) => {
     const point: Record<string, string | number | null> = { period }
-    cohorts.slice(0, 4).forEach((c) => {
+    shown.forEach((c) => {
       const label = new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
         + ` (${c.cohort_size})`
       point[label] = c[pctKeys[i]]
@@ -57,7 +59,7 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
     return point
   })
 
-  const cohortLabels = cohorts.slice(0, 4).map((c) =>
+  const cohortLabels = shown.map((c) =>
     new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
       + ` (${c.cohort_size})`
   )

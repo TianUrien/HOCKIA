@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { share, shortDay, toWeekly, weekStart } from '@/features/admin/lib/adminCharts'
+import { completeDaysOnly, share, shareLabel, shortDay, toWeekly, weekStart } from '@/features/admin/lib/adminCharts'
 import { DonutChartCard } from '@/features/admin/components/charts/DonutChartCard'
 import { RankedBarsCard } from '@/features/admin/components/charts/RankedBarsCard'
 
@@ -18,15 +18,18 @@ describe('adminCharts helpers', () => {
       { date: '2026-10-12', players: 3, coaches: 0 },
       { date: '2026-10-01', players: 5, coaches: 5 },
     ]
-    const weeks = toWeekly(daily, 'date', ['players', 'coaches'])
+    const weeks = toWeekly(daily, 'date', ['players', 'coaches'], '2026-10-15')
     expect(weeks.map((w) => w.week)).toEqual(['2026-09-28', '2026-10-05', '2026-10-12'])
-    expect(weeks[1]).toMatchObject({ players: 3, coaches: 1, label: '5 Oct' })
+    expect(weeks[1]).toMatchObject({ players: 3, coaches: 1, label: '5 Oct', partial: false })
+    expect(weeks[2].partial).toBe(true) // the week that contains today is still filling
   })
 
-  it('share and shortDay', () => {
+  it('share, shareLabel, shortDay and completeDaysOnly', () => {
     expect(share(1, 3)).toBe(33)
-    expect(share(1, 0)).toBe(0)
+    expect(share(1, 0)).toBeNull() // no denominator → N/A, never 0%
+    expect(shareLabel(1, 0)).toBe('—')
     expect(shortDay('2026-10-05')).toBe('5 Oct')
+    expect(completeDaysOnly([{ day: '2026-10-14' }, { day: '2026-10-15' }], '2026-10-15')).toEqual([{ day: '2026-10-14' }])
   })
 })
 

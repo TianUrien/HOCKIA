@@ -13,6 +13,8 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { normalizeEmailCampaign } from '../utils/campaigns'
 import type {
+  RecruitingFunnel,
+  ChannelWeekRow,
   DashboardStats,
   SignupTrend,
   TopCountry,
@@ -2653,5 +2655,30 @@ export async function getActivitySeries(days = 30): Promise<ActivitySeriesPoint[
     opportunities: Number(r.opportunities) || 0,
     friendships: Number(r.friendships) || 0,
     posts: Number(r.posts) || 0,
+  }))
+}
+
+/** The recruiting loop as a funnel: roles posted → viewed → applied → shortlisted → invited → offered → signed. */
+export async function getRecruitingFunnel(days = 30): Promise<RecruitingFunnel> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('admin_get_recruiting_funnel', { p_days: days })
+  if (error) throw new Error(error.message)
+  const raw = data as RecruitingFunnel
+  return {
+    ...raw,
+    steps: (raw?.steps ?? []).map((s) => ({ ...s, count: Number(s.count) || 0, people: Number(s.people) || 0 })),
+  }
+}
+
+/** Sign-ups per Monday-start week by first-touch channel group. */
+export async function getSignupsByChannelWeek(days = 91): Promise<ChannelWeekRow[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('admin_get_signups_by_channel_week', { p_days: days })
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+    week: String(r.week),
+    channel_group: String(r.channel_group ?? 'unknown'),
+    signups: Number(r.signups) || 0,
+    measured: Number(r.measured) || 0,
   }))
 }
