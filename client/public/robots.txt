@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.inhockia.com/api/sitemap.xml
+Sitemap: https://inhockia.com/api/sitemap.xml
 
 # Disallow admin/private routes
 Disallow: /admin/

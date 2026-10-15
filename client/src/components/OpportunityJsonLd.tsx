@@ -210,6 +210,10 @@ export default function VacancyJsonLd({ vacancy, club }: VacancyJsonLdProps) {
     }
   }, [vacancy, club])
 
+  // api/opportunity-page.ts already put a JobPosting in the server HTML for
+  // this role; a second copy would read as a duplicate posting.
+  if (typeof window !== 'undefined' && (window as Window & { __SERVER_JSONLD__?: boolean }).__SERVER_JSONLD__) return null
+
   return (
     <script
       type="application/ld+json"

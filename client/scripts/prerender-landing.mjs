@@ -128,6 +128,20 @@ function postProcess(html, shellHtml) {
   return out
 }
 
+
+/**
+ * app.html is the shell for EVERY non-root route, so it must not carry the
+ * homepage canonical / og:url / twitter:url (Google read every route as a
+ * copy of the homepage). <RouteMeta> sets them per route on the client, and
+ * api/opportunity-page.ts injects them server-side for roles.
+ */
+function stripRouteMeta(html) {
+  return html
+    .replace(/[ \t]*<link rel="canonical"[^>]*>\s*/g, '')
+    .replace(/[ \t]*<meta property="og:url"[^>]*>\s*/g, '')
+    .replace(/[ \t]*<meta name="twitter:url"[^>]*>\s*/g, '')
+}
+
 async function main() {
   const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
   // Idempotency: a second run against an already-prerendered dist would
@@ -140,7 +154,7 @@ async function main() {
   // navigateFallback and the PWA start_url all point non-root navigation
   // here. Byte-copy of the BUILT shell — same hashed assets, no second
   // Vite input (which changes the output shape entirely).
-  await writeFile(path.join(DIST, 'app.html'), shell)
+  await writeFile(path.join(DIST, 'app.html'), stripRouteMeta(shell))
   const { server, port } = await serveDist()
   const browser = await launchChromium()
   try {
@@ -174,7 +188,7 @@ main().catch(async (err) => {
   // Even on failure the rewrite target must exist: app.html = the shell.
   try {
     const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
-    await writeFile(path.join(DIST, 'app.html'), shell)
+    await writeFile(path.join(DIST, 'app.html'), stripRouteMeta(shell))
   } catch { /* dist missing entirely — nothing to do */ }
   console.warn('────────────────────────────────────────────────────────')
   console.warn('[prerender] FAILED — keeping the plain SPA shell for /.')

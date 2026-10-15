@@ -18,8 +18,11 @@
     <meta name="keywords" content="field hockey, hockey players, hockey coaches, hockey clubs, sports platform, HOCKIA" />
     <meta name="author" content="HOCKIA" />
 
-    <!-- Canonical URL -->
+    <!-- Canonical URL (the prerendered landing only; app.html strips it and RouteMeta sets one per route) -->
     <link rel="canonical" href="https://inhockia.com/" />
+
+    <!-- Organization + WebSite structured data: ties the Instagram, LinkedIn, Facebook and store listings to this site -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://inhockia.com/#organization","name":"HOCKIA","alternateName":"Hockia","url":"https://inhockia.com/","logo":"https://inhockia.com/brand/logo-png/hockia-logo-violet-512w.png","email":"team@inhockia.com","sameAs":["https://www.instagram.com/inhockia/","https://www.linkedin.com/company/hockia/","https://www.facebook.com/profile.php?id=61590881692674","https://apps.apple.com/app/hockia/id6760937891","https://play.google.com/store/apps/details?id=com.inhockia.app"]},{"@type":"WebSite","@id":"https://inhockia.com/#website","url":"https://inhockia.com/","name":"HOCKIA","alternateName":["Hockia","inhockia"],"inLanguage":"en","publisher":{"@id":"https://inhockia.com/#organization"}}]}</script>
 
     <!-- Favicon & PWA Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
