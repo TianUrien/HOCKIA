@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canonicalFor, resolveRouteMeta } from '@/lib/seo/routeMeta'
 import { applyRouteMeta } from '@/lib/seo/applyRouteMeta'
-import { buildJobPosting, metaDescription, renderNoindexHtml, renderOpportunityHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
+import { buildJobPosting, fromPublicApi, metaDescription, renderNoindexHtml, renderOpportunityHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
 
 describe('routeMeta', () => {
   it('canonical is the apex site, no query, no trailing slash', () => {
@@ -73,5 +73,19 @@ describe('opportunityHead', () => {
     const html = renderNoindexHtml(shell)
     expect(html).not.toContain('rel="canonical"')
     expect(html).toContain('<meta name="robots" content="noindex, nofollow" />')
+  })
+})
+
+describe('fromPublicApi', () => {
+  it('maps the public API object into the row shape and drops the placeholder club name', () => {
+    const row = fromPublicApi({
+      id: 'x', title: 'Senior Women’s First player', opportunity_type: 'player', position: 'midfielder', gender: 'Women', description: null,
+      location: { city: 'Box Hill', country: 'Australia' }, start_date: '2027-03-22', duration: '12 months', application_deadline: null,
+      requirements: [], benefits: ['housing', 'flights'], club: { name: 'Unknown Club', logo_url: null, location: 'Melbourne VIC, Australia', league: null, kind: 'coach' },
+      published_at: '2026-10-15T12:48:56Z', created_at: '2026-10-15T12:48:56Z',
+    })
+    expect(row).toMatchObject({ location_city: 'Box Hill', location_country: 'Australia', duration_text: '12 months', club_name: null, club_location: 'Melbourne VIC, Australia' })
+    expect(metaDescription(row)).toMatch(/^Women's Midfielder role at A field hockey club in Box Hill, Australia\./)
+    expect(buildJobPosting(row, 'https://inhockia.com')).not.toHaveProperty('validThrough')
   })
 })

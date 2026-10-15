@@ -12,7 +12,7 @@
  * Browsers with the service worker installed never reach this function
  * (navigateFallback serves app.html from cache); crawlers always do.
  */
-import { renderNoindexHtml, renderOpportunityHtml, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
+import { fromPublicApi, renderNoindexHtml, renderOpportunityHtml, type PublicApiOpportunity, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
 
 export const config = { runtime: 'edge' }
 
@@ -29,40 +29,33 @@ async function fetchShell(origin: string): Promise<string> {
   return res.text()
 }
 
-/** The project ref in a Supabase URL (public: it is in every client bundle). */
-function projectRef(base: string): string {
-  return base.match(/^https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] ?? 'other'
-}
-
-/** The project ref an anon JWT was issued for, or the key family for non-JWT keys. Never the key itself. */
-function keyRef(key: string): string {
-  if (key.startsWith('sb_publishable_')) return 'publishable'
-  try {
-    const payload = JSON.parse(atob(key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return `${payload.ref ?? '?'}:${payload.role ?? '?'}`
-  } catch {
-    return 'not-a-jwt'
-  }
-}
-
 /** Why a role was not served, for the HTML comment crawl checks read. */
 type Lookup = { row: PublicOpportunityRow | null; why: string }
 
-async function fetchRole(id: string): Promise<Lookup> {
-  // Trimmed: a trailing newline in a pasted secret turns into "Bearer …\n"
-  // and a 401 (the Stream signing key failed exactly this way in September).
+/**
+ * One role through the public-opportunities edge function (service role
+ * behind it). A direct anon read of the public_opportunities view fails:
+ * the view is security_invoker and joins profiles, which anon cannot read.
+ * The visitor's IP is forwarded so the API's per-IP rate limit counts the
+ * visitor, not this function's egress address.
+ */
+async function fetchRole(id: string, clientIp: string | null): Promise<Lookup> {
   const base = (process.env.VITE_SUPABASE_URL ?? '').trim().replace(/\/+$/, '')
   const key = (process.env.VITE_SUPABASE_ANON_KEY ?? '').trim()
   if (!base || !key) return { row: null, why: 'no-env' }
   try {
-    const res = await fetch(`${base}/rest/v1/public_opportunities?id=eq.${id}&select=*&limit=1`, {
-      // apikey only: the gateway maps it to the anon role. A publishable
-      // (sb_publishable_…) key is not a JWT, so sending it as Bearer is a 401.
-      headers: { apikey: key, accept: 'application/json' },
+    const res = await fetch(`${base}/functions/v1/public-opportunities/${id}`, {
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${key}`,
+        accept: 'application/json',
+        ...(clientIp ? { 'x-forwarded-for': clientIp } : {}),
+      },
     })
-    if (!res.ok) return { row: null, why: `rest-${res.status} url=${projectRef(base)} key=${keyRef(key)}` }
-    const rows = (await res.json()) as PublicOpportunityRow[]
-    return { row: rows[0] ?? null, why: rows[0] ? 'ok' : 'not-public' }
+    if (res.status === 404) return { row: null, why: 'not-public' }
+    if (!res.ok) return { row: null, why: `api-${res.status}` }
+    const body = (await res.json()) as { data?: PublicApiOpportunity }
+    return body.data ? { row: fromPublicApi(body.data), why: 'ok' } : { row: null, why: 'empty' }
   } catch (err) {
     console.error('[opportunity-page] lookup failed', err instanceof Error ? err.message : String(err))
     return { row: null, why: 'fetch-error' }
@@ -88,7 +81,8 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(renderNoindexHtml(shell), { status: 404, headers: { ...HTML, 'cache-control': 'public, s-maxage=60' } })
   }
 
-  const { row, why } = await fetchRole(id)
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip')
+  const { row, why } = await fetchRole(id, clientIp)
   if (!row) {
     // Exists-but-closed and unknown look the same to the public view: both
     // are noindex. Status stays 200 so an owner previewing a draft or a

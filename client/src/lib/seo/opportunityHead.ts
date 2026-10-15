@@ -37,6 +37,54 @@ export interface PublicOpportunityRow {
   world_club_avatar_url: string | null
 }
 
+/** One role as the public-opportunities API returns it (supabase/functions/_shared/public-api-types.ts). */
+export interface PublicApiOpportunity {
+  id: string
+  title: string
+  opportunity_type: string
+  position: string | null
+  gender: string | null
+  description: string | null
+  location: { city: string; country: string }
+  start_date: string | null
+  duration: string | null
+  application_deadline: string | null
+  requirements: string[]
+  benefits: string[]
+  club: { name: string; logo_url: string | null; location: string | null; league: string | null; kind: 'club' | 'coach' }
+  published_at: string | null
+  created_at: string
+}
+
+/** The API object in the view-row shape the head builders take. */
+export function fromPublicApi(o: PublicApiOpportunity): PublicOpportunityRow {
+  const name = o.club?.name && o.club.name !== 'Unknown Club' ? o.club.name : null
+  return {
+    id: o.id,
+    title: o.title,
+    opportunity_type: o.opportunity_type,
+    position: o.position,
+    gender: o.gender,
+    description: o.description,
+    location_city: o.location?.city || null,
+    location_country: o.location?.country || null,
+    start_date: o.start_date,
+    duration_text: o.duration,
+    application_deadline: o.application_deadline,
+    requirements: o.requirements ?? [],
+    benefits: o.benefits ?? [],
+    custom_benefits: null,
+    published_at: o.published_at,
+    created_at: o.created_at,
+    club_name: name,
+    club_logo_url: o.club?.logo_url ?? null,
+    club_location: o.club?.location ?? null,
+    organization_name: null,
+    world_club_name: null,
+    world_club_avatar_url: null,
+  }
+}
+
 const POSITION_LABEL: Record<string, string> = {
   goalkeeper: 'Goalkeeper', defender: 'Defender', midfielder: 'Midfielder', forward: 'Forward',
   head_coach: 'Head Coach', assistant_coach: 'Assistant Coach', youth_coach: 'Youth Coach',
