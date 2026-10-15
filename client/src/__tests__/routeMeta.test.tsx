@@ -59,6 +59,7 @@ describe('opportunityHead', () => {
   it('injects title, description, canonical and JSON-LD without letting the description break out of the script', () => {
     const html = renderOpportunityHtml(shell, row, 'https://inhockia.com')
     expect(html).toContain('<title>Goalkeeper for 2027 season at HC Rotterdam | HOCKIA</title>')
+    expect(renderOpportunityHtml(shell, { ...row, title: ' Senior  player ' }, 'https://inhockia.com')).toContain('<title>Senior player at HC Rotterdam | HOCKIA</title>') // club-typed whitespace never reaches the title
     expect(html).toContain('<link rel="canonical" href="https://inhockia.com/opportunities/123e4567-e89b-12d3-a456-426614174000" />')
     expect(html).not.toContain('href="https://inhockia.com/"')
     expect(html).toContain('<meta property="og:url" content="https://inhockia.com/opportunities/123e4567-e89b-12d3-a456-426614174000" />')
