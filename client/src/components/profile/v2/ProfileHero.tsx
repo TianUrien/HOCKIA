@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Camera, ChevronLeft, Instagram, Settings, Share } from 'lucide-react'
+import { Camera, Instagram, Settings, Share } from 'lucide-react'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { GLASS, initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { cn } from '@/lib/utils'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
  * Profile v2 hero (Figma PR1 97:5 / PR2): the best photo full-bleed (540 pt),
@@ -86,7 +87,7 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
         {owner ? (
           <button type="button" onClick={onCamera} aria-label="Change photos" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         ) : (
-          <button type="button" onClick={onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><ChevronLeft className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
+          <button type="button" onClick={onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
         )}
         <div className="flex items-center gap-2">
           <button type="button" onClick={onShare} aria-label="Share profile" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>

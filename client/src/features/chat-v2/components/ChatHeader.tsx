@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft, UserRound } from 'lucide-react'
+import { ArrowLeft, UserRound } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -13,6 +13,8 @@ import { clubLeadLeague } from '@/lib/clubProfileCopy'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { useReportAction } from '@/components/safety/useReportAction'
+import { BackGlyph } from '@/components/ui/BackGlyph'
+import { ANDROID_CHROME } from '@/lib/platformChrome'
 
 interface ChatHeaderProps {
   participant?: ConversationParticipant
@@ -100,9 +102,10 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
     )
     return (
       <header className="relative flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-line bg-white pl-2 pr-4" data-testid="chat-header">
-        <button type="button" onClick={onBack} aria-label={`Back to ${backLabel}`} className="flex h-11 items-center pr-1 text-body text-hockia-primary">
-          <span className="flex h-11 w-9 items-center justify-center"><ChevronLeft className="h-6 w-6" strokeWidth={2} /></span>
-          <span className="max-w-[72px] truncate">{backLabel}</span>
+        {/* iOS: chevron + where the chat was opened from. Android: the Material arrow alone, in ink. */}
+        <button type="button" onClick={onBack} aria-label={`Back to ${backLabel}`} className={cn('flex h-11 items-center pr-1 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}>
+          <span className="flex h-11 w-9 items-center justify-center"><BackGlyph className="h-6 w-6" strokeWidth={2} /></span>
+          {!ANDROID_CHROME && <span className="max-w-[72px] truncate">{backLabel}</span>}
         </button>
         {profilePath ? (
           <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`View ${participantName} profile`}>{identity}</Link>
