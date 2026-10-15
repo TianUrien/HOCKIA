@@ -68,8 +68,44 @@
       "destination": "/api/opportunity-page?id=:id"
     },
     {
+      "source": "/opportunities",
+      "destination": "/api/page-head?path=/opportunities"
+    },
+    {
+      "source": "/community",
+      "destination": "/api/page-head?path=/community"
+    },
+    {
+      "source": "/world",
+      "destination": "/api/page-head?path=/world"
+    },
+    {
+      "source": "/marketplace",
+      "destination": "/api/page-head?path=/marketplace"
+    },
+    {
+      "source": "/developers",
+      "destination": "/api/page-head?path=/developers"
+    },
+    {
+      "source": "/terms",
+      "destination": "/api/page-head?path=/terms"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/api/page-head?path=/privacy-policy"
+    },
+    {
+      "source": "/signup",
+      "destination": "/api/page-head?path=/signup"
+    },
+    {
+      "source": "/juniors-waitlist",
+      "destination": "/api/page-head?path=/juniors-waitlist"
+    },
+    {
       "source": "/:path*",
       "destination": "/app.html"
     }
   ]
-}
+}\n

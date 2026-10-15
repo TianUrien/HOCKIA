@@ -11,6 +11,8 @@
  * No DOM, no imports from the app: this file is bundled into the edge
  * function with relative imports, so keep it dependency-free.
  */
+import { countryCode } from './countryCodes'
+import { resolveRouteMeta } from './routeMeta'
 
 export interface PublicOpportunityRow {
   id: string
@@ -155,8 +157,11 @@ export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Rec
     occupationalCategory: roleLabel(row),
     ...(benefits.length ? { jobBenefits: benefits.join(', ') } : {}),
     ...(row.requirements?.length ? { qualifications: row.requirements.join('. ') } : {}),
-    hiringOrganization: { '@type': 'SportsTeam', name: organisationName(row), ...(logo ? { logo } : {}), ...(row.club_location ? { location: row.club_location } : {}) },
-    jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', ...(row.location_city ? { addressLocality: row.location_city } : {}), ...(row.location_country ? { addressCountry: row.location_country } : {}) } },
+    // Google Jobs accepts only Organization here (SportsTeam fails the Rich
+    // Results Test, 2026-10-15). The club profile's own location is never
+    // used: the role's jobLocation is the role's.
+    hiringOrganization: { '@type': 'Organization', name: organisationName(row), ...(logo ? { logo } : {}) },
+    jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', ...(row.location_city ? { addressLocality: row.location_city } : {}), ...(row.location_country ? { addressCountry: countryCode(row.location_country) ?? row.location_country } : {}) } },
     directApply: true,
     url: `${siteUrl}/opportunities/${row.id}`,
     identifier: { '@type': 'PropertyValue', name: 'HOCKIA Opportunity ID', value: row.id },
@@ -195,4 +200,30 @@ export function renderOpportunityHtml(shell: string, row: PublicOpportunityRow, 
 export function renderNoindexHtml(shell: string): string {
   const html = shell.replace(/<link\s+rel="canonical"[^>]*>\s*/g, '')
   return html.replace('</head>', `<meta name="robots" content="noindex, nofollow" />\n</head>`)
+}
+
+/**
+ * The shell with a static public route's head (title, description, self
+ * canonical, og:*), from the same table RouteMeta uses on the client, so
+ * /opportunities ranks under its own title instead of the homepage's.
+ */
+export function renderStaticHtml(shell: string, pathname: string, siteUrl: string): string {
+  const meta = resolveRouteMeta(pathname)
+  const canonical = meta.canonical.replace(/^https:\/\/inhockia\.com/, siteUrl)
+  const title = meta.title ?? ''
+  let html = shell
+  if (title) {
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`)
+    html = setMeta(html, 'name', 'title', title)
+    html = setMeta(html, 'property', 'og:title', title)
+    html = setMeta(html, 'name', 'twitter:title', title)
+  }
+  html = setMeta(html, 'name', 'description', meta.description)
+  html = setMeta(html, 'property', 'og:description', meta.description)
+  html = setMeta(html, 'name', 'twitter:description', meta.description)
+  html = setMeta(html, 'property', 'og:url', canonical)
+  html = setMeta(html, 'name', 'twitter:url', canonical)
+  html = html.replace(/<link\s+rel="canonical"[^>]*>\s*/g, '')
+  const robots = meta.index ? '' : `<meta name="robots" content="noindex, nofollow" />\n`
+  return html.replace('</head>', `<link rel="canonical" href="${escapeHtml(canonical)}" />\n${robots}</head>`)
 }

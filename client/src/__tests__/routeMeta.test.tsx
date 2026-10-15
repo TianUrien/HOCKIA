@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canonicalFor, resolveRouteMeta } from '@/lib/seo/routeMeta'
 import { applyRouteMeta } from '@/lib/seo/applyRouteMeta'
-import { buildJobPosting, fromPublicApi, metaDescription, renderNoindexHtml, renderOpportunityHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
+import { buildJobPosting, fromPublicApi, metaDescription, renderNoindexHtml, renderOpportunityHtml, renderStaticHtml, type PublicOpportunityRow } from '@/lib/seo/opportunityHead'
 
 describe('routeMeta', () => {
   it('canonical is the apex site, no query, no trailing slash', () => {
@@ -49,8 +49,8 @@ describe('opportunityHead', () => {
   it('builds a JobPosting with the required and recommended fields', () => {
     const jp = buildJobPosting(row, 'https://inhockia.com') as Record<string, unknown>
     expect(jp).toMatchObject({ '@type': 'JobPosting', title: row.title, datePosted: '2026-10-01', validThrough: '2027-05-31T23:59:59Z', employmentType: 'FULL_TIME', occupationalCategory: "Women's Goalkeeper", directApply: true })
-    expect(jp.hiringOrganization).toMatchObject({ name: 'HC Rotterdam', logo: 'https://x/logo.png' })
-    expect(jp.jobLocation).toMatchObject({ address: { addressLocality: 'Rotterdam', addressCountry: 'Netherlands' } })
+    expect(jp.hiringOrganization).toEqual({ '@type': 'Organization', name: 'HC Rotterdam', logo: 'https://x/logo.png' }) // Organization only: Google rejects SportsTeam here
+    expect(jp.jobLocation).toMatchObject({ address: { addressLocality: 'Rotterdam', addressCountry: 'NL' } }) // ISO code, not the name
     expect(jp.jobBenefits).toBe('Housing provided, Bike')
     expect(metaDescription(row)).toMatch(/^Women's Goalkeeper role at HC Rotterdam in Rotterdam, Netherlands\./)
     expect(metaDescription(row).length).toBeLessThanOrEqual(160)
@@ -87,5 +87,17 @@ describe('fromPublicApi', () => {
     expect(row).toMatchObject({ location_city: 'Box Hill', location_country: 'Australia', duration_text: '12 months', club_name: null, club_location: 'Melbourne VIC, Australia' })
     expect(metaDescription(row)).toMatch(/^Women's Midfielder role at A field hockey club in Box Hill, Australia\./)
     expect(buildJobPosting(row, 'https://inhockia.com')).not.toHaveProperty('validThrough')
+  })
+})
+
+describe('renderStaticHtml', () => {
+  it('gives /opportunities its own title, description and self canonical', () => {
+    const html = renderStaticHtml(shell, '/opportunities', 'https://inhockia.com')
+    expect(html).toContain('<title>Field Hockey Opportunities – Player &amp; Coach Roles Worldwide | HOCKIA</title>')
+    expect(html).toContain('<link rel="canonical" href="https://inhockia.com/opportunities" />')
+    expect(html).toContain('<meta property="og:url" content="https://inhockia.com/opportunities" />')
+    expect(html).not.toContain('href="https://inhockia.com/"')
+    expect(html).not.toContain('name="robots"')
+    expect(html.match(/<meta name="description"/g)).toHaveLength(1)
   })
 })
