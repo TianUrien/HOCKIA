@@ -16,6 +16,7 @@ The repository is public.
 | [architecture.md](architecture.md) | Responsibilities and boundaries of each layer, data flows, where business rules live, the recruiting pipeline D1-D4 |
 | [standards.md](standards.md) | Conventions that are enforced or visible in the code: typecheck, lint, copy rules, budgets, migration conventions, commit text |
 | [testing.md](testing.md) | Test suites, commands, what each CI job does, where test credentials come from, known flakes |
+| [device-lab.md](device-lab.md) | Native app on iOS simulators and Android emulators with real gestures (Appium) plus desktop web; six devices, six core journeys; run before every store build (added 2026-10-16) |
 | [security.md](security.md) | Trust boundaries, RLS and grants, SECURITY DEFINER rules, fences, secrets by name, open hardening workstreams |
 | [operations.md](operations.md) | Environments, release runbook, rollback paths, backups, monitoring, known traps |
 | [native-release.md](native-release.md) | Store builds: version numbers, native crash reporting (Sentry Capacitor), symbols (source maps, dSYMs), the ordered release checklist, Sentry verification |

@@ -145,3 +145,7 @@ Keep the `[QA]` fixtures on staging; several specs and probes depend on them.
 - No contract test between `client/src/lib/database.types.ts` and
   `supabase/functions/_shared/database.types.ts`.
 - Coverage floor of 27 % leaves most component code unmeasured.
+
+## Device lab (native app)
+
+`tools/devicelab/` drives the real iOS simulator and Android emulator apps with touch gestures through the core journeys, plus desktop web via Playwright. Run it before every store build and after layout/scroll/modal changes. Guide: `device-lab.md` (added 2026-10-16).

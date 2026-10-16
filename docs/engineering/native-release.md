@@ -278,3 +278,7 @@ with Xcode 27+ needs this; test a store build on an iOS 27 simulator before uplo
 Source: main after #301 (same web code as iOS 1.3.19 build 31). First Android build since 1.19 (21) on
 2026-10-10, so it carries everything in between: Community redesign, Home v1, Profile v2 and the
 messenger fixes (#297). R8 stays on; the signed AAB carries `mapping.txt`.
+
+## Gate: device lab green (added 2026-10-16)
+
+Before `npm run cap:build` for a store build: `cd tools/devicelab && npm run build && npm run run -- --device all`. Every core journey must pass on all six devices; attach `report/<timestamp>/REPORT.md` to the release notes. A failure on the role page, the thread or a sheet blocks the build (the 15 Oct frozen role page shipped in iOS build 32 for lack of this gate).
