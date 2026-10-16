@@ -19,7 +19,7 @@ describe('crest colour', () => {
     expect(b).toBeGreaterThan(g)
   })
 
-  it('ignores black outlines, greys and transparency', () => {
+  it('ignores black outlines, greys and transparency (a monochrome crest keeps the brand purple on cards)', () => {
     expect(dominantCrestColor(pixels([800, [0, 0, 0]], [800, [128, 128, 128]], [800, [200, 30, 30, 0]]))).toBeNull()
   })
 

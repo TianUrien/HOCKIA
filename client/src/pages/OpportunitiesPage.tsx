@@ -22,6 +22,7 @@ import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { IconButton } from '@/components/ui/IconButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { RoleCard } from '@/components/opportunities/RoleCard'
+import { postedByLine, roleIdentity } from '@/lib/opportunityIdentity'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
 import { Chip } from '@/components/ui/Chip'
@@ -943,13 +944,15 @@ export default function OpportunitiesPage() {
                 {mobileList.map((vacancy) => {
                   const club = clubs[vacancy.club_id]
                   const wc = vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null
+                  const identity = roleIdentity({ publisherRole: club?.role, publisherName: club?.full_name, publisherAvatar: club?.avatar_url, organizationName: vacancy.organization_name, publisherCurrentClub: club?.current_club, worldClub: wc ? { name: wc.clubName, avatarUrl: wc.avatarUrl } : null })
                   return (
                     <RoleCard
                       key={vacancy.id}
                       vacancy={vacancy}
-                      clubName={wc?.clubName || club?.full_name || 'Club'}
-                      clubLogo={wc?.avatarUrl || club?.avatar_url || null}
-                      publisherRole={club?.role}
+                      clubName={identity.displayName}
+                      clubLogo={identity.displayLogo}
+                      publisherRole={identity.hiringClub ? 'club' : 'coach'}
+                      postedBy={postedByLine(identity)}
                       countryFlag={getFlagEmoji(vacancy.location_country)}
                       league={leagueFor(vacancy)}
                       applied={userApplications.includes(vacancy.id)}

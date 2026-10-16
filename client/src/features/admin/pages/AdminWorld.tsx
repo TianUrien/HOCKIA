@@ -35,6 +35,7 @@ import { EditWorldClubModal } from '../components/EditWorldClubModal'
 import { AdminWorldLeagues } from '../components/AdminWorldLeagues'
 import { AdminWorldRegions } from '../components/AdminWorldRegions'
 import { AdminWorldClaims } from '../components/AdminWorldClaims'
+import { CrestPaletteBackfill } from '../components/CrestPaletteBackfill'
 import {
   getWorldClubs,
   getWorldClubStats,
@@ -372,6 +373,7 @@ export default function AdminWorld() {
       {/* Tab Content */}
       {activeTab === 'clubs' && (
         <>
+          <CrestPaletteBackfill />
           {/* Filters */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">

@@ -13,6 +13,7 @@ import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
 import Breadcrumbs from '../components/Breadcrumbs'
 import { OpportunityDetailMobile } from '../components/opportunities/OpportunityDetailMobile'
+import { roleIdentity } from '@/lib/opportunityIdentity'
 import OwnApplicationRoad from '../components/opportunities/OwnApplicationRoad'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -385,6 +386,7 @@ export default function OpportunityDetailPage() {
       ? club.womens_league_division ?? club.mens_league_division
       : club.mens_league_division ?? club.womens_league_division) ?? null
   })()
+  const identity = roleIdentity({ publisherRole: club.role, publisherName: club.full_name, publisherAvatar: club.avatar_url, organizationName: opportunity.organization_name, publisherCurrentClub: club.current_club, worldClub: worldClub ? { name: worldClub.clubName, avatarUrl: worldClub.avatarUrl } : null })
 
   // Determine if user can apply (or should see the apply button)
   const canShowApplyButton = !isClosed && !hasApplied && (
@@ -414,10 +416,11 @@ export default function OpportunityDetailPage() {
         <div className="pt-[env(safe-area-inset-top)] lg:hidden">
           <OpportunityDetailMobile
             vacancy={opportunity}
-            clubName={worldClub?.clubName || club.full_name || 'Club'}
-            clubLogo={worldClub?.avatarUrl || club.avatar_url}
+            clubName={identity.displayName}
+            clubLogo={identity.displayLogo}
             clubId={club.id}
             publisherRole={club.role}
+            identity={identity}
             countryFlag={worldClub?.flagEmoji ?? null}
             league={leagueForPhone}
             hasApplied={hasApplied}

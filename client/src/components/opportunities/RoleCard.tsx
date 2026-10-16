@@ -18,6 +18,8 @@ export interface RoleCardProps {
   applied: boolean
   /** The whole card opens the role detail; Apply lives only in the detail bottom bar. */
   onOpen: () => void
+  /** "Posted by <coach>" when a coach posted for a club (lib/opportunityIdentity). */
+  postedBy?: string | null
 }
 
 /**
@@ -28,7 +30,7 @@ export interface RoleCardProps {
  * opens the role detail, where Apply lives. An applied role carries a neutral
  * "Applied" tag after the team tag. No level, no counts, no reply time.
  */
-export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, onOpen }: RoleCardProps) {
+export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, onOpen, postedBy = null }: RoleCardProps) {
   // Player and coach roles alike: position (or coaching role) + the team tag.
   const pill = genderPill(vacancy.gender)
   // The club's title leads; position (or coaching role) + team sit under it.
@@ -47,6 +49,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
           <div className="min-w-0 flex-1">
             <p className="truncate text-row font-semibold text-ink-1">{clubName}</p>
             {placeLine && <p className="truncate text-secondary text-ink-2">{placeLine}</p>}
+            {postedBy && <p className="truncate text-secondary text-ink-3" data-testid="role-posted-by">{postedBy}</p>}
           </div>
           <span className="flex shrink-0 items-center gap-1 self-start pt-0.5 text-secondary text-ink-3">
             <Clock className="h-[13px] w-[13px]" strokeWidth={1.8} />
