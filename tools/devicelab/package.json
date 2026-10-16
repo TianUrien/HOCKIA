@@ -1,0 +1,17 @@
+{
+  "name": "hockia-devicelab",
+  "private": true,
+  "type": "module",
+  "description": "Drives the HOCKIA native app on iOS simulators and Android emulators (Appium) and the web on desktop (Playwright) through the core journeys, before every store build.",
+  "scripts": {
+    "build": "node build.mjs",
+    "run": "node run.mjs",
+    "doctor": "node doctor.mjs"
+  },
+  "devDependencies": {
+    "appium": "^2.19.0",
+    "appium-uiautomator2-driver": "^4.2.0",
+    "appium-xcuitest-driver": "^9.7.0",
+    "webdriverio": "^9.12.0"
+  }
+}

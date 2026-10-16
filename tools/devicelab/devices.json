@@ -1,0 +1,13 @@
+{
+  "_doc": "Device set for the lab. iOS entries name a simulator (matched by name + runtime at run time, or by udid); Android entries name an AVD. kind drives layout expectations (phone vs tablet). desktop entries run through Playwright against the web.",
+  "devices": [
+    { "id": "iphone-max", "platform": "ios", "kind": "phone", "simulator": "iPhone 17 Pro Max", "runtime": "iOS 27.0" },
+    { "id": "iphone-small", "platform": "ios", "kind": "phone", "simulator": "iPhone 17e", "runtime": "iOS 27.0" },
+    { "id": "ipad", "platform": "ios", "kind": "tablet", "simulator": "iPad Air 11-inch (M4)", "runtime": "iOS 27.0" },
+    { "id": "android-phone", "platform": "android", "kind": "phone", "avd": "Medium_Phone_API_36.1" },
+    { "id": "android-small", "platform": "android", "kind": "phone", "avd": "Small_Phone_API_36" },
+    { "id": "android-tablet", "platform": "android", "kind": "tablet", "avd": "Pixel_Tablet_API_36" },
+    { "id": "desktop-chrome", "platform": "web", "kind": "desktop", "browser": "chromium", "viewport": { "width": 1440, "height": 900 } },
+    { "id": "desktop-safari", "platform": "web", "kind": "desktop", "browser": "webkit", "viewport": { "width": 1440, "height": 900 } }
+  ]
+}
