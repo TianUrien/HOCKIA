@@ -291,6 +291,30 @@ export const scenarios = {
     if (!opened) ctx.note('no Edit control found on /profile')
   },
 
+  // Hockia AI sheet (beta, 16 Oct 2026): the Opportunities mascot opens the
+  // sheet over the page; it grows to full height and closes. No question is
+  // sent, so no daily quota is used.
+  async 'hockia-ai-sheet'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await sleep(800)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-sheet"]', 15000)
+    await sleep(1500)
+    await ctx.shot('sheet-medium')
+    const medium = await lab.eval(() => ({ detent: document.querySelector('[data-testid="hockia-ai-sheet"]')?.getAttribute('data-detent'), suggestions: document.querySelectorAll('[data-testid="hockia-ai-suggestion"]').length, beta: !!document.querySelector('[data-testid="hockia-ai-beta"]') }))
+    if (medium.detent !== 'medium' || medium.suggestions < 1 || !medium.beta) throw new Error(`medium sheet wrong: ${JSON.stringify(medium)}`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-grabber"]')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 100 })))
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-grabber"]')?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 100 })))
+    await sleep(1200)
+    await ctx.shot('sheet-large')
+    const large = await lab.eval(() => document.querySelector('[data-testid="hockia-ai-sheet"]')?.getAttribute('data-detent'))
+    if (large !== 'large') throw new Error(`grabber tap did not grow the sheet (detent ${large})`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+    await sleep(800)
+    if (await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-sheet"]'))) throw new Error('the sheet did not close')
+  },
+
   // ---- Publisher (club) journeys: `--scenario club` ----------------------
 
   async 'club-sign-in'(lab, ctx) {
@@ -373,5 +397,5 @@ export const scenarios = {
   },
 }
 
-export const CORE_ORDER = ['sign-in', 'home-feed', 'opportunities-role-apply', 'role-cover-render', 'inbox-thread', 'community-profile', 'profile-edit']
+export const CORE_ORDER = ['sign-in', 'home-feed', 'opportunities-role-apply', 'hockia-ai-sheet', 'role-cover-render', 'inbox-thread', 'community-profile', 'profile-edit']
 export const CLUB_ORDER = ['club-sign-in', 'club-roles', 'club-post-role-cover', 'role-cover-render', 'club-sign-out']
