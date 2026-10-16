@@ -315,6 +315,32 @@ export const scenarios = {
     if (await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-sheet"]'))) throw new Error('the sheet did not close')
   },
 
+  // Opt-in (uses one Hockia AI question of the daily cap): ask a question in
+  // the sheet and check the live steps stream in and an answer arrives — the
+  // event stream must work inside WKWebView / Android WebView too.
+  async 'hockia-ai-ask'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await sleep(800)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-suggestion"]')?.click())
+    let sawSteps = 0
+    for (let i = 0; i < 90; i++) {
+      await sleep(300)
+      const st = await lab.eval(() => ({ steps: document.querySelectorAll('[data-testid="hockia-ai-step"]').length, thinking: !!document.querySelector('[data-testid="hockia-ai-thinking"]') }))
+      if (st.steps > sawSteps) { sawSteps = st.steps; if (sawSteps === 2) await ctx.shot('steps') }
+      if (!st.thinking && i > 2) break
+    }
+    await sleep(2500)
+    await ctx.shot('answer')
+    const res = await lab.eval(() => ({ error: /trouble connecting|lost the signal/i.test(document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || ''), chars: (document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || '').length }))
+    if (res.error) throw new Error('Hockia AI answered with the connection error')
+    if (sawSteps < 1) throw new Error('no live step arrived before the answer (event stream not read?)')
+    ctx.note(`${sawSteps} live steps, answer ${res.chars} chars`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+  },
+
   // ---- Publisher (club) journeys: `--scenario club` ----------------------
 
   async 'club-sign-in'(lab, ctx) {

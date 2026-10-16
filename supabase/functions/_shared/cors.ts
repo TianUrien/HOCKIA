@@ -19,6 +19,13 @@ const ALLOWED_ORIGINS = [
   'hockia://app.inhockia.com',
   'https://app.inhockia.com',
   'capacitor://localhost',
+  // Android: Capacitor reads ONLY `server.hostname`; capacitor.config.ts sets
+  // `android.hostname`, which the runtime ignores, so the shipped Android
+  // WebView serves from https://localhost (verified 2026-10-17 in the lab APK
+  // and in CapConfig.java). Moving the app to server.hostname would change the
+  // origin and drop every Android user's stored session, so the server allows
+  // this origin instead. CORS is not the auth boundary (JWT + RLS are).
+  'https://localhost',
 ]
 
 /** Check if an origin is allowed (static list + Vercel preview deployments). */
@@ -35,7 +42,7 @@ function isAllowedOrigin(origin: string): boolean {
     // silently re-break native edge calls. CORS is not the auth boundary here
     // (verify_jwt + getUser + RLS are) — the native app is a first-party client.
     if (host === 'app.inhockia.com') return true
-    if (host === 'localhost' && (scheme === 'capacitor' || scheme === 'ionic')) return true
+    if (host === 'localhost' && (scheme === 'capacitor' || scheme === 'ionic' || (scheme === 'https' && !url.port))) return true
   } catch { /* invalid URL */ }
   return false
 }

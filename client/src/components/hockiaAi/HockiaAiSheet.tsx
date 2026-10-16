@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, ChevronRight, Flag, MoreHorizontal, Trash2, X } from 'lucide-react'
+import { ArrowUp, Check, ChevronRight, Flag, Loader2, MoreHorizontal, Trash2, X } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -12,6 +12,9 @@ import { hapticLight, hapticSelection } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { MascotAvatar, MascotClip, MascotHello } from './mascot'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
+import { useWordReveal } from './useWordReveal'
+import type { DiscoverChatMessage } from '@/hooks/useDiscover'
+import type { AiStep } from '@/lib/aiStream'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -41,7 +44,7 @@ function BetaPill() {
  */
 export function HockiaAiSheet() {
   const { open, detent, setDetent, close } = useHockiaAiSheet()
-  const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()
+  const { messages, sendMessage, clearChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const [input, setInput] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
@@ -166,13 +169,8 @@ export function HockiaAiSheet() {
 
           {large && hasMessages && (
             <div className="pb-4 pt-1" data-testid="hockia-ai-conversation">
-              <DiscoverChat messages={messages} assistantAvatar={<MascotAvatar state="calm" size={36} ring />} />
-              {isPending && (
-                <div className="mt-4 flex items-center gap-2.5" role="status" aria-label="Thinking" data-testid="hockia-ai-thinking">
-                  <span className="flex h-[42px] w-[42px] items-center justify-center overflow-hidden rounded-full"><MascotClip clip="avatar_thinking_loop" loop height={42} /></span>
-                  <span className="text-[15px] font-semibold text-brand-primary">Thinking…</span>
-                </div>
-              )}
+              <RevealingChat messages={messages} revealId={revealId} onRevealed={finishReveal} />
+              {isPending && <ThinkingSteps steps={steps} />}
             </div>
           )}
           <div ref={bottomRef} />
@@ -223,4 +221,53 @@ export function HockiaAiSheet() {
       )}
     </div>
   )
+}
+
+/** "Thinking…" with the live steps from the server: done ✓, now spinner (handoff A2). Never a silent wait. */
+function ThinkingSteps({ steps }: { steps: AiStep[] }) {
+  return (
+    <div className="mt-4 flex items-start gap-2.5" role="status" aria-live="polite" aria-label="Thinking" data-testid="hockia-ai-thinking">
+      <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center overflow-hidden rounded-full"><MascotClip clip="avatar_thinking_loop" loop height={42} /></span>
+      <div className="min-w-0 flex-1 pt-2">
+        <p className="text-[15px] font-semibold text-brand-primary">Thinking…</p>
+        {steps.length > 0 && (
+          <ul className="mt-2 flex flex-col gap-1.5" data-testid="hockia-ai-steps">
+            {steps.map((st) => (
+              <li key={st.id} className="flex items-center gap-2 text-[14px] leading-[19px] text-ink-2" data-state={st.state} data-testid="hockia-ai-step">
+                {st.state === 'done'
+                  ? <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-positive text-white"><Check className="h-2.5 w-2.5" strokeWidth={3.5} /></span>
+                  : <Loader2 className="h-4 w-4 shrink-0 animate-spin text-brand-primary" strokeWidth={2.2} />}
+                <span className={st.state === 'now' ? 'text-ink-1' : undefined}>{st.label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The conversation with the newest answer revealed word by word; its cards,
+ * chips and results appear once the words are in (handoff: answers stream).
+ */
+function RevealingChat({ messages: all, revealId, onRevealed }: { messages: DiscoverChatMessage[]; revealId: string | null; onRevealed: () => void }) {
+  // The in-flight placeholder is replaced by the live steps below the chat.
+  const messages = useMemo(() => all.filter((m) => m.status !== 'sending'), [all])
+  const target = revealId ? messages.find((m) => m.id === revealId) ?? null : null
+  const partial = useWordReveal(target?.content ?? '', Boolean(target), onRevealed)
+  const shown = useMemo(() => {
+    if (!target) return messages
+    const done = partial === target.content
+    // While the words come in, show the message as plain text (kind 'text'):
+    // a results / no-results card with its rows held back would read wrong.
+    return messages.map((m) => (m.id !== target.id ? m : done ? m : {
+      ...m,
+      kind: 'text' as const,
+      content: partial,
+      results: undefined, recommendations: undefined, opportunities: undefined,
+      suggested_actions: undefined, clarifying_options: undefined, cta: undefined, secondary_note: undefined,
+    }))
+  }, [messages, target, partial])
+  return <DiscoverChat messages={shown} assistantAvatar={<MascotAvatar state="calm" size={36} ring />} />
 }
