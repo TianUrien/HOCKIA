@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
+import { allDone, applyStep, streamNlSearch, type AiStep } from '@/lib/aiStream'
 
 /** Invoke nl-search, refreshing the session ONCE on a 401 then retrying. A native
  *  Capacitor session can go stale after the app is backgrounded (the refresh
@@ -311,6 +312,12 @@ function collectShownProfileIds(messages: DiscoverChatMessage[]): string[] {
 interface DiscoverChatStore {
   messages: DiscoverChatMessage[]
   isPending: boolean
+  /** Live steps of the question in flight (nl-search event stream); kept,
+   *  all done, until the next question so the sheet can fade them out. */
+  steps: AiStep[]
+  /** The assistant message whose text is still being revealed word by word. */
+  revealId: string | null
+  finishReveal: () => void
   sendMessage: (query: string) => Promise<void>
   /**
    * Phase 1A — submit a structured action (chip tap). Free-text intents
@@ -331,6 +338,9 @@ interface DiscoverChatStore {
 export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   messages: [],
   isPending: false,
+  steps: [],
+  revealId: null,
+  finishReveal: () => set({ revealId: null }),
 
   sendMessage: async (query: string) => {
     const trimmed = query.trim()
@@ -356,6 +366,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     set(s => ({
       messages: [...s.messages, userMsg, assistantPlaceholder],
       isPending: true,
+      steps: [],
+      revealId: null,
     }))
 
     // Build history from completed messages (last 10 turns)
@@ -389,18 +401,14 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
 
     try {
       const excludedIds = collectShownProfileIds(get().messages)
-      const { data, error } = await invokeNlSearch({ query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds })
+      // Live steps over Server-Sent Events (2026-10-17); a function without
+      // the stream mode answers plain JSON and the same envelope is read.
+      const { data, error } = await streamNlSearch(
+        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds },
+        (e) => set(s => ({ steps: applyStep(s.steps, e) })),
+      )
 
-      if (error) {
-        let serverMessage = ''
-        if (error.context && typeof error.context.json === 'function') {
-          try {
-            const body = await error.context.json()
-            serverMessage = body?.error || ''
-          } catch { /* response body not parseable */ }
-        }
-        throw new Error(serverMessage || error.message || 'Search failed')
-      }
+      if (error) throw new Error(error.message || 'Search failed')
 
       const result = data as DiscoverResponse
       if (!result.success) {
@@ -436,6 +444,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
               }
             : m
         ),
+        steps: allDone(s.steps),
+        revealId: assistantId,
       }))
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error'

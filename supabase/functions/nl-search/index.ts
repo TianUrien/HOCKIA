@@ -29,6 +29,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
@@ -1478,9 +1479,14 @@ async function handleCandidateOpportunitySearch(params: {
     // Never offer the viewer a role they published (prod and staging alike).
     rows = withoutOwnRoles(rows, ((ownRes?.data ?? []) as { id: string }[]).map(r => r.id))
 
+    step('understand', 'Understanding your question', 'done')
+    step('roles', `Checked ${rows.length} open role${rows.length === 1 ? '' : 's'}`, 'done')
+    step('match', 'Matching team, position and passport')
     const today = new Date().toISOString().slice(0, 10)
     const { criteria, matched, landed, askedLabel, widenedRegion, ineligibleInAsked } =
       runOpportunitySearch(query, rows, countries, viewer, today)
+    step('match', 'Matching team, position and passport', 'done')
+    step('write', 'Writing your answer')
     const noun = describeRoleNoun(criteria)
     const meta = {
       kind: matched.length ? 'opportunity_results' : 'no_results',
@@ -1799,7 +1805,59 @@ async function handleRoleSuggestionsRefine(params: {
   }
 }
 
-Deno.serve(async (req) => {
+// ── Live steps (Hockia AI sheet, 2026-10-17) ─────────────────────────────
+// A request sent with `Accept: text/event-stream` gets Server-Sent Events:
+// `step` events as each real stage starts / finishes, then one `result`
+// event carrying the usual JSON body and status. Everyone else (old native
+// builds, /discover, curl) gets plain JSON exactly as before. The step sink
+// lives in AsyncLocalStorage so concurrent requests in one isolate never mix.
+type StepState = 'now' | 'done'
+type StepEvent = { id: string; label: string; state: StepState }
+const stepChannel = new AsyncLocalStorage<(e: StepEvent) => void>()
+function step(id: string, label: string, state: StepState = 'now') {
+  stepChannel.getStore()?.({ id, label, state })
+}
+
+function streamResponse(req: Request): Response {
+  const headers = getCorsHeaders(req.headers.get('origin'))
+  const enc = new TextEncoder()
+  let closed = false
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const send = (event: string, data: unknown) => {
+        if (closed) return
+        controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+      }
+      // Keep proxies from idling the connection out during a slow model call.
+      const ping = setInterval(() => { if (!closed) controller.enqueue(enc.encode(': ping\n\n')) }, 10_000)
+      const finish = () => { if (closed) return; closed = true; clearInterval(ping); controller.close() }
+      stepChannel.run((e) => send('step', e), () => handleRequest(req))
+        .then(async (res) => {
+          const text = await res.text()
+          let body: unknown
+          try { body = JSON.parse(text) } catch { body = { success: false, error: text || 'Empty response' } }
+          send('result', { status: res.status, body, retry_after: res.headers.get('Retry-After') })
+          finish()
+        })
+        .catch((err) => {
+          captureException(err, { functionName: 'nl-search', extra: { phase: 'stream' } })
+          send('result', { status: 500, body: { success: false, error: 'Search failed' } })
+          finish()
+        })
+    },
+    cancel() { closed = true },
+  })
+  return new Response(stream, {
+    headers: { ...headers, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' },
+  })
+}
+
+Deno.serve((req) => {
+  if (req.method === 'POST' && (req.headers.get('accept') ?? '').includes('text/event-stream')) return streamResponse(req)
+  return handleRequest(req)
+})
+
+async function handleRequest(req: Request): Promise<Response> {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const origin = req.headers.get('origin')
   const headers = getCorsHeaders(origin)
@@ -2231,6 +2289,7 @@ Deno.serve(async (req) => {
     // this fixes the "asked for clubs, got mixed players/coaches/clubs/brands"
     // bug. The hint is also passed to the LLM as a system-prompt nudge so
     // it filters and writes its message accordingly.
+    step('profile', 'Reading your profile')
     const intent: RoutedIntent = classifyEntityType(query)
     pendingIntentEntityType = intent.entity_type
 
@@ -2530,6 +2589,8 @@ Deno.serve(async (req) => {
           ? Math.round((metCriteria / totalCriteria) * 100)
           : 0
 
+        step('profile', 'Read your profile', 'done')
+        step('understand', 'Understanding your question')
         userContext = {
           role: userProfile.role,
           full_name: userProfile.full_name,
@@ -2697,6 +2758,8 @@ Deno.serve(async (req) => {
     // role-awareness; without it we fall through to the normal LLM flow.
     if (intent.entity_type === 'platform_help' && userContext) {
       try {
+        step('understand', 'Understanding your question', 'done')
+        step('help', 'Looking up how Hockia works')
         const { result: helpResult, meta: helpMeta } = await answerPlatformHelp({
           userQuery: query,
           userContext,
@@ -2762,6 +2825,8 @@ Deno.serve(async (req) => {
     // asking for. The hint is informational; the backend ENFORCES below
     // for HIGH-confidence intents regardless of the LLM's output.
     const { result: parseResult, meta: parseMeta } = await parseSearchQuery(query, history, userContext, intent)
+    step('understand', 'Understanding your question', 'done')
+    step('search', 'Searching profiles')
 
     // ── Phase 0 forced-search override ──────────────────────────────────
     // When the keyword router is HIGH confidence on a profile-entity type
@@ -3933,6 +3998,9 @@ Deno.serve(async (req) => {
         p_offset: requestedOffset,
       } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
       rpcResult = data as { results: any[]; total: number; has_more: boolean } | null
+      // No count here: the search may still widen (geo softening) before the answer.
+      step('search', 'Searched profiles', 'done')
+      step('write', 'Writing your answer')
       rpcError = error
 
       // ── Geographic softening ──────────────────────────────────────────
@@ -4274,6 +4342,7 @@ Deno.serve(async (req) => {
 
           const hasAnyData = qualData.some(p => p.comments.length > 0 || p.references.length > 0)
           if (hasAnyData) {
+            step('write', 'Writing your answer')
             const { text: synthesis, meta } = await synthesizeQualitativeInsights(qualData, query)
             synthMeta = meta
             if (synthesis) aiMessage += `\n\n${synthesis}`
@@ -4692,4 +4761,4 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
   }
-})
+}
