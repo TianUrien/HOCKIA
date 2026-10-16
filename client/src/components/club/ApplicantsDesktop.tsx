@@ -182,7 +182,12 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
             </div>
             <p className="-mt-1 text-secondary text-ink-2">{caption}</p>
 
-            {data.error && <p className="text-row text-ink-2">{data.error}</p>}
+            {data.error && (
+              <div className="rounded-[16px] bg-white p-4" role="alert" data-testid="applicants-error">
+                <h1 className="text-[17px] font-semibold leading-[22px] text-ink-1">Can’t open these applicants</h1>
+                <p className="mt-1 text-row text-ink-2">{data.error.replace('Pull to try again.', 'Please try again.')}</p>
+              </div>
+            )}
             {!data.loading && !data.error && list.length === 0 && <p className="text-row text-ink-3">{emptyCopy[chip]}</p>}
 
             <div className="flex flex-col gap-2" data-testid="applicants-list">
