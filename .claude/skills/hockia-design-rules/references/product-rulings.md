@@ -59,4 +59,4 @@
 - Text only, no microphone. "+" attaches photos, video/links (YouTube, Vimeo → videos; socials stored as links; club/league/stats pages → proposed career rows), CV PDF. Never ID documents.
 - Profile builder: one review card "Save all to my profile", each item removable/editable; afterwards a real checklist of what's still missing (no score).
 - UI: live "Thinking…" steps, streamed answers, follow-up chips, confused face for errors, the existing daily-limit copy on a neutral surface, private deletable history.
-- Open question for the founder: AI-written applicant summaries vs the 2026-10-04 "template reasons, no free AI text" ruling for HOCKIA suggests — confirm before shipping summaries.
+- Applicant summaries (C3) may be AI-written (2026-10-16): facts from the applications only, never judging or comparing by age, gender, nationality or appearance, labelled Beta. "HOCKIA suggests" reasons stay templates.

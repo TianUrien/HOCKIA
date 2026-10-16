@@ -9,7 +9,7 @@
 - Errors: what went wrong + what to do, no apologies, never blame the user.
 - Deadline tag: ≤ 14 days → "Closes in N days"; later → "Closes 30 Nov"; no deadline → "New" if posted ≤ 7 days, otherwise nothing.
 - Coach posting for a club: copy follows the poster ("What we offer", "In <First name>'s words", "A note to <First name>", messages go to the coach).
-- Suggestion reasons in "HOCKIA suggests" are templates filled from profile fields, not free AI text (2026-10-04).
+- Suggestion reasons in "HOCKIA suggests" are templates filled from profile fields, not free AI text (2026-10-04). Exception: Hockia AI applicant summaries may be AI-written (2026-10-16), within the Safety rules below.
 
 ## Claims (UI, AI, email, marketing)
 Never promise placements, signings, contracts, guarantees or rankings; never "accurate AI". Never invent metrics, percentages, completeness scores, "replies in ~1 day" or "4× views" — show real data or nothing. Label sample data as illustrative. Hockia AI is labelled **Beta** everywhere.

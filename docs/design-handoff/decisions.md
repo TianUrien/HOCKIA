@@ -4,6 +4,7 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-16 | Hockia AI applicant summaries (C3) may be AI-written text: built only from the applications' facts, never judging or comparing by age, gender, nationality or appearance, no fit scores or rankings shown to players, labelled Beta. "HOCKIA suggests" reasons stay template-based (2026-10-04 ruling unchanged) | Founder |
 | 2026-10-16 | Hockia AI is the name of HOCKIA's whole intelligence layer, not only the chat: what it knows about the viewer (role, open/closed roles, applicants), field hockey knowledge, rules in code (fit, ranking, suggestions) and the language model. Direction (not yet designed): the recruiting context for clubs and recruiting coaches becomes Hockia AI's context. Hockia AI knows what the recruiter is recruiting for (by default the open role in use) and sets or changes it with the recruiter's confirmation; it replaces the separate context form. Unchanged: people judgements (fit, reasons) stay rule-based with template reasons; Hockia AI only reads what the viewer may see (hidden profiles, DOB, privacy); switching between open roles works without the language model or the daily limit | Founder |
 | 2026-10-16 | Home views card (every role): tapping it opens who viewed your profile (viewers + search appearances), CTA "View"; brands no longer get "Post" on it (the header + composes). A card's action must match its title | Founder |
 | 2026-10-16 | Product strategy: clubs (and recruiting coaches) are the growth and design priority; umpires stay profile-only (Opportunities browse-only); free for every role until traction, no paywalls or upsells; under-18s get the waitlist only, the 18+ gate stays. Role definitions: `.claude/skills/hockia-design-rules/references/roles-and-product.md` | Founder |
@@ -44,6 +45,5 @@
 
 ## Open
 
-- Hockia AI applicant summaries are AI-written text, while the 2026-10-04 ruling keeps HOCKIA suggests reasons as templates. Confirm whether AI-written summaries are allowed before shipping them.
 
 New questions go in IMPLEMENTATION_FEEDBACK.md first.
