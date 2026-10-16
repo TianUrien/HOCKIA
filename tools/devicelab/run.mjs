@@ -47,15 +47,26 @@ for (const device of devices) {
     const notes = []
     const ctx = { writes, note: (n) => notes.push(n), shot: async (label) => { try { await lab.shot(path.join(devDir, `${name}--${label}.png`)) } catch (e) { notes.push(`screenshot failed: ${e.message.slice(0, 80)}`) } } }
     const t0 = Date.now()
+    // Time-box each journey: a hung device agent must fail the journey, not the run.
+    const LIMIT = Number(process.env.LAB_SCENARIO_TIMEOUT_MS || 300000)
+    let timer
+    const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`journey exceeded ${LIMIT / 1000} s (device agent hung?)`)), LIMIT) })
     try {
-      await fn(lab, ctx)
+      await Promise.race([fn(lab, ctx), timeout])
       results.push({ device: device.id, scenario: name, status: 'pass', ms: Date.now() - t0, notes })
       log(`PASS ${name} (${Math.round((Date.now() - t0) / 1000)} s)${notes.length ? ' — ' + notes.join('; ') : ''}`)
     } catch (err) {
-      await ctx.shot('FAILED')
+      const hung = /exceeded .* s \(device agent hung/.test(err.message)
+      if (!hung) await ctx.shot('FAILED')
       results.push({ device: device.id, scenario: name, status: 'fail', ms: Date.now() - t0, error: err.message.slice(0, 500), notes })
       log(`FAIL ${name}: ${err.message.slice(0, 300)}`)
-    }
+      if (hung && device.platform !== 'web') {
+        // Recover once: new session, same device, remaining journeys continue.
+        log('recovering the session…')
+        try { await lab.close() } catch { /* already dead */ }
+        try { lab = await openSession(device); log('session recovered') } catch (e) { log(`recovery failed: ${e.message.slice(0, 200)}`); break }
+      }
+    } finally { clearTimeout(timer) }
   }
   await lab.close()
 }
