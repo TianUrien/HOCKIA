@@ -355,8 +355,7 @@ export const scenarios = {
   },
 
   async 'role-cover-render'(lab, ctx) {
-    // Every width shows the cover: the phone hero or the desktop D2 cover column.
-    await phoneWidth(lab, ctx)
+    // Every width shows the cover: the phone hero or the desktop D2 cover column, so the viewport stays as the device has it.
     try {
       await lab.go(`/opportunities/${FIXTURES.coverRoleId}`)
       await lab.waitFor('h1', 20000)
