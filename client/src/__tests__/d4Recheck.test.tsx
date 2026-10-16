@@ -51,6 +51,8 @@ vi.mock('@/hooks/useCareerTimeline', () => ({
   useCareerTimeline: () => ({ entries: fx.career, loading: false, failed: false, refresh: vi.fn() }),
 }))
 // D5 entry row on the role (its own suite: d5Suggests.test.tsx).
+// Opportunities v2 covers read the owner's crest through react-query; no provider here.
+vi.mock('@/hooks/useOwnerCrest', () => ({ useOwnerCrest: () => ({ crestUrl: null, palette: null, clubName: 'Club' }) }))
 vi.mock('@/hooks/useRoleSuggestions', () => ({ useRoleSuggestions: () => ({ data: null, suggestions: [], loading: false, error: false, refetch: () => undefined }) }))
 vi.mock('@/hooks/useRoleApplicants', () => ({
   useRoleApplicants: () => ({

@@ -21,7 +21,11 @@ import {
   levelHint, offerStepCopy, skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
 } from '@/lib/postRole'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
-import { Chips, HardnessPill, Muted, Section, Segments } from './roleFormUi'
+import { Chips, HardnessPill, Muted, Section, Segments, TeamChips } from './roleFormUi'
+import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
+import { useOwnerCrest } from '@/hooks/useOwnerCrest'
+import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { positionLabel } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
@@ -51,6 +55,7 @@ export default function PostRoleScreen({ draftId }: Props) {
   const profile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
+  const cover = useOwnerCrest(profile)
   const clubCountry = profile?.nationality_country_id ? getCountryById(profile.nationality_country_id) : null
   const defaults = useMemo(() => ({ baseLocation: profile?.base_location ?? null, countryName: clubCountry?.name ?? null }), [profile?.base_location, clubCountry?.name])
 
@@ -251,6 +256,11 @@ export default function PostRoleScreen({ draftId }: Props) {
   const copy = step === 3 ? { ...STEP_COPY[3], title: editing ? 'Check and save' : STEP_COPY[3].title, sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
+  // Live cover preview (Figma O4): the club's colours from its crest, the team chip, the role.
+  const previewPill = genderPill(draft.gender)
+  const previewFamily = categoryFamily(draft.gender)
+  const previewTitle = draft.title.trim() || positionLabel(draft.position) || (isPlayer ? 'Your role' : 'Coaching role')
+  const previewClub = cover.clubName ?? profile?.full_name ?? 'Your club'
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
     ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
@@ -283,6 +293,23 @@ export default function PostRoleScreen({ draftId }: Props) {
 
         {step === 1 && (
           <>
+            <section className="px-5 pt-5" data-testid="post-role-cover-preview">
+              <div className="flex items-center justify-between">
+                <span className="text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">Cover · optional</span>
+                <span className="text-secondary text-ink-3">Live preview</span>
+              </div>
+              <RoleCover crestUrl={cover.crestUrl} palette={cover.palette} scrim="card" className="mt-2 h-[196px] rounded-[20px]">
+                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
+                <div className="absolute bottom-3.5 left-3.5 right-3.5 flex items-center gap-2.5">
+                  <CrestTile src={cover.crestUrl} name={previewClub} size={36} radius={10} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{previewTitle}</span>
+                    <span className="block truncate text-caption text-white/80">{[previewClub, draft.country.trim() || null].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </div>
+              </RoleCover>
+              <p className="mt-2 text-secondary text-ink-2">No photo? We build a cover from your crest in your club colours — it already looks finished.</p>
+            </section>
             <div className="px-5 pt-5">
               <Segments label="Role type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setProblem(null); setDraft((d) => switchRoleType(d, v)) }} />
             </div>
@@ -298,7 +325,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               )}
             </Section>
             <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint={isPlayer ? 'Players outside this team can’t apply.' : COACH_TEAM_HINT}>
-              <Segments label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
+              <TeamChips label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
             </Section>
             <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`The role’s headline, shown above the position. Up to ${TITLE_MAX} characters.`}>
               <input
