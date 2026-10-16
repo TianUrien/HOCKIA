@@ -4,10 +4,20 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-16 | Design rules digest: `.claude/skills/hockia-design-rules/` collects the standing rulings for agents; new rulings are added there and here in the same PR | Founder |
+| 2026-10-16 | Hockia AI (beta) is not a tab: a mascot button top-right on Opportunities opens a sheet over the current screen; contextual entries on role detail, applicants and profile. It drafts actions (apply, profile update) that the user confirms; text only (no microphone); attachments: photos, video/links, CV PDF, never ID documents; profile builder saves through one "Save all" review card | Founder |
+| 2026-10-16 | Opportunities desktop: content max 1200; wide featured card, 4-up rails, 3-column list; role detail is a page with a sticky left cover column; applicants are master-detail with inline decisions | Founder |
+| 2026-10-16 | Nationality first: a person's flag means nationality (both passports + EU badge), location is text ("Based in …"), the second nationality is never truncated; permits show as one line | Founder |
+| 2026-10-16 | Location stays city + country from Google Places autocomplete; no coordinates and no proximity search | Founder |
+| 2026-10-16 | Generated covers use the club's crest colours (dominant colour gradient, second colour glow, crest watermark); no crest or independent coach → brand violet; a coach recruiting for a club uses the club's crest. One extractor app-wide (ADR 0009); optional cover photo at publish | Founder |
+| 2026-10-16 | Category colours: Women's ruby #BE123C, Men's ocean #0369A1, Mixed violet #6C2BD9 (dark-mode pairs in Figma); Girls/Boys outline in the same hue. Colour only on category chips, filter dots and the Team fact, never on covers. Supersedes the 2026-10-05 soft-purple team tags | Founder |
+| 2026-10-16 | Opportunities motion: spring press 0.96, card-to-detail expansion, drag to dismiss, sheet springs and send morph per the Figma motion spec; haptics only on selection, opening and success; Reduce Motion = crossfades | Founder |
+| 2026-10-12 | No activity or last-seen signals on profiles, cards, Community or recruiter fit; the chat header may show activity only if the user allows it | Founder |
+| 2026-10-11 | All bottom sheets use radius 28 (supersedes sheet 20); redesigned surfaces use facts 12, rows/person tiles 20, large cards 24; action-bar Primary 52 | Founder |
 | 2026-10-09 | B2 Club reminders: reminder emails go at 09:00 in the club's country timezone. New-application emails are batched hourly per club (this replaces the immediate per-application email). The old Shortlist / Maybe / Decline email buttons are replaced by one Review link | Founder |
 | 2026-10-06 | Landing v3: white page throughout; the closing panel is the only dark-purple moment (no store badges in it, app icon on its edge); real club crests with an initials fallback; fixed navbar morphs into a glass capsule | Founder |
 | 2026-10-05 | Role cards in the Opportunities list carry no button: the card opens Role detail, where the Message + Apply bar lives. Applied roles show a Neutral "Applied" tag | Founder |
-| 2026-10-05 | Team tags on roles (Men's, Women's, Girls, Boys, Mixed) all use the soft-purple Tag (brand/soft + brand/primary). No pink/blue by gender; replaces the raw hex in `genderPill` | Founder |
+| 2026-10-05 | ~~Team tags on roles all use the soft-purple Tag~~ — superseded 2026-10-16 by category colours. Still valid: no pink/blue by gender | Founder |
 | 2026-10-05 | Selected Chip = soft purple (brand/soft fill, brand/primary text; pressed brand/soft-pressed). Replaces Figma's black and the code's solid purple, so the one Primary stays the only solid-purple shape | Founder |
 | 2026-10-05 | Two text styles join the scale to name existing one-offs: Title XL 28 Bold / 34 (screen titles, profile names) and Figure 26 Semibold / 31 (stat numbers). 24 pt sheet names use Title S (22) | Founder |
 | 2026-10-05 | Coach set-up: "Do you recruit players for a team?" is two option cards, required, nothing preselected (shipped: optional, default "Not right now"). `coach_recruits_for_team` stays boolean; unanswered is client-only | Founder |
@@ -21,7 +31,7 @@
 | 2026-10-02 | Chat cards use radius 16, no new token | Founder |
 | 2026-10-02 | Shared `ui/Button.tsx` at the start of D5: 7 styles × Large 48 / Small 36, loading, 44 pt hit area | Founder |
 | 2026-10-02 | Figma variables are the source of truth for colour, spacing, radius and type; code reads them through generated tokens (PR #166) | Founder |
-| 2026-10-02 | Radius follows Figma: card 16, sheet 20, tile 8 (was 14 / 22 / 7) | Founder |
+| 2026-10-02 | Radius follows Figma: card 16, sheet 20, tile 8 (was 14 / 22 / 7). Sheet 20 superseded 2026-10-11 (sheets 28) | Founder |
 | 2026-10-02 | Both agents may edit the Figma file; every edit is logged in CHANGELOG.md | Founder |
 | 2026-10-02 | Button hierarchy: one Primary per screen; Tonal for repeated row actions; Destructive (soft) → Danger (solid) confirmation | Design, matches the existing "purple once per screen" rule |
 | 2026-09-25 | Fonts: Inter on the web, the system font in the native apps | Founder |
@@ -31,4 +41,6 @@
 
 ## Open
 
-None right now. New questions go in IMPLEMENTATION_FEEDBACK.md first.
+- Hockia AI applicant summaries are AI-written text, while the 2026-10-04 ruling keeps HOCKIA suggests reasons as templates. Confirm whether AI-written summaries are allowed before shipping them.
+
+New questions go in IMPLEMENTATION_FEEDBACK.md first.
