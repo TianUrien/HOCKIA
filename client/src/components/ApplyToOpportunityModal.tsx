@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ChevronRight, Info, X } from 'lucide-react'
+import { ChevronRight, Info } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -16,11 +16,13 @@ import { extractErrorMessage } from '@/lib/utils'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { Button } from '@/components/ui/Button'
-import { IconButton } from '@/components/ui/IconButton'
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { ApplicationSent } from '@/components/opportunities/ApplicationSent'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
+import { applySubline, noteHeading, roleIdentity, type RoleIdentity } from '@/lib/opportunityIdentity'
+import { CrestTile } from '@/components/opportunities/RoleCover'
+import { hapticSuccess } from '@/lib/haptics'
+import { Check } from 'lucide-react'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 
 interface ApplyToVacancyModalProps {
@@ -34,6 +36,8 @@ interface ApplyToVacancyModalProps {
   clubLogo?: string | null
   publisherRole?: string | null
   league?: string | null
+  /** Who is behind the role (hiring club + posted-by coach): coach-aware copy. */
+  identity?: RoleIdentity
 }
 
 const DURATION_LABELS: Record<string, string> = {
@@ -55,7 +59,7 @@ const DURATION_LABELS: Record<string, string> = {
  * Detail rows with a chevron (each opens its Edit profile field).
  */
 export default function ApplyToVacancyModal({
-  isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league,
+  isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league, identity: identityProp,
 }: ApplyToVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const { addToast } = useToastStore()
@@ -68,8 +72,12 @@ export default function ApplyToVacancyModal({
   const [sent, setSent] = useState(false)
 
   const displayClub = clubName?.trim() || vacancy.organization_name?.trim() || 'the club'
+  const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: displayClub, publisherAvatar: clubLogo ?? null })
   const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
-  const subtitle = [roleTitle(vacancy), [pill?.label, league].filter(Boolean).join(' ')].filter(Boolean).join(' · ')
+  const roleLine = [roleTitle(vacancy), pill?.label].filter(Boolean).join(' · ')
+  const subtitle = [applySubline(identity), league].filter(Boolean).join(' · ')
+  const [sending, setSending] = useState<'idle' | 'sending' | 'done'>('idle')
+  const noteTarget = identity.postedBy ? identity.postedBy.firstName : 'the club'
 
   // ── The three facts ──
   const passports = useMemo(() => {
@@ -116,6 +124,7 @@ export default function ApplyToVacancyModal({
     if (vacancy.club_id === user.id) { setError("You can't apply to your own opportunity."); return }
 
     setIsSubmitting(true)
+    setSending('sending')
     setError(null)
     try {
       Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id }, level: 'info' })
@@ -163,6 +172,10 @@ export default function ApplyToVacancyModal({
         trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined })
         void trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
         onSuccess(vacancy.id)
+        // Send morph (Motion spec): spinner → green check → the sent screen.
+        setSending('done')
+        void hapticSuccess()
+        await new Promise((r) => setTimeout(r, 520))
         setSent(true)
       }
     } catch (err) {
@@ -174,17 +187,22 @@ export default function ApplyToVacancyModal({
       addToast(msg, 'error')
     } finally {
       setIsSubmitting(false)
+      setSending((v) => (v === 'done' ? v : 'idle'))
     }
   }
 
   if (sent) {
     return (
-      <ApplicationSent
-        clubName={displayClub}
-        clubLogo={clubLogo ?? null}
-        publisherRole={publisherRole}
-        onClose={() => { setSent(false); setMessage(''); onClose() }}
-      />
+      <BottomSheet open={isOpen} onClose={() => { setSent(false); setSending('idle'); setMessage(''); onClose() }} ariaLabel="Application sent" initialFocus="panel">
+        <ApplicationSent
+          clubName={displayClub}
+          clubLogo={clubLogo ?? null}
+          publisherRole={publisherRole}
+          identity={identity}
+          roleLine={roleLine}
+          onClose={() => { setSent(false); setSending('idle'); setMessage(''); onClose() }}
+        />
+      </BottomSheet>
     )
   }
 
@@ -205,19 +223,25 @@ export default function ApplyToVacancyModal({
 
   return (
     <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`}>
-      <div className="flex flex-col gap-4 px-5 pb-2 pt-1">
-        <div className="flex items-start gap-3">
-          <EntityAvatar src={clubLogo} name={displayClub} role={publisherRole ?? 'club'} size={48} />
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">Apply to {displayClub}</h2>
-            <p className="mt-0.5 text-row text-ink-2">{subtitle}</p>
-          </div>
-          <IconButton label="Close" onClick={handleClose} className="-mr-2.5 -mt-1">
-            <X className="h-6 w-6" strokeWidth={1.8} />
-          </IconButton>
+      <div className="flex flex-col px-5 pb-2 pt-1">
+        <div className="flex items-center gap-3 pb-4">
+          <h2 className="min-w-0 flex-1 text-title text-ink-1">Apply to {identity.hiringClub?.name ?? identity.displayName}</h2>
+          <button type="button" onClick={handleClose} className="shrink-0 text-[16px] leading-[22px] text-brand-primary" aria-label="Cancel">Cancel</button>
         </div>
 
-        <div className="divide-y divide-line overflow-hidden rounded-[12px] bg-surface-muted">
+        {/* The role (Figma 153:386): crest 40 · role · "Club · posted by Coach". */}
+        <div className="flex items-center gap-3 rounded-[16px] bg-surface-subtle p-3" data-testid="apply-role-summary">
+          {identity.hiringClub
+            ? <CrestTile src={identity.hiringClub.logo} name={identity.hiringClub.name} size={40} radius={12} />
+            : <EntityAvatar src={clubLogo} name={displayClub} role={publisherRole ?? 'club'} size={40} />}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleLine}</p>
+            <p className="truncate text-secondary text-ink-2">{subtitle}</p>
+          </div>
+        </div>
+
+        <p className="pt-5 text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">Sent with your application · tap to edit</p>
+        <div className="mt-2 divide-y-[0.5px] divide-line overflow-hidden rounded-[16px] border border-line">
           <Row label="Available from" value={availableText} field="availability" />
           <Row label="Passport" value={passportText} field="passports" />
           <Row label="Contact" value={contactText} field="contact" />
@@ -225,45 +249,51 @@ export default function ApplyToVacancyModal({
 
         {blocked ? (
           // Callout (Figma 460:23): neutral surface, info icon. Never amber.
-          <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" role="status" data-testid="apply-not-eligible">
+          <div className="mt-5 flex items-start gap-2.5 rounded-[12px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" role="status" data-testid="apply-not-eligible">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-2" strokeWidth={1.8} aria-hidden="true" />
             <p>{blockedReason}</p>
           </div>
         ) : (
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Add a message to the club (optional)"
-            aria-label="Add a message to the club (optional)"
-            rows={3}
-            maxLength={600}
-            className="min-h-[100px] w-full resize-none rounded-[12px] bg-surface-muted px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
-          />
+          <>
+            <p className="pt-5 text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">{noteHeading(identity)} (optional)</p>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={`Add a note to ${noteTarget} (optional)`}
+              aria-label={`${noteHeading(identity)} (optional)`}
+              rows={3}
+              maxLength={600}
+              className="mt-2 min-h-[96px] w-full resize-none rounded-[16px] bg-surface-subtle px-3.5 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
+            />
+            <p className="pt-1 text-right text-caption text-ink-3" aria-live="polite">{message.length} / 600</p>
+          </>
         )}
 
-        {error && <p className="text-secondary text-status-danger" role="alert">{error}</p>}
+        {error && <p className="pt-3 text-secondary text-status-danger" role="alert">{error}</p>}
 
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col items-center gap-2.5 pt-5">
           {blocked && (
             <button type="button" onClick={messageClub} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
-              Message the club
+              {identity.postedBy ? `Message ${identity.postedBy.firstName}` : 'Message the club'}
             </button>
           )}
-          <Button
-            block
-            loading={isSubmitting}
-            disabled={blocked}
+          {/* Send morph: the pill narrows to a 52 pt circle with a spinner, then a green check. */}
+          <button
+            type="button"
+            disabled={blocked || isSubmitting || sending === 'done'}
             aria-disabled={blocked || undefined}
+            aria-busy={sending === 'sending' || undefined}
             onClick={() => void handleSubmit()}
-            className="!rounded-full"
+            className={`flex h-[52px] items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] text-white transition-[width,background-color] duration-[var(--spring-ms,420ms)] [transition-timing-function:var(--spring,cubic-bezier(0.2,0.8,0.2,1))] ${sending === 'done' ? 'w-[52px] bg-positive' : sending === 'sending' ? 'w-[52px] bg-brand-primary' : 'w-full bg-brand-primary active:opacity-90 disabled:opacity-50'}`}
             data-testid="send-application"
+            data-state={sending}
           >
-            Send application
-          </Button>
+            {sending === 'done' ? <Check className="h-6 w-6" strokeWidth={2.5} aria-label="Sent" /> : sending === 'sending' ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-label="Sending" /> : 'Send application'}
+          </button>
+          <p className="text-center text-caption text-ink-3">
+            {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from Applied.'}
+          </p>
         </div>
-        <p className="text-center text-secondary text-ink-3">
-          {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from My applications.'}
-        </p>
       </div>
     </BottomSheet>
   )

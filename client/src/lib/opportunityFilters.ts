@@ -40,11 +40,12 @@ export function applyRoleFilters(list: Vacancy[], f: RoleFilters, viewerIsEuElig
  * Quick chips over the phone list (Figma 313:1417). Each maps onto the same
  * RoleFilters the sheet edits; "All" is selected while none of them is on.
  */
-export type QuickChipKey = 'all' | 'women' | 'men' | 'paid' | 'housing' | 'flights' | 'no-eu-passport'
+export type QuickChipKey = 'all' | 'women' | 'men' | 'mixed' | 'paid' | 'housing' | 'flights' | 'no-eu-passport'
 export const QUICK_CHIPS: { key: QuickChipKey; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'women', label: "Women's" },
   { key: 'men', label: "Men's" },
+  { key: 'mixed', label: 'Mixed' },
   { key: 'paid', label: 'Paid' },
   { key: 'housing', label: 'Housing' },
   { key: 'flights', label: 'Flights' },
@@ -57,6 +58,7 @@ export function isQuickChipOn(f: RoleFilters, key: QuickChipKey): boolean {
     case 'all': return !QUICK_CHIPS.some((c) => c.key !== 'all' && isQuickChipOn(f, c.key))
     case 'women': return f.gender === 'Women'
     case 'men': return f.gender === 'Men'
+    case 'mixed': return f.gender === 'Mixed'
     case 'no-eu-passport': return f.noEuPassport === true
     default: return f.package.includes(CHIP_PACKAGE[key] as PackageFilterKey)
   }
@@ -66,10 +68,11 @@ export function toggleQuickChip(f: RoleFilters, key: QuickChipKey): RoleFilters 
   switch (key) {
     case 'all': {
       const chipPackages = Object.values(CHIP_PACKAGE)
-      return { ...f, gender: f.gender === 'Women' || f.gender === 'Men' ? '' : f.gender, package: f.package.filter((p) => !chipPackages.includes(p)), noEuPassport: false }
+      return { ...f, gender: f.gender === 'Women' || f.gender === 'Men' || f.gender === 'Mixed' ? '' : f.gender, package: f.package.filter((p) => !chipPackages.includes(p)), noEuPassport: false }
     }
     case 'women': return { ...f, gender: f.gender === 'Women' ? '' : 'Women' }
     case 'men': return { ...f, gender: f.gender === 'Men' ? '' : 'Men' }
+    case 'mixed': return { ...f, gender: f.gender === 'Mixed' ? '' : 'Mixed' }
     case 'no-eu-passport': return { ...f, noEuPassport: !f.noEuPassport }
     default: {
       const pkg = CHIP_PACKAGE[key] as PackageFilterKey

@@ -107,3 +107,51 @@ export function useClubCrestPalettes(clubs: Club[]): Map<string, CrestPalette | 
   }
   return out
 }
+
+/**
+ * Directory clubs (world_clubs): the same palette, read from
+ * world_club_crest_colors. Clients never write it (admins backfill through
+ * /admin/world); a missing or stale row is computed here for the session.
+ */
+type WorldClub = { id: string; avatar_url: string | null }
+const worldComputed = new Map<string, CrestColors | null>()
+
+export function useWorldClubCrestPalettes(clubs: WorldClub[]): Map<string, CrestPalette | null> {
+  const withCrest = useMemo(() => clubs.filter((c) => c.avatar_url), [clubs])
+  const ids = useMemo(() => withCrest.map((c) => c.id).sort(), [withCrest])
+  const { data: stored } = useQuery({
+    queryKey: ['world-club-crest-colors', ids],
+    enabled: ids.length > 0,
+    staleTime: 10 * 60_000,
+    placeholderData: (previous) => previous,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('world_club_crest_colors').select('world_club_id, crest_url, palette').in('world_club_id', ids)
+      if (error) {
+        logger.debug('[useWorldClubCrestPalettes] read failed', error)
+        return new Map<string, { url: string; palette: CrestPalette | null }>()
+      }
+      return new Map((data ?? []).map((r) => [r.world_club_id, { url: r.crest_url, palette: isCurrentPalette(r.palette) ? r.palette : null }]))
+    },
+  })
+  const [, bump] = useState(0)
+  useEffect(() => {
+    if (!stored) return
+    let cancelled = false
+    const todo = withCrest.filter((c) => { const row = stored.get(c.id); return (!row || row.url !== c.avatar_url || !row.palette) && !worldComputed.has(c.avatar_url as string) })
+    if (todo.length === 0) return
+    void (async () => {
+      for (const club of todo) {
+        const url = club.avatar_url as string
+        worldComputed.set(url, await extractCrestColors(getImageUrl(url, 'avatar-md') ?? url))
+        if (!cancelled) bump((n) => n + 1)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [stored, withCrest])
+  const out = new Map<string, CrestPalette | null>()
+  for (const c of withCrest) {
+    const row = stored?.get(c.id)
+    out.set(c.id, row && row.url === c.avatar_url && row.palette ? row.palette : worldComputed.get(c.avatar_url as string)?.palette ?? null)
+  }
+  return out
+}

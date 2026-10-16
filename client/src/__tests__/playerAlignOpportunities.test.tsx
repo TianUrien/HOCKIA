@@ -53,18 +53,17 @@ describe('Card / Role', () => {
     expect(screen.getByTestId('category-tag').className).toContain('bg-category-men-soft')
     expect(screen.queryByText("Head coach · Men's")).toBeNull()
   })
-  it('shows "flag city · league", a category-coloured team tag and an optional day-first Apply by', () => {
-    card(false, { application_deadline: '2026-10-12' })
-    expect(screen.getByText('🇮🇹 Bologna, Italy · Serie A1')).toBeInTheDocument()
+  it('shows "Club · flag city · league", a category-coloured team tag and the closing status', () => {
+    card(false, { application_deadline: '2027-02-13' })
+    expect(screen.getByTestId('role-card-subline')).toHaveTextContent('Hockey Team Bologna · 🇮🇹 Bologna · Serie A1')
     expect(screen.getByTestId('category-tag').className).toMatch(/bg-category-(women|men|mixed)-soft/)
-    expect(screen.getByTestId('role-card-apply-by').textContent).toMatch(/Apply by 12 Oct/)
+    expect(screen.getByTestId('role-card-apply-by').textContent).toBe('Closes 13 Feb')
   })
-  it('EU passport is a neutral Requirement (ink-1 label, no amber)', () => {
+  it('EU passport never colours the card amber; it is a detail fact, not a card chip', () => {
     card(false, { eu_passport_required: true })
-    const req = within(screen.getByTestId('role-card-package')).getByText('EU passport').closest('li')!
-    expect(req).toHaveAttribute('data-type', 'requirement')
-    expect(req.className).toContain('text-ink-1')
-    expect(req.innerHTML).not.toMatch(/b45309|amber|warning/)
+    const cardEl = screen.getByTestId('role-card')
+    expect(cardEl.innerHTML).not.toMatch(/b45309|amber|warning/)
+    expect(within(cardEl).queryByText('EU passport')).toBeNull()
   })
 })
 
@@ -128,12 +127,13 @@ describe('Opportunity detail bottom bar', () => {
         hasApplied={hasApplied} applicationStatus={hasApplied ? 'pending' : null} canApply isPublisher={false} onApply={() => {}} onMessage={() => {}} />
     </MemoryRouter>,
   )
-  it('open: Muted 48 message button + Primary Apply', () => {
+  it('open: 52 pt outlined message button + Primary Apply in a glass bar', () => {
     detail(false)
     const msg = screen.getByRole('button', { name: 'Message club' })
-    expect(msg).toHaveAttribute('data-variant', 'muted')
-    expect(msg).toHaveAttribute('data-size', 'large')
-    expect(screen.getByTestId('apply-button').className).toContain('bg-hockia-primary')
+    expect(msg.className).toContain('h-[52px]')
+    expect(msg.className).toContain('border-line')
+    expect(screen.getByTestId('role-apply').className).toContain('bg-hockia-primary')
+    expect(screen.getByTestId('role-action-bar').className).toContain('backdrop-blur')
     expect(screen.getByText('Compensation not stated')).toBeInTheDocument()
     expect(screen.getByText('Ask the club when you apply')).toBeInTheDocument()
   })
