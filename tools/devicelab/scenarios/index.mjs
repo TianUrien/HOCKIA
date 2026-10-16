@@ -32,19 +32,34 @@ const SCROLL_STATE = () => {
 
 async function assertScrolled(lab, ctx, label) {
   const before = await lab.eval(SCROLL_STATE)
-  await lab.swipeUp(0.5)
-  const after = await lab.eval(SCROLL_STATE)
+  let after = before
+  // Two attempts: a swipe can land while the page is still painting (loaded
+  // simulators drop the first touch); a frozen page ignores both.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await lab.swipeUp(0.5)
+    after = await lab.eval(SCROLL_STATE)
+    if (after.y > before.y || after.inner > before.inner || !after.tall) break
+    await sleep(1200)
+  }
   await ctx.shot(`${label}-after-swipe`)
   const moved = after.y > before.y || after.inner > before.inner
   if (after.tall && !moved) throw new Error(`${label}: swipe did not scroll (scrollY ${before.y} → ${after.y}, inner ${before.inner} → ${after.inner}, ${after.scrollers} scrollers; body ${after.pos}, lock=${after.locked})`)
   return after
 }
 
-/** An inner scroller (chat thread, deck) must move on a thumb swipe. */
+/**
+ * An inner scroller (chat thread, deck) must move on a thumb swipe. A thread
+ * opens at its bottom, so the swipe goes DOWN (towards older messages).
+ */
 async function assertInnerScrolled(lab, ctx, selector, label) {
   const before = await lab.eval((s) => document.querySelector(s)?.scrollTop ?? null, selector)
-  await lab.swipeUp(0.4)
-  const after = await lab.eval((s) => { const el = document.querySelector(s); return el ? { top: el.scrollTop, tall: el.scrollHeight > el.clientHeight + 40 } : null }, selector)
+  let after = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await lab.swipeDown(0.4)
+    after = await lab.eval((s) => { const el = document.querySelector(s); return el ? { top: el.scrollTop, tall: el.scrollHeight > el.clientHeight + 40 } : null }, selector)
+    if (!after || !after.tall || after.top !== before) break
+    await sleep(1200)
+  }
   await ctx.shot(`${label}-after-swipe`)
   if (!after) throw new Error(`${label}: scroller ${selector} not found`)
   if (after.tall && after.top === before) throw new Error(`${label}: swipe did not move ${selector} (scrollTop stayed ${before})`)
@@ -171,9 +186,6 @@ export const scenarios = {
     const scroller = await lab.eval(() => document.querySelector('.chat-scroll-container') ? '.chat-scroll-container' : null)
     if (scroller) {
       // Swipe DOWN (towards older messages) must move the thread.
-      await lab.native()
-      const { width, height } = await lab.driver ? await lab.driver.getWindowSize() : { width: lab.device.viewport?.width ?? 400, height: lab.device.viewport?.height ?? 800 }
-      void width; void height
       await assertInnerScrolled(lab, ctx, scroller, 'thread')
     }
     await lab.type('textarea', 'Device lab check — not sent')

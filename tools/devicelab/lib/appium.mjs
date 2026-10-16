@@ -219,15 +219,33 @@ export class AppiumLab {
   }
 
   /** A thumb swipe up (content moves up = scroll down) in the native layer. */
-  async swipeUp(fraction = 0.5) {
+  async swipeUp(fraction = 0.5) { return this.swipe(fraction, 'up') }
+
+  /** A thumb swipe down (towards earlier content, e.g. older messages). */
+  async swipeDown(fraction = 0.5) { return this.swipe(fraction, 'down') }
+
+  /** An overloaded emulator shows "Process system isn't responding": choose Wait so the app keeps running. */
+  async dismissSystemDialogs() {
+    if (this.device.platform !== 'android') return
+    try {
+      const wait = await this.driver.$('id=android:id/aerr_wait')
+      if (await wait.isExisting()) await wait.click()
+    } catch { /* no dialog */ }
+  }
+
+  async swipe(fraction, direction) {
     await this.native()
+    await this.dismissSystemDialogs()
     // Window size once per session: the Android agent has hung on repeated
     // window/rect calls after ~10 minutes of use.
     if (!this.size) this.size = await this.driver.getWindowSize()
     const { width, height } = this.size
-    const x = Math.round(width / 2), y1 = Math.round(height * 0.75), y2 = Math.round(height * (0.75 - fraction))
-    await this.driver.action('pointer', { parameters: { pointerType: 'touch' } }).move({ x, y: y1 }).down().pause(80).move({ x, y: y2, duration: 400 }).up().perform()
-    await sleep(600)
+    const x = Math.round(width / 2)
+    const from = direction === 'up' ? 0.75 : 0.25
+    const to = direction === 'up' ? 0.75 - fraction : 0.25 + fraction
+    const y1 = Math.round(height * from), y2 = Math.round(height * to)
+    await this.driver.action('pointer', { parameters: { pointerType: 'touch' } }).move({ x, y: y1 }).down().pause(120).move({ x, y: y2, duration: 500 }).up().perform()
+    await sleep(800)
   }
 
   async shot(file) { await this.native(); await this.driver.saveScreenshot(file) }

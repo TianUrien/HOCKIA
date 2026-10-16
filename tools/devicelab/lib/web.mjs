@@ -28,6 +28,7 @@ export class WebLab {
   async tap(selector) { await this.page.locator(selector).first().click() }
   async type(selector, text) { await this.page.locator(selector).first().fill(text) }
   async swipeUp(fraction = 0.5) { await this.page.mouse.move(this.device.viewport.width / 2, this.device.viewport.height / 2); await this.page.mouse.wheel(0, this.device.viewport.height * fraction); await this.page.waitForTimeout(500) }
+  async swipeDown(fraction = 0.5) { await this.page.mouse.move(this.device.viewport.width / 2, this.device.viewport.height / 2); await this.page.mouse.wheel(0, -this.device.viewport.height * fraction); await this.page.waitForTimeout(500) }
   async shot(file) { await this.page.screenshot({ path: file }) }
   async url() { const u = new URL(this.page.url()); return u.pathname + u.search }
   async close() { await this.browser.close() }

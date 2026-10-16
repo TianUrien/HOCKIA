@@ -13,6 +13,7 @@ the tree, and the consequences. Status is `accepted` unless noted.
 | [0005](0005-cloudflare-stream-signing-domain.md) | Signed Stream playback URLs are minted locally and served from the account's customer subdomain, never `videodelivery.net` | `_shared/stream-signing.ts`, commits `65d19677`, `f7535ea1` |
 | [0006](0006-public-repository-policy.md) | The repository is public; commit text is neutral and nothing sensitive is committed; CI enforces secret and dependency gates | `.gitleaks.toml`, `scripts/audit-check.mjs`, `ci.yml` artifact retention |
 | [0007](0007-no-agent-framework.md) | No primary agent workflow framework: `CLAUDE.md` + memory + `docs/engineering/` + lazily loaded copied skills + two local hooks; frameworks with always-on hooks, user-settings writes or telemetry are out | `.claude/skills/*/SKILL.md`, `scripts/hooks/`, `skills.md` sections 2-5, `hooks.md` |
+| [0008](0008-tablets-get-the-phone-layout.md) | Tablets show the phone layout inside the native app: the WebView is held to 640 pt/dp and centred (iOS `MainViewController`, Android `MainActivity`); phones and desktop unchanged | `client/ios/App/App/MainViewController.swift`, `client/android/.../MainActivity.java`, `tools/devicelab` run reports |
 
 ## Writing a new ADR
 
