@@ -178,11 +178,15 @@ describe('Opportunities · Roles by viewer', () => {
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
-  it('My roles is phone only', async () => {
+  it('My roles works on desktop too (D3, 16 Oct 2026): ?view=mine opens the coach\'s own roles, Roles keeps the list', async () => {
     phone = false
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     tables = { opportunities: both }
-    wrap(<OpportunitiesPage />, '/opportunities?view=mine')
+    const first = wrap(<OpportunitiesPage />, '/opportunities?view=mine')
+    expect(await screen.findByTestId('coach-my-roles')).toBeTruthy()
+    expect(screen.queryAllByTestId('role-card')).toHaveLength(0)
+    first.unmount()
+    wrap(<OpportunitiesPage />, '/opportunities')
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
     expect(screen.queryByTestId('coach-my-roles')).toBeNull()
   })

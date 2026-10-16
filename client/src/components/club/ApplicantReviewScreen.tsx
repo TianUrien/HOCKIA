@@ -1,5 +1,5 @@
 import { videoLinkSite } from '@/lib/videoUrlValidator'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -39,6 +39,9 @@ import { cn } from '@/lib/utils'
 import { flagForCountryName } from '@/lib/careerCopy'
 import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { MENU_ICON_CLASS } from '@/lib/report'
+import { nationalityCountries } from '@/lib/nationality'
+import { fitChipLabel } from '@/lib/clubRecruiting'
+import { EuBadge } from '@/components/ui/NationalityBadges'
 import type { Json } from '@/lib/database.types'
 
 // D4.2 / D4.4 sheets: their own chunks, loaded when the club opens one.
@@ -69,7 +72,22 @@ const MENU_LABEL: Record<RoadMenuItem, string> = {
  * signed). "…" holds Not moving forward (the Decline sheet), Mark as signed
  * without an offer, Withdraw offer and Undo signing, as the server allows.
  */
-interface Props { roleId: string; applicationId: string }
+/** Keyboard decisions for the desktop master-detail (S / M / D). */
+export interface ReviewActions { shortlist: () => void; maybe: () => void; decline: () => void }
+
+interface Props {
+  roleId: string
+  applicationId: string
+  /** 'pane' = the detail side of the desktop applicants page (Figma D4
+   *  195:987): photo 300×380 beside the name, nationalities + EU, fit, inline
+   *  Decline / Maybe / Shortlist, then the same sections. Same logic, same
+   *  undo toast; after a decision the page moves on instead of going back. */
+  layout?: 'screen' | 'pane'
+  /** Pane only: a decision was taken (the page selects the next applicant). */
+  onDecided?: (status: string) => void
+  /** Pane only: S / M / D from the page's keyboard handler. */
+  actionsRef?: MutableRefObject<ReviewActions | null>
+}
 
 type Person = {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null; position: string | null; secondary_position: string | null
@@ -88,7 +106,8 @@ type Review = {
 // Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
 const monthDay = (iso: string | null) => shortDayOf(iso)
 
-export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
+export default function ApplicantReviewScreen({ roleId, applicationId, layout = 'screen', onDecided, actionsRef }: Props) {
+  const pane = layout === 'pane'
   const navigate = useNavigate()
   const location = useLocation()
   const club = useAuthStore((s) => s.profile)
@@ -109,7 +128,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const signing = useSigningActions()
 
   const playerId = review?.person.id ?? null
-  useEffect(() => { void setStatusBarForBackground('dark-bg'); return () => { void setStatusBarForBackground('light-bg') } }, [])
+  useEffect(() => { if (pane) return; void setStatusBarForBackground('dark-bg'); return () => { void setStatusBarForBackground('light-bg') } }, [pane])
   const scroll = useProfileScrollData(playerId, Boolean(playerId))
   const { acceptedReferences } = useTrustedReferences(playerId ?? '')
 
@@ -288,7 +307,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     })
     patchRoleApplicantStatus(roleId, applicationId, status)
     showUndo({ applicationId, text: decisionToast(firstName, status), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
-    backToApplicants()
+    if (pane) onDecided?.(status)
+    else backToApplicants()
   }
 
   const decline = (reason: string, message: string) => {
@@ -303,7 +323,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     })
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')
     showUndo({ applicationId, text: decisionToast(firstName, 'rejected'), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
-    backToApplicants()
+    if (pane) onDecided?.('rejected')
+    else backToApplicants()
   }
 
   const message = async () => {
@@ -366,12 +387,277 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       setDeclining(true)
     }
   }, [review, decidable, searchParams, setSearchParams])
+  useEffect(() => {
+    if (!actionsRef) return
+    actionsRef.current = {
+      shortlist: () => { if (decidable && review?.status !== 'shortlisted') decide('shortlisted') },
+      maybe: () => { if (decidable && review?.status !== 'maybe') decide('maybe') },
+      decline: () => { if (decidable && review?.status !== 'rejected') setDeclining(true) },
+    }
+    return () => { actionsRef.current = null }
+  })
   const roadAction = review && onRoad ? roadMainAction(review.status) : null
   const mainAction = signingNeedsClub && roadAction === 'mark_signed' ? null : roadAction
   const menu = (review && onRoad ? roadMenu(review.status) : []).filter((item) => !(signingNeedsClub && item === 'mark_signed'))
   const waitingLine = review && onRoad
     ? signingNeedsClub && roadAction === 'mark_signed' ? COACH_SIGNING_NEEDS_CLUB_NOTE : roadWaitingLine(review.status, firstName)
     : null
+
+  function renderPane() {
+    const nats = p ? nationalityCountries([p.nationality_country_id, p.nationality2_country_id], countries) : []
+    const fitLine = review?.fit?.state ? fitChipLabel(review.fit.state) : null
+    const H2 = 'text-[22px] font-bold leading-7 tracking-[-0.01em] text-ink-1'
+    return (
+      <div className="min-w-0 pb-16" data-testid="applicant-review-pane">
+        {error && <p className="py-6 text-row text-ink-2">{error}</p>}
+        {!error && !review && <div className="h-[380px] animate-pulse rounded-[24px] bg-surface-subtle" />}
+        {p && review && (
+          <>
+            <div className="flex gap-6">
+              <div className="relative h-[380px] w-[300px] shrink-0 overflow-hidden rounded-[24px] bg-surface-subtle" data-testid="review-photo">
+                {avatar
+                  ? <img src={getImageUrl(p.avatar_url, 'feed-full') ?? avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  : <span className="absolute inset-0 flex items-center justify-center"><EntityAvatar src={null} name={p.full_name} role={p.role} size={120} /></span>}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
+                <div className="flex items-start gap-2">
+                  <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                    <span className={cn('rounded-full px-2.5 py-[3px] text-caption font-semibold', heroStatus.brand ? 'bg-brand-soft text-brand-primary' : 'bg-surface-muted text-ink-2')} data-testid="review-status-chip">{heroStatus.label}</span>
+                    {appliedLine && <span className={cn('rounded-full bg-surface-subtle px-2.5 py-[3px] text-caption font-semibold', review.status === 'pending' && isClubReplyUrgent(review.appliedAt, days) ? 'text-status-warning' : 'text-ink-2')}>{appliedLine}</span>}
+                  </div>
+                  <ProfileActionMenu
+                    targetId={p.id}
+                    targetName={p.full_name ?? 'this player'}
+                    showBlock={false}
+                    triggerClassName="flex h-9 w-9 items-center justify-center rounded-full text-ink-2 hover:bg-surface-subtle"
+                    iconClassName="h-[18px] w-[18px]"
+                    leadingItems={[
+                      { key: 'message', label: 'Message', icon: <MessageCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void message() },
+                      { key: 'profile', label: 'View full profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } }) },
+                    ]}
+                  />
+                </div>
+                <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1" data-testid="review-name">{p.full_name}</h1>
+                <p className="-mt-1 text-[17px] leading-[22px] text-ink-2">{[personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review.age ? String(review.age) : null].filter(Boolean).join(' · ')}</p>
+                {nats.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2" data-testid="review-nationalities">
+                    {nats.map((c) => (
+                      <span key={c.id} className="inline-flex items-center gap-1.5 rounded-full bg-surface-subtle px-2.5 py-1 text-secondary font-semibold text-ink-1">
+                        {c.flag && <span aria-hidden="true">{c.flag}</span>}{c.name}
+                      </span>
+                    ))}
+                    {nats.some((c) => c.isEu) && <EuBadge />}
+                  </div>
+                )}
+                {fitLine && review.status !== 'withdrawn' && (
+                  <p className={cn('flex items-center gap-2 rounded-[12px] px-3.5 py-2.5 text-secondary', review.fit?.state === 'green' ? 'bg-positive-soft text-positive' : 'bg-surface-subtle text-ink-2')} data-testid="review-fit-line">
+                    <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> {fitLine}
+                  </p>
+                )}
+                {statusNote && <p className="rounded-[12px] bg-surface-subtle px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}
+                {decidable && (
+                  <div data-testid="decision-bar">
+                    <div className="flex gap-2.5">
+                      <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[120px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger transition-colors hover:bg-surface-muted disabled:opacity-40">Decline</button>
+                      <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[52px] w-[110px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-muted disabled:opacity-40">Maybe</button>
+                      <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[52px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40">
+                        <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist
+                      </button>
+                    </div>
+                    <button type="button" onClick={() => void message()} className="mt-2 text-secondary font-semibold text-hockia-primary hover:underline">Message {firstName}</button>
+                  </div>
+                )}
+                {onRoad && (
+                  <div className="flex items-center gap-2.5" data-testid="road-bar">
+                    {menu.length > 0 && (
+                      <button type="button" onClick={() => setSheet('menu')} aria-label="More actions" className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink-1 hover:bg-surface-muted" data-testid="road-more">
+                        <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
+                      </button>
+                    )}
+                    <button type="button" onClick={() => void message()} className="flex h-[52px] shrink-0 items-center justify-center rounded-full bg-surface-subtle px-5 text-[16px] font-semibold text-ink-1 hover:bg-surface-muted">Message</button>
+                    {mainAction ? (
+                      <button type="button" onClick={() => setSheet(mainAction === 'mark_signed' ? 'sign' : 'offer')} disabled={mainAction === 'edit_offer' && !liveOffer} className="flex h-[52px] min-w-0 flex-1 items-center justify-center rounded-full bg-hockia-primary px-3 text-[16px] font-semibold text-white disabled:opacity-60" data-testid="road-main">
+                        <span className="truncate">{mainAction === 'make_offer' ? 'Make an offer' : mainAction === 'edit_offer' ? 'Edit offer' : 'Mark as signed'}</span>
+                      </button>
+                    ) : waitingLine ? (
+                      <span className="flex min-h-12 min-w-0 flex-1 items-center justify-center rounded-[20px] bg-surface-grouped px-3 py-1.5 text-center text-secondary font-semibold leading-[17px] text-ink-2" data-testid="road-waiting">{waitingLine}</span>
+                    ) : null}
+                  </div>
+                )}
+                {!decidable && !onRoad && (
+                  <div className="flex items-center gap-2 text-secondary text-ink-2" data-testid="closed-application-note">
+                    <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> {closedApplicationNote(review.status, firstName)}
+                    <button type="button" onClick={() => void message()} className="ml-auto shrink-0 font-semibold text-hockia-primary hover:underline">Message</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {onRoad && (
+              <div className="pt-6">
+                <RoadToSigningCard steps={steps} onMessage={() => void message()} onToggleTrial={review.status !== 'signed' ? () => void toggleTrial() : undefined} trialBusy={signing.busy} />
+                {declinedNote && <p className="mt-2 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary leading-[18px] text-ink-2" data-testid="road-decline-note">{declinedNote}</p>}
+              </div>
+            )}
+
+            {note && (
+              <section className="pt-8" data-testid="applicant-note">
+                <h2 className={H2}>In their words</h2>
+                <p className="mt-2 max-w-[72ch] whitespace-pre-wrap break-words text-[17px] leading-[26px] text-ink-1">“{note}”</p>
+              </section>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 pt-8">
+              {review.status !== 'withdrawn' ? <FitCard state={review.fit?.state} rows={rows} /> : <span />}
+              <div className="overflow-hidden self-start rounded-2xl border border-line bg-white">
+                {[
+                  ...(review.age ? [{ k: 'Age', v: String(review.age) }] : []),
+                  ...(p.base_location ? [{ k: 'Based in', v: p.base_location }] : []),
+                  ...(review.playerClub ? [{ k: 'Club', v: review.playerClub.name }] : []),
+                ].map((row, i) => (
+                  <div key={row.k}>
+                    {i > 0 && <div className="ml-3.5 h-[0.5px] bg-line" />}
+                    <div className="flex h-[46px] items-center justify-between gap-3 px-3.5">
+                      <span className="text-row text-ink-2">{row.k}</span>
+                      <span className="min-w-0 truncate text-row font-medium text-ink-1">{row.v}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {videos > 0 && (
+              <section className="pt-8">
+                <div className="flex items-center justify-between pb-3">
+                  <h2 className={H2}>Videos</h2>
+                  <button type="button" onClick={() => navigate(`/players/id/${p.id}/videos`, { state: { from: location.pathname } })} className="text-row font-semibold text-hockia-primary hover:underline">See all {videos}</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {scroll.fullGameLinks.slice(0, 2).map((l) => (
+                    <a key={l.id} href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex aspect-video flex-col justify-end overflow-hidden rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 p-3 text-left">
+                      <span className="absolute left-2.5 top-2.5 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">Full match</span>
+                      <span className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
+                      <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span>
+                    </a>
+                  ))}
+                  {[...scroll.fullMatches, ...scroll.highlights].slice(0, Math.max(0, 4 - scroll.fullGameLinks.slice(0, 2).length)).map((v, i) => (
+                    <ProfileVideoTile key={v.id} video={v} locked={false} canWatch eager={i < 2} onOpen={() => navigate(`/players/id/${p.id}/videos`, { state: { from: location.pathname } })} className="aspect-video w-full" />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {scroll.career.length > 0 && (
+              <section className="pt-8">
+                <div className="flex items-center justify-between pb-2">
+                  <h2 className={H2}>Career</h2>
+                  <button type="button" onClick={() => navigate(`/players/id/${p.id}/journey`, { state: { from: location.pathname } })} className="text-row font-semibold text-hockia-primary hover:underline">See all</button>
+                </div>
+                {scroll.career.slice(0, 3).map((c, i, arr) => (
+                  <CareerRow key={c.id} entry={c} last={i === arr.length - 1} flag={countryRow(c.representedCountryId)?.split(' ')[0] ?? null} locationFlag={flagForCountryName(countries, c.locationCountry)} />
+                ))}
+              </section>
+            )}
+
+            {(p.specialist_skills ?? []).length > 0 && (
+              <section className="pt-8">
+                <h2 className={`${H2} pb-2`}>Specialist skills</h2>
+                <div className="flex flex-wrap gap-x-3.5 gap-y-2">
+                  {(p.specialist_skills ?? []).map((sk) => (
+                    <span key={sk} className="flex items-center gap-[7px] text-[14px] font-medium text-ink-1">
+                      <span className="flex h-[22px] w-[22px] items-center justify-center rounded-[7px] bg-hockia-soft text-hockia-primary"><Target className="h-3.5 w-3.5" strokeWidth={2} /></span>
+                      {specialistSkillLabel(sk)}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="pt-8">
+              <h2 className={`${H2} pb-2`}>References</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {acceptedReferences.length === 0
+                  ? <p className="col-span-2 text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>
+                  : acceptedReferences.slice(0, 2).map((r) => (
+                    <ReferenceCard key={r.id} reference={r} onOpen={() => navigate(`/players/id/${p.id}/references`, { state: { from: location.pathname } })} />
+                  ))}
+              </div>
+            </section>
+          </>
+        )}
+        {overlays}
+      </div>
+    )
+  }
+
+  const overlays = (
+    <>
+      {/* "…" on the road: what the server allows at this step. */}
+      <BottomSheet open={sheet === 'menu'} onClose={() => setSheet(null)} ariaLabel="More actions">
+        <div className="px-3 pb-2 pt-1" data-testid="road-menu">
+          {menu.map((item) => (
+            <button key={item} type="button" onClick={() => pickMenu(item)} className={cn('flex h-12 w-full items-center rounded-xl px-3 text-left text-[16px] font-medium', item === 'decline' || item === 'withdraw_offer' || item === 'undo_signing' ? 'text-status-danger' : 'text-ink-1')} data-testid={`road-menu-${item}`}>
+              {MENU_LABEL[item]}
+            </button>
+          ))}
+          <button type="button" onClick={() => setSheet(null)} className="flex h-12 w-full items-center justify-center text-[16px] font-semibold text-ink-1">Cancel</button>
+        </div>
+      </BottomSheet>
+      {sheet === 'offer' && (
+        <Suspense fallback={null}>
+          <OfferSheet
+            open
+            firstName={firstName}
+            roleLabel={roleLabel}
+            role={roadData?.role ?? null}
+            current={liveOffer}
+            publisherIsClub={organisation.isClub}
+            organisation={organisation.name}
+            busy={signing.busy}
+            onClose={() => setSheet(null)}
+            onSend={(d) => void sendOffer(d)}
+          />
+        </Suspense>
+      )}
+      {sheet === 'sign' && p && (
+        <Suspense fallback={null}>
+          <MarkSignedSheet
+            open
+            firstName={firstName}
+            playerAvatar={avatar}
+            playerName={p.full_name}
+            clubAvatar={organisation.avatarUrl}
+            clubName={organisation.name}
+            publisherIsClub={organisation.isClub}
+            roleLabel={roleLabel}
+            waiting={roadData?.waiting ?? 0}
+            busy={signing.busy}
+            onClose={() => setSheet(null)}
+            onConfirm={(closeRole) => void markSigned(closeRole)}
+          />
+        </Suspense>
+      )}
+      {/* Danger confirmations are sheets, like Decline (one surface per screen). */}
+      <ConfirmSheet
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={runConfirm}
+        title={confirm === 'withdraw_offer' ? 'Withdraw this offer?' : 'Undo the signing?'}
+        message={confirm === 'withdraw_offer'
+          ? `${firstName} is told the offer was withdrawn and goes back to Shortlisted.`
+          : `${firstName} won’t be asked to confirm any more. You can mark the signing again later.`}
+        confirmLabel={confirm === 'withdraw_offer' ? 'Withdraw offer' : 'Undo signing'}
+        busyLabel={confirm === 'withdraw_offer' ? 'Withdrawing…' : 'Undoing…'}
+        testId="road-confirm"
+      />
+
+      {p && (
+        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => { setDeclining(false); setLinkedDeclineReason(null) }} onSend={decline} initialReason={linkedDeclineReason} />
+      )}
+    </>
+  )
+
+  if (pane) return renderPane()
 
   return (
     <div className="flex h-app-screen flex-col bg-white lg:hidden" data-testid="applicant-review-screen">
@@ -603,68 +889,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
         </div>
       )}
 
-      {/* "…" on the road: what the server allows at this step. */}
-      <BottomSheet open={sheet === 'menu'} onClose={() => setSheet(null)} ariaLabel="More actions">
-        <div className="px-3 pb-2 pt-1" data-testid="road-menu">
-          {menu.map((item) => (
-            <button key={item} type="button" onClick={() => pickMenu(item)} className={cn('flex h-12 w-full items-center rounded-xl px-3 text-left text-[16px] font-medium', item === 'decline' || item === 'withdraw_offer' || item === 'undo_signing' ? 'text-status-danger' : 'text-ink-1')} data-testid={`road-menu-${item}`}>
-              {MENU_LABEL[item]}
-            </button>
-          ))}
-          <button type="button" onClick={() => setSheet(null)} className="flex h-12 w-full items-center justify-center text-[16px] font-semibold text-ink-1">Cancel</button>
-        </div>
-      </BottomSheet>
-      {sheet === 'offer' && (
-        <Suspense fallback={null}>
-          <OfferSheet
-            open
-            firstName={firstName}
-            roleLabel={roleLabel}
-            role={roadData?.role ?? null}
-            current={liveOffer}
-            publisherIsClub={organisation.isClub}
-            organisation={organisation.name}
-            busy={signing.busy}
-            onClose={() => setSheet(null)}
-            onSend={(d) => void sendOffer(d)}
-          />
-        </Suspense>
-      )}
-      {sheet === 'sign' && p && (
-        <Suspense fallback={null}>
-          <MarkSignedSheet
-            open
-            firstName={firstName}
-            playerAvatar={avatar}
-            playerName={p.full_name}
-            clubAvatar={organisation.avatarUrl}
-            clubName={organisation.name}
-            publisherIsClub={organisation.isClub}
-            roleLabel={roleLabel}
-            waiting={roadData?.waiting ?? 0}
-            busy={signing.busy}
-            onClose={() => setSheet(null)}
-            onConfirm={(closeRole) => void markSigned(closeRole)}
-          />
-        </Suspense>
-      )}
-      {/* Danger confirmations are sheets, like Decline (one surface per screen). */}
-      <ConfirmSheet
-        open={confirm !== null}
-        onClose={() => setConfirm(null)}
-        onConfirm={runConfirm}
-        title={confirm === 'withdraw_offer' ? 'Withdraw this offer?' : 'Undo the signing?'}
-        message={confirm === 'withdraw_offer'
-          ? `${firstName} is told the offer was withdrawn and goes back to Shortlisted.`
-          : `${firstName} won’t be asked to confirm any more. You can mark the signing again later.`}
-        confirmLabel={confirm === 'withdraw_offer' ? 'Withdraw offer' : 'Undo signing'}
-        busyLabel={confirm === 'withdraw_offer' ? 'Withdrawing…' : 'Undoing…'}
-        testId="road-confirm"
-      />
-
-      {p && (
-        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => { setDeclining(false); setLinkedDeclineReason(null) }} onSend={decline} initialReason={linkedDeclineReason} />
-      )}
+      {overlays}
     </div>
   )
 }

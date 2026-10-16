@@ -17,9 +17,10 @@ export interface CoachMyRolesProps {
   data: ClubRolesData
   onPostRole: () => void
   onEditRole: (role: ClubRole) => void
+  layout?: 'phone' | 'desktop'
 }
 
-export default function CoachMyRoles({ profile, data, onPostRole, onEditRole }: CoachMyRolesProps) {
+export default function CoachMyRoles({ profile, data, onPostRole, onEditRole, layout = 'phone' }: CoachMyRolesProps) {
   const worldClubId = profile.current_world_club_id ?? null
   const { data: worldClubName } = useQuery({
     queryKey: ['world-club-name', worldClubId],
@@ -36,13 +37,16 @@ export default function CoachMyRoles({ profile, data, onPostRole, onEditRole }: 
 
   return (
     <div data-testid="coach-my-roles">
-      {line && <p className="px-6 pb-3.5 text-secondary text-ink-2" data-testid="coach-recruiting-for">{line}</p>}
+      {line && layout !== 'desktop' && <p className="px-6 pb-3.5 text-secondary text-ink-2" data-testid="coach-recruiting-for">{line}</p>}
       <RecruiterRoles
         data={data}
         onPostRole={onPostRole}
         onEditRole={onEditRole}
         from="/opportunities?view=mine"
         statusSegment="when-closed"
+        layout={layout}
+        title={null}
+        subtitle={layout === 'desktop' ? line : null}
       />
     </div>
   )

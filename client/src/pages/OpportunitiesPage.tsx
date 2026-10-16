@@ -39,6 +39,7 @@ import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { useCoachingRolesHistory } from '@/hooks/useCoachingRolesHistory'
 import { useProfileWriter } from '@/hooks/useProfileWriter'
 import { CoachRolesEmptyState } from '@/components/opportunities/CoachRolesEmptyState'
+import { RecruiterRoles } from '@/components/club/ClubOpportunitiesScreen'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
@@ -112,8 +113,11 @@ export default function OpportunitiesPage() {
   const candidateCoach = isCandidateCoach(profile)
   const recruitingCoach = isRecruitingCoach(profile)
   const [coachView, setCoachView] = useState<'roles' | 'mine'>(() => (searchParams.get('view') === 'mine' ? 'mine' : 'roles'))
-  const showMyRoles = recruitingCoach && isPhone && coachView === 'mine'
-  const myRoles = useClubRoles(recruitingCoach && isPhone ? profile?.id : null)
+  // Desktop D3 (Figma 195:889, ruling 16 Oct 2026): a club's /opportunities is
+  // its own roles; a recruiting coach gets them under "My roles" on every width.
+  const clubDesktop = !isPhone && profile?.role === 'club'
+  const showMyRoles = recruitingCoach && coachView === 'mine'
+  const myRoles = useClubRoles(recruitingCoach || clubDesktop ? profile?.id : null)
   const myOpenRoleCount = myRoles.open.filter((r) => r.status === 'open').length
   // "Edit role" on a coach's applicants screen lands here with the role to
   // edit: open the coach's own role form once their roles have loaded.
@@ -514,6 +518,16 @@ export default function OpportunitiesPage() {
         <Header mobileHidden />
 
         <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-24 lg:max-w-[1232px] lg:px-4 lg:pt-24 lg:pb-20">
+          {clubDesktop ? (
+            <RecruiterRoles
+              data={myRoles}
+              layout="desktop"
+              subtitle={profile?.full_name ? `${profile.full_name} · your roles` : 'Your roles'}
+              onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
+              onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+            />
+          ) : (
+          <>
           {/* Phone header (Figma Opportunities v2): large title, one filters
               button, a search pill, and Open roles | Applied. */}
           {isPhone && (
@@ -605,21 +619,25 @@ export default function OpportunitiesPage() {
             </div>
             {user && (profile?.role === 'player' || profile?.role === 'coach') && (
               <div className="shrink-0">
-                <SegmentedControl<'open' | 'applied'>
+                <SegmentedControl<'open' | 'applied' | 'mine'>
                   ariaLabel="Roles"
-                  value="open"
+                  value={showMyRoles ? 'mine' : 'open'}
                   className="[&_button]:whitespace-nowrap [&_button]:px-4"
-                  onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
+                  onChange={(v) => {
+                    if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } })
+                    else setCoachView(v === 'mine' ? 'mine' : 'roles')
+                  }}
                   options={[
                     { value: 'open', label: profile.role === 'coach' ? 'Roles' : 'Open roles', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My roles', count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
             )}
-            {canPostOpportunity && (
+            {canPostOpportunity && !showMyRoles && (
               <Button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => { setEditingRole(null); setShowCreateModal(true) }}
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
@@ -650,7 +668,7 @@ export default function OpportunitiesPage() {
               floating dialog; the quick chips are the phone ones (selected =
               soft violet). Deep-link filters (?role, ?position, ?applied=mine…)
               keep working and show a clear chip. */}
-          {!isPhone && !coachEmpty && (
+          {!isPhone && !coachEmpty && !showMyRoles && (
           <div className="mb-9 flex flex-wrap items-center gap-2" role="group" aria-label="Filters" data-testid="opportunity-desktop-chips">
             <Chip
               label="Filters"
@@ -685,6 +703,7 @@ export default function OpportunitiesPage() {
               <CoachMyRoles
                 profile={profile}
                 data={myRoles}
+                layout={isPhone ? 'phone' : 'desktop'}
                 onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
                 onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
               />
@@ -910,6 +929,8 @@ export default function OpportunitiesPage() {
               </div>
               )}
             </>
+          )}
+          </>
           )}
           </>
           )}
