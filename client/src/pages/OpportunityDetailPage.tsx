@@ -7,12 +7,11 @@ import { trackDbEvent } from '../lib/trackDbEvent'
 import { trackVacancyView } from '../lib/analytics'
 import type { Opportunity } from '../lib/supabase'
 import Header from '../components/Header'
-import OpportunityDetailView from '../components/OpportunityDetailView'
 import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
-import Breadcrumbs from '../components/Breadcrumbs'
 import { OpportunityDetailMobile } from '../components/opportunities/OpportunityDetailMobile'
+import { OpportunityDetailDesktop } from '../components/opportunities/OpportunityDetailDesktop'
 import { roleIdentity } from '@/lib/opportunityIdentity'
 import { useClubCrestPalettes, useWorldClubCrestPalettes } from '@/hooks/useClubCrestColors'
 import OwnApplicationRoad from '../components/opportunities/OwnApplicationRoad'
@@ -446,36 +445,25 @@ export default function OpportunityDetailPage() {
         </div>
         )}
         {isDesktop && (
-        <div className="hidden pt-20 lg:block">
-          <div className="max-w-4xl mx-auto px-4 md:px-6 pt-4 pb-2">
-            <Breadcrumbs
-              items={[
-                { label: 'Opportunities', to: '/opportunities' },
-                { label: opportunity.title },
-              ]}
-            />
-          </div>
-          <OpportunityDetailView
+        <div className="hidden pt-16 lg:block">
+          {/* Desktop (Figma D2 194:885): the role as a page with a sticky cover column. */}
+          <OpportunityDetailDesktop
             vacancy={opportunity}
-            clubName={club.full_name || 'Unknown Club'}
-            clubLogo={club.avatar_url}
+            clubName={identity.displayName}
+            clubLogo={identity.displayLogo}
             clubId={club.id}
             publisherRole={club.role}
-            publisherOrganization={opportunity.organization_name || club.current_club || null}
-            leagueDivision={(() => {
-              // Phase 3d — Women + Girls families map to women's league;
-              // Men + Boys to men's; Mixed defaults to first available.
-              const womensFamily = opportunity.gender === 'Women' || opportunity.gender === 'Girls'
-              return womensFamily
-                ? club.womens_league_division ?? club.mens_league_division ?? null
-                : club.mens_league_division ?? club.womens_league_division ?? null
-            })()}
-            worldClub={worldClub}
+            identity={identity}
+            palette={coverPalette}
             onClose={handleClose}
-            onApply={canShowApplyButton ? handleApplyClick : undefined}
+            countryFlag={worldClub?.flagEmoji ?? null}
+            league={leagueForPhone}
             hasApplied={hasApplied}
             applicationStatus={applicationStatus}
+            canApply={canShowApplyButton}
+            isPublisher={Boolean(user && user.id === opportunity.club_id)}
             isClosed={isClosed}
+            onApply={handleApplyClick}
             onMessage={handleMessageClick}
             ownApplicationSlot={applicationId && applicationStatus ? (
               <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onSeeOffer={() => handleMessageClick('offer')} onChanged={setApplicationStatus} />

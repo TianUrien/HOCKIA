@@ -431,7 +431,7 @@ export function OpportunityDetailMobile({
 }
 
 /** Key fact tile (Figma 148:399): 11 label · 16 value · 13 sub, r12. */
-function Fact({ label, value, sub, className, tinted = false }: { label: string; value: string; sub?: string | null; className?: string; tinted?: boolean }) {
+export function Fact({ label, value, sub, className, tinted = false }: { label: string; value: string; sub?: string | null; className?: string; tinted?: boolean }) {
   return (
     <div className={`flex flex-col gap-0.5 rounded-[12px] px-3.5 py-3 ${className ?? 'bg-surface-subtle'}`} data-testid="role-fact">
       <span className={`text-micro font-semibold uppercase tracking-[0.02em] ${tinted ? '' : 'text-ink-3'}`}>{label}</span>
@@ -445,9 +445,9 @@ function Fact({ label, value, sub, className, tinted = false }: { label: string;
  * List item / Benefit (Figma 148:418): a 40 px tile in the Package colours,
  * title 16 semibold, detail 13 ink-2. Note type = subtle grey tile, info.
  */
-function BenefitItem({ icon: Icon, tileClass, title, detail, type }: { icon: LucideIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note' }) {
+export function BenefitItem({ icon: Icon, tileClass, title, detail, type, className }: { icon: LucideIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note'; className?: string }) {
   return (
-    <li className="flex items-center gap-3 py-2" data-type={type}>
+    <li className={className ?? 'flex items-center gap-3 py-2'} data-type={type}>
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${tileClass}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
       <span className="min-w-0">
         <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">{title}</span>
