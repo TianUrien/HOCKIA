@@ -50,6 +50,8 @@
 - Chat header may show activity only if the user allows it.
 
 ## Hockia AI (approved 2026-10-16)
+- Hockia AI is the name of the whole intelligence layer: what it knows about the viewer and their roles, hockey knowledge, rules in code (fit, ranking, suggestions) and the language model. In copy, intelligence features belong to Hockia AI (2026-10-16).
+- Direction, not yet designed: the clubs' and recruiting coaches' recruiting context becomes Hockia AI's context. Default = the open role in use; Hockia AI sets or changes it with confirmation and replaces the context form. Fit and reasons stay rule-based (template reasons). Switching between open roles works without the language model or the daily limit.
 - Mascot: violet vinyl-toy figure with a right-handed field hockey stick and a headband "mind light" (calm glow · thinking sweep · idea flash). Friendly, curious, smart; explains, doesn't hype; gender-neutral; CG assets (Blender). Avatars at 32–40 pt show head + headband only.
 - Entry: mascot button top-right on Opportunities (Filters becomes the first quick chip; "Has suggestion" glow only for real news); opens a **sheet over the current screen** (medium / large); contextual entries: "Ask Hockia AI about this role", applicants summary, "Fill my profile for me".
 - **Does things with confirmation**: drafts as cards (apply, profile update); nothing is sent or saved until the user taps.
