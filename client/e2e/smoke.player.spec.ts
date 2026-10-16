@@ -53,7 +53,8 @@ test.describe('@smoke player', () => {
       await roleCard.getByRole('button').first().click()
       await page.waitForURL(/\/opportunities\/[0-9a-f-]{36}/, { timeout: 20000 })
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
-      await page.getByRole('button', { name: /back to opportunities/i }).click()
+      // Opportunities v2: the detail closes with the glass × (App Store style), not a back bar.
+      await page.getByTestId('role-close').click()
       await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
       return
     }

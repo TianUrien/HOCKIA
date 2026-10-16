@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// CI's unit job has no Supabase env: the eligibility helper imports the client transitively.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import type { Vacancy, Profile } from '@/lib/supabase'
 import { buildRails, isNewRole, isRelevantForViewer, pickFeatured, roleStatus } from '@/lib/opportunityRails'
 
