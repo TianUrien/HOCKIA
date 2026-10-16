@@ -46,7 +46,7 @@ function closedLabel(r: ClubRole): { label: string; tone: 'positive' | 'grey' } 
 /** Draft card (Figma O5 162:542): dashed outline, Draft pill, the title, Continue. */
 function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => void }) {
   return (
-    <article className="flex flex-col gap-1.5 rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
+    <article className="flex flex-col gap-1.5 self-start rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
       <div className="flex items-center gap-2">
         <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[3px] text-caption font-semibold text-ink-2">Draft</span>
         <h3 className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleTitle(role)}</h3>
@@ -88,14 +88,14 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { ro
   }
   const reviewLabel = open && p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'
   return (
-    <article className="overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)]" data-testid="club-role-card" data-status={role.status}>
+    <article className="flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] lg:transition-[transform,box-shadow] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_12px_24px_rgba(15,15,20,0.1)]" data-testid="club-role-card" data-status={role.status}>
       <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
         {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
         <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-[8px]" style={{ backgroundColor: 'rgba(0,0,0,0.32)' }}>
           <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
         </span>
       </RoleCover>
-      <div className="flex flex-col gap-1 px-4 pb-4 pt-3.5">
+      <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
         {outcome && (
           <span className={cn('mb-1 self-start rounded-full px-2.5 py-[3px] text-caption font-semibold', outcome.tone === 'positive' ? 'bg-positive-soft text-positive' : 'bg-surface-muted text-ink-2')} data-testid="club-role-outcome">{outcome.label}</span>
         )}
@@ -112,8 +112,9 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { ro
             {closedBreakdown(p, expiryDays)}
           </p>
         )}
+        <span aria-hidden="true" className="h-3 shrink-0" />
         {/* Primary only while this role owes a reply (Figma O5); quiet otherwise. */}
-        <button ref={press.ref} type="button" onClick={onReview} {...press.handlers} data-testid="role-review-button" className={cn('mt-3 flex h-11 items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] [transform-origin:center]', open && p.toReview > 0 ? 'bg-brand-primary text-white' : 'bg-surface-subtle text-ink-1')}>
+        <button ref={press.ref} type="button" onClick={onReview} {...press.handlers} data-testid="role-review-button" className={cn('mt-auto flex h-11 items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] [transform-origin:center]', open && p.toReview > 0 ? 'bg-brand-primary text-white' : 'bg-surface-subtle text-ink-1')}>
           {reviewLabel}
         </button>
       </div>
@@ -167,9 +168,17 @@ export interface RecruiterRolesProps {
   statusSegment?: 'always' | 'when-closed'
   /** Parent label the Shortlist screen's back button names. */
   parentLabel?: string
+  /** 'desktop' = Figma D3 195:889: a header row (title + subtitle, Open|Closed,
+   *  "+ Post a role" Primary), full-width waiting notice, role cards three
+   *  across (two under 1200) with the draft in the grid, scouting rows below. */
+  layout?: 'phone' | 'desktop'
+  /** Desktop header copy (title defaults to "Opportunities"; null = controls only, the host owns the title). */
+  title?: string | null
+  subtitle?: string | null
 }
 
-export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities' }: RecruiterRolesProps) {
+export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
+  const desktop = layout === 'desktop'
   const navigate = useNavigate()
   const [segment, setSegment] = useState<Segment>('open')
   const location = useLocation()
@@ -215,12 +224,34 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
 
   if (firstRun) {
     // Find players now opens Find players with "No context" active.
-    return <FirstRunOpportunities cover={cover} onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+    const first = <FirstRunOpportunities cover={cover} onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+    return desktop ? <div className="mx-auto max-w-[520px] pt-6" data-testid="club-opportunities-desktop">{first}</div> : first
   }
 
   return (
     <>
-      {showSegment && (
+      {desktop ? (
+        <div className="mb-6 flex items-center gap-4" data-testid="club-opportunities-desktop-header">
+          <div className="min-w-0 flex-1">
+            {title && <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">{title}</h1>}
+            {subtitle && <p className={cn('text-[16px] leading-[22px] text-ink-2', title && 'mt-1')}>{subtitle}</p>}
+          </div>
+          {showSegment && (
+            <div className="shrink-0">
+              <SegmentedControl<Segment>
+                ariaLabel="Role status"
+                value={segment}
+                onChange={setSegment}
+                className="[&_button]:whitespace-nowrap [&_button]:px-4"
+                options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+              />
+            </div>
+          )}
+          <button type="button" onClick={postRole} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-primary px-5 text-[16px] font-semibold text-white transition-opacity hover:opacity-90" data-testid="desktop-post-role">
+            <Plus className="h-5 w-5" strokeWidth={2.2} /> Post a role
+          </button>
+        </div>
+      ) : showSegment && (
         <div className="px-4 pb-3.5 pt-1">
           <SegmentedControl<Segment>
             ariaLabel="Role status"
@@ -232,7 +263,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
       )}
 
       {segment === 'open' && notice && (
-        <div className="px-4 pb-3.5">
+        <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
           {/* Amber only because the viewer must act (Figma O5 162:477). */}
           <button type="button" onClick={openNotice} className="flex w-full items-center gap-3 rounded-[16px] bg-status-warning-soft py-3 pl-3.5 pr-3 text-left" data-testid="club-waiting-notice">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-status-warning text-secondary font-semibold text-white tabular-nums">{pending.length}</span>
@@ -245,7 +276,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
         </div>
       )}
 
-      <div className="flex flex-col gap-3.5 px-4">
+      <div className={desktop ? 'flex flex-col gap-5' : 'flex flex-col gap-3.5 px-4'}>
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
             <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
@@ -253,13 +284,18 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
-        {roles.map((r) => (r.status === 'draft'
-          ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
-          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
-        ))}
+        {(() => {
+          const cards = roles.map((r) => (r.status === 'draft'
+            ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
+            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
+          ))
+          return desktop
+            ? cards.length > 0 && <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-role-grid">{cards}</div>
+            : cards
+        })()}
 
         {segment === 'open' && (
-          <div className="mt-1.5 overflow-hidden rounded-[16px] bg-surface-subtle" data-testid="club-scouting-group">
+          <div className={cn('overflow-hidden rounded-[16px] bg-surface-subtle', desktop ? 'mt-2' : 'mt-1.5')} data-testid="club-scouting-group">
             <button type="button" onClick={() => navigate(findPlayersPath)} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
               <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Find players for this role</span>
               <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />

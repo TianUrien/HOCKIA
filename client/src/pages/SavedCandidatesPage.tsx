@@ -18,7 +18,7 @@ import { ArrowLeft, BookmarkCheck, Trash2, ExternalLink } from 'lucide-react'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import Header from '@/components/Header'
 import { Avatar, RoleBadge } from '@/components'
-import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
+import { RankedForControl } from '@/components/recruiting/RankedForControl'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getInitials } from '@/lib/utils'
@@ -82,7 +82,7 @@ export default function SavedCandidatesPage() {
               each saved candidate row. Self-hides for non-recruiter
               roles. */}
           <div className="mt-3">
-            <ContextSwitcher />
+            <RankedForControl kind="player" />
           </div>
         </header>
 

@@ -34,6 +34,12 @@ export function qaCredentials() {
   return { email: env.QA_EMAIL, password: env.QA_PASSWORD }
 }
 
+/** Staging club account for the publisher journeys (same keys file, never printed). */
+export function clubCredentials() {
+  const env = parseEnvFile(path.join(os.homedir(), '.config', 'hockia', 'staging-qa.env'))
+  if (!env.QA_CLUB_EMAIL || !env.QA_CLUB_PASSWORD) throw new Error('QA_CLUB_EMAIL / QA_CLUB_PASSWORD missing in ~/.config/hockia/staging-qa.env')
+  return { email: env.QA_CLUB_EMAIL, password: env.QA_CLUB_PASSWORD }
+}
 export function loadDevices(filter) {
   const all = JSON.parse(fs.readFileSync(path.join(LAB_DIR, 'devices.json'), 'utf8')).devices
   if (!filter || filter === 'all') return all

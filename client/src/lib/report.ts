@@ -35,7 +35,7 @@ export interface ReportPayload {
   p_target_id: string
   p_reason: string
   p_category: ReportReason
-  p_content_type: 'user' | 'post' | 'comment' | 'feed_item' | 'feed_item_comment' | 'video'
+  p_content_type: 'user' | 'post' | 'comment' | 'feed_item' | 'feed_item_comment' | 'video' | 'opportunity'
   p_content_id: string | null
 }
 
@@ -44,7 +44,7 @@ const SUBJECT_TAG: Record<ReportSubject, string | null> = {
   post: null,
   comment: null,
   chat: 'Chat',
-  role: 'Role',
+  role: null,
   feed_item: null,
   feed_item_comment: null,
   video: null,
@@ -68,6 +68,8 @@ export function buildReportPayload(o: {
   const contentType =
     o.subject === 'post' || o.subject === 'comment' || o.subject === 'feed_item' || o.subject === 'feed_item_comment' || o.subject === 'video'
       ? o.subject
+      // A role report targets the opportunity itself (takedown v2 removes its cover photo, 16 Oct 2026).
+      : o.subject === 'role' && o.contentId ? 'opportunity'
       : 'user'
   return {
     p_target_id: o.targetId,

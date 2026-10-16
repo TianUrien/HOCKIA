@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, ChevronDown, Lock, MessageCircle, Star } from 'lucide-react'
+import { Check, Lock, MessageCircle, Star } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
+import { RankedForPill } from './RankedForPill'
 import { UndoToast } from './UndoToast'
 import { InviteAction, InviteLimitNotice } from './InviteAction'
 import type { InviteSheetPlayer } from './InviteSheet'
@@ -118,10 +119,9 @@ export default function ShortlistScreen() {
           </button>
         ))}
       </div>
-      <button type="button" onClick={() => setSheet(true)} className="flex items-center gap-1 px-5 pb-1 pt-3.5 text-secondary text-ink-2" data-testid="shortlist-ranked-for">
-        Ranked for {contextPillLabel(ctx)}
-        <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-      </button>
+      <div className="px-5 pb-1 pt-3.5">
+        <RankedForPill label={contextPillLabel(ctx)} onClick={() => setSheet(true)} testId="shortlist-ranked-for" />
+      </div>
 
       {limitReason && list.length > 0 && <InviteLimitNotice reason={limitReason} />}
       {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}

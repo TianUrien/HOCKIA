@@ -8,6 +8,7 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 // clubs never download the club phone screens.
 const ClubOpportunitiesScreen = lazy(() => import('@/components/club/ClubOpportunitiesScreen'))
 const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen'))
+const ApplicantsDesktop = lazy(() => import('@/components/club/ApplicantsDesktop'))
 const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
 const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
 const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen'))
@@ -51,9 +52,10 @@ export function ApplicantsEntry() {
   const isPhone = useMediaQuery(PHONE)
   const profile = useAuthStore((s) => s.profile)
   const { opportunityId } = useParams<{ opportunityId: string }>()
-  if (isPhone && opportunityId) {
+  if (opportunityId) {
     if (!profile?.role) return <Blank />
-    if (isRecruitingViewer(profile)) return <Screen><ApplicantsScreen roleId={opportunityId} /></Screen>
+    // Desktop D4 master-detail replaces the v1 list for recruiters (ruling 16 Oct 2026).
+    if (isRecruitingViewer(profile)) return <Screen>{isPhone ? <ApplicantsScreen roleId={opportunityId} /> : <ApplicantsDesktop roleId={opportunityId} />}</Screen>
   }
   return <Screen><ApplicantsList /></Screen>
 }
@@ -63,7 +65,14 @@ export function ApplicantReviewEntry() {
   const profile = useAuthStore((s) => s.profile)
   const { opportunityId, applicationId } = useParams<{ opportunityId: string; applicationId: string }>()
   if (!opportunityId || !applicationId) return <Navigate to="/opportunities" replace />
-  if (!isPhone || (profile?.role && !isRecruitingViewer(profile))) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
+  if (profile?.role && !isRecruitingViewer(profile)) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
+  // Desktop: the master-detail page opens on this application.
+  if (!isPhone) {
+    // Keep the rest of the query (e.g. the Last call email's ?decline=1, which the pane reads).
+    const q = new URLSearchParams(window.location.search)
+    q.set('a', applicationId)
+    return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants?${q.toString()}`} replace />
+  }
   if (!profile?.role) return <Blank />
   return <Screen><ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} /></Screen>
 }

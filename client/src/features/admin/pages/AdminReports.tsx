@@ -91,10 +91,11 @@ const CONTENT_TYPE_ICONS: Record<string, React.ReactNode> = {
   feed_item: <FileText className="w-3.5 h-3.5" />,
   feed_item_comment: <MessageSquare className="w-3.5 h-3.5" />,
   video: <FileText className="w-3.5 h-3.5" />,
+  opportunity: <FileText className="w-3.5 h-3.5" />,
 }
 
 /** Content admin_takedown_content can remove (20261011150700). */
-const TAKEDOWN_TYPES = new Set(['post', 'comment', 'profile_comment', 'feed_item', 'feed_item_comment', 'video'])
+const TAKEDOWN_TYPES = new Set(['post', 'comment', 'profile_comment', 'feed_item', 'feed_item_comment', 'video', 'opportunity'])
 const previewKey = (r: { content_type: string | null; content_id: string | null }) => `${r.content_type}:${r.content_id}`
 
 export function AdminReports() {

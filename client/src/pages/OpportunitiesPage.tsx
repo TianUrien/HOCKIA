@@ -1,12 +1,10 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, SlidersHorizontal } from 'lucide-react'
+import { Shield, Plus, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Header from '../components/Header'
-import OpportunityCard from '../components/OpportunityCard'
-import OpportunityPreviewModal from '../components/OpportunityPreviewModal'
 import CreateOpportunityModal from '../components/CreateOpportunityModal'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
@@ -23,7 +21,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { RoleCard } from '@/components/opportunities/RoleCard'
 import { FeaturedRoleCard } from '@/components/opportunities/FeaturedRoleCard'
-import { RailCard, RoleRail } from '@/components/opportunities/RoleRail'
+import { RailCard, RoleRail, RoleRailDesktop } from '@/components/opportunities/RoleRail'
 import { roleIdentity, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { buildRails, pickFeatured, type RailKey } from '@/lib/opportunityRails'
 import { useClubCrestPalettes, useWorldClubCrestPalettes } from '@/hooks/useClubCrestColors'
@@ -35,16 +33,22 @@ import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityF
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { Chip } from '@/components/ui/Chip'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { useCoachingRolesHistory } from '@/hooks/useCoachingRolesHistory'
 import { useProfileWriter } from '@/hooks/useProfileWriter'
 import { CoachRolesEmptyState } from '@/components/opportunities/CoachRolesEmptyState'
+import { RecruiterRoles } from '@/components/club/ClubOpportunitiesScreen'
+import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
 const CoachMyRoles = lazy(() => import('@/components/opportunities/CoachMyRoles'))
+// Hockia AI sheet (handoff 2026-10-16): its own chunk, loaded on the first open.
+const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -68,102 +72,10 @@ type GenderFilterValue = typeof GENDER_FILTER_VALUES[number]
 const isGenderFilterValue = (v: string | null): v is GenderFilterValue =>
   v !== null && (GENDER_FILTER_VALUES as readonly string[]).includes(v)
 
-const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
-
 const SORT_VALUES = ['newest', 'oldest', 'deadline'] as const
 type SortValue = typeof SORT_VALUES[number]
 const isSortValue = (v: string | null): v is SortValue =>
   v !== null && (SORT_VALUES as readonly string[]).includes(v)
-const SORT_OPTIONS: { value: SortValue; label: string }[] = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'oldest', label: 'Oldest' },
-  { value: 'deadline', label: 'Closing soon' },
-]
-
-// ─── Filter Dropdown Component ───────────────────────────────────────────────
-
-interface FilterDropdownProps {
-  label: string
-  value: string
-  options: { value: string; label: string }[]
-  onChange: (value: string) => void
-  icon?: React.ReactNode
-  /** Filters are clearable (active state + an X to reset). A non-clearable
-   *  dropdown — e.g. Sort — always has a value and shows a plain chevron. */
-  clearable?: boolean
-}
-
-function FilterDropdown({ label, value, options, onChange, icon, clearable = true }: FilterDropdownProps) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const selectedOption = options.find(o => o.value === value)
-  const isActive = clearable && value !== '' && value !== 'all'
-  // Fall back to the raw value when no option matches — e.g. a country
-  // filtered out of the loaded results still shows "Belgium", not "Country".
-  const displayLabel = clearable
-    ? (isActive ? (selectedOption?.label || value || label) : label)
-    : (selectedOption?.label || label)
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
-          isActive
-            ? 'bg-hockia-primary/10 border-hockia-primary text-hockia-primary font-semibold'
-            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-        }`}
-      >
-        {icon}
-        <span>{displayLabel}</span>
-        {isActive ? (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onChange(options[0].value); setOpen(false) }}
-            className="ml-0.5 p-0.5 rounded-full hover:bg-hockia-primary/10"
-            aria-label={`Clear ${label} filter`}
-          >
-            <X className="w-3 h-3" />
-          </button>
-        ) : (
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
-        )}
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1 min-w-[180px] bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1 max-h-[300px] overflow-y-auto">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => { onChange(option.value); setOpen(false) }}
-              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                value === option.value
-                  ? 'bg-hockia-primary/5 text-hockia-primary font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function OpportunitiesPage() {
@@ -205,8 +117,11 @@ export default function OpportunitiesPage() {
   const candidateCoach = isCandidateCoach(profile)
   const recruitingCoach = isRecruitingCoach(profile)
   const [coachView, setCoachView] = useState<'roles' | 'mine'>(() => (searchParams.get('view') === 'mine' ? 'mine' : 'roles'))
-  const showMyRoles = recruitingCoach && isPhone && coachView === 'mine'
-  const myRoles = useClubRoles(recruitingCoach && isPhone ? profile?.id : null)
+  // Desktop D3 (Figma 195:889, ruling 16 Oct 2026): a club's /opportunities is
+  // its own roles; a recruiting coach gets them under "My roles" on every width.
+  const clubDesktop = !isPhone && profile?.role === 'club'
+  const showMyRoles = recruitingCoach && coachView === 'mine'
+  const myRoles = useClubRoles(recruitingCoach || clubDesktop ? profile?.id : null)
   const myOpenRoleCount = myRoles.open.filter((r) => r.status === 'open').length
   // "Edit role" on a coach's applicants screen lands here with the role to
   // edit: open the coach's own role form once their roles have loaded.
@@ -225,17 +140,21 @@ export default function OpportunitiesPage() {
   }, [pendingEditRoleId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
   const settings = useProfileWriter()
 
-  // Modal preview state — opening an opportunity from the list shows
-  // it as an overlay on top of the (still-mounted) list, so scroll /
-  // filters / search are preserved without a route navigation. Mirrors
-  // the Community MemberPreviewModal pattern. Deep-link entries to
-  // /opportunities/:id still use the standalone OpportunityDetailPage.
-  const [previewVacancy, setPreviewVacancy] = useState<Vacancy | null>(null)
-  // Phone layout (Figma Opportunities v2): filters sheet + role cards, applied
-  // client-side on top of the open list; the wide layout keeps its dropdowns.
+  // Opportunities v2 (phone and desktop): filters sheet + quick chips + role
+  // cards, applied client-side on top of the open list. A card opens the
+  // role page (/opportunities/:id) on every width (desktop ruling 16 Oct 2026).
   const [roleFilters, setRoleFilters] = useState<RoleFilters>(EMPTY_ROLE_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // Hockia AI (beta): the header mascot opens the sheet; a one-time tip says so.
+  const aiOpen = useHockiaAiSheet((st) => st.open)
+  const showAi = useHockiaAiSheet((st) => st.show)
+  const [aiTip, setAiTip] = useState(() => { try { return !localStorage.getItem('hockia-ai-tip-seen') } catch { return false } })
+  const openAi = () => {
+    setAiTip(false)
+    try { localStorage.setItem('hockia-ai-tip-seen', '1') } catch { /* private mode */ }
+    showAi('opportunities')
+  }
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
 
@@ -301,22 +220,6 @@ export default function OpportunitiesPage() {
     if (!countryName) return null
     return countryFlagMap[countryName.toLowerCase()] || null
   }, [countryFlagMap])
-
-  // Build country options from available vacancies
-  const countryOptions = useMemo(() => {
-    const countrySet = new Set<string>()
-    vacancies.forEach(v => {
-      if (v.location_country) countrySet.add(v.location_country)
-    })
-    const sorted = [...countrySet].sort((a, b) => a.localeCompare(b))
-    return [
-      { value: '', label: 'All Countries' },
-      ...sorted.map(c => {
-        const flag = getFlagEmoji(c)
-        return { value: c, label: flag ? `${flag}  ${c}` : c }
-      }),
-    ]
-  }, [vacancies, getFlagEmoji])
 
   // ─── Data Fetching ─────────────────────────────────────────────────────────
 
@@ -574,15 +477,15 @@ export default function OpportunitiesPage() {
     return (womens ? club?.womens_league_division ?? club?.mens_league_division : club?.mens_league_division ?? club?.womens_league_division) ?? null
   }, [worldClubsMap, clubs])
 
-  // ── Opportunities v2 (phone): covers in the club's crest colours, the
-  // featured role and the themed rails over the filtered list ──
+  // ── Opportunities v2 (phone + desktop): covers in the club's crest colours,
+  // the featured role and the themed rails over the filtered list ──
   useEffect(() => { installSpringEasing() }, [])
-  const phoneClubs = useMemo(() => (isPhone ? Object.values(clubs).filter((c) => c.role !== 'coach').map((c) => ({ id: c.id, avatar_url: c.avatar_url })) : []), [clubs, isPhone])
-  const phoneWorldClubs = useMemo(() => (isPhone ? Object.values(worldClubsMap).map((w) => ({ id: w.id, avatar_url: w.avatarUrl })) : []), [worldClubsMap, isPhone])
+  const phoneClubs = useMemo(() => Object.values(clubs).filter((c) => c.role !== 'coach').map((c) => ({ id: c.id, avatar_url: c.avatar_url })), [clubs])
+  const phoneWorldClubs = useMemo(() => Object.values(worldClubsMap).map((w) => ({ id: w.id, avatar_url: w.avatarUrl })), [worldClubsMap])
   const profilePalettes = useClubCrestPalettes(phoneClubs)
   const worldPalettes = useWorldClubCrestPalettes(phoneWorldClubs)
   const relevance = useMemo(() => ({ profile, countries }), [profile, countries])
-  const structured = isPhone && !showMyRoles && !coachEmpty && filters.applied !== 'mine'
+  const structured = !showMyRoles && !coachEmpty && filters.applied !== 'mine'
   // A featured card over a list of one or two roles only repeats them: it needs three.
   const featured = useMemo(() => (structured && mobileList.length >= 3 ? pickFeatured(mobileList, relevance) : null), [structured, mobileList, relevance])
   const rails = useMemo(() => (structured ? buildRails(mobileList, relevance, featured?.id ?? null) : []), [structured, mobileList, relevance, featured])
@@ -627,16 +530,37 @@ export default function OpportunitiesPage() {
       <div className="min-h-screen bg-white lg:bg-gray-50">
         <Header mobileHidden />
 
-        <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-24 lg:px-4 lg:pt-24 lg:pb-12">
+        <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-24 lg:max-w-[1232px] lg:px-4 lg:pt-24 lg:pb-20">
+          {clubDesktop ? (
+            <RecruiterRoles
+              data={myRoles}
+              layout="desktop"
+              subtitle={profile?.full_name ? `${profile.full_name} · your roles` : 'Your roles'}
+              onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
+              onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+            />
+          ) : (
+          <>
           {/* Phone header (Figma Opportunities v2): large title, one filters
               button, a search pill, and Open roles | Applied. */}
-          <div className="lg:hidden">
+          {isPhone && (
+          <div>
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
                 <IconButton label="Post a role" onClick={() => { setEditingRole(null); setShowCreateModal(true) }}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
+              ) : user ? (
+                /* Hockia AI header button (Figma B1 178:26); Filters moved to the first quick chip. */
+                <span className="relative mr-1">
+                  <HockiaAiButton onClick={openAi} />
+                  {aiTip && (
+                    <button type="button" onClick={() => setAiTip(false)} className="absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-[12px] bg-ink-1 px-3 py-2 text-[13px] font-semibold text-white shadow-lg" data-testid="hockia-ai-tip">
+                      New: ask Hockia AI anything
+                    </button>
+                  )}
+                </span>
               ) : (
                 <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
                   <span className="relative">
@@ -684,49 +608,77 @@ export default function OpportunitiesPage() {
             {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
             {!showMyRoles && !coachEmpty && (
             <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
-              {/* Figma O1 147:266: selected = ink pill; category chips carry their colour dot (never a fill). */}
+              {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by Tian 16 Oct); category chips carry their colour dot, never a fill. */}
+              {user && (
+                <Chip
+                  label={activeRoleFilterCount > 0 ? `Filters · ${activeRoleFilterCount}` : 'Filters'}
+                  selected={activeRoleFilterCount > 0}
+                  leading={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />}
+                  onClick={() => setFiltersOpen(true)}
+                  data-testid="phone-filters-chip"
+                />
+              )}
               {QUICK_CHIPS.map((c) => {
-                const on = isQuickChipOn(roleFilters, c.key)
                 const family = c.key === 'women' ? 'women' : c.key === 'men' ? 'men' : c.key === 'mixed' ? 'mixed' : null
                 return (
-                  <button
+                  <Chip
                     key={c.key}
-                    type="button"
-                    aria-pressed={on}
+                    label={c.label}
+                    selected={isQuickChipOn(roleFilters, c.key)}
+                    leading={family ? <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} /> : undefined}
                     onClick={() => { void hapticSelection(); setRoleFilters((f) => toggleQuickChip(f, c.key)) }}
-                    className={`relative inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-secondary font-semibold transition-colors before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] ${on ? 'bg-ink-1 text-white' : 'border border-line bg-white text-ink-1 active:bg-surface-muted'}`}
-                  >
-                    {family && <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} />}
-                    {c.label}
-                  </button>
+                  />
                 )
               })}
             </div>
             )}
           </div>
-          {/* Page Header (wide layout) */}
-          <div className="mb-6 hidden items-start justify-between gap-4 lg:flex">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                Opportunities
-              </h1>
-              <p className="text-sm text-gray-500">
+          )}
+          {/* Desktop header (Figma D1 192:770): Display title + "N open roles",
+              Open roles | Applied on the right. Clubs and recruiting coaches
+              keep "Post Opportunity" until the D3 club roles screen lands. */}
+          {!isPhone && (
+          <div className="mb-7 flex items-center gap-4" data-testid="opportunities-desktop-header">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">Opportunities</h1>
+              <p className="mt-1 text-[16px] leading-[22px] text-ink-2">
                 {isUmpire
-                  ? 'See what clubs are looking for — roster openings across the HOCKIA network.'
-                  : 'Find your next career move in field hockey'}
+                  ? 'See what clubs are looking for across the HOCKIA network.'
+                  : isLoading || fetchError
+                    ? 'Open roles from clubs and coaches'
+                    : `${mobileList.length} open role${mobileList.length === 1 ? '' : 's'} from clubs and coaches`}
               </p>
             </div>
-            {canPostOpportunity && (
+            {user && (profile?.role === 'player' || profile?.role === 'coach') && (
+              <div className="shrink-0">
+                <SegmentedControl<'open' | 'applied' | 'mine'>
+                  ariaLabel="Roles"
+                  value={showMyRoles ? 'mine' : 'open'}
+                  className="[&_button]:whitespace-nowrap [&_button]:px-4"
+                  onChange={(v) => {
+                    if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } })
+                    else setCoachView(v === 'mine' ? 'mine' : 'roles')
+                  }}
+                  options={[
+                    { value: 'open', label: profile.role === 'coach' ? 'Roles' : 'Open roles', count: mobileList.length },
+                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My roles', count: myOpenRoleCount }] : []),
+                  ]}
+                />
+              </div>
+            )}
+            {user && <HockiaAiButton onClick={openAi} />}
+            {canPostOpportunity && !showMyRoles && (
               <Button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => { setEditingRole(null); setShowCreateModal(true) }}
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Post Opportunity</span>
-                <span className="sm:hidden">Post</span>
+                Post Opportunity
               </Button>
             )}
           </div>
+          )}
 
           {/* Umpire read-only notice — opportunities are player/coach roster
               listings today, so Apply is hidden for umpires. Kept low-key so
@@ -745,122 +697,46 @@ export default function OpportunitiesPage() {
             </div>
           )}
 
-          {/* Filter Bar (wide layout) */}
-          <div className="mb-6 hidden flex-wrap items-center gap-2 lg:flex">
-            <FilterDropdown
-              label="Country"
-              value={filters.country}
-              options={countryOptions}
-              onChange={(v) => setFilters(prev => ({ ...prev, country: v }))}
+          {/* Desktop filters (Figma D1 192:784): Filters opens the sheet as a
+              floating dialog; the quick chips are the phone ones (selected =
+              soft violet). Deep-link filters (?role, ?position, ?applied=mine…)
+              keep working and show a clear chip. */}
+          {!isPhone && !coachEmpty && !showMyRoles && (
+          <div className="mb-9 flex flex-wrap items-center gap-2" role="group" aria-label="Filters" data-testid="opportunity-desktop-chips">
+            <Chip
+              label="Filters"
+              selected={activeRoleFilterCount > 0}
+              leading={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />}
+              onClick={() => setFiltersOpen(true)}
+              data-testid="desktop-filters"
             />
-            <FilterDropdown
-              label="Role"
-              value={filters.role}
-              options={[
-                { value: 'all', label: 'All Roles' },
-                { value: 'player', label: 'Player' },
-                { value: 'coach', label: 'Coach' },
-              ]}
-              onChange={(v) => setFilters(prev => ({
-                ...prev,
-                role: v as FiltersState['role'],
-                // Clear gender and position when switching to coach
-                ...(v === 'coach' ? { gender: 'all' as const, position: '' } : {}),
-              }))}
-            />
-            {filters.role !== 'coach' && (
-              <FilterDropdown
-                label="Category"
-                value={filters.gender}
-                options={[
-                  { value: 'all', label: 'All' },
-                  { value: 'Men', label: 'Adult men' },
-                  { value: 'Women', label: 'Adult women' },
-                  { value: 'Mixed', label: 'Mixed' },
-                ]}
-                onChange={(v) => setFilters(prev => ({ ...prev, gender: v as FiltersState['gender'] }))}
-              />
-            )}
-            <FilterDropdown
-              label="Position"
-              value={filters.position}
-              options={[
-                { value: '', label: 'All Positions' },
-                ...POSITIONS.map(p => ({
-                  value: p,
-                  label: p.charAt(0).toUpperCase() + p.slice(1),
-                })),
-              ]}
-              onChange={(v) => setFilters(prev => ({ ...prev, position: v }))}
-            />
-            {/* EU Passport — a toggle, not a dropdown. The checkbox box
-                makes the on/off nature unambiguous next to the dropdowns. */}
-            <button
-              type="button"
-              onClick={() => setFilters(prev => ({ ...prev, euPassport: !prev.euPassport }))}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
-                filters.euPassport
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <span
-                className={`flex h-4 w-4 items-center justify-center rounded border ${
-                  filters.euPassport ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
-                }`}
-                aria-hidden="true"
-              >
-                {filters.euPassport && <Check className="h-3 w-3 text-white" />}
-              </span>
-              EU Passport
-            </button>
-
-            {/* "Applied: mine" — chip shown only when the filter is
-                active. Users land here from the dashboard "View
-                applications" CTA, and the chip gives them a clear way
-                to drop the restriction. */}
+            {QUICK_CHIPS.map((c) => {
+              const family = c.key === 'women' ? 'women' : c.key === 'men' ? 'men' : c.key === 'mixed' ? 'mixed' : null
+              return (
+                <Chip
+                  key={c.key}
+                  label={c.label}
+                  selected={isQuickChipOn(roleFilters, c.key)}
+                  leading={family ? <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} /> : undefined}
+                  onClick={() => setRoleFilters((f) => toggleQuickChip(f, c.key))}
+                />
+              )
+            })}
             {filters.applied === 'mine' && (
-              <button
-                type="button"
-                onClick={() => setFilters(prev => ({ ...prev, applied: 'all' }))}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border bg-hockia-primary/5 border-hockia-primary/20 text-hockia-primary whitespace-nowrap"
-                aria-label="Clear applied filter"
-              >
-                <span>My applications</span>
-                <X className="w-3 h-3" />
-              </button>
+              <Chip label="My applications ×" selected onClick={() => setFilters((prev) => ({ ...prev, applied: 'all' }))} aria-label="Clear the my-applications filter" />
             )}
-
-            {/* Clear all — shown once any filter is applied. */}
             {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-hockia-primary hover:bg-hockia-primary/5 transition-colors whitespace-nowrap"
-              >
-                <X className="w-3.5 h-3.5" />
-                Clear all
-              </button>
+              <button type="button" onClick={clearFilters} className="ml-1 text-[14px] font-semibold leading-[19px] text-ink-2 hover:text-brand-primary">Clear filters</button>
             )}
-
-            {/* Sort — a real menu (Newest / Oldest / Closing soon). */}
-            <div className="ml-auto">
-              <FilterDropdown
-                label="Sort"
-                clearable={false}
-                value={sort}
-                options={SORT_OPTIONS}
-                onChange={(v) => setSort(v as SortValue)}
-                icon={<ArrowUpDown className="w-3.5 h-3.5" />}
-              />
-            </div>
           </div>
+          )}
 
           {showMyRoles && profile ? (
             <Suspense fallback={<div className="min-h-[40vh]" />}>
               <CoachMyRoles
                 profile={profile}
                 data={myRoles}
+                layout={isPhone ? 'phone' : 'desktop'}
                 onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
                 onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
               />
@@ -978,7 +854,8 @@ export default function OpportunitiesPage() {
                one and the feed never looks like a repetitive list. */
                         <>
               {/* Phone (Figma O1): featured role → themed rails → all open roles. Tap → detail; Apply → sheet. */}
-              <div className="lg:hidden">
+              {isPhone && (
+              <div>
               {featured && (() => {
                 const d = describeRole(featured)
                 return (
@@ -1027,33 +904,77 @@ export default function OpportunitiesPage() {
                 })}
               </div>
               </div>
-            <div className="hidden columns-1 gap-4 md:columns-2 lg:block">
-              {filteredOpportunities.map((vacancy) => {
-                const club = clubs[vacancy.club_id]
-                const org = vacancy.organization_name || club?.current_club || null
-
-                return (
-                  <OpportunityCard
-                    key={vacancy.id}
-                    vacancy={vacancy}
-                    clubName={club?.full_name || 'Unknown Club'}
-                    clubLogo={club?.avatar_url || null}
-                    clubId={vacancy.club_id}
-                    publisherRole={club?.role}
-                    publisherOrganization={org}
-                    worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
-                    countryFlag={getFlagEmoji(vacancy.location_country)}
-                    onViewDetails={() => setPreviewVacancy(vacancy)}
+              )}
+              {/* Desktop (Figma D1 192:755): wide featured → paged rails → All open roles in 3 columns (2 at 1024–1199). */}
+              {!isPhone && (
+              <div className="flex flex-col gap-9" data-testid="opportunities-desktop">
+                {featured && (() => {
+                  const d = describeRole(featured)
+                  return <FeaturedRoleCard layout="wide" vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`)} />
+                })()}
+                {rails.map((rail) => (
+                  <RoleRailDesktop
+                    key={rail.key}
+                    title={rail.title}
+                    subtitle={rail.subtitle}
+                    onSeeAll={() => seeAll(rail.key)}
+                    testId={`rail-${rail.key}`}
+                    cards={rail.roles.map((v) => {
+                      const d = describeRole(v)
+                      return <RailCard key={v.id} fluid data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`)} />
+                    })}
                   />
-                )
-              })}
-            </div>
+                ))}
+                <div ref={allRolesRef} className="[scroll-margin-top:96px]">
+                  {structured && mobileList.length > 0 && (
+                    <div className="flex items-end pb-3.5">
+                      <h2 className="flex-1 text-title text-ink-1">All open roles</h2>
+                      <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
+                    </div>
+                  )}
+                  {mobileList.length === 0 ? (
+                    <div className="rounded-[24px] bg-white py-12 text-center">
+                      <p className="text-row font-semibold text-ink-1">No roles match these filters</p>
+                      <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary hover:underline">Reset filters</button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3">
+                      {mobileList.map((vacancy) => {
+                        const { identity, flag, league } = describeRole(vacancy)
+                        return (
+                          <RoleCard
+                            key={vacancy.id}
+                            vacancy={vacancy}
+                            clubName={identity.displayName}
+                            clubLogo={identity.displayLogo}
+                            publisherRole={identity.hiringClub ? 'club' : 'coach'}
+                            postedBy={identity.kind === 'coach-for-club' && identity.postedBy ? { name: identity.postedBy.name, avatar: identity.postedBy.avatar, roleLabel: identity.postedBy.roleLabel } : null}
+                            countryFlag={flag}
+                            league={league}
+                            applied={userApplications.includes(vacancy.id)}
+                            onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+              )}
             </>
+          )}
+          </>
           )}
           </>
           )}
         </main>
       </div>
+
+      {aiOpen && (
+        <Suspense fallback={null}>
+          <HockiaAiSheet />
+        </Suspense>
+      )}
 
       <OpportunityFiltersSheet
         open={filtersOpen}
@@ -1082,23 +1003,6 @@ export default function OpportunitiesPage() {
         />
       )}
 
-      {/* Opportunity preview — opens as an in-place overlay so the list
-          underneath stays mounted (scroll, filters, search all preserved).
-          All visible data is already in memory, so the modal opens
-          instantly without a fetch. */}
-      {previewVacancy && (
-        <OpportunityPreviewModal
-          vacancy={previewVacancy}
-          clubInfo={clubs[previewVacancy.club_id]}
-          worldClub={previewVacancy.world_club_id ? worldClubsMap[previewVacancy.world_club_id] ?? null : null}
-          hasApplied={userApplications.includes(previewVacancy.id)}
-          applicationStatus={applicationStatuses[previewVacancy.id] ?? null}
-          onClose={() => setPreviewVacancy(null)}
-          onApplicationSuccess={(vacancyId) => {
-            setUserApplications(prev => prev.includes(vacancyId) ? prev : [...prev, vacancyId])
-          }}
-        />
-      )}
     </>
   )
 }
