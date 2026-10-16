@@ -84,7 +84,7 @@ describe('Community scope reshaping follows the recruiter rule', () => {
   it('CommunityPage derives recruiter + scope from the shared rule, not role === coach', () => {
     const page = readFileSync(resolve(__dirname, '../pages/CommunityPage.tsx'), 'utf-8')
     expect(page).toMatch(/const isRecruiterViewer = isRecruitingViewer\(viewerProfile\)/)
-    expect(page).toMatch(/const scopedRole = recruitingScopedRole\(viewerProfile, activeRecruitingRole\)/)
+    expect(page).toMatch(/const scopedRole = recruitingScopedRole\(viewerProfile, activeRecruitingRole, hasActiveScope\)/)
     expect(page).not.toMatch(/viewerProfile\?\.role === 'coach'/)
   })
 })

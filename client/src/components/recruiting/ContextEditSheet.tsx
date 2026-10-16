@@ -246,7 +246,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
           <div>
             <h2 className="text-lg font-bold text-gray-900">Recruiting context</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Optional — personalises Fit chips + featured players to a target. Only you see this.
+              Narrows and ranks players for a target team and region. Only you see this.
             </p>
           </div>
           <button
@@ -312,7 +312,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900">No context</p>
-                  <p className="text-xs text-gray-500">Fit chips + featured players use your profile.</p>
+                  <p className="text-xs text-gray-500">Everyone is shown; Fit uses your profile.</p>
                 </div>
               </button>
             </li>
@@ -353,7 +353,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
               </button>
             ) : visibleOpps.length === 0 ? (
               <div className="px-3 py-2.5 rounded-lg border border-dashed border-gray-200 text-xs text-gray-500 italic">
-                You haven&rsquo;t posted any opportunities yet.
+                No open roles right now. Post a role to scope by it.
               </div>
             ) : (
               <ul className="space-y-2">
@@ -453,8 +453,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                         {row.label || formatRowFallback(row)}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {row.target_category ?? 'No target set'}
-                        {row.region ? ` · ${row.region}` : ''}
+                        {row.label ? `${row.target_category ?? 'No target set'}${row.region ? ` · ${row.region}` : ''}` : 'Saved search · narrows and ranks players'}
                       </p>
                     </div>
                   </button>
@@ -509,7 +508,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   type="text"
                   value={draftRegion}
                   onChange={(e) => setDraftRegion(e.target.value)}
-                  placeholder="e.g., Buenos Aires, Europe, Latin America"
+                  placeholder="Country or city, e.g. Spain, Madrid"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
                 />
               </div>

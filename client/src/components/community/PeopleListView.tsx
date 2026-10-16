@@ -18,6 +18,8 @@ import { MemberPreviewModal } from './MemberPreviewModal'
 import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
+import { scopeFilters } from '@/lib/recruitingScopeFilters'
+import type { PlayingCategory } from '@/lib/hockeyCategories'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
@@ -199,6 +201,9 @@ const memberEvidence = (m: Profile) =>
     current_world_club_id: m.current_world_club_id ?? null,
   })
 
+const EMPTY_CATEGORIES: PlayingCategory[] = []
+const EMPTY_IDS: number[] = []
+
 export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, onEuCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   const navigate = useNavigate()
@@ -274,11 +279,21 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     () => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)),
     [countries],
   )
+  const { active: activeContext } = useRecruitingContext()
   const euFilterActive = scopeReshaping && euRequired
+  // A PLAYER scope narrows the grid while it reshapes the page: the target
+  // team's categories and, for a saved search, its region (lib/
+  // recruitingScopeFilters). "Show everyone" lifts it like the EU filter.
+  const scopeNarrow = useMemo(
+    () => (scopeReshaping && contextTargetRole !== 'coach' ? scopeFilters(activeContext, countries) : null),
+    [scopeReshaping, contextTargetRole, activeContext, countries],
+  )
+  const scopeCategories = scopeNarrow?.categories ?? EMPTY_CATEGORIES
+  const scopeCountryIds = scopeNarrow?.countryIds ?? EMPTY_IDS
+  const scopeLocation = scopeNarrow?.location ?? null
 
   // Club view fit (D1.17 · DEV NOTE 355:905) — server fit for the active
   // context, the same source Find players reads.
-  const { active: activeContext } = useRecruitingContext()
   const clubCtx = clubView ? (activeContext as ContextLike | null) : null
   const clubFitTarget = contextFitTarget(clubCtx)
   const ownLeague = useOwnLeague(clubView ? clubFitTarget : null)
@@ -420,11 +435,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_role: filters.role === 'all' ? undefined : filters.role,
       p_positions: filters.position.length ? filters.position : undefined,
       p_coach_specializations: filters.coachSpecializations.length ? filters.coachSpecializations : undefined,
-      p_categories: filters.categories.length ? filters.categories : undefined,
+      p_categories: filters.categories.length ? filters.categories : scopeCategories.length ? scopeCategories : undefined,
       p_officiating_specializations: filters.officiatingSpecializations.length ? filters.officiatingSpecializations : undefined,
       p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : undefined,
       p_eu_required: (filters.euOnly || euFilterActive) ? true : undefined,
-      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : undefined,
+      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : scopeCountryIds.length ? scopeCountryIds : undefined,
       // The RPC's role-relative "open" flag only matches the play/coach
       // values; recruiting/opportunities read their own columns client-side.
       p_availability_open: filters.availability === 'play' || filters.availability === 'coach' ? true : undefined,
@@ -537,7 +552,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
   }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
       filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
-      filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive, blockKey])
+      filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive, blockKey, scopeCategories, scopeCountryIds])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
@@ -804,6 +819,21 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       const loc = filters.location.toLowerCase()
       result = result.filter(m => m.base_location?.toLowerCase().includes(loc))
     }
+    // The recruiting scope's own narrowing (same predicates as the drawer
+    // filters above, so the server pool and this re-filter agree).
+    if (scopeCategories.length > 0) {
+      const targets = new Set<string>(scopeCategories)
+      result = result.filter((m) => m.role !== 'player' || (!!m.playing_category && targets.has(m.playing_category)))
+    }
+    if (scopeCountryIds.length > 0) {
+      const idSet = new Set(expandCountryEquivalents(scopeCountryIds, countries))
+      const names = countries.filter((c) => idSet.has(c.id)).flatMap((c) => [c.name, c.common_name].filter((n): n is string => Boolean(n))).map((n) => n.toLowerCase())
+      result = result.filter((m) => m.role !== 'player' || (typeof m.base_country_id === 'number' && idSet.has(m.base_country_id)) || (!!m.base_location && names.some((n) => m.base_location!.toLowerCase().includes(n))))
+    }
+    if (scopeLocation) {
+      const loc = scopeLocation.toLowerCase()
+      result = result.filter((m) => m.role !== 'player' || !!m.base_location?.toLowerCase().includes(loc))
+    }
     if (filters.nationalityCountryIds.length > 0) {
       // Dual-aware: match EITHER primary or secondary nationality FK. The old
       // freetext demonym match was primary-only and missed every dual national.
@@ -988,7 +1018,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, blockedIds, filters, partnerBrandIds, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
+  }, [allMembers, blockedIds, filters, partnerBrandIds, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit, scopeCategories, scopeCountryIds, scopeLocation])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -1393,9 +1423,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No members found</h3>
           <p className="text-gray-500 mb-4">
-            {isNarrowed
-              ? 'Try adjusting your search or filters to see more results.'
-              : 'No members yet.'}
+            {scopeNarrow && (scopeNarrow.categories.length || scopeNarrow.countryIds.length || scopeNarrow.location)
+              ? 'No players match your recruiting context yet. Tap “Show everyone” to widen, or change the context.'
+              : isNarrowed
+                ? 'Try adjusting your search or filters to see more results.'
+                : 'No members yet.'}
           </p>
           {isNarrowed && (
             <button
