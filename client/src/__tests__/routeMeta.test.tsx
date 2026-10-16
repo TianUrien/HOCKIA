@@ -87,7 +87,8 @@ describe('fromPublicApi', () => {
     })
     expect(row).toMatchObject({ location_city: 'Box Hill', location_country: 'Australia', duration_text: '12 months', club_name: null, club_location: 'Melbourne VIC, Australia' })
     expect(metaDescription(row)).toMatch(/^Women's Midfielder role at A field hockey club in Box Hill, Australia\./)
-    expect(buildJobPosting(row, 'https://inhockia.com')).not.toHaveProperty('validThrough')
+    // No deadline → validThrough is the day the 90-day rule stops advertising the role.
+    expect(buildJobPosting(row, 'https://inhockia.com')).toMatchObject({ datePosted: '2026-10-15', validThrough: '2027-01-13T23:59:59Z' })
   })
 })
 
