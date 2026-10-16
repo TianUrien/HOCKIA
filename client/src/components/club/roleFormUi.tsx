@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill } from '@/lib/opportunityCopy'
 
 /**
  * Form pieces shared by Post a role step 1 (Figma D1.6 330:318) and the
@@ -75,6 +76,37 @@ export function Chips({ values, options, onToggle, label }: { values: string[]; 
           >
             {on && <Check className="h-4 w-4" strokeWidth={2.2} />}
             {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Team picker (Figma O4 158:426): one chip per category with its colour dot;
+ * the selected one takes the category's soft fill and outline. Girls/Boys
+ * (coach roles) follow the women's / men's colours.
+ */
+export function TeamChips<T extends string>({ value, options, onChange, label }: { value: T | null; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const on = o.value === value
+        const family = categoryFamily(o.value)
+        const pill = genderPill(o.value)
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(o.value)}
+            className={cn('inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-[15px] font-semibold transition-colors', on && pill ? `${pill.className} border-current` : 'border-line bg-white text-ink-1 active:bg-surface-muted')}
+            data-testid="team-chip"
+          >
+            {family && <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} />}
+            {pill?.label ?? o.label}
           </button>
         )
       })}

@@ -2,8 +2,10 @@ import { videoLinkSite } from '@/lib/videoUrlValidator'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
-import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
+import { GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
+import { setStatusBarForBackground } from '@/lib/nativeUi'
+import { BackGlyph } from '@/components/ui/BackGlyph'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { CareerRow, ReferenceCard } from '@/components/profile/mobile/ProfileLongScroll'
@@ -14,7 +16,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
-import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
+import { clubRoadTag, closedApplicantTag, isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -32,7 +34,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { canOpenLinkedDecline, DECLINE_DEEP_LINK_PARAM, DECLINE_DEEP_LINK_REASON, wantsDeclineSheet, daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
+import { canOpenLinkedDecline, DECLINE_DEEP_LINK_PARAM, DECLINE_DEEP_LINK_REASON, wantsDeclineSheet, daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 import { flagForCountryName } from '@/lib/careerCopy'
 import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
@@ -42,6 +44,8 @@ import type { Json } from '@/lib/database.types'
 // D4.2 / D4.4 sheets: their own chunks, loaded when the club opens one.
 const OfferSheet = lazy(() => import('./OfferSheet'))
 const MarkSignedSheet = lazy(() => import('./MarkSignedSheet'))
+
+const HERO_HEIGHT = 360
 
 const MENU_LABEL: Record<RoadMenuItem, string> = {
   mark_signed: 'Mark as signed',
@@ -105,6 +109,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const signing = useSigningActions()
 
   const playerId = review?.person.id ?? null
+  useEffect(() => { void setStatusBarForBackground('dark-bg'); return () => { void setStatusBarForBackground('light-bg') } }, [])
   const scroll = useProfileScrollData(playerId, Boolean(playerId))
   const { acceptedReferences } = useTrustedReferences(playerId ?? '')
 
@@ -327,6 +332,18 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     lockedHighlights: 0,
   })
   const avatar = p?.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null
+  // Hero chips (Figma O9): the stage in brand while new, glass otherwise; applied + days left beside it.
+  const heroStatus = (() => {
+    if (!review) return { label: '', brand: false }
+    const road = clubRoadTag(review.status) ?? closedApplicantTag(review.status)
+    if (road) return { label: road, brand: false }
+    if (review.status === 'pending') return { label: 'New', brand: true }
+    if (review.status === 'shortlisted') return { label: 'Shortlisted', brand: false }
+    if (review.status === 'maybe') return { label: 'Maybe', brand: false }
+    if (review.status === 'rejected') return { label: 'Declined', brand: false }
+    return { label: review.status, brand: false }
+  })()
+  const heroLine = p ? [personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review?.age ? String(review.age) : null, ...passports].filter(Boolean).join(' · ') : ''
   const statusNote = review && review.status !== 'pending' && !onRoad
     ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.', filled: 'This role was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null
     : null
@@ -357,44 +374,52 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     : null
 
   return (
-    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
-      <DetailNavBar
-        parent="Applicants"
-        title={scrolled && p?.full_name ? p.full_name : undefined}
-        showParent
-        wideParent
-        onBack={backToApplicants}
-        trailing={p ? (
-          // Founder ruling: the applicant "…" = Message · View full profile · Report.
-          <ProfileActionMenu
-            targetId={p.id}
-            targetName={p.full_name ?? 'this player'}
-            showBlock={false}
-            leadingItems={[
-              { key: 'message', label: 'Message', icon: <MessageCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void message() },
-              { key: 'profile', label: 'View full profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } }) },
-            ]}
-          />
-        ) : undefined}
-      />
-      <div className="flex-1 overflow-y-auto pb-40" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 120)}>
+    <div className="flex h-app-screen flex-col bg-white lg:hidden" data-testid="applicant-review-screen">
+      <div className="flex-1 overflow-y-auto pb-40" onScroll={(e) => { const past = e.currentTarget.scrollTop > HERO_HEIGHT - 80; if (past !== scrolled) { setScrolled(past); void setStatusBarForBackground(past ? 'light-bg' : 'dark-bg') } }}>
         {error && <p className="px-5 py-6 text-row text-ink-2">{error}</p>}
         {p && review && (
           <>
-            <div className="flex items-center gap-3.5 px-5 pb-4 pt-1.5">
-              <EntityAvatar src={avatar} name={p.full_name} role={p.role} size={76} />
-              <div className="min-w-0 flex-1">
-                <h1 className="text-[24px] font-bold leading-[30px] tracking-[-0.144px] text-ink-1">{p.full_name}</h1>
-                <p className="truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position })}</p>
-                <p className={cn('text-caption', clubReplyLineClass(review.status === 'pending' && isClubReplyUrgent(review.appliedAt, days)))}>{appliedLine}</p>
-                <button type="button" onClick={() => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } })} className="text-[14px] font-semibold text-hockia-primary">View full profile</button>
+            {/* Figma O9 169:642: the applicant's photo as a hero under the status bar; glass back + "…". */}
+            <RoleCover coverUrl={p.avatar_url} palette={null} scrim="portrait" className="w-full" style={{ height: HERO_HEIGHT }}>
+              {!p.avatar_url && (
+                <span className="absolute inset-0 flex items-center justify-center"><EntityAvatar src={null} name={p.full_name} role={p.role} size={120} /></span>
+              )}
+              <div className="absolute inset-x-4 flex items-center justify-between" style={{ top: 'calc(env(safe-area-inset-top) + 8px)' }}>
+                <button type="button" onClick={backToApplicants} aria-label="Back to applicants" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }} data-testid="review-back">
+                  <BackGlyph className="h-5 w-5" strokeWidth={2.2} />
+                </button>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+                  {/* Founder ruling: the applicant "…" = Message · View full profile · Report. */}
+                  <ProfileActionMenu
+                    targetId={p.id}
+                    targetName={p.full_name ?? 'this player'}
+                    showBlock={false}
+                    triggerClassName="flex h-9 w-9 items-center justify-center rounded-full text-white"
+                    iconClassName="h-[18px] w-[18px]"
+                    leadingItems={[
+                      { key: 'message', label: 'Message', icon: <MessageCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void message() },
+                      { key: 'profile', label: 'View full profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } }) },
+                    ]}
+                  />
+                </span>
               </div>
-            </div>
+              <div className="absolute inset-x-4 bottom-4 flex flex-col gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
+                  <GlassChip className={heroStatus.brand ? '!border-transparent' : ''} testId="review-status-chip">
+                    {heroStatus.brand && <span aria-hidden="true" className="absolute inset-0 -z-10 rounded-full" style={{ backgroundColor: 'rgba(107,43,217,0.9)' }} />}
+                    {heroStatus.label}
+                  </GlassChip>
+                  {appliedLine && <GlassChip className={review.status === 'pending' && isClubReplyUrgent(review.appliedAt, days) ? '!text-status-warning' : ''}>{appliedLine}</GlassChip>}
+                </div>
+                <h1 className="text-title-xl text-white" data-testid="review-name">{p.full_name}</h1>
+                <p className="truncate text-secondary text-white/85">{heroLine}</p>
+              </div>
+            </RoleCover>
 
-            {statusNote && <p className="mx-5 mb-3 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}
+            {statusNote && <p className="mx-4 mb-3 mt-4 rounded-[12px] bg-surface-subtle px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}
 
             {onRoad && (
-              <div className="px-5 pb-4">
+              <div className="px-4 pb-4 pt-4">
                 <RoadToSigningCard
                   steps={steps}
                   onMessage={() => void message()}
@@ -409,17 +434,15 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
             {/* The applicant's note from the Apply sheet — their words, first. */}
             {note && (
-              <section className="px-5 pb-4" data-testid="applicant-note">
-                <div className="rounded-2xl border border-line bg-white px-3.5 py-3">
-                  <h2 className="text-secondary font-semibold text-ink-2">In their words</h2>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{note}</p>
-                </div>
+              <section className="px-4 pb-5" data-testid="applicant-note">
+                <h2 className="text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink-1">In their words</h2>
+                <p className="mt-2 whitespace-pre-wrap break-words text-[16px] leading-[22px] text-ink-1">“{note}”</p>
               </section>
             )}
 
             {/* Fit — clubs only; not for an application the player withdrew (read-only record). */}
             {review.status !== 'withdrawn' && (
-              <div className="px-5">
+              <div className="px-4 pt-4">
                 <FitCard state={review.fit?.state} rows={rows} />
               </div>
             )}
@@ -533,34 +556,35 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
       {/* Decision bar */}
       {p && review && decidable && (
-        <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3" data-testid="decision-bar">
+        <div className="fixed inset-x-0 bottom-0 border-t-[0.5px] border-line bg-white/94 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px]" data-testid="decision-bar">
+          {/* Figma O9 169:687: glass bar — Decline · Maybe quiet, Shortlist Primary, Message as a link. */}
           <div className="flex gap-2">
-            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-status-danger disabled:opacity-40">Decline</button>
-            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
-            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
+            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[100px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger disabled:opacity-40">Decline</button>
+            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[52px] w-[92px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
+            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[52px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
               <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist
             </button>
           </div>
-          <button type="button" onClick={() => void message()} className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 text-row font-semibold text-hockia-primary">
-            <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> Message {firstName}
+          <button type="button" onClick={() => void message()} className="mt-1 flex min-h-10 w-full items-center justify-center text-secondary font-semibold text-hockia-primary">
+            Message {firstName}
           </button>
         </div>
       )}
       {/* Road to signing bar (D4.1): "…" · Message · the next step. */}
       {p && review && onRoad && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2.5 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3" data-testid="road-bar">
+        <div className="fixed inset-x-0 bottom-0 border-t-[0.5px] border-line bg-white/94 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px] flex items-center gap-2.5" data-testid="road-bar">
           {menu.length > 0 && (
-            <button type="button" onClick={() => setSheet('menu')} aria-label="More actions" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-grouped text-ink-1" data-testid="road-more">
+            <button type="button" onClick={() => setSheet('menu')} aria-label="More actions" className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink-1" data-testid="road-more">
               <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
             </button>
           )}
-          <button type="button" onClick={() => void message()} className="flex h-12 shrink-0 items-center justify-center rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1">Message</button>
+          <button type="button" onClick={() => void message()} className="flex h-[52px] shrink-0 items-center justify-center rounded-full bg-surface-subtle px-5 text-[16px] font-semibold text-ink-1">Message</button>
           {mainAction ? (
             <button
               type="button"
               onClick={() => setSheet(mainAction === 'mark_signed' ? 'sign' : 'offer')}
               disabled={mainAction === 'edit_offer' && !liveOffer}
-              className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-hockia-primary px-3 text-[16px] font-semibold text-white disabled:opacity-60"
+              className="flex h-[52px] min-w-0 flex-1 items-center justify-center rounded-full bg-hockia-primary px-3 text-[16px] font-semibold text-white disabled:opacity-60"
               data-testid="road-main"
             >
               <span className="truncate">{mainAction === 'make_offer' ? 'Make an offer' : mainAction === 'edit_offer' ? 'Edit offer' : 'Mark as signed'}</span>
@@ -573,7 +597,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
         </div>
       )}
       {p && review && !decidable && !onRoad && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-secondary text-ink-2" data-testid="closed-application-note">
+        <div className="fixed inset-x-0 bottom-0 border-t-[0.5px] border-line bg-white/94 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px] flex items-center gap-2 text-secondary text-ink-2" data-testid="closed-application-note">
           <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> {closedApplicationNote(review.status, firstName)}
           <button type="button" onClick={() => void message()} className="ml-auto shrink-0 font-semibold text-hockia-primary">Message</button>
         </div>

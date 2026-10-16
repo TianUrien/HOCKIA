@@ -10,7 +10,7 @@ interface RoleCoverProps {
   /** Club palette from the crest (useClubCrestPalettes); null = Hockia violet. */
   palette: CrestPalette | null | undefined
   /** Bottom scrim strength: 'card' (rail / featured) or 'hero' (detail). */
-  scrim?: 'card' | 'hero' | 'none'
+  scrim?: 'card' | 'hero' | 'band' | 'portrait' | 'none'
   className?: string
   style?: CSSProperties
   children?: ReactNode
@@ -19,6 +19,8 @@ interface RoleCoverProps {
 const SCRIM: Record<NonNullable<RoleCoverProps['scrim']>, string> = {
   card: 'linear-gradient(180deg, rgba(15,15,20,0) 25%, rgba(15,15,20,0.13) 50%, rgba(15,15,20,0.45) 62.5%, rgba(15,15,20,0.77) 75%, rgba(15,15,20,0.9) 100%)',
   hero: 'linear-gradient(180deg, rgba(15,15,20,0) 35%, rgba(15,15,20,0.14) 56.7%, rgba(15,15,20,0.46) 67.5%, rgba(15,15,20,0.78) 78.3%, rgba(15,15,20,0.92) 100%), linear-gradient(180deg, rgba(15,15,20,0.45) 0%, rgba(15,15,20,0) 22%)',
+  band: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%)',
+  portrait: 'linear-gradient(180deg, rgba(15,15,20,0.4) 0%, rgba(15,15,20,0) 25%, rgba(15,15,20,0) 55%, rgba(15,15,20,0.85) 100%)',
   none: '',
 }
 
