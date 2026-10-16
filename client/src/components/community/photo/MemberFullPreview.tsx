@@ -1,3 +1,5 @@
+import { nationalityCountries } from '@/lib/nationality'
+import { NationalityLine } from '@/components/ui/NationalityBadges'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
@@ -94,11 +96,11 @@ function ageFromDob(dob: string | null | undefined, now = new Date()): number | 
   return age
 }
 
+/** Every nationality, named ("🇦🇷 Argentina · 🇮🇹 Italy"), + EU when either passport is EU. */
 function passportText(passports: Country[]): string | null {
   if (passports.length === 0) return null
-  const flags = passports.map((c) => c.flag_emoji).filter(Boolean).join(' ')
-  if (passports.length === 1) return [flags, passports[0].common_name || passports[0].name].filter(Boolean).join(' ')
-  return [flags, passports.some((c) => isEuCountryCode(c.code)) ? 'EU' : null].filter(Boolean).join(' ')
+  const names = passports.map((c) => [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ')).join(' · ')
+  return passports.some((c) => isEuCountryCode(c.code)) ? `${names} · EU` : names
 }
 
 interface MemberPreviewBodyProps extends MemberFullPreviewProps {
@@ -233,7 +235,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
 
   // ── Identity lines
   const where = displayPlace(member.base_location, member.base_country_id, countries)
-  const place = placeLabel(where, true)
+  // People: the place is text without a flag (the flag means nationality); clubs and brands keep theirs.
+  const place = isPerson ? [where.city, where.country].filter(Boolean).join(', ') || null : placeLabel(where, true)
+  const nationalities = isPerson ? nationalityCountries([member.nationality_country_id, member.nationality2_country_id], countries) : []
   const league = isClub ? (member as { competition_name?: string | null }).competition_name?.trim() || getPlayerLeagueName(member.current_world_club_id, null) : null
   const coachTeam = member.coaching_categories?.length === 1 ? teamLabel(member.coaching_categories[0]) : null
   const subParts = (() => {
@@ -506,6 +510,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             )}
             <h2 className="line-clamp-2 text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-white">{title}</h2>
             {subLine && <p className="line-clamp-2 text-[15px] leading-5 text-white/[0.88]">{subLine}</p>}
+            {nationalities.length > 0 && <NationalityLine nationalities={nationalities} className="pt-1" />}
           </div>
         </div>
 

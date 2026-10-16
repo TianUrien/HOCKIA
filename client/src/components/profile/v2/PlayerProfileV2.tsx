@@ -17,7 +17,9 @@ import { useProfileScrollData, type ScrollVideo } from '@/hooks/useProfileScroll
 import { useRolesHealth } from '@/hooks/useRolesHealth'
 import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 import { isRecruiterProfile, fullMatchVisibilityOf, canViewLinkedHighlight } from '@/lib/recruiter'
-import { displayPlace, placeLabel } from '@/lib/communityCard'
+import { displayPlace } from '@/lib/communityCard'
+import { basedInLine, nationalityCountries } from '@/lib/nationality'
+import { NationalitiesTile } from '@/components/ui/NationalityBadges'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { RELOCATION_LABEL } from '@/lib/candidateIntent'
@@ -137,11 +139,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     ? [coachSpec && !coachSpec.missing ? coachSpec.value : 'Coach', category].filter(Boolean).join(' · ')
     : [...positions, category].filter(Boolean).join(' · ') || 'Player'
   const recruitsForTeam = isCoach && Boolean((profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team)
-  const place = useMemo(() => {
-    const p = displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)
-    // placeLabel already leads with the flag: "🇬🇧 London".
-    return placeLabel(p)
-  }, [profile, countries])
+  // A person's flag means nationality; the place is text ("Based in Santander, Spain") — 16 Oct 2026.
+  const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
+  const nationalities = useMemo(() => nationalityCountries([profile.nationality_country_id, profile.nationality2_country_id], countries), [profile.nationality_country_id, profile.nationality2_country_id, countries])
   const instagram = instagramHandle((profile as { social_links?: unknown }).social_links)
   const minor = typeof age === 'number' && age < 18
   // Ruling 11 Oct: no fit pill and no Shortlist on an under-18 player.
@@ -401,6 +401,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           age={age}
           roleLine={roleLine}
           place={place}
+          nationalities={nationalities}
           instagram={instagram}
           role="player"
           owner={owner}
@@ -457,10 +458,17 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             onClick={profile.current_world_club_id ? () => navigate(claimedClub.data ? `/clubs/id/${claimedClub.data}` : `/world/clubs/${profile.current_world_club_id}`) : undefined}
           />
         )}
-        {(availableTile || passport) && (
+        {/* Figma 189:61: nationalities, passports & permits full width, never truncated; permit lines follow the viewer rules in lib/keyFacts. */}
+        {passport && (
+          <NationalitiesTile
+            nationalities={nationalities}
+            permits={passport.extraLines.map((l) => ({ text: l.text, amber: l.status === 'expiring_soon' || l.status === 'expired' }))}
+            onAdd={owner && passport.action === 'add_passport' ? () => props.onEdit() : null}
+          />
+        )}
+        {availableTile && (
           <div className="flex gap-2.5">
-            {availableTile && <FactTile label="Available" value={availableTile.value} detail={availableTile.detail} tone={availableTile.tone} />}
-            {passport && <FactTile label="Passport" value={passport.value} detail={passport.detail} tone={passport.missing ? 'muted' : undefined} />}
+            <FactTile label="Available" value={availableTile.value} detail={availableTile.detail} tone={availableTile.tone} />
           </div>
         )}
         {!isCoach && (skills.length > 0 || (confirmed.data?.length ?? 0) > 0 || showSelfDeclared) && (
