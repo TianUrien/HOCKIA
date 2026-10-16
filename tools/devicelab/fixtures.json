@@ -1,7 +1,12 @@
 {
-  "_doc": "Staging fixtures the journeys fall back to when the UI offers no tappable entry (desktop opens roles in a preview modal without a route). Kept QA rows; never production ids.",
+  "_doc": "Staging fixtures the journeys fall back to when the UI offers no tappable entry (desktop opens roles in a preview modal without a route). Kept QA rows; never production ids. coverRoleId = a QA role of the lab club with a cover photo in role-covers (lab-fixture-cover.png), so the photo path renders on every platform.",
   "staging": {
-    "roleIds": ["ce602e74-91b6-41ae-a454-2aeed2c6d351", "6220a251-620a-40b0-9bc8-0af9ebd28af8"],
-    "longRoleTitle": "[QA] Device lab"
+    "roleIds": [
+      "ce602e74-91b6-41ae-a454-2aeed2c6d351",
+      "6220a251-620a-40b0-9bc8-0af9ebd28af8"
+    ],
+    "longRoleTitle": "[QA] Device lab",
+    "coverRoleId": "2c31e161-22b5-4345-b60f-a561f6ffed07",
+    "coverRoleTitle": "[QA] Club flow 10 Oct B"
   }
 }

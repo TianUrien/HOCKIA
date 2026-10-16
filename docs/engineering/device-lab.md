@@ -28,6 +28,11 @@ Devices are declared in `tools/devicelab/devices.json`. The Android tablet and s
 4. `inbox-thread` — opens a conversation, swipe moves the thread, types in the composer; sends only with `--writes`.
 5. `community-profile` — grid scrolls, a public profile opens and scrolls.
 6. `profile-edit` — own profile scrolls, Edit opens.
+7. `role-cover-render` — opens `fixtures.json → coverRoleId` (a QA role of the lab club with a cover photo in the `role-covers` bucket) and fails if the photo is missing or broken; on desktop width the role page has no cover hero yet, so it only notes.
+
+## Publisher (club) journeys (`--scenario club`, added 16 Oct 2026)
+
+`club-sign-in` → `club-roles` → `club-post-role-cover` → `role-cover-render` → `club-sign-out`. They use `QA_CLUB_EMAIL` / `QA_CLUB_PASSWORD` from the same keys file (the Playwright staging club account) and sign out at the end so the next core run signs the player back in; `sign-in` itself now replaces a session that belongs to a different account. Publisher screens are phone-only (`max-width: 1023px`), so desktop browsers run them at a 390×844 viewport and tablets skip them with a note. `club-post-role-cover` uploads `fixtures/lab-cover.png` on desktop, asserts the preview and the Change / Remove states, removes it and discards the role (Remove deletes the file, so staging is left as it was); on phones it verifies the cover section and the image-only picker input but does not drive the OS photo picker.
 
 Each journey is written once against a small lab API (`go`, `waitFor`, `tap`, `type`, `swipeUp`, `eval`, `shot`) implemented twice: `lib/appium.mjs` (WebView context for DOM, `NATIVE_APP` context for gestures) and `lib/web.mjs` (Playwright). A failing assertion keeps a `FAILED` screenshot.
 
