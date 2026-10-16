@@ -15,6 +15,7 @@ import Breadcrumbs from '../components/Breadcrumbs'
 import { OpportunityDetailMobile } from '../components/opportunities/OpportunityDetailMobile'
 import OwnApplicationRoad from '../components/opportunities/OwnApplicationRoad'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -69,6 +70,12 @@ export default function OpportunityDetailPage() {
   // ("Opportunity") while fetching so the tab doesn't flash the static
   // "HOCKIA – Where field hockey sticks together." suffix during the load.
   useDocumentTitle(opportunity?.title ? `${opportunity.title} • Opportunities` : 'Opportunity')
+  // Phone and desktop get different trees. The desktop OpportunityDetailView
+  // is a dialog that pins the document (useBodyScrollLock) because it scrolls
+  // inside its own fixed layer; the phone layout scrolls the document. Hiding
+  // the desktop tree with CSS still MOUNTS it, so its lock froze the phone
+  // page (iPhone, 15 Oct 2026). Mount one tree or the other, never both.
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const fetchVacancyDetails = useCallback(async () => {
     if (!id) return
@@ -403,6 +410,7 @@ export default function OpportunityDetailPage() {
       <div className="min-h-screen bg-white lg:bg-gray-50">
         <Header mobileHidden />
         {/* Phone: Figma Opportunity detail v2 / — applied */}
+        {!isDesktop && (
         <div className="pt-[env(safe-area-inset-top)] lg:hidden">
           <OpportunityDetailMobile
             vacancy={opportunity}
@@ -424,6 +432,8 @@ export default function OpportunityDetailPage() {
             ) : undefined}
           />
         </div>
+        )}
+        {isDesktop && (
         <div className="hidden pt-20 lg:block">
           <div className="max-w-4xl mx-auto px-4 md:px-6 pt-4 pb-2">
             <Breadcrumbs
@@ -460,6 +470,7 @@ export default function OpportunityDetailPage() {
             ) : undefined}
           />
         </div>
+        )}
       </div>
 
       {/* Sign In Prompt Modal - for unauthenticated users */}
