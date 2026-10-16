@@ -75,7 +75,9 @@ test.describe('@smoke coach', () => {
       const url = page.url()
       const isRedirected = !url.includes('/applicants')
       const showsError = await page.getByRole('heading', { name: /error/i }).isVisible().catch(() => false)
+      // v1 page (candidate coach) or the desktop D4 page (coach who recruits): both refuse a role that isn't theirs.
       const showsFailure = await page.getByText(/failed to load applicants/i).isVisible().catch(() => false)
+        || await page.getByTestId('applicants-error').isVisible().catch(() => false)
       expect(isRedirected || showsError || showsFailure).toBe(true)
     }).toPass({ timeout: 15000, intervals: [500, 1000, 2000] })
   })
