@@ -248,8 +248,10 @@ describe('desktop preview on an open role the viewer applied to', () => {
     )
     expect(screen.queryByText('Application Deadline')).toBeNull()
   })
-  it('the Opportunities list passes the viewer\'s own status to the preview', () => {
-    expect(read('../pages/OpportunitiesPage.tsx')).toContain('applicationStatus={applicationStatuses[previewVacancy.id] ?? null}')
+  it('the Opportunities list opens the role PAGE on every width (desktop D2, 16 Oct 2026): no preview dialog, the page loads the viewer\'s own status', () => {
+    const src = read('../pages/OpportunitiesPage.tsx')
+    expect(src).not.toContain('OpportunityPreviewModal')
+    expect(src).toContain('onOpen={() => navigate(`/opportunities/${vacancy.id}`)}')
   })
 })
 

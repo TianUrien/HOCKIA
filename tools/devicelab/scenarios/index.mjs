@@ -145,22 +145,29 @@ export const scenarios = {
     await ctx.shot('opportunities-list')
     await assertScrolled(lab, ctx, 'opportunities-list')
     if (lab.device.platform === 'web') {
-      // Desktop: a card opens a preview modal (no route); the role page itself is a URL.
-      const clicked = await lab.eval(() => { const c = document.querySelector('.cursor-pointer.rounded-2xl'); if (!c) return false; c.click(); return true })
-      if (!clicked) throw new Error('no opportunity card on the desktop list')
-      await lab.waitFor('[role="dialog"]', 15000)
-      await sleep(500)
-      await ctx.shot('preview-modal')
-      await lab.eval(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
-      for (const id of FIXTURES.roleIds) {
-        await lab.go(`/opportunities/${id}`)
-        await lab.waitFor('[role="dialog"], h1', 20000)
-        await sleep(800)
-        await ctx.shot('role-page')
-        const state = await assertScrolled(lab, ctx, 'role-page')
-        if (state.tall) return
+      // Desktop (D1/D2, 16 Oct 2026): a card opens the role as a PAGE, no preview dialog.
+      const clicked = await lab.eval(() => { const c = document.querySelector('[data-testid="role-card-open"], [data-testid="featured-role"]'); if (!c) return false; c.click(); return true })
+      if (!clicked) throw new Error('no role card on the desktop list')
+      let url = ''
+      for (let i = 0; i < 40; i++) { await sleep(500); url = await lab.url(); if (/\/opportunities\/[0-9a-f-]{36}/.test(url)) break }
+      if (!/\/opportunities\/[0-9a-f-]{36}/.test(url)) throw new Error(`clicking a role card did not open a role page (url ${url})`)
+      await lab.waitFor('[data-testid="role-detail-desktop"] h1', 20000)
+      await sleep(800)
+      await ctx.shot('role-page')
+      const state = await assertScrolled(lab, ctx, 'role-page')
+      if (!state.tall) ctx.note('the role page fits the desktop viewport; scroll not asserted')
+      const sticky = await lab.eval(() => getComputedStyle(document.querySelector('[data-testid="role-detail-aside"]')).position)
+      if (sticky !== 'sticky') throw new Error(`the cover column is ${sticky}, expected sticky`)
+      const apply = await lab.eval(() => { const b = document.querySelector('[data-testid="role-apply"]'); if (!b) return false; b.click(); return true })
+      if (apply) {
+        await sleep(1200)
+        await ctx.shot('apply-sheet')
+        const sheet = await lab.eval(() => !!document.querySelector('[role="dialog"]'))
+        if (!sheet) throw new Error('apply sheet did not open')
+        await lab.eval(() => { const c = document.querySelector('[role="dialog"] button[aria-label*="lose" i], [role="dialog"] button[aria-label*="ancel" i]'); c?.click(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
+      } else {
+        ctx.note('no Apply button (already applied, own role, or closed) — sheet not tested')
       }
-      ctx.note('fixture roles fit the desktop dialog; scroll could not be asserted')
       return
     }
     // Open up to three roles until one is longer than the screen: a short
@@ -348,13 +355,12 @@ export const scenarios = {
   },
 
   async 'role-cover-render'(lab, ctx) {
-    const phone = await phoneWidth(lab, ctx)
+    // Every width shows the cover: the phone hero or the desktop D2 cover column, so the viewport stays as the device has it.
     try {
       await lab.go(`/opportunities/${FIXTURES.coverRoleId}`)
       await lab.waitFor('h1', 20000)
       await sleep(1500)
       await ctx.shot('role-cover')
-      if (!phone) { ctx.note('desktop role page has no cover hero yet (Desktop increment); not asserted'); return }
       const img = await lab.eval(() => { const i = document.querySelector('img[src*="role-covers"]'); return i ? { complete: i.complete, w: i.naturalWidth } : null })
       if (!img) throw new Error('the role page shows no cover photo for the fixture role')
       if (img.complete && img.w === 0) throw new Error('the cover photo failed to load (broken image)')

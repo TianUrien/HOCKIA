@@ -50,7 +50,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
   const isCoachCircle = publisherRole === 'coach'
 
   return (
-    <article className="rounded-[24px] border-[0.5px] border-[rgba(15,15,20,0.06)] bg-white px-4 pb-3.5 pt-4 shadow-[0_8px_12px_rgba(15,15,20,0.08),0_1px_1px_rgba(15,15,20,0.05)]" data-testid="role-card" data-status={applied ? 'applied' : 'open'}>
+    <article className="h-full rounded-[24px] border-[0.5px] border-[rgba(15,15,20,0.06)] bg-white px-4 pb-3.5 pt-4 shadow-[0_8px_12px_rgba(15,15,20,0.08),0_1px_1px_rgba(15,15,20,0.05)] lg:transition-[transform,box-shadow] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_14px_24px_rgba(15,15,20,0.12),0_1px_1px_rgba(15,15,20,0.05)]" data-testid="role-card" data-status={applied ? 'applied' : 'open'}>
       <button
         ref={press.ref}
         type="button"
