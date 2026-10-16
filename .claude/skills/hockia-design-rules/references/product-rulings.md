@@ -17,6 +17,7 @@
 - Photo-first grid, newest first for people and clubs, no interleaving; clubs are always full-width cards; Clubs tab available.
 - Person card = 3 lines over the scrim: name (no age) / role · team / nationality flags + EU · age · city. No chips on person cards (no "Open to play" — it covers faces; no category, no status). Clubs show a glass "Recruiting now" only with an open opportunity.
 - Tap opens a full-screen preview deck (swipe between members, "3 of N" pager with 44 pt prev/next). Recruiters get Shortlist + fit in the preview. Anyone can message anyone (server rate-limited).
+- Recruiting context (clubs, recruiting coaches): one UI everywhere, the "Ranked for" pill + sheet (open roles, saved contexts, No context, New context); the word is "context", never "scope". An active player context narrows the Community grid by team + region and ranks by fit, using rules only (2026-10-16).
 - Club preview: Message only, no Add friend (the club page keeps the friendship button); facts League / Based in / Friends here.
 
 ## Home (live)
