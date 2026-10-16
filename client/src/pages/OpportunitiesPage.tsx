@@ -35,6 +35,7 @@ import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityF
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { Chip } from '@/components/ui/Chip'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { useCoachingRolesHistory } from '@/hooks/useCoachingRolesHistory'
@@ -684,21 +685,17 @@ export default function OpportunitiesPage() {
             {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
             {!showMyRoles && !coachEmpty && (
             <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
-              {/* Figma O1 147:266: selected = ink pill; category chips carry their colour dot (never a fill). */}
+              {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by Tian 16 Oct); category chips carry their colour dot, never a fill. */}
               {QUICK_CHIPS.map((c) => {
-                const on = isQuickChipOn(roleFilters, c.key)
                 const family = c.key === 'women' ? 'women' : c.key === 'men' ? 'men' : c.key === 'mixed' ? 'mixed' : null
                 return (
-                  <button
+                  <Chip
                     key={c.key}
-                    type="button"
-                    aria-pressed={on}
+                    label={c.label}
+                    selected={isQuickChipOn(roleFilters, c.key)}
+                    leading={family ? <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} /> : undefined}
                     onClick={() => { void hapticSelection(); setRoleFilters((f) => toggleQuickChip(f, c.key)) }}
-                    className={`relative inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-secondary font-semibold transition-colors before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] ${on ? 'bg-ink-1 text-white' : 'border border-line bg-white text-ink-1 active:bg-surface-muted'}`}
-                  >
-                    {family && <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} />}
-                    {c.label}
-                  </button>
+                  />
                 )
               })}
             </div>
