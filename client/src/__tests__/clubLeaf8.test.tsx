@@ -133,12 +133,12 @@ describe('ClubViewPlayersHeader', () => {
     expect(screen.getByRole('option', { name: 'Best fit' })).toBeInTheDocument()
     expect(screen.getByTestId('ranked-for-pill')).toHaveTextContent("Midfielder · Men's")
   })
-  it('reads "No context" and "Newest" without a context, and the pill opens Recruiting for', () => {
+  it('reads "No context" and "Newest" without a context, and the pill opens Ranked for', () => {
     render(<ClubViewPlayersHeader sort="newest" onSort={() => {}} />)
     expect(screen.getByTestId('ranked-for-pill')).toHaveTextContent('No context')
     expect(screen.getByRole('option', { name: 'Newest' })).toBeInTheDocument()
     fireEvent.click(screen.getByTestId('ranked-for-pill'))
-    expect(screen.getByRole('radiogroup', { name: 'Recruiting for' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Ranked for' })).toBeInTheDocument()
   })
   it('changing the sort reports the new value', () => {
     const onSort = vi.fn()

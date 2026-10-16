@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, ChevronDown, Info, Plus, Star } from 'lucide-react'
+import { Check, Info, Plus, Star } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
+import { RankedForPill } from './RankedForPill'
 import { InviteAction, InviteLimitNotice } from './InviteAction'
 import type { InviteSheetPlayer } from './InviteSheet'
 import { useCountries, EU_COUNTRY_CODES } from '@/hooks/useCountries'
@@ -130,11 +131,7 @@ export default function FindPlayersScreen() {
       <div className="px-5 pb-3 pt-0.5">
         <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">Find players</h1>
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-[14px] text-ink-2">Ranked for</span>
-          <button type="button" onClick={() => setSheet(true)} className="flex max-w-[240px] items-center gap-1 rounded-full bg-hockia-soft py-1 pl-2.5 pr-2 text-[14px] font-semibold text-hockia-primary" data-testid="ranked-for-pill">
-            <span className="truncate">{contextPillLabel(ctx)}</span>
-            <ChevronDown className="h-4 w-4 shrink-0" strokeWidth={2.2} aria-hidden="true" />
-          </button>
+          <RankedForPill label={contextPillLabel(ctx)} onClick={() => setSheet(true)} />
         </div>
       </div>
 

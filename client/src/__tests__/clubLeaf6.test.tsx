@@ -286,11 +286,11 @@ describe('Find players screen (D1.9)', () => {
     expect(screen.queryByText('Leandro Bica')).toBeNull()
   })
 
-  it('the pill opens Recruiting for; picking No context clears the active context', () => {
+  it('the pill opens Ranked for; picking No context clears the active context', () => {
     renderAt(<FindPlayersScreen />)
     fireEvent.click(screen.getByTestId('ranked-for-pill'))
-    expect(screen.getByText('Recruiting for')).toBeTruthy()
-    expect(screen.getByText('From your open role · 3 to review')).toBeTruthy()
+    expect(screen.getByRole('radiogroup', { name: 'Ranked for' })).toBeTruthy()
+    expect(screen.getByText('3 to review')).toBeTruthy()
     fireEvent.click(screen.getByRole('radio', { name: /No context/ }))
     expect(scoutingState.clearActive).toHaveBeenCalled()
   })
