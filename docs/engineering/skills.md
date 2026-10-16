@@ -17,7 +17,7 @@ verbatim apart from the pruning and the one override header listed below.
 | Agent notes pointer | `AGENTS.md` (root) | A pointer to `CLAUDE.md` and this directory for tools that look for that file name |
 | Copilot instructions | `.github/copilot-instructions.md` | Architecture summary and code patterns for GitHub Copilot; partly stale |
 | Permissions | `.claude/settings.json` | `permissions.allow` list and `additionalDirectories`. Still a history of one-off approvals; curation is pending (section 6) |
-| Project skills | `.claude/skills/<name>/` | Seven lazily loaded skills copied from MIT repositories (section 2). Only each skill's `description` line is in context every session; the body loads when the skill triggers |
+| Project skills | `.claude/skills/<name>/` | Seven lazily loaded skills copied from MIT repositories plus one written in-house, `hockia-design-rules` (section 2). Only each skill's `description` line is in context every session; the body loads when the skill triggers |
 | Hooks | `scripts/hooks/` + a `hooks` block the founder adds to `.claude/settings.json` | A pre-commit/pre-push secret scan and a post-edit migration lint; see [hooks.md](hooks.md) |
 | Agents, commands | `.claude/agents`, `.claude/commands` | None in the repository |
 | Engineering memory | `docs/engineering/` | This directory |
@@ -126,6 +126,18 @@ plugins (they run `npx protect-mcp` on every tool call).
 | What it is for | React 19 composition: compound components over boolean props, lifting state into providers, explicit variants, `children` over render props, no `forwardRef` |
 | Triggers | Refactoring components with boolean-prop proliferation, building reusable component APIs, compound components, context providers |
 | Remove | `rm -rf .claude/skills/composition-patterns` |
+
+### 2.8 `hockia-design-rules` (written in-house)
+
+| | |
+|---|---|
+| Source | Written for this repository on 2026-10-16 from the founder's design rulings, `docs/design-handoff/decisions.md`, the Figma token collections and the ADRs. No upstream; no licence file needed |
+| Files | `SKILL.md`, `references/` (foundations, components-and-patterns, covers-and-crests, motion-and-haptics, copy-privacy-safety, product-rulings, platforms, hockey-domain, workflow), `evals/evals.json` |
+| What it is for | Applying the founder's design and product rulings (tokens, category colours, crest covers, nationality/EU display, motion, copy and claims, privacy and minors, platform rules, per-area rulings) whenever an agent designs, reviews or implements UI |
+| Triggers | Any HOCKIA UI work: Figma, `client/src` components and copy, design handoffs, staging and device-lab reviews |
+| Maintenance | A new design ruling is added to the skill and to `docs/design-handoff/decisions.md` in the same PR; superseded rules are removed. No names, Figma keys or private links (ADR 0006) |
+| Checked | Baseline vs with-skill on four prompts (2026-10-16): with the skill the answers followed every ruling checked; without it they reintroduced rejected patterns (Save, activity pills, location flags, unspecified category colours) |
+| Remove | `rm -rf .claude/skills/hockia-design-rules` |
 
 Not taken from vercel-labs: `react-best-practices` (416 KB, 13 Next-only rules
 to prune; revisit if the bundle-budget work wants it), `deploy-to-vercel`
