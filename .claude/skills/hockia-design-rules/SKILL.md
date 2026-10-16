@@ -50,6 +50,7 @@ Read the core rules below, then open only the reference you need:
 - **Privacy & safety.** Every list, count, summary or AI read of people respects hidden profiles (blocked or frozen minors). Date of birth is owner-only (others see age). Never accept photos of ID documents. AI never judges or compares people by age, gender, nationality or appearance.
 - **Respect what exists.** Reuse the status words, enums and copy helpers already in code (`lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/statusTone.ts`, …) and existing components before inventing new ones. Flag anything that needs backend.
 - **Field hockey, never ice hockey;** pitches have no centre circle; sticks are right-handed and the ball is played with the flat face.
+- **Product priority.** Clubs first; free for every role (no paywalls or upsells); umpires profile-only; under-18s waitlist only (2026-10-16). Roles: `references/roles-and-product.md`.
 - **Platforms.** Phone first (393 × 852), then Android (412 × 915) and desktop (≥ 1024, content max 1200). Native tablets get the phone layout (ADR 0008). Light first; check dark mode before handoff.
 
 ## Working with the founder

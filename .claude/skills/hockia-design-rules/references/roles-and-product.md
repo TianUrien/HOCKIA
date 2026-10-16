@@ -1,6 +1,6 @@
 # Product and roles
 
-Evidence-based definition of what HOCKIA is for and what each role is, does and gets (code on staging, 2026-10-16). Strategic goals marked **(to confirm)** are proposals awaiting the founder; everything else describes the shipped product.
+Evidence-based definition of what HOCKIA is for and what each role is, does and gets (code on staging, 2026-10-16). The strategic rulings at the end are the founder's; everything else describes the shipped product.
 
 ## The product
 - **What it is:** the network where field hockey people get found and hired — players, coaches and umpires build a professional profile; clubs and recruiting coaches publish roles and recruit with trust and context; brands reach athletes.
@@ -64,8 +64,8 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 - `OPEN_TO_PLAY_UNDER_18` copy in `client/src/lib/onboardingV2.ts` still describes under-18 accounts continuing, which contradicts the 18+ age gate.
 - Umpire onboarding still uses the legacy wizard; umpire and brand get no role-specific emails.
 
-## Strategic goals (to confirm with the founder)
-- Priority order of roles for growth and design attention.
-- The umpire roadmap (appointments/assessments marketplace or profile-only).
-- What brands get beyond visibility, and whether any role ever pays.
-- Juniors (under-18): waitlist only, or a future product.
+## Strategic rulings (founder, 2026-10-16)
+- **Clubs first.** Growth and design attention go first to clubs (and recruiting coaches): the loop needs posted roles. When priorities compete, pick the change that gets more roles posted or more applicants answered.
+- **Umpires: profile only for now.** Officiating history, references and network; Opportunities stays browse-only. Don't design an umpire appointments marketplace without a new ruling.
+- **Free for every role until traction.** Don't design paywalls, premium tiers, locked features or upsells.
+- **Juniors: waitlist only.** The 18+ age gate stays; no junior or parental-consent product. Copy must not suggest under-18 accounts can continue.
