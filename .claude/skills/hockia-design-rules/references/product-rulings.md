@@ -20,7 +20,7 @@
 - Club preview: Message only, no Add friend (the club page keeps the friendship button); facts League / Based in / Friends here.
 
 ## Home (live)
-- Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). Roles rail for players; clubs see applicant next steps instead.
+- Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). A views card always opens who viewed you (CTA "View"), never the composer; a card's action must match its title (2026-10-16). Roles rail for players; clubs see applicant next steps instead.
 - Grouped digests for automatic events (≥ 4 items), media grouped per day; "New in the community" faces row opens the Community deck.
 - New signing posts only by clubs: the club tags a member (notified, can remove the tag; 18+ only). Card = light grey surface, faint violet pitch, two overlapping circles (player photo + crest), "NEW SIGNING".
 - Reactions: likes, comments, and Congrats 👏 (count visible to all). Full match video only if the player made it public; no score; tap to play.

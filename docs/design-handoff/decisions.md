@@ -4,6 +4,7 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-16 | Home views card (every role): tapping it opens who viewed your profile (viewers + search appearances), CTA "View"; brands no longer get "Post" on it (the header + composes). A card's action must match its title | Founder |
 | 2026-10-16 | Product strategy: clubs (and recruiting coaches) are the growth and design priority; umpires stay profile-only (Opportunities browse-only); free for every role until traction, no paywalls or upsells; under-18s get the waitlist only, the 18+ gate stays. Role definitions: `.claude/skills/hockia-design-rules/references/roles-and-product.md` | Founder |
 | 2026-10-16 | Design rules digest: `.claude/skills/hockia-design-rules/` collects the standing rulings for agents; new rulings are added there and here in the same PR | Founder |
 | 2026-10-16 | Hockia AI (beta) is not a tab: a mascot button top-right on Opportunities opens a sheet over the current screen; contextual entries on role detail, applicants and profile. It drafts actions (apply, profile update) that the user confirms; text only (no microphone); attachments: photos, video/links, CV PDF, never ID documents; profile builder saves through one "Save all" review card | Founder |

@@ -57,11 +57,12 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 - **Promise:** "Build your brand in the hockey community" — reach and recruit athletes as ambassadors.
 - **Can:** profile with cover, logo, products (taps to store counted with consent), updates in the feed, followers, invite ambassadors (players only, two-sided), "Open to partners" (default off), owner stats (views, search appearances); Hockia AI: find ambassadors.
 - **Never:** posts roles, applies, references, friends (followers instead), recruiter tools.
-- **Home Next step:** profile views + search appearances, with a Post action.
+- **Home Next step:** profile views + search appearances; tapping opens who viewed you ("View"), not the composer (2026-10-16).
 
 ## Known gaps and inconsistencies (fix or decide)
 - `supabase/functions/_shared/hockia-features.ts` (Hockia AI's feature map) is out of date: references are open to umpires, and it says brands publish roles (they can't). Hockia AI can answer wrongly until it's updated.
 - `OPEN_TO_PLAY_UNDER_18` copy in `client/src/lib/onboardingV2.ts` still describes under-18 accounts continuing, which contradicts the 18+ age gate.
+- The brand views card opens the post composer instead of the viewers (fix approved 2026-10-16).
 - Umpire onboarding still uses the legacy wizard; umpire and brand get no role-specific emails.
 
 ## Strategic rulings (founder, 2026-10-16)
