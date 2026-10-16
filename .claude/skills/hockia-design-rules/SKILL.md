@@ -28,6 +28,7 @@ Read the core rules below, then open only the reference you need:
 | Covers, crest colours, generated backgrounds, photos, imagery | `references/covers-and-crests.md` |
 | Motion, springs, gestures, haptics | `references/motion-and-haptics.md` |
 | Copy, labels, claims, privacy, safety, minors | `references/copy-privacy-safety.md` |
+| What HOCKIA is for, each role (player, coach, club, umpire, brand): who, goals, capabilities, limits | `references/roles-and-product.md` |
 | A product area (Community, Home, Profile, Opportunities, Inbox, Hockia AI, nationality, location) | `references/product-rulings.md` |
 | iOS, Android, tablet, desktop, dark mode, accessibility | `references/platforms.md` |
 | Field hockey facts, roles, categories, vocabulary | `references/hockey-domain.md` |
