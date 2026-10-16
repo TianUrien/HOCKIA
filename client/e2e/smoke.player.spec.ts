@@ -1,12 +1,7 @@
 import { test, expect } from './fixtures'
 
 const E2E_CLUB_USERNAME = 'e2e-test-fc'
-const E2E_VACANCY_TITLE = 'E2E Vacancy - Automated Test'
 
-async function getE2EVacancyCard(page: import('@playwright/test').Page) {
-  const titleHeading = page.getByRole('heading', { level: 2, name: E2E_VACANCY_TITLE })
-  return titleHeading.locator('xpath=ancestor::div[contains(@class,"rounded-2xl")]').first()
-}
 
 // The 2026-09 redesign gives phones their own profile and opportunities
 // screens (Figma 03 Player); the profile is Profile v2 on desktop too.
@@ -45,31 +40,16 @@ test.describe('@smoke player', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
 
-    if (isPhone(page)) {
-      // Phone: role cards lead with the position ("Midfielder") and the club;
-      // the card opens the full-screen detail at /opportunities/:id.
-      const roleCard = page.getByTestId('role-card').filter({ hasText: /E2E Test FC/i }).first()
-      await expect(roleCard).toBeVisible({ timeout: 20000 })
-      await roleCard.getByRole('button').first().click()
-      await page.waitForURL(/\/opportunities\/[0-9a-f-]{36}/, { timeout: 20000 })
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
-      // Opportunities v2: the detail closes with the glass × (App Store style), not a back bar.
-      await page.getByTestId('role-close').click()
-      await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
-      return
-    }
-
-    const card = await getE2EVacancyCard(page)
-    await expect(card).toBeVisible({ timeout: 20000 })
-
-    // Cards are now fully clickable — click the card to open detail view
-    await card.click()
-
-    await expect(page.getByRole('heading', { level: 1, name: E2E_VACANCY_TITLE })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeVisible({ timeout: 20000 })
-
-    await page.getByRole('button', { name: 'Close', exact: true }).click()
-    await expect(page.getByRole('heading', { level: 1, name: E2E_VACANCY_TITLE })).not.toBeVisible({ timeout: 20000 })
+    // Opportunities v2 on every width (desktop D1/D2, 16 Oct 2026): the role
+    // card opens the role page at /opportunities/:id; the × / "‹ Opportunities"
+    // (role-close) goes back to the list.
+    const roleCard = page.getByTestId('role-card').filter({ hasText: /E2E Test FC/i }).first()
+    await expect(roleCard).toBeVisible({ timeout: 20000 })
+    await roleCard.getByTestId('role-card-open').click()
+    await page.waitForURL(/\/opportunities\/[0-9a-f-]{36}/, { timeout: 20000 })
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
+    await page.getByTestId('role-close').click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
   })
 
   test('player can start a message from a club profile', async ({ page }) => {
