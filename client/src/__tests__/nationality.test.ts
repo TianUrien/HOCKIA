@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// CI's unit job has no Supabase env: useCountries (isEuCountryCode) imports the client transitively.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import { ageCityLine, basedInLine, hasEuPassport, nationalityCountries, nationalityFlags, nationalityNames } from '@/lib/nationality'
 
 const countries = [
