@@ -3,6 +3,8 @@ import { Camera, Instagram, Settings, Share } from 'lucide-react'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { GLASS, initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { BlurImage } from '@/components/home/v1/BlurImage'
+import { NationalityPills } from '@/components/ui/NationalityBadges'
+import type { NationalityCountry } from '@/lib/nationality'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 
@@ -20,7 +22,10 @@ export interface ProfileHeroProps {
   age?: number | null
   roleLine: string | null
   /** "🇬🇧 London" — base city + flag only (ruling 11 Oct). */
+  /** Where the member is based. People pass it as text without a flag ('Based in Santander, Spain'); clubs keep '🇪🇸 Santander'. */
   place: string | null
+  /** People: the nationality pills (flag + name) and the EU badge under the role line. */
+  nationalities?: NationalityCountry[]
   instagram?: string | null
   role: CommunityRole
   owner: boolean
@@ -43,7 +48,7 @@ const SCRIM =
 
 const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS)
 
-export function ProfileHero({ photos, name, age, roleLine, place, instagram, role, owner, fitPill, onBack, onShare, moreMenu, onCamera, onSettings, badge, roleLineAction }: ProfileHeroProps) {
+export function ProfileHero({ photos, name, age, roleLine, place, nationalities = [], instagram, role, owner, fitPill, onBack, onShare, moreMenu, onCamera, onSettings, badge, roleLineAction }: ProfileHeroProps) {
   const [index, setIndex] = useState(0)
   const count = photos.length
   useEffect(() => { if (index >= count) setIndex(0) }, [count, index])
@@ -122,6 +127,7 @@ export function ProfileHero({ photos, name, age, roleLine, place, instagram, rol
         {roleLineAction ? (
           <button type="button" onClick={roleLineAction} className="pointer-events-auto w-fit truncate text-left text-[15px] leading-5 text-white/90">{roleLine} →</button>
         ) : roleLine && <p className="truncate text-[15px] leading-5 text-white/90">{roleLine}</p>}
+        {nationalities.length > 0 && <NationalityPills nationalities={nationalities} className="pointer-events-auto pt-0.5" />}
         {(place || instagram) && (
           <div className="flex items-center gap-2.5">
             {place && <p className="truncate text-secondary text-white/85">{place}</p>}

@@ -9,6 +9,8 @@
  * (the card keeps the brand purple).
  */
 
+import { GRAPHITE, extractCrestPalette, type CrestPalette } from './crestPalette'
+
 const WHITE_CONTRAST = 4.5
 
 function luminance([r, g, b]: [number, number, number]): number {
@@ -38,38 +40,58 @@ export function toHex([r, g, b]: [number, number, number]): string {
 }
 
 /**
- * Dominant colour from RGBA pixels (e.g. a 48×48 canvas read), already
- * darkened for white text. Returns "#rrggbb" or null.
+ * The crest's single colour for the Community / Home cards ("#rrggbb", darkened
+ * for white text). Since the Opportunities v2 unification (2026-10-16) it is
+ * derived from the same palette every surface uses: the light end of the
+ * palette gradient, darkened until white text reaches 4.5:1. Gold-heavy crests
+ * therefore get a warm dark base (never olive), black & white crests graphite.
+ * Returns null only when there are too few usable pixels to be a crest.
  */
 export function dominantCrestColor(pixels: ArrayLike<number>): string | null {
-  const buckets = new Map<number, { n: number; weight: number; r: number; g: number; b: number }>()
-  for (let i = 0; i + 3 < pixels.length; i += 4) {
-    const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2], a = pixels[i + 3]
-    if (a < 128) continue
-    const max = Math.max(r, g, b), min = Math.min(r, g, b)
-    if (min > 225) continue // near-white: the JPEG square, highlights
-    if (max < 40) continue // near-black: outlines, text
-    const sat = max === 0 ? 0 : (max - min) / max
-    if (sat < 0.22) continue // greys
-    const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5)
-    const bucket = buckets.get(key) ?? { n: 0, weight: 0, r: 0, g: 0, b: 0 }
-    bucket.n += 1
-    bucket.weight += sat
-    bucket.r += r; bucket.g += g; bucket.b += b
-    buckets.set(key, bucket)
+  // Usable = opaque and not the white plate; a handful of stray pixels is not a crest.
+  let usable = 0
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] >= 200 && !(pixels[i] >= 235 && pixels[i + 1] >= 235 && pixels[i + 2] >= 235)) usable += 1
   }
-  let best: { n: number; weight: number; r: number; g: number; b: number } | null = null
-  for (const bucket of buckets.values()) if (!best || bucket.weight > best.weight) best = bucket
-  // A handful of stray pixels is not a crest colour.
-  if (!best || best.n < 12) return null
-  const avg: [number, number, number] = [Math.round(best.r / best.n), Math.round(best.g / best.n), Math.round(best.b / best.n)]
-  return toHex(darkenForWhiteText(avg))
+  if (usable < 12) return null
+  return colorFromPalette(extractCrestPalette(pixels))
+}
+
+/**
+ * The single card colour a palette implies (same rule as dominantCrestColor).
+ * A monochrome crest (graphite palette) gives null: Community cards keep the
+ * brand purple as before, while covers use the graphite palette directly.
+ */
+export function colorFromPalette(palette: CrestPalette): string | null {
+  if (palette.stops[0] === GRAPHITE.stops[0]) return null
+  const rgb = hexToRgb(palette.stops[0])
+  return toHex(darkenForWhiteText(rgb))
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
 }
 
 const SAMPLE = 48
 
-/** Browser only: read an image (URL with CORS, or a File/Blob) and pick its colour. */
+export interface CrestColors { color: string; palette: CrestPalette }
+
+/** Browser only: read an image (URL with CORS, or a File/Blob) once and derive both the card colour and the cover palette. */
+export async function extractCrestColors(source: string | Blob): Promise<CrestColors | null> {
+  const pixels = await readCrestPixels(source)
+  if (!pixels) return null
+  const color = dominantCrestColor(pixels)
+  if (!color) return null
+  return { color, palette: extractCrestPalette(pixels) }
+}
+
+/** Browser only: the single card colour (kept for existing callers). */
 export async function extractCrestColor(source: string | Blob): Promise<string | null> {
+  return (await extractCrestColors(source))?.color ?? null
+}
+
+async function readCrestPixels(source: string | Blob): Promise<Uint8ClampedArray | null> {
   if (typeof document === 'undefined') return null
   const objectUrl = typeof source === 'string' ? null : URL.createObjectURL(source)
   try {
@@ -88,7 +110,7 @@ export async function extractCrestColor(source: string | Blob): Promise<string |
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) return null
     ctx.drawImage(img, 0, 0, SAMPLE, SAMPLE)
-    return dominantCrestColor(ctx.getImageData(0, 0, SAMPLE, SAMPLE).data)
+    return ctx.getImageData(0, 0, SAMPLE, SAMPLE).data
   } catch {
     return null
   } finally {

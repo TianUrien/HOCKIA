@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ChevronRight, Info, Sparkles } from 'lucide-react'
+import { CrestTile } from '@/components/opportunities/RoleCover'
+import { useOwnerCrest } from '@/hooks/useOwnerCrest'
+import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { Chip } from '@/components/ui/Chip'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
@@ -18,7 +22,6 @@ import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, 
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
 import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
-import { Chip } from '@/components/ui/Chip'
 
 /**
  * Applicants of one role (Figma 04 Club · Applicants — club v2, 324:411;
@@ -50,6 +53,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const home = recruiterRolesHome(owner)
   const coachOwner = isRecruitingCoach(owner)
   const data = useRoleApplicants(roleId, clubId)
+  const cover = useOwnerCrest(owner)
   const { countries } = useCountries()
   const [chip, setChip] = useState<Chip>('pending')
   const p = pipelineOf(data.applicants.map((a) => a.status))
@@ -67,6 +71,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
 
   const role = data.role
   const pill = role ? genderPill(role.gender) : null
+  const family = role ? categoryFamily(role.gender) : null
   const chips: { id: Chip; label: string }[] = [
     { id: 'pending', label: p.toReview ? `To review · ${p.toReview}` : 'To review' },
     { id: 'shortlisted', label: 'Shortlisted' },
@@ -108,48 +113,54 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           : undefined}
       />
       {role && (
-        <div className="px-5 pb-3.5 pt-0.5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">{roleTitle(role)}</h1>
-            {pill && <span className={cn('rounded-full px-2 py-0.5 text-secondary font-semibold', pill.className)}>{pill.label}</span>}
+        <div className="flex items-start gap-3 px-4 pb-4 pt-0.5" data-testid="applicants-role-header">
+          <CrestTile src={cover.crestUrl} name={cover.clubName ?? 'Club'} size={48} radius={14} className="mt-1" />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-title-xl text-ink-1">{roleTitle(role)}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {pill && family && (
+                <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-secondary font-semibold', pill.className)}>
+                  <span aria-hidden="true" className={`h-[7px] w-[7px] rounded-full ${CATEGORY_DOT_CLASSES[family]}`} />{pill.label}
+                </span>
+              )}
+              <span className="text-secondary text-ink-2">{appliedSinceLine(data.applicants, monthDay) ?? role.title}</span>
+            </div>
           </div>
-          <p className="text-[14px] leading-[19px] text-ink-2">
-            {[role.title, appliedSinceLine(data.applicants, monthDay)].filter(Boolean).join(' · ')}
-          </p>
         </div>
       )}
 
       {suggestable && (
-        <div className="px-5 pb-3">
+        <div className="px-4 pb-3">
+          {/* Figma O6 163:499: the Hockia suggests entry in the brand soft, players who fit and haven't applied. */}
           <button
             type="button"
             onClick={() => navigate(`/dashboard/opportunities/${roleId}/suggested`, { state: { from: location.pathname } })}
-            className="flex min-h-[52px] w-full items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-2.5 text-left"
+            className="flex min-h-[56px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-3.5 py-2.5 text-left active:opacity-90"
             data-testid="suggests-entry"
           >
-            <Sparkles className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-              {SUGGESTS_TITLE}
-              {suggestsDetail && <span className="font-normal text-ink-2" data-testid="suggests-entry-detail"> · {suggestsDetail}</span>}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-brand-primary"><Sparkles className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[16px] font-semibold leading-[21px] text-brand-primary">{SUGGESTS_TITLE}</span>
+              {suggestsDetail && <span className="block truncate text-secondary text-ink-2" data-testid="suggests-entry-detail">{suggestsDetail}</span>}
             </span>
-            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-brand-primary" strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
       )}
 
-      <div className="flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Application status">
+      <div className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Application status">
         {chips.map((c) => (
-          // ui/Chip: selected = soft purple (Chip ruling 2026-10-04); tab semantics kept.
+          // ui/Chip: selected = soft purple (Chip ruling 2026-10-04); tab semantics kept. Figma O6 draws an ink pill here — raised in the PR.
           <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => setChip(c.id)} />
         ))}
       </div>
-      <p className="px-5 pb-1 pt-3.5 text-secondary text-ink-2">{caption}</p>
+      <p className="px-4 pb-2.5 pt-3.5 text-secondary text-ink-2">{caption}</p>
 
-      {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}
-      {!data.loading && !data.error && list.length === 0 && <p className="px-5 py-3 text-row text-ink-3">{emptyCopy[chip]}</p>}
+      {data.error && <p className="px-4 py-3 text-row text-ink-2">{data.error}</p>}
+      {!data.loading && !data.error && list.length === 0 && <p className="px-4 py-3 text-row text-ink-3">{emptyCopy[chip]}</p>}
 
-      <div>
-        {list.map((a, i) => {
+      <div className="flex flex-col gap-2.5 px-4">
+        {list.map((a) => {
           const isNew = !a.viewed && a.status === 'pending'
           const days = a.status === 'pending' ? daysLeftToReply(a.appliedAt, data.expiryDays) : null
           const right = a.status === 'pending' ? daysLeftLabel(days) : monthDay(a.updatedAt)
@@ -158,42 +169,32 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           // Grey, never amber: the road step past Shortlist, or why a closed row closed.
           const tag = clubRoadTag(a.status) ?? closedApplicantTag(a.status)
           return (
-            <div key={a.applicationId}>
-              <button type="button" onClick={() => open(a)} className="flex w-full items-center gap-3 py-3 pl-5 pr-3.5 text-left" data-testid="applicant-row">
-                <span className="relative shrink-0">
-                  <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={52} />
-                  {isNew && <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-hockia-primary" aria-label="New" />}
+            // Figma O6 163:499: one card per applicant; amber only on the days left when a reply is urgent.
+            <button key={a.applicationId} type="button" onClick={() => open(a)} className="flex w-full items-center gap-3 rounded-[16px] bg-surface-subtle p-3 text-left active:bg-surface-muted-pressed" data-testid="applicant-row">
+              <span className="relative shrink-0">
+                <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={48} />
+                {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label="New" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5">
+                  <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{a.person.fullName}</span>
+                  {a.invited
+                    ? <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="applicant-invited-tag">Invited</span>
+                    : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">New</span>}
+                  {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5">
-                    <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{a.person.fullName}</span>
-                    {a.invited
-                      ? <span className="shrink-0 text-caption font-semibold text-hockia-primary" data-testid="applicant-invited-tag">Invited</span>
-                      : isNew && <span className="shrink-0 text-caption font-semibold text-hockia-primary">New</span>}
-                    {tag && <span className="shrink-0 rounded-full bg-surface-grouped px-2 py-0.5 text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
-                  </span>
-                  <span className="block truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine(a.person)}</span>
-                  {(a.fit?.state && a.fit.state !== 'grey') || country ? (
-                    <span className="flex items-center gap-2 pt-[3px]">
-                      <FitChip state={a.fit?.state} />
-                      {country && <span className="truncate text-secondary text-ink-2">{country}</span>}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="flex shrink-0 items-center gap-0.5">
-                  {right && <span className={cn('text-secondary', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}
-                  <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
-                </span>
-              </button>
-              {i < list.length - 1 && <div className="ml-[84px] h-[0.5px] bg-line" />}
-            </div>
+                <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), country].filter(Boolean).join(' · ')}</span>
+                {a.fit?.state && a.fit.state !== 'grey' ? <span className="mt-1 flex"><FitChip state={a.fit.state} /></span> : null}
+              </span>
+              {right && <span className={cn('shrink-0 text-secondary font-semibold', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}
+            </button>
           )
         })}
       </div>
 
       {chip === 'pending' && !data.loading && (
-        <div className="px-5 pt-[18px]">
-          <div className="flex items-start gap-2.5 rounded-card bg-surface-grouped p-3.5">
+        <div className="px-4 pt-[18px]">
+          <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-subtle p-3.5">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
             <p className="text-secondary leading-[18px] text-ink-2">
               Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? ` — ${toReviewClosedNote(p)}` : ''}.

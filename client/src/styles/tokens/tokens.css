@@ -63,6 +63,15 @@
   --role-club-ink: #c2410c;
   --role-brand-bg: #fff1f2;
   --role-brand-ink: #be123c;
+  --category-women: #be123c;
+  --category-men: #0369a1;
+  --category-mixed: #6c2bd9;
+  --category-women-dark: #fb7185;
+  --category-men-dark: #38bdf8;
+  --category-mixed-dark: #a78bfa;
+  --category-women-soft: #ffe4e6;
+  --category-men-soft: #e0f2fe;
+  --category-mixed-soft: #f1eafd;
   --space-2: 2px;
   --space-4: 4px;
   --space-6: 6px;

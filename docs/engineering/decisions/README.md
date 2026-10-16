@@ -14,6 +14,7 @@ the tree, and the consequences. Status is `accepted` unless noted.
 | [0006](0006-public-repository-policy.md) | The repository is public; commit text is neutral and nothing sensitive is committed; CI enforces secret and dependency gates | `.gitleaks.toml`, `scripts/audit-check.mjs`, `ci.yml` artifact retention |
 | [0007](0007-no-agent-framework.md) | No primary agent workflow framework: `CLAUDE.md` + memory + `docs/engineering/` + lazily loaded copied skills + two local hooks; frameworks with always-on hooks, user-settings writes or telemetry are out | `.claude/skills/*/SKILL.md`, `scripts/hooks/`, `skills.md` sections 2-5, `hooks.md` |
 | [0008](0008-tablets-get-the-phone-layout.md) | Tablets show the phone layout inside the native app: the WebView is held to 640 pt/dp and centred (iOS `MainViewController`, Android `MainActivity`); phones and desktop unchanged | `client/ios/App/App/MainViewController.swift`, `client/android/.../MainActivity.java`, `tools/devicelab` run reports |
+| [0009](0009-one-crest-palette-extractor.md) | One crest palette extractor (`lib/crestPalette.ts`), palette stored next to the crest colour (`club_crest_colors.palette`, `world_club_crest_colors` via admin RPC); card colour derived from it; category colours in chips only; role identity read from existing data | `client/src/lib/crestPalette.ts`, `client/src/lib/opportunityIdentity.ts`, `supabase/migrations/20261016140000_opps_v2_foundations.sql` |
 
 ## Writing a new ADR
 

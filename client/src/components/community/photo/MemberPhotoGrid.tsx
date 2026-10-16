@@ -14,6 +14,7 @@ import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { rememberBlockedPair } from '@/lib/publicProfileCache'
 import { clubMetaLine, displayPlace, placeLabel } from '@/lib/communityCard'
+import { nationalityCountries } from '@/lib/nationality'
 import type { FitState } from '@/lib/clubRecruiting'
 import type { Profile } from '../PeopleListView'
 import { MemberPhotoCard } from './MemberPhotoCard'
@@ -73,6 +74,9 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
     (m: Profile, withCountry = false) => placeLabel(displayPlace(m.base_location, m.base_country_id, countries), withCountry),
     [countries],
   )
+  // People: the flag is nationality; the place is the city as text (16 Oct 2026).
+  const cityOf = useCallback((m: Profile) => { const p = displayPlace(m.base_location, m.base_country_id, countries); return p.city ?? p.country ?? null }, [countries])
+  const nationalitiesOf = useCallback((m: Profile) => nationalityCountries([m.nationality_country_id, m.nationality2_country_id], countries), [countries])
 
   useEffect(() => {
     if (!blocked) return
@@ -142,7 +146,8 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
               photoUrl={photo}
               pending={pending}
               age={ages.get(m.id) ?? null}
-              place={placeOf(m)}
+              place={m.role === 'brand' ? placeOf(m) : cityOf(m)}
+              nationalities={m.role === 'brand' ? [] : nationalitiesOf(m)}
               fit={fitById?.get(m.id) ?? null}
               onOpen={() => open(m)}
               priority={i < 4}

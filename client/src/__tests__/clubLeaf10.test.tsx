@@ -264,6 +264,8 @@ describe('ClubEditScreen (D1.27)', () => {
 // ── D1.25 first run ─────────────────────────────────────────────────
 
 const roles = vi.hoisted(() => ({ state: { loading: false, open: [] as unknown[], closed: [] as unknown[], expiryDays: 14, refresh: vi.fn() } }))
+// Opportunities v2 covers read the owner's crest through react-query; no provider here.
+vi.mock('@/hooks/useOwnerCrest', () => ({ useOwnerCrest: () => ({ crestUrl: null, palette: null, clubName: 'Club' }) }))
 vi.mock('@/hooks/useClubRoles', () => ({ useClubRoles: () => roles.state }))
 vi.mock('@/hooks/useScouting', () => ({
   useScoutingContext: () => ({ ctx: null, roleTitle: null }),
