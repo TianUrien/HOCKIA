@@ -40,11 +40,15 @@ import { useCoachingRolesHistory } from '@/hooks/useCoachingRolesHistory'
 import { useProfileWriter } from '@/hooks/useProfileWriter'
 import { CoachRolesEmptyState } from '@/components/opportunities/CoachRolesEmptyState'
 import { RecruiterRoles } from '@/components/club/ClubOpportunitiesScreen'
+import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
 const CoachMyRoles = lazy(() => import('@/components/opportunities/CoachMyRoles'))
+// Hockia AI sheet (handoff 2026-10-16): its own chunk, loaded on the first open.
+const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -142,6 +146,15 @@ export default function OpportunitiesPage() {
   const [roleFilters, setRoleFilters] = useState<RoleFilters>(EMPTY_ROLE_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // Hockia AI (beta): the header mascot opens the sheet; a one-time tip says so.
+  const aiOpen = useHockiaAiSheet((st) => st.open)
+  const showAi = useHockiaAiSheet((st) => st.show)
+  const [aiTip, setAiTip] = useState(() => { try { return !localStorage.getItem('hockia-ai-tip-seen') } catch { return false } })
+  const openAi = () => {
+    setAiTip(false)
+    try { localStorage.setItem('hockia-ai-tip-seen', '1') } catch { /* private mode */ }
+    showAi('opportunities')
+  }
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
 
@@ -538,6 +551,16 @@ export default function OpportunitiesPage() {
                 <IconButton label="Post a role" onClick={() => { setEditingRole(null); setShowCreateModal(true) }}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
+              ) : user ? (
+                /* Hockia AI header button (Figma B1 178:26); Filters moved to the first quick chip. */
+                <span className="relative mr-1">
+                  <HockiaAiButton onClick={openAi} />
+                  {aiTip && (
+                    <button type="button" onClick={() => setAiTip(false)} className="absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-[12px] bg-ink-1 px-3 py-2 text-[13px] font-semibold text-white shadow-lg" data-testid="hockia-ai-tip">
+                      New: ask Hockia AI anything
+                    </button>
+                  )}
+                </span>
               ) : (
                 <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
                   <span className="relative">
@@ -586,6 +609,15 @@ export default function OpportunitiesPage() {
             {!showMyRoles && !coachEmpty && (
             <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
               {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by Tian 16 Oct); category chips carry their colour dot, never a fill. */}
+              {user && (
+                <Chip
+                  label={activeRoleFilterCount > 0 ? `Filters · ${activeRoleFilterCount}` : 'Filters'}
+                  selected={activeRoleFilterCount > 0}
+                  leading={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />}
+                  onClick={() => setFiltersOpen(true)}
+                  data-testid="phone-filters-chip"
+                />
+              )}
               {QUICK_CHIPS.map((c) => {
                 const family = c.key === 'women' ? 'women' : c.key === 'men' ? 'men' : c.key === 'mixed' ? 'mixed' : null
                 return (
@@ -635,6 +667,7 @@ export default function OpportunitiesPage() {
                 />
               </div>
             )}
+            {user && <HockiaAiButton onClick={openAi} />}
             {canPostOpportunity && !showMyRoles && (
               <Button
                 onClick={() => { setEditingRole(null); setShowCreateModal(true) }}
@@ -936,6 +969,12 @@ export default function OpportunitiesPage() {
           )}
         </main>
       </div>
+
+      {aiOpen && (
+        <Suspense fallback={null}>
+          <HockiaAiSheet />
+        </Suspense>
+      )}
 
       <OpportunityFiltersSheet
         open={filtersOpen}
