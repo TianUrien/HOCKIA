@@ -108,6 +108,10 @@ export default {
         // Additive Figma namespaces (new class names only; nothing existing moves):
         // brand-*, status-*, accent-*, social-*, focus-ring, overlay-scrim.
         brand: { DEFAULT: t.brand.primary, ...t.brand },
+        // category-women / -men / -mixed (+ -dark, -soft): the team a role is for.
+        // Chips, filter dots and the detail "Team" fact only — never a background
+        // (Opportunities v2 ruling, 2026-10-16).
+        category: { ...t.category },
         // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
         // (player, coach, club, brand). Umpire has no pair: it stays neutral.
         role: t.role,

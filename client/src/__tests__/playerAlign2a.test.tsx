@@ -457,8 +457,9 @@ describe('Role detail header', () => {
     expect(screen.getByTestId('role-detail-position')).toHaveTextContent(/head coach/i)
     const tag = screen.getByTestId('role-detail-team-tag')
     expect(tag).toHaveTextContent("Men's")
-    expect(tag.className).toContain('bg-brand-soft')
-    expect(tag.className).toContain('text-brand-primary')
+    // Opportunities v2 ruling 1 (2026-10-16): the team's own category colour, not the brand purple.
+    expect(tag.className).toContain('bg-category-men-soft')
+    expect(tag.className).toContain('text-category-men')
     expect(screen.queryByText("Head coach · Men's")).toBeNull()
   })
 

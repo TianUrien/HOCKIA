@@ -21,6 +21,7 @@ import {
   APPLICATION_TONE_CLASS, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, closedRoleView, clubNoteFromFeedback,
   compensationText, deadlineLine, genderPill, postedLine, roleBenefits, roleHeadline, startsLine,
 } from '@/lib/opportunityCopy'
+import { askWhenApplying, asksHeading, messageLabel, offersHeading, postedByLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 
 interface OpportunityDetailMobileProps {
   vacancy: Vacancy
@@ -28,6 +29,8 @@ interface OpportunityDetailMobileProps {
   clubLogo: string | null
   clubId: string
   publisherRole: string | null | undefined
+  /** Who is behind the role (hiring club + posted by); coach-aware copy (lib/opportunityIdentity). Defaults to the publisher as given. */
+  identity?: RoleIdentity
   countryFlag: string | null
   league: string | null
   hasApplied: boolean
@@ -58,7 +61,7 @@ interface OpportunityDetailMobileProps {
  * anyone else sees "This role is closed" with a link to open roles.
  */
 export function OpportunityDetailMobile({
-  vacancy, clubName, clubLogo, clubId, publisherRole, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, isClosed = false, onApply, onMessage, ownApplicationSlot,
+  vacancy, clubName, clubLogo, clubId, publisherRole, identity: identityProp, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, isClosed = false, onApply, onMessage, ownApplicationSlot,
 }: OpportunityDetailMobileProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -77,7 +80,9 @@ export function OpportunityDetailMobile({
   const headline = roleHeadline(vacancy)
   const positionText = positionLabel(vacancy.position)
   const place = [vacancy.location_city, vacancy.location_country].map((s) => s?.trim()).filter(Boolean).join(', ')
-  const clubLine = [identityLine(publisherRole ?? 'club'), countryFlag && place ? `${countryFlag} ${place}` : place, league].filter(Boolean).join(' · ')
+  const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
+  const postedBy = postedByLine(identity)
+  const clubLine = [identityLine(identity.hiringClub ? 'club' : 'coach'), countryFlag && place ? `${countryFlag} ${place}` : place, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
@@ -157,10 +162,11 @@ export function OpportunityDetailMobile({
 
       <div className="px-5 pt-1">
       <button type="button" onClick={openClub} className="flex w-full items-center gap-3 rounded-card bg-surface-muted p-3 text-left active:bg-surface-muted-pressed" data-testid="role-club-row">
-        <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={48} />
+        <EntityAvatar src={clubLogo} name={clubName} role={identity.hiringClub ? 'club' : 'coach'} size={48} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-row font-semibold text-ink-1">{clubName}</span>
           <span className="block truncate text-secondary text-ink-2">{clubLine}</span>
+          {postedBy && <span className="block truncate text-secondary text-ink-3" data-testid="role-posted-by">{postedBy}</span>}
         </span>
         <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.6} />
       </button>
@@ -240,7 +246,7 @@ export function OpportunityDetailMobile({
       )}
 
       <section className="px-5 pt-3.5">
-        <h2 className="text-body font-semibold text-ink-1">What the club offers</h2>
+        <h2 className="text-body font-semibold text-ink-1">{offersHeading(identity)}</h2>
         <ul className="mt-1" data-testid="role-offers">
           {compensationKey === 'paid' && <BenefitItem icon={PAID_TILE.icon} tileClass={PAID_TILE.tileClass} title={PAID_TILE.label} detail={PAID_TILE.detail} type="benefit" />}
           {benefits.map((b) => <BenefitItem key={b.key} icon={b.icon} tileClass={b.tileClass} title={b.label} detail={b.detail} type="benefit" />)}
@@ -251,7 +257,7 @@ export function OpportunityDetailMobile({
               icon={NOTE_TILE.icon}
               tileClass={NOTE_TILE.tileClass}
               title={compensationText(vacancy)}
-              detail={!vacancy.compensation && !closed ? 'Ask the club when you apply' : null}
+              detail={!vacancy.compensation && !closed ? askWhenApplying(identity) : null}
               type="note"
             />
           )}
@@ -259,7 +265,7 @@ export function OpportunityDetailMobile({
       </section>
 
       <section className="px-5 pt-4">
-        <h2 className="text-body font-semibold text-ink-1">What the club asks</h2>
+        <h2 className="text-body font-semibold text-ink-1">{asksHeading(identity)}</h2>
         <div className="mt-1">
           {vacancy.opportunity_type === 'player' && vacancy.position && askRow('Position', `${humanizeToken(vacancy.position)}${vacancy.position_required ? ' · required' : ''}`)}
           {vacancy.opportunity_type === 'player' && pill && askRow('Category', pill.label)}
@@ -281,7 +287,7 @@ export function OpportunityDetailMobile({
 
       {(vacancy.description?.trim() || (vacancy.requirements ?? []).length > 0) && (
         <section className="px-5 pt-[18px]">
-          <h2 className="text-body font-semibold text-ink-1">In the club’s words</h2>
+          <h2 className="text-body font-semibold text-ink-1">{wordsHeading(identity)}</h2>
           {vacancy.description?.trim() && <p className="mt-1 whitespace-pre-wrap text-row text-ink-2">“{vacancy.description.trim()}”</p>}
           {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(' · ')}</p>}
         </section>
@@ -335,7 +341,7 @@ export function OpportunityDetailMobile({
       {closedView === 'applicant' && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-5 pb-[max(env(safe-area-inset-bottom),0.625rem)] pt-2.5 lg:hidden" data-testid="closed-message-bar">
           <button type="button" onClick={onMessage} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-body font-semibold text-ink-1 active:opacity-90">
-            <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> Message the club
+            <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
           </button>
         </div>
       )}

@@ -47,16 +47,16 @@ describe('Card / Role', () => {
     expect(screen.getByTestId('category-tag').nextElementSibling).toBe(tag)
     expect(screen.getAllByRole('button')).toHaveLength(1)
   })
-  it('coach roles get the position + soft-purple team tag too', () => {
+  it('coach roles get the position + the team tag in its category colour too', () => {
     card(false, { opportunity_type: 'coach', position: 'head_coach', gender: 'Men', title: 'Head coach wanted' } as Partial<Vacancy>)
     expect(screen.getByTestId('category-tag')).toHaveTextContent("Men's")
-    expect(screen.getByTestId('category-tag').className).toContain('bg-brand-soft')
+    expect(screen.getByTestId('category-tag').className).toContain('bg-category-men-soft')
     expect(screen.queryByText("Head coach · Men's")).toBeNull()
   })
-  it('shows "flag city · league", a soft-purple category tag and an optional day-first Apply by', () => {
+  it('shows "flag city · league", a category-coloured team tag and an optional day-first Apply by', () => {
     card(false, { application_deadline: '2026-10-12' })
     expect(screen.getByText('🇮🇹 Bologna, Italy · Serie A1')).toBeInTheDocument()
-    expect(screen.getByTestId('category-tag').className).toContain('bg-brand-soft')
+    expect(screen.getByTestId('category-tag').className).toMatch(/bg-category-(women|men|mixed)-soft/)
     expect(screen.getByTestId('role-card-apply-by').textContent).toMatch(/Apply by 12 Oct/)
   })
   it('EU passport is a neutral Requirement (ink-1 label, no amber)', () => {
