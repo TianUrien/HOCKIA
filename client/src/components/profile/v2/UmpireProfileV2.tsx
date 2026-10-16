@@ -14,7 +14,8 @@ import { useWeeklyVisibility } from '@/hooks/useWeeklyVisibility'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useUmpireAppointments, type UmpireAppointment } from '@/hooks/useUmpireAppointments'
-import { displayPlace, placeLabel } from '@/lib/communityCard'
+import { displayPlace } from '@/lib/communityCard'
+import { basedInLine, nationalityCountries } from '@/lib/nationality'
 import { humanizeToken } from '@/lib/identity'
 import { flagForCountryName } from '@/lib/careerCopy'
 import { publicProfileShareUrl } from '@/lib/profileShare'
@@ -118,7 +119,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const level = profile.umpire_level?.trim() || null
   const spec = specializationLabel(profile.officiating_specialization)
   const roleLine = ['Umpire', spec].filter(Boolean).join(' · ')
-  const place = useMemo(() => placeLabel(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
+  const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
+  const nationalities = useMemo(() => nationalityCountries([profile.nationality_country_id, profile.nationality2_country_id], countries), [profile.nationality_country_id, profile.nationality2_country_id, countries])
   const photos = useMemo(() => {
     const urls = data.photos.map((p) => p.url).filter(Boolean)
     if (urls.length === 0 && profile.avatar_url) urls.push(profile.avatar_url)
@@ -243,6 +245,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
           roleLine={owner && !level ? 'Add your umpire level' : roleLine}
           roleLineAction={owner && !level ? props.onEdit : null}
           place={place}
+          nationalities={nationalities}
           role="umpire"
           owner={owner}
           onBack={back}
