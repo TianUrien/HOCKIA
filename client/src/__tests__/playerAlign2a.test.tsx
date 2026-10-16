@@ -377,21 +377,23 @@ describe('Apply sheet', () => {
       </MemoryRouter>,
     )
 
-  it('eligible: header, three Detail rows with a chevron, the message box and the one Primary', () => {
+  it('eligible (O3): title + Cancel, the role card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
     sheet()
     expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute('data-variant', 'ghost')
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    expect(screen.getByTestId('apply-role-summary')).toHaveTextContent('Hockey Team Bologna')
     const rows = screen.getAllByTestId('apply-detail-row')
     expect(rows.map((r) => r.firstElementChild?.textContent)).toEqual(['Available from', 'Passport', 'Contact'])
     for (const r of rows) expect(r.querySelector('svg')).not.toBeNull()
-    expect(screen.getByPlaceholderText('Add a message to the club (optional)')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Add a note to the club (optional)')).toBeInTheDocument()
+    expect(screen.getByText('0 / 600')).toBeInTheDocument()
     const send = screen.getByTestId('send-application')
     expect(send).toHaveTextContent('Send application')
     expect(send).not.toBeDisabled()
-    expect(send.className).toContain('bg-hockia-primary')
+    expect(send.className).toContain('bg-brand-primary')
     expect(screen.queryByRole('button', { name: 'Message the club' })).toBeNull()
     expect(screen.queryByTestId('apply-not-eligible')).toBeNull()
-    expect(screen.getByText('Your profile, career and highlights are sent automatically. Withdraw any time from My applications.')).toBeInTheDocument()
+    expect(screen.getByText('Your profile, career and highlights are sent automatically. Withdraw any time from Applied.')).toBeInTheDocument()
   })
 
   it('not eligible: a NEUTRAL callout with an info icon (never amber), Secondary "Message the club", Primary disabled', () => {
@@ -403,7 +405,7 @@ describe('Apply sheet', () => {
     expect(callout.outerHTML).not.toMatch(AMBER)
     expect(callout.querySelector('svg')).not.toBeNull()
     expect(callout).toHaveTextContent('asks for an EU passport')
-    expect(screen.queryByPlaceholderText('Add a message to the club (optional)')).toBeNull()
+    expect(screen.queryByPlaceholderText('Add a note to the club (optional)')).toBeNull()
     const message = screen.getByRole('button', { name: 'Message the club' })
     expect(message.className).toContain('ring-line')
     expect(message.className).not.toContain('bg-hockia-primary')
@@ -421,14 +423,15 @@ describe('Application sent', () => {
       </MemoryRouter>,
     )
 
-  it('Ghost ✕, Primary "View my applications" and Secondary "Back to roles"', () => {
+  it('O3b: green check, "Application sent", the role card, Primary Done and a "View in Applied" link', () => {
     sent()
     expect(screen.getByRole('heading', { name: 'Application sent' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute('data-variant', 'ghost')
-    expect(screen.getByRole('button', { name: 'View my applications' }).className).toContain('bg-hockia-primary')
-    const back = screen.getByRole('button', { name: 'Back to roles' })
-    expect(back.className).toContain('ring-line')
-    expect(back.className).not.toContain('bg-hockia-primary')
+    expect(screen.getByText('Hockey Team Bologna has your profile, career and highlights. Their answer arrives in your Inbox.')).toBeInTheDocument()
+    const done = screen.getByTestId('application-sent-done')
+    expect(done.className).toContain('bg-hockia-primary')
+    const follow = screen.getByRole('button', { name: 'View in Applied' })
+    expect(follow.className).not.toContain('bg-hockia-primary')
+    expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 
   it('the tip reads exactly as approved and says nothing about other applicants', async () => {
@@ -457,9 +460,13 @@ describe('Role detail header', () => {
     expect(screen.getByTestId('role-detail-position')).toHaveTextContent(/head coach/i)
     const tag = screen.getByTestId('role-detail-team-tag')
     expect(tag).toHaveTextContent("Men's")
-    // Opportunities v2 ruling 1 (2026-10-16): the team's own category colour, not the brand purple.
-    expect(tag.className).toContain('bg-category-men-soft')
-    expect(tag.className).toContain('text-category-men')
+    // Opportunities v2 ruling 1 (2026-10-16): the hero chip is glass with the
+    // category dot; the Team key fact carries the team's own colour, never the brand purple.
+    expect(tag.innerHTML).toContain('bg-category-men')
+    const facts = screen.getByTestId('role-key-facts')
+    expect(facts.innerHTML).toContain('bg-category-men-soft')
+    expect(facts.innerHTML).toContain('text-category-men')
+    expect(facts.innerHTML).not.toContain('bg-brand-soft')
     expect(screen.queryByText("Head coach · Men's")).toBeNull()
   })
 

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, Search, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
@@ -22,10 +22,17 @@ import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { IconButton } from '@/components/ui/IconButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { RoleCard } from '@/components/opportunities/RoleCard'
-import { postedByLine, roleIdentity } from '@/lib/opportunityIdentity'
+import { FeaturedRoleCard } from '@/components/opportunities/FeaturedRoleCard'
+import { RailCard, RoleRail } from '@/components/opportunities/RoleRail'
+import { roleIdentity, type RoleIdentity } from '@/lib/opportunityIdentity'
+import { buildRails, pickFeatured, type RailKey } from '@/lib/opportunityRails'
+import { useClubCrestPalettes, useWorldClubCrestPalettes } from '@/hooks/useClubCrestColors'
+import { CATEGORY_DOT_CLASSES } from '@/lib/opportunityCopy'
+import { installSpringEasing } from '@/lib/spring'
+import { hapticSelection } from '@/lib/haptics'
+import type { CrestPalette } from '@/lib/crestPalette'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
-import { Chip } from '@/components/ui/Chip'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -181,7 +188,7 @@ export default function OpportunitiesPage() {
     || (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)
 
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
-  const [clubs, setClubs] = useState<Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null }>>({})
+  const [clubs, setClubs] = useState<Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; coach_current_role?: string | null; womens_league_division: string | null; mens_league_division: string | null }>>({})
   const [worldClubsMap, setWorldClubsMap] = useState<Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }>>({})
   const [userApplications, setUserApplications] = useState<string[]>([])
   // The viewer's own status per applied role — the preview shows the real
@@ -334,7 +341,7 @@ export default function OpportunitiesPage() {
               .select(`
                 *,
                 club:profiles!opportunities_club_id_fkey(
-                  id, full_name, avatar_url, is_test_account, role, current_club,
+                  id, full_name, avatar_url, is_test_account, role, current_club, coach_current_role,
                   womens_league_division, mens_league_division
                 ),
                 world_club:world_clubs!opportunities_world_club_id_fkey(
@@ -373,7 +380,7 @@ export default function OpportunitiesPage() {
               women_league: { name: string; tier: number | null } | null
             } | null
             type VacancyWithClub = Vacancy & {
-              club?: { id: string; full_name: string | null; avatar_url: string | null; is_test_account?: boolean; role?: string | null; current_club?: string | null; womens_league_division?: string | null; mens_league_division?: string | null }
+              club?: { id: string; full_name: string | null; avatar_url: string | null; is_test_account?: boolean; role?: string | null; current_club?: string | null; coach_current_role?: string | null; womens_league_division?: string | null; mens_league_division?: string | null }
               world_club?: WorldClubJoin
             }
 
@@ -382,7 +389,7 @@ export default function OpportunitiesPage() {
               filteredVacancies = filteredVacancies.filter(v => !v.club?.is_test_account)
             }
 
-            const clubsMap: Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null }> = {}
+            const clubsMap: Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; coach_current_role?: string | null; womens_league_division: string | null; mens_league_division: string | null }> = {}
             const wcMap: Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }> = {}
 
             filteredVacancies.forEach((vacancy) => {
@@ -393,6 +400,7 @@ export default function OpportunitiesPage() {
                   avatar_url: vacancy.club.avatar_url,
                   role: vacancy.club.role ?? null,
                   current_club: vacancy.club.current_club ?? null,
+                  coach_current_role: vacancy.club.coach_current_role ?? null,
                   womens_league_division: vacancy.club.womens_league_division ?? null,
                   mens_league_division: vacancy.club.mens_league_division ?? null,
                 }
@@ -557,18 +565,47 @@ export default function OpportunitiesPage() {
   const mobileList = useMemo(() => applyRoleFilters(phoneBase, roleFilters, viewerIsEuEligible), [phoneBase, roleFilters, viewerIsEuEligible])
   // No coaching role open at all (before any phone filter): the D6.2 empty state.
   const coachEmpty = candidateCoach && !isLoading && !fetchError && filters.applied !== 'mine' && phoneBase.length === 0
-  const coachHistory = useCoachingRolesHistory({ enabled: coachEmpty && isPhone, includeTestAccounts: Boolean(isStaging) || isCurrentUserTestAccount })
-  const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
-  const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
-  const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
-  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
-  const leagueFor = (v: Vacancy) => {
+
+  const leagueFor = useCallback((v: Vacancy) => {
     const wc = v.world_club_id ? worldClubsMap[v.world_club_id] : null
     const club = clubs[v.club_id]
     if (wc?.leagueName) return wc.leagueName
     const womens = v.gender === 'Women' || v.gender === 'Girls'
     return (womens ? club?.womens_league_division ?? club?.mens_league_division : club?.mens_league_division ?? club?.womens_league_division) ?? null
+  }, [worldClubsMap, clubs])
+
+  // ── Opportunities v2 (phone): covers in the club's crest colours, the
+  // featured role and the themed rails over the filtered list ──
+  useEffect(() => { installSpringEasing() }, [])
+  const phoneClubs = useMemo(() => (isPhone ? Object.values(clubs).filter((c) => c.role !== 'coach').map((c) => ({ id: c.id, avatar_url: c.avatar_url })) : []), [clubs, isPhone])
+  const phoneWorldClubs = useMemo(() => (isPhone ? Object.values(worldClubsMap).map((w) => ({ id: w.id, avatar_url: w.avatarUrl })) : []), [worldClubsMap, isPhone])
+  const profilePalettes = useClubCrestPalettes(phoneClubs)
+  const worldPalettes = useWorldClubCrestPalettes(phoneWorldClubs)
+  const relevance = useMemo(() => ({ profile, countries }), [profile, countries])
+  const structured = isPhone && !showMyRoles && !coachEmpty && filters.applied !== 'mine'
+  // A featured card over a list of one or two roles only repeats them: it needs three.
+  const featured = useMemo(() => (structured && mobileList.length >= 3 ? pickFeatured(mobileList, relevance) : null), [structured, mobileList, relevance])
+  const rails = useMemo(() => (structured ? buildRails(mobileList, relevance, featured?.id ?? null) : []), [structured, mobileList, relevance, featured])
+  const allRolesRef = useRef<HTMLDivElement>(null)
+  /** Everything a phone card needs about one role: who is behind it and the cover palette. */
+  const describeRole = useCallback((vacancy: Vacancy): { identity: RoleIdentity; palette: CrestPalette | null; flag: string | null; league: string | null } => {
+    const club = clubs[vacancy.club_id]
+    const wc = vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null
+    const identity = roleIdentity({ publisherRole: club?.role, publisherName: club?.full_name, publisherAvatar: club?.avatar_url, organizationName: vacancy.organization_name, publisherCurrentClub: club?.current_club, publisherCoachRole: club?.coach_current_role, worldClub: wc ? { name: wc.clubName, avatarUrl: wc.avatarUrl } : null })
+    const palette = (wc && worldPalettes.get(wc.id)) || (club && club.role !== 'coach' ? profilePalettes.get(club.id) : null) || null
+    return { identity, palette, flag: getFlagEmoji(vacancy.location_country), league: leagueFor(vacancy) }
+  }, [clubs, worldClubsMap, worldPalettes, profilePalettes, getFlagEmoji, leagueFor])
+  const seeAll = (key: RailKey) => {
+    if (key === 'for-you') setRoleFilters({ ...EMPTY_ROLE_FILTERS, eligibleOnly: true, position: profile?.role === 'player' ? profile.position ?? '' : '' })
+    else if (key === 'paid-housing') setRoleFilters({ ...EMPTY_ROLE_FILTERS, package: ['paid', 'housing'] })
+    else setSort('deadline')
+    requestAnimationFrame(() => allRolesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
+  const coachHistory = useCoachingRolesHistory({ enabled: coachEmpty && isPhone, includeTestAccounts: Boolean(isStaging) || isCurrentUserTestAccount })
+  const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
+  const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
+  const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
+  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
 
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
@@ -609,13 +646,6 @@ export default function OpportunitiesPage() {
                 </IconButton>
               )}
             />
-            {!showMyRoles && (
-            <div className="px-5 pb-3">
-              <button type="button" onClick={() => navigate('/search')} className="flex h-10 w-full items-center gap-2 rounded-[12px] bg-surface-muted px-3 text-body text-ink-3" data-testid="opportunities-search">
-                <Search className="h-[18px] w-[18px]" strokeWidth={2} /> Search roles and clubs
-              </button>
-            </div>
-            )}
             {user && profile?.role === 'coach' && (
               /* Coach v2 (Figma D6.2 / D6.4): Roles · Applied · My roles — the
                  last one only for a coach who recruits for their team. */
@@ -653,10 +683,24 @@ export default function OpportunitiesPage() {
             )}
             {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
             {!showMyRoles && !coachEmpty && (
-            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
-              {QUICK_CHIPS.map((c) => (
-                <Chip key={c.key} label={c.label} selected={isQuickChipOn(roleFilters, c.key)} onClick={() => setRoleFilters((f) => toggleQuickChip(f, c.key))} />
-              ))}
+            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
+              {/* Figma O1 147:266: selected = ink pill; category chips carry their colour dot (never a fill). */}
+              {QUICK_CHIPS.map((c) => {
+                const on = isQuickChipOn(roleFilters, c.key)
+                const family = c.key === 'women' ? 'women' : c.key === 'men' ? 'men' : c.key === 'mixed' ? 'mixed' : null
+                return (
+                  <button
+                    key={c.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => { void hapticSelection(); setRoleFilters((f) => toggleQuickChip(f, c.key)) }}
+                    className={`relative inline-flex h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-secondary font-semibold transition-colors before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] ${on ? 'bg-ink-1 text-white' : 'border border-line bg-white text-ink-1 active:bg-surface-muted'}`}
+                  >
+                    {family && <span aria-hidden="true" className={`h-2 w-2 rounded-full ${CATEGORY_DOT_CLASSES[family]}`} />}
+                    {c.label}
+                  </button>
+                )
+              })}
             </div>
             )}
           </div>
@@ -933,8 +977,31 @@ export default function OpportunitiesPage() {
                richly-completed opportunity reads taller than a sparse
                one and the feed never looks like a repetitive list. */
                         <>
-              {/* Phone: role cards (Figma). Tap → detail screen; Apply → sheet. */}
-              <div className="flex flex-col gap-3 px-5 lg:hidden">
+              {/* Phone (Figma O1): featured role → themed rails → all open roles. Tap → detail; Apply → sheet. */}
+              <div className="lg:hidden">
+              {featured && (() => {
+                const d = describeRole(featured)
+                return (
+                  <div className="px-5 pt-3">
+                    <FeaturedRoleCard vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`)} />
+                  </div>
+                )
+              })()}
+              {rails.map((rail) => (
+                <RoleRail key={rail.key} title={rail.title} subtitle={rail.subtitle} onSeeAll={() => seeAll(rail.key)} testId={`rail-${rail.key}`}>
+                  {rail.roles.map((v) => {
+                    const d = describeRole(v)
+                    return <RailCard key={v.id} data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`)} />
+                  })}
+                </RoleRail>
+              ))}
+              {structured && mobileList.length > 0 && (
+                <div ref={allRolesRef} className="flex items-end px-5 pb-3 pt-7 [scroll-margin-top:12px]">
+                  <h2 className="flex-1 text-title text-ink-1">All open roles</h2>
+                  <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
+                </div>
+              )}
+              <div className="flex flex-col gap-3 px-5">
                 {mobileList.length === 0 && (
                   <div className="py-10 text-center">
                     <p className="text-row font-semibold text-ink-1">No roles match these filters</p>
@@ -942,9 +1009,7 @@ export default function OpportunitiesPage() {
                   </div>
                 )}
                 {mobileList.map((vacancy) => {
-                  const club = clubs[vacancy.club_id]
-                  const wc = vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null
-                  const identity = roleIdentity({ publisherRole: club?.role, publisherName: club?.full_name, publisherAvatar: club?.avatar_url, organizationName: vacancy.organization_name, publisherCurrentClub: club?.current_club, worldClub: wc ? { name: wc.clubName, avatarUrl: wc.avatarUrl } : null })
+                  const { identity, flag, league } = describeRole(vacancy)
                   return (
                     <RoleCard
                       key={vacancy.id}
@@ -952,14 +1017,15 @@ export default function OpportunitiesPage() {
                       clubName={identity.displayName}
                       clubLogo={identity.displayLogo}
                       publisherRole={identity.hiringClub ? 'club' : 'coach'}
-                      postedBy={postedByLine(identity)}
-                      countryFlag={getFlagEmoji(vacancy.location_country)}
-                      league={leagueFor(vacancy)}
+                      postedBy={identity.kind === 'coach-for-club' && identity.postedBy ? { name: identity.postedBy.name, avatar: identity.postedBy.avatar, roleLabel: identity.postedBy.roleLabel } : null}
+                      countryFlag={flag}
+                      league={league}
                       applied={userApplications.includes(vacancy.id)}
                       onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
                     />
                   )
                 })}
+              </div>
               </div>
             <div className="hidden columns-1 gap-4 md:columns-2 lg:block">
               {filteredOpportunities.map((vacancy) => {
