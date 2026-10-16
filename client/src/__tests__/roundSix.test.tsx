@@ -200,8 +200,9 @@ describe('recruiting context per tab kind', () => {
     for (const f of ['components/club/FindPlayersScreen.tsx', 'components/club/ShortlistScreen.tsx', 'components/club/ClubOpportunitiesScreen.tsx']) {
       expect(src(f)).toContain("useRecruitingViewKind('player')")
     }
-    const sheet = src('components/recruiting/ContextEditSheet.tsx')
-    expect(sheet).toContain("if (viewKind) q = q.eq('opportunity_type', viewKind)")
+    // The one context control lists only the screen's kind (unify ruling 16 Oct 2026).
+    expect(src('pages/CommunityPage.tsx')).toContain("<RankedForControl kind={tab === 'coaches' ? 'coach' : 'player'} />")
+    expect(src('components/recruiting/RankedForControl.tsx')).toContain("contextKind(r) === 'coach'")
   })
 })
 

@@ -246,10 +246,10 @@ describe('coach profile + settings', () => {
     expect(src).not.toContain('<ContextSwitcher')
     expect(src).not.toContain('<ProfileTopBar')
   })
-  it('the club’s own profile has no recruiting-context chip either (it stays on Community / Saved)', () => {
-    expect(read('../pages/ClubDashboard.tsx')).not.toContain('<ContextSwitcher')
-    expect(read('../pages/CommunityPage.tsx')).toContain('<ContextSwitcher')
-    expect(read('../pages/SavedCandidatesPage.tsx')).toContain('<ContextSwitcher')
+  it('the club’s own profile has no recruiting-context control either (one Ranked for control on Community / Saved, unify ruling 16 Oct 2026)', () => {
+    expect(read('../pages/ClubDashboard.tsx')).not.toContain('<RankedForControl')
+    expect(read('../pages/CommunityPage.tsx')).toContain('<RankedForControl')
+    expect(read('../pages/SavedCandidatesPage.tsx')).toContain('<RankedForControl')
   })
 })
 

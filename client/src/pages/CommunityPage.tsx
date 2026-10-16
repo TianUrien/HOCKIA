@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, SlidersHorizontal, Loader2, Sparkles, X, ChevronDown } from 'lucide-react'
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown } from 'lucide-react'
 import { Header } from '@/components'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import {
@@ -40,8 +40,7 @@ import { getActiveFilterChips } from '@/lib/communityActiveFilters'
 import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
 import { useActiveRecruitingTargetRole, useHasActiveRecruitingScope, useRecruitingContext, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { scopeBannerLine, scopeFilters } from '@/lib/recruitingScopeFilters'
-import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
-import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
+import { RankedForControl } from '@/components/recruiting/RankedForControl'
 import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
@@ -390,29 +389,16 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* Recruiter-only ContextSwitcher self-hides for everyone else. */}
-          {!clubView && <ContextSwitcher className="mb-3" />}
-
-          {/* Educational hint — Recruiter Match needs a real recruiting
-              context. Without one we never show fit/match language, so tell
-              the recruiter how to turn it on. Recruiter-only, no-context. */}
-          {isRecruiterViewer && !scopedRole && !clubView && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-hockia-primary/15 bg-hockia-primary/[0.04] px-3.5 py-2.5 text-xs leading-snug text-gray-600">
-              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-hockia-primary" aria-hidden="true" />
-              <span>
-                Add a recruiting context to see <span className="font-semibold text-gray-800">Recruiter Match</span> ranking.
-                Until then, profiles are shown by completeness and activity.
-              </span>
+          {/* The one context control (Figma U1): recruiters only, self-hides for everyone else. */}
+          {!clubView && isRecruiterViewer && (
+            <div className="mb-3" data-testid="community-ranked-for">
+              <RankedForControl kind={tab === 'coaches' ? 'coach' : 'player'} />
             </div>
           )}
 
+
           {isMembers ? (
             <>
-              {/* Coach-only discoverability banner — self-hides once a
-                  context is set or the user dismisses. */}
-              <div className="mb-3">
-                <CoachContextNudge />
-              </div>
 
               {/* Search */}
               <div className="relative mb-3">
