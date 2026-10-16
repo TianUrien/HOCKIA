@@ -17,7 +17,7 @@ export interface ContentPreview {
   author_avatar: string | null
   author_role: string | null
   excerpt: string
-  context: 'post' | 'post_comment' | 'reference_comment' | 'profile_comment' | 'feed_item' | 'video'
+  context: 'post' | 'post_comment' | 'reference_comment' | 'profile_comment' | 'feed_item' | 'video' | 'opportunity'
   post_id: string | null
   context_profile_id: string | null
   context_profile_name: string | null
@@ -36,6 +36,8 @@ const NOUN: Record<string, string> = {
   feed_item: 'post',
   feed_item_comment: 'comment',
   video: 'video',
+  // Takedown of a role = its cover photo comes down; the role stays open.
+  opportunity: 'role cover photo',
 }
 
 function contentNoun(type: string | null): string {
@@ -49,6 +51,7 @@ function contextLine(p: ContentPreview): string {
     case 'reference_comment': return `on ${owner} reference`
     case 'profile_comment': return `on ${owner} profile`
     case 'video': return 'video'
+    case 'opportunity': return 'role cover photo'
     case 'feed_item': return 'reference'
     default: return 'post'
   }

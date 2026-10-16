@@ -1,0 +1,17 @@
+-- READ-ONLY probe for 20261016200000_opportunity_cover_photos.sql. Safe for MCP and prod.
+-- Expected: role-covers bucket public, images only, 10 MB; four storage policies;
+-- 'opportunity' accepted by user_reports and content_takedowns; the three admin
+-- functions and the orphan sweep know 'opportunity' / 'role-covers'; admin
+-- functions stay DEFINER with search_path pinned and anon cannot execute them.
+SELECT CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'role-covers' AND public) THEN 'PASS' ELSE 'FAIL' END AS status, 'role-covers bucket public' AS chk
+UNION ALL SELECT CASE WHEN (SELECT file_size_limit = 10485760 AND 'image/jpeg' = ANY(allowed_mime_types) AND NOT ('video/mp4' = ANY(allowed_mime_types)) FROM storage.buckets WHERE id = 'role-covers') THEN 'PASS' ELSE 'FAIL' END, 'bucket: images only, 10 MB'
+UNION ALL SELECT CASE WHEN (SELECT count(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname IN ('Public role cover access', 'Publishers upload role covers', 'Publishers update role covers', 'Publishers delete role covers')) = 4 THEN 'PASS' ELSE 'FAIL' END, 'four role-cover policies'
+UNION ALL SELECT CASE WHEN (SELECT pg_get_expr(c.conbin, c.conrelid) FROM pg_constraint c WHERE c.conname = 'user_reports_content_type_check') LIKE '%opportunity%' THEN 'PASS' ELSE 'FAIL' END, 'user_reports accepts opportunity'
+UNION ALL SELECT CASE WHEN (SELECT pg_get_expr(c.conbin, c.conrelid) FROM pg_constraint c WHERE c.conname = 'content_takedowns_content_type_check') LIKE '%opportunity%' THEN 'PASS' ELSE 'FAIL' END, 'content_takedowns accepts opportunity'
+UNION ALL SELECT CASE WHEN pg_get_functiondef('public.admin_takedown_content(text, uuid, uuid, text, boolean)'::regprocedure) LIKE '%WHEN ''opportunity''%' THEN 'PASS' ELSE 'FAIL' END, 'takedown removes a cover'
+UNION ALL SELECT CASE WHEN pg_get_functiondef('public.admin_restore_content(uuid)'::regprocedure) LIKE '%WHEN ''opportunity''%' THEN 'PASS' ELSE 'FAIL' END, 'restore puts a cover back'
+UNION ALL SELECT CASE WHEN pg_get_functiondef('public.admin_content_preview(text, uuid)'::regprocedure) LIKE '%WHEN ''opportunity''%' THEN 'PASS' ELSE 'FAIL' END, 'preview knows opportunities'
+UNION ALL SELECT CASE WHEN pg_get_functiondef('public.enqueue_orphaned_storage_objects(integer, interval)'::regprocedure) LIKE '%role-covers%' THEN 'PASS' ELSE 'FAIL' END, 'orphan sweep covers role-covers'
+UNION ALL SELECT CASE WHEN (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname IN ('admin_takedown_content', 'admin_restore_content', 'admin_content_preview') AND p.prosecdef AND array_to_string(p.proconfig, ',') LIKE '%search_path=public%') = 3 THEN 'PASS' ELSE 'FAIL' END, 'admin fns: DEFINER + search_path pinned'
+UNION ALL SELECT CASE WHEN NOT has_function_privilege('anon', 'public.admin_takedown_content(text, uuid, uuid, text, boolean)', 'EXECUTE') AND NOT has_function_privilege('anon', 'public.admin_restore_content(uuid)', 'EXECUTE') AND NOT has_function_privilege('anon', 'public.admin_content_preview(text, uuid)', 'EXECUTE') THEN 'PASS' ELSE 'FAIL' END, 'anon cannot execute admin fns'
+UNION ALL SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname IN ('admin_takedown_content', 'admin_restore_content', 'admin_content_preview') AND EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee = 0)) THEN 'PASS' ELSE 'FAIL' END, 'admin fns: PUBLIC holds nothing';

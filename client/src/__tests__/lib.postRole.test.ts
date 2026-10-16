@@ -19,6 +19,12 @@ describe('Post a role · mapping', () => {
     expect(locationFromClub({ baseLocation: null, countryName: null })).toEqual({ city: '', country: '' })
   })
 
+  it('carries the optional cover photo both ways (null = generated cover)', () => {
+    expect(draftToRow(base({ coverUrl: null }), 'c', 'open').cover_url).toBeNull()
+    expect(draftToRow(base({ coverUrl: 'https://x/storage/v1/object/public/role-covers/c/a.jpg' }), 'c', 'open').cover_url).toBe('https://x/storage/v1/object/public/role-covers/c/a.jpg')
+    expect(draftFromRow({ ...draftToRow(base({}), 'c', 'open'), id: 'r1', cover_url: 'https://x/storage/v1/object/public/role-covers/c/a.jpg' } as never).coverUrl).toBe('https://x/storage/v1/object/public/role-covers/c/a.jpg')
+  })
+
   it('writes every field onto the opportunities row', () => {
     const row = draftToRow(base({
       positionRequired: true, level: 'high_performance', levelRequired: true, skills: ['drag_flicker', 'sweeper_keeper'],

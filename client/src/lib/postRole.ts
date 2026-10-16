@@ -44,6 +44,8 @@ export interface PostRoleDraft {
   otherBenefits: string[]
   euPassport: boolean
   description: string
+  /** Optional cover photo (opportunities.cover_url, public URL in role-covers); null = generated cover in the club's colours. */
+  coverUrl: string | null
 }
 
 export const TITLE_MAX = 120
@@ -188,6 +190,7 @@ export function emptyDraft(defaults: ClubDefaults): PostRoleDraft {
     otherBenefits: [],
     euPassport: false,
     description: '',
+    coverUrl: null,
   }
 }
 
@@ -219,6 +222,7 @@ export function draftFromRow(v: Vacancy): PostRoleDraft {
     otherBenefits: (v.benefits ?? []).filter((b) => !(PACKAGE_KEYS as readonly string[]).includes(b)),
     euPassport: v.eu_passport_required ?? false,
     description: v.description ?? '',
+    coverUrl: v.cover_url ?? null,
   }
 }
 
@@ -281,6 +285,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     custom_benefits: d.customBenefits,
     eu_passport_required: d.euPassport,
     description: d.description.trim().slice(0, DESCRIPTION_MAX) || null,
+    cover_url: d.coverUrl,
     status,
   }
 }
