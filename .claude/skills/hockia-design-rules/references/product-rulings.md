@@ -44,6 +44,7 @@
 - Covers from club crest palettes; optional cover photo at publish (moderated).
 - Apply sheet = the real modal: Available from / Passport / Contact (editable), optional note ≤ 600, "Your profile, career and highlights are sent automatically".
 - Recruiter screens keep existing logic and copy: Open/Closed segments, waiting banner, pipeline (To review / Shortlisted / Declined), drafts, close/reopen sheet, applicants chips (To review, Shortlisted, Maybe, Declined, Closed), review with Decline / Maybe / Shortlist and the road to signing. "Review N applicants" is solid Primary while a reply is owed.
+- Club speed (2026-10-17, Figma section CS): start a role with Hockia AI (one sentence → filled fields → check summary → Post role); Post again from closed roles; select several applicants → one reason + one Hockia AI note, personalised; closing a role (Filled or Not filled) tells everyone still waiting; phone review auto-advances with Undo; "Your replies · last 30 days" with real data only (≥ 5 applicants, neutral, no comparisons).
 - Desktop: content max 1200; list = wide featured + 4-up rails + 3-column list; role detail = page with a sticky left cover column (Apply, Message, Ask Hockia AI); applicants = master-detail with inline decisions. Filters on desktop = the phone filters sheet shown as a centred dialog; desktop role detail reuses the phone copy (no desktop-only copy). Hockia AI header button and "Ask Hockia AI" stay out until the mascot ships.
 
 ## Inbox and chat
