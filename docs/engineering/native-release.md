@@ -257,6 +257,7 @@ Source: main after the release of staging on 2026-10-16. Apple approved 1.3.19 (
 - Role page scrolls again on phones (PR #316): the CSS-hidden desktop dialog no longer mounts under the phone layout, so its body scroll lock is gone. Shipped on the web 16 Oct; this build carries it natively.
 - Tablets get the phone layout (PR #320, ADR 0008): the WebView is held to 640 pt/dp and centred on iPad and Android tablets; phones unchanged.
 - Android only: Material 3 bottom navigation and back arrow (PR #304), first shipped here.
+- Android only: crisp launch icon. The Android 12+ system splash draws the launcher's foreground layer at 240 dp; ours was a 192 px bitmap (4x upscale, blurry on Samsung phones). The launcher foreground is regenerated per density from the brand logo (108 dp layer, 432 px at xxxhdpi) and the splash uses its own 288 dp icon (`drawable-*/splash_icon.png`, 1152 px at xxxhdpi), rendered from `public/brand/logo-png/hockia-logo-white-2048w.png` by a Playwright script. Re-render with the script in the PR description if the logo changes.
 - Verified by the device lab (`tools/devicelab`) on iPhone 17 Pro Max, iPhone 17e, iPad Air 11, Android medium/small phone, Pixel Tablet before archiving.
 
 ## Changes in iOS 1.3.19 (32) — 2026-10-15
