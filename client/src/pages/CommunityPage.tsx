@@ -38,7 +38,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { getActiveFilterChips } from '@/lib/communityActiveFilters'
 import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
-import { useActiveRecruitingTargetRole, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTargetRole, useHasActiveRecruitingScope, useRecruitingContext, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
+import { scopeBannerLine, scopeFilters } from '@/lib/recruitingScopeFilters'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
 import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
@@ -97,7 +98,9 @@ export default function CommunityPage() {
   // is active, AND it carries a role we can filter on. (target_role is only
   // 'player' or 'coach' today; category-only/custom scopes don't hard-filter
   // by role.)
-  const scopedRole = recruitingScopedRole(viewerProfile, activeRecruitingRole)
+  const hasActiveScope = useHasActiveRecruitingScope()
+  const { active: activeScopeRow } = useRecruitingContext()
+  const scopedRole = recruitingScopedRole(viewerProfile, activeRecruitingRole, hasActiveScope)
   // "Show everyone" escape — the recruiter can widen past the auto role
   // filter without clearing the scope (Fit ranking + category still apply).
   // Reset whenever the scoped role changes so a new scope re-focuses.
@@ -193,6 +196,13 @@ export default function CommunityPage() {
   const filtersState = useCommunityFiltersState(memberRoleFilter, searchParams.get('q') ?? '')
   const { searchQuery, setSearchQuery, filters, updateFilter, clearFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, setApplyContextFit } = filtersState
   const { countries } = useCountries()
+  // A player scope that narrows the grid (team / region): the heading counts
+  // the scoped result, not the role total (16 Oct 2026).
+  const scopeNarrows = (() => {
+    if (!scopeReshaping || scopedRole !== 'player') return false
+    const f = scopeFilters(activeScopeRow, countries)
+    return f.categories.length > 0 || f.countryIds.length > 0 || !!f.location
+  })()
   // Removable active-filter chips shown below the search bar; its length is also
   // the "Filters · N" badge count. Role is intentionally excluded (the chip row
   // already shows it). Rebuilt each render so onRemove closes over current state.
@@ -441,7 +451,7 @@ export default function CommunityPage() {
                   title-row button; "Open to opportunities" lives inside it. */}
               <CommunityFiltersDrawer
                 state={filtersState}
-                resultCount={isNarrowed ? filteredCount : totalCount}
+                resultCount={isNarrowed || scopeNarrows ? filteredCount : totalCount}
                 videoCount={videoCount}
                 euCount={euCount}
                 onSelectRole={(role) => navigate(pathWithSearch(roleToPath(role), searchQuery))}
@@ -487,7 +497,7 @@ export default function CommunityPage() {
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
                   {isNarrowed ? 'Matching members' : activeTab === 'all' || !isPhone ? 'All members' : TITLE_BY_TAB[activeTab]}
                   {(() => {
-                    const displayed = isNarrowed ? filteredCount : totalCount
+                    const displayed = isNarrowed || scopeNarrows ? filteredCount : totalCount
                     if (displayed === null) return null
                     return <span className="font-semibold tabular-nums text-gray-500"> · {displayed.toLocaleString()}</span>
                   })()}
@@ -523,7 +533,7 @@ export default function CommunityPage() {
                     <span key={scopeReshaping ? 'scoped' : 'everyone'} className="inline-block animate-fade-in">
                       {scopeReshaping ? (
                         <>
-                          Showing <span className="font-semibold">{scopedRole === 'coach' ? 'coaches' : 'players'}</span> ranked for your recruiting scope.
+                          Showing <span className="font-semibold">{scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole)}</span>, ranked for your recruiting context.
                         </>
                       ) : (
                         <>Showing everyone — your scope still personalises ranking.</>
