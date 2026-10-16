@@ -21,6 +21,10 @@ const config: CapacitorConfig = {
   },
   ios: {
     scheme: 'HOCKIA',
+    // Device lab only (tools/devicelab/build.mjs sets HOCKIA_LAB=1 at `cap
+    // sync`): lets Appium reach the WKWebView DOM. Store builds never set it,
+    // so the shipped WebView stays non-inspectable.
+    webContentsDebuggingEnabled: process.env.HOCKIA_LAB === '1',
     // Mirror the android.hostname above so the iOS WKWebView serves from
     // https://app.inhockia.com instead of the default https://localhost.
     // Without this, the Places API key (HTTP-referrer restricted to

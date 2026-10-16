@@ -14,7 +14,7 @@ read from the environment (`client/.env`, gitignored) and are never printed.
 | Item | iOS | Android |
 |---|---|---|
 | Version numbers | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `client/ios/App/App.xcodeproj/project.pbxproj` — **both** the Debug and the Release configuration | `versionName` and `versionCode` in `client/android/app/build.gradle` |
-| Next build | **1.3.20 (33)** | **1.21 (23)** |
+| Next build | **1.3.21 (34)** | **1.22 (24)** |
 | Web bundle | `client/dist` copied by `npx cap sync` to `ios/App/App/public` (gitignored) | same, to `android/app/src/main/assets/public` (gitignored) |
 | Native plugins | `client/ios/App/CapApp-SPM/Package.swift` (SPM, no CocoaPods, no `.xcworkspace`) | `client/android/capacitor.settings.gradle` + `app/capacitor.build.gradle` |
 | Crash reporting | `SentryCapacitor` product from `@sentry/capacitor` (pulls `getsentry/sentry-cocoa` 9.28.0, exact) | `:sentry-capacitor` project (pulls `io.sentry:sentry-android` 8.50.1) |
@@ -250,6 +250,15 @@ Source: PRs #247–#249.
 - **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
 - **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
 
+## Changes in iOS 1.3.20 (33) and Android 1.21 (23) — 2026-10-16
+
+Source: main after the release of staging on 2026-10-16. Apple approved 1.3.19 (32) the same day; 33 follows with:
+
+- Role page scrolls again on phones (PR #316): the CSS-hidden desktop dialog no longer mounts under the phone layout, so its body scroll lock is gone. Shipped on the web 16 Oct; this build carries it natively.
+- Tablets get the phone layout (PR #320, ADR 0008): the WebView is held to 640 pt/dp and centred on iPad and Android tablets; phones unchanged.
+- Android only: Material 3 bottom navigation and back arrow (PR #304), first shipped here.
+- Verified by the device lab (`tools/devicelab`) on iPhone 17 Pro Max, iPhone 17e, iPad Air 11, Android medium/small phone, Pixel Tablet before archiving.
+
 ## Changes in iOS 1.3.19 (32) — 2026-10-15
 
 Source: main after release #298. iOS only (founder, 2026-10-14); Android stays on 1.19 (21).
@@ -278,3 +287,7 @@ with Xcode 27+ needs this; test a store build on an iOS 27 simulator before uplo
 Source: main after #301 (same web code as iOS 1.3.19 build 31). First Android build since 1.19 (21) on
 2026-10-10, so it carries everything in between: Community redesign, Home v1, Profile v2 and the
 messenger fixes (#297). R8 stays on; the signed AAB carries `mapping.txt`.
+
+## Gate: device lab green (added 2026-10-16)
+
+Before `npm run cap:build` for a store build: `cd tools/devicelab && npm run build && npm run run -- --device all`. Every core journey must pass on all six devices; attach `report/<timestamp>/REPORT.md` to the release notes. A failure on the role page, the thread or a sheet blocks the build (the 15 Oct frozen role page shipped in iOS build 32 for lack of this gate).
