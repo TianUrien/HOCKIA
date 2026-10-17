@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { Vacancy } from '@/lib/supabase'
 
 /**
  * Round 4 follow-ups: Message the club from the desktop role preview, open
@@ -66,7 +65,6 @@ vi.mock('@/lib/homeInstrumentation', () => ({
   recordModuleImpression: vi.fn(),
   trackModuleClick: vi.fn(),
 }))
-vi.mock('@/components/OpportunityDetailOverlay', () => ({ default: () => <div data-testid="detail-overlay" /> }))
 vi.mock('@/components/index', () => ({
   Avatar: () => <div data-testid="avatar" />,
   StorageImage: () => <div data-testid="storage-image" />,
@@ -88,7 +86,6 @@ vi.mock('@/hooks/useNavigation', () => ({
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
 vi.mock('@/hooks/useInboxSegmentDots', () => ({ useInboxSegmentDots: () => ({ messages: false, requests: false, activity: false }) }))
 
-import OpportunityPreviewModal from '@/components/OpportunityPreviewModal'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
 import { OpportunityPostedCard } from '@/components/home/cards/OpportunityPostedCard'
 import Header from '@/components/Header'
@@ -111,40 +108,7 @@ beforeEach(() => {
 })
 
 // ── 1. Message the club from the desktop preview ────────────────────────────
-const closedVacancy = {
-  id: 'opp-1', club_id: 'club-1', title: '[QA] Midfielder', opportunity_type: 'player', position: 'midfielder',
-  gender: 'Women', status: 'closed', priority: 'medium', location_city: 'Amsterdam', location_country: 'Netherlands',
-  created_at: '2026-09-01T00:00:00Z', application_deadline: null, start_date: null, duration_text: null, benefits: [],
-  custom_benefits: [], specialist_skills_wanted: [], requirements: [], description: null, compensation: null,
-  eu_passport_required: false,
-} as unknown as Vacancy
 
-describe('desktop role preview: Message the club', () => {
-  it('an applicant on a closed role gets Message the club, which opens the message flow', () => {
-    const onClose = vi.fn()
-    render(
-      <MemoryRouter initialEntries={['/opportunities']}>
-        <OpportunityPreviewModal
-          vacancy={closedVacancy}
-          clubInfo={{ id: 'club-1', full_name: 'QA Club', avatar_url: null, role: 'club', current_club: null, womens_league_division: null, mens_league_division: null }}
-          worldClub={null}
-          hasApplied
-          applicationStatus="filled"
-          onClose={onClose}
-        />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByTestId('closed-message-club'))
-    expect(onClose).toHaveBeenCalled()
-    expect(navigateSpy).toHaveBeenCalledWith('/messages?new=club-1', { state: { from: '/opportunities' } })
-  })
-
-  it('the club profile Opportunities tab wires Message the club too (never for the publisher)', () => {
-    const src = read('../components/OpportunitiesTab.tsx')
-    expect(src).toMatch(/onMessage=\{\s*\/\/[^\n]*\n\s*user && detailVacancy\.club_id !== user\.id/)
-    expect(src).toContain('navigate(`/messages?new=${clubId}`')
-  })
-})
 
 // ── 2. Open roles follow the closed-role publisher rules ────────────────────
 describe('open roles: hidden club + blocked pair (migration)', () => {
@@ -266,7 +230,8 @@ describe('club screens', () => {
     render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
     expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'View role' }))
-    expect(screen.getByTestId('detail-overlay')).toBeTruthy()
+    // One role design app-wide (17 Oct 2026): the feed opens the v2 role page.
+    expect(navigateSpy).toHaveBeenCalledWith('/opportunities/opp-9')
   })
 
   it('a player gets Apply on a player role', () => {
