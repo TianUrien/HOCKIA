@@ -92,6 +92,7 @@ vi.mock('@/components/club/RoleActions', () => ({
   ),
 }))
 vi.mock('@/pages/ApplicantsList', () => ({ default: () => <div data-testid="applicants-v1" /> }))
+vi.mock('@/components/club/ApplicantsDesktop', () => ({ default: () => <div data-testid="applicants-desktop" /> }))
 vi.mock('@/pages/OpportunitiesPage', () => ({ default: () => <div data-testid="opportunities-page" /> }))
 vi.mock('@/components/club/HockiaSuggestsScreen', () => ({ default: () => <div data-testid="hockia-suggests-screen" /> }))
 vi.mock('@/components/club/SuggestRefineScreen', () => ({ default: () => <div data-testid="suggest-refine-screen" /> }))
@@ -174,16 +175,25 @@ describe('route guard · Applicants', () => {
     expect(screen.queryByTestId('applicants-screen')).toBeNull()
   })
 
+  // Desktop D4 (ruling 16 Oct 2026): recruiters get the master-detail page.
   it.each([
     ['club', CLUB],
     ['recruiting coach', COACH],
+  ])('desktop · %s → the D4 master-detail', async (_n, profile) => {
+    as(profile); fx.phone = false
+    open()
+    expect(await screen.findByTestId('applicants-desktop')).toBeTruthy()
+    expect(screen.queryByTestId('applicants-v1')).toBeNull()
+  })
+
+  it.each([
     ['non-recruiting coach', CANDIDATE_COACH],
     ['player', PLAYER],
   ])('desktop · %s → today’s page', async (_n, profile) => {
     as(profile); fx.phone = false
     open()
     expect(await screen.findByTestId('applicants-v1')).toBeTruthy()
-    expect(screen.queryByTestId('applicants-screen')).toBeNull()
+    expect(screen.queryByTestId('applicants-desktop')).toBeNull()
   })
 
   it('phone · profile still loading → blank, never the v1 page', () => {
@@ -210,8 +220,6 @@ describe('route guard · Applicant review', () => {
   it.each([
     ['non-recruiting coach', CANDIDATE_COACH, true],
     ['player', PLAYER, true],
-    ['club', CLUB, false],
-    ['recruiting coach', COACH, false],
     ['non-recruiting coach', CANDIDATE_COACH, false],
     ['player', PLAYER, false],
   ])('%s · phone=%s → back to the role’s applicants', (_n, profile, phone) => {
@@ -219,6 +227,15 @@ describe('route guard · Applicant review', () => {
     open()
     expect(screen.getByTestId('where').textContent).toBe(APPLICANTS)
     expect(screen.queryByTestId('applicant-review-screen')).toBeNull()
+  })
+
+  it.each([
+    ['club', CLUB],
+    ['recruiting coach', COACH],
+  ])('desktop · %s → the master-detail page opened on this application', (_n, profile) => {
+    as(profile); fx.phone = false
+    open()
+    expect(screen.getByTestId('where').textContent).toBe(`${APPLICANTS}?a=${REVIEW.split('/').pop()}`)
   })
 
   it('phone · profile still loading → blank', () => {

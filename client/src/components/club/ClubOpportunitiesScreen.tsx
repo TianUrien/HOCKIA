@@ -1,13 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Briefcase, Calendar, ChevronRight, Clock, DollarSign, Info, Plus, Star, Users } from 'lucide-react'
+import { ChevronRight, Info, Plus } from 'lucide-react'
+import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
+import { useOwnerCrest, type OwnerCrest } from '@/hooks/useOwnerCrest'
+import { usePressSpring } from '@/hooks/usePressSpring'
 import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuthStore } from '@/lib/auth'
 import { useRoleShortlist, useScoutingContext } from '@/hooks/useScouting'
 import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole, type ClubRolesData } from '@/hooks/useClubRoles'
-import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
+import { formatDurationText, genderPill, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { closedBreakdown, waitingNotice } from '@/lib/clubRecruiting'
 import { shortDayOf } from '@/lib/signing'
 import { isFirstRunOpportunities } from '@/lib/clubEdit'
@@ -29,102 +33,91 @@ type Segment = 'open' | 'closed'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 function whenLine(r: ClubRole): string {
-  const from = r.start_date ? `From ${monthDay(r.start_date)}` : 'Starts immediately'
-  return [from, formatDurationText(r.duration_text), r.location_city?.trim() || null].filter(Boolean).join(' · ')
+  const from = r.start_date ? `Starts ${monthDay(r.start_date)}` : 'Starts immediately'
+  return [from, formatDurationText(r.duration_text)].filter(Boolean).join(' · ')
 }
 
-function closedLabel(r: ClubRole): string {
-  if (r.closed_reason === 'filled') return r.filled_via_hockia ? 'Filled through Hockia' : 'Filled'
-  if (r.closed_reason === 'withdrawn') return 'Closed without hiring'
-  return 'Closed'
+function closedLabel(r: ClubRole): { label: string; tone: 'positive' | 'grey' } {
+  if (r.closed_reason === 'filled') return r.filled_via_hockia ? { label: 'Filled through Hockia', tone: 'positive' } : { label: 'Filled', tone: 'grey' }
+  if (r.closed_reason === 'withdrawn') return { label: 'Closed without hiring', tone: 'grey' }
+  return { label: 'Closed', tone: 'grey' }
 }
 
-/** A saved draft (Post a role · Save draft): title, what's set so far, Continue. */
+/** Draft card (Figma O5 162:542): dashed outline, Draft pill, the title, Continue. */
 function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => void }) {
-  const pill = genderPill(role.gender)
   return (
-    <article className="flex flex-col gap-3 rounded-[18px] border border-line bg-white p-4" data-testid="club-draft-card">
-      <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
-        <span className="shrink-0 rounded-full bg-surface-grouped px-2 py-0.5 text-caption font-semibold text-ink-2">Draft</span>
-      </div>
+    <article className="flex flex-col gap-1.5 self-start rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
       <div className="flex items-center gap-2">
-        <h3 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">{roleTitle(role)}</h3>
-        {pill && <span className={cn('rounded-full px-2 py-0.5 text-secondary font-semibold', pill.className)}>{pill.label}</span>}
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[3px] text-caption font-semibold text-ink-2">Draft</span>
+        <h3 className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleTitle(role)}</h3>
+        <button type="button" onClick={onContinue} className="shrink-0 text-[16px] font-semibold leading-[21px] text-brand-primary">Continue</button>
       </div>
-      <p className="text-[14px] leading-[19px] text-ink-2">Only you can see this. Post it when it’s ready.</p>
-      <button type="button" onClick={onContinue} className="flex h-11 items-center justify-center rounded-full bg-surface-grouped text-row font-semibold text-ink-1">
-        Continue
-      </button>
+      <p className="text-secondary text-ink-2">Only you can see this. Post it when it’s ready.</p>
     </article>
   )
 }
 
-function RoleCard({ role, expiryDays, onReview, onChanged, onEdit }: { role: ClubRole; expiryDays: number; onReview: () => void; onChanged: () => void; onEdit?: () => void }) {
+/**
+ * Role card (Figma O5 162:486 / O5b 166:654): an 88 pt cover band in the
+ * club's colours with the category chip and the "…" actions, the title, a
+ * meta line, three big pipeline figures (To review in brand when > 0), the
+ * grey closed-without-reply note and "Review N applicants" — Primary while
+ * a reply is owed, quiet otherwise. Closed roles lead with their outcome
+ * pill ("Filled through Hockia" positive, the rest neutral).
+ */
+function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void }) {
+  const press = usePressSpring<HTMLButtonElement>()
   const pill = genderPill(role.gender)
-  const benefits = roleBenefits(role)
-  const paid = isPaid(role)
+  const family = categoryFamily(role.gender)
   const p = role.pipeline
   const open = role.status === 'open'
-  const stat = (value: number, label: string, accent = false) => (
-    <div className="flex flex-1 flex-col items-start">
-      <span className={cn('text-[22px] font-bold leading-7 tabular-nums', accent && value > 0 ? 'text-hockia-primary' : 'text-ink-1')}>{value}</span>
-      <span className="text-caption text-ink-2">{label}</span>
-    </div>
-  )
+  const outcome = open ? null : closedLabel(role)
+  const meta = [
+    `Posted ${monthDay(rolePostedAt(role))}`,
+    open ? whenLine(role) : role.closed_at ? `Closed ${monthDay(role.closed_at)}` : null,
+    role.location_city?.trim() || null,
+  ].filter(Boolean).join(' · ')
+  const stat = (value: number, label: string, accent = false) => {
+    const lit = accent && value > 0
+    return (
+      <div className={cn('flex flex-1 flex-col items-start rounded-[12px] py-2.5 pl-3', lit ? 'bg-brand-soft text-brand-primary' : 'bg-surface-subtle')}>
+        <span className={cn('text-figure tabular-nums', lit ? 'text-brand-primary' : 'text-ink-1')}>{value}</span>
+        <span className={cn('text-caption', lit ? 'text-brand-primary' : 'text-ink-2')}>{label}</span>
+      </div>
+    )
+  }
+  const reviewLabel = open && p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'
   return (
-    <article className="flex flex-col gap-3 rounded-[18px] border border-line bg-white p-4" data-testid="club-role-card">
-      <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
-        <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
-          <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(rolePostedAt(role))}` : closedLabel(role)}
-          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} />
+    <article className="flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] lg:transition-[transform,box-shadow] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_12px_24px_rgba(15,15,20,0.1)]" data-testid="club-role-card" data-status={role.status}>
+      <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
+        {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
+        <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-[8px]" style={{ backgroundColor: 'rgba(0,0,0,0.32)' }}>
+          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
         </span>
+      </RoleCover>
+      <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
+        {outcome && (
+          <span className={cn('mb-1 self-start rounded-full px-2.5 py-[3px] text-caption font-semibold', outcome.tone === 'positive' ? 'bg-positive-soft text-positive' : 'bg-surface-muted text-ink-2')} data-testid="club-role-outcome">{outcome.label}</span>
+        )}
+        <h3 className="text-body font-semibold text-ink-1">{roleTitle(role)}</h3>
+        <p className="text-secondary text-ink-2">{meta}</p>
+        <button type="button" onClick={onReview} className="flex gap-2 pt-3 text-left" aria-label="Open applicants">
+          {stat(p.toReview, 'To review', open)}
+          {stat(p.shortlisted, 'Shortlisted')}
+          {stat(p.declined, 'Declined')}
+        </button>
+        {closedBreakdown(p, expiryDays) && (
+          <p className="flex items-center gap-1.5 pt-1 text-caption text-ink-3" data-testid="role-closed-breakdown">
+            <Info className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            {closedBreakdown(p, expiryDays)}
+          </p>
+        )}
+        <span aria-hidden="true" className="h-3 shrink-0" />
+        {/* Primary only while this role owes a reply (Figma O5); quiet otherwise. */}
+        <button ref={press.ref} type="button" onClick={onReview} {...press.handlers} data-testid="role-review-button" className={cn('mt-auto flex h-11 items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] [transform-origin:center]', open && p.toReview > 0 ? 'bg-brand-primary text-white' : 'bg-surface-subtle text-ink-1')}>
+          {reviewLabel}
+        </button>
       </div>
-      <div className="flex items-center gap-2">
-        <h3 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">{roleTitle(role)}</h3>
-        {pill && <span className={cn('rounded-full px-2 py-0.5 text-secondary font-semibold', pill.className)}>{pill.label}</span>}
-      </div>
-      <p className="flex items-center gap-1.5 text-[14px] leading-[19px] text-ink-2">
-        <Calendar className="h-4 w-4 shrink-0" strokeWidth={1.8} /> {whenLine(role)}
-      </p>
-      {(paid || benefits.length > 0) && (
-        <div className="flex flex-wrap gap-x-3.5 gap-y-2">
-          {paid && (
-            <span className="flex items-center gap-[7px] text-[14px] font-medium text-ink-1">
-              <span className="flex h-[22px] w-[22px] items-center justify-center rounded-[7px] bg-positive-soft text-positive"><DollarSign className="h-3.5 w-3.5" strokeWidth={2} /></span>
-              Paid
-            </span>
-          )}
-          {benefits.map((b) => {
-            const Icon = b.icon
-            return (
-              <span key={b.key} className="flex items-center gap-[7px] text-[14px] font-medium text-ink-1">
-                <span className={cn('flex h-[22px] w-[22px] items-center justify-center rounded-[7px]', b.tileClass)}><Icon className="h-3.5 w-3.5" strokeWidth={2} /></span>
-                {b.label}
-              </span>
-            )
-          })}
-        </div>
-      )}
-      <div className="h-[0.5px] bg-line" />
-      <button type="button" onClick={onReview} className="flex gap-2 text-left" aria-label="Open applicants">
-        {stat(p.toReview, 'To review', true)}
-        {stat(p.shortlisted, 'Shortlisted')}
-        {stat(p.declined, 'Declined')}
-      </button>
-      {closedBreakdown(p, expiryDays) && (
-        <p className="flex items-center gap-1.5 text-caption text-ink-3" data-testid="role-closed-breakdown">
-          <Info className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          {closedBreakdown(p, expiryDays)}
-        </p>
-      )}
-      {/* Repeated per card → Tonal, never the solid Primary (design review,
-          D6): several role cards can owe a reply at once, and the solid
-          Primary belongs to single-focus screens such as applicant review. */}
-      <button type="button" onClick={onReview} data-testid="role-review-button" className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-soft text-hockia-primary active:bg-surface-muted-pressed' : 'bg-surface-grouped text-ink-1')}>
-        {p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'}
-      </button>
     </article>
   )
 }
@@ -134,27 +127,21 @@ function RoleCard({ role, expiryDays, onReview, onChanged, onEdit }: { role: Clu
  * yet. One clear action, Post a role, and a way to start scouting before
  * posting. No segmented control, no waiting notice, no counters.
  */
-function FirstRunOpportunities({ onPostRole, onFindPlayers }: { onPostRole: () => void; onFindPlayers: () => void }) {
+function FirstRunOpportunities({ cover, onPostRole, onFindPlayers }: { cover: OwnerCrest; onPostRole: () => void; onFindPlayers: () => void }) {
   return (
-    <div className="flex flex-col px-5" data-testid="club-opportunities-first-run">
-      <section className="mt-2 flex flex-col items-center rounded-[20px] bg-surface-grouped px-6 pb-6 pt-6 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-hockia-soft text-hockia-primary">
-          <Briefcase className="h-7 w-7" strokeWidth={1.8} />
-        </span>
-        <h2 className="mt-2.5 text-[20px] font-semibold leading-[25px] tracking-[-0.2px] text-ink-1">Post your first role</h2>
-        <p className="mt-2.5 text-[15px] leading-[21px] text-ink-2">Describe the role once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
-        <button type="button" onClick={onPostRole} className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white">
-          Post a role
-        </button>
-      </section>
-      <p className="mt-3 px-1 pb-2 text-secondary text-ink-2">Not ready to post? Find players and shortlist them first.</p>
-      <div className="mt-3 overflow-hidden rounded-2xl bg-surface-grouped">
-        <button type="button" onClick={onFindPlayers} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
-          <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Users className="h-[18px] w-[18px]" strokeWidth={2} /></span>
-          <span className="flex-1 text-[16px] font-medium text-ink-1">Find players now</span>
-          <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
-        </button>
-      </div>
+    <div className="flex flex-col px-4" data-testid="club-opportunities-first-run">
+      {/* Figma O8 164:663: a cover in the club's colours shows what a posted role will look like. */}
+      <RoleCover crestUrl={cover.crestUrl} palette={cover.palette} scrim="none" className="mt-2 h-[196px] rounded-[24px]">
+        <span aria-hidden="true" className="absolute bottom-8 left-4 h-4 w-[170px] rounded-full bg-white/60" />
+        <span aria-hidden="true" className="absolute bottom-[14px] left-4 h-3 w-[110px] rounded-full bg-white/45" />
+      </RoleCover>
+      <h2 className="mt-6 text-title text-ink-1">Post your first role</h2>
+      <p className="mt-2 text-[16px] leading-[22px] text-ink-2">Describe the role once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
+      <button type="button" onClick={onPostRole} className="mt-5 flex h-[52px] w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-semibold text-white">
+        Post a role
+      </button>
+      <p className="mt-4 text-center text-secondary text-ink-2">Not ready to post? Find players and shortlist them first.</p>
+      <button type="button" onClick={onFindPlayers} className="mt-2 h-11 text-[16px] font-semibold text-brand-primary">Find players now</button>
     </div>
   )
 }
@@ -181,12 +168,22 @@ export interface RecruiterRolesProps {
   statusSegment?: 'always' | 'when-closed'
   /** Parent label the Shortlist screen's back button names. */
   parentLabel?: string
+  /** 'desktop' = Figma D3 195:889: a header row (title + subtitle, Open|Closed,
+   *  "+ Post a role" Primary), full-width waiting notice, role cards three
+   *  across (two under 1200) with the draft in the grid, scouting rows below. */
+  layout?: 'phone' | 'desktop'
+  /** Desktop header copy (title defaults to "Opportunities"; null = controls only, the host owns the title). */
+  title?: string | null
+  subtitle?: string | null
 }
 
-export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities' }: RecruiterRolesProps) {
+export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
+  const desktop = layout === 'desktop'
   const navigate = useNavigate()
   const [segment, setSegment] = useState<Segment>('open')
   const location = useLocation()
+  const owner = useAuthStore((s) => s.profile)
+  const cover = useOwnerCrest(owner)
   const highlight = (location.state as { highlight?: string } | null)?.highlight ?? null
   // Land on Opportunities with the role just posted or saved on top (DEV NOTE 330:781).
   const roles = useMemo(() => {
@@ -227,13 +224,35 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
 
   if (firstRun) {
     // Find players now opens Find players with "No context" active.
-    return <FirstRunOpportunities onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+    const first = <FirstRunOpportunities cover={cover} onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+    return desktop ? <div className="mx-auto max-w-[520px] pt-6" data-testid="club-opportunities-desktop">{first}</div> : first
   }
 
   return (
     <>
-      {showSegment && (
-        <div className="px-5 pb-3.5 pt-1">
+      {desktop ? (
+        <div className="mb-6 flex items-center gap-4" data-testid="club-opportunities-desktop-header">
+          <div className="min-w-0 flex-1">
+            {title && <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">{title}</h1>}
+            {subtitle && <p className={cn('text-[16px] leading-[22px] text-ink-2', title && 'mt-1')}>{subtitle}</p>}
+          </div>
+          {showSegment && (
+            <div className="shrink-0">
+              <SegmentedControl<Segment>
+                ariaLabel="Role status"
+                value={segment}
+                onChange={setSegment}
+                className="[&_button]:whitespace-nowrap [&_button]:px-4"
+                options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+              />
+            </div>
+          )}
+          <button type="button" onClick={postRole} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-primary px-5 text-[16px] font-semibold text-white transition-opacity hover:opacity-90" data-testid="desktop-post-role">
+            <Plus className="h-5 w-5" strokeWidth={2.2} /> Post a role
+          </button>
+        </div>
+      ) : showSegment && (
+        <div className="px-4 pb-3.5 pt-1">
           <SegmentedControl<Segment>
             ariaLabel="Role status"
             value={segment}
@@ -244,19 +263,20 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
       )}
 
       {segment === 'open' && notice && (
-        <div className="px-5 pb-3.5">
-          <button type="button" onClick={openNotice} className="flex w-full items-center gap-3 rounded-2xl bg-[#fdf1e4] py-3 pl-3.5 pr-2.5 text-left" data-testid="club-waiting-notice">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white text-[#b45309]"><Clock className="h-5 w-5" strokeWidth={2} /></span>
+        <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
+          {/* Amber only because the viewer must act (Figma O5 162:477). */}
+          <button type="button" onClick={openNotice} className="flex w-full items-center gap-3 rounded-[16px] bg-status-warning-soft py-3 pl-3.5 pr-3 text-left" data-testid="club-waiting-notice">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-status-warning text-secondary font-semibold text-white tabular-nums">{pending.length}</span>
             <span className="min-w-0 flex-1">
-              <span className="block text-row font-semibold text-ink-1">{notice.title}</span>
-              {notice.detail && <span className="block text-secondary text-[#b45309]">{notice.detail}</span>}
+              <span className="block text-[14px] font-semibold leading-[19px] text-ink-1">{notice.title}</span>
+              {notice.detail && <span className="block text-secondary text-ink-2">{notice.detail}</span>}
             </span>
-            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#b45309]" strokeWidth={2} />
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
           </button>
         </div>
       )}
 
-      <div className="flex flex-col gap-3 px-5">
+      <div className={desktop ? 'flex flex-col gap-5' : 'flex flex-col gap-3.5 px-4'}>
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
             <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
@@ -264,24 +284,27 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
-        {roles.map((r) => (r.status === 'draft'
-          ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
-          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
-        ))}
+        {(() => {
+          const cards = roles.map((r) => (r.status === 'draft'
+            ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
+            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
+          ))
+          return desktop
+            ? cards.length > 0 && <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-role-grid">{cards}</div>
+            : cards
+        })()}
 
         {segment === 'open' && (
-          <div className="overflow-hidden rounded-2xl bg-surface-grouped" data-testid="club-scouting-group">
-            <button type="button" onClick={() => navigate(findPlayersPath)} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
-              <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Users className="h-[18px] w-[18px]" strokeWidth={2} /></span>
-              <span className="flex-1 text-[16px] font-medium text-ink-1">Find players for this role</span>
-              <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
+          <div className={cn('overflow-hidden rounded-[16px] bg-surface-subtle', desktop ? 'mt-2' : 'mt-1.5')} data-testid="club-scouting-group">
+            <button type="button" onClick={() => navigate(findPlayersPath)} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
+              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Find players for this role</span>
+              <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
             </button>
-            <div className="ml-[58px] h-[0.5px] bg-line" />
-            <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: parentLabel } })} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
-              <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Star className="h-[18px] w-[18px]" strokeWidth={2} /></span>
-              <span className="flex-1 text-[16px] font-medium text-ink-1">Shortlist</span>
-              <span className="text-[16px] text-ink-2 tabular-nums" data-testid="club-shortlist-count">{activeShortlist.loading ? '' : activeShortlist.rows.length}</span>
-              <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
+            <div className="mx-3.5 h-[0.5px] bg-line" />
+            <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: parentLabel } })} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
+              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Shortlist</span>
+              <span className="text-[16px] leading-[22px] text-ink-3 tabular-nums" data-testid="club-shortlist-count">{activeShortlist.loading ? '' : activeShortlist.rows.length}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
             </button>
           </div>
         )}
@@ -300,8 +323,8 @@ export default function ClubOpportunitiesScreen() {
       <LargeTitleBar
         title="Opportunities"
         trailing={(
-          <button type="button" onClick={postRole} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center text-ink-1">
-            <Plus className="h-6 w-6" strokeWidth={2} />
+          <button type="button" onClick={postRole} aria-label="Post a role" className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
+            <Plus className="h-6 w-6" strokeWidth={2.2} />
           </button>
         )}
       />

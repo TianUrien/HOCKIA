@@ -43,13 +43,45 @@ export interface GenderPill { label: string; className: string }
  * Women's, Girls, Boys, Mixed) uses the one soft-purple Tag style — no pink /
  * blue by gender.
  */
-export const CATEGORY_TAG_CLASS = 'bg-brand-soft text-brand-primary'
-
 const CATEGORY_LABELS: Record<string, string> = { Women: "Women's", Men: "Men's", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed' }
+
+/**
+ * The team's own colour (Opportunities v2 ruling, 2026-10-16): women #be123c,
+ * men #0369a1, mixed #6c2bd9, from the Figma category/* variables (tokens).
+ * Girls and Boys follow the women's and men's palettes. These colours live in
+ * chips, filter dots and the detail "Team" fact only — never a background.
+ */
+export type CategoryFamily = 'women' | 'men' | 'mixed'
+
+export function categoryFamily(gender: string | null | undefined): CategoryFamily | null {
+  switch (gender) {
+    case 'Women': case 'Girls': return 'women'
+    case 'Men': case 'Boys': return 'men'
+    case 'Mixed': return 'mixed'
+    default: return null
+  }
+}
+
+const CATEGORY_TAG_CLASSES: Record<CategoryFamily, string> = {
+  women: 'bg-category-women-soft text-category-women',
+  men: 'bg-category-men-soft text-category-men',
+  mixed: 'bg-category-mixed-soft text-category-mixed',
+}
+
+/** Filter dot / inline marker colour class for a category. */
+export const CATEGORY_DOT_CLASSES: Record<CategoryFamily, string> = {
+  women: 'bg-category-women', men: 'bg-category-men', mixed: 'bg-category-mixed',
+}
+
+export function categoryTagClass(gender: string | null | undefined): string | null {
+  const fam = categoryFamily(gender)
+  return fam ? CATEGORY_TAG_CLASSES[fam] : null
+}
 
 export function genderPill(gender: string | null | undefined): GenderPill | null {
   const label = gender ? CATEGORY_LABELS[gender] : undefined
-  return label ? { label, className: CATEGORY_TAG_CLASS } : null
+  const className = categoryTagClass(gender)
+  return label && className ? { label, className } : null
 }
 
 /**

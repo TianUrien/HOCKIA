@@ -27,7 +27,11 @@ export function isRecruitingViewer(profile: RecruiterAccessProfile | null | unde
 export function recruitingScopedRole(
   profile: RecruiterAccessProfile | null | undefined,
   activeTargetRole: string | null | undefined,
+  /** An active context with no sought role (a saved search: team + region)
+   *  ranks and narrows PLAYERS (16 Oct 2026 — before, it reshaped nothing). */
+  hasActiveScope = false,
 ): 'player' | 'coach' | null {
   if (!isRecruitingViewer(profile)) return null
-  return activeTargetRole === 'player' || activeTargetRole === 'coach' ? activeTargetRole : null
+  if (activeTargetRole === 'player' || activeTargetRole === 'coach') return activeTargetRole
+  return hasActiveScope && !activeTargetRole ? 'player' : null
 }

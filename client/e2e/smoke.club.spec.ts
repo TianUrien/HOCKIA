@@ -55,14 +55,12 @@ test.describe('@smoke club', () => {
     await page.waitForURL(`**/applicants`, { timeout: CLUB_H1_TIMEOUT_MS })
     await waitForAppReady(page)
 
-    await expect(
-      page.getByRole('heading', { level: 1, name: new RegExp(`Applicants for ${seeded.title}`, 'i') })
-    ).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
-
-    // Either the empty state or some applicants count should show
-    const emptyState = page.getByRole('heading', { level: 3, name: 'No Applicants Yet' })
-    const hasEmptyOrApplicants = await emptyState.isVisible() || await page.getByText(/\d+\s+applicants?/i).first().isVisible()
-    expect(hasEmptyOrApplicants).toBe(true)
+    // Desktop D4 (16 Oct 2026): the master-detail page — role header, status
+    // chips, and either applicant rows or the empty copy for the chip.
+    await expect(page.getByTestId('applicants-desktop')).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
+    await expect(page.getByTestId('applicants-role-header')).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
+    await expect(page.getByRole('tab', { name: /To review/ })).toBeVisible()
+    await expect(page.getByTestId('applicants-error')).toHaveCount(0)
   })
 
   test('club public profile is accessible', async ({ page }) => {

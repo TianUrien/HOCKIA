@@ -178,11 +178,15 @@ describe('Opportunities · Roles by viewer', () => {
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
-  it('My roles is phone only', async () => {
+  it('My roles works on desktop too (D3, 16 Oct 2026): ?view=mine opens the coach\'s own roles, Roles keeps the list', async () => {
     phone = false
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     tables = { opportunities: both }
-    wrap(<OpportunitiesPage />, '/opportunities?view=mine')
+    const first = wrap(<OpportunitiesPage />, '/opportunities?view=mine')
+    expect(await screen.findByTestId('coach-my-roles')).toBeTruthy()
+    expect(screen.queryAllByTestId('role-card')).toHaveLength(0)
+    first.unmount()
+    wrap(<OpportunitiesPage />, '/opportunities')
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
     expect(screen.queryByTestId('coach-my-roles')).toBeNull()
   })
@@ -287,18 +291,18 @@ describe('Opportunities · My roles (coach who recruits)', () => {
   })
   const props = { profile: { id: 'coach-1', current_world_club_id: null, current_club: 'Barnes HC' }, onPostRole: vi.fn(), onEditRole: vi.fn() }
 
-  it('"Recruiting for <club>", the waiting notice, the pipeline and a Tonal review action', () => {
+  it('"Recruiting for <club>", the waiting notice, the pipeline and a Primary review action', () => {
     myRoles = { ...myRoles, open: [ownRole(['pending', 'pending', 'pending', 'rejected'])] }
     wrap(<CoachMyRoles {...props} data={myRoles as never} />)
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')
     expect(screen.getByTestId('club-waiting-notice').textContent).toContain('3 applicants waiting for a reply')
     const card = screen.getByTestId('club-role-card')
     expect(card.textContent).toContain('To review')
-    // The per-card action is Tonal: no solid Primary on a list of role cards.
     const review = screen.getByTestId('role-review-button')
     expect(review.textContent).toBe('Review 3 applicants')
-    expect(review.className).toContain('bg-hockia-soft')
-    expect(review.className).toContain('text-hockia-primary')
+    // Opportunities v2 (Figma O5): Primary while this role owes a reply.
+    expect(review.className).toContain('bg-brand-primary')
+    expect(review.className).toContain('text-white')
     expect(Array.from(document.querySelectorAll('button')).filter((b) => b.className.includes('bg-hockia-primary'))).toHaveLength(0)
     const group = screen.getByTestId('club-scouting-group')
     expect(group.textContent).toContain('Find players for this role')
@@ -313,7 +317,7 @@ describe('Opportunities · My roles (coach who recruits)', () => {
     myRoles = { ...myRoles, open: [ownRole(['shortlisted'])] }
     wrap(<CoachMyRoles {...props} data={myRoles as never} />)
     expect(screen.queryByTestId('club-waiting-notice')).toBeNull()
-    expect(screen.getByTestId('role-review-button').className).toContain('bg-surface-grouped')
+    expect(screen.getByTestId('role-review-button').className).toContain('bg-surface-subtle')
     expect(screen.getByText('View applicants')).toBeInTheDocument()
   })
 

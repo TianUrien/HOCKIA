@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -7,12 +7,13 @@ import { trackDbEvent } from '../lib/trackDbEvent'
 import { trackVacancyView } from '../lib/analytics'
 import type { Opportunity } from '../lib/supabase'
 import Header from '../components/Header'
-import OpportunityDetailView from '../components/OpportunityDetailView'
 import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
-import Breadcrumbs from '../components/Breadcrumbs'
 import { OpportunityDetailMobile } from '../components/opportunities/OpportunityDetailMobile'
+import { OpportunityDetailDesktop } from '../components/opportunities/OpportunityDetailDesktop'
+import { roleIdentity } from '@/lib/opportunityIdentity'
+import { useClubCrestPalettes, useWorldClubCrestPalettes } from '@/hooks/useClubCrestColors'
 import OwnApplicationRoad from '../components/opportunities/OwnApplicationRoad'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -53,7 +54,7 @@ export default function OpportunityDetailPage() {
   const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
   
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null)
-  const [club, setClub] = useState<{ id: string; full_name: string | null; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null } | null>(null)
+  const [club, setClub] = useState<{ id: string; full_name: string | null; avatar_url: string | null; role: string | null; current_club: string | null; coach_current_role?: string | null; womens_league_division: string | null; mens_league_division: string | null } | null>(null)
   const [worldClub, setWorldClub] = useState<{ id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null } | null>(null)
   const [hasApplied, setHasApplied] = useState(false)
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
@@ -76,6 +77,10 @@ export default function OpportunityDetailPage() {
   // the desktop tree with CSS still MOUNTS it, so its lock froze the phone
   // page (iPhone, 15 Oct 2026). Mount one tree or the other, never both.
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  // Cover palette for the hero: the directory club's crest when the role is linked to one, else the publisher's.
+  const profilePalettes = useClubCrestPalettes(useMemo(() => (club && club.role !== 'coach' ? [{ id: club.id, avatar_url: club.avatar_url }] : []), [club]))
+  const worldPalettes = useWorldClubCrestPalettes(useMemo(() => (worldClub ? [{ id: worldClub.id, avatar_url: worldClub.avatarUrl }] : []), [worldClub]))
+  const coverPalette = (worldClub && worldPalettes.get(worldClub.id)) || (club ? profilePalettes.get(club.id) : null) || null
 
   const fetchVacancyDetails = useCallback(async () => {
     if (!id) return
@@ -104,6 +109,7 @@ export default function OpportunityDetailPage() {
             is_test_account,
             role,
             current_club,
+            coach_current_role,
             womens_league_division,
             mens_league_division
           ),
@@ -144,7 +150,7 @@ export default function OpportunityDetailPage() {
         women_league: { name: string; tier: number | null } | null
       } | null
       const opportunityWithClub = opportunityData as Opportunity & {
-        club?: { id: string; full_name: string | null; avatar_url: string | null; is_test_account?: boolean; role?: string | null; current_club?: string | null; womens_league_division?: string | null; mens_league_division?: string | null }
+        club?: { id: string; full_name: string | null; avatar_url: string | null; is_test_account?: boolean; role?: string | null; current_club?: string | null; coach_current_role?: string | null; womens_league_division?: string | null; mens_league_division?: string | null }
         world_club?: WorldClubJoin
       }
       if (opportunityWithClub.club?.is_test_account && !isCurrentUserTestAccount && !isStaging) {
@@ -165,6 +171,7 @@ export default function OpportunityDetailPage() {
           avatar_url: opportunityWithClub.club.avatar_url,
           role: opportunityWithClub.club.role ?? null,
           current_club: opportunityWithClub.club.current_club ?? null,
+          coach_current_role: opportunityWithClub.club.coach_current_role ?? null,
           womens_league_division: opportunityWithClub.club.womens_league_division ?? null,
           mens_league_division: opportunityWithClub.club.mens_league_division ?? null,
         })
@@ -385,6 +392,7 @@ export default function OpportunityDetailPage() {
       ? club.womens_league_division ?? club.mens_league_division
       : club.mens_league_division ?? club.womens_league_division) ?? null
   })()
+  const identity = roleIdentity({ publisherRole: club.role, publisherName: club.full_name, publisherAvatar: club.avatar_url, organizationName: opportunity.organization_name, publisherCurrentClub: club.current_club, publisherCoachRole: club.coach_current_role, worldClub: worldClub ? { name: worldClub.clubName, avatarUrl: worldClub.avatarUrl } : null })
 
   // Determine if user can apply (or should see the apply button)
   const canShowApplyButton = !isClosed && !hasApplied && (
@@ -411,13 +419,16 @@ export default function OpportunityDetailPage() {
         <Header mobileHidden />
         {/* Phone: Figma Opportunity detail v2 / — applied */}
         {!isDesktop && (
-        <div className="pt-[env(safe-area-inset-top)] lg:hidden">
+        <div className="lg:hidden">
           <OpportunityDetailMobile
             vacancy={opportunity}
-            clubName={worldClub?.clubName || club.full_name || 'Club'}
-            clubLogo={worldClub?.avatarUrl || club.avatar_url}
+            clubName={identity.displayName}
+            clubLogo={identity.displayLogo}
             clubId={club.id}
             publisherRole={club.role}
+            identity={identity}
+            palette={coverPalette}
+            onClose={handleClose}
             countryFlag={worldClub?.flagEmoji ?? null}
             league={leagueForPhone}
             hasApplied={hasApplied}
@@ -434,36 +445,25 @@ export default function OpportunityDetailPage() {
         </div>
         )}
         {isDesktop && (
-        <div className="hidden pt-20 lg:block">
-          <div className="max-w-4xl mx-auto px-4 md:px-6 pt-4 pb-2">
-            <Breadcrumbs
-              items={[
-                { label: 'Opportunities', to: '/opportunities' },
-                { label: opportunity.title },
-              ]}
-            />
-          </div>
-          <OpportunityDetailView
+        <div className="hidden pt-16 lg:block">
+          {/* Desktop (Figma D2 194:885): the role as a page with a sticky cover column. */}
+          <OpportunityDetailDesktop
             vacancy={opportunity}
-            clubName={club.full_name || 'Unknown Club'}
-            clubLogo={club.avatar_url}
+            clubName={identity.displayName}
+            clubLogo={identity.displayLogo}
             clubId={club.id}
             publisherRole={club.role}
-            publisherOrganization={opportunity.organization_name || club.current_club || null}
-            leagueDivision={(() => {
-              // Phase 3d — Women + Girls families map to women's league;
-              // Men + Boys to men's; Mixed defaults to first available.
-              const womensFamily = opportunity.gender === 'Women' || opportunity.gender === 'Girls'
-              return womensFamily
-                ? club.womens_league_division ?? club.mens_league_division ?? null
-                : club.mens_league_division ?? club.womens_league_division ?? null
-            })()}
-            worldClub={worldClub}
+            identity={identity}
+            palette={coverPalette}
             onClose={handleClose}
-            onApply={canShowApplyButton ? handleApplyClick : undefined}
+            countryFlag={worldClub?.flagEmoji ?? null}
+            league={leagueForPhone}
             hasApplied={hasApplied}
             applicationStatus={applicationStatus}
+            canApply={canShowApplyButton}
+            isPublisher={Boolean(user && user.id === opportunity.club_id)}
             isClosed={isClosed}
+            onApply={handleApplyClick}
             onMessage={handleMessageClick}
             ownApplicationSlot={applicationId && applicationStatus ? (
               <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onSeeOffer={() => handleMessageClick('offer')} onChanged={setApplicationStatus} />
@@ -492,6 +492,7 @@ export default function OpportunityDetailPage() {
           clubLogo={worldClub?.avatarUrl || club.avatar_url}
           publisherRole={club.role}
           league={leagueForPhone}
+          identity={identity}
           onSuccess={(vacancyId) => {
             void vacancyId
             // ⚡ OPTIMISTIC UPDATE: Instant UI feedback

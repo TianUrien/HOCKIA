@@ -67,15 +67,16 @@ beforeEach(() => {
 })
 
 describe('1 · Report', () => {
-  it('builds the report_user payload: note optional, chats and roles file against the person', () => {
+  it('builds the report_user payload: note optional, chats file against the person, roles against the opportunity', () => {
     expect(buildReportPayload({ targetId: 'u2', subject: 'profile', reason: 'spam' })).toEqual({
       p_target_id: 'u2', p_reason: 'Spam or scam', p_category: 'spam', p_content_type: 'user', p_content_id: null,
     })
     expect(buildReportPayload({ targetId: 'u2', subject: 'post', reason: 'harassment', note: '  rude  ', contentId: 'p1' })).toMatchObject({
       p_reason: 'rude', p_content_type: 'post', p_content_id: 'p1',
     })
+    // A role report targets the opportunity (admin takedown removes its cover photo), filed against the publisher.
     expect(buildReportPayload({ targetId: 'club', subject: 'role', reason: 'spam', contentId: 'opp-1' })).toMatchObject({
-      p_reason: '[Role opp-1] Spam or scam', p_content_type: 'user', p_content_id: null,
+      p_target_id: 'club', p_reason: 'Spam or scam', p_content_type: 'opportunity', p_content_id: 'opp-1',
     })
     expect(buildReportPayload({ targetId: 'u3', subject: 'chat', reason: 'spam', note: 'asked for money', contentId: 'conv-9' }).p_reason)
       .toBe('[Chat conv-9] asked for money')

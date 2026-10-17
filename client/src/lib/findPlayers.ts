@@ -204,6 +204,8 @@ export interface ContextLike {
   target_position: string | null
   target_role: string | null
   opportunity_id: string | null
+  /** Saved searches: the region they narrow to (shown in the Ranked for sheet). */
+  region?: string | null
 }
 
 /** A saved context's name; else "Midfielder · Men's" (position + team); else the label. */

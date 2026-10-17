@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Check, ChevronDown, Lock, MapPin, Sparkles } from 'lucide-react'
+import { Calendar, Camera, Check, ChevronDown, Lock, MapPin, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -21,7 +21,13 @@ import {
   levelHint, offerStepCopy, skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
 } from '@/lib/postRole'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
-import { Chips, HardnessPill, Muted, Section, Segments } from './roleFormUi'
+import { Chips, HardnessPill, Muted, Section, Segments, TeamChips } from './roleFormUi'
+import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
+import { useOwnerCrest } from '@/hooks/useOwnerCrest'
+import { optimizeImage, validateImage } from '@/lib/imageOptimization'
+import { deleteStorageObject } from '@/lib/storage'
+import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { positionLabel } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
@@ -51,6 +57,40 @@ export default function PostRoleScreen({ draftId }: Props) {
   const profile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
+  const cover = useOwnerCrest(profile)
+  // Cover photo (Figma O4a/O4b, ruling 4): optional, uploaded to role-covers/<club>/…,
+  // written as opportunities.cover_url on save. A replaced or removed photo is
+  // deleted only after the draft no longer points at it.
+  const coverInput = useRef<HTMLInputElement>(null)
+  const [coverBusy, setCoverBusy] = useState(false)
+  const uploadCover = async (file: File | undefined) => {
+    if (!file || !profile?.id) return
+    const check = validateImage(file, { maxFileSizeMB: 10 })
+    if (!check.valid) { addToast(check.error ?? 'Please use a JPG, PNG or WebP photo up to 10 MB.', 'error'); return }
+    setCoverBusy(true)
+    try {
+      const optimized = await optimizeImage(file, { maxWidth: 1600, maxHeight: 1200, quality: 0.82 })
+      const ext = (optimized.type === 'image/png' ? 'png' : optimized.type === 'image/webp' ? 'webp' : 'jpg')
+      const path = `${profile.id}/${crypto.randomUUID()}.${ext}`
+      const { error } = await supabase.storage.from('role-covers').upload(path, optimized, { upsert: false, cacheControl: '31536000' })
+      if (error) throw error
+      const publicUrl = supabase.storage.from('role-covers').getPublicUrl(path).data.publicUrl
+      const previous = draft.coverUrl
+      set('coverUrl', publicUrl)
+      if (previous) void deleteStorageObject({ bucket: 'role-covers', publicUrl: previous, context: 'post-role:replace-cover' })
+    } catch (err) {
+      logger.error('[PostRole] cover upload failed', err)
+      addToast('We couldn’t upload this photo. Please use a JPG, PNG or WebP up to 10 MB.', 'error')
+    } finally {
+      setCoverBusy(false)
+      if (coverInput.current) coverInput.current.value = ''
+    }
+  }
+  const removeCover = () => {
+    const previous = draft.coverUrl
+    set('coverUrl', null)
+    if (previous) void deleteStorageObject({ bucket: 'role-covers', publicUrl: previous, context: 'post-role:remove-cover' })
+  }
   const clubCountry = profile?.nationality_country_id ? getCountryById(profile.nationality_country_id) : null
   const defaults = useMemo(() => ({ baseLocation: profile?.base_location ?? null, countryName: clubCountry?.name ?? null }), [profile?.base_location, clubCountry?.name])
 
@@ -251,6 +291,11 @@ export default function PostRoleScreen({ draftId }: Props) {
   const copy = step === 3 ? { ...STEP_COPY[3], title: editing ? 'Check and save' : STEP_COPY[3].title, sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
+  // Live cover preview (Figma O4): the club's colours from its crest, the team chip, the role.
+  const previewPill = genderPill(draft.gender)
+  const previewFamily = categoryFamily(draft.gender)
+  const previewTitle = draft.title.trim() || positionLabel(draft.position) || (isPlayer ? 'Your role' : 'Coaching role')
+  const previewClub = cover.clubName ?? profile?.full_name ?? 'Your club'
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
     ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
@@ -283,6 +328,43 @@ export default function PostRoleScreen({ draftId }: Props) {
 
         {step === 1 && (
           <>
+            <section className="px-5 pt-5" data-testid="post-role-cover-preview">
+              <div className="flex items-center justify-between">
+                <span className="text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">Cover · optional</span>
+                <span className="text-secondary text-ink-3">Live preview</span>
+              </div>
+              <RoleCover coverUrl={draft.coverUrl} crestUrl={cover.crestUrl} palette={cover.palette} scrim="card" className="mt-2 h-[196px] rounded-[20px]">
+                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
+                {/* Add photo / Change (Figma 158:426 / 158:506): a glass pill on the preview. */}
+                <button
+                  type="button"
+                  onClick={() => coverInput.current?.click()}
+                  disabled={coverBusy}
+                  className="absolute right-3 top-3 inline-flex h-9 items-center gap-1.5 rounded-full border border-white/20 px-3.5 text-secondary font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[10px] disabled:opacity-60"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
+                  data-testid="post-role-cover-add"
+                >
+                  <Camera className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  {coverBusy ? 'Uploading…' : draft.coverUrl ? 'Change' : 'Add photo'}
+                </button>
+                <input ref={coverInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => void uploadCover(e.target.files?.[0])} data-testid="post-role-cover-input" />
+                <div className="absolute bottom-3.5 left-3.5 right-3.5 flex items-center gap-2.5">
+                  <CrestTile src={cover.crestUrl} name={previewClub} size={36} radius={10} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{previewTitle}</span>
+                    <span className="block truncate text-caption text-white/80">{[previewClub, draft.country.trim() || null].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </div>
+              </RoleCover>
+              {draft.coverUrl ? (
+                <>
+                  <p className="mt-2 text-secondary text-ink-2">Looks great. We add a soft shade at the bottom so the title always reads.</p>
+                  <button type="button" onClick={removeCover} className="mt-1 h-9 text-secondary font-semibold text-status-danger" data-testid="post-role-cover-remove">Remove photo</button>
+                </>
+              ) : (
+                <p className="mt-2 text-secondary text-ink-2">No photo? We build a cover from your crest in your club colours — it already looks finished.</p>
+              )}
+            </section>
             <div className="px-5 pt-5">
               <Segments label="Role type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setProblem(null); setDraft((d) => switchRoleType(d, v)) }} />
             </div>
@@ -298,7 +380,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               )}
             </Section>
             <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint={isPlayer ? 'Players outside this team can’t apply.' : COACH_TEAM_HINT}>
-              <Segments label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
+              <TeamChips label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
             </Section>
             <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`The role’s headline, shown above the position. Up to ${TITLE_MAX} characters.`}>
               <input

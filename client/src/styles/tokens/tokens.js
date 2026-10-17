@@ -84,6 +84,17 @@ export const colors = {
     "club-ink": "#c2410c",
     "brand-bg": "#fff1f2",
     "brand-ink": "#be123c"
+  },
+  "category": {
+    "women": "#be123c",
+    "men": "#0369a1",
+    "mixed": "#6c2bd9",
+    "women-dark": "#fb7185",
+    "men-dark": "#38bdf8",
+    "mixed-dark": "#a78bfa",
+    "women-soft": "#ffe4e6",
+    "men-soft": "#e0f2fe",
+    "mixed-soft": "#f1eafd"
   }
 }
 

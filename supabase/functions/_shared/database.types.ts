@@ -1465,18 +1465,21 @@ export type Database = {
         Row: {
           color: string
           crest_url: string
+          palette: Json | null
           profile_id: string
           updated_at: string
         }
         Insert: {
           color: string
           crest_url: string
+          palette?: Json | null
           profile_id: string
           updated_at?: string
         }
         Update: {
           color?: string
           crest_url?: string
+          palette?: Json | null
           profile_id?: string
           updated_at?: string
         }
@@ -3161,6 +3164,7 @@ export type Database = {
           compensation_required: boolean
           contact_email: string | null
           contact_phone: string | null
+          cover_url: string | null
           created_at: string
           custom_benefits: string[]
           description: string | null
@@ -3204,6 +3208,7 @@ export type Database = {
           compensation_required?: boolean
           contact_email?: string | null
           contact_phone?: string | null
+          cover_url?: string | null
           created_at?: string
           custom_benefits?: string[]
           description?: string | null
@@ -3247,6 +3252,7 @@ export type Database = {
           compensation_required?: boolean
           contact_email?: string | null
           contact_phone?: string | null
+          cover_url?: string | null
           created_at?: string
           custom_benefits?: string[]
           description?: string | null
@@ -6439,6 +6445,38 @@ export type Database = {
           },
         ]
       }
+      world_club_crest_colors: {
+        Row: {
+          color: string
+          crest_url: string
+          palette: Json | null
+          updated_at: string
+          world_club_id: string
+        }
+        Insert: {
+          color: string
+          crest_url: string
+          palette?: Json | null
+          updated_at?: string
+          world_club_id: string
+        }
+        Update: {
+          color?: string
+          crest_url?: string
+          palette?: Json | null
+          updated_at?: string
+          world_club_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "world_club_crest_colors_world_club_id_fkey"
+            columns: ["world_club_id"]
+            isOneToOne: true
+            referencedRelation: "world_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       world_clubs: {
         Row: {
           avatar_url: string | null
@@ -7637,6 +7675,15 @@ export type Database = {
         Args: { p_expires_in_days?: number; p_name?: string }
         Returns: Json
       }
+      admin_crest_backfill_candidates: {
+        Args: { p_version: number }
+        Returns: {
+          crest_url: string
+          id: string
+          kind: string
+          name: string
+        }[]
+      }
       admin_delete_email_campaign: {
         Args: { p_campaign_id: string }
         Returns: Json
@@ -8371,6 +8418,15 @@ export type Database = {
         Args: { p_removed_profile_id: string }
         Returns: number
       }
+      admin_set_crest_colors: {
+        Args: {
+          p_color: string
+          p_crest_url: string
+          p_palette: Json
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
       admin_set_profile_verified: {
         Args: {
           p_notes?: string
@@ -8389,6 +8445,15 @@ export type Database = {
         Returns: Json
       }
       admin_restore_content: { Args: { p_takedown_id: string }; Returns: Json }
+      admin_set_world_club_crest_colors: {
+        Args: {
+          p_color: string
+          p_crest_url: string
+          p_palette: Json
+          p_world_club_id: string
+        }
+        Returns: undefined
+      }
       admin_takedown_content: {
         Args: {
           p_admin_note?: string

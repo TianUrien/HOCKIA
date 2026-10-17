@@ -156,6 +156,13 @@ export function isStaleOpenRole(row: Pick<PublicOpportunityRow, 'application_dea
   return now.getTime() - posted > STALE_OPEN_ROLE_DAYS * 86_400_000
 }
 
+/** ISO date STALE_OPEN_ROLE_DAYS after the posting date (UTC). */
+export function validThroughFromPosted(datePosted: string): string {
+  const d = new Date(`${datePosted}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + STALE_OPEN_ROLE_DAYS)
+  return d.toISOString().slice(0, 10)
+}
+
 /** schema.org/JobPosting for one open role. `siteUrl` has no trailing slash. */
 export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Record<string, unknown> {
   const datePosted = (row.published_at ?? row.created_at).slice(0, 10)
@@ -172,7 +179,9 @@ export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Rec
     title: clean(row.title),
     description: parts.join(' '),
     datePosted,
-    ...(row.application_deadline ? { validThrough: `${row.application_deadline}T23:59:59Z` } : {}),
+    // validThrough is the deadline when the club set one; otherwise the day
+    // the 90-day rule stops advertising the role (a true date, not a guess).
+    validThrough: row.application_deadline ? `${row.application_deadline}T23:59:59Z` : `${validThroughFromPosted(datePosted)}T23:59:59Z`,
     ...(row.start_date ? { jobStartDate: row.start_date } : {}),
     employmentType: row.opportunity_type === 'coach' ? 'CONTRACTOR' : 'FULL_TIME',
     occupationalCategory: roleLabel(row),

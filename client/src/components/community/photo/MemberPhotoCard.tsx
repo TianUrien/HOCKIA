@@ -7,12 +7,16 @@ import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, init
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import monogramRing from '@/assets/community/monogram-ring.svg'
 import { FitPill } from './FitPill'
+import { NationalityLine } from '@/components/ui/NationalityBadges'
+import type { NationalityCountry } from '@/lib/nationality'
 
 /**
  * Card / Member photo (Figma 6:100), Community grid on the phone. 3:4, radius
  * 20; the photo fills the card and a scrim keeps the white text readable on
  * any photo. Info bottom-left: name (one line), role · team, age · flag city.
  * No status chip on people (founder ruling 2026-10-11 — it covered faces).
+ * Line 3 on people = nationality flags (+ EU) · age · city (16 Oct 2026):
+ * a person's flag means nationality, never where they live.
  * No photo → the role colour, pitch lines and an initials ring. Brands show
  * their logo on a white tile instead of initials. The whole card opens the
  * member preview; the fit pill appears only for recruiters (fit passed in).
@@ -25,8 +29,10 @@ interface MemberPhotoCardProps {
    *  no-photo colours (or the avatar) before the gallery photo lands. */
   pending?: boolean
   age?: number | null
-  /** placeLabel(): "🇦🇷 Buenos Aires" (city only, never a postcode). */
+  /** City only, no flag ("Buenos Aires"): where the member is based. */
   place?: string | null
+  /** The member's nationalities (up to two): the flags on line 3 and the EU badge. */
+  nationalities?: NationalityCountry[]
   fit?: FitState | null
   onOpen: () => void
   priority?: boolean
@@ -34,7 +40,7 @@ interface MemberPhotoCardProps {
 
 const SCRIM = CARD_SCRIM
 
-export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
+export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, nationalities = [], fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
   const [failed, setFailed] = useState<string | null>(null)
   const name = member.full_name?.trim() || 'HOCKIA member'
   const isBrand = member.role === 'brand'
@@ -92,7 +98,10 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
         )}
         <span className="truncate text-[16px] font-semibold leading-5 text-white">{name}</span>
         <span className="truncate text-[13px] font-medium leading-[17px] text-white/[0.86]">{roleLine}</span>
-        {placeLine && <span className="truncate text-[12px] leading-4 text-white/[0.72]">{placeLine}</span>}
+        {/* Line 3 (Figma 189:12): nationality flags + EU, then "age · city" with no flag. Clubs/brands keep the place line. */}
+        {nationalities.length > 0
+          ? <NationalityLine nationalities={nationalities} tail={placeLine} className="pt-0.5" />
+          : placeLine && <span className="truncate text-[12px] leading-4 text-white/[0.72]">{placeLine}</span>}
       </span>
     </button>
   )
