@@ -341,6 +341,35 @@ export const scenarios = {
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
   },
 
+  // Home → role (17 Oct 2026): a Home role opens the v2 role page, and closing
+  // it returns to Home at the same scroll position.
+  async 'home-role-back'(lab, ctx) {
+    await lab.go('/home')
+    await lab.waitFor('[data-testid="home-roles-rail"] button', 25000)
+    await sleep(1500)
+    // Real thumb swipes (native gestures on phones, wheel on desktop), then measure.
+    await lab.swipeUp(0.5)
+    await lab.swipeUp(0.5)
+    // Let momentum scrolling settle (iOS keeps gliding) before measuring.
+    let before = -1
+    for (let i = 0; i < 10; i++) { await sleep(500); const y = await lab.eval(() => Math.round(window.scrollY)); if (y === before) break; before = y }
+    await ctx.shot('home-before')
+    await lab.eval(() => document.querySelector('[data-testid="home-roles-rail"] button')?.click())
+    let url = ''
+    for (let i = 0; i < 40; i++) { await sleep(500); url = await lab.url(); if (/\/opportunities\/[0-9a-f-]{36}/.test(url)) break }
+    if (!/\/opportunities\/[0-9a-f-]{36}/.test(url)) throw new Error(`the Home role did not open the role page (url ${url})`)
+    await lab.waitFor('[data-testid="role-detail"], [data-testid="role-detail-desktop"]', 20000)
+    await sleep(1000)
+    await ctx.shot('role-from-home')
+    await lab.eval(() => document.querySelector('[data-testid="role-close"]')?.click())
+    for (let i = 0; i < 40; i++) { await sleep(500); if ((await lab.url()).startsWith('/home')) break }
+    await sleep(2500)
+    const after = await lab.eval(() => Math.round(window.scrollY))
+    await ctx.shot('home-after-back')
+    ctx.note(`scroll ${before} → ${after}`)
+    if (before > 100 && Math.abs(after - before) > 60) throw new Error(`Home scroll not restored (${before} → ${after})`)
+  },
+
   // ---- Publisher (club) journeys: `--scenario club` ----------------------
 
   async 'club-sign-in'(lab, ctx) {

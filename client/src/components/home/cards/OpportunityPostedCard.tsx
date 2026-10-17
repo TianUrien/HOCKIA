@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
@@ -6,7 +6,6 @@ import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter
 import { useAuthStore } from '@/lib/auth'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
-import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
@@ -16,7 +15,9 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // Open the opportunity as an overlay over the Home feed (the feed stays
   // mounted underneath, so closing reveals it exactly where it was — no route
   // change, no unmount, no scroll jump). Deep links still use the route.
-  const [showDetail, setShowDetail] = useState(false)
+  const navigate = useNavigate()
+  // The v2 role page, the same as Opportunities (17 Oct 2026); Back returns to Home at the same scroll.
+  const openRole = () => navigate(`/opportunities/${item.opportunity_id}`)
   // "Apply" only for someone who can apply: a player on a player role, a coach
   // on a coach role, never the publisher. Everyone else (clubs, brands,
   // umpires, the publisher) gets a quiet "View role" that opens the same
@@ -102,19 +103,12 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
 
       <FeedCardFooter>
         {canApply ? (
-          <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+          <FeedCardPrimaryAction onClick={openRole}>Apply</FeedCardPrimaryAction>
         ) : (
-          <FeedCardAction onClick={() => setShowDetail(true)}>View role</FeedCardAction>
+          <FeedCardAction onClick={openRole}>View role</FeedCardAction>
         )}
       </FeedCardFooter>
 
-      {showDetail && (
-        <OpportunityDetailOverlay
-          opportunityId={item.opportunity_id}
-          clubLogo={item.club_logo}
-          onClose={() => setShowDetail(false)}
-        />
-      )}
     </FeedCard>
   )
 }
