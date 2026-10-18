@@ -937,7 +937,7 @@ export default function SettingsPage() {
                   <div className="flex-1 pr-4">
                     <p className="text-gray-900 font-medium text-sm">Anonymous Browsing</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      When enabled, you won't appear in other users' "Who Viewed Your Profile" lists
+                      When enabled, you won't appear in other users' "Who viewed your profile" lists
                     </p>
                   </div>
                   <button

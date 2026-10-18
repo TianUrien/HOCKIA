@@ -67,7 +67,7 @@ export function ProfileViewersSection() {
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <Eye className="w-5 h-5 text-hockia-primary" />
-        <h3 className="text-base font-semibold text-gray-900">Who Viewed Your Profile</h3>
+        <h3 className="text-base font-semibold text-gray-900">Who viewed your profile</h3>
       </div>
 
       {/* Stats row */}
