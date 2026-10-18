@@ -5,8 +5,9 @@ export type HockiaAiDetent = 'medium' | 'large'
 /** Where the sheet was opened from: the line under the title and later the context chip. */
 export type HockiaAiEntry = 'opportunities' | 'profile' | 'role'
 
-/** 'builder' = "Fill my profile for me" (handoff P0–P3): its own conversation inside the same sheet. */
-export type HockiaAiMode = 'chat' | 'builder' | 'apply'
+/** 'builder' = "Fill my profile for me" (handoff P0–P3): its own conversation inside the same sheet.
+ *  'history' = the saved chats (handoff C2). */
+export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history'
 
 /** The role "Prepare my application" is for (handoff A4): what the draft card shows before the role loads. */
 export interface ApplyTarget { id: string; title: string; organization: string | null; logoUrl: string | null }
