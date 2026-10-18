@@ -279,7 +279,9 @@ describe('close / reopen copy', () => {
     const desktop = read('../components/OpportunitiesTab.tsx')
     expect(desktop).not.toContain('Opportunity reopened.')
     expect(desktop).not.toContain('Just closing')
-    expect(desktop).toContain('closeRoleToast(reason, waiting)')
+    // The dashboard tab closes through the shared sheet (Club speed CS6), with the same toasts.
+    expect(desktop).toContain('<CloseRoleSheet')
+    expect(read('../components/club/CloseRoleSheet.tsx')).toContain('closeRoleToast(chosen, left)')
   })
 })
 

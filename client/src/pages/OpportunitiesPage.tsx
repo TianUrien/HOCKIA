@@ -128,18 +128,26 @@ export default function OpportunitiesPage() {
   // "Edit role" on a coach's applicants screen lands here with the role to
   // edit: open the coach's own role form once their roles have loaded.
   const routeLocation = useLocation()
-  const routeEditRoleId = (routeLocation.state as { editRoleId?: string } | null)?.editRoleId ?? null
+  const routeState = routeLocation.state as { editRoleId?: string; postAgainRoleId?: string } | null
+  const routeEditRoleId = routeState?.editRoleId ?? null
+  // Club speed CS3 on desktop: "Post again" on the applicants page lands here too.
+  const routePostAgainId = routeState?.postAgainRoleId ?? null
   const [pendingEditRoleId, setPendingEditRoleId] = useState<string | null>(routeEditRoleId)
+  const [pendingPostAgainId, setPendingPostAgainId] = useState<string | null>(routePostAgainId)
   // Taken once: drop it from the history entry so coming back doesn't reopen the form.
   useEffect(() => {
-    if (routeEditRoleId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
-  }, [routeEditRoleId, navigate, routeLocation.pathname, routeLocation.search])
+    if (routeEditRoleId || routePostAgainId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
+  }, [routeEditRoleId, routePostAgainId, navigate, routeLocation.pathname, routeLocation.search])
   useEffect(() => {
-    if (!pendingEditRoleId || !showMyRoles || myRoles.loading) return
-    const hit = [...myRoles.open, ...myRoles.closed].find((r) => r.id === pendingEditRoleId)
-    if (hit) { setEditingRole(hit); setShowCreateModal(true) }
+    if ((!pendingEditRoleId && !pendingPostAgainId) || !showMyRoles || myRoles.loading) return
+    const all = [...myRoles.open, ...myRoles.closed]
+    const edit = pendingEditRoleId ? all.find((r) => r.id === pendingEditRoleId) : null
+    const again = pendingPostAgainId ? all.find((r) => r.id === pendingPostAgainId) : null
+    if (edit) { setTemplateRole(null); setEditingRole(edit); setShowCreateModal(true) }
+    else if (again) { setEditingRole(null); setTemplateRole(again); setShowCreateModal(true) }
     setPendingEditRoleId(null)
-  }, [pendingEditRoleId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
+    setPendingPostAgainId(null)
+  }, [pendingEditRoleId, pendingPostAgainId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
   const settings = useProfileWriter()
 
   // Opportunities v2 (phone and desktop): filters sheet + quick chips + role
