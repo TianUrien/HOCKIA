@@ -176,7 +176,7 @@ export function AdminAppRatings() {
                   <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6B7280' }} tickFormatter={shortDay} minTickGap={24} />
                   <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '0.5rem', fontSize: '12px' }} />
-                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Legend itemSorter={null} wrapperStyle={{ fontSize: '11px' }} />
                   <Line type="monotone" dataKey="shown" name="Shown" stroke="#3B82F6" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="submitted" name="Rated" stroke="#10B981" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="dismissed" name="Dismissed" stroke="#F43F5E" strokeWidth={2} dot={false} />

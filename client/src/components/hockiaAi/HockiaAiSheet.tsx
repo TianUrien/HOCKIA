@@ -44,7 +44,7 @@ function BetaPill() {
  * three suggestions, the composer) and large (the conversation). Dragging
  * the grabber changes the detent or closes; tapping the dim closes.
  *
- * PR 1 scope (Tian, 16 Oct): the shell on today's Hockia AI answers
+ * PR 1 scope (founder, 16 Oct): the shell on today's Hockia AI answers
  * (useDiscoverChat — same engine, cards and daily limit as /discover). No
  * streaming, no action drafts, no attachments yet, so no "Do it for me"
  * suggestions and no "+" in the composer. Beta everywhere.
@@ -74,7 +74,7 @@ export function HockiaAiSheet() {
   const applying = mode === 'apply' && canBuild && applyTarget !== null
   // Saved chats (handoff C2): signed-in members only — chats live on the account.
   const history = mode === 'history' && signedIn
-  // Next steps (Tian, 2026-10-18): Hockia AI proposes what helps the profile most.
+  // Next steps (founder, 2026-10-18): Hockia AI proposes what helps the profile most.
   const { facts, steps: nextSteps } = useNextSteps(open && canBuild)
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null

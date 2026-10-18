@@ -124,7 +124,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     )
   }
 
-  // ONBOARDING GATE (Tian's age-gate decision 3, 2026-07-11): an authenticated
+  // ONBOARDING GATE (the founder's age-gate decision 3, 2026-07-11): an authenticated
   // account must finish onboarding — which contains the 18+ DOB step — before
   // reaching ANY surface, public pages included. Leaving and returning resumes
   // at onboarding. Applies only once the profile row has loaded (no redirect

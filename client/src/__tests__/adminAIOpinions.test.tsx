@@ -132,7 +132,7 @@ const mockFeedbackPage = {
       viewer_name: 'E2E Test FC',
       viewer_role: 'club',
       player_id: 'player-2',
-      player_name: 'Tian Admin',
+      player_name: 'Alex Admin',
       player_role: 'player',
     },
   ],
@@ -189,7 +189,7 @@ describe('AdminAIOpinions', () => {
     expect(screen.getByText(/No reason provided/)).toBeInTheDocument()
     expect(screen.getAllByText('E2E Test FC').length).toBeGreaterThan(0)
     expect(screen.getByText('Valentina Turienzo')).toBeInTheDocument()
-    expect(screen.getByText('Tian Admin')).toBeInTheDocument()
+    expect(screen.getByText('Alex Admin')).toBeInTheDocument()
   })
 
   it('changing days filter re-calls getAIOpinionMetrics with the new window', async () => {

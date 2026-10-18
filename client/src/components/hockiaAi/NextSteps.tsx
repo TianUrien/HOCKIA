@@ -40,7 +40,7 @@ interface Props {
 }
 
 /**
- * One next step done with the member (Tian, 2026-10-18): a profile photo, the
+ * One next step done with the member (founder, 2026-10-18): a profile photo, the
  * bio or a link. Hockia AI proposes, asks with ready-made options, and saves
  * only on the member's tap; then it recommends what to do next.
  */

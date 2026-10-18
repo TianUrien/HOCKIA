@@ -141,7 +141,7 @@ export const METRIC_INFO = {
     why: 'Pure growth, separated from engagement: this is the top of the funnel, before anyone has formed a habit.',
   },
   activation: {
-    title: 'Activation (profile completed)',
+    title: 'Activated (photo + position)',
     measures: 'Of this period’s new signups, how many completed the minimum setup to become a usable member. ("Activated · first real action" in the registration funnel and "Activation by Role" count a first value-action instead — different definitions, named on each card.)',
     formula: 'New users who finished onboarding AND uploaded a profile photo AND (for players) set a position ÷ all new users in the period.',
     why: 'Signups without activation are empty shells — they can’t be discovered, matched, or contacted. This measures how well onboarding converts interest into a real member.',
@@ -168,8 +168,8 @@ export const METRIC_INFO = {
   },
   contributors: {
     title: 'Weekly Contributors',
-    measures: 'How many people actively created something in the last 7 days — not just browsed.',
-    formula: 'Distinct users who posted, uploaded a photo or video, commented, sent a message, or published an opportunity in the last 7 days.',
+    measures: 'How many people actively created something in the last 7 complete days (yesterday and the 6 before, as WAU) — not just browsed.',
+    formula: 'Distinct users who posted, uploaded a photo or video, commented, sent a message, or published an opportunity in the last 7 complete days (same window as WAU).',
     why: 'Communities live on fresh content. Contributors are the engine; browsers are the audience. Both matter, but only contributors keep the feed alive.',
   },
   contributorShare: {

@@ -104,7 +104,7 @@ export function ActivationByRoleCard({ days = 90 }: { days?: number }) {
         <div>
           <h3 className="text-sm font-semibold text-gray-700">Activation by Role (first value-action, {days}d)</h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            A different bar from "Activation (profile completed)" above: signups in the last {days} days who took a value-action (apply / message / post / friend request / reference / profile update).
+            A different bar from "Activated (photo + position)" above: signups in the last {days} days who took a value-action (apply / message / post / friend request / reference / profile update).
           </p>
         </div>
       </div>

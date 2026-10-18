@@ -67,7 +67,7 @@ export function EmailVolumeChart({ data, loading }: EmailVolumeChartProps) {
           <Tooltip
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
           />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
+          <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} />
           <Area type="monotone" dataKey="sent" name="Sent" stroke={HOCKIA_PRIMARY} fill="url(#gradSent)" strokeWidth={2} />
           <Area type="monotone" dataKey="delivered" name="Delivered" stroke="#10b981" fill="url(#gradDelivered)" strokeWidth={2} />
           <Area type="monotone" dataKey="opened" name="Opened" stroke="#3b82f6" fill="url(#gradOpened)" strokeWidth={2} />

@@ -16,12 +16,16 @@ import { logger } from '@/lib/logger'
 
 type CountKey = keyof NonNullable<Ga4FunnelData['counts']>
 
-const STEPS: { key: CountKey; label: string; icon: typeof Eye; bar: string; iconColor: string }[] = [
+// `from` = the step this one is a true subset of. The wall is a separate entry
+// path, and a sign-up can start from the CTA, the wall or a direct link, so
+// those steps get no "% from" line (it read "100% from Wall"; Analytics
+// review 2026-10-18).
+const STEPS: { key: CountKey; label: string; icon: typeof Eye; bar: string; iconColor: string; from?: CountKey; note?: string }[] = [
   { key: 'page_view_landing', label: 'Landing page viewed', icon: Eye, bar: 'bg-sky-500', iconColor: 'text-sky-500' },
-  { key: 'signup_cta_click', label: 'Sign-up CTA clicked', icon: MousePointerClick, bar: 'bg-cyan-500', iconColor: 'text-cyan-500' },
-  { key: 'protected_action_blocked', label: 'Sign-up wall shown', icon: Lock, bar: 'bg-teal-500', iconColor: 'text-teal-500' },
-  { key: 'signup_wall_action_clicked', label: 'Wall → clicked to join', icon: LogIn, bar: 'bg-emerald-500', iconColor: 'text-emerald-500' },
-  { key: 'sign_up_start', label: 'Sign-up started', icon: UserPlus, bar: 'bg-purple-500', iconColor: 'text-purple-500' },
+  { key: 'signup_cta_click', label: 'Sign-up CTA clicked', icon: MousePointerClick, bar: 'bg-cyan-500', iconColor: 'text-cyan-500', from: 'page_view_landing' },
+  { key: 'protected_action_blocked', label: 'Sign-up wall shown', icon: Lock, bar: 'bg-teal-500', iconColor: 'text-teal-500', note: 'A separate entry path: shown when a visitor tries a members-only action' },
+  { key: 'signup_wall_action_clicked', label: 'Wall → clicked to join', icon: LogIn, bar: 'bg-emerald-500', iconColor: 'text-emerald-500', from: 'protected_action_blocked' },
+  { key: 'sign_up_start', label: 'Sign-up started', icon: UserPlus, bar: 'bg-purple-500', iconColor: 'text-purple-500', note: 'From any entry point (CTA, wall or a direct link), so not a % of the steps above' },
 ]
 
 const DATE_OPTIONS = [7, 15, 30, 90]
@@ -127,14 +131,16 @@ export function Ga4TopFunnel() {
       ) : (
         <>
           <div className="space-y-5">
-            {STEPS.map((step, index) => {
+            {STEPS.map((step) => {
               const value = counts?.[step.key] ?? 0
               const hasValue = value > 0
               const percentage = total > 0 ? Math.round((value / total) * 100) : 0
               const widthPct = total > 0 ? Math.max(percentage, hasValue ? 4 : 0) : 0
               const Icon = step.icon
-              const prevValue = index > 0 ? (counts?.[STEPS[index - 1].key] ?? 0) : value
-              const stepConversion = prevValue > 0 ? Math.min(100, Math.round((value / prevValue) * 100)) : 0
+              const parent = step.from ? STEPS.find((x) => x.key === step.from) : undefined
+              const prevValue = parent ? (counts?.[parent.key] ?? 0) : 0
+              // A "subset" larger than its parent means the steps aren't sequential here: no %.
+              const stepConversion = prevValue > 0 && value <= prevValue ? Math.round((value / prevValue) * 100) : null
 
               return (
                 <div key={step.key} className="space-y-1.5">
@@ -154,14 +160,15 @@ export function Ga4TopFunnel() {
                       style={{ width: `${widthPct}%` }}
                     />
                   </div>
-                  {index > 0 && hasValue && prevValue > 0 && (
+                  {hasValue && parent && stepConversion !== null && (
                     <p className="text-xs text-gray-400 pl-6">
-                      {stepConversion}% from {STEPS[index - 1].label}
+                      {stepConversion}% from {parent.label}
                       {stepConversion < 100 && (
                         <span className="text-gray-500"> &middot; {100 - stepConversion}% drop-off</span>
                       )}
                     </p>
                   )}
+                  {step.note && <p className="text-xs text-gray-400 pl-6" data-testid="ga4-step-note">{step.note}</p>}
                 </div>
               )
             })}

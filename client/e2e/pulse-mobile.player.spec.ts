@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 /**
- * Mobile-viewport pass for the Home V2 Pulse tab (Tian's QA agent could not
+ * Mobile-viewport pass for the Home V2 Pulse tab (the founder's QA agent could not
  * hold a stable ~390px viewport — this covers the render half of that gap;
  * pull-to-refresh needs a real device). Runs meaningfully under the
  * mobile-player project (Pixel 5, 393×851, touch); on desktop projects it

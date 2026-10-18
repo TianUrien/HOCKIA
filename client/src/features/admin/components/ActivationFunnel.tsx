@@ -8,7 +8,7 @@ interface ActivationFunnelProps {
 
 const STEPS = [
   { key: 'signed_up' as const, label: 'Signed Up', icon: UserPlus, color: 'purple' },
-  { key: 'profile_complete' as const, label: 'Profile Complete', icon: UserCheck, color: 'blue' },
+  { key: 'profile_complete' as const, label: 'Photo + bio, or further', icon: UserCheck, color: 'blue' },
   { key: 'browsed_opportunity' as const, label: 'Browsed Opportunity', icon: Eye, color: 'indigo' },
   { key: 'applied' as const, label: 'Applied', icon: FileText, color: 'emerald' },
   { key: 'messaged' as const, label: 'Messaged', icon: MessageSquare, color: 'amber' },

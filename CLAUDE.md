@@ -104,9 +104,10 @@ the outer fence.
 Persistent docs live in `docs/engineering/` (index: `docs/engineering/README.md`). Consult:
 - Before a migration, RPC, view or edge fn → `security.md` (grants, fences, DEFINER rules) + `standards.md` (rollback file, probe, naming)
 - Before a release or a prod deploy → `operations.md` (runbook, verify_jwt flags, rollback paths, traps)
-- Adding a dependency or heavy component → `standards.md` "Bundle budgets" (480 KB first-load is never raised)
+- Adding a dependency or heavy component → `standards.md` "Bundle budgets" (the first-load limit is only raised with founder approval)
 - Writing user-facing copy or status colours → `standards.md` "Copy and status rules" (neutral copy, amber only when the viewer must act)
 - Adding tests or debugging CI → `testing.md` (suites, CI jobs, E2E credential names, flakes)
 - Growth, campaigns, load → `capacity.md` (1,000-user model, load-test plan not yet run)
 - "Why is it like this?" → `decisions/` (ADRs); agent frameworks → `skills.md`
+- Designing, reviewing or implementing any UI → the `hockia-design-rules` skill (`.claude/skills/hockia-design-rules/`) + `docs/design-handoff/decisions.md`
 - Update the relevant doc in the same PR as the change it describes.
