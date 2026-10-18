@@ -479,6 +479,45 @@ export const scenarios = {
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-close"]')?.click())
   },
 
+  // Opt-in, no AI call and no writes: Hockia AI opens with the next-step
+  // plan as a choice card (recommended first + Other), the bio step asks
+  // what to lead with, and a vague question gets a choice card in the chat.
+  async 'hockia-ai-next-steps'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="ai-next-step"]', 15000)
+    await sleep(1200)
+    await ctx.shot('plan')
+    const plan = await lab.eval(() => {
+      const opts = [...document.querySelectorAll('[data-testid="ai-next-step-option"]')]
+      return { n: opts.length, firstRecommended: opts[0]?.getAttribute('data-recommended') === 'true', recommended: opts.filter((o) => o.getAttribute('data-recommended') === 'true').length, other: !!document.querySelector('[data-testid="ai-next-step-other"]'), first: opts[0]?.querySelector('span span span')?.textContent || '' }
+    })
+    if (!plan.n || !plan.firstRecommended || plan.recommended !== 1 || !plan.other) throw new Error(`plan card wrong: ${JSON.stringify(plan)}`)
+    // The bio step (if offered) asks first, before any AI call.
+    const bio = await lab.eval(() => { const b = [...document.querySelectorAll('[data-testid="ai-next-step-option"]')].find((o) => /bio/i.test(o.textContent || '')); b?.click(); return !!b })
+    if (bio) {
+      await lab.waitFor('[data-testid="ai-bio-focus"]', 8000)
+      await sleep(800)
+      await ctx.shot('bio-focus')
+      const n = await lab.eval(() => document.querySelectorAll('[data-testid="ai-bio-focus-option"]').length)
+      if (n !== 3) throw new Error(`bio focus shows ${n} options`)
+      await lab.eval(() => document.querySelector('[data-testid="hockia-ai-to-chat"]')?.click())
+      await sleep(800)
+    }
+    // A vague question gets a choice card (no AI call: the clarifier answers).
+    await lab.eval(() => { const t = document.querySelector('[data-testid="hockia-ai-composer"]'); const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set; set.call(t, 'Find people'); t.dispatchEvent(new Event('input', { bubbles: true })) })
+    await sleep(300)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-send"]')?.click())
+    await lab.waitFor('[data-testid="ai-clarify"]', 20000)
+    await sleep(1200)
+    await ctx.shot('clarify')
+    const clar = await lab.eval(() => ({ first: document.querySelector('[data-testid="ai-clarify-option"]')?.getAttribute('data-recommended'), other: !!document.querySelector('[data-testid="ai-clarify-other"]') }))
+    if (clar.first !== 'true' || !clar.other) throw new Error(`clarify card wrong: ${JSON.stringify(clar)}`)
+    ctx.note(`plan: ${plan.n} steps, "${plan.first}" recommended${bio ? '; bio asks first' : ''}; chat question card OK`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+  },
+
   // Home → role (17 Oct 2026): a Home role opens the v2 role page, and closing
   // it returns to Home at the same scroll position.
   async 'home-role-back'(lab, ctx) {

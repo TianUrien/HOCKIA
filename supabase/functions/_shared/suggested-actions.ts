@@ -82,6 +82,10 @@ export interface SuggestedAction {
 export interface ClarifyingOption {
   label: string
   routed_query: string
+  /** One line on what picking it does (Hockia AI choice card, 2026-10-18). */
+  description?: string
+  /** The option Hockia AI suggests; listed first and badged "Recommended". */
+  recommended?: boolean
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────

@@ -310,16 +310,19 @@ jobs:
           # Budget bumped 5000KB → 5200KB on 2026-10-11 (founder-approved) — the
           # Profile v2 player screen took raw to 5019KB. First-load gate is
           # unchanged (483KB). Old per-role profile screens retire in later phases.
+          # Budget bumped 5200KB → 5400KB on 2026-10-18 (founder-approved) — Hockia AI
+          # (apply, role entry, chat history) took raw to 5198KB; next steps need room.
+          # First-load gate is unchanged (483KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5222400 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5200KB ($(( TOTAL_KB * 100 / 5200 ))%)"
+          if [ "$TOTAL_JS" -gt 5427200 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5400KB ($(( TOTAL_KB * 100 / 5400 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.2MB
-          if [ "$TOTAL_JS" -gt 5324800 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5200KB"
+          # Secondary gate: raw total must stay under 5.4MB
+          if [ "$TOTAL_JS" -gt 5529600 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5400KB"
             exit 1
           fi
 
