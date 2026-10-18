@@ -169,7 +169,7 @@ describe('role menu: Find players / coaches for this role', () => {
     renderRoleActions({ status: 'closed', opportunity_type: 'player' })
     fireEvent.click(screen.getByTestId('role-actions-button'))
     expect(screen.queryByTestId('role-actions-find')).toBeNull()
-    expect(screen.getByText('Reopen role')).toBeTruthy()
+    expect(screen.getByText('Reopen this role')).toBeTruthy()
   })
   it('Role posted reuses the same activation', () => {
     expect(read('../components/club/RolePostedScreen.tsx')).toContain("useFindForRole")

@@ -8,12 +8,19 @@ import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { AI_TEXT_MAX, aiDraftFailedCopy, type AiRoleDraft, type PostRoleStartState } from '@/lib/postRoleAi'
+import { useAuthStore } from '@/lib/auth'
+import { closedRoleLine } from '@/lib/postAgain'
+import { genderPill, roleTitle } from '@/lib/opportunityCopy'
+import { shortDayOf } from '@/lib/signing'
+
+type ClosedRow = { id: string; title: string; position: string | null; opportunity_type: string | null; gender: string | null; closed_at: string | null; closed_reason: string | null }
 
 /**
  * Post a role — how do you want to start? (Figma 05 Club speed · CS1 205:1132).
  * "Start with Hockia AI": one sentence → Hockia AI fills steps 1–3 and the
  * club checks it (CS2) before anything is posted. "Start from scratch" opens
- * the three steps empty. (Post again from a closed role comes in its own PR.)
+ * the three steps empty. "Post again" lists the two most recently closed
+ * roles (CS3): a new role with the same details, opened on the check screen.
  */
 const NEW_ROLE = '/dashboard/opportunities/new'
 
@@ -22,10 +29,32 @@ export function PostRoleStartSheet({ open, onClose }: { open: boolean; onClose: 
   const addToast = useToastStore((s) => s.addToast)
   const [text, setText] = useState('')
   const [drafting, setDrafting] = useState(false)
+  const clubId = useAuthStore((st) => st.profile?.id)
+  const [closed, setClosed] = useState<ClosedRow[]>([])
 
   useEffect(() => { if (!open) { setText(''); setDrafting(false) } }, [open])
+  useEffect(() => {
+    if (!open || !clubId) return
+    let cancelled = false
+    // Best effort: without the list the sheet still offers Hockia AI and scratch.
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from('opportunities')
+          .select('id, title, position, opportunity_type, gender, closed_at, closed_reason')
+          .eq('club_id', clubId)
+          .eq('status', 'closed')
+          .order('closed_at', { ascending: false, nullsFirst: false })
+          .limit(2)
+        if (!cancelled) setClosed((data as ClosedRow[] | null) ?? [])
+      } catch (err) {
+        logger.warn('[PostRoleStart] closed roles not loaded', err)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [open, clubId])
 
-  const go = (state: PostRoleStartState | null, method: 'ai' | 'scratch' | 'ai_fallback') => {
+  const go = (state: PostRoleStartState | null, method: 'ai' | 'scratch' | 'ai_fallback' | 'post_again') => {
     onClose()
     if (state) navigate(NEW_ROLE, { state })
     else navigate(NEW_ROLE)
@@ -85,6 +114,23 @@ export function PostRoleStartSheet({ open, onClose }: { open: boolean; onClose: 
           </button>
           <p className="text-secondary text-ink-2">Hockia AI fills in the role, the offer and the description. Nothing is posted until you check it.</p>
         </div>
+        {closed.length > 0 && (
+          <>
+            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Post again</p>
+            {closed.map((r) => {
+              const team = genderPill(r.gender)?.label
+              return (
+                <button key={r.id} type="button" onClick={() => go({ postAgainId: r.id }, 'post_again')} disabled={drafting} className="-mt-1 flex items-center gap-3 rounded-[16px] bg-surface-subtle px-4 py-3 text-left disabled:opacity-50" data-testid="post-role-again-row">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[17px] leading-[22px] text-ink-1">{[roleTitle(r), team ? `${team} team` : null].filter(Boolean).join(' · ')}</span>
+                    <span className="block text-secondary text-ink-2">{closedRoleLine(r.closed_at, r.closed_reason, (iso) => shortDayOf(iso))}</span>
+                  </span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+                </button>
+              )
+            })}
+          </>
+        )}
         <button
           type="button"
           onClick={() => go(null, 'scratch')}

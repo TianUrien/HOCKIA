@@ -66,7 +66,7 @@ function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => voi
  * a reply is owed, quiet otherwise. Closed roles lead with their outcome
  * pill ("Filled through Hockia" positive, the rest neutral).
  */
-function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void }) {
+function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPostAgain }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void; onPostAgain?: () => void }) {
   const press = usePressSpring<HTMLButtonElement>()
   const pill = genderPill(role.gender)
   const family = categoryFamily(role.gender)
@@ -93,7 +93,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { ro
       <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
         {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
         <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-[8px]" style={{ backgroundColor: 'rgba(0,0,0,0.32)' }}>
-          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
+          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} onPostAgain={onPostAgain} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
         </span>
       </RoleCover>
       <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
@@ -162,6 +162,8 @@ export interface RecruiterRolesProps {
   onPostRole: () => void
   /** Continue a draft / edit a role. Default: the club's phone editor. */
   onEditRole?: (role: ClubRole) => void
+  /** Club speed CS3 · Post again from a closed role. Default: a club on its phone opens Post a role prefilled. */
+  onPostAgainRole?: (role: ClubRole) => void
   /** Where the applicant screens return to. */
   from?: string
   /** 'always' = the club tab; 'when-closed' = only once a closed role exists
@@ -178,7 +180,7 @@ export interface RecruiterRolesProps {
   subtitle?: string | null
 }
 
-export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
+export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
   const desktop = layout === 'desktop'
   const navigate = useNavigate()
   const [segment, setSegment] = useState<Segment>('open')
@@ -288,7 +290,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
         {(() => {
           const cards = roles.map((r) => (r.status === 'draft'
             ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
-            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
+            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} onPostAgain={onPostAgainRole ? () => onPostAgainRole(r) : undefined} />
           ))
           return desktop
             ? cards.length > 0 && <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-role-grid">{cards}</div>

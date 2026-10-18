@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { X, Plus, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, CreditCard, Trophy, Flag } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
+import { postAgainSeed } from '../lib/postAgain'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Button from './Button'
@@ -35,6 +36,9 @@ interface CreateVacancyModalProps {
    *  the coach dashboard launch the modal pre-set to 'coach' so users
    *  don't land on a "Player Position" form. Ignored when editing. */
   initialOpportunityType?: 'player' | 'coach'
+  /** Club speed CS3 · Post again: a closed role whose details seed a NEW
+   *  role. Start date and deadline start empty; it saves as a new row. */
+  templateVacancy?: Vacancy | null
 }
 
 // Field limits — also enforced as `maxLength` on the inputs so the
@@ -181,8 +185,9 @@ function MustNiceToggle({
   )
 }
 
-export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType }: CreateVacancyModalProps) {
+export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType, templateVacancy }: CreateVacancyModalProps) {
   const { user, profile } = useAuthStore()
+  const seedVacancy = useMemo(() => (editingVacancy ? editingVacancy : templateVacancy ? postAgainSeed(templateVacancy) : null), [editingVacancy, templateVacancy])
   const [isLoading, setIsLoading] = useState(false)
   // Tracks whether the user has changed anything this session, so closing
   // the modal can warn before discarding unsaved work.
@@ -196,7 +201,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const [submitError, setSubmitError] = useState<string | null>(null)
   const { addToast } = useToastStore()
 
-  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy, initialOpportunityType))
+  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(seedVacancy, initialOpportunityType))
 
   // Live posting-strength assessment (Market Phase 3) — recomputes as the
   // club fills the form; nudge only, never blocks publishing.
@@ -214,11 +219,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
   // Location autocomplete state
   const [locationText, setLocationText] = useState(() => {
-    const city = editingVacancy?.location_city || ''
-    const country = editingVacancy?.location_country || ''
+    const city = seedVacancy?.location_city || ''
+    const country = seedVacancy?.location_country || ''
     return city && country ? `${city}, ${country}` : city || ''
   })
-  const [locationSelected, setLocationSelected] = useState(() => !!(editingVacancy?.location_city && editingVacancy?.location_country))
+  const [locationSelected, setLocationSelected] = useState(() => !!(seedVacancy?.location_city && seedVacancy?.location_country))
 
   const [newRequirement, setNewRequirement] = useState('')
   const [newCustomBenefit, setNewCustomBenefit] = useState('')
@@ -306,7 +311,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     setNewRequirement('')
     setNewCustomBenefit('')
 
-    if (!editingVacancy && user && typeof window !== 'undefined') {
+    if (!editingVacancy && !templateVacancy && user && typeof window !== 'undefined') {
       const draftKey = getVacancyDraftKey(user.id)
       const rawDraft = window.localStorage.getItem(draftKey)
       if (rawDraft) {
@@ -332,13 +337,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
     }
 
-    const initial = buildInitialFormData(editingVacancy, initialOpportunityType)
+    const initial = buildInitialFormData(seedVacancy, initialOpportunityType)
     // Pre-fill organization name from coach's current club for new opportunities
     if (!editingVacancy && profile?.role === 'coach' && profile.current_club && !initial.organization_name) {
       initial.organization_name = profile.current_club
     }
     setFormData(initial)
-  }, [addToast, editingVacancy, initialOpportunityType, isOpen, profile, user])
+  }, [addToast, editingVacancy, templateVacancy, seedVacancy, initialOpportunityType, isOpen, profile, user])
 
   useBodyScrollLock(isOpen)
 
@@ -360,7 +365,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   }, [handleClose, isOpen, showDiscardConfirm])
 
   useEffect(() => {
-    if (!isOpen || editingVacancy || !user) {
+    // Post again never writes the local new-role draft (it would reopen as "restored" next time).
+    if (!isOpen || editingVacancy || templateVacancy || !user) {
       if (vacancyDraftSaveTimeoutRef.current && typeof window !== 'undefined') {
         window.clearTimeout(vacancyDraftSaveTimeoutRef.current)
         vacancyDraftSaveTimeoutRef.current = null
@@ -396,7 +402,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         vacancyDraftSaveTimeoutRef.current = null
       }
     }, 600)
-  }, [editingVacancy, formData, isOpen, newCustomBenefit, newRequirement, user])
+  }, [editingVacancy, templateVacancy, formData, isOpen, newCustomBenefit, newRequirement, user])
 
   useEffect(() => {
     return () => {
@@ -692,11 +698,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             </div>
             <div>
               <h2 id={titleId} className="text-xl font-bold text-gray-900">
-                {editingVacancy ? 'Edit Opportunity' : 'Create New Opportunity'}
+                {editingVacancy ? 'Edit Opportunity' : templateVacancy ? 'Post again' : 'Create New Opportunity'}
               </h2>
               <p id={subtitleId} className="text-sm text-gray-600">
                 {editingVacancy 
                   ? 'Update your opportunity details' 
+                  : templateVacancy
+                    ? 'A new role with the same details. Dates and applicants start fresh.'
                   : formData.opportunity_type === 'player'
                     ? 'Create a new player position opportunity'
                     : 'Create a new coaching position opportunity'

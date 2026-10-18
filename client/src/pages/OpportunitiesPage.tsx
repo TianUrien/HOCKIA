@@ -109,6 +109,8 @@ export default function OpportunitiesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   // Coach v2 · My roles: "Edit role" / a draft's Continue open the coach's own role form.
   const [editingRole, setEditingRole] = useState<Vacancy | null>(null)
+  // Club speed CS3 · Post again: a closed role that seeds a new one in the create form.
+  const [templateRole, setTemplateRole] = useState<Vacancy | null>(null)
 
   // Coach v2 (Figma D6.2 377:614 · D6.4 377:1814), phone only. A candidate
   // coach's Roles list holds coaching roles only; a coach who recruits keeps
@@ -536,8 +538,9 @@ export default function OpportunitiesPage() {
               data={myRoles}
               layout="desktop"
               subtitle={profile?.full_name ? `${profile.full_name} · your roles` : 'Your roles'}
-              onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
-              onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+              onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
+              onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
+              onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
             />
           ) : (
           <>
@@ -548,7 +551,7 @@ export default function OpportunitiesPage() {
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
-                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setShowCreateModal(true) }}>
+                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
               ) : user ? (
@@ -670,7 +673,7 @@ export default function OpportunitiesPage() {
             {user && <HockiaAiButton onClick={openAi} />}
             {canPostOpportunity && !showMyRoles && (
               <Button
-                onClick={() => { setEditingRole(null); setShowCreateModal(true) }}
+                onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
@@ -737,8 +740,9 @@ export default function OpportunitiesPage() {
                 profile={profile}
                 data={myRoles}
                 layout={isPhone ? 'phone' : 'desktop'}
-                onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
-                onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+                onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
+                onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
+                onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
               />
             </Suspense>
           ) : coachEmpty && isPhone ? (
@@ -993,10 +997,12 @@ export default function OpportunitiesPage() {
         <CreateOpportunityModal
           isOpen={showCreateModal}
           editingVacancy={editingRole}
-          onClose={() => { setShowCreateModal(false); setEditingRole(null) }}
+          templateVacancy={templateRole}
+          onClose={() => { setShowCreateModal(false); setEditingRole(null); setTemplateRole(null) }}
           onSuccess={() => {
             setShowCreateModal(false)
             setEditingRole(null)
+            setTemplateRole(null)
             fetchVacancies({ skipCache: true })
             myRoles.refresh()
           }}
