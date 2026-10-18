@@ -1,5 +1,7 @@
+import { useContext } from 'react'
+import { RoleApplyActionContext } from './roleApplyAction'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Sparkles } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import type { OpportunityResultItem } from '@/hooks/useDiscover'
 import { roleResultMeta, roleResultTitle } from '@/lib/hockiaAi'
@@ -16,6 +18,7 @@ interface RoleResultRowProps {
  */
 export default function RoleResultRow({ role }: RoleResultRowProps) {
   const navigate = useNavigate()
+  const prepare = useContext(RoleApplyActionContext)
   const meta = roleResultMeta(role)
   return (
     <li>
@@ -32,6 +35,11 @@ export default function RoleResultRow({ role }: RoleResultRowProps) {
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-ink-4" strokeWidth={1.75} aria-hidden="true" />
       </button>
+      {prepare && (
+        <button type="button" onClick={() => prepare(role)} className="mb-1 ml-[68px] flex h-8 items-center gap-1.5 rounded-full bg-brand-soft px-3 text-secondary font-semibold text-brand-primary" data-testid="ai-role-prepare">
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> Prepare my application
+        </button>
+      )}
     </li>
   )
 }

@@ -2,14 +2,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronRight, Info } from 'lucide-react'
-import * as Sentry from '@sentry/react'
 import { format } from 'date-fns'
-import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
-import { trackDbEvent } from '@/lib/trackDbEvent'
-import { trackApplicationSubmit } from '@/lib/analytics'
 import type { Vacancy } from '@/lib/supabase'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { extractErrorMessage } from '@/lib/utils'
@@ -24,6 +20,7 @@ import { CrestTile } from '@/components/opportunities/RoleCover'
 import { hapticSuccess } from '@/lib/haptics'
 import { Check } from 'lucide-react'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
+import { submitApplication } from '@/lib/submitApplication'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -127,50 +124,16 @@ export default function ApplyToVacancyModal({
     setSending('sending')
     setError(null)
     try {
-      Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id }, level: 'info' })
-      const trimmed = message.trim()
-      const { error: insertError } = await supabase
-        .from('opportunity_applications')
-        .insert({
-          opportunity_id: vacancy.id,
-          applicant_id: user.id,
-          status: 'pending',
-          ...(trimmed ? { metadata: { message: trimmed } } : {}),
-        } as never)
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          onSuccess(vacancy.id)
-          onClose()
-          addToast('You have already applied to this opportunity.', 'info')
-        } else if (insertError.code === '42501' || insertError.message?.includes('row-level security')) {
-          logger.error('Role mismatch - RLS policy blocked application:', insertError)
-          reportSupabaseError('vacancies.apply_rls_block', insertError, { vacancyId: vacancy.id, viewerRole: profile?.role ?? null }, { feature: 'vacancies', operation: 'apply_vacancy' })
-          onError?.(vacancy.id)
-          const msg = vacancy.opportunity_type === 'coach'
-            ? 'Only coaches can apply to coach opportunities.'
-            : vacancy.opportunity_type === 'player'
-              ? 'Only players can apply to player opportunities.'
-              : 'You cannot apply to this opportunity due to role restrictions.'
-          setError(msg)
-          addToast(msg, 'error')
-        } else if (insertError.code === 'P0001') {
-          // check_application_eligibility rejected it — the message is user-facing.
-          onError?.(vacancy.id)
-          const msg = insertError.message || 'You are not eligible to apply to this opportunity.'
-          setError(msg)
-          addToast(msg, 'error')
-        } else {
-          logger.error('Error applying to vacancy:', insertError)
-          reportSupabaseError('vacancies.apply_error', insertError, { vacancyId: vacancy.id, viewerRole: profile?.role ?? null }, { feature: 'vacancies', operation: 'apply_vacancy' })
-          onError?.(vacancy.id)
-          const msg = extractErrorMessage(insertError, 'Failed to submit application. Please try again.')
-          setError(msg)
-          addToast(msg, 'error')
-        }
+      const res = await submitApplication(vacancy, user.id, message, { viewerRole: profile?.role ?? null, source: 'apply_sheet' })
+      if (res.ok && res.already) {
+        onSuccess(vacancy.id)
+        onClose()
+        addToast('You have already applied to this opportunity.', 'info')
+      } else if (!res.ok) {
+        onError?.(vacancy.id)
+        setError(res.message)
+        addToast(res.message, 'error')
       } else {
-        trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined })
-        void trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
         onSuccess(vacancy.id)
         // Send morph (Motion spec): spinner → green check → the sent screen.
         setSending('done')

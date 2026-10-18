@@ -14,6 +14,8 @@ import { MascotAvatar, MascotClip, MascotHello } from './mascot'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
 import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
+import { ApplyFlow } from './ApplyFlow'
+import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
 
@@ -44,7 +46,7 @@ function BetaPill() {
  * suggestions and no "+" in the composer. Beta everywhere.
  */
 export function HockiaAiSheet() {
-  const { open, detent, setDetent, close, mode, setMode } = useHockiaAiSheet()
+  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const [input, setInput] = useState('')
@@ -62,11 +64,14 @@ export function HockiaAiSheet() {
   // "Fill my profile for me" (handoff P0–P3): players and coaches (ruling 2026-10-18).
   const canBuild = profile?.role === 'player' || profile?.role === 'coach'
   const builder = mode === 'builder' && canBuild
+  // "Prepare my application" (handoff A4): players and coaches, from a role result.
+  const applying = mode === 'apply' && canBuild && applyTarget !== null
+  const special = builder || applying
   const startBuilder = () => { void hapticSelection(); setMode('builder') }
   const hasMessages = messages.length > 0
 
   useEffect(() => { if (open) void hapticLight() }, [open])
-  useEffect(() => { if ((hasMessages || builder) && open && detent === 'medium') setDetent('large') }, [hasMessages, builder, open, detent, setDetent])
+  useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
   useEffect(() => {
     if (!open) return
@@ -143,7 +148,7 @@ export function HockiaAiSheet() {
 
         {large ? (
           <div className="flex shrink-0 items-center justify-between px-4 pb-2">
-            {builder ? (
+            {special ? (
               <button type="button" onClick={() => setMode('chat')} aria-label="Back to the chat" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
                 <MessageSquare className="h-5 w-5" strokeWidth={2} />
               </button>
@@ -159,7 +164,15 @@ export function HockiaAiSheet() {
           </div>
         ) : null}
 
-        {builder ? <ProfileBuilder onClose={close} /> : (<>
+        {applying && applyTarget ? (
+          <ApplyFlow
+            key={applyTarget.id}
+            target={applyTarget}
+            onClose={close}
+            onAddVideo={() => setMode('builder')}
+            onFindSimilar={(q) => { setMode('chat'); setTimeout(() => send(q), 0) }}
+          />
+        ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
           {!large && (
             <div className="flex flex-col gap-3 pb-3" data-testid="hockia-ai-medium">
@@ -194,7 +207,9 @@ export function HockiaAiSheet() {
 
           {large && hasMessages && (
             <div className="pb-4 pt-1" data-testid="hockia-ai-conversation">
-              <RevealingChat messages={messages} revealId={revealId} onRevealed={finishReveal} />
+              <RoleApplyActionContext.Provider value={canBuild ? (r) => prepareApplication({ id: r.id, title: r.title, organization: r.organization, logoUrl: r.logo_url }) : null}>
+                <RevealingChat messages={messages} revealId={revealId} onRevealed={finishReveal} />
+              </RoleApplyActionContext.Provider>
               {isPending && <ThinkingSteps steps={steps} />}
             </div>
           )}

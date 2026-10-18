@@ -333,6 +333,33 @@ export const scenarios = {
     await sleep(600)
   },
 
+  // Opt-in (one question + one draft on staging): "Prepare my application"
+  // from a role result. The draft card (or an honest already-applied / not
+  // eligible answer) must show; nothing is SENT.
+  async 'hockia-ai-apply'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await sleep(800)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-composer"]', 15000)
+    await lab.type('[data-testid="hockia-ai-composer"]', 'Show me open roles for women midfielders')
+    await lab.tap('[data-testid="hockia-ai-send"]')
+    await lab.waitFor('[data-testid="ai-role-prepare"]', 60000)
+    await sleep(1200)
+    await ctx.shot('results')
+    await lab.eval(() => document.querySelector('[data-testid="ai-role-prepare"]')?.click())
+    await lab.waitFor('[data-testid="apply-draft-card"], [data-testid="apply-not-eligible"], [data-testid="apply-already"], [data-testid="apply-closed"], [data-testid="apply-error"]', 45000)
+    await sleep(800)
+    await ctx.shot('draft')
+    const r = await lab.eval(() => ({ card: !!document.querySelector('[data-testid="apply-draft-card"]'), send: !!document.querySelector('[data-testid="apply-send"]'), already: !!document.querySelector('[data-testid="apply-already"]'), notEligible: !!document.querySelector('[data-testid="apply-not-eligible"]'), err: document.querySelector('[data-testid="apply-error"]')?.textContent || null }))
+    if (r.err) throw new Error(`apply draft error: ${r.err}`)
+    if (r.card && !r.send) throw new Error('draft card without Send application')
+    if (!r.card && !r.already && !r.notEligible) throw new Error(`no draft: ${JSON.stringify(r)}`)
+    ctx.note(r.card ? 'draft card shown; not sent' : r.already ? 'already applied (honest answer)' : 'not eligible (neutral callout)')
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+    await sleep(600)
+  },
+
   async 'hockia-ai-sheet'(lab, ctx) {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
