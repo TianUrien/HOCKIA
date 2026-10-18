@@ -461,6 +461,9 @@ verify_jwt = true
 [functions.profile-builder]
 verify_jwt = true
 
+[functions.profile-bio]
+verify_jwt = true
+
 [functions.apply-draft]
 verify_jwt = true
 

@@ -17,6 +17,8 @@ import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
 import { ChatHistory } from './ChatHistory'
+import { NextStepPlan, NextSteps } from './NextSteps'
+import { useNextSteps } from './useNextSteps'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
@@ -48,7 +50,7 @@ function BetaPill() {
  * suggestions and no "+" in the composer. Beta everywhere.
  */
 export function HockiaAiSheet() {
-  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole } = useHockiaAiSheet()
+  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
@@ -72,7 +74,11 @@ export function HockiaAiSheet() {
   const applying = mode === 'apply' && canBuild && applyTarget !== null
   // Saved chats (handoff C2): signed-in members only — chats live on the account.
   const history = mode === 'history' && signedIn
-  const special = builder || applying || history
+  // Next steps (Tian, 2026-10-18): Hockia AI proposes what helps the profile most.
+  const { facts, steps: nextSteps } = useNextSteps(open && canBuild)
+  const stepping = mode === 'steps' && canBuild && step !== null
+  const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
+  const special = builder || applying || history || stepping
   const startBuilder = () => { void hapticSelection(); setMode('builder') }
   const hasMessages = messages.length > 0
 
@@ -111,6 +117,8 @@ export function HockiaAiSheet() {
 
   if (!open) return null
   const large = detent === 'large'
+  const askFromPlan = (text: string) => { setMode('chat'); setTimeout(() => send(text), 0) }
+  const planCard = plan ? <NextStepPlan steps={plan} question="Where should we start?" onPick={startStep} onOther={askFromPlan} /> : null
   const canSend = input.trim().length > 0 && !isPending
   const buildChip = canBuild ? (
     <button type="button" onClick={startBuilder} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-brand-primary/30 bg-brand-soft px-4 py-3 text-left" data-testid="hockia-ai-fill-profile">
@@ -192,7 +200,9 @@ export function HockiaAiSheet() {
           </div>
         ) : null}
 
-        {history ? (
+        {stepping && step ? (
+          <NextSteps key={step} step={step} facts={facts} steps={nextSteps ?? []} onStep={startStep} onAsk={askFromPlan} onClose={close} />
+        ) : history ? (
           <ChatHistory
             onBack={() => setMode('chat')}
             onNewChat={() => { clearChat(); setMode('chat') }}
@@ -221,7 +231,7 @@ export function HockiaAiSheet() {
                 <MascotHello height={96} className="-ml-1 shrink-0" />
                 <div className="min-w-0 flex-1 pt-3">
                   <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2">{roleContext ? 'Ask me anything about this role. I already have it open.' : 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'}</p>
+                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this role. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'}</p>
                 </div>
               </div>
               {roleContext ? (
@@ -231,8 +241,8 @@ export function HockiaAiSheet() {
                 </>
               ) : (
                 <>
-                  {buildChip}
-                  {examples.slice(0, canBuild ? 2 : 3).map(suggestion)}
+                  {planCard ?? buildChip}
+                  {examples.slice(0, planCard ? 1 : canBuild ? 2 : 3).map(suggestion)}
                 </>
               )}
             </div>
@@ -244,7 +254,7 @@ export function HockiaAiSheet() {
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? `Hi ${firstName}, I’m Hockia AI` : 'Hi, I’m Hockia AI'}</h2>
               <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about roles, clubs, players or the game.</p>
               {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
-              {!roleContext && buildChip && <div className="mt-5 w-full">{buildChip}</div>}
+              {!roleContext && (planCard ?? buildChip) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
               <div className={cn('grid w-full grid-cols-2 gap-2.5', roleContext && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
                 {examples.slice(0, 4).map((q, i, all) => (
                   <button key={q} type="button" onClick={() => { void hapticSelection(); send(q) }} className={cn('flex min-h-[96px] flex-col items-start rounded-[16px] border border-line bg-white p-3.5 text-left transition-colors hover:bg-surface-subtle', all.length % 2 === 1 && i === all.length - 1 && 'col-span-2')} data-testid="hockia-ai-card">

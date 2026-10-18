@@ -7,6 +7,7 @@ import { Component } from 'react';
 import type { ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { logger } from '@/lib/logger';
+import { recoverFromStaleChunk } from '@/lib/swUpdate';
 
 interface Props {
   children: ReactNode;
@@ -54,6 +55,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReload = () => {
+    // After a release the old service worker keeps serving the old shell:
+    // activate the new one first, or the reload lands on the same error.
+    if (this.state.variant === 'staleAsset') { void recoverFromStaleChunk(); return; }
     window.location.reload();
   };
 

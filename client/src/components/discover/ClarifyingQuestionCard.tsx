@@ -1,29 +1,27 @@
 import type { ClarifyingOption } from '@/hooks/useDiscover'
-import { Chip } from '@/components/ui/Chip'
+import { ChoiceCard } from '@/components/hockiaAi/ChoiceCard'
 
 interface ClarifyingQuestionCardProps {
   question: string
   options: ClarifyingOption[]
   onPick: (option: ClarifyingOption) => void
+  /** The member's own answer ("Other"), sent as a new question. */
+  onOther?: (text: string) => void
 }
 
 /**
- * Clarifying question: the question as plain answer text + 2-4 Chips.
- * Tapping a chip submits its routed_query as a new user message.
+ * Clarifying question as a Hockia AI choice card (2026-10-18): ready-made
+ * answers with the recommended one first, plus "Other" to write your own.
+ * Tapping an option submits its routed_query as a new user message.
  */
-export default function ClarifyingQuestionCard({
-  question,
-  options,
-  onPick,
-}: ClarifyingQuestionCardProps) {
+export default function ClarifyingQuestionCard({ question, options, onPick, onOther }: ClarifyingQuestionCardProps) {
   return (
-    <div>
-      <p className="text-row font-medium text-ink-1 whitespace-pre-line">{question}</p>
-      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Disambiguation options">
-        {options.map((option, idx) => (
-          <Chip key={`${option.label}-${idx}`} label={option.label} onClick={() => onPick(option)} />
-        ))}
-      </div>
-    </div>
+    <ChoiceCard
+      question={question}
+      choices={options.map((o) => ({ value: o, label: o.label, description: o.description, recommended: o.recommended }))}
+      onPick={(c) => onPick(c.value)}
+      onOther={onOther}
+      testId="ai-clarify"
+    />
   )
 }

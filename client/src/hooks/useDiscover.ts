@@ -150,6 +150,10 @@ export interface SuggestedAction {
 export interface ClarifyingOption {
   label: string
   routed_query: string
+  /** One line on what picking it does (choice card, 2026-10-18). */
+  description?: string
+  /** Hockia AI's suggestion: listed first, badged "Recommended". */
+  recommended?: boolean
 }
 
 /** Platform-help CTA — an explicit in-app destination the assistant
