@@ -6,7 +6,7 @@
  * gates explicit actions (View Profile, Message) behind the usual auth flow.
  *
  * Analytics: fires a distinct `profile_preview` event — NOT `profile_view` —
- * so previews do not appear in the owner's "Who Viewed Your Profile" list,
+ * so previews do not appear in the owner's "Who viewed your profile" list,
  * do not inflate profile-view stats, and do not trigger the daily viewer
  * notification cron. The full `profile_view` event fires only when the user
  * explicitly presses View Profile (the dashboard page handles that as usual,
