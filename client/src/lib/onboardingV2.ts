@@ -54,7 +54,11 @@ export const PHOTO_HELPER = 'A real match photo gets more profile views.'
 export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about roles.'
 /** Under 18: the switch is not offered and the copy promises nothing
  *  about being suggested — suggestions are 18+ AND open, server-side. */
-export const OPEN_TO_PLAY_UNDER_18 = 'Open to play is for players 18 and over. Until then, clubs aren’t suggested your profile — you can still keep it up to date.'
+// Ruling 2026-10-16: the 18+ gate stays; juniors get the waitlist only (an
+// under-18 date of birth ends set-up on the age-gate screen).
+export const OPEN_TO_PLAY_UNDER_18 = 'Hockia is for players 18 and over, so we can’t create your account yet. Join the juniors waitlist and we’ll tell you when it opens.'
+/** Shown before a date of birth is entered. */
+export const OPEN_TO_PLAY_NEEDS_DOB = 'Add your date of birth to turn on Open to play.'
 
 export interface AboutYouDraft {
   fullName: string

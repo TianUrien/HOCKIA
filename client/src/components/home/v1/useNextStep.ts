@@ -13,6 +13,11 @@ import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { positionLabel } from '@/lib/identity'
 import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 
+/** Who viewed you: Your activity with the viewer list open (players, coaches). */
+export const VIEWERS_PATH = '/pulse?viewers=1'
+/** A brand's viewers + search appearances: its own profile with the views sheet open. */
+export const BRAND_VIEWERS_PATH = '/dashboard/profile?viewers=1'
+
 /**
  * Next step (Figma H5 64:326; spec 65:329): the viewer's Pulse actions in
  * priority order, one card at a time. Agreed order (Home v1 review):
@@ -111,7 +116,8 @@ export function useNextStep() {
         })
       }
       if (views > 0) {
-        out.push({ key: 'views', title: plural(views, 'profile view', 'profile views'), subtitle: 'This week', cta: 'Activity', visual: { kind: 'icon', icon: 'chart' }, to: '/pulse' })
+        // A views card opens who viewed you (ruling 2026-10-16): "View", never another action.
+        out.push({ key: 'views', title: plural(views, 'profile view', 'profile views'), subtitle: 'This week', cta: 'View', visual: { kind: 'icon', icon: 'chart' }, to: VIEWERS_PATH })
       }
       const pct = profile.profile_completeness_pct ?? 100
       if (hasPhoto && pct < 80) {
@@ -156,9 +162,10 @@ export function useNextStep() {
         key: 'brand',
         title: plural(views, 'profile view', 'profile views'),
         subtitle: searches > 0 ? `This week · in ${plural(searches, 'search', 'searches')}` : 'This week',
-        cta: 'Post',
+        // Opens who viewed the brand + search appearances (ruling 2026-10-16), never the composer.
+        cta: 'View',
         visual: { kind: 'icon', icon: 'chart' },
-        action: 'compose',
+        to: BRAND_VIEWERS_PATH,
       })
     }
 
@@ -173,9 +180,9 @@ export function useNextStep() {
         key: 'week',
         title: views > 0 ? plural(views, 'profile view', 'profile views') : 'Your week',
         subtitle: views > 0 ? 'This week' : 'See your activity',
-        cta: 'Activity',
+        cta: views > 0 ? 'View' : 'Activity',
         visual: { kind: 'icon', icon: 'chart' },
-        to: '/pulse',
+        to: views > 0 ? VIEWERS_PATH : '/pulse',
       })
     }
     return open

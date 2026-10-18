@@ -61,7 +61,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'apply_to_opportunity',
     label: 'Browse opportunities',
     summary:
-      'Players and coaches apply from the Opportunities page — open a role and use "Apply Now". Clubs and brands publish roles rather than apply to them.',
+      'Players and coaches apply from the Opportunities page — open a role and use "Apply Now". Clubs and recruiting coaches publish roles; brands and umpires can browse roles but can\'t post them.',
     route: '/opportunities',
     roles: ['player', 'coach'],
   },
@@ -101,15 +101,15 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'references',
     label: 'References',
     summary:
-      'References are endorsements from people you have worked with — a trust signal for players and coaches. Request and manage them in the References area of your dashboard.',
+      'References are endorsements from people you have worked with — a trust signal for players, coaches and umpires. Request and manage them in the References area of your dashboard.',
     route: '/dashboard/profile/references',
-    roles: ['player', 'coach'],
+    roles: ['player', 'coach', 'umpire'],
   },
   {
     key: 'my_network',
     label: 'My Network',
     summary:
-      'My Network is your social hub — connections, comments and posts on your own profile (plus references for players and coaches) — inside your dashboard.',
+      'My Network is your social hub — connections, comments and posts on your own profile (plus references for players, coaches and umpires) — inside your dashboard.',
     // Routes to the Connections section: it is a valid dashboard section
     // for every role (the unified "community" section does not exist on the
     // club dashboard, so it cannot be the shared destination).

@@ -415,14 +415,16 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(mocks.events).toContain('db:onboarding_step:wizard_step_completed:2')
   })
 
-  it('under 18 (16–17): no switch, and the line promises nothing about being suggested', () => {
+  it('under 18 (16–17): no switch; juniors get the waitlist only (ruling 2026-10-16)', () => {
     mocks.profile.current = playerProfile(years(16))
     render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
-    expect(within(screen.getByTestId('open-to-play-row')).getByText(/18 and over/)).toBeInTheDocument()
-    const line = screen.getByText(/18 and over/)
-    expect(line).toHaveTextContent(/aren’t suggested/)
-    expect(line.textContent).not.toMatch(/will be suggested|get suggested|can suggest/)
+    const row = screen.getByTestId('open-to-play-row')
+    expect(within(row).getByText(/18 and over/)).toBeInTheDocument()
+    expect(row.textContent).toMatch(/juniors waitlist/i)
+    expect(within(row).getByTestId('juniors-waitlist-link')).toHaveAttribute('href', '/juniors-waitlist')
+    // Never implies the account carries on (no "keep it up to date", no "suggested").
+    expect(row.textContent).not.toMatch(/keep it up to date|will be suggested|get suggested|can suggest/)
     expect(offersOpenToPlay(years(16))).toBe(false)
     expect(offersOpenToPlay(years(18))).toBe(true)
   })
