@@ -60,6 +60,7 @@ describe('Edit club helpers', () => {
 // ── Screens ─────────────────────────────────────────────────────────
 
 const navigateMock = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
   return { ...actual, useNavigate: () => navigateMock }
@@ -297,7 +298,7 @@ describe('ClubOpportunitiesScreen first run (D1.25)', () => {
     expect(screen.queryByTestId('club-shortlist-count')).toBeNull()
   })
 
-  it('Post a role and the + open step 1; Find players now opens with No context', () => {
+  it('Post a role and the + ask how to start (Club speed CS1); Start from scratch opens step 1; Find players now opens with No context', () => {
     renderOpps()
     // The card's button and the + in the nav do the same.
     const posts = screen.getAllByRole('button', { name: 'Post a role' })
@@ -305,6 +306,8 @@ describe('ClubOpportunitiesScreen first run (D1.25)', () => {
     for (const b of posts) {
       navigateMock.mockClear()
       fireEvent.click(b)
+      expect(screen.getByTestId('post-role-start')).toBeTruthy()
+      fireEvent.click(screen.getByTestId('post-role-scratch'))
       expect(navigateMock).toHaveBeenCalledWith('/dashboard/opportunities/new')
     }
     fireEvent.click(screen.getByRole('button', { name: /Find players now/ }))

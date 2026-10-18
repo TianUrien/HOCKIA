@@ -17,6 +17,7 @@ import { shortDayOf } from '@/lib/signing'
 import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
+import { PostRoleStartSheet } from './PostRoleStartSheet'
 
 
 /**
@@ -314,10 +315,11 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
 }
 
 export default function ClubOpportunitiesScreen() {
-  const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
   const data = useClubRoles(profile?.id)
-  const postRole = () => navigate('/dashboard/opportunities/new')
+  // Club speed CS1: "+" asks how to start — Hockia AI or from scratch.
+  const [starting, setStarting] = useState(false)
+  const postRole = () => setStarting(true)
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="club-opportunities-screen">
       <LargeTitleBar
@@ -329,6 +331,7 @@ export default function ClubOpportunitiesScreen() {
         )}
       />
       <RecruiterRoles data={data} onPostRole={postRole} />
+      <PostRoleStartSheet open={starting} onClose={() => setStarting(false)} />
     </div>
   )
 }
