@@ -17,10 +17,11 @@ export interface CoachMyRolesProps {
   data: ClubRolesData
   onPostRole: () => void
   onEditRole: (role: ClubRole) => void
+  onPostAgainRole?: (role: ClubRole) => void
   layout?: 'phone' | 'desktop'
 }
 
-export default function CoachMyRoles({ profile, data, onPostRole, onEditRole, layout = 'phone' }: CoachMyRolesProps) {
+export default function CoachMyRoles({ profile, data, onPostRole, onEditRole, onPostAgainRole, layout = 'phone' }: CoachMyRolesProps) {
   const worldClubId = profile.current_world_club_id ?? null
   const { data: worldClubName } = useQuery({
     queryKey: ['world-club-name', worldClubId],
@@ -42,6 +43,7 @@ export default function CoachMyRoles({ profile, data, onPostRole, onEditRole, la
         data={data}
         onPostRole={onPostRole}
         onEditRole={onEditRole}
+        onPostAgainRole={onPostAgainRole}
         from="/opportunities?view=mine"
         statusSegment="when-closed"
         layout={layout}

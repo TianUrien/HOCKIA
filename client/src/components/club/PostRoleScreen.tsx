@@ -33,6 +33,7 @@ import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
 import { MascotAvatar } from '@/components/hockiaAi/mascot'
 import { applyAiDraft, checkSummary, type PostRoleStartState } from '@/lib/postRoleAi'
+import { postAgainDraft } from '@/lib/postAgain'
 
 /**
  * Post a role (Figma 04 Club 330:318 The role → 330:431 The offer →
@@ -63,6 +64,9 @@ export default function PostRoleScreen({ draftId }: Props) {
   const seed = (fresh: PostRoleDraft): PostRoleDraft =>
     start?.ai ? applyAiDraft(fresh, start.ai.draft) : start?.scratchText ? { ...fresh, description: start.scratchText } : fresh
   const [aiMode] = useState(Boolean(start?.ai))
+  const [againMode] = useState(Boolean(start?.postAgainId))
+  // Both open on the summary check screen (Figma CS2 / CS3).
+  const checkMode = aiMode || againMode
   const [aboutOpen, setAboutOpen] = useState(false)
   const startedAt = useRef(Date.now())
   const profile = useAuthStore((s) => s.profile)
@@ -105,9 +109,9 @@ export default function PostRoleScreen({ draftId }: Props) {
   const clubCountry = profile?.nationality_country_id ? getCountryById(profile.nationality_country_id) : null
   const defaults = useMemo(() => ({ baseLocation: profile?.base_location ?? null, countryName: clubCountry?.name ?? null }), [profile?.base_location, clubCountry?.name])
 
-  const [step, setStep] = useState<Step>(aiMode ? 3 : 1)
+  const [step, setStep] = useState<Step>(checkMode ? 3 : 1)
   const [draft, setDraft] = useState<PostRoleDraft>(() => seed(emptyDraft(defaults)))
-  const [loaded, setLoaded] = useState(draftId === null)
+  const [loaded, setLoaded] = useState(draftId === null && !start?.postAgainId)
   // Set when editing a role that is already live: its status is kept as is.
   const [liveStatus, setLiveStatus] = useState<'open' | 'closed' | null>(null)
   const editing = liveStatus !== null
@@ -124,13 +128,31 @@ export default function PostRoleScreen({ draftId }: Props) {
   // then the countries list), until the club changes anything.
   const touched = useRef(false)
   useEffect(() => {
-    if (draftId !== null || touched.current || !profile) return
+    if (draftId !== null || touched.current || !profile || againMode) return
     const fresh = emptyDraft(defaults)
     setDraft(seed(fresh))
     // Measured against the empty form, so a drafted role counts as changes (Cancel offers Save draft).
     initial.current = JSON.stringify(fresh)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seed reads the router state once per new role
   }, [draftId, defaults, profile])
+
+  // Post again (CS3): the club's own closed role → a new draft with fresh dates.
+  const postAgainId = start?.postAgainId ?? null
+  useEffect(() => {
+    if (!postAgainId || !profile?.id) return
+    let cancelled = false
+    void supabase.from('opportunities').select('*').eq('id', postAgainId).eq('club_id', profile.id).maybeSingle().then(({ data }) => {
+      if (cancelled) return
+      const row = data as Vacancy | null
+      if (!row) { navigate('/opportunities', { replace: true }); return }
+      setDraft(postAgainDraft(draftFromRow(row)))
+      // Measured against the empty form, so Cancel offers Save draft.
+      initial.current = JSON.stringify(emptyDraft(defaults))
+      setLoaded(true)
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per role; defaults only shape the "unchanged" baseline
+  }, [postAgainId, profile?.id, navigate])
 
   // Continue a draft, or edit a live role (the club's own only).
   useEffect(() => {
@@ -235,7 +257,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     const p = stepProblem(draft, 3)
     if (p) {
       // From the AI check screen, take the club to the step that needs it.
-      if (aiMode) setStep(stepProblem(draft, 1) ? 1 : stepProblem(draft, 2) ? 2 : 3)
+      if (checkMode) setStep(stepProblem(draft, 1) ? 1 : stepProblem(draft, 2) ? 2 : 3)
       setProblem(p)
       return
     }
@@ -248,7 +270,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       await scopeToRole(id)
       // Role posted has its own route, so a refresh re-renders it from the
       // saved role; replace keeps Back from reopening the form.
-      trackDbEvent('post_role_posted', 'vacancy', id, { method: aiMode ? 'ai' : 'form', seconds: Math.round((Date.now() - startedAt.current) / 1000) })
+      trackDbEvent('post_role_posted', 'vacancy', id, { method: aiMode ? 'ai' : againMode ? 'post_again' : 'form', seconds: Math.round((Date.now() - startedAt.current) / 1000) })
       navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
     } catch (err) {
       logger.error('[PostRole] post failed', err)
@@ -266,7 +288,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     else void post()
   }
 
-  const aiCheck = aiMode && step === 3
+  const aiCheck = checkMode && step === 3
   const back = () => {
     setProblem(null)
     if (step > 1 && !aiCheck) { setStep((s) => (s - 1) as Step); return }
@@ -333,7 +355,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           {aiCheck ? (
             <span className="pointer-events-none absolute inset-x-24 flex flex-col items-center text-center" data-testid="post-role-ai-header">
               <span className="text-body font-semibold leading-[21px] text-ink-1">Check your role</span>
-              <span className="text-caption text-ink-3">Drafted by Hockia AI · Beta</span>
+              <span className="text-caption text-ink-3">{aiMode ? 'Drafted by Hockia AI · Beta' : 'Posted again · same details'}</span>
             </span>
           ) : (
             <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
@@ -534,10 +556,14 @@ export default function PostRoleScreen({ draftId }: Props) {
             </div>
             {aiCheck && (
               <div className="flex flex-col gap-2 px-5 pt-2" data-testid="post-role-ai-summary">
-                <div className="flex items-center gap-2.5 rounded-[16px] bg-brand-soft px-3.5 py-3">
-                  <MascotAvatar size={32} />
-                  <p className="min-w-0 flex-1 text-secondary leading-[18px] text-ink-1">I filled this in from what you wrote. Check each part, then post. Nothing is live yet.</p>
-                </div>
+                {aiMode ? (
+                  <div className="flex items-center gap-2.5 rounded-[16px] bg-brand-soft px-3.5 py-3">
+                    <MascotAvatar size={32} />
+                    <p className="min-w-0 flex-1 text-secondary leading-[18px] text-ink-1">I filled this in from what you wrote. Check each part, then post. Nothing is live yet.</p>
+                  </div>
+                ) : (
+                  <p className="rounded-[16px] bg-surface-subtle px-3.5 py-3 text-secondary leading-[18px] text-ink-1" data-testid="post-again-note">Same details as your closed role. Dates and applicants start fresh — add a start date if you have one, then post. Nothing is live yet.</p>
+                )}
                 {checkSummary(draft, { fromClub }).map((sec) => (
                   <div key={sec.key} className="flex flex-col gap-1 rounded-[16px] bg-surface-subtle px-4 py-3" data-testid={`ai-summary-${sec.key}`}>
                     <div className="flex items-center">

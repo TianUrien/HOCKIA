@@ -29,6 +29,8 @@ export interface PostRoleStartState {
   ai?: { draft: AiRoleDraft; text: string }
   /** Hockia AI couldn't draft: start from scratch with the sentence in "About the role". */
   scratchText?: string
+  /** Club speed CS3 · Post again: a closed role (the club's own) to copy. */
+  postAgainId?: string
 }
 
 export const AI_TEXT_MAX = 500
