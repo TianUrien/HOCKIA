@@ -426,6 +426,59 @@ export const scenarios = {
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
   },
 
+  // Opt-in (uses one Hockia AI question): the answered chat is saved to
+  // Your chats (handoff C2) under Today, reopens with its answer, and its
+  // delete removes it. Leaves nothing behind.
+  async 'hockia-ai-history'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await sleep(800)
+    const asked = await lab.eval(() => { const b = document.querySelector('[data-testid="hockia-ai-suggestion"]'); const q = b?.querySelector('span:nth-child(2)')?.textContent || ''; b?.click(); return q })
+    for (let i = 0; i < 100; i++) {
+      await sleep(300)
+      if (i > 3 && !(await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-thinking"]')))) break
+    }
+    await sleep(3000)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-more"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-chats"]', 8000)
+    await sleep(500)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-chats"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-history-row"]', 15000)
+    await sleep(800)
+    await ctx.shot('chats')
+    const first = await lab.eval(() => {
+      const sec = document.querySelector('[data-testid="hockia-ai-history"] section')
+      const row = sec?.querySelector('[data-testid="hockia-ai-history-row"]')
+      return { group: sec?.getAttribute('aria-label'), title: row?.querySelector('span span')?.textContent || '', summary: row?.querySelectorAll('span span')[1]?.textContent || '' }
+    })
+    if (first.group !== 'Today') throw new Error(`newest chat is under "${first.group}", expected Today`)
+    if (asked && first.title.slice(0, 20) !== asked.trim().slice(0, 20)) throw new Error(`top row "${first.title}" is not the question asked ("${asked}")`)
+    // Reopen it: the conversation comes back with the answer.
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-open"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-conversation"]', 15000)
+    await sleep(1200)
+    await ctx.shot('reopened')
+    const chars = await lab.eval(() => (document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || '').length)
+    if (chars < 20) throw new Error('the reopened chat is empty')
+    // Back to the list and delete it.
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-more"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-chats"]', 8000)
+    await sleep(500)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-chats"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-history-row"]', 15000)
+    await sleep(800)
+    const before = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-history-row"]').length)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-delete"]')?.click())
+    await sleep(1500)
+    await ctx.shot('deleted')
+    const after = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-history-row"]').length)
+    if (after !== before - 1) throw new Error(`delete left ${after} of ${before} rows`)
+    ctx.note(`"${first.title}" · ${first.summary} → reopened (${chars} chars) → deleted`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-close"]')?.click())
+  },
+
   // Home → role (17 Oct 2026): a Home role opens the v2 role page, and closing
   // it returns to Home at the same scroll position.
   async 'home-role-back'(lab, ctx) {
