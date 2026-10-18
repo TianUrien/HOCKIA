@@ -19,7 +19,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
  * the scrollTop of every scrollable element, before and after the swipe.
  */
 const SCROLL_STATE = () => {
-  const els = [...document.querySelectorAll('*')].filter((el) => { const s = getComputedStyle(el); return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 40 })
+  // Only visible scroll areas of a real size count: a hidden or tiny inner
+  // scroller made a one-screen profile look "tall" (lab 2026-10-18).
+  const els = [...document.querySelectorAll('*')].filter((el) => {
+    const s = getComputedStyle(el)
+    if (!/(auto|scroll)/.test(s.overflowY) || el.scrollHeight <= el.clientHeight + 40) return false
+    const r = el.getBoundingClientRect()
+    return s.visibility !== 'hidden' && r.width > 0 && r.height > 150 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth
+  })
   return {
     y: window.scrollY,
     inner: els.reduce((n, el) => n + el.scrollTop, 0),
