@@ -18,6 +18,8 @@ import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
 import { PostRoleStartSheet } from './PostRoleStartSheet'
+import { useYourReplies } from '@/hooks/useYourReplies'
+import { yourRepliesCopy } from '@/lib/yourReplies'
 
 
 /**
@@ -214,6 +216,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
 
   const pending = useMemo(() => data.open.flatMap((r) => r.pendingAppliedAt), [data.open])
   const notice = waitingNotice(pending, data.expiryDays)
+  const replies = useYourReplies(owner?.id)
   const rolesWithPending = data.open.filter((r) => r.pipeline.toReview > 0)
   const applicantsPath = (id: string) => `/dashboard/opportunities/${id}/applicants`
   const openNotice = () => {
@@ -276,6 +279,20 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
           </button>
+        </div>
+      )}
+
+      {segment === 'open' && replies && (
+        <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
+          {/* Figma 05 CS8 205:5742: neutral surface, the club's own last 30 days, from 5 applicants. */}
+          <div className="flex flex-col gap-2 rounded-[16px] bg-surface-subtle px-4 py-3.5" data-testid="your-replies">
+            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Your replies · last 30 days</p>
+            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{yourRepliesCopy(replies).title}</p>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={replies.total} aria-valuenow={replies.answered} aria-label="Applicants answered">
+              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${Math.round((replies.answered / replies.total) * 100)}%` }} />
+            </div>
+            {yourRepliesCopy(replies).detail && <p className="text-secondary text-ink-2">{yourRepliesCopy(replies).detail}</p>}
+          </div>
         </div>
       )}
 
