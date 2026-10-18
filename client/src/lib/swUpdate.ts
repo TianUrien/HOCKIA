@@ -147,3 +147,52 @@ export function registerServiceWorker({
 
   return wb
 }
+
+/** Shared with lazyWithRetry: at most one automatic recovery per tab session. */
+export const STALE_CHUNK_KEY = 'chunk-reload'
+
+function waitForWaiting(reg: ServiceWorkerRegistration, timeoutMs: number): Promise<ServiceWorker | null> {
+  if (reg.waiting) return Promise.resolve(reg.waiting)
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(reg.waiting ?? null), timeoutMs)
+    const watch = (sw: ServiceWorker | null) => {
+      sw?.addEventListener('statechange', () => {
+        if (sw.state === 'installed') { clearTimeout(timer); resolve(reg.waiting ?? sw) }
+        if (sw.state === 'redundant') { clearTimeout(timer); resolve(reg.waiting ?? null) }
+      })
+    }
+    watch(reg.installing)
+    reg.addEventListener('updatefound', () => watch(reg.installing))
+  })
+}
+
+/**
+ * A lazy chunk failed to load because a newer release replaced it (prod,
+ * 2026-10-18: /admin showed "Something went wrong"). A plain reload is not
+ * enough: the old service worker keeps serving the old shell, whose chunks
+ * are gone. So: fetch the new worker, activate it, then reload. The page is
+ * already broken here, so applying the update cannot lose anything — the
+ * "never reload on its own" rule above is about working pages.
+ */
+export async function recoverFromStaleChunk({
+  reload = () => window.location.reload(),
+  timeoutMs = 8000,
+}: { reload?: () => void; timeoutMs?: number } = {}): Promise<void> {
+  try {
+    const reg = typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined
+    if (reg) {
+      await reg.update().catch(() => { /* offline: the reload below still runs */ })
+      const waiting = await waitForWaiting(reg, timeoutMs)
+      if (waiting) {
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 3000)
+          navigator.serviceWorker.addEventListener('controllerchange', () => { clearTimeout(timer); resolve() }, { once: true })
+          waiting.postMessage({ type: 'SKIP_WAITING' })
+        })
+      }
+    }
+  } catch (err) {
+    logger.warn('[PWA] stale-chunk recovery could not update the worker', err)
+  }
+  reload()
+}
