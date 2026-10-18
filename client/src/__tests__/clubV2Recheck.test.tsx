@@ -41,6 +41,7 @@ import { contactRowValue } from '@/lib/clubEdit'
 import settingsSource from '@/components/settings/SettingsMobile.tsx?raw'
 import dashboardSource from '@/pages/ClubDashboard.tsx?raw'
 import roleActionsSource from '@/components/club/RoleActions.tsx?raw'
+import closeSheetSource from '@/components/club/CloseRoleSheet.tsx?raw'
 import opportunitiesTabSource from '@/components/OpportunitiesTab.tsx?raw'
 
 beforeEach(() => {
@@ -182,9 +183,11 @@ describe('closed roles', () => {
   })
 
   it('both close paths tell the store', () => {
-    expect(roleActionsSource).toContain("roleStatusChanged(role.id, 'closed')")
+    // Club speed CS6: one shared close sheet for the phone menu and the dashboard tab.
+    expect(closeSheetSource).toContain("roleStatusChanged(role.id, 'closed')")
+    expect(roleActionsSource).toContain('<CloseRoleSheet')
+    expect(opportunitiesTabSource).toContain('<CloseRoleSheet')
     expect(roleActionsSource).toContain("roleStatusChanged(role.id, 'open')")
-    expect(opportunitiesTabSource).toContain("roleStatusChanged(vacancyId, 'closed')")
   })
 })
 

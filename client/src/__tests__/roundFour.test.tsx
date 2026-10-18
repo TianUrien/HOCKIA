@@ -284,7 +284,7 @@ describe('club screens', () => {
     expect(read('../components/club/RoleActions.tsx')).toContain("addToast(REOPEN_ROLE_TOAST, 'success')")
     expect(read('../lib/roleLifecycle.ts')).toContain("export const REOPEN_ROLE_TOAST = 'Role reopened.'")
     // Club speed CS6: a close that told the waiting players says how many; otherwise the filled toast knows how many were left.
-    expect(read('../components/club/RoleActions.tsx')).toContain("closeRoleToldToast(told.told, told.failed) : closeRoleToast(chosen, left)")
+    expect(read('../components/club/CloseRoleSheet.tsx')).toContain("closeRoleToldToast(told.told, told.failed) : closeRoleToast(chosen, left)")
     expect(read('../components/club/PostRoleScreen.tsx')).toContain("addToast('Changes saved.', 'success')")
   })
 })

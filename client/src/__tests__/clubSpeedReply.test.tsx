@@ -95,3 +95,17 @@ describe('Club speed CS7 · phone review moves on', () => {
     expect(read('../pages/ClubRecruitingRoutes.tsx')).toContain('<ApplicantReviewScreen key={applicationId}')
   })
 })
+
+describe('Club speed on desktop', () => {
+  it('the desktop applicants page selects several and declines with the shared sheet', () => {
+    const src = read('../components/club/ApplicantsDesktop.tsx')
+    expect(src).toContain('data-testid="selection-pane"')
+    expect(src).toContain('<BulkDeclineSheet')
+    expect(src).toContain('if (selecting) return')
+    expect(src).toContain("onPostAgain={() => navigate(home.path, { state: { postAgainRoleId: role.id } })}")
+  })
+  it('the dashboard Opportunities tab closes with the shared sheet', () => {
+    expect(read('../components/OpportunitiesTab.tsx')).toContain('<CloseRoleSheet')
+    expect(read('../pages/OpportunitiesPage.tsx')).toContain('postAgainRoleId')
+  })
+})
