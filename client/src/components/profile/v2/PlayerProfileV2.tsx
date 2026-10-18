@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Check, ExternalLink, MessageCircle, Plus, Star, UserPlus } from 'lucide-react'
+import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
+
+const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -114,6 +117,16 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const profileId = profile.id ?? null
   const { countries } = useCountries()
   const data = useProfileScrollData(profileId)
+  // "Fill my profile with Hockia AI" (ruling 2026-10-18): the owner opens the
+  // builder from a thin Career section; after "Save all" the list reloads.
+  const aiOpen = useHockiaAiSheet((st) => st.open)
+  const showAi = useHockiaAiSheet((st) => st.show)
+  const refreshScroll = data.refresh
+  useEffect(() => {
+    const onUpdated = () => refreshScroll()
+    window.addEventListener('hockia:profile-updated', onUpdated)
+    return () => window.removeEventListener('hockia:profile-updated', onUpdated)
+  }, [refreshScroll])
   const { acceptedReferences, loading: refsLoading } = useTrustedReferences(profileId ?? '')
   const friendship = useFriendship(profileId ?? '')
   const inCommon = useFriendsInCommonSummary(visitor ? profileId : null)
@@ -392,6 +405,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   return (
     <div className="bg-white pb-8" data-testid="profile-v2">
+      {owner && aiOpen && (<Suspense fallback={null}><HockiaAiSheet /></Suspense>)}
       <CompactHeader name={name} avatarUrl={profile.avatar_url} visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
       <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
@@ -567,6 +581,17 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       {(owner || careerCount > 0) && (
         <Section id="career" title="Career" action={careerCount > 0 ? `See all ${careerCount}` : null} onAction={() => props.onOpenSection('journey')}>
           {careerCount === 0 && !data.loading && dashed('Add your first club', () => props.onOpenSection('journey'))}
+          {owner && careerCount < 2 && !data.loading && (
+            <div className="px-4 pt-2">
+              <button type="button" onClick={() => showAi('profile', 'builder')} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
+                <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI</span>
+                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines — you check it first</span>
+                </span>
+              </button>
+            </div>
+          )}
           <div className="flex flex-col px-4">
             {data.career.map((e) => {
               const now = isCurrentEntry(e)
