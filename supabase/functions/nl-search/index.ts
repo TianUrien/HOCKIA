@@ -74,6 +74,10 @@ import {
   type SuggestedAction,
 } from '../_shared/suggested-actions.ts'
 import { detectRecoveryQuery } from '../_shared/recovery.ts'
+import { ROLE_ASK_MODE, ROLE_ASK_SYSTEM, stripClaims } from '../_shared/role-ask.ts'
+import { SUMMARY_MODE, SUMMARY_SYSTEM, sanitizeApplicants, summaryFacts } from '../_shared/applicants-summary.ts'
+import { loadMemberRoleFacts } from '../_shared/member-role-facts.ts'
+import { factLines } from '../_shared/apply-note.ts'
 import { detectClarifyingNeed } from '../_shared/clarifying.ts'
 import { scopeFiltersToRoles } from '../_shared/role-filter-scope.ts'
 import { buildSofteningLadder, describeSoftening, type GeoSofteningStep } from '../_shared/geo-softening.ts'
@@ -1805,6 +1809,107 @@ async function handleRoleSuggestionsRefine(params: {
   }
 }
 
+// ── Role questions (2026-10-18) ──────────────────────────────────────────
+async function handleRoleAsk(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  opportunityId: unknown
+  question: string
+  history: HistoryTurn[]
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, opportunityId, question, history, correlationId, headers } = params
+  const json = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { ...headers, 'Content-Type': 'application/json' } })
+  const text = (message: string, kind: ResponseKind = 'text') => json({ success: true, kind, data: [], total: 0, has_more: false, parsed_filters: null, summary: null, applied: null, ai_message: message, suggested_actions: [] })
+  if (!isUuid(opportunityId)) return json({ success: false, error: 'Missing or invalid opportunity_id' }, 400)
+  step('role', 'Reading this role')
+  const facts = await loadMemberRoleFacts(adminClient, userId, opportunityId as string)
+  if (!facts) return text('This role isn’t open any more, so I can’t answer about it. Ask me about other roles instead.')
+  step('role', 'Read this role', 'done')
+  step('profile', 'Checking your profile')
+  const lines = factLines(facts.member, facts.role)
+  if (facts.extra.teamCategory) lines.push(`The role is for this team category: ${facts.extra.teamCategory}.`)
+  if (facts.extra.type) lines.push(`The role is for a ${facts.extra.type}.`)
+  step('profile', 'Checked your profile', 'done')
+  step('write', 'Writing the answer')
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) return text('I can’t answer about this role right now. Try again in a moment.', 'soft_error')
+  const model = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+  const meter: { usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number } | null } = { usage: null }
+  try {
+    const turns = history.slice(-4).map((h) => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content ?? '').slice(0, 800) })).filter((h) => h.content)
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model,
+        max_tokens: 400,
+        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: ROLE_ASK_SYSTEM }, { type: 'text', text: `Facts:\n${lines.join('\n')}` }],
+        messages: [...turns, { role: 'user', content: question.slice(0, 500) }],
+      }),
+      signal: AbortSignal.timeout(25_000),
+    })
+    if (!res.ok) throw new Error(`anthropic ${res.status}`)
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    meter.usage = data.usage ?? null
+    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    step('write', 'Wrote the answer', 'done')
+    return text(answer || 'I’m not sure about that one — the club can tell you best.')
+  } catch (err) {
+    captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'role_ask' } })
+    return text('I can’t answer about this role right now. Try again in a moment.', 'soft_error')
+  } finally {
+    const u = meter.usage
+    fireAndForget(recordAiUsage(adminClient, { user_id: userId, function: 'nl-search', provider: 'claude', model, input_tokens: u?.input_tokens ?? null, output_tokens: u?.output_tokens ?? null, cached_tokens: u?.cache_read_input_tokens ?? null }))
+  }
+}
+
+// ── Applicants summary (2026-10-18) ──────────────────────────────────────
+async function handleApplicantsSummary(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  opportunityId: unknown
+  applicants: unknown
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, opportunityId, applicants, correlationId, headers } = params
+  const json = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { ...headers, 'Content-Type': 'application/json' } })
+  if (!isUuid(opportunityId)) return json({ success: false, error: 'Missing or invalid opportunity_id' }, 400)
+  const { data: opp } = await adminClient.from('opportunities').select('club_id, title').eq('id', opportunityId).maybeSingle()
+  // Only the role's publisher: nothing about applicants leaks to anyone else.
+  if (!opp || opp.club_id !== userId) return json({ success: false, error: 'Not available' }, 403)
+  const list = sanitizeApplicants(applicants)
+  const text = (message: string, kind: ResponseKind = 'text') => json({ success: true, kind, data: [], total: 0, has_more: false, parsed_filters: null, summary: null, applied: null, ai_message: message, suggested_actions: [] })
+  if (list.length < 2) return text(list.length === 1 ? `1 applicant is waiting for your reply.` : 'Nobody is waiting for a reply.')
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) return text('I can’t summarise right now. Try again in a moment.', 'soft_error')
+  const model = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+  const meter: { usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number } | null } = { usage: null }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: 250, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: SUMMARY_SYSTEM }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) throw new Error(`anthropic ${res.status}`)
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    meter.usage = data.usage ?? null
+    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    return text(answer || `${list.length} applicants are waiting for your reply.`)
+  } catch (err) {
+    captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'applicants_summary' } })
+    return text('I can’t summarise right now. Try again in a moment.', 'soft_error')
+  } finally {
+    const u = meter.usage
+    fireAndForget(recordAiUsage(adminClient, { user_id: userId, function: 'nl-search', provider: 'claude', model, input_tokens: u?.input_tokens ?? null, output_tokens: u?.output_tokens ?? null, cached_tokens: u?.cache_read_input_tokens ?? null }))
+  }
+}
+
 // ── Live steps (Hockia AI sheet, 2026-10-17) ─────────────────────────────
 // A request sent with `Accept: text/event-stream` gets Server-Sent Events:
 // `step` events as each real stage starts / finishes, then one `result`
@@ -2078,6 +2183,18 @@ async function handleRequest(req: Request): Promise<Response> {
         userClient, adminClient, userId: user.id, opportunityId: body?.opportunity_id,
         question: query, history, llmProvider, correlationId, headers,
       })
+    }
+
+    // ── Role questions (Hockia AI sheet opened on a role, handoff B3/B4) ──
+    // One open role + the asker's own facts; counts toward the daily cap
+    // (checked above) because usage is logged as nl-search.
+    if (body?.mode === ROLE_ASK_MODE) {
+      return await handleRoleAsk({ adminClient, userId: user.id, opportunityId: body?.opportunity_id, question: query, history, correlationId, headers })
+    }
+
+    // ── Applicants summary for the role's publisher (handoff C3, ruling 2026-10-18) ──
+    if (body?.mode === SUMMARY_MODE) {
+      return await handleApplicantsSummary({ adminClient, userId: user.id, opportunityId: body?.opportunity_id, applicants: body?.applicants, correlationId, headers })
     }
 
     // All prerequisites validated — record state so the catch block can

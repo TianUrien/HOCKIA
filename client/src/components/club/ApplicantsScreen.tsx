@@ -10,6 +10,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
 import { UndoToast } from './UndoToast'
 import { BulkDeclineSheet } from './BulkDeclineSheet'
+import { ApplicantsAiSummary } from './ApplicantsAiSummary'
 import { useBulkDecisions } from '@/hooks/useBulkDecisions'
 import { firstWord } from '@/lib/declineNotes'
 import { RoleActions } from './RoleActions'
@@ -185,6 +186,9 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
         )}
       </div>
 
+      {chip === 'pending' && !selecting && role && clubId && role.club_id === clubId && (
+        <div className="px-4 pb-2.5"><ApplicantsAiSummary roleId={roleId} pending={list} expiryDays={data.expiryDays} /></div>
+      )}
       {data.error && <p className="px-4 py-3 text-row text-ink-2">{data.error}</p>}
       {!data.loading && !data.error && list.length === 0 && <p className="px-4 py-3 text-row text-ink-3">{emptyCopy[chip]}</p>}
 

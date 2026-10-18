@@ -318,7 +318,8 @@ interface DiscoverChatStore {
   /** The assistant message whose text is still being revealed word by word. */
   revealId: string | null
   finishReveal: () => void
-  sendMessage: (query: string) => Promise<void>
+  /** `extra` joins the request body, e.g. a role question: { mode: 'role_ask', opportunity_id } (handoff B4). */
+  sendMessage: (query: string, extra?: Record<string, unknown>) => Promise<void>
   /**
    * Phase 1A — submit a structured action (chip tap). Free-text intents
    * become a new user message + LLM round-trip. `retry` resubmits the most
@@ -342,7 +343,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   revealId: null,
   finishReveal: () => set({ revealId: null }),
 
-  sendMessage: async (query: string) => {
+  sendMessage: async (query: string, extra?: Record<string, unknown>) => {
     const trimmed = query.trim()
     if (!trimmed || get().isPending) return
 
@@ -404,7 +405,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       // Live steps over Server-Sent Events (2026-10-17); a function without
       // the stream mode answers plain JSON and the same envelope is read.
       const { data, error } = await streamNlSearch(
-        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds },
+        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...(extra ?? {}) },
         (e) => set(s => ({ steps: applyStep(s.steps, e) })),
       )
 
