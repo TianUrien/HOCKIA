@@ -15,7 +15,7 @@
 6. Deviations: decide with the founder, then update Figma and `docs/design-handoff/decisions.md` so design and code don't drift. The code agent records constraints in `docs/design-handoff/IMPLEMENTATION_FEEDBACK.md`.
 
 ## Engineering constraints that shape design
-- Bundle budgets: `docs/engineering/standards.md` and ADR 0004 (first-load limit raised to 560 KB on 2026-10-07; never raise without the founder).
+- Bundle budgets: `docs/engineering/standards.md` §2 (first-load 560 KB gzip since 2026-10-07; raw 5,400 KB since 2026-10-18; either is raised only with founder approval). ADR 0004 point 1 ("480 KB, never raised") is superseded.
 - New public tables/columns: explicit grants; `profiles` uses column-level SELECT grants (`CLAUDE.md`).
 - Hidden-profile predicate on every new surface that returns people.
 - Old native clients: additive, nullable changes; gate breaking ones on `min_version`.

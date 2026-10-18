@@ -12,10 +12,10 @@ phone-first redesign and Club v2 add many lazy screens, growing the total.
 
 ## Decision
 
-1. **Initial-load gzip of the eager chunks is the primary gate: 480 KB,
+1. *(Superseded 2026-10-07: raised to 560 KB with founder approval; current values in `docs/engineering/standards.md` §2.)* **Initial-load gzip of the eager chunks is the primary gate: 480 KB,
    warning at 450 KB. It is never raised.** If a change crosses it, split or
    defer code instead.
-2. **Raw total across all chunks is a backstop: 4,800 KB**, warning at
+2. *(Current value 5,400 KB since 2026-10-18; see `standards.md` §2.)* **Raw total across all chunks is a backstop: 4,800 KB**, warning at
    4,700 KB. It may be raised only with founder approval and a written
    justification in the workflow comment; a new dependency gets a real
    justification, not a quiet bump.

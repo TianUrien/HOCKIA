@@ -47,5 +47,4 @@
 
 ## Open
 
-
 New questions go in IMPLEMENTATION_FEEDBACK.md first.

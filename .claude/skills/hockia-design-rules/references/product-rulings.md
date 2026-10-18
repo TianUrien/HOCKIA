@@ -21,7 +21,7 @@
 - Club preview: Message only, no Add friend (the club page keeps the friendship button); facts League / Based in / Friends here.
 
 ## Home (live)
-- Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). A views card always opens who viewed you (CTA "View"), never the composer; a card's action must match its title (2026-10-16). Roles rail for players; clubs see applicant next steps instead.
+- Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). Approved, not yet shipped (2026-10-16): a views card always opens who viewed you (CTA "View"), never the composer; a card's action must match its title. Today the brand card still says "Post" and the player card "Activity". Roles rail for players; clubs see applicant next steps instead.
 - Grouped digests for automatic events (≥ 4 items), media grouped per day; "New in the community" faces row opens the Community deck.
 - New signing posts only by clubs: the club tags a member (notified, can remove the tag; 18+ only). Card = light grey surface, faint violet pitch, two overlapping circles (player photo + crest), "NEW SIGNING".
 - Reactions: likes, comments, and Congrats 👏 (count visible to all). Full match video only if the player made it public; no score; tap to play.
@@ -45,7 +45,7 @@
 - Apply sheet = the real modal: Available from / Passport / Contact (editable), optional note ≤ 600, "Your profile, career and highlights are sent automatically".
 - Recruiter screens keep existing logic and copy: Open/Closed segments, waiting banner, pipeline (To review / Shortlisted / Declined), drafts, close/reopen sheet, applicants chips (To review, Shortlisted, Maybe, Declined, Closed), review with Decline / Maybe / Shortlist and the road to signing. "Review N applicants" is solid Primary while a reply is owed.
 - Club speed (2026-10-17, Figma section CS): start a role with Hockia AI (one sentence → filled fields → check summary → Post role); Post again from closed roles; select several applicants → one reason + one Hockia AI note, personalised; closing a role (Filled or Not filled) tells everyone still waiting; phone review auto-advances with Undo; "Your replies · last 30 days" with real data only (≥ 5 applicants, neutral, no comparisons).
-- Desktop: content max 1200; list = wide featured + 4-up rails + 3-column list; role detail = page with a sticky left cover column (Apply, Message, Ask Hockia AI); applicants = master-detail with inline decisions. Filters on desktop = the phone filters sheet shown as a centred dialog; desktop role detail reuses the phone copy (no desktop-only copy). Hockia AI header button and "Ask Hockia AI" stay out until the mascot ships.
+- Desktop: content max 1200; list = wide featured + 4-up rails + 3-column list; role detail = page with a sticky left cover column (Apply, Message, Ask Hockia AI); applicants = master-detail with inline decisions. Filters on desktop = the phone filters sheet shown as a centred dialog; desktop role detail reuses the phone copy (no desktop-only copy). Hockia AI: mascot button in the Opportunities header and "Ask Hockia AI about this role" in the role detail (shipped).
 
 ## Inbox and chat
 - Conversation rows: amber dot only when the viewer owes a first reply; offer and invitation cards keep a stable height; offer deadline amber only for the player in the last 5 days.
@@ -60,5 +60,5 @@
 - **Does things with confirmation**: drafts as cards (apply, profile update); nothing is sent or saved until the user taps.
 - Text only, no microphone. "+" attaches photos, video/links (YouTube, Vimeo → videos; socials stored as links; club/league/stats pages → proposed career rows), CV PDF. Never ID documents.
 - Profile builder: one review card "Save all to my profile", each item removable/editable; afterwards a real checklist of what's still missing (no score).
-- UI: live "Thinking…" steps, streamed answers, follow-up chips, confused face for errors, the existing daily-limit copy on a neutral surface, private deletable history.
+- UI: live "Thinking…" steps, streamed answers, follow-up chips, confused face for errors, the existing daily-limit copy on a neutral surface, private history kept 90 days, deletable one by one or all.
 - Applicant summaries (C3) may be AI-written (2026-10-16): facts from the applications only, never judging or comparing by age, gender, nationality or appearance, labelled Beta. "HOCKIA suggests" reasons stay templates.
