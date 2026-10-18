@@ -7,6 +7,7 @@ import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
+import { recordAiAction } from '@/lib/aiChats'
 import { AVAILABILITY_LABELS, loadApplyDraft, type ApplyDraft } from '@/lib/applyDraft'
 import { positionLabel } from '@/lib/identity'
 import { hapticSuccess } from '@/lib/haptics'
@@ -80,6 +81,8 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
     trackDbEvent('hockia_ai_apply_sent', 'vacancy', vacancy.id, { note_by_ai: draft?.kind === 'draft' && draft.byAi && note === draft.note })
     void hapticSuccess()
     setPhase(res.already ? 'already' : 'sent')
+    // Chats (handoff C2): "Applied to Holcombe · Action · Application sent".
+    if (!res.already) void recordAiAction({ kind: 'apply', title: `Applied to ${org}`, summary: 'Action · Application sent', link: `/opportunities/${vacancy.id}` })
   }
 
   return (

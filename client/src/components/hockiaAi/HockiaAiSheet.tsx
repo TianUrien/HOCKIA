@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, Check, ChevronRight, Flag, Loader2, MessageSquare, MoreHorizontal, Trash2, UserRoundPen, X } from 'lucide-react'
+import { ArrowUp, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -15,6 +16,7 @@ import { useHockiaAiSheet } from './hockiaAiSheetStore'
 import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
+import { ChatHistory } from './ChatHistory'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
@@ -47,8 +49,10 @@ function BetaPill() {
  */
 export function HockiaAiSheet() {
   const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole } = useHockiaAiSheet()
-  const { messages, sendMessage, clearChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
+  const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
+  const signedIn = useAuthStore((s) => Boolean(s.user))
+  const navigate = useNavigate()
   const [input, setInput] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -66,7 +70,9 @@ export function HockiaAiSheet() {
   const builder = mode === 'builder' && canBuild
   // "Prepare my application" (handoff A4): players and coaches, from a role result.
   const applying = mode === 'apply' && canBuild && applyTarget !== null
-  const special = builder || applying
+  // Saved chats (handoff C2): signed-in members only — chats live on the account.
+  const history = mode === 'history' && signedIn
+  const special = builder || applying || history
   const startBuilder = () => { void hapticSelection(); setMode('builder') }
   const hasMessages = messages.length > 0
 
@@ -85,7 +91,7 @@ export function HockiaAiSheet() {
     const t = text.trim()
     if (!t || isPending) return
     // Opened on a role (handoff B4): questions are about that role.
-    sendMessage(t, roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined)
+    sendMessage(t, roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined, roleContext ? { roleLabel: roleContext.label } : undefined)
     setInput('')
     setDetent('large')
   }, [isPending, sendMessage, setDetent, roleContext])
@@ -158,7 +164,8 @@ export function HockiaAiSheet() {
           maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 12px)',
           transform: `translateY(${Math.max(0, drag)}px)`,
           transition: dragStart.current !== null || reduced ? 'none' : `height 480ms ${OPEN_EASE}, transform 420ms ${OPEN_EASE}`,
-          backgroundImage: 'linear-gradient(180deg, rgba(241,234,253,0.9) 0%, rgba(255,255,255,1) 34%)',
+          // Chats (C2) is a plain surface; the chat has the mind-light wash.
+          backgroundImage: history ? 'none' : 'linear-gradient(180deg, rgba(241,234,253,0.9) 0%, rgba(255,255,255,1) 34%)',
         }}
         data-testid="hockia-ai-sheet"
         data-detent={detent}
@@ -167,7 +174,7 @@ export function HockiaAiSheet() {
           <span className="h-[5px] w-10 rounded-full bg-ink-4/60" />
         </div>
 
-        {large ? (
+        {large && !history ? (
           <div className="flex shrink-0 items-center justify-between px-4 pb-2">
             {special ? (
               <button type="button" onClick={() => setMode('chat')} aria-label="Back to the chat" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
@@ -185,7 +192,20 @@ export function HockiaAiSheet() {
           </div>
         ) : null}
 
-        {applying && applyTarget ? (
+        {history ? (
+          <ChatHistory
+            onBack={() => setMode('chat')}
+            onNewChat={() => { clearChat(); setMode('chat') }}
+            onClose={close}
+            onOpenChat={async (row) => {
+              await openChat(row.id, row.kind === 'role' ? row.summary : null)
+              // An old chat is its own conversation, not about the role this sheet was opened on.
+              clearRole()
+              setMode('chat')
+            }}
+            onOpenLink={(link) => { close(); navigate(link) }}
+          />
+        ) : applying && applyTarget ? (
           <ApplyFlow
             key={applyTarget.id}
             target={applyTarget}
@@ -277,9 +297,16 @@ export function HockiaAiSheet() {
         <ul className="px-2 pb-2 pt-1">
           <li>
             <button type="button" onClick={() => { clearChat(); setMoreOpen(false); setDetent('large') }} className="flex h-12 w-full items-center gap-3 rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted" data-testid="hockia-ai-clear">
-              <Trash2 className="h-5 w-5 text-ink-2" strokeWidth={1.75} /> Clear conversation
+              <SquarePen className="h-5 w-5 text-ink-2" strokeWidth={1.75} /> New chat
             </button>
           </li>
+          {signedIn && (
+            <li>
+              <button type="button" onClick={() => { setMoreOpen(false); setMode('history') }} className="flex h-12 w-full items-center gap-3 rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted" data-testid="hockia-ai-chats">
+                <History className="h-5 w-5 text-ink-2" strokeWidth={1.75} /> Your chats
+              </button>
+            </li>
+          )}
           <li>
             <button type="button" onClick={() => { setMoreOpen(false); setFeedbackOpen(true) }} className="flex h-12 w-full items-center gap-3 rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted" data-testid="hockia-ai-report">
               <Flag className="h-5 w-5 text-ink-2" strokeWidth={1.75} /> Report a problem

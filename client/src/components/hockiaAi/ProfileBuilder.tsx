@@ -11,6 +11,7 @@ import {
   LINKS_MAX, PHOTOS_MAX, TEXT_MAX, builderErrorCopy, cvProblem, draftItemCount, linksInText, photoProblem, readForProfile, saveProfileDraft, stillMissing,
   type BuilderAttachments, type CareerDraft, type MissingItem, type ProfileDraft,
 } from '@/lib/profileBuilder'
+import { profileSavedSummary, recordAiAction } from '@/lib/aiChats'
 import { MascotAvatar } from './mascot'
 
 /**
@@ -108,6 +109,15 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
     const res = await saveProfileDraft(profile.id, draft, photos)
     trackDbEvent('profile_builder_saved', 'profile', profile.id, { saved: res.saved, failed: res.failed.length })
     setOutcome(res)
+    // Chats (handoff C2): "Finish my profile · Added career + video".
+    if (res.saved > 0) {
+      void recordAiAction({
+        kind: 'profile',
+        title: 'Finish my profile',
+        summary: profileSavedSummary({ career: draft.career.length, videos: draft.videos.length ? 1 : 0, photos: photos.length, passports: draft.passports.length, socials: draft.socials.length, position: Boolean(draft.position || draft.secondary_position), dob: Boolean(draft.date_of_birth) }),
+        link: '/dashboard/profile',
+      })
+    }
     // Open profile screens reload what they show (PlayerProfileV2 listens).
     window.dispatchEvent(new Event('hockia:profile-updated'))
     setMissing(await stillMissing(profile.id, profile.role))
