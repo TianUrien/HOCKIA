@@ -1,5 +1,5 @@
 {
-  "_doc": "Staging fixtures the journeys fall back to when the UI offers no tappable entry (desktop opens roles in a preview modal without a route). Kept QA rows; never production ids. coverRoleId = a QA role of the lab club with a cover photo in role-covers (lab-fixture-cover.png), so the photo path renders on every platform.",
+  "_doc": "Staging fixtures the journeys fall back to when the UI offers no tappable entry (desktop opens roles in a preview modal without a route). Kept QA rows; never production ids. coverRoleId = a QA role of the lab club with a cover photo in role-covers (lab-fixture-cover.png), so the photo path renders on every platform. speedRoleId = a QA role of the lab club with two pending applications from [QA] players, for the Club speed journeys (every action there is undone or cancelled).",
   "staging": {
     "roleIds": [
       "ce602e74-91b6-41ae-a454-2aeed2c6d351",
@@ -7,6 +7,8 @@
     ],
     "longRoleTitle": "[QA] Device lab",
     "coverRoleId": "2c31e161-22b5-4345-b60f-a561f6ffed07",
-    "coverRoleTitle": "[QA] Club flow 10 Oct B"
+    "coverRoleTitle": "[QA] Club flow 10 Oct B",
+    "speedRoleId": "a77da142-9765-44e0-b196-e426ea373ed1",
+    "speedRoleTitle": "[QA] Club speed"
   }
 }
