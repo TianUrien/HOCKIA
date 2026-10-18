@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
@@ -144,6 +144,16 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const compact = useScrolledPast(heroRef)
   const [bioOpen, setBioOpen] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
+  // Home's views card links here with ?viewers=1 (ruling 2026-10-16): open who viewed you.
+  useEffect(() => {
+    if (!owner) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('viewers') !== '1') return
+    setViewersOpen(true)
+    params.delete('viewers')
+    const qs = params.toString()
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`)
+  }, [owner])
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
   const countryName = country ? (country.common_name ?? country.name) : null
@@ -445,7 +455,14 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       </ProfileLayout>
       {owner && (
         <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel="Profile views">
-          <div className="px-1 pb-4"><ProfileViewersSection /></div>
+          <div className="px-1 pb-4">
+            {(searches.summary?.total ?? 0) > 0 && (
+              <p className="px-3 pb-2 text-secondary text-ink-2" data-testid="brand-viewers-searches">
+                Your brand appeared in {searches.summary?.total} {searches.summary?.total === 1 ? 'search' : 'searches'} in the last 7 days.
+              </p>
+            )}
+            <ProfileViewersSection />
+          </div>
         </BottomSheet>
       )}
     </div>

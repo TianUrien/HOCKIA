@@ -37,7 +37,8 @@ export function ActivityScreen() {
   const vis = useWeeklyVisibility(Boolean(profile), false)
   const viewers = useWeekViewers(profile?.role === 'player' || profile?.role === 'coach')
   const refs = useTrustedReferences(profile?.id ?? '')
-  const [showViewers, setShowViewers] = useState(false)
+  // Home's views card links here with ?viewers=1: open the list straight away.
+  const [showViewers, setShowViewers] = useState(() => new URLSearchParams(location.search).get('viewers') === '1')
   const [busy, setBusy] = useState<string | null>(null)
 
   const checkIn = steps.find((s) => s.action === 'confirm_availability')
