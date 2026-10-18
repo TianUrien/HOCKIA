@@ -49,20 +49,18 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
 
   // The four most recent cohorts, oldest first, so the legend reads left to right in time.
   const shown = [...cohorts].sort((a, b) => (a.signup_month < b.signup_month ? 1 : -1)).slice(0, 4).reverse()
+  // signup_month is a date ("2026-08-01"): format it in UTC, or west of UTC
+  // it reads as the previous month.
+  const cohortLabel = (c: RetentionCohort) =>
+    new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+      + ` (${c.cohort_size})`
   const chartData = periods.map((period, i) => {
     const point: Record<string, string | number | null> = { period }
-    shown.forEach((c) => {
-      const label = new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-        + ` (${c.cohort_size})`
-      point[label] = c[pctKeys[i]]
-    })
+    shown.forEach((c) => { point[cohortLabel(c)] = c[pctKeys[i]] })
     return point
   })
 
-  const cohortLabels = shown.map((c) =>
-    new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-      + ` (${c.cohort_size})`
-  )
+  const cohortLabels = shown.map(cohortLabel)
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -82,7 +80,8 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
             // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Recharts Formatter type mismatch
             formatter={(value: number | undefined) => [`${value?.toFixed(1) ?? '—'}%`] as any}
           />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
+          {/* itemSorter null: keep the oldest-first line order (recharts 3 sorts the legend alphabetically by default). */}
+          <Legend wrapperStyle={{ fontSize: '12px' }} itemSorter={null} />
           {cohortLabels.map((label, i) => (
             <Line
               key={label}

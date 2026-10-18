@@ -33,7 +33,7 @@ export function StackedBarsCard({ title, hint, rows, series, stacked = true, loa
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: '#f5f3ff' }} />
-          {series.length > 1 && <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />}
+          {series.length > 1 && <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />}
           {series.map((s, i) => (
             <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} stackId={stacked ? 'a' : undefined} radius={i === series.length - 1 || !stacked ? [4, 4, 0, 0] : [0, 0, 0, 0]} maxBarSize={28}>
               {/* A period still in progress (this week) is drawn lighter so it doesn't read as a drop. */}

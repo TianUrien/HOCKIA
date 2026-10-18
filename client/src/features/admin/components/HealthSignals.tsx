@@ -74,7 +74,7 @@ export function HealthSignals({ stats, loading }: HealthSignalsProps) {
       tooltip: 'Weekly to Monthly active ratio. Green: >=25%, Yellow: >=15%',
     },
     {
-      label: 'Profile Complete',
+      label: 'Photo + bio',
       value: stats.profile_completion_pct === null ? '—' : `${stats.profile_completion_pct}%`,
       status: getProfileCompletionStatus(stats.profile_completion_pct ?? 0),
       tooltip: 'Users with avatar + bio. Green: >=50%, Yellow: >=30%',

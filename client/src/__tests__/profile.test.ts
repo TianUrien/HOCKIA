@@ -3,7 +3,7 @@ import { derivePublicContactEmail, getFirstName } from '@/lib/profileHelpers'
 
 describe('getFirstName', () => {
   it('returns the first whitespace-delimited token of a normal name', () => {
-    expect(getFirstName('Cristian Urien')).toBe('Cristian')
+    expect(getFirstName('Alex Rivera')).toBe('Alex')
   })
 
   it('returns just the name when no surname is present', () => {
@@ -28,16 +28,16 @@ describe('getFirstName', () => {
   })
 
   it('trims surrounding whitespace before splitting', () => {
-    expect(getFirstName('   Cristian Urien   ')).toBe('Cristian')
+    expect(getFirstName('   Alex Rivera   ')).toBe('Alex')
   })
 
   it('collapses repeated internal whitespace via the regex split', () => {
-    expect(getFirstName('Cristian   Manuel   Urien')).toBe('Cristian')
+    expect(getFirstName('Alex   Sam   Rivera')).toBe('Alex')
   })
 
   it('treats tabs and newlines as whitespace separators', () => {
-    expect(getFirstName('Cristian\tUrien')).toBe('Cristian')
-    expect(getFirstName('Cristian\nUrien')).toBe('Cristian')
+    expect(getFirstName('Alex\tRivera')).toBe('Alex')
+    expect(getFirstName('Alex\nRivera')).toBe('Alex')
   })
 })
 

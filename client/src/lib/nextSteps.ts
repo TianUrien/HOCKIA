@@ -5,7 +5,7 @@ import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
 import type { SocialPlatform } from '@/lib/socialLinks'
 
 /**
- * Hockia AI next steps (Tian, 2026-10-18): the agent looks at what a
+ * Hockia AI next steps (founder, 2026-10-18): the agent looks at what a
  * profile is missing, recommends the step that helps most, and does it with
  * the member — a profile photo, the bio, links — asking with ready-made
  * options. Nothing is saved until the member confirms.
@@ -37,7 +37,7 @@ export function nextStepsFrom(f: ProfileFacts): NextStep[] {
   if (!f.avatar_url) {
     out.push({ key: 'photo', label: 'Add a profile photo', description: f.galleryPhotos.length ? 'Pick one of your photos or upload a new one' : 'Clubs look at the photo first' })
   }
-  // Players: passports right after the photo — clubs filter on nationality and EU (Tian, 2026-10-18).
+  // Players: passports right after the photo — clubs filter on nationality and EU (founder, 2026-10-18).
   const passport: NextStep = { key: 'passport', label: 'Add my passports', description: player ? 'Clubs filter on nationality and EU' : 'Just the countries, never a document' }
   if (player && !f.nationality_country_id) out.push(passport)
   const bio = (f.bio ?? '').trim()

@@ -25,7 +25,7 @@ interface Props<T> {
 }
 
 /**
- * Hockia AI asks with ready-made answers (Tian, 2026-10-18 — "like Claude
+ * Hockia AI asks with ready-made answers (founder, 2026-10-18 — "like Claude
  * Code"): 2–4 options, the recommended one first and badged, a one-line
  * trade-off under each, and "Other" to write your own. One tap answers.
  */

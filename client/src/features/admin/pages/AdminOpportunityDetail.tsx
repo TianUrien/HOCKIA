@@ -224,7 +224,7 @@ export function AdminOpportunityDetail() {
   // 202603230400 but the frontend type kept the old key, so every
   // call resolved detail.vacancy to undefined and the page rendered
   // a misleading "Vacancy not found" empty state even when the
-  // opportunity existed (as in the 28331754... case Tian saw on 2026-05-25
+  // opportunity existed (as in the 28331754... case the founder saw on 2026-05-25
   // with 2 pending applications). The destructure aliases opportunity →
   // vacancy so the rest of the JSX (12+ field reads) stays unchanged.
   if (!detail || !detail.opportunity) {

@@ -3,7 +3,7 @@
  * (World Phase 1).
  *
  * Zero-friction growth phase: claims are granted instantly (review mode
- * 'auto') and every grant lands here as an audit row. Tian reviews after the
+ * 'auto') and every grant lands here as an audit row. The founder reviews after the
  * fact: mark a claim reviewed, or revoke it (unclaims the club and clears the
  * claimant's profile link). Unreviewed rows are highlighted. If the review
  * mode is ever flipped to 'manual', pending requests surface in this same

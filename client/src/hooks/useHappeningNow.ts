@@ -11,7 +11,7 @@ import type { HomeFeedItem } from '@/types/homeFeed'
  *
  * Why not sample the merged feed: movement items are a MINORITY of feed rows
  * — the first 50 get_home_feed items are routinely all text posts +
- * references, so any client-side sample renders the module empty (Tian's QA
+ * references, so any client-side sample renders the module empty (the founder's QA
  * caught exactly that). The RPC filters server-side and applies the standing
  * fences itself (hidden authors, test accounts, bidirectional blocks).
  *

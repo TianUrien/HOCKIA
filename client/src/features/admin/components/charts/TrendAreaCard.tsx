@@ -40,7 +40,7 @@ export function TrendAreaCard({ title, hint, rows, series, loading, height = 240
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={TOOLTIP_STYLE} />
-          {series.length > 1 && <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />}
+          {series.length > 1 && <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} iconType="circle" iconSize={8} />}
           {series.map((s) => (
             <Area key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={s.color} strokeWidth={2} fill={`url(#${gradientId(s.key)})`} dot={false} activeDot={{ r: 4 }} />
           ))}

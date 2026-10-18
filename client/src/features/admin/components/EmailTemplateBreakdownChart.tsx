@@ -55,7 +55,7 @@ export function EmailTemplateBreakdownChart({ data, loading }: EmailTemplateBrea
           <Tooltip
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
           />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
+          <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} />
           <Bar dataKey="sent" name="Sent" fill={HOCKIA_PRIMARY} radius={[0, 4, 4, 0]} />
           <Bar dataKey="opened" name="Opened" fill="#3b82f6" radius={[0, 4, 4, 0]} />
           <Bar dataKey="clicked" name="Clicked" fill="#10b981" radius={[0, 4, 4, 0]} />

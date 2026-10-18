@@ -1090,7 +1090,7 @@ export async function getMarketIntelligence(demandDays = 90): Promise<MarketInte
 
 /**
  * Set / clear the admin "verified" mark on a world club (independent of
- * claiming — Tian's manual review stamp).
+ * claiming — the founder's manual review stamp).
  */
 export async function setWorldClubVerified(clubId: string, verified: boolean): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()

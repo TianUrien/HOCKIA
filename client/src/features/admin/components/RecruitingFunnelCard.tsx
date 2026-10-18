@@ -11,8 +11,8 @@
  * is a share of. Data: admin_get_recruiting_funnel(p_days).
  */
 import { useQuery } from '@tanstack/react-query'
-import { getRecruitingFunnel } from '../api/adminApi'
-import type { RecruitingFunnel, RecruitingFunnelStep } from '../types'
+import { getRecruitingFunnel, getResponseTimeStats } from '../api/adminApi'
+import type { RecruitingFunnel, RecruitingFunnelStep, ResponseTimeStats } from '../types'
 import { ChartCard } from './charts/ChartCard'
 import { shareLabel } from '../lib/adminCharts'
 import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
@@ -35,7 +35,7 @@ const STEP_COLORS: Record<RecruitingFunnelStep['key'], string> = {
 function shareOf(step: RecruitingFunnelStep, steps: RecruitingFunnelStep[]): { label: string; whole: number } | null {
   const by = (k: RecruitingFunnelStep['key']) => steps.find((s) => s.key === k)
   switch (step.key) {
-    case 'viewed': return { label: 'of roles posted', whole: by('posted')?.count ?? 0 }
+    // No share for 'viewed': older roles keep being viewed, so it read "700% of roles posted".
     case 'applied': return { label: 'of viewers applied', whole: by('viewed')?.people ?? 0 }
     case 'shortlisted':
     case 'signed': return { label: 'of applications', whole: by('applied')?.count ?? 0 }
@@ -58,6 +58,8 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
   const steps = q.data?.steps ?? []
   const max = Math.max(1, ...steps.map((s) => s.count))
   const med = q.data?.medians
+  // The club's first reply to an application: the P1 value metric (also in Cohort retention).
+  const reply = useQuery<ResponseTimeStats>({ queryKey: ['admin', 'response-time-stats'], queryFn: getResponseTimeStats, staleTime: 5 * 60 * 1000 }).data
 
   return (
     <ChartCard
@@ -95,7 +97,7 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
             })}
           </ol>
           {med && (
-            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-xs sm:grid-cols-4" data-testid="funnel-medians">
+            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-xs sm:grid-cols-5" data-testid="funnel-medians">
               <div>
                 <dt className="text-gray-500">Role posted → first application</dt>
                 <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.role_to_first_application_hours)} <span className="font-normal text-gray-400">median · {med.roles_with_application} roles</span></dd>
@@ -107,6 +109,10 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
               <div>
                 <dt className="text-gray-500">Offer answered in</dt>
                 <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.offer_response_hours)} <span className="font-normal text-gray-400">median</span></dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Club's first reply</dt>
+                <dd className="font-semibold text-gray-900 tabular-nums" data-testid="funnel-first-reply">{hours(reply?.median_hours)} <span className="font-normal text-gray-400">median · {(reply?.responses_measured ?? 0).toLocaleString()} replies</span></dd>
               </div>
               <div>
                 <dt className="text-gray-500">Applications still unanswered</dt>
