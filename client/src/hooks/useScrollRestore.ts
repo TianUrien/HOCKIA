@@ -3,6 +3,8 @@ import { useLocation, useNavigationType } from 'react-router-dom'
 
 /** In-memory map — fast writes on scroll, survives within a single SPA session */
 const SCROLL_POSITIONS = new Map<string, number>()
+/** The entry being restored: its own scroll events are not saved meanwhile. */
+let restoringKey: string | null = null
 
 /**
  * Saves scroll position on scroll events and restores it on POP (back/forward) navigation.
@@ -25,10 +27,15 @@ export function useScrollRestore(ready = true) {
     const key = location.key
     let rafId: number
 
+    // Only while this entry is still the current one: after a navigation the
+    // next page renders BEFORE this effect is cleaned up, and the scroll
+    // events of that switch (iOS WebView, 17 Oct 2026) were being saved under
+    // the page we just left — Back then landed ~234 px off.
+    const isCurrent = () => ((window.history.state as { key?: string } | null)?.key ?? 'default') === key
     const handleScroll = () => {
       cancelAnimationFrame(rafId)
       rafId = requestAnimationFrame(() => {
-        SCROLL_POSITIONS.set(key, window.scrollY)
+        if (isCurrent() && restoringKey !== key) SCROLL_POSITIONS.set(key, window.scrollY)
       })
     }
 
@@ -36,8 +43,11 @@ export function useScrollRestore(ready = true) {
     return () => {
       window.removeEventListener('scroll', handleScroll)
       cancelAnimationFrame(rafId)
-      // Final save on unmount
-      SCROLL_POSITIONS.set(key, window.scrollY)
+      // No "final save" here: this cleanup runs after the NEXT route has
+      // rendered, so window.scrollY already belongs to the new page (device
+      // lab 17 Oct 2026: Android Home saved 80 instead of 1249, iOS a wrong
+      // offset too, so Back from a role never restored Home). The scroll
+      // listener above has already stored the last real position.
     }
   }, [location.key])
 
@@ -52,45 +62,49 @@ export function useScrollRestore(ready = true) {
       return
     }
 
-    // For list views with pagination/lazy loading, the DOM might not be tall
-    // enough immediately. We retry with exponential backoff up to 1 second,
-    // then scroll anyway to avoid losing the position forever.
-    let attempts = 0
-    const maxAttempts = 20 // ~1 second with 50ms backoff
-    let delayMs = 50
-    // Track the in-flight rAF / timeout so the cleanup can cancel them. Without
-    // this, a POP into a slow/paginating list leaves a chain of timers running
-    // (up to ~1s); navigating away again before it settles would let an
-    // orphaned timer fire window.scrollTo on the NEW view — hijacking its
-    // scroll position. Cancelling on unmount / key change prevents that.
+    // The DOM may not be tall enough yet: lists re-render from cache or
+    // re-fetch after a back navigation, and in the native WebViews that can
+    // take several seconds (device lab 17 Oct 2026: Android Home came back at
+    // 80 px instead of 1186 when this gave up after ~3 s). Keep trying until
+    // the page can reach the saved offset, for up to 8 s; the moment the
+    // person touches, wheels or presses a key we stop, so we never fight them.
+    const deadline = Date.now() + 8000
     let timerId: ReturnType<typeof setTimeout> | undefined
+    let stopped = false
+    const stop = () => { stopped = true; if (timerId !== undefined) clearTimeout(timerId) }
+    const userEvents: (keyof WindowEventMap)[] = ['touchstart', 'wheel', 'keydown', 'mousedown']
+    userEvents.forEach((ev) => window.addEventListener(ev, stop, { passive: true, once: true }))
+
+    // While restoring, scroll anchoring must not "compensate" for sections
+    // above that re-render after Back (it shifted Home by a stable 234 px on
+    // iOS and Android, 17 Oct 2026). Once the page is back to its full height
+    // the saved offset shows the same content, so we pin to it until the
+    // height has been stable for 600 ms (or the person takes over).
+    const root = document.documentElement
+    const prevAnchor = root.style.overflowAnchor
+    root.style.overflowAnchor = 'none'
+    let firstOk = 0
+    const key = location.key
+    restoringKey = key
+    const release = () => { root.style.overflowAnchor = prevAnchor; if (restoringKey === key) restoringKey = null }
 
     const attemptScroll = () => {
-      const canScroll = document.documentElement.scrollHeight >= savedY + window.innerHeight * 0.5
-      if (canScroll) {
+      if (stopped) { release(); return }
+      const canScroll = root.scrollHeight >= savedY + window.innerHeight * 0.5
+      const late = Date.now() >= deadline
+      if (canScroll || late) {
         // behavior: 'instant' overrides `scroll-smooth` on <html>. Without
         // it the user sees the page animate back to position on every
         // browser back/forward — same flash as the modal-close case.
-        window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
+        if (Math.abs(window.scrollY - savedY) > 1) window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
         hasRestoredRef.current = true
-        return
+        if (!firstOk) firstOk = Date.now()
+        // Sections above can still re-render a beat later (Android WebView
+        // grew the page 234 px ~500 ms after the first restore): keep the
+        // saved offset pinned for 2.5 s unless the person takes over.
+        if (late || Date.now() - firstOk >= 2500) { stop(); release(); return }
       }
-
-      attempts += 1
-      if (attempts >= maxAttempts) {
-        // Max retries reached — scroll anyway. This handles cases where the
-        // list is still paginating (DOM grows as user scrolls). Scrolling
-        // positions the user back in the right zone even if the exact
-        // scroll-to-content isn't available yet.
-        window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
-        hasRestoredRef.current = true
-        return
-      }
-
-      // Exponential backoff: 50ms, 100ms, 150ms... prevents thrashing
-      // on rapidly-growing DOM while giving it enough time to render.
-      delayMs = Math.min(delayMs + 50, 200)
-      timerId = setTimeout(attemptScroll, delayMs)
+      timerId = setTimeout(attemptScroll, 100)
     }
 
     // Use rAF to ensure DOM has processed current renders before checking height
@@ -98,7 +112,9 @@ export function useScrollRestore(ready = true) {
 
     return () => {
       cancelAnimationFrame(rafId)
-      if (timerId !== undefined) clearTimeout(timerId)
+      stop()
+      release()
+      userEvents.forEach((ev) => window.removeEventListener(ev, stop))
     }
   }, [navigationType, location.key, ready])
 }

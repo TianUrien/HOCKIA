@@ -54,7 +54,7 @@ vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: 
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
 vi.mock('@/hooks/useCountries', () => ({ useCountries: () => ({ countries: [], loading: false }) }))
-vi.mock('@/hooks/useRoleApplicants', () => ({ patchRoleApplicantStatus: vi.fn(), markRoleApplicantViewed: vi.fn() }))
+vi.mock('@/hooks/useRoleApplicants', () => ({ patchRoleApplicantStatus: vi.fn(), markRoleApplicantViewed: vi.fn(), cachedRoleApplicants: () => null }))
 vi.mock('@/hooks/useSigning', () => ({
   useApplicationRoad: () => ({ data: null, loading: false, refetch: vi.fn() }),
   useSigningActions: () => ({ busy: false, makeOffer: vi.fn(), withdrawOffer: vi.fn(), markSigned: vi.fn(), undoMarkSigned: vi.fn(), setTrial: vi.fn() }),

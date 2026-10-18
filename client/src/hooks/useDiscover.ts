@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
+import { allDone, applyStep, streamNlSearch, type AiStep } from '@/lib/aiStream'
+import { chatKind, chatSummary, chatTitle, forStorage, loadChat, saveChat } from '@/lib/aiChats'
 
 /** Invoke nl-search, refreshing the session ONCE on a 401 then retrying. A native
  *  Capacitor session can go stale after the app is backgrounded (the refresh
@@ -148,6 +150,10 @@ export interface SuggestedAction {
 export interface ClarifyingOption {
   label: string
   routed_query: string
+  /** One line on what picking it does (choice card, 2026-10-18). */
+  description?: string
+  /** Hockia AI's suggestion: listed first, badged "Recommended". */
+  recommended?: boolean
 }
 
 /** Platform-help CTA — an explicit in-app destination the assistant
@@ -311,7 +317,21 @@ function collectShownProfileIds(messages: DiscoverChatMessage[]): string[] {
 interface DiscoverChatStore {
   messages: DiscoverChatMessage[]
   isPending: boolean
-  sendMessage: (query: string) => Promise<void>
+  /** Live steps of the question in flight (nl-search event stream); kept,
+   *  all done, until the next question so the sheet can fade them out. */
+  steps: AiStep[]
+  /** The assistant message whose text is still being revealed word by word. */
+  revealId: string | null
+  finishReveal: () => void
+  /** `extra` joins the request body, e.g. a role question: { mode: 'role_ask', opportunity_id } (handoff B4).
+   *  `meta.roleLabel` names the role in the chat history row ("Lazio Hockey"). */
+  sendMessage: (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => Promise<void>
+  /** Saved conversation this chat writes to (handoff C2 history); null until the first answer. */
+  chatId: string | null
+  /** The role a role chat is about, for its history row. */
+  chatRoleLabel: string | null
+  /** Show a saved chat again; following questions continue it. A role chat keeps its role label. */
+  openChat: (id: string, roleLabel?: string | null) => Promise<void>
   /**
    * Phase 1A — submit a structured action (chip tap). Free-text intents
    * become a new user message + LLM round-trip. `retry` resubmits the most
@@ -328,13 +348,43 @@ interface DiscoverChatStore {
   clearChat: () => void
 }
 
+/** Serialised saves so a fast second answer never creates a second row. */
+let saveQueue: Promise<unknown> = Promise.resolve()
+
+function persistChat(get: () => DiscoverChatStore, set: (p: Partial<DiscoverChatStore>) => void) {
+  if (!useAuthStore.getState().user) return
+  saveQueue = saveQueue.then(async () => {
+    const { messages, chatId, chatRoleLabel } = get()
+    const stored = forStorage(messages)
+    if (!stored.some((m) => m.role === 'assistant')) return
+    try {
+      const id = await saveChat(chatId, {
+        kind: chatKind(stored, chatRoleLabel !== null),
+        title: chatTitle(stored),
+        summary: chatRoleLabel ?? chatSummary(stored),
+        messages: stored,
+      })
+      // Cleared or switched while saving: don't attach the old row to the new chat.
+      if (get().messages.length && get().chatId === chatId) set({ chatId: id })
+    } catch (err) {
+      logger.warn('[useDiscoverChat] could not save the chat', err)
+    }
+  })
+}
+
 export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   messages: [],
   isPending: false,
+  steps: [],
+  revealId: null,
+  chatId: null,
+  chatRoleLabel: null,
+  finishReveal: () => set({ revealId: null }),
 
-  sendMessage: async (query: string) => {
+  sendMessage: async (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => {
     const trimmed = query.trim()
     if (!trimmed || get().isPending) return
+    if (meta?.roleLabel && !get().messages.length) set({ chatRoleLabel: meta.roleLabel })
 
     const userMsg: DiscoverChatMessage = {
       id: crypto.randomUUID(),
@@ -356,6 +406,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     set(s => ({
       messages: [...s.messages, userMsg, assistantPlaceholder],
       isPending: true,
+      steps: [],
+      revealId: null,
     }))
 
     // Build history from completed messages (last 10 turns)
@@ -389,18 +441,14 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
 
     try {
       const excludedIds = collectShownProfileIds(get().messages)
-      const { data, error } = await invokeNlSearch({ query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds })
+      // Live steps over Server-Sent Events (2026-10-17); a function without
+      // the stream mode answers plain JSON and the same envelope is read.
+      const { data, error } = await streamNlSearch(
+        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...(extra ?? {}) },
+        (e) => set(s => ({ steps: applyStep(s.steps, e) })),
+      )
 
-      if (error) {
-        let serverMessage = ''
-        if (error.context && typeof error.context.json === 'function') {
-          try {
-            const body = await error.context.json()
-            serverMessage = body?.error || ''
-          } catch { /* response body not parseable */ }
-        }
-        throw new Error(serverMessage || error.message || 'Search failed')
-      }
+      if (error) throw new Error(error.message || 'Search failed')
 
       const result = data as DiscoverResponse
       if (!result.success) {
@@ -436,7 +484,10 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
               }
             : m
         ),
+        steps: allDone(s.steps),
+        revealId: assistantId,
       }))
+      persistChat(get, set)
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error'
       logger.error('[useDiscoverChat] Error:', errMsg)
@@ -547,6 +598,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
           }
         }),
       }))
+      persistChat(get, set)
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error'
       logger.error('[useDiscoverChat] loadMore error:', errMsg)
@@ -559,5 +611,11 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     }
   },
 
-  clearChat: () => set({ messages: [], isPending: false }),
+  openChat: async (id: string, roleLabel: string | null = null) => {
+    if (get().isPending) return
+    const messages = await loadChat(id)
+    set({ messages, chatId: id, chatRoleLabel: roleLabel, steps: [], revealId: null, isPending: false })
+  },
+
+  clearChat: () => set({ messages: [], isPending: false, chatId: null, chatRoleLabel: null, steps: [], revealId: null }),
 }))

@@ -80,6 +80,12 @@ export function markRoleApplicantViewed(roleId: string, applicationId: string): 
   if (hit) hit.value = { ...hit.value, applicants: hit.value.applicants.map((a) => (a.applicationId === applicationId ? { ...a, viewed: true } : a)) }
 }
 
+/** The last loaded list whatever its age — for picking the next applicant to
+ *  review (Club speed CS7); held decisions are already patched into it. */
+export function cachedRoleApplicants(roleId: string): Applicant[] | null {
+  return cache.get(roleId)?.value.applicants ?? null
+}
+
 export function peekRoleApplicants(roleId: string) {
   const hit = cache.get(roleId)
   return hit && Date.now() - hit.at < TTL ? hit.value : null

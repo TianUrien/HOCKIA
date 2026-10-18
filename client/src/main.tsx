@@ -13,7 +13,7 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
-import { isSafeSilentUpdate, registerServiceWorker } from './lib/swUpdate'
+import { STALE_CHUNK_KEY, isSafeSilentUpdate, recoverFromStaleChunk, registerServiceWorker } from './lib/swUpdate'
 import { hasPersistedSession } from './lib/persistedSession'
 import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
@@ -37,6 +37,18 @@ if (import.meta.env.PROD) {
       }),
   })
 }
+
+// A lazy chunk replaced by a newer release (any dynamic import, not only the
+// routes behind lazyWithRetry): activate the new worker and reload, once per
+// tab session (prod 2026-10-18: /admin showed "Something went wrong").
+window.addEventListener('vite:preloadError', (event) => {
+  try {
+    if (sessionStorage.getItem(STALE_CHUNK_KEY)) return
+    sessionStorage.setItem(STALE_CHUNK_KEY, '1')
+  } catch { /* storage blocked: still recover once */ }
+  event.preventDefault()
+  void recoverFromStaleChunk()
+})
 
 const isNativePlatform = Capacitor.isNativePlatform()
 // Native builds use the platform font (SF Pro / Roboto); the web keeps Inter.

@@ -36,3 +36,55 @@ export async function fetchRolesWithSigning(roleIds: string[]): Promise<Set<stri
     return new Set()
   }
 }
+
+/** Waiting applications a close can answer with a note: the ones a club may still
+ *  decline (application-feedback refuses offered / accepted — a close as filled
+ *  moves those to "Role filled" on the server). Oldest first. */
+export const TELLABLE_STATUSES = ['pending', 'shortlisted', 'maybe'] as const
+
+export interface WaitingApplicant { applicationId: string; firstName: string | null }
+
+export async function fetchTellableApplicants(roleId: string): Promise<WaitingApplicant[]> {
+  const { data, error } = await supabase
+    .from('opportunity_applications')
+    .select('id, applied_at, applicant:applicant_id ( full_name )')
+    .eq('opportunity_id', roleId)
+    .in('status', [...TELLABLE_STATUSES] as never)
+    .order('applied_at', { ascending: true })
+  if (error || !data) return []
+  return (data as unknown as { id: string; applicant: { full_name: string | null } | null }[]).map((r) => ({
+    applicationId: r.id,
+    firstName: r.applicant?.full_name?.trim().split(/\s+/)[0] || null,
+  }))
+}
+
+/**
+ * Club speed CS6: tell everyone still waiting before a role closes. Each one is
+ * declined with the club's note and their own first name — the same write,
+ * notification and email as a single decline (application-feedback, no model
+ * call). A few at a time; returns how many went out and how many failed.
+ */
+export async function tellWaitingApplicants(
+  rows: WaitingApplicant[],
+  reason: string,
+  noteFor: (firstName: string | null) => string,
+): Promise<{ told: number; failed: number }> {
+  let told = 0
+  let failed = 0
+  const queue = [...rows]
+  const worker = async () => {
+    for (let r = queue.shift(); r; r = queue.shift()) {
+      try {
+        const { data, error } = await supabase.functions.invoke('application-feedback', {
+          body: { mode: 'decline', application_id: r.applicationId, reason, message: noteFor(r.firstName) },
+        })
+        if (error || !(data as { ok?: boolean } | null)?.ok) throw error ?? new Error('decline_failed')
+        told += 1
+      } catch {
+        failed += 1
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, rows.length) }, worker))
+  return { told, failed }
+}

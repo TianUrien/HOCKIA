@@ -66,6 +66,13 @@ export function closeRoleToast(outcome: RoleCloseOutcome, waitingApplicants = 0)
   return waitingApplicants > 0 ? 'Role closed as filled. Applicants have been told.' : 'Role closed as filled.'
 }
 
+/** Toast after a close that told the waiting players (Club speed CS6). */
+export function closeRoleToldToast(told: number, failed: number): string {
+  const who = (n: number) => (n === 1 ? '1 player' : `${n} players`)
+  if (told === 0 && failed > 0) return `Role closed. Couldn’t tell ${who(failed)}.`
+  return failed > 0 ? `Role closed. ${who(told)} told; couldn’t tell ${failed}.` : `Role closed. ${who(told)} told.`
+}
+
 /** Reopen toast — phone and desktop share it. */
 export const REOPEN_ROLE_TOAST = 'Role reopened.'
 

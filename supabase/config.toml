@@ -458,6 +458,15 @@ verify_jwt = true
 [functions.role-description-draft]
 verify_jwt = true
 
+[functions.profile-builder]
+verify_jwt = true
+
+[functions.profile-bio]
+verify_jwt = true
+
+[functions.apply-draft]
+verify_jwt = true
+
 # Database-webhook and cron callers present a service-role JWT, which passes
 # the gateway check; every one of these also calls assertServiceRole.
 [functions.admin-market-digest]

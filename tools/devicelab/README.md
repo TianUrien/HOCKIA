@@ -15,6 +15,15 @@ npm run run -- --device iphone-max,android-phone --scenario opportunities-role-a
 
 Reports land in `report/<timestamp>/REPORT.md` with one screenshot folder per device.
 
+## Club speed journeys
+
+```bash
+npm run run -- --device iphone-max --scenario club-speed
+npm run run -- --device android-phone --scenario club-speed
+```
+
+Signs in as the staging club and runs Your replies, select several + bulk decline, review moves on (+ Undo), the close sheet, Post again and Start with Hockia AI. Nothing is written: decisions are undone inside the 5 s window (an in-page script on Android, step by step on iOS) and every sheet is cancelled. They use `fixtures.json → speedRoleId` ("[QA] Club speed", two pending applications from [QA] players); if a run is interrupted mid-Undo, set those applications back to `pending`. `club-ai-start` makes one real Hockia AI call on staging.
+
 ## Publisher (club) journeys
 
 ```bash

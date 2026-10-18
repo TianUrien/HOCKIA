@@ -29,7 +29,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 vi.mock('@/lib/analytics', () => ({ trackProtectedActionBlocked: vi.fn() }))
 
-// Feed card → OpportunityDetailOverlay → OpportunityPreviewModal → Apply sheet.
+// Feed card → the v2 role page (since 17 Oct 2026) → Apply sheet.
 const applyProps = vi.hoisted(() => ({ current: null as null | Record<string, unknown> }))
 vi.mock('@/components/OpportunityDetailView', () => ({
   default: (p: { onApply?: () => void }) => <button type="button" onClick={p.onApply}>Apply now</button>,
@@ -59,8 +59,6 @@ import { InboxActivity } from '@/components/inbox/InboxActivity'
 import NotificationsDrawer from '@/components/NotificationsDrawer'
 import { getNotificationConfig } from '@/components/notifications/config'
 import type { MyClubInvitation } from '@/lib/clubInvitations'
-import OpportunityPreviewModal from '@/components/OpportunityPreviewModal'
-import type { Vacancy } from '@/lib/supabase'
 
 const note = (overrides: Partial<NotificationRecord> = {}): NotificationRecord => ({
   id: 'n1',
@@ -234,44 +232,6 @@ describe('new-opportunity notification line', () => {
   it('player positions still read as before', () => {
     const n = note({ kind: 'opportunity_published' as NotificationRecord['kind'], metadata: { position: 'midfielder' } })
     expect(getNotificationConfig(n).getDescription?.(n)).toBe('Midfielder')
-  })
-})
-
-describe('Apply sheet from the feed card overlay', () => {
-  it('passes the club name + crest the role page passes', () => {
-    applyProps.current = null
-    const vacancy = { id: 'o1', club_id: 'club-1', opportunity_type: 'coach', gender: 'Men', organization_name: null } as unknown as Vacancy
-    render(
-      <MemoryRouter>
-        <OpportunityPreviewModal
-          vacancy={vacancy}
-          clubInfo={{ id: 'club-1', full_name: 'E2E Test FC', avatar_url: 'clubs/crest.png', role: 'club', current_club: null, womens_league_division: null, mens_league_division: 'Premier' }}
-          worldClub={null}
-          hasApplied={false}
-          onClose={vi.fn()}
-        />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Apply now' }))
-    expect(applyProps.current).toMatchObject({ clubName: 'E2E Test FC', clubLogo: 'clubs/crest.png', publisherRole: 'club', league: 'Premier' })
-  })
-
-  it('prefers the linked world club, like the role page', () => {
-    applyProps.current = null
-    const vacancy = { id: 'o1', club_id: 'club-1', opportunity_type: 'coach', gender: 'Women', organization_name: null } as unknown as Vacancy
-    render(
-      <MemoryRouter>
-        <OpportunityPreviewModal
-          vacancy={vacancy}
-          clubInfo={{ id: 'club-1', full_name: 'E2E Test FC', avatar_url: null, role: 'club', current_club: null, womens_league_division: null, mens_league_division: null }}
-          worldClub={{ id: 'w1', clubName: 'CASI', avatarUrl: 'w/casi.png', countryName: null, flagEmoji: null, leagueName: 'Metro A' }}
-          hasApplied={false}
-          onClose={vi.fn()}
-        />
-      </MemoryRouter>,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Apply now' }))
-    expect(applyProps.current).toMatchObject({ clubName: 'CASI', clubLogo: 'w/casi.png', league: 'Metro A' })
   })
 })
 

@@ -20,6 +20,17 @@ export default function DiscoverChat({ messages, assistantAvatar }: DiscoverChat
       {messages.map(msg => {
         if (msg.role === 'user') return <UserBubble key={msg.id} text={msg.content} />
         if (!assistantAvatar) return <AssistantMessage key={msg.id} msg={msg} />
+        // Answers with result cards keep the full width (the cards are dense):
+        // the avatar sits on its own line above. Text answers keep it beside.
+        const hasCards = (msg.results?.length ?? 0) > 0 || (msg.recommendations?.length ?? 0) > 0 || (msg.opportunities?.length ?? 0) > 0
+        if (hasCards) {
+          return (
+            <div key={msg.id} className="flex flex-col gap-1.5" data-testid="ai-answer-cards">
+              {assistantAvatar}
+              <AssistantMessage msg={msg} />
+            </div>
+          )
+        }
         return (
           <div key={msg.id} className="flex items-start gap-2.5">
             {assistantAvatar}

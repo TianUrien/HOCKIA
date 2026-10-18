@@ -29,6 +29,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
@@ -73,6 +74,10 @@ import {
   type SuggestedAction,
 } from '../_shared/suggested-actions.ts'
 import { detectRecoveryQuery } from '../_shared/recovery.ts'
+import { ROLE_ASK_MODE, ROLE_ASK_SYSTEM, stripClaims } from '../_shared/role-ask.ts'
+import { SUMMARY_MODE, SUMMARY_SYSTEM, sanitizeApplicants, summaryFacts } from '../_shared/applicants-summary.ts'
+import { loadMemberRoleFacts } from '../_shared/member-role-facts.ts'
+import { factLines } from '../_shared/apply-note.ts'
 import { detectClarifyingNeed } from '../_shared/clarifying.ts'
 import { scopeFiltersToRoles } from '../_shared/role-filter-scope.ts'
 import { buildSofteningLadder, describeSoftening, type GeoSofteningStep } from '../_shared/geo-softening.ts'
@@ -1478,9 +1483,14 @@ async function handleCandidateOpportunitySearch(params: {
     // Never offer the viewer a role they published (prod and staging alike).
     rows = withoutOwnRoles(rows, ((ownRes?.data ?? []) as { id: string }[]).map(r => r.id))
 
+    step('understand', 'Understanding your question', 'done')
+    step('roles', `Checked ${rows.length} open role${rows.length === 1 ? '' : 's'}`, 'done')
+    step('match', 'Matching team, position and passport')
     const today = new Date().toISOString().slice(0, 10)
     const { criteria, matched, landed, askedLabel, widenedRegion, ineligibleInAsked } =
       runOpportunitySearch(query, rows, countries, viewer, today)
+    step('match', 'Matching team, position and passport', 'done')
+    step('write', 'Writing your answer')
     const noun = describeRoleNoun(criteria)
     const meta = {
       kind: matched.length ? 'opportunity_results' : 'no_results',
@@ -1799,7 +1809,160 @@ async function handleRoleSuggestionsRefine(params: {
   }
 }
 
-Deno.serve(async (req) => {
+// ── Role questions (2026-10-18) ──────────────────────────────────────────
+async function handleRoleAsk(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  opportunityId: unknown
+  question: string
+  history: HistoryTurn[]
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, opportunityId, question, history, correlationId, headers } = params
+  const json = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { ...headers, 'Content-Type': 'application/json' } })
+  const text = (message: string, kind: ResponseKind = 'text') => json({ success: true, kind, data: [], total: 0, has_more: false, parsed_filters: null, summary: null, applied: null, ai_message: message, suggested_actions: [] })
+  if (!isUuid(opportunityId)) return json({ success: false, error: 'Missing or invalid opportunity_id' }, 400)
+  step('role', 'Reading this role')
+  const facts = await loadMemberRoleFacts(adminClient, userId, opportunityId as string)
+  if (!facts) return text('This role isn’t open any more, so I can’t answer about it. Ask me about other roles instead.')
+  step('role', 'Read this role', 'done')
+  step('profile', 'Checking your profile')
+  const lines = factLines(facts.member, facts.role)
+  if (facts.extra.teamCategory) lines.push(`The role is for this team category: ${facts.extra.teamCategory}.`)
+  if (facts.extra.type) lines.push(`The role is for a ${facts.extra.type}.`)
+  step('profile', 'Checked your profile', 'done')
+  step('write', 'Writing the answer')
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) return text('I can’t answer about this role right now. Try again in a moment.', 'soft_error')
+  const model = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+  const meter: { usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number } | null } = { usage: null }
+  try {
+    const turns = history.slice(-4).map((h) => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content ?? '').slice(0, 800) })).filter((h) => h.content)
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model,
+        max_tokens: 400,
+        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: ROLE_ASK_SYSTEM }, { type: 'text', text: `Facts:\n${lines.join('\n')}` }],
+        messages: [...turns, { role: 'user', content: question.slice(0, 500) }],
+      }),
+      signal: AbortSignal.timeout(25_000),
+    })
+    if (!res.ok) throw new Error(`anthropic ${res.status}`)
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    meter.usage = data.usage ?? null
+    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    step('write', 'Wrote the answer', 'done')
+    return text(answer || 'I’m not sure about that one — the club can tell you best.')
+  } catch (err) {
+    captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'role_ask' } })
+    return text('I can’t answer about this role right now. Try again in a moment.', 'soft_error')
+  } finally {
+    const u = meter.usage
+    fireAndForget(recordAiUsage(adminClient, { user_id: userId, function: 'nl-search', provider: 'claude', model, input_tokens: u?.input_tokens ?? null, output_tokens: u?.output_tokens ?? null, cached_tokens: u?.cache_read_input_tokens ?? null }))
+  }
+}
+
+// ── Applicants summary (2026-10-18) ──────────────────────────────────────
+async function handleApplicantsSummary(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  opportunityId: unknown
+  applicants: unknown
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, opportunityId, applicants, correlationId, headers } = params
+  const json = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { ...headers, 'Content-Type': 'application/json' } })
+  if (!isUuid(opportunityId)) return json({ success: false, error: 'Missing or invalid opportunity_id' }, 400)
+  const { data: opp } = await adminClient.from('opportunities').select('club_id, title').eq('id', opportunityId).maybeSingle()
+  // Only the role's publisher: nothing about applicants leaks to anyone else.
+  if (!opp || opp.club_id !== userId) return json({ success: false, error: 'Not available' }, 403)
+  const list = sanitizeApplicants(applicants)
+  const text = (message: string, kind: ResponseKind = 'text') => json({ success: true, kind, data: [], total: 0, has_more: false, parsed_filters: null, summary: null, applied: null, ai_message: message, suggested_actions: [] })
+  if (list.length < 2) return text(list.length === 1 ? `1 applicant is waiting for your reply.` : 'Nobody is waiting for a reply.')
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) return text('I can’t summarise right now. Try again in a moment.', 'soft_error')
+  const model = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+  const meter: { usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number } | null } = { usage: null }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: 250, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: SUMMARY_SYSTEM }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
+      signal: AbortSignal.timeout(20_000),
+    })
+    if (!res.ok) throw new Error(`anthropic ${res.status}`)
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    meter.usage = data.usage ?? null
+    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    return text(answer || `${list.length} applicants are waiting for your reply.`)
+  } catch (err) {
+    captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'applicants_summary' } })
+    return text('I can’t summarise right now. Try again in a moment.', 'soft_error')
+  } finally {
+    const u = meter.usage
+    fireAndForget(recordAiUsage(adminClient, { user_id: userId, function: 'nl-search', provider: 'claude', model, input_tokens: u?.input_tokens ?? null, output_tokens: u?.output_tokens ?? null, cached_tokens: u?.cache_read_input_tokens ?? null }))
+  }
+}
+
+// ── Live steps (Hockia AI sheet, 2026-10-17) ─────────────────────────────
+// A request sent with `Accept: text/event-stream` gets Server-Sent Events:
+// `step` events as each real stage starts / finishes, then one `result`
+// event carrying the usual JSON body and status. Everyone else (old native
+// builds, /discover, curl) gets plain JSON exactly as before. The step sink
+// lives in AsyncLocalStorage so concurrent requests in one isolate never mix.
+type StepState = 'now' | 'done'
+type StepEvent = { id: string; label: string; state: StepState }
+const stepChannel = new AsyncLocalStorage<(e: StepEvent) => void>()
+function step(id: string, label: string, state: StepState = 'now') {
+  stepChannel.getStore()?.({ id, label, state })
+}
+
+function streamResponse(req: Request): Response {
+  const headers = getCorsHeaders(req.headers.get('origin'))
+  const enc = new TextEncoder()
+  let closed = false
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const send = (event: string, data: unknown) => {
+        if (closed) return
+        controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+      }
+      // Keep proxies from idling the connection out during a slow model call.
+      const ping = setInterval(() => { if (!closed) controller.enqueue(enc.encode(': ping\n\n')) }, 10_000)
+      const finish = () => { if (closed) return; closed = true; clearInterval(ping); controller.close() }
+      stepChannel.run((e) => send('step', e), () => handleRequest(req))
+        .then(async (res) => {
+          const text = await res.text()
+          let body: unknown
+          try { body = JSON.parse(text) } catch { body = { success: false, error: text || 'Empty response' } }
+          send('result', { status: res.status, body, retry_after: res.headers.get('Retry-After') })
+          finish()
+        })
+        .catch((err) => {
+          captureException(err, { functionName: 'nl-search', extra: { phase: 'stream' } })
+          send('result', { status: 500, body: { success: false, error: 'Search failed' } })
+          finish()
+        })
+    },
+    cancel() { closed = true },
+  })
+  return new Response(stream, {
+    headers: { ...headers, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' },
+  })
+}
+
+Deno.serve((req) => {
+  if (req.method === 'POST' && (req.headers.get('accept') ?? '').includes('text/event-stream')) return streamResponse(req)
+  return handleRequest(req)
+})
+
+async function handleRequest(req: Request): Promise<Response> {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const origin = req.headers.get('origin')
   const headers = getCorsHeaders(origin)
@@ -2022,6 +2185,18 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ── Role questions (Hockia AI sheet opened on a role, handoff B3/B4) ──
+    // One open role + the asker's own facts; counts toward the daily cap
+    // (checked above) because usage is logged as nl-search.
+    if (body?.mode === ROLE_ASK_MODE) {
+      return await handleRoleAsk({ adminClient, userId: user.id, opportunityId: body?.opportunity_id, question: query, history, correlationId, headers })
+    }
+
+    // ── Applicants summary for the role's publisher (handoff C3, ruling 2026-10-18) ──
+    if (body?.mode === SUMMARY_MODE) {
+      return await handleApplicantsSummary({ adminClient, userId: user.id, opportunityId: body?.opportunity_id, applicants: body?.applicants, correlationId, headers })
+    }
+
     // All prerequisites validated — record state so the catch block can
     // attempt a keyword fallback if the LLM call fails downstream.
     pendingAdminClient = adminClient
@@ -2231,6 +2406,7 @@ Deno.serve(async (req) => {
     // this fixes the "asked for clubs, got mixed players/coaches/clubs/brands"
     // bug. The hint is also passed to the LLM as a system-prompt nudge so
     // it filters and writes its message accordingly.
+    step('profile', 'Reading your profile')
     const intent: RoutedIntent = classifyEntityType(query)
     pendingIntentEntityType = intent.entity_type
 
@@ -2530,6 +2706,8 @@ Deno.serve(async (req) => {
           ? Math.round((metCriteria / totalCriteria) * 100)
           : 0
 
+        step('profile', 'Read your profile', 'done')
+        step('understand', 'Understanding your question')
         userContext = {
           role: userProfile.role,
           full_name: userProfile.full_name,
@@ -2697,6 +2875,8 @@ Deno.serve(async (req) => {
     // role-awareness; without it we fall through to the normal LLM flow.
     if (intent.entity_type === 'platform_help' && userContext) {
       try {
+        step('understand', 'Understanding your question', 'done')
+        step('help', 'Looking up how Hockia works')
         const { result: helpResult, meta: helpMeta } = await answerPlatformHelp({
           userQuery: query,
           userContext,
@@ -2762,6 +2942,8 @@ Deno.serve(async (req) => {
     // asking for. The hint is informational; the backend ENFORCES below
     // for HIGH-confidence intents regardless of the LLM's output.
     const { result: parseResult, meta: parseMeta } = await parseSearchQuery(query, history, userContext, intent)
+    step('understand', 'Understanding your question', 'done')
+    step('search', 'Searching profiles')
 
     // ── Phase 0 forced-search override ──────────────────────────────────
     // When the keyword router is HIGH confidence on a profile-entity type
@@ -3933,6 +4115,9 @@ Deno.serve(async (req) => {
         p_offset: requestedOffset,
       } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
       rpcResult = data as { results: any[]; total: number; has_more: boolean } | null
+      // No count here: the search may still widen (geo softening) before the answer.
+      step('search', 'Searched profiles', 'done')
+      step('write', 'Writing your answer')
       rpcError = error
 
       // ── Geographic softening ──────────────────────────────────────────
@@ -4274,6 +4459,7 @@ Deno.serve(async (req) => {
 
           const hasAnyData = qualData.some(p => p.comments.length > 0 || p.references.length > 0)
           if (hasAnyData) {
+            step('write', 'Writing your answer')
             const { text: synthesis, meta } = await synthesizeQualitativeInsights(qualData, query)
             synthMeta = meta
             if (synthesis) aiMessage += `\n\n${synthesis}`
@@ -4692,4 +4878,4 @@ Deno.serve(async (req) => {
       { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
   }
-})
+}

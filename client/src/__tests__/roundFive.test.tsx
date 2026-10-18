@@ -169,7 +169,7 @@ describe('role menu: Find players / coaches for this role', () => {
     renderRoleActions({ status: 'closed', opportunity_type: 'player' })
     fireEvent.click(screen.getByTestId('role-actions-button'))
     expect(screen.queryByTestId('role-actions-find')).toBeNull()
-    expect(screen.getByText('Reopen role')).toBeTruthy()
+    expect(screen.getByText('Reopen this role')).toBeTruthy()
   })
   it('Role posted reuses the same activation', () => {
     expect(read('../components/club/RolePostedScreen.tsx')).toContain("useFindForRole")
@@ -279,7 +279,9 @@ describe('close / reopen copy', () => {
     const desktop = read('../components/OpportunitiesTab.tsx')
     expect(desktop).not.toContain('Opportunity reopened.')
     expect(desktop).not.toContain('Just closing')
-    expect(desktop).toContain('closeRoleToast(reason, waiting)')
+    // The dashboard tab closes through the shared sheet (Club speed CS6), with the same toasts.
+    expect(desktop).toContain('<CloseRoleSheet')
+    expect(read('../components/club/CloseRoleSheet.tsx')).toContain('closeRoleToast(chosen, left)')
   })
 })
 

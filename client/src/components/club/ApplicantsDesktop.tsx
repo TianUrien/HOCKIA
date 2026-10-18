@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, Info } from 'lucide-react'
+import { Check, ChevronLeft, Info } from 'lucide-react'
 import Header from '@/components/Header'
 import { CrestTile } from '@/components/opportunities/RoleCover'
 import { useOwnerCrest } from '@/hooks/useOwnerCrest'
@@ -9,6 +9,10 @@ import { Chip } from '@/components/ui/Chip'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
 import { UndoToast } from './UndoToast'
+import { BulkDeclineSheet } from './BulkDeclineSheet'
+import { ApplicantsAiSummary } from './ApplicantsAiSummary'
+import { useBulkDecisions } from '@/hooks/useBulkDecisions'
+import { firstWord, namesLine } from '@/lib/declineNotes'
 import { RoleActions } from './RoleActions'
 import ApplicantReviewScreen, { type ReviewActions } from './ApplicantReviewScreen'
 import { useAuthStore } from '@/lib/auth'
@@ -39,6 +43,10 @@ const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
  *
  * Hockia suggests is phone-only for now (its route sends desktop back here),
  * so the entry is not shown on desktop.
+ *
+ * Club speed CS4/CS5 on desktop: "Select" on To review and Maybe → a checkbox
+ * per row, and the detail pane becomes the selection (N selected · Maybe ·
+ * Decline N) with the same fixed-note decline sheet and one Undo as the phone.
  */
 export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   const navigate = useNavigate()
@@ -53,6 +61,10 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   const p = pipelineOf(data.applicants.map((a) => a.status))
   const [chip, setChip] = useState<ChipId>('pending')
   const actions = useRef<ReviewActions | null>(null)
+  const [selecting, setSelecting] = useState(false)
+  const [picks, setPicks] = useState<Set<string>>(() => new Set())
+  const [bulkDeclining, setBulkDeclining] = useState(false)
+  const bulk = useBulkDecisions(roleId)
 
   const list = useMemo(() => {
     const rows = data.applicants.filter((a) => applicantChipFor(a.status) === chip)
@@ -72,6 +84,12 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   }, [wanted, data.loading, data.applicants])
 
   const selected = list.find((a) => a.applicationId === wanted) ?? list[0] ?? null
+  const selectable = chip === 'pending' || chip === 'maybe'
+  const picked = list.filter((a) => picks.has(a.applicationId))
+  const allPicked = list.length > 0 && picked.length === list.length
+  const endSelect = () => { setSelecting(false); setPicks(new Set()); setBulkDeclining(false) }
+  const toggle = (id: string) => setPicks((cur) => { const next = new Set(cur); if (next.has(id)) next.delete(id); else next.add(id); return next })
+  const changeChip = (c: ChipId) => { setChip(c); endSelect() }
   const select = useCallback((a: Applicant | null) => {
     const next = new URLSearchParams(params)
     if (a) next.set('a', a.applicationId)
@@ -95,6 +113,8 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
       const t = e.target as HTMLElement | null
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return
       if (document.querySelector('[role="dialog"]')) return
+      // Selecting several: the keys act on one applicant, so they rest.
+      if (selecting) return
       const i = selected ? list.findIndex((a) => a.applicationId === selected.applicationId) : -1
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault()
@@ -112,7 +132,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [list, selected, select])
+  }, [list, selected, select, selecting])
 
   const role = data.role
   const pill = role ? genderPill(role.gender) : null
@@ -169,6 +189,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                     role={role}
                     onChanged={data.refresh}
                     onEdit={() => navigate(home.path, { state: { editRoleId: role.id } })}
+                    onPostAgain={() => navigate(home.path, { state: { postAgainRoleId: role.id } })}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-white"
                   />
                 )}
@@ -177,11 +198,24 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
 
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Application status">
               {chips.map((c) => (
-                <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => setChip(c.id)} />
+                <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => changeChip(c.id)} />
               ))}
             </div>
-            <p className="-mt-1 text-secondary text-ink-2">{caption}</p>
+            <div className="-mt-1 flex items-center gap-3">
+              <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? 'Select applicants to answer them together' : caption}</p>
+              {selecting ? (
+                <>
+                  <button type="button" onClick={() => setPicks(allPicked ? new Set() : new Set(list.map((a) => a.applicationId)))} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="select-all">{allPicked ? 'Deselect all' : 'Select all'}</button>
+                  <button type="button" onClick={endSelect} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline">Cancel</button>
+                </>
+              ) : selectable && list.length > 0 && (
+                <button type="button" onClick={() => setSelecting(true)} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="applicants-select">Select</button>
+              )}
+            </div>
 
+            {chip === 'pending' && !selecting && role && clubId && role.club_id === clubId && (
+              <ApplicantsAiSummary roleId={roleId} pending={list} expiryDays={data.expiryDays} />
+            )}
             {data.error && (
               <div className="rounded-[16px] bg-white p-4" role="alert" data-testid="applicants-error">
                 <h1 className="text-[17px] font-semibold leading-[22px] text-ink-1">Can’t open these applicants</h1>
@@ -203,12 +237,18 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                   <button
                     key={a.applicationId}
                     type="button"
-                    onClick={() => select(a)}
-                    aria-current={isSel ? 'true' : undefined}
+                    onClick={() => (selecting ? toggle(a.applicationId) : select(a))}
+                    aria-current={!selecting && isSel ? 'true' : undefined}
+                    {...(selecting ? { role: 'checkbox', 'aria-checked': picks.has(a.applicationId) } : {})}
                     data-application-id={a.applicationId}
-                    className={cn('flex w-full items-center gap-3 rounded-[16px] border-2 p-3 text-left transition-colors', isSel ? 'border-brand-primary bg-white' : 'border-transparent bg-white hover:border-line')}
+                    className={cn('flex w-full items-center gap-3 rounded-[16px] border-2 p-3 text-left transition-colors', (selecting ? picks.has(a.applicationId) : isSel) ? 'border-brand-primary bg-white' : 'border-transparent bg-white hover:border-line')}
                     data-testid="applicant-row"
                   >
+                    {selecting && (
+                      <span aria-hidden="true" className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full', picks.has(a.applicationId) ? 'bg-brand-primary text-white' : 'border-2 border-ink-4')} data-testid="applicant-check">
+                        {picks.has(a.applicationId) && <Check className="h-4 w-4" strokeWidth={3} />}
+                      </span>
+                    )}
                     <span className="relative shrink-0">
                       <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={48} />
                       {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label="New" />}
@@ -238,19 +278,42 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                 </p>
               </div>
             )}
-            {list.length > 0 && (
+            {list.length > 0 && !selecting && (
               <p className="text-caption text-ink-3" data-testid="applicants-keyboard-hint">Keyboard: ↑ ↓ to move · S Shortlist · M Maybe · D Decline</p>
             )}
           </aside>
 
           {/* Detail */}
           <section className="min-w-0 rounded-[24px] bg-white p-6" data-testid="applicants-detail">
-            {selected
+            {selecting ? (
+              <div className="flex flex-col items-start gap-4 py-10" data-testid="selection-pane">
+                <h2 className="text-[22px] font-bold leading-[27px] text-ink-1">{picked.length === 1 ? '1 selected' : `${picked.length} selected`}</h2>
+                <p className="text-row text-ink-2">{picked.length ? namesLine(picked.map((a) => a.person.fullName)) : 'Tick the applicants you want to answer together.'}</p>
+                <div className="flex gap-3">
+                  {chip === 'pending' && (
+                    <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-muted disabled:opacity-40" data-testid="bulk-maybe">Maybe</button>
+                  )}
+                  <button type="button" disabled={picked.length === 0} onClick={() => setBulkDeclining(true)} className="flex h-12 items-center rounded-full bg-hockia-primary px-6 text-[16px] font-semibold text-white hover:opacity-90 disabled:opacity-40" data-testid="bulk-decline">
+                    {picked.length ? `Decline ${picked.length}` : 'Decline'}
+                  </button>
+                </div>
+              </div>
+            ) : selected
               ? <ApplicantReviewScreen key={selected.applicationId} roleId={roleId} applicationId={selected.applicationId} layout="pane" onDecided={onDecided} actionsRef={actions} />
               : <p className="py-16 text-center text-row text-ink-3">{data.loading ? '' : 'Pick an applicant to review.'}</p>}
           </section>
         </div>
       </main>
+      {role && (
+        <BulkDeclineSheet
+          open={bulkDeclining}
+          roleTitle={roleTitle(role)}
+          names={picked.map((a) => a.person.fullName)}
+          firstNames={picked.map((a) => firstWord(a.person.fullName))}
+          onCancel={() => setBulkDeclining(false)}
+          onSend={(reason, body) => { bulk.decline(picked, reason, body); endSelect() }}
+        />
+      )}
       <UndoToast />
     </div>
   )

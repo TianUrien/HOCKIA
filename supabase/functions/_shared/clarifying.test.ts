@@ -78,11 +78,13 @@ for (const q of NEGATIVE) {
 
 // ── Role-aware option sets ─────────────────────────────────────────────
 
-Deno.test('clarifying options: player gets Clubs/Coaches/Opportunities/Brands', () => {
+Deno.test('clarifying options: player gets Opportunities (recommended) / Clubs / Coaches / Brands', () => {
   const result = detectClarifyingNeed('Find people', 'player')
   if (!result) throw new Error('expected match')
   const labels = result.options.map(o => o.label)
-  assertEquals(labels, ['Clubs', 'Coaches', 'Opportunities', 'Brands'])
+  assertEquals(labels, ['Opportunities', 'Clubs', 'Coaches', 'Brands'])
+  assertEquals(result.options[0].recommended, true)
+  assertEquals(result.options.filter(o => o.recommended).length, 1)
 })
 
 Deno.test('clarifying options: club gets Players/Coaches/Opportunities/Brands', () => {

@@ -159,6 +159,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
             question={content}
             options={opts}
             onPick={(option) => submitAction({ type: 'free_text', query: option.routed_query })}
+            onOther={(text) => submitAction({ type: 'free_text', query: text })}
           />
         )
       }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ChevronRight, Info, Sparkles } from 'lucide-react'
+import { Check, ChevronRight, Info, Sparkles } from 'lucide-react'
 import { CrestTile } from '@/components/opportunities/RoleCover'
 import { useOwnerCrest } from '@/hooks/useOwnerCrest'
 import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
@@ -9,6 +9,10 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
 import { UndoToast } from './UndoToast'
+import { BulkDeclineSheet } from './BulkDeclineSheet'
+import { ApplicantsAiSummary } from './ApplicantsAiSummary'
+import { useBulkDecisions } from '@/hooks/useBulkDecisions'
+import { firstWord } from '@/lib/declineNotes'
 import { RoleActions } from './RoleActions'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -56,6 +60,11 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const cover = useOwnerCrest(owner)
   const { countries } = useCountries()
   const [chip, setChip] = useState<Chip>('pending')
+  // Club speed CS4: answer several at once — To review and Maybe only.
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [bulkDeclining, setBulkDeclining] = useState(false)
+  const bulk = useBulkDecisions(roleId)
   const p = pipelineOf(data.applicants.map((a) => a.status))
   // D5 entry (Figma D5.1 398:83): the publisher's open player roles only.
   const suggestable = !!data.role && !!clubId && data.role.club_id === clubId && data.role.status === 'open' && data.role.opportunity_type === 'player'
@@ -68,6 +77,13 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
       ? rows.sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))
       : rows.sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
   }, [data.applicants, chip])
+
+  const selectable = chip === 'pending' || chip === 'maybe'
+  const picked = list.filter((a) => selected.has(a.applicationId))
+  const endSelect = () => { setSelecting(false); setSelected(new Set()); setBulkDeclining(false) }
+  const toggle = (id: string) => setSelected((cur) => { const next = new Set(cur); if (next.has(id)) next.delete(id); else next.add(id); return next })
+  const allPicked = list.length > 0 && picked.length === list.length
+  const changeChip = (c: Chip) => { setChip(c); endSelect() }
 
   const role = data.role
   const pill = role ? genderPill(role.gender) : null
@@ -97,6 +113,14 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="applicants-screen">
+      {selecting ? (
+        <div className="flex min-h-[52px] items-center justify-between pl-2 pr-3" data-testid="select-bar-top">
+          <button type="button" onClick={endSelect} className="flex min-h-11 items-center px-2 text-body text-brand-primary">Cancel</button>
+          <button type="button" onClick={() => setSelected(allPicked ? new Set() : new Set(list.map((a) => a.applicationId)))} className="flex min-h-11 items-center px-2 text-body text-brand-primary" data-testid="select-all">
+            {allPicked ? 'Deselect all' : 'Select all'}
+          </button>
+        </div>
+      ) : (
       <DetailNavBar
         parent={home.label}
         fallbackPath={home.path}
@@ -112,6 +136,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           )
           : undefined}
       />
+      )}
       {role && (
         <div className="flex items-start gap-3 px-4 pb-4 pt-0.5" data-testid="applicants-role-header">
           <CrestTile src={cover.crestUrl} name={cover.clubName ?? 'Club'} size={48} radius={14} className="mt-1" />
@@ -129,7 +154,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
         </div>
       )}
 
-      {suggestable && (
+      {suggestable && !selecting && (
         <div className="px-4 pb-3">
           {/* Figma O6 163:499: the Hockia suggests entry in the brand soft, players who fit and haven't applied. */}
           <button
@@ -151,11 +176,19 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
       <div className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Application status">
         {chips.map((c) => (
           // ui/Chip: selected = soft purple (Chip ruling 2026-10-04); tab semantics kept. Figma O6 draws an ink pill here — raised in the PR.
-          <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => setChip(c.id)} />
+          <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => changeChip(c.id)} />
         ))}
       </div>
-      <p className="px-4 pb-2.5 pt-3.5 text-secondary text-ink-2">{caption}</p>
+      <div className="flex items-center gap-3 px-4 pb-2.5 pt-3.5">
+        <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? 'Select applicants to answer them together' : caption}</p>
+        {!selecting && selectable && list.length > 0 && (
+          <button type="button" onClick={() => setSelecting(true)} className="-my-2 flex min-h-11 shrink-0 items-center text-secondary font-semibold text-brand-primary" data-testid="applicants-select">Select</button>
+        )}
+      </div>
 
+      {chip === 'pending' && !selecting && role && clubId && role.club_id === clubId && (
+        <div className="px-4 pb-2.5"><ApplicantsAiSummary roleId={roleId} pending={list} expiryDays={data.expiryDays} /></div>
+      )}
       {data.error && <p className="px-4 py-3 text-row text-ink-2">{data.error}</p>}
       {!data.loading && !data.error && list.length === 0 && <p className="px-4 py-3 text-row text-ink-3">{emptyCopy[chip]}</p>}
 
@@ -170,7 +203,23 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           const tag = clubRoadTag(a.status) ?? closedApplicantTag(a.status)
           return (
             // Figma O6 163:499: one card per applicant; amber only on the days left when a reply is urgent.
-            <button key={a.applicationId} type="button" onClick={() => open(a)} className="flex w-full items-center gap-3 rounded-[16px] bg-surface-subtle p-3 text-left active:bg-surface-muted-pressed" data-testid="applicant-row">
+            <button
+              key={a.applicationId}
+              type="button"
+              onClick={() => (selecting ? toggle(a.applicationId) : open(a))}
+              {...(selecting ? { role: 'checkbox', 'aria-checked': selected.has(a.applicationId) } : {})}
+              className="flex w-full items-center gap-3 rounded-[16px] bg-surface-subtle p-3 text-left active:bg-surface-muted-pressed"
+              data-testid="applicant-row"
+            >
+              {selecting && (
+                <span
+                  aria-hidden="true"
+                  className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full', selected.has(a.applicationId) ? 'bg-brand-primary text-white' : 'border-2 border-ink-4')}
+                  data-testid="applicant-check"
+                >
+                  {selected.has(a.applicationId) && <Check className="h-4 w-4" strokeWidth={3} />}
+                </span>
+              )}
               <span className="relative shrink-0">
                 <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={48} />
                 {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label="New" />}
@@ -192,7 +241,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
         })}
       </div>
 
-      {chip === 'pending' && !data.loading && (
+      {chip === 'pending' && !data.loading && !selecting && (
         <div className="px-4 pt-[18px]">
           <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-subtle p-3.5">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
@@ -203,7 +252,30 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
         </div>
       )}
 
-      <UndoToast />
+      {selecting && (
+        // Figma CS4 204:6272: "N selected" · Maybe · Decline N, over the tab bar while selecting.
+        <div className="fixed inset-x-0 bottom-0 z-50 flex items-center gap-3 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3" data-testid="selection-bar">
+          <p className="min-w-0 flex-1 text-[16px] font-semibold leading-[21px] text-ink-1">{picked.length} selected</p>
+          {chip === 'pending' && (
+            <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-5 text-[16px] font-semibold text-ink-1 disabled:opacity-40" data-testid="bulk-maybe">Maybe</button>
+          )}
+          <button type="button" disabled={picked.length === 0} onClick={() => setBulkDeclining(true)} className="flex h-12 items-center rounded-full bg-hockia-primary px-5 text-[16px] font-semibold text-white disabled:opacity-40" data-testid="bulk-decline">
+            {picked.length ? `Decline ${picked.length}` : 'Decline'}
+          </button>
+        </div>
+      )}
+      {role && (
+        <BulkDeclineSheet
+          open={bulkDeclining}
+          roleTitle={roleTitle(role)}
+          names={picked.map((a) => a.person.fullName)}
+          firstNames={picked.map((a) => firstWord(a.person.fullName))}
+          onCancel={() => setBulkDeclining(false)}
+          onSend={(reason, body) => { bulk.decline(picked, reason, body); endSelect() }}
+        />
+      )}
+
+      {!selecting && <UndoToast />}
     </div>
   )
 }

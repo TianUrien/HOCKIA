@@ -36,6 +36,10 @@ if (typeof window !== 'undefined') {
 
 // Create Supabase client with typed database
 // Use implicit auth flow so email links work across devices/browsers
+/** For the nl-search event stream (lib/aiStream), which needs a raw fetch. */
+export const SUPABASE_URL_FOR_STREAM = supabaseUrl as string
+export const SUPABASE_ANON_KEY_FOR_STREAM = supabaseAnonKey as string
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     flowType: 'implicit', // Implicit avoids local-only PKCE storage so email links work cross-device

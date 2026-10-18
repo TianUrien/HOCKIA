@@ -3,13 +3,37 @@ import { create } from 'zustand'
 export type HockiaAiDetent = 'medium' | 'large'
 
 /** Where the sheet was opened from: the line under the title and later the context chip. */
-export type HockiaAiEntry = 'opportunities'
+export type HockiaAiEntry = 'opportunities' | 'profile' | 'role'
+
+/** 'builder' = "Fill my profile for me" (handoff P0–P3): its own conversation inside the same sheet.
+ *  'history' = the saved chats (handoff C2). 'steps' = a next step done with
+ *  the member: photo, bio, links (2026-10-18). */
+export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history' | 'steps'
+export type HockiaAiStep = 'photo' | 'bio' | 'video' | 'career' | 'links' | 'position' | 'passport'
+
+/** The role "Prepare my application" is for (handoff A4): what the draft card shows before the role loads. */
+export interface ApplyTarget { id: string; title: string; organization: string | null; logoUrl: string | null }
+
+/** The role the sheet was opened on (handoff B3/B4): questions go to nl-search's role_ask mode. */
+export interface RoleContext extends ApplyTarget { city: string | null; label: string }
 
 interface HockiaAiSheetState {
   open: boolean
   detent: HockiaAiDetent
   entry: HockiaAiEntry
-  show: (entry?: HockiaAiEntry) => void
+  mode: HockiaAiMode
+  applyTarget: ApplyTarget | null
+  roleContext: RoleContext | null
+  step: HockiaAiStep | null
+  /** Do a next step: photo, bio and links here; clubs, position and passports in Fill my profile. */
+  startStep: (step: HockiaAiStep) => void
+  show: (entry?: HockiaAiEntry, mode?: HockiaAiMode) => void
+  setMode: (mode: HockiaAiMode) => void
+  /** "Prepare my application" for a role: the apply conversation, large. */
+  prepareApplication: (target: ApplyTarget) => void
+  /** "Ask Hockia AI about this role": the sheet opens medium with the role attached. */
+  askAboutRole: (ctx: RoleContext) => void
+  clearRole: () => void
   setDetent: (d: HockiaAiDetent) => void
   close: () => void
 }
@@ -19,7 +43,17 @@ export const useHockiaAiSheet = create<HockiaAiSheetState>((set) => ({
   open: false,
   detent: 'medium',
   entry: 'opportunities',
-  show: (entry = 'opportunities') => set({ open: true, detent: 'medium', entry }),
+  mode: 'chat',
+  applyTarget: null,
+  roleContext: null,
+  step: null,
+  startStep: (step) => set({ open: true, detent: 'large', step, mode: ['photo', 'bio', 'links', 'video'].includes(step) ? 'steps' : 'builder' }),
+  // The builder needs room for the review card: it always opens large.
+  show: (entry = 'opportunities', mode = 'chat') => set({ open: true, detent: mode === 'chat' ? 'medium' : 'large', entry, mode, roleContext: null }),
+  setMode: (mode) => set((s) => ({ mode, detent: mode === 'chat' ? s.detent : 'large' })),
+  prepareApplication: (target) => set({ open: true, mode: 'apply', applyTarget: target, detent: 'large' }),
+  askAboutRole: (ctx) => set({ open: true, mode: 'chat', entry: 'role', roleContext: ctx, detent: 'medium' }),
+  clearRole: () => set({ roleContext: null }),
   setDetent: (detent) => set({ detent }),
   close: () => set({ open: false }),
 }))

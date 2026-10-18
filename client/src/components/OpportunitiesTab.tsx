@@ -17,9 +17,10 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, isRoleHasSigningError, REOPEN_ROLE_TOAST, reopenRolePatch, ROLE_HAS_SIGNING_MESSAGE } from '@/lib/roleLifecycle'
+import { isRoleHasSigningError, REOPEN_ROLE_TOAST, reopenRolePatch, ROLE_HAS_SIGNING_MESSAGE } from '@/lib/roleLifecycle'
+import { CloseRoleSheet } from '@/components/club/CloseRoleSheet'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
-import { countWaitingApplicants, fetchRolesWithSigning } from '@/lib/roleWaiting'
+import { fetchRolesWithSigning } from '@/lib/roleWaiting'
 import { dayFirst } from '@/lib/dayFirst'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
@@ -545,50 +546,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     setVacancyToClose(vacancy)
   }
 
-  const handleClose = async (reason: 'filled' | 'withdrawn') => {
-    if (actionLoading || !vacancyToClose) return
-    const vacancyId = vacancyToClose.id
-
-    setActionLoading({ id: vacancyId, action: 'close' })
-    try {
-      Sentry.addBreadcrumb({
-        category: 'supabase',
-        message: 'vacancies.close',
-        data: { vacancyId, reason },
-        level: 'info'
-      })
-      const waiting = reason === 'filled' ? await countWaitingApplicants(vacancyId) : 0
-      const { error } = await supabase
-        .from('opportunities')
-        // "Filled through Hockia" comes only from a signing the player
-        // confirmed (confirm_signing); a club can't claim it by hand.
-        .update(closeRolePatch(reason) as never)
-        .eq('id', vacancyId)
-
-      if (error) throw error
-      void useRecruitingContextStore.getState().roleStatusChanged(vacancyId, 'closed')
-
-      await fetchVacancies()
-      // Keep the row visible after close — without this the user is
-      // typically on the "Open" filter and the just-closed row vanishes,
-      // which reads as the page navigating away.
-      setStatusFilter('closed')
-      setVacancyToClose(null)
-      addToast(closeRoleToast(reason, waiting), 'success')
-    } catch (error) {
-      logger.error('Error closing vacancy:', error)
-      reportSupabaseError('vacancies.close', error, {
-        vacancyId
-      }, {
-        feature: 'vacancies',
-        operation: 'close_vacancy'
-      })
-      addToast('Failed to close opportunity. Please try again.', 'error')
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
   // Reopen — flips a closed opportunity back to 'open' so the publisher
   // doesn't have to Duplicate (and lose the applicant history). Uses
   // the same publish breadcrumb category for telemetry grouping.
@@ -1107,49 +1064,20 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         />
       )}
 
-      {/* Close flow (Home redesign Q5) — one-tap typed close. "Filled" feeds
-          the role_filled market-moves card, so the distinction must be honest:
-          never guess "filled" from a plain close. */}
+      {/* Close (Club speed CS6): the shared sheet — Filled or Not filled, and tell everyone still waiting.
+          "Filled" feeds the role_filled market-moves card, so the club says it; it's never guessed. */}
       {vacancyToClose && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" role="presentation" onClick={() => setVacancyToClose(null)}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Close this opportunity"
-            data-testid="close-opportunity-confirm"
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold text-gray-900">Close “{vacancyToClose.title}”?</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              It will stop accepting applications. Existing applicants stay attached — you can reopen it any time.
-            </p>
-            <p className="mt-3 text-sm font-medium text-gray-900">Did you fill this role?</p>
-            <div className="mt-4 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => void handleClose('filled')}
-                className="w-full rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Filled
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleClose('withdrawn')}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {CLOSE_NOT_FILLED_LABEL}
-              </button>
-              <button
-                type="button"
-                onClick={() => setVacancyToClose(null)}
-                className="w-full px-4 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <CloseRoleSheet
+          open
+          role={vacancyToClose}
+          onCancel={() => setVacancyToClose(null)}
+          onClosed={() => {
+            setVacancyToClose(null)
+            void fetchVacancies()
+            // Keep the just-closed row visible (the user is usually on "Open").
+            setStatusFilter('closed')
+          }}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

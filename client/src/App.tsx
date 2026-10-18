@@ -39,6 +39,7 @@ import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
 import { isStaleChunkMessage } from '@/lib/sentryFilters'
+import { STALE_CHUNK_KEY, recoverFromStaleChunk } from '@/lib/swUpdate'
 import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
@@ -56,13 +57,15 @@ function lazyWithRetry<T extends ComponentType<any>>(
       // signature list lives in lib/sentryFilters.
       const isStale = isStaleChunkMessage(error?.message)
 
-      if (isStale && !sessionStorage.getItem('chunk-reload')) {
-        sessionStorage.setItem('chunk-reload', '1')
-        window.location.reload()
+      if (isStale && !sessionStorage.getItem(STALE_CHUNK_KEY)) {
+        sessionStorage.setItem(STALE_CHUNK_KEY, '1')
+        // Activate the new service worker first: a plain reload came back to
+        // the same stale shell (prod 2026-10-18).
+        void recoverFromStaleChunk()
         return new Promise<never>(() => {}) // hang until reload completes
       }
 
-      sessionStorage.removeItem('chunk-reload')
+      sessionStorage.removeItem(STALE_CHUNK_KEY)
       throw error // not stale or already retried — let ErrorBoundary handle
     }),
   )

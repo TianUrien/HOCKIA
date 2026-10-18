@@ -19,7 +19,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
  * the scrollTop of every scrollable element, before and after the swipe.
  */
 const SCROLL_STATE = () => {
-  const els = [...document.querySelectorAll('*')].filter((el) => { const s = getComputedStyle(el); return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 40 })
+  // Only visible scroll areas of a real size count: a hidden or tiny inner
+  // scroller made a one-screen profile look "tall" (lab 2026-10-18).
+  const els = [...document.querySelectorAll('*')].filter((el) => {
+    const s = getComputedStyle(el)
+    if (!/(auto|scroll)/.test(s.overflowY) || el.scrollHeight <= el.clientHeight + 40) return false
+    const r = el.getBoundingClientRect()
+    return s.visibility !== 'hidden' && r.width > 0 && r.height > 150 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth
+  })
   return {
     y: window.scrollY,
     inner: els.reduce((n, el) => n + el.scrollTop, 0),
@@ -294,6 +301,84 @@ export const scenarios = {
   // Hockia AI sheet (beta, 16 Oct 2026): the Opportunities mascot opens the
   // sheet over the page; it grows to full height and closes. No question is
   // sent, so no daily quota is used.
+  // Opt-in (one Hockia AI profile read on staging): "Fill my profile for me"
+  // from the chat, typed text only (the lab can't drive the OS file pickers),
+  // review card checked, closed WITHOUT saving.
+  async 'hockia-ai-profile-builder'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await sleep(800)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-fill-profile"]', 15000)
+    await sleep(800)
+    await ctx.shot('chip')
+    await lab.tap('[data-testid="hockia-ai-fill-profile"]')
+    await lab.waitFor('[data-testid="profile-builder"]', 10000)
+    await sleep(800)
+    await ctx.shot('intro')
+    await lab.type('[data-testid="builder-composer"]', 'I played for Banco Provincia in Buenos Aires from 2019 to 2022 in Metro A, then Club de Campo in Madrid since 2023.')
+    await sleep(400)
+    await lab.tap('[data-testid="builder-send"]')
+    await lab.waitFor('[data-testid="builder-reading"], [data-testid="builder-review"], [data-testid="builder-nothing"], [data-testid="builder-error"]', 15000)
+    await ctx.shot('reading')
+    await lab.waitFor('[data-testid="builder-review"], [data-testid="builder-nothing"], [data-testid="builder-error"]', 90000)
+    await sleep(1000)
+    await ctx.shot('review')
+    const r = await lab.eval(() => ({ err: document.querySelector('[data-testid="builder-error"]')?.textContent || null, rows: document.querySelectorAll('[data-testid="builder-career-row"]').length, nothing: !!document.querySelector('[data-testid="builder-nothing"]'), save: !!document.querySelector('[data-testid="builder-save-all"]') }))
+    if (r.err) throw new Error(`builder error: ${r.err.slice(0, 120)}`)
+    // The QA player may already have these clubs from an earlier run: "nothing new" is a valid answer.
+    if (!r.nothing && (!r.rows || !r.save)) throw new Error(`review card incomplete: ${JSON.stringify(r)}`)
+    ctx.note(r.nothing ? 'nothing new to add (clubs already on the profile)' : `${r.rows} career rows proposed; not saved`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+    await sleep(600)
+  },
+
+  // Opt-in (one question + one draft on staging): "Prepare my application"
+  // from a role result. The draft card (or an honest already-applied / not
+  // eligible answer) must show; nothing is SENT.
+  async 'hockia-ai-apply'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await sleep(800)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-composer"]', 15000)
+    await lab.type('[data-testid="hockia-ai-composer"]', 'Show me all open roles')
+    await lab.tap('[data-testid="hockia-ai-send"]')
+    await lab.waitFor('[data-testid="ai-role-prepare"]', 60000)
+    await sleep(1200)
+    await ctx.shot('results')
+    await lab.eval(() => document.querySelector('[data-testid="ai-role-prepare"]')?.click())
+    await lab.waitFor('[data-testid="apply-draft-card"], [data-testid="apply-not-eligible"], [data-testid="apply-already"], [data-testid="apply-closed"], [data-testid="apply-error"]', 45000)
+    await sleep(800)
+    await ctx.shot('draft')
+    const r = await lab.eval(() => ({ card: !!document.querySelector('[data-testid="apply-draft-card"]'), send: !!document.querySelector('[data-testid="apply-send"]'), already: !!document.querySelector('[data-testid="apply-already"]'), notEligible: !!document.querySelector('[data-testid="apply-not-eligible"]'), err: document.querySelector('[data-testid="apply-error"]')?.textContent || null }))
+    if (r.err) throw new Error(`apply draft error: ${r.err}`)
+    if (r.card && !r.send) throw new Error('draft card without Send application')
+    if (!r.card && !r.already && !r.notEligible) throw new Error(`no draft: ${JSON.stringify(r)}`)
+    ctx.note(r.card ? 'draft card shown; not sent' : r.already ? 'already applied (honest answer)' : 'not eligible (neutral callout)')
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+    await sleep(600)
+  },
+
+  // Opt-in, no AI call: "Ask Hockia AI about this role" on the fixture role
+  // opens the sheet with the role chip and its three suggestions.
+  async 'hockia-ai-role'(lab, ctx) {
+    await lab.go(`/opportunities/${FIXTURES.roleIds[1] ?? FIXTURES.roleIds[0]}`)
+    await lab.waitFor('[data-testid="role-ask-ai"]', 20000)
+    await sleep(800)
+    await lab.eval(() => document.querySelector('[data-testid="role-ask-ai"]')?.scrollIntoView({ block: 'center' }))
+    await ctx.shot('entry')
+    await lab.tap('[data-testid="role-ask-ai"]')
+    await lab.waitFor('[data-testid="hockia-ai-role-chip"]', 10000)
+    await sleep(1000)
+    await ctx.shot('sheet')
+    const n = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-role-suggestion"]').length)
+    if (n < 2) throw new Error(`role sheet shows ${n} suggestions`)
+    ctx.note(`${n} role suggestions`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-dim"]')?.click())
+    await sleep(600)
+  },
+
   async 'hockia-ai-sheet'(lab, ctx) {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
@@ -313,6 +398,153 @@ export const scenarios = {
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
     await sleep(800)
     if (await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-sheet"]'))) throw new Error('the sheet did not close')
+  },
+
+  // Opt-in (uses one Hockia AI question of the daily cap): ask a question in
+  // the sheet and check the live steps stream in and an answer arrives — the
+  // event stream must work inside WKWebView / Android WebView too.
+  async 'hockia-ai-ask'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await sleep(800)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-suggestion"]')?.click())
+    let sawSteps = 0
+    for (let i = 0; i < 90; i++) {
+      await sleep(300)
+      const st = await lab.eval(() => ({ steps: document.querySelectorAll('[data-testid="hockia-ai-step"]').length, thinking: !!document.querySelector('[data-testid="hockia-ai-thinking"]') }))
+      if (st.steps > sawSteps) { sawSteps = st.steps; if (sawSteps === 2) await ctx.shot('steps') }
+      if (!st.thinking && i > 2) break
+    }
+    await sleep(2500)
+    await ctx.shot('answer')
+    const res = await lab.eval(() => ({ error: /trouble connecting|lost the signal/i.test(document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || ''), chars: (document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || '').length }))
+    if (res.error) throw new Error('Hockia AI answered with the connection error')
+    if (sawSteps < 1) throw new Error('no live step arrived before the answer (event stream not read?)')
+    ctx.note(`${sawSteps} live steps, answer ${res.chars} chars`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+  },
+
+  // Opt-in (uses one Hockia AI question): the answered chat is saved to
+  // Your chats (handoff C2) under Today, reopens with its answer, and its
+  // delete removes it. Leaves nothing behind.
+  async 'hockia-ai-history'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await sleep(800)
+    const asked = await lab.eval(() => { const b = document.querySelector('[data-testid="hockia-ai-suggestion"]'); const q = b?.querySelector('span:nth-child(2)')?.textContent || ''; b?.click(); return q })
+    for (let i = 0; i < 100; i++) {
+      await sleep(300)
+      if (i > 3 && !(await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-thinking"]')))) break
+    }
+    await sleep(3000)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-more"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-chats"]', 8000)
+    await sleep(500)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-chats"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-history-row"]', 15000)
+    await sleep(800)
+    await ctx.shot('chats')
+    const first = await lab.eval(() => {
+      const sec = document.querySelector('[data-testid="hockia-ai-history"] section')
+      const row = sec?.querySelector('[data-testid="hockia-ai-history-row"]')
+      return { group: sec?.getAttribute('aria-label'), title: row?.querySelector('span span')?.textContent || '', summary: row?.querySelectorAll('span span')[1]?.textContent || '' }
+    })
+    if (first.group !== 'Today') throw new Error(`newest chat is under "${first.group}", expected Today`)
+    if (asked && first.title.slice(0, 20) !== asked.trim().slice(0, 20)) throw new Error(`top row "${first.title}" is not the question asked ("${asked}")`)
+    // Reopen it: the conversation comes back with the answer.
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-open"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-conversation"]', 15000)
+    await sleep(1200)
+    await ctx.shot('reopened')
+    const chars = await lab.eval(() => (document.querySelector('[data-testid="hockia-ai-conversation"]')?.textContent || '').length)
+    if (chars < 20) throw new Error('the reopened chat is empty')
+    // Back to the list and delete it.
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-more"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-chats"]', 8000)
+    await sleep(500)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-chats"]')?.click())
+    await lab.waitFor('[data-testid="hockia-ai-history-row"]', 15000)
+    await sleep(800)
+    const before = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-history-row"]').length)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-delete"]')?.click())
+    await sleep(1500)
+    await ctx.shot('deleted')
+    const after = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-history-row"]').length)
+    if (after !== before - 1) throw new Error(`delete left ${after} of ${before} rows`)
+    ctx.note(`"${first.title}" · ${first.summary} → reopened (${chars} chars) → deleted`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-history-close"]')?.click())
+  },
+
+  // Opt-in, no AI call and no writes: Hockia AI opens with the next-step
+  // plan as a choice card (recommended first + Other), the bio step asks
+  // what to lead with, and a vague question gets a choice card in the chat.
+  async 'hockia-ai-next-steps'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="ai-next-step"]', 15000)
+    await sleep(1200)
+    await ctx.shot('plan')
+    const plan = await lab.eval(() => {
+      const opts = [...document.querySelectorAll('[data-testid="ai-next-step-option"]')]
+      return { n: opts.length, firstRecommended: opts[0]?.getAttribute('data-recommended') === 'true', recommended: opts.filter((o) => o.getAttribute('data-recommended') === 'true').length, other: !!document.querySelector('[data-testid="ai-next-step-other"]'), first: opts[0]?.querySelector('span span span')?.textContent || '' }
+    })
+    if (!plan.n || !plan.firstRecommended || plan.recommended !== 1 || !plan.other) throw new Error(`plan card wrong: ${JSON.stringify(plan)}`)
+    // The bio step (if offered) asks first, before any AI call.
+    const bio = await lab.eval(() => { const b = [...document.querySelectorAll('[data-testid="ai-next-step-option"]')].find((o) => /bio/i.test(o.textContent || '')); b?.click(); return !!b })
+    if (bio) {
+      await lab.waitFor('[data-testid="ai-bio-focus"]', 8000)
+      await sleep(800)
+      await ctx.shot('bio-focus')
+      const n = await lab.eval(() => document.querySelectorAll('[data-testid="ai-bio-focus-option"]').length)
+      if (n !== 3) throw new Error(`bio focus shows ${n} options`)
+      await lab.eval(() => document.querySelector('[data-testid="hockia-ai-to-chat"]')?.click())
+      await sleep(800)
+    }
+    // A vague question gets a choice card (no AI call: the clarifier answers).
+    await lab.eval(() => { const t = document.querySelector('[data-testid="hockia-ai-composer"]'); const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set; set.call(t, 'Find people'); t.dispatchEvent(new Event('input', { bubbles: true })) })
+    await sleep(300)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-send"]')?.click())
+    await lab.waitFor('[data-testid="ai-clarify"]', 20000)
+    await sleep(1200)
+    await ctx.shot('clarify')
+    const clar = await lab.eval(() => ({ first: document.querySelector('[data-testid="ai-clarify-option"]')?.getAttribute('data-recommended'), other: !!document.querySelector('[data-testid="ai-clarify-other"]') }))
+    if (clar.first !== 'true' || !clar.other) throw new Error(`clarify card wrong: ${JSON.stringify(clar)}`)
+    ctx.note(`plan: ${plan.n} steps, "${plan.first}" recommended${bio ? '; bio asks first' : ''}; chat question card OK`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+  },
+
+  // Home → role (17 Oct 2026): a Home role opens the v2 role page, and closing
+  // it returns to Home at the same scroll position.
+  async 'home-role-back'(lab, ctx) {
+    await lab.go('/home')
+    await lab.waitFor('[data-testid="home-roles-rail"] button', 25000)
+    await sleep(1500)
+    // Real thumb swipes (native gestures on phones, wheel on desktop), then measure.
+    await lab.swipeUp(0.5)
+    await lab.swipeUp(0.5)
+    // Let momentum scrolling settle (iOS keeps gliding) before measuring.
+    let before = -1
+    for (let i = 0; i < 10; i++) { await sleep(500); const y = await lab.eval(() => Math.round(window.scrollY)); if (y === before) break; before = y }
+    await ctx.shot('home-before')
+    await lab.eval(() => document.querySelector('[data-testid="home-roles-rail"] button')?.click())
+    let url = ''
+    for (let i = 0; i < 40; i++) { await sleep(500); url = await lab.url(); if (/\/opportunities\/[0-9a-f-]{36}/.test(url)) break }
+    if (!/\/opportunities\/[0-9a-f-]{36}/.test(url)) throw new Error(`the Home role did not open the role page (url ${url})`)
+    await lab.waitFor('[data-testid="role-detail"], [data-testid="role-detail-desktop"]', 20000)
+    await sleep(1000)
+    await ctx.shot('role-from-home')
+    await lab.eval(() => document.querySelector('[data-testid="role-close"]')?.click())
+    for (let i = 0; i < 40; i++) { await sleep(500); if ((await lab.url()).startsWith('/home')) break }
+    await sleep(2500)
+    const after = await lab.eval(() => Math.round(window.scrollY))
+    await ctx.shot('home-after-back')
+    ctx.note(`scroll ${before} → ${after}`)
+    if (before > 100 && Math.abs(after - before) > 60) throw new Error(`Home scroll not restored (${before} → ${after})`)
   },
 
   // ---- Publisher (club) journeys: `--scenario club` ----------------------
@@ -391,6 +623,188 @@ export const scenarios = {
     } finally { await restoreWidth(lab) }
   },
 
+  // ── Club speed (Figma 05 CS1–CS8). Nothing is written: every decision is
+  // undone inside the Undo window and every sheet is cancelled. ──────────────
+
+  async 'club-your-replies'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await lab.waitFor('[data-testid="your-replies"]', 15000)
+      await sleep(800)
+      await ctx.shot('your-replies')
+      const text = await lab.eval(() => document.querySelector('[data-testid="your-replies"]')?.textContent || '')
+      if (!/You answered \d+ of \d+ applicants/.test(text)) throw new Error(`Your replies reads "${text.slice(0, 80)}"`)
+      ctx.note(text.replace(/^Your replies · last 30 days/i, '').slice(0, 80))
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-select-decline'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="applicant-row"]', 20000)
+      await sleep(1000)
+      const rows = await lab.eval(() => document.querySelectorAll('[data-testid="applicant-row"]').length)
+      if (rows < 2) throw new Error(`fixture role shows ${rows} applicant(s) to review; expected 2 (reset ${FIXTURES.speedRoleId} to pending)`)
+      await lab.tap('[data-testid="applicants-select"]')
+      await lab.waitFor('[data-testid="select-all"]', 5000)
+      await lab.tap('[data-testid="select-all"]')
+      await sleep(500)
+      const bar = await lab.eval(() => document.querySelector('[data-testid="selection-bar"]')?.textContent || '')
+      await ctx.shot('two-selected')
+      if (!/2 selected/.test(bar) || !/Decline 2/.test(bar)) throw new Error(`selection bar reads "${bar}"`)
+      await lab.tap('[data-testid="bulk-decline"]')
+      await lab.waitFor('[data-testid="bulk-decline-sheet"]', 8000)
+      await sleep(600)
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="bulk-decline-sheet"] [role="radio"]')].find((b) => b.textContent?.trim() === 'Timing')?.click() })
+      await lab.waitFor('[data-testid="bulk-decline-greeting"]', 5000)
+      await sleep(500)
+      await ctx.shot('decline-sheet')
+      const note = await lab.eval(() => ({ greet: document.querySelector('[data-testid="bulk-decline-greeting"]')?.textContent || '', body: document.querySelector('[data-testid="bulk-decline-note"] textarea')?.value || '', send: document.querySelector('[data-testid="bulk-decline-send"]')?.textContent || '' }))
+      if (!/^(Hi .+,|Hello,)$/.test(note.greet)) throw new Error(`greeting reads "${note.greet}"`)
+      if (!/timing doesn’t work/.test(note.body)) throw new Error('note is not the fixed Timing template')
+      if (!/Decline 2 and send/.test(note.send)) throw new Error(`send button reads "${note.send}"`)
+      ctx.note('fixed note, personal greeting; cancelled, nothing sent')
+      // Cancel the sheet, then leave select mode.
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="bulk-decline-sheet"] button')].find((b) => b.textContent?.trim() === 'Cancel')?.click() })
+      await sleep(600)
+      await lab.eval(() => { document.querySelector('[data-testid="select-bar-top"] button')?.click() })
+      await sleep(400)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-review-advance'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="applicant-row"]', 20000)
+      await sleep(1000)
+      await lab.tap('[data-testid="applicant-row"]')
+      await lab.waitFor('[data-testid="review-counter"]', 20000)
+      await sleep(1200)
+      const first = await lab.eval(() => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' }))
+      await ctx.shot('review-1')
+      if (!/^1 of 2 to review$/.test(first.c)) throw new Error(`counter reads "${first.c}"`)
+      // Decide, wait for the next applicant, and press Undo — all inside the
+      // page, so a slow emulator round-trip can't miss the 5 s Undo window.
+      // Android: one in-page script (its round-trips are slow). iOS: the web view
+      // doesn't let the app react while it waits on a page script, so step through.
+      const r = lab.device.platform === 'ios' ? null : await lab.eval(() => new Promise((resolve) => {
+        const read = () => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' })
+        ;[...document.querySelectorAll('[data-testid="decision-bar"] button')].find((b) => b.textContent?.trim() === 'Maybe')?.click()
+        const t0 = Date.now()
+        const tick = () => {
+          const now = read()
+          const undo = document.querySelector('[data-testid="undo-toast"] button')
+          if (now.c.startsWith('2 of') && undo) {
+            undo.click()
+            setTimeout(() => resolve({ second: now, toast: true, afterUndo: read().c, ms: Date.now() - t0 }), 600)
+          } else if (Date.now() - t0 > 3500) resolve({ second: now, toast: Boolean(undo), afterUndo: null, ms: Date.now() - t0 })
+          else setTimeout(tick, 100)
+        }
+        setTimeout(tick, 100)
+      }))
+      let second = r?.second
+      let toast = r?.toast
+      let afterUndo = r?.afterUndo ?? ''
+      if (!second) {
+        await lab.eval(() => { [...document.querySelectorAll('[data-testid="decision-bar"] button')].find((b) => b.textContent?.trim() === 'Maybe')?.click() })
+        second = { c: '', n: '' }
+        for (let i = 0; i < 12; i++) { await sleep(250); second = await lab.eval(() => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' })); if (second.c.startsWith('2 of')) break }
+        toast = await lab.eval(() => { const b = document.querySelector('[data-testid="undo-toast"] button'); if (b) b.click(); return Boolean(b) })
+        await sleep(600)
+        afterUndo = await lab.eval(() => document.querySelector('[data-testid="review-counter"]')?.textContent || '')
+      }
+      await ctx.shot('review-2-after-undo')
+      // The undone applicant is back in the queue, so this one is 1 of 2 again.
+      if (!/^1 of 2 to review$/.test(afterUndo)) throw new Error(`after Undo the counter reads "${afterUndo}", expected 1 of 2`)
+      if (!/^2 of 2 to review$/.test(second.c)) throw new Error(`after Maybe the counter reads "${second.c}"`)
+      if (second.n === first.n) throw new Error('the same applicant stayed on screen after the decision')
+      if (!toast) throw new Error('no Undo toast after the decision')
+      ctx.note(`${first.n} → ${second.n}; Maybe undone`)
+      await lab.eval(() => { document.querySelector('[data-testid="review-back"]')?.click() })
+      await sleep(1000)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-close-sheet'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="role-actions-button"]', 20000)
+      await sleep(800)
+      await lab.tap('[data-testid="role-actions-button"]')
+      await lab.waitFor('[data-testid="role-actions-sheet"]', 8000)
+      await sleep(500)
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="role-actions-sheet"] button')].find((b) => /Close role/.test(b.textContent || ''))?.click() })
+      await lab.waitFor('[data-testid="close-role-sheet"]', 8000)
+      await lab.tap('[data-testid="close-role-withdrawn"]')
+      await lab.waitFor('[data-testid="close-role-note"]', 8000)
+      await sleep(600)
+      await ctx.shot('close-sheet')
+      const s = await lab.eval(() => ({ tell: document.querySelector('[data-testid="close-role-tell"]')?.getAttribute('aria-checked'), btn: document.querySelector('[data-testid="close-role-confirm"]')?.textContent || '' }))
+      if (s.tell !== 'true') throw new Error('"Tell the players still waiting" is not on by default')
+      if (!/Close role and tell 2 players/.test(s.btn)) throw new Error(`confirm reads "${s.btn}"`)
+      ctx.note('Filled / Not filled + tell 2 players (on); cancelled')
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="close-role-sheet"] button')].find((b) => b.textContent?.trim() === 'Cancel')?.click() })
+      await sleep(500)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-post-again'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await sleep(1000)
+      await lab.tap('button[aria-label="Post a role"]')
+      await lab.waitFor('[data-testid="post-role-start"]', 8000)
+      await lab.waitFor('[data-testid="post-role-again-row"]', 10000)
+      await sleep(600)
+      await ctx.shot('start-sheet')
+      await lab.tap('[data-testid="post-role-again-row"]')
+      await lab.waitFor('[data-testid="post-again-note"]', 20000)
+      await sleep(1200)
+      await ctx.shot('check-screen')
+      const parts = await lab.eval(() => ['role', 'offer', 'where', 'about'].filter((k) => document.querySelector(`[data-testid="ai-summary-${k}"]`)).length)
+      if (parts !== 4) throw new Error(`check screen shows ${parts} of 4 parts`)
+      ctx.note('closed role copied to the check screen; discarded')
+      await lab.eval(() => { document.querySelector('[data-testid="post-role-screen"] button[aria-label="Cancel"]')?.click() })
+      await sleep(800)
+      await lab.eval(() => { [...document.querySelectorAll('button')].find((x) => /^discard$/i.test(x.textContent?.trim() || ''))?.click() })
+      await sleep(800)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-ai-start'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await sleep(1000)
+      await lab.tap('button[aria-label="Post a role"]')
+      await lab.waitFor('[data-testid="post-role-ai-text"]', 8000)
+      await lab.type('[data-testid="post-role-ai-text"]', 'Left back for our women’s 1st team, paid, with housing, from January')
+      await sleep(400)
+      await ctx.shot('typed')
+      const t0 = Date.now()
+      await lab.tap('[data-testid="post-role-ai-draft"]')
+      await lab.waitFor('[data-testid="post-role-ai-summary"], [data-testid="post-role-screen"]', 45000)
+      await lab.waitFor('[data-testid="ai-summary-role"]', 10000)
+      await sleep(1200)
+      await ctx.shot('drafted')
+      const role = await lab.eval(() => document.querySelector('[data-testid="ai-summary-role"]')?.textContent || '')
+      if (!/Defender/.test(role) || !/Women/.test(role)) throw new Error(`drafted role reads "${role.slice(0, 80)}"`)
+      ctx.note(`drafted in ${Math.round((Date.now() - t0) / 100) / 10} s; discarded`)
+      await lab.eval(() => { document.querySelector('[data-testid="post-role-screen"] button[aria-label="Cancel"]')?.click() })
+      await sleep(800)
+      await lab.eval(() => { [...document.querySelectorAll('button')].find((x) => /^discard$/i.test(x.textContent?.trim() || ''))?.click() })
+      await sleep(800)
+    } finally { await restoreWidth(lab) }
+  },
+
   async 'club-sign-out'(lab, ctx) {
     await signOut(lab)
     await ctx.shot('signed-out')
@@ -399,3 +813,5 @@ export const scenarios = {
 
 export const CORE_ORDER = ['sign-in', 'home-feed', 'opportunities-role-apply', 'hockia-ai-sheet', 'role-cover-render', 'inbox-thread', 'community-profile', 'profile-edit']
 export const CLUB_ORDER = ['club-sign-in', 'club-roles', 'club-post-role-cover', 'role-cover-render', 'club-sign-out']
+// Club speed journeys (--scenario club-speed): sign in as the club, run them, sign out.
+export const CLUB_SPEED_ORDER = ['club-sign-in', 'club-your-replies', 'club-select-decline', 'club-review-advance', 'club-close-sheet', 'club-post-again', 'club-ai-start', 'club-sign-out']
