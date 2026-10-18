@@ -57,34 +57,36 @@ export interface ClarifyingResult {
  * as HIGH confidence, so the follow-up search stays predictable.
  */
 function buildClarifyingOptions(userRole: string | null): ClarifyingOption[] {
+  // The recommended option comes first (Hockia AI choice card, 2026-10-18):
+  // what that role most often came to Hockia for.
   switch (userRole) {
     case 'player':
       return [
-        { label: 'Clubs', routed_query: 'Find clubs for me' },
-        { label: 'Coaches', routed_query: 'Find coaches in my position' },
-        { label: 'Opportunities', routed_query: 'Find opportunities for my position' },
-        { label: 'Brands', routed_query: 'Find brands' },
+        { label: 'Opportunities', routed_query: 'Find opportunities for my position', description: 'Open roles that match your position', recommended: true },
+        { label: 'Clubs', routed_query: 'Find clubs for me', description: 'Clubs that fit your level and category' },
+        { label: 'Coaches', routed_query: 'Find coaches in my position', description: 'Coaches who work with your position' },
+        { label: 'Brands', routed_query: 'Find brands', description: 'Brands on Hockia' },
       ]
     case 'coach':
       return [
-        { label: 'Clubs hiring', routed_query: 'Find clubs hiring head coaches' },
-        { label: 'Players', routed_query: 'Find players for my staff' },
-        { label: 'Opportunities', routed_query: 'Find opportunities for coaches' },
-        { label: 'Brands', routed_query: 'Find brands' },
+        { label: 'Opportunities', routed_query: 'Find opportunities for coaches', description: 'Open coaching roles', recommended: true },
+        { label: 'Clubs hiring', routed_query: 'Find clubs hiring head coaches', description: 'Clubs looking for coaching staff' },
+        { label: 'Players', routed_query: 'Find players for my staff', description: 'Players open to new teams' },
+        { label: 'Brands', routed_query: 'Find brands', description: 'Brands on Hockia' },
       ]
     case 'club':
       return [
-        { label: 'Players', routed_query: 'Find players for my team' },
-        { label: 'Coaches', routed_query: 'Find coaches with head-coach experience' },
-        { label: 'Opportunities', routed_query: 'Find opportunities to post' },
-        { label: 'Brands', routed_query: 'Find brands' },
+        { label: 'Players', routed_query: 'Find players for my team', description: 'Players open to joining a club', recommended: true },
+        { label: 'Coaches', routed_query: 'Find coaches with head-coach experience', description: 'Coaches with head-coach experience' },
+        { label: 'Opportunities', routed_query: 'Find opportunities to post', description: 'Help posting a role' },
+        { label: 'Brands', routed_query: 'Find brands', description: 'Brands on Hockia' },
       ]
     case 'brand':
       return [
-        { label: 'Player ambassadors', routed_query: 'Find player ambassadors' },
-        { label: 'Clubs', routed_query: 'Find clubs' },
-        { label: 'Coaches', routed_query: 'Find coaches' },
-        { label: 'Marketplace', routed_query: 'Show me products' },
+        { label: 'Player ambassadors', routed_query: 'Find player ambassadors', description: 'Players who could represent your brand', recommended: true },
+        { label: 'Clubs', routed_query: 'Find clubs', description: 'Clubs for sponsorships' },
+        { label: 'Coaches', routed_query: 'Find coaches', description: 'Coaches on Hockia' },
+        { label: 'Marketplace', routed_query: 'Show me products', description: 'Products on Hockia' },
       ]
     default:
       return [

@@ -6,8 +6,10 @@ export type HockiaAiDetent = 'medium' | 'large'
 export type HockiaAiEntry = 'opportunities' | 'profile' | 'role'
 
 /** 'builder' = "Fill my profile for me" (handoff P0–P3): its own conversation inside the same sheet.
- *  'history' = the saved chats (handoff C2). */
-export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history'
+ *  'history' = the saved chats (handoff C2). 'steps' = a next step done with
+ *  the member: photo, bio, links (2026-10-18). */
+export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history' | 'steps'
+export type HockiaAiStep = 'photo' | 'bio' | 'video' | 'career' | 'links' | 'position' | 'passport'
 
 /** The role "Prepare my application" is for (handoff A4): what the draft card shows before the role loads. */
 export interface ApplyTarget { id: string; title: string; organization: string | null; logoUrl: string | null }
@@ -22,6 +24,9 @@ interface HockiaAiSheetState {
   mode: HockiaAiMode
   applyTarget: ApplyTarget | null
   roleContext: RoleContext | null
+  step: HockiaAiStep | null
+  /** Do a next step: photo, bio and links here; clubs, position and passports in Fill my profile. */
+  startStep: (step: HockiaAiStep) => void
   show: (entry?: HockiaAiEntry, mode?: HockiaAiMode) => void
   setMode: (mode: HockiaAiMode) => void
   /** "Prepare my application" for a role: the apply conversation, large. */
@@ -41,6 +46,8 @@ export const useHockiaAiSheet = create<HockiaAiSheetState>((set) => ({
   mode: 'chat',
   applyTarget: null,
   roleContext: null,
+  step: null,
+  startStep: (step) => set({ open: true, detent: 'large', step, mode: ['photo', 'bio', 'links', 'video'].includes(step) ? 'steps' : 'builder' }),
   // The builder needs room for the review card: it always opens large.
   show: (entry = 'opportunities', mode = 'chat') => set({ open: true, detent: mode === 'chat' ? 'medium' : 'large', entry, mode, roleContext: null }),
   setMode: (mode) => set((s) => ({ mode, detent: mode === 'chat' ? s.detent : 'large' })),
