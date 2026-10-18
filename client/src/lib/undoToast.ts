@@ -6,8 +6,9 @@ import { create } from 'zustand'
  * screen shows on Applicants after the navigation back.
  */
 interface UndoToastState {
-  toast: { applicationId: string; text: string; onUndo: () => void; at: number } | null
-  show: (t: { applicationId: string; text: string; onUndo: () => void }) => void
+  /** applicationIds: a bulk decision (Club speed CS4/CS5) — Undo drops every held one. */
+  toast: { applicationId: string; applicationIds?: string[]; text: string; onUndo: (undoneIds: string[]) => void; at: number } | null
+  show: (t: { applicationId: string; applicationIds?: string[]; text: string; onUndo: (undoneIds: string[]) => void }) => void
   hide: () => void
 }
 

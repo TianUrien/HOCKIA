@@ -26,7 +26,8 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
 import { COACH_SIGNING_NEEDS_CLUB_NOTE, coachSigningNeedsClub } from '@/lib/coachRoles'
-import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
+import { cachedRoleApplicants, markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
+import { UndoToast } from './UndoToast'
 import { holdDecision } from '@/lib/pendingDecisions'
 import { APPLICATION_MOVED_ON_MESSAGE, WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
@@ -296,6 +297,24 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
     else navigate(`/dashboard/opportunities/${roleId}/applicants`)
   }
 
+  // Club speed CS7 (Figma 05 204:1358): on the phone, after a decision on an
+  // applicant To review, the next one To review comes up (oldest first, like
+  // desktop S/M/D), with "N of M to review"; the Undo toast stays on screen.
+  // Back still returns to the list. Nothing left → back to the list.
+  const run = (location.state as { run?: number } | null)?.run ?? 0
+  const waitingNow = (cachedRoleApplicants(roleId) ?? []).filter((a) => a.status === 'pending')
+  const reviewTotal = run + waitingNow.length
+  const showCounter = review?.status === 'pending' && reviewTotal > 1 && waitingNow.some((a) => a.applicationId === applicationId)
+  const advance = (prevStatus: string) => {
+    if (prevStatus !== 'pending') { backToApplicants(); return }
+    const next = (cachedRoleApplicants(roleId) ?? [])
+      .filter((a) => a.status === 'pending' && a.applicationId !== applicationId)
+      .sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))[0]
+    if (!next) { backToApplicants(); return }
+    const from = (location.state as { from?: string } | null)?.from
+    navigate(`/dashboard/opportunities/${roleId}/applicants/${next.applicationId}`, { replace: true, state: { from, run: run + 1 } })
+  }
+
   const decide = (status: 'shortlisted' | 'maybe') => {
     if (!review) return
     const prev = review.status
@@ -308,7 +327,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
     patchRoleApplicantStatus(roleId, applicationId, status)
     showUndo({ applicationId, text: decisionToast(firstName, status), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
     if (pane) onDecided?.(status)
-    else backToApplicants()
+    else advance(prev)
   }
 
   const decline = (reason: string, message: string) => {
@@ -324,7 +343,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')
     showUndo({ applicationId, text: decisionToast(firstName, 'rejected'), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
     if (pane) onDecided?.('rejected')
-    else backToApplicants()
+    else advance(prev)
   }
 
   const message = async () => {
@@ -674,6 +693,11 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 <button type="button" onClick={backToApplicants} aria-label="Back to applicants" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }} data-testid="review-back">
                   <BackGlyph className="h-5 w-5" strokeWidth={2.2} />
                 </button>
+                {showCounter && (
+                  <span className="flex h-9 items-center rounded-full px-3 text-secondary font-semibold text-white" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }} data-testid="review-counter">
+                    {run + 1} of {reviewTotal} to review
+                  </span>
+                )}
                 <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[10px]" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
                   {/* Founder ruling: the applicant "…" = Message · View full profile · Report. */}
                   <ProfileActionMenu
@@ -890,6 +914,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
       )}
 
       {overlays}
+      <UndoToast aboveBar />
     </div>
   )
 }
