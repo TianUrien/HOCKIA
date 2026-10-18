@@ -301,6 +301,38 @@ export const scenarios = {
   // Hockia AI sheet (beta, 16 Oct 2026): the Opportunities mascot opens the
   // sheet over the page; it grows to full height and closes. No question is
   // sent, so no daily quota is used.
+  // Opt-in (one Hockia AI profile read on staging): "Fill my profile for me"
+  // from the chat, typed text only (the lab can't drive the OS file pickers),
+  // review card checked, closed WITHOUT saving.
+  async 'hockia-ai-profile-builder'(lab, ctx) {
+    await lab.go('/opportunities')
+    await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
+    await sleep(800)
+    await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-fill-profile"]', 15000)
+    await sleep(800)
+    await ctx.shot('chip')
+    await lab.tap('[data-testid="hockia-ai-fill-profile"]')
+    await lab.waitFor('[data-testid="profile-builder"]', 10000)
+    await sleep(800)
+    await ctx.shot('intro')
+    await lab.type('[data-testid="builder-composer"]', 'I played for Banco Provincia in Buenos Aires from 2019 to 2022 in Metro A, then Club de Campo in Madrid since 2023.')
+    await sleep(400)
+    await lab.tap('[data-testid="builder-send"]')
+    await lab.waitFor('[data-testid="builder-reading"], [data-testid="builder-review"], [data-testid="builder-nothing"], [data-testid="builder-error"]', 15000)
+    await ctx.shot('reading')
+    await lab.waitFor('[data-testid="builder-review"], [data-testid="builder-nothing"], [data-testid="builder-error"]', 90000)
+    await sleep(1000)
+    await ctx.shot('review')
+    const r = await lab.eval(() => ({ err: document.querySelector('[data-testid="builder-error"]')?.textContent || null, rows: document.querySelectorAll('[data-testid="builder-career-row"]').length, nothing: !!document.querySelector('[data-testid="builder-nothing"]'), save: !!document.querySelector('[data-testid="builder-save-all"]') }))
+    if (r.err) throw new Error(`builder error: ${r.err.slice(0, 120)}`)
+    // The QA player may already have these clubs from an earlier run: "nothing new" is a valid answer.
+    if (!r.nothing && (!r.rows || !r.save)) throw new Error(`review card incomplete: ${JSON.stringify(r)}`)
+    ctx.note(r.nothing ? 'nothing new to add (clubs already on the profile)' : `${r.rows} career rows proposed; not saved`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
+    await sleep(600)
+  },
+
   async 'hockia-ai-sheet'(lab, ctx) {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
