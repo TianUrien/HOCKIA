@@ -225,12 +225,12 @@ describe('category labels', () => {
 })
 
 // ── 5. Feed pop-up keeps the club logo ───────────────────────────────────────
-describe('feed role pop-up logo', () => {
-  it('the feed card hands its logo to the pop-up, which uses it and warms it', () => {
-    expect(src('components/home/cards/OpportunityPostedCard.tsx')).toContain('clubLogo={item.club_logo}')
-    const overlay = src('components/OpportunityDetailOverlay.tsx')
-    expect(overlay).toContain("getImageUrl(clubLogo, 'avatar-md')")
-    expect(overlay).toContain('clubInfo={club.avatar_url || !clubLogo ? club : { ...club, avatar_url: clubLogo }}')
+describe('feed roles open the v2 role page (17 Oct 2026)', () => {
+  it('Home rail and both feed cards navigate to /opportunities/:id; the old pop-up is gone', () => {
+    expect(src('components/home/cards/OpportunityPostedCard.tsx')).toContain('navigate(`/opportunities/${item.opportunity_id}`)')
+    expect(src('components/home/v1/cards/OpportunityCard.tsx')).toContain('navigate(`/opportunities/${item.opportunity_id}`)')
+    expect(src('components/home/v1/RolesRail.tsx')).toContain('navigate(`/opportunities/${o.id}`)')
+    expect(src('pages/HomePage.tsx')).toContain('useScrollRestore()')
   })
 })
 

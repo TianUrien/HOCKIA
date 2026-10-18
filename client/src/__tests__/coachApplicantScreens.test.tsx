@@ -71,6 +71,7 @@ vi.mock('@/hooks/useRoleSuggestions', () => ({ useRoleSuggestions: () => ({ data
 vi.mock('@/hooks/useRoleApplicants', () => ({
   patchRoleApplicantStatus: vi.fn(),
   markRoleApplicantViewed: vi.fn(),
+  cachedRoleApplicants: () => null,
   useRoleApplicants: () => ({
     loading: false, error: null, expiryDays: 14, refresh: vi.fn(), setLocalStatus: vi.fn(), applicants: [],
     role: { id: 'r1', club_id: fx.roleOwner, status: 'open', title: 'Men’s 1st player', position: 'midfielder', gender: 'Men', opportunity_type: 'player' },

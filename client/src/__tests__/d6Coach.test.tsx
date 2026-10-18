@@ -83,7 +83,6 @@ vi.mock('@/hooks/useRecruitingContext', () => ({ useRecruitingViewKind: () => un
 vi.mock('@/components/club/RoleActions', () => ({ RoleActions: () => null }))
 vi.mock('@/components/Header', () => ({ default: () => null }))
 vi.mock('@/components/OpportunityCard', () => ({ default: () => null }))
-vi.mock('@/components/OpportunityPreviewModal', () => ({ default: () => null }))
 vi.mock('@/components/CreateOpportunityModal', () => ({ default: () => <div data-testid="create-role-modal" /> }))
 vi.mock('@/components/OpportunityJsonLd', () => ({ OpportunitiesListJsonLd: () => null }))
 vi.mock('@/components/opportunities/OpportunityFiltersSheet', () => ({ OpportunityFiltersSheet: () => null }))

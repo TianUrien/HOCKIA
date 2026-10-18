@@ -19,7 +19,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
  * the scrollTop of every scrollable element, before and after the swipe.
  */
 const SCROLL_STATE = () => {
-  const els = [...document.querySelectorAll('*')].filter((el) => { const s = getComputedStyle(el); return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 40 })
+  // Only visible scroll areas of a real size count: a hidden or tiny inner
+  // scroller made a one-screen profile look "tall" (lab 2026-10-18).
+  const els = [...document.querySelectorAll('*')].filter((el) => {
+    const s = getComputedStyle(el)
+    if (!/(auto|scroll)/.test(s.overflowY) || el.scrollHeight <= el.clientHeight + 40) return false
+    const r = el.getBoundingClientRect()
+    return s.visibility !== 'hidden' && r.width > 0 && r.height > 150 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth
+  })
   return {
     y: window.scrollY,
     inner: els.reduce((n, el) => n + el.scrollTop, 0),
@@ -341,6 +348,35 @@ export const scenarios = {
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-close"]')?.click())
   },
 
+  // Home → role (17 Oct 2026): a Home role opens the v2 role page, and closing
+  // it returns to Home at the same scroll position.
+  async 'home-role-back'(lab, ctx) {
+    await lab.go('/home')
+    await lab.waitFor('[data-testid="home-roles-rail"] button', 25000)
+    await sleep(1500)
+    // Real thumb swipes (native gestures on phones, wheel on desktop), then measure.
+    await lab.swipeUp(0.5)
+    await lab.swipeUp(0.5)
+    // Let momentum scrolling settle (iOS keeps gliding) before measuring.
+    let before = -1
+    for (let i = 0; i < 10; i++) { await sleep(500); const y = await lab.eval(() => Math.round(window.scrollY)); if (y === before) break; before = y }
+    await ctx.shot('home-before')
+    await lab.eval(() => document.querySelector('[data-testid="home-roles-rail"] button')?.click())
+    let url = ''
+    for (let i = 0; i < 40; i++) { await sleep(500); url = await lab.url(); if (/\/opportunities\/[0-9a-f-]{36}/.test(url)) break }
+    if (!/\/opportunities\/[0-9a-f-]{36}/.test(url)) throw new Error(`the Home role did not open the role page (url ${url})`)
+    await lab.waitFor('[data-testid="role-detail"], [data-testid="role-detail-desktop"]', 20000)
+    await sleep(1000)
+    await ctx.shot('role-from-home')
+    await lab.eval(() => document.querySelector('[data-testid="role-close"]')?.click())
+    for (let i = 0; i < 40; i++) { await sleep(500); if ((await lab.url()).startsWith('/home')) break }
+    await sleep(2500)
+    const after = await lab.eval(() => Math.round(window.scrollY))
+    await ctx.shot('home-after-back')
+    ctx.note(`scroll ${before} → ${after}`)
+    if (before > 100 && Math.abs(after - before) > 60) throw new Error(`Home scroll not restored (${before} → ${after})`)
+  },
+
   // ---- Publisher (club) journeys: `--scenario club` ----------------------
 
   async 'club-sign-in'(lab, ctx) {
@@ -417,6 +453,188 @@ export const scenarios = {
     } finally { await restoreWidth(lab) }
   },
 
+  // ── Club speed (Figma 05 CS1–CS8). Nothing is written: every decision is
+  // undone inside the Undo window and every sheet is cancelled. ──────────────
+
+  async 'club-your-replies'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await lab.waitFor('[data-testid="your-replies"]', 15000)
+      await sleep(800)
+      await ctx.shot('your-replies')
+      const text = await lab.eval(() => document.querySelector('[data-testid="your-replies"]')?.textContent || '')
+      if (!/You answered \d+ of \d+ applicants/.test(text)) throw new Error(`Your replies reads "${text.slice(0, 80)}"`)
+      ctx.note(text.replace(/^Your replies · last 30 days/i, '').slice(0, 80))
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-select-decline'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="applicant-row"]', 20000)
+      await sleep(1000)
+      const rows = await lab.eval(() => document.querySelectorAll('[data-testid="applicant-row"]').length)
+      if (rows < 2) throw new Error(`fixture role shows ${rows} applicant(s) to review; expected 2 (reset ${FIXTURES.speedRoleId} to pending)`)
+      await lab.tap('[data-testid="applicants-select"]')
+      await lab.waitFor('[data-testid="select-all"]', 5000)
+      await lab.tap('[data-testid="select-all"]')
+      await sleep(500)
+      const bar = await lab.eval(() => document.querySelector('[data-testid="selection-bar"]')?.textContent || '')
+      await ctx.shot('two-selected')
+      if (!/2 selected/.test(bar) || !/Decline 2/.test(bar)) throw new Error(`selection bar reads "${bar}"`)
+      await lab.tap('[data-testid="bulk-decline"]')
+      await lab.waitFor('[data-testid="bulk-decline-sheet"]', 8000)
+      await sleep(600)
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="bulk-decline-sheet"] [role="radio"]')].find((b) => b.textContent?.trim() === 'Timing')?.click() })
+      await lab.waitFor('[data-testid="bulk-decline-greeting"]', 5000)
+      await sleep(500)
+      await ctx.shot('decline-sheet')
+      const note = await lab.eval(() => ({ greet: document.querySelector('[data-testid="bulk-decline-greeting"]')?.textContent || '', body: document.querySelector('[data-testid="bulk-decline-note"] textarea')?.value || '', send: document.querySelector('[data-testid="bulk-decline-send"]')?.textContent || '' }))
+      if (!/^(Hi .+,|Hello,)$/.test(note.greet)) throw new Error(`greeting reads "${note.greet}"`)
+      if (!/timing doesn’t work/.test(note.body)) throw new Error('note is not the fixed Timing template')
+      if (!/Decline 2 and send/.test(note.send)) throw new Error(`send button reads "${note.send}"`)
+      ctx.note('fixed note, personal greeting; cancelled, nothing sent')
+      // Cancel the sheet, then leave select mode.
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="bulk-decline-sheet"] button')].find((b) => b.textContent?.trim() === 'Cancel')?.click() })
+      await sleep(600)
+      await lab.eval(() => { document.querySelector('[data-testid="select-bar-top"] button')?.click() })
+      await sleep(400)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-review-advance'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="applicant-row"]', 20000)
+      await sleep(1000)
+      await lab.tap('[data-testid="applicant-row"]')
+      await lab.waitFor('[data-testid="review-counter"]', 20000)
+      await sleep(1200)
+      const first = await lab.eval(() => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' }))
+      await ctx.shot('review-1')
+      if (!/^1 of 2 to review$/.test(first.c)) throw new Error(`counter reads "${first.c}"`)
+      // Decide, wait for the next applicant, and press Undo — all inside the
+      // page, so a slow emulator round-trip can't miss the 5 s Undo window.
+      // Android: one in-page script (its round-trips are slow). iOS: the web view
+      // doesn't let the app react while it waits on a page script, so step through.
+      const r = lab.device.platform === 'ios' ? null : await lab.eval(() => new Promise((resolve) => {
+        const read = () => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' })
+        ;[...document.querySelectorAll('[data-testid="decision-bar"] button')].find((b) => b.textContent?.trim() === 'Maybe')?.click()
+        const t0 = Date.now()
+        const tick = () => {
+          const now = read()
+          const undo = document.querySelector('[data-testid="undo-toast"] button')
+          if (now.c.startsWith('2 of') && undo) {
+            undo.click()
+            setTimeout(() => resolve({ second: now, toast: true, afterUndo: read().c, ms: Date.now() - t0 }), 600)
+          } else if (Date.now() - t0 > 3500) resolve({ second: now, toast: Boolean(undo), afterUndo: null, ms: Date.now() - t0 })
+          else setTimeout(tick, 100)
+        }
+        setTimeout(tick, 100)
+      }))
+      let second = r?.second
+      let toast = r?.toast
+      let afterUndo = r?.afterUndo ?? ''
+      if (!second) {
+        await lab.eval(() => { [...document.querySelectorAll('[data-testid="decision-bar"] button')].find((b) => b.textContent?.trim() === 'Maybe')?.click() })
+        second = { c: '', n: '' }
+        for (let i = 0; i < 12; i++) { await sleep(250); second = await lab.eval(() => ({ c: document.querySelector('[data-testid="review-counter"]')?.textContent || '', n: document.querySelector('[data-testid="review-name"]')?.textContent || '' })); if (second.c.startsWith('2 of')) break }
+        toast = await lab.eval(() => { const b = document.querySelector('[data-testid="undo-toast"] button'); if (b) b.click(); return Boolean(b) })
+        await sleep(600)
+        afterUndo = await lab.eval(() => document.querySelector('[data-testid="review-counter"]')?.textContent || '')
+      }
+      await ctx.shot('review-2-after-undo')
+      // The undone applicant is back in the queue, so this one is 1 of 2 again.
+      if (!/^1 of 2 to review$/.test(afterUndo)) throw new Error(`after Undo the counter reads "${afterUndo}", expected 1 of 2`)
+      if (!/^2 of 2 to review$/.test(second.c)) throw new Error(`after Maybe the counter reads "${second.c}"`)
+      if (second.n === first.n) throw new Error('the same applicant stayed on screen after the decision')
+      if (!toast) throw new Error('no Undo toast after the decision')
+      ctx.note(`${first.n} → ${second.n}; Maybe undone`)
+      await lab.eval(() => { document.querySelector('[data-testid="review-back"]')?.click() })
+      await sleep(1000)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-close-sheet'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go(`/dashboard/opportunities/${FIXTURES.speedRoleId}/applicants`)
+      await lab.waitFor('[data-testid="role-actions-button"]', 20000)
+      await sleep(800)
+      await lab.tap('[data-testid="role-actions-button"]')
+      await lab.waitFor('[data-testid="role-actions-sheet"]', 8000)
+      await sleep(500)
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="role-actions-sheet"] button')].find((b) => /Close role/.test(b.textContent || ''))?.click() })
+      await lab.waitFor('[data-testid="close-role-sheet"]', 8000)
+      await lab.tap('[data-testid="close-role-withdrawn"]')
+      await lab.waitFor('[data-testid="close-role-note"]', 8000)
+      await sleep(600)
+      await ctx.shot('close-sheet')
+      const s = await lab.eval(() => ({ tell: document.querySelector('[data-testid="close-role-tell"]')?.getAttribute('aria-checked'), btn: document.querySelector('[data-testid="close-role-confirm"]')?.textContent || '' }))
+      if (s.tell !== 'true') throw new Error('"Tell the players still waiting" is not on by default')
+      if (!/Close role and tell 2 players/.test(s.btn)) throw new Error(`confirm reads "${s.btn}"`)
+      ctx.note('Filled / Not filled + tell 2 players (on); cancelled')
+      await lab.eval(() => { [...document.querySelectorAll('[data-testid="close-role-sheet"] button')].find((b) => b.textContent?.trim() === 'Cancel')?.click() })
+      await sleep(500)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-post-again'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await sleep(1000)
+      await lab.tap('button[aria-label="Post a role"]')
+      await lab.waitFor('[data-testid="post-role-start"]', 8000)
+      await lab.waitFor('[data-testid="post-role-again-row"]', 10000)
+      await sleep(600)
+      await ctx.shot('start-sheet')
+      await lab.tap('[data-testid="post-role-again-row"]')
+      await lab.waitFor('[data-testid="post-again-note"]', 20000)
+      await sleep(1200)
+      await ctx.shot('check-screen')
+      const parts = await lab.eval(() => ['role', 'offer', 'where', 'about'].filter((k) => document.querySelector(`[data-testid="ai-summary-${k}"]`)).length)
+      if (parts !== 4) throw new Error(`check screen shows ${parts} of 4 parts`)
+      ctx.note('closed role copied to the check screen; discarded')
+      await lab.eval(() => { document.querySelector('[data-testid="post-role-screen"] button[aria-label="Cancel"]')?.click() })
+      await sleep(800)
+      await lab.eval(() => { [...document.querySelectorAll('button')].find((x) => /^discard$/i.test(x.textContent?.trim() || ''))?.click() })
+      await sleep(800)
+    } finally { await restoreWidth(lab) }
+  },
+
+  async 'club-ai-start'(lab, ctx) {
+    if (!(await phoneWidth(lab, ctx))) { ctx.note('tablet width: phone-only screen; skipped'); return }
+    try {
+      await lab.go('/opportunities')
+      await lab.waitFor('[data-testid="club-opportunities-screen"]', 20000)
+      await sleep(1000)
+      await lab.tap('button[aria-label="Post a role"]')
+      await lab.waitFor('[data-testid="post-role-ai-text"]', 8000)
+      await lab.type('[data-testid="post-role-ai-text"]', 'Left back for our women’s 1st team, paid, with housing, from January')
+      await sleep(400)
+      await ctx.shot('typed')
+      const t0 = Date.now()
+      await lab.tap('[data-testid="post-role-ai-draft"]')
+      await lab.waitFor('[data-testid="post-role-ai-summary"], [data-testid="post-role-screen"]', 45000)
+      await lab.waitFor('[data-testid="ai-summary-role"]', 10000)
+      await sleep(1200)
+      await ctx.shot('drafted')
+      const role = await lab.eval(() => document.querySelector('[data-testid="ai-summary-role"]')?.textContent || '')
+      if (!/Defender/.test(role) || !/Women/.test(role)) throw new Error(`drafted role reads "${role.slice(0, 80)}"`)
+      ctx.note(`drafted in ${Math.round((Date.now() - t0) / 100) / 10} s; discarded`)
+      await lab.eval(() => { document.querySelector('[data-testid="post-role-screen"] button[aria-label="Cancel"]')?.click() })
+      await sleep(800)
+      await lab.eval(() => { [...document.querySelectorAll('button')].find((x) => /^discard$/i.test(x.textContent?.trim() || ''))?.click() })
+      await sleep(800)
+    } finally { await restoreWidth(lab) }
+  },
+
   async 'club-sign-out'(lab, ctx) {
     await signOut(lab)
     await ctx.shot('signed-out')
@@ -425,3 +643,5 @@ export const scenarios = {
 
 export const CORE_ORDER = ['sign-in', 'home-feed', 'opportunities-role-apply', 'hockia-ai-sheet', 'role-cover-render', 'inbox-thread', 'community-profile', 'profile-edit']
 export const CLUB_ORDER = ['club-sign-in', 'club-roles', 'club-post-role-cover', 'role-cover-render', 'club-sign-out']
+// Club speed journeys (--scenario club-speed): sign in as the club, run them, sign out.
+export const CLUB_SPEED_ORDER = ['club-sign-in', 'club-your-replies', 'club-select-decline', 'club-review-advance', 'club-close-sheet', 'club-post-again', 'club-ai-start', 'club-sign-out']

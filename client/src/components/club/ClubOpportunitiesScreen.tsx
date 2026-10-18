@@ -17,6 +17,9 @@ import { shortDayOf } from '@/lib/signing'
 import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
+import { PostRoleStartSheet } from './PostRoleStartSheet'
+import { useYourReplies } from '@/hooks/useYourReplies'
+import { yourRepliesCopy } from '@/lib/yourReplies'
 
 
 /**
@@ -65,7 +68,7 @@ function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => voi
  * a reply is owed, quiet otherwise. Closed roles lead with their outcome
  * pill ("Filled through Hockia" positive, the rest neutral).
  */
-function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void }) {
+function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPostAgain }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void; onPostAgain?: () => void }) {
   const press = usePressSpring<HTMLButtonElement>()
   const pill = genderPill(role.gender)
   const family = categoryFamily(role.gender)
@@ -92,7 +95,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit }: { ro
       <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
         {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
         <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-[8px]" style={{ backgroundColor: 'rgba(0,0,0,0.32)' }}>
-          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
+          <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} onPostAgain={onPostAgain} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
         </span>
       </RoleCover>
       <div className="flex flex-1 flex-col gap-1 px-4 pb-4 pt-3.5">
@@ -161,6 +164,8 @@ export interface RecruiterRolesProps {
   onPostRole: () => void
   /** Continue a draft / edit a role. Default: the club's phone editor. */
   onEditRole?: (role: ClubRole) => void
+  /** Club speed CS3 · Post again from a closed role. Default: a club on its phone opens Post a role prefilled. */
+  onPostAgainRole?: (role: ClubRole) => void
   /** Where the applicant screens return to. */
   from?: string
   /** 'always' = the club tab; 'when-closed' = only once a closed role exists
@@ -177,7 +182,7 @@ export interface RecruiterRolesProps {
   subtitle?: string | null
 }
 
-export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
+export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
   const desktop = layout === 'desktop'
   const navigate = useNavigate()
   const [segment, setSegment] = useState<Segment>('open')
@@ -211,6 +216,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
 
   const pending = useMemo(() => data.open.flatMap((r) => r.pendingAppliedAt), [data.open])
   const notice = waitingNotice(pending, data.expiryDays)
+  const replies = useYourReplies(owner?.id)
   const rolesWithPending = data.open.filter((r) => r.pipeline.toReview > 0)
   const applicantsPath = (id: string) => `/dashboard/opportunities/${id}/applicants`
   const openNotice = () => {
@@ -276,6 +282,20 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
         </div>
       )}
 
+      {segment === 'open' && replies && (
+        <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
+          {/* Figma 05 CS8 205:5742: neutral surface, the club's own last 30 days, from 5 applicants. */}
+          <div className="flex flex-col gap-2 rounded-[16px] bg-surface-subtle px-4 py-3.5" data-testid="your-replies">
+            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Your replies · last 30 days</p>
+            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{yourRepliesCopy(replies).title}</p>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={replies.total} aria-valuenow={replies.answered} aria-label="Applicants answered">
+              <div className="h-full rounded-full bg-brand-primary" style={{ width: `${Math.round((replies.answered / replies.total) * 100)}%` }} />
+            </div>
+            {yourRepliesCopy(replies).detail && <p className="text-secondary text-ink-2">{yourRepliesCopy(replies).detail}</p>}
+          </div>
+        </div>
+      )}
+
       <div className={desktop ? 'flex flex-col gap-5' : 'flex flex-col gap-3.5 px-4'}>
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
@@ -287,7 +307,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
         {(() => {
           const cards = roles.map((r) => (r.status === 'draft'
             ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />
-            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} />
+            : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} cover={cover} onReview={() => navigate(applicantsPath(r.id), { state: { from } })} onChanged={data.refresh} onEdit={onEditRole ? () => onEditRole(r) : undefined} onPostAgain={onPostAgainRole ? () => onPostAgainRole(r) : undefined} />
           ))
           return desktop
             ? cards.length > 0 && <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-role-grid">{cards}</div>
@@ -314,10 +334,11 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, from = '/opportun
 }
 
 export default function ClubOpportunitiesScreen() {
-  const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
   const data = useClubRoles(profile?.id)
-  const postRole = () => navigate('/dashboard/opportunities/new')
+  // Club speed CS1: "+" asks how to start — Hockia AI or from scratch.
+  const [starting, setStarting] = useState(false)
+  const postRole = () => setStarting(true)
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="club-opportunities-screen">
       <LargeTitleBar
@@ -329,6 +350,7 @@ export default function ClubOpportunitiesScreen() {
         )}
       />
       <RecruiterRoles data={data} onPostRole={postRole} />
+      <PostRoleStartSheet open={starting} onClose={() => setStarting(false)} />
     </div>
   )
 }

@@ -92,6 +92,21 @@ export function matchesRoutePrefix(pathname: string, prefixes: readonly string[]
   return prefixes.some((p) => pathname === p || pathname.startsWith(p + '/'))
 }
 
+/**
+ * Screens with their own bottom action bar, where the card would cover the
+ * main buttons (device lab 2026-10-18; founder OK): the applicant review
+ * (Decline · Maybe · Shortlist) and Post a role / edit (Post role).
+ */
+const ACTION_BAR_SCREENS = [
+  /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+\/?$/,
+  /^\/dashboard\/opportunities\/new\/?$/,
+  /^\/dashboard\/opportunities\/[^/]+\/edit\/?$/,
+]
+
+export function onActionBarScreen(pathname: string): boolean {
+  return ACTION_BAR_SCREENS.some((re) => re.test(pathname))
+}
+
 /** Test hook: forget the in-memory session id. */
 export function __resetAppSessionForTests(): void {
   memorySessionId = null

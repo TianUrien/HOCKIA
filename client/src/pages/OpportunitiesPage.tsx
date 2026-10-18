@@ -109,6 +109,8 @@ export default function OpportunitiesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   // Coach v2 · My roles: "Edit role" / a draft's Continue open the coach's own role form.
   const [editingRole, setEditingRole] = useState<Vacancy | null>(null)
+  // Club speed CS3 · Post again: a closed role that seeds a new one in the create form.
+  const [templateRole, setTemplateRole] = useState<Vacancy | null>(null)
 
   // Coach v2 (Figma D6.2 377:614 · D6.4 377:1814), phone only. A candidate
   // coach's Roles list holds coaching roles only; a coach who recruits keeps
@@ -126,18 +128,26 @@ export default function OpportunitiesPage() {
   // "Edit role" on a coach's applicants screen lands here with the role to
   // edit: open the coach's own role form once their roles have loaded.
   const routeLocation = useLocation()
-  const routeEditRoleId = (routeLocation.state as { editRoleId?: string } | null)?.editRoleId ?? null
+  const routeState = routeLocation.state as { editRoleId?: string; postAgainRoleId?: string } | null
+  const routeEditRoleId = routeState?.editRoleId ?? null
+  // Club speed CS3 on desktop: "Post again" on the applicants page lands here too.
+  const routePostAgainId = routeState?.postAgainRoleId ?? null
   const [pendingEditRoleId, setPendingEditRoleId] = useState<string | null>(routeEditRoleId)
+  const [pendingPostAgainId, setPendingPostAgainId] = useState<string | null>(routePostAgainId)
   // Taken once: drop it from the history entry so coming back doesn't reopen the form.
   useEffect(() => {
-    if (routeEditRoleId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
-  }, [routeEditRoleId, navigate, routeLocation.pathname, routeLocation.search])
+    if (routeEditRoleId || routePostAgainId) navigate(`${routeLocation.pathname}${routeLocation.search}`, { replace: true, state: null })
+  }, [routeEditRoleId, routePostAgainId, navigate, routeLocation.pathname, routeLocation.search])
   useEffect(() => {
-    if (!pendingEditRoleId || !showMyRoles || myRoles.loading) return
-    const hit = [...myRoles.open, ...myRoles.closed].find((r) => r.id === pendingEditRoleId)
-    if (hit) { setEditingRole(hit); setShowCreateModal(true) }
+    if ((!pendingEditRoleId && !pendingPostAgainId) || !showMyRoles || myRoles.loading) return
+    const all = [...myRoles.open, ...myRoles.closed]
+    const edit = pendingEditRoleId ? all.find((r) => r.id === pendingEditRoleId) : null
+    const again = pendingPostAgainId ? all.find((r) => r.id === pendingPostAgainId) : null
+    if (edit) { setTemplateRole(null); setEditingRole(edit); setShowCreateModal(true) }
+    else if (again) { setEditingRole(null); setTemplateRole(again); setShowCreateModal(true) }
     setPendingEditRoleId(null)
-  }, [pendingEditRoleId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
+    setPendingPostAgainId(null)
+  }, [pendingEditRoleId, pendingPostAgainId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
   const settings = useProfileWriter()
 
   // Opportunities v2 (phone and desktop): filters sheet + quick chips + role
@@ -536,8 +546,9 @@ export default function OpportunitiesPage() {
               data={myRoles}
               layout="desktop"
               subtitle={profile?.full_name ? `${profile.full_name} · your roles` : 'Your roles'}
-              onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
-              onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+              onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
+              onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
+              onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
             />
           ) : (
           <>
@@ -548,7 +559,7 @@ export default function OpportunitiesPage() {
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
-                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setShowCreateModal(true) }}>
+                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
               ) : user ? (
@@ -670,7 +681,7 @@ export default function OpportunitiesPage() {
             {user && <HockiaAiButton onClick={openAi} />}
             {canPostOpportunity && !showMyRoles && (
               <Button
-                onClick={() => { setEditingRole(null); setShowCreateModal(true) }}
+                onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
@@ -737,8 +748,9 @@ export default function OpportunitiesPage() {
                 profile={profile}
                 data={myRoles}
                 layout={isPhone ? 'phone' : 'desktop'}
-                onPostRole={() => { setEditingRole(null); setShowCreateModal(true) }}
-                onEditRole={(role: ClubRole) => { setEditingRole(role); setShowCreateModal(true) }}
+                onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
+                onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
+                onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
               />
             </Suspense>
           ) : coachEmpty && isPhone ? (
@@ -993,10 +1005,12 @@ export default function OpportunitiesPage() {
         <CreateOpportunityModal
           isOpen={showCreateModal}
           editingVacancy={editingRole}
-          onClose={() => { setShowCreateModal(false); setEditingRole(null) }}
+          templateVacancy={templateRole}
+          onClose={() => { setShowCreateModal(false); setEditingRole(null); setTemplateRole(null) }}
           onSuccess={() => {
             setShowCreateModal(false)
             setEditingRole(null)
+            setTemplateRole(null)
             fetchVacancies({ skipCache: true })
             myRoles.refresh()
           }}
