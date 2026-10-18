@@ -10,6 +10,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
 import { UndoToast } from './UndoToast'
 import { BulkDeclineSheet } from './BulkDeclineSheet'
+import { ApplicantsAiSummary } from './ApplicantsAiSummary'
 import { useBulkDecisions } from '@/hooks/useBulkDecisions'
 import { firstWord, namesLine } from '@/lib/declineNotes'
 import { RoleActions } from './RoleActions'
@@ -212,6 +213,9 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
               )}
             </div>
 
+            {chip === 'pending' && !selecting && role && clubId && role.club_id === clubId && (
+              <ApplicantsAiSummary roleId={roleId} pending={list} expiryDays={data.expiryDays} />
+            )}
             {data.error && (
               <div className="rounded-[16px] bg-white p-4" role="alert" data-testid="applicants-error">
                 <h1 className="text-[17px] font-semibold leading-[22px] text-ink-1">Can’t open these applicants</h1>

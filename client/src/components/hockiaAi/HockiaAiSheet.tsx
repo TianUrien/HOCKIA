@@ -46,7 +46,7 @@ function BetaPill() {
  * suggestions and no "+" in the composer. Beta everywhere.
  */
 export function HockiaAiSheet() {
-  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication } = useHockiaAiSheet()
+  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const [input, setInput] = useState('')
@@ -84,10 +84,11 @@ export function HockiaAiSheet() {
   const send = useCallback((text: string) => {
     const t = text.trim()
     if (!t || isPending) return
-    sendMessage(t)
+    // Opened on a role (handoff B4): questions are about that role.
+    sendMessage(t, roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined)
     setInput('')
     setDetent('large')
-  }, [isPending, sendMessage, setDetent])
+  }, [isPending, sendMessage, setDetent, roleContext])
 
   // Grabber: drag down to step down (large → medium → closed), up to grow.
   const onPointerDown = (e: React.PointerEvent) => { dragStart.current = e.clientY; (e.target as HTMLElement).setPointerCapture?.(e.pointerId) }
@@ -115,6 +116,26 @@ export function HockiaAiSheet() {
       <ChevronRight className="h-4 w-4 shrink-0 text-brand-primary" strokeWidth={2} />
     </button>
   ) : null
+  // Figma B4 178:603: three suggestions for the open role.
+  const roleSuggestions = roleContext ? [
+    { eyebrow: 'ASK', label: 'Do I fit this role?', run: () => send('Do I fit this role?') },
+    ...(canBuild ? [{ eyebrow: 'DO IT FOR ME', label: 'Prepare my application', run: () => prepareApplication(roleContext) }] : []),
+    { eyebrow: 'LEARN', label: roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club?', run: () => send(roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club about this role?') },
+  ] : []
+  const roleChip = roleContext ? (
+    <span className="mx-auto flex max-w-full items-center gap-2 rounded-full bg-white py-1 pl-1.5 pr-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-role-chip">
+      <img src={roleContext.logoUrl ?? undefined} alt="" className={cn('h-6 w-6 rounded-full object-contain', !roleContext.logoUrl && 'hidden')} />
+      <span className="truncate text-secondary font-semibold text-ink-1">{roleContext.label}</span>
+      <button type="button" onClick={clearRole} aria-label="Stop asking about this role" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3"><X className="h-3.5 w-3.5" /></button>
+    </span>
+  ) : null
+  const roleSuggestion = (r: { eyebrow: string; label: string; run: () => void }) => (
+    <button key={r.label} type="button" onClick={() => { void hapticSelection(); r.run() }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-role-suggestion">
+      <span className={cn('shrink-0 text-caption font-semibold tracking-[0.04em]', r.eyebrow === 'DO IT FOR ME' ? 'text-brand-primary' : 'text-ink-3')}>{r.eyebrow}</span>
+      <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{r.label}</span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
+    </button>
+  )
   const suggestion = (q: string, i: number) => (
     <button key={q} type="button" onClick={() => { void hapticSelection(); send(q) }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-suggestion" data-index={i}>
       <span className="shrink-0 text-caption font-semibold tracking-[0.04em] text-ink-3">{eyebrowFor(q)}</span>
@@ -180,11 +201,20 @@ export function HockiaAiSheet() {
                 <MascotHello height={96} className="-ml-1 shrink-0" />
                 <div className="min-w-0 flex-1 pt-3">
                   <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2">I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.</p>
+                  <p className="mt-1 text-[15px] leading-5 text-ink-2">{roleContext ? 'Ask me anything about this role. I already have it open.' : 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'}</p>
                 </div>
               </div>
-              {buildChip}
-              {examples.slice(0, canBuild ? 2 : 3).map(suggestion)}
+              {roleContext ? (
+                <>
+                  {roleChip}
+                  {roleSuggestions.map(roleSuggestion)}
+                </>
+              ) : (
+                <>
+                  {buildChip}
+                  {examples.slice(0, canBuild ? 2 : 3).map(suggestion)}
+                </>
+              )}
             </div>
           )}
 
@@ -193,8 +223,9 @@ export function HockiaAiSheet() {
               <MascotHello height={200} />
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? `Hi ${firstName}, I’m Hockia AI` : 'Hi, I’m Hockia AI'}</h2>
               <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about roles, clubs, players or the game.</p>
-              {buildChip && <div className="mt-5 w-full">{buildChip}</div>}
-              <div className={cn('grid w-full grid-cols-2 gap-2.5', buildChip ? 'mt-2.5' : 'mt-5')}>
+              {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
+              {!roleContext && buildChip && <div className="mt-5 w-full">{buildChip}</div>}
+              <div className={cn('grid w-full grid-cols-2 gap-2.5', roleContext && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
                 {examples.slice(0, 4).map((q, i, all) => (
                   <button key={q} type="button" onClick={() => { void hapticSelection(); send(q) }} className={cn('flex min-h-[96px] flex-col items-start rounded-[16px] border border-line bg-white p-3.5 text-left transition-colors hover:bg-surface-subtle', all.length % 2 === 1 && i === all.length - 1 && 'col-span-2')} data-testid="hockia-ai-card">
                     <span className="text-caption font-semibold tracking-[0.04em] text-ink-3">{eyebrowFor(q)}</span>
@@ -217,6 +248,7 @@ export function HockiaAiSheet() {
         </div>
 
         <div className="shrink-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2">
+          {roleContext && large && hasMessages && <div className="mb-2 flex">{roleChip}</div>}
           <div className="flex items-end gap-2 rounded-[28px] border border-line bg-white p-1.5 pl-4 shadow-[0_2px_10px_rgba(15,15,20,0.06)]">
             <label className="min-w-0 flex-1">
               <span className="sr-only">Ask Hockia AI</span>

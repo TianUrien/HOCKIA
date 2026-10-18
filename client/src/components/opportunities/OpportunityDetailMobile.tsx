@@ -1,3 +1,4 @@
+import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -251,6 +252,10 @@ export function OpportunityDetailMobile({
         {onBehalfNote(identity) && <p className="pt-2 text-caption text-ink-3">{onBehalfNote(identity)}</p>}
         <p className="pt-2 text-caption text-ink-3">{postedLine(vacancy, new Date(), closed)}</p>
       </div>
+
+      {!closed && !isPublisher && (
+        <div className="px-4 pt-3"><RoleAiEntry vacancy={vacancy} clubName={identity.hiringClub?.name ?? clubName} clubLogo={identity.displayLogo ?? clubLogo} /></div>
+      )}
 
       {!closed && hasApplied && ownApplicationSlot && (
         <section className="px-4 pt-3">{ownApplicationSlot}</section>
