@@ -48,6 +48,8 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState<ProfileDraft | null>(null)
   const [steps, setSteps] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  // The daily limit can't be retried today, so it gets no Try again.
+  const [retryable, setRetryable] = useState(true)
   const [keptPhotos, setKeptPhotos] = useState<number[]>([])
   const [editing, setEditing] = useState<string | null>(null)
   const [outcome, setOutcome] = useState<{ saved: number; failed: string[] } | null>(null)
@@ -74,7 +76,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
     setSent(payload); setText(''); setAtt(EMPTY); setDraft(null); setError(null); setOutcome(null); setPhase('reading')
     trackDbEvent('profile_builder_read', 'profile', profile.id, { has_text: Boolean(payload.text), cv: Boolean(payload.att.cv), photos: payload.att.photos.length, links: payload.att.links.length + linksInText(payload.text).length })
     const res = await readForProfile(payload.text, payload.att)
-    if (!res.ok) { setError(builderErrorCopy(res.reason)); setPhase('error'); return }
+    if (!res.ok) { setError(builderErrorCopy(res.reason)); setRetryable(res.reason !== 'limit'); setPhase('error'); return }
     setDraft(res.draft); setSteps(res.steps)
     setKeptPhotos(res.draft.photos.filter((x) => x.ok).map((x) => x.index))
     setPhase('review')
@@ -153,7 +155,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
           {phase === 'error' && error && (
             <AssistantTurn>
               <p className="text-[16px] leading-[22px] text-ink-1" data-testid="builder-error">{error}</p>
-              <button type="button" onClick={retry} className="mt-2 flex h-10 items-center rounded-full bg-surface-subtle px-4 text-secondary font-semibold text-ink-1">Try again</button>
+              {retryable && <button type="button" onClick={retry} className="mt-2 flex h-10 items-center rounded-full bg-surface-subtle px-4 text-secondary font-semibold text-ink-1" data-testid="builder-retry">Try again</button>}
             </AssistantTurn>
           )}
 
