@@ -74,7 +74,7 @@ export function ApplicantReviewEntry() {
     return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants?${q.toString()}`} replace />
   }
   if (!profile?.role) return <Blank />
-  return <Screen><ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} /></Screen>
+  return <Screen><ApplicantReviewScreen key={applicationId} roleId={opportunityId} applicationId={applicationId} /></Screen>
 }
 
 /** Post a role (Figma 04 Club 330:318): phone clubs only. Desktop keeps the
