@@ -158,7 +158,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           }
         />
         <MetricTile
-          label="Activation (profile completed)"
+          label="Activated (photo + position)"
           info={<InfoTip metric="activation" value={data?.activation_pct} interpretation={`Of the ${data?.activation_cohort ?? 0} people who joined in the last ${days} days, ${data?.activation_activated ?? 0} completed onboarding, added a photo and set their position — ready to be found and contacted.`} />}
           value={`${data?.activation_pct ?? 0}%`}
           sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users · onboarding + photo + position`}
@@ -176,7 +176,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MetricTile
           label="Weekly Contributors"
-          info={<InfoTip metric="contributors" interpretation={`${data?.contributors_7d ?? 0} people created something in the last 7 days — posts, photos, videos, comments, messages or opportunities.`} />}
+          info={<InfoTip metric="contributors" interpretation={`${data?.contributors_7d ?? 0} people created something in the last 7 complete days — posts, photos, videos, comments, messages or opportunities.`} />}
           value={(data?.contributors_7d ?? 0).toLocaleString()}
           sub={`of ${data?.wau ?? wau} weekly actives`}
         />

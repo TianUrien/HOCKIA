@@ -76,7 +76,7 @@ export function CommandCenterGrowthChart({ data, loading }: CommandCenterGrowthC
           <Tooltip
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
           />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
+          <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} />
           <Area
             yAxisId="left"
             type="monotone"

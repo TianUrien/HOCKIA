@@ -337,7 +337,7 @@ export function AdminAIOpinions() {
                   <XAxis dataKey="prompt_version" tick={{ fontSize: 11, fill: '#6B7280' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '0.5rem', fontSize: '12px' }} />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Legend itemSorter={null} wrapperStyle={{ fontSize: '12px' }} />
                   <Bar dataKey="up_count" name="👍" fill="#10B981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="down_count" name="👎" fill="#EF4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
