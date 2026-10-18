@@ -1,3 +1,4 @@
+import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, ChevronRight, MessageCircle, Share } from 'lucide-react'
@@ -173,6 +174,10 @@ export function OpportunityDetailDesktop({
                 </button>
               </div>
             </div>
+          )}
+
+          {closedView === 'open' && !isPublisher && (
+            <div className="mt-4"><RoleAiEntry vacancy={vacancy} clubName={identity.hiringClub?.name ?? clubName} clubLogo={identity.displayLogo ?? clubLogo} /></div>
           )}
 
           {closedView === 'applicant' && (

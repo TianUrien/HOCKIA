@@ -360,6 +360,25 @@ export const scenarios = {
     await sleep(600)
   },
 
+  // Opt-in, no AI call: "Ask Hockia AI about this role" on the fixture role
+  // opens the sheet with the role chip and its three suggestions.
+  async 'hockia-ai-role'(lab, ctx) {
+    await lab.go(`/opportunities/${FIXTURES.roleIds[1] ?? FIXTURES.roleIds[0]}`)
+    await lab.waitFor('[data-testid="role-ask-ai"]', 20000)
+    await sleep(800)
+    await lab.eval(() => document.querySelector('[data-testid="role-ask-ai"]')?.scrollIntoView({ block: 'center' }))
+    await ctx.shot('entry')
+    await lab.tap('[data-testid="role-ask-ai"]')
+    await lab.waitFor('[data-testid="hockia-ai-role-chip"]', 10000)
+    await sleep(1000)
+    await ctx.shot('sheet')
+    const n = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-role-suggestion"]').length)
+    if (n < 2) throw new Error(`role sheet shows ${n} suggestions`)
+    ctx.note(`${n} role suggestions`)
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-dim"]')?.click())
+    await sleep(600)
+  },
+
   async 'hockia-ai-sheet'(lab, ctx) {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
