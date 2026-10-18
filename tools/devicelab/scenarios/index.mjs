@@ -342,7 +342,7 @@ export const scenarios = {
     await sleep(800)
     await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
     await lab.waitFor('[data-testid="hockia-ai-composer"]', 15000)
-    await lab.type('[data-testid="hockia-ai-composer"]', 'Show me open roles for women midfielders')
+    await lab.type('[data-testid="hockia-ai-composer"]', 'Show me all open roles')
     await lab.tap('[data-testid="hockia-ai-send"]')
     await lab.waitFor('[data-testid="ai-role-prepare"]', 60000)
     await sleep(1200)
