@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Calendar, Camera, Check, ChevronDown, Lock, MapPin, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
@@ -31,6 +31,8 @@ import { positionLabel } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
+import { MascotAvatar } from '@/components/hockiaAi/mascot'
+import { applyAiDraft, checkSummary, type PostRoleStartState } from '@/lib/postRoleAi'
 
 /**
  * Post a role (Figma 04 Club 330:318 The role → 330:431 The offer →
@@ -54,6 +56,15 @@ const STEP_COPY: Record<Step, { title: string; sub: string; back: string | null 
 
 export default function PostRoleScreen({ draftId }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Club speed CS1–CS2: a new role started with Hockia AI (or from scratch
+  // after it couldn't draft) arrives with router state from the start sheet.
+  const start = draftId === null ? ((location.state as PostRoleStartState | null) ?? null) : null
+  const seed = (fresh: PostRoleDraft): PostRoleDraft =>
+    start?.ai ? applyAiDraft(fresh, start.ai.draft) : start?.scratchText ? { ...fresh, description: start.scratchText } : fresh
+  const [aiMode] = useState(Boolean(start?.ai))
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const startedAt = useRef(Date.now())
   const profile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
@@ -94,8 +105,8 @@ export default function PostRoleScreen({ draftId }: Props) {
   const clubCountry = profile?.nationality_country_id ? getCountryById(profile.nationality_country_id) : null
   const defaults = useMemo(() => ({ baseLocation: profile?.base_location ?? null, countryName: clubCountry?.name ?? null }), [profile?.base_location, clubCountry?.name])
 
-  const [step, setStep] = useState<Step>(1)
-  const [draft, setDraft] = useState<PostRoleDraft>(() => emptyDraft(defaults))
+  const [step, setStep] = useState<Step>(aiMode ? 3 : 1)
+  const [draft, setDraft] = useState<PostRoleDraft>(() => seed(emptyDraft(defaults)))
   const [loaded, setLoaded] = useState(draftId === null)
   // Set when editing a role that is already live: its status is kept as is.
   const [liveStatus, setLiveStatus] = useState<'open' | 'closed' | null>(null)
@@ -115,8 +126,10 @@ export default function PostRoleScreen({ draftId }: Props) {
   useEffect(() => {
     if (draftId !== null || touched.current || !profile) return
     const fresh = emptyDraft(defaults)
-    setDraft(fresh)
+    setDraft(seed(fresh))
+    // Measured against the empty form, so a drafted role counts as changes (Cancel offers Save draft).
     initial.current = JSON.stringify(fresh)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed reads the router state once per new role
   }, [draftId, defaults, profile])
 
   // Continue a draft, or edit a live role (the club's own only).
@@ -220,7 +233,12 @@ export default function PostRoleScreen({ draftId }: Props) {
   const post = async () => {
     if (editing) { await saveEdit(); return }
     const p = stepProblem(draft, 3)
-    if (p) { setProblem(p); return }
+    if (p) {
+      // From the AI check screen, take the club to the step that needs it.
+      if (aiMode) setStep(stepProblem(draft, 1) ? 1 : stepProblem(draft, 2) ? 2 : 3)
+      setProblem(p)
+      return
+    }
     if (saving) return
     setSaving('post')
     try {
@@ -230,6 +248,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       await scopeToRole(id)
       // Role posted has its own route, so a refresh re-renders it from the
       // saved role; replace keeps Back from reopening the form.
+      trackDbEvent('post_role_posted', 'vacancy', id, { method: aiMode ? 'ai' : 'form', seconds: Math.round((Date.now() - startedAt.current) / 1000) })
       navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
     } catch (err) {
       logger.error('[PostRole] post failed', err)
@@ -247,9 +266,10 @@ export default function PostRoleScreen({ draftId }: Props) {
     else void post()
   }
 
+  const aiCheck = aiMode && step === 3
   const back = () => {
     setProblem(null)
-    if (step > 1) { setStep((s) => (s - 1) as Step); return }
+    if (step > 1 && !aiCheck) { setStep((s) => (s - 1) as Step); return }
     if (dirty) setConfirmCancel(true)
     else navigate('/opportunities')
   }
@@ -288,7 +308,9 @@ export default function PostRoleScreen({ draftId }: Props) {
     }
   }
 
-  const copy = step === 3 ? { ...STEP_COPY[3], title: editing ? 'Check and save' : STEP_COPY[3].title, sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
+  const baseCopy = step === 3 ? { ...STEP_COPY[3], title: editing ? 'Check and save' : STEP_COPY[3].title, sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
+  // The AI check screen (Figma CS2) is reached from the start sheet: its way out is Cancel.
+  const copy = aiCheck ? { ...baseCopy, back: null } : baseCopy
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
   // Live cover preview (Figma O4): the club's colours from its crest, the team chip, the role.
@@ -308,7 +330,14 @@ export default function PostRoleScreen({ draftId }: Props) {
             {copy.back && <BackGlyph className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
             {copy.back && ANDROID_CHROME ? null : (copy.back ?? 'Cancel')}
           </button>
-          <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
+          {aiCheck ? (
+            <span className="pointer-events-none absolute inset-x-24 flex flex-col items-center text-center" data-testid="post-role-ai-header">
+              <span className="text-body font-semibold leading-[21px] text-ink-1">Check your role</span>
+              <span className="text-caption text-ink-3">Drafted by Hockia AI · Beta</span>
+            </span>
+          ) : (
+            <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
+          )}
           {editing ? <span aria-hidden="true" /> : (
             <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
               {saving === 'draft' ? 'Saving…' : 'Save draft'}
@@ -321,10 +350,17 @@ export default function PostRoleScreen({ draftId }: Props) {
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto pb-6">
-        <div className="px-5 pt-4">
-          <h1 className="text-title-xl text-ink-1">{copy.title}</h1>
-          <p className="mt-1 text-secondary text-ink-2">{copy.sub}</p>
-        </div>
+        {aiCheck ? (
+          <div className="flex items-center px-5 pt-3 text-ink-3">
+            <span className="flex-1 text-micro font-semibold uppercase tracking-[0.44px]">Preview</span>
+            <span className="text-caption">Live preview</span>
+          </div>
+        ) : (
+          <div className="px-5 pt-4">
+            <h1 className="text-title-xl text-ink-1">{copy.title}</h1>
+            <p className="mt-1 text-secondary text-ink-2">{copy.sub}</p>
+          </div>
+        )}
 
         {step === 1 && (
           <>
@@ -496,6 +532,35 @@ export default function PostRoleScreen({ draftId }: Props) {
                 />
               </div>
             </div>
+            {aiCheck && (
+              <div className="flex flex-col gap-2 px-5 pt-2" data-testid="post-role-ai-summary">
+                <div className="flex items-center gap-2.5 rounded-[16px] bg-brand-soft px-3.5 py-3">
+                  <MascotAvatar size={32} />
+                  <p className="min-w-0 flex-1 text-secondary leading-[18px] text-ink-1">I filled this in from what you wrote. Check each part, then post. Nothing is live yet.</p>
+                </div>
+                {checkSummary(draft, { fromClub }).map((sec) => (
+                  <div key={sec.key} className="flex flex-col gap-1 rounded-[16px] bg-surface-subtle px-4 py-3" data-testid={`ai-summary-${sec.key}`}>
+                    <div className="flex items-center">
+                      <span className="flex-1 text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{sec.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setProblem(null); if (sec.key === 'role') setStep(1); else if (sec.key === 'offer') setStep(2); else if (sec.key === 'where') { setWhereText(''); setWhereOpen(true) } else setAboutOpen((v) => !v) }}
+                        className="-my-2 flex min-h-11 items-center pl-3 text-[14px] font-semibold text-brand-primary"
+                        aria-label={`Edit ${sec.label.toLowerCase()}`}
+                      >
+                        {sec.key === 'about' && aboutOpen ? 'Done' : 'Edit'}
+                      </button>
+                    </div>
+                    {sec.key === 'about' && aboutOpen ? null : sec.lines.map((line, i) => (
+                      <p key={i} className={cn('text-body text-ink-1', sec.key === 'about' && 'line-clamp-3')}>{line}</p>
+                    ))}
+                    {sec.neededMissing.length > 0 && <p className="text-secondary font-semibold text-status-warning">Needed — {sec.neededMissing.join(', ')}</p>}
+                    {sec.optionalMissing.length > 0 && !(sec.key === 'about' && aboutOpen) && <p className="text-secondary text-ink-3">Not set · optional — {sec.optionalMissing.join(', ')}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {(!aiCheck || aboutOpen) && (
             <Section label="About the role" trailing={<Muted>Optional</Muted>}>
               <textarea
                 value={draft.description}
@@ -511,6 +576,8 @@ export default function PostRoleScreen({ draftId }: Props) {
                 {drafting ? 'Drafting…' : draft.description.trim() ? 'Redraft it with Hockia AI' : 'Draft it with Hockia AI'}
               </button>
             </Section>
+            )}
+            {!aiCheck && (
             <section className="px-5 pt-3">
               <div className="rounded-[16px] border border-line p-4" data-testid="post-role-checklist">
                 <h2 className="text-body font-semibold text-ink-1">{checkStepCopy(draft.type).checklistTitle}</h2>
@@ -527,6 +594,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               </div>
               <p className="mt-3 text-[13px] leading-[17px] text-ink-3" data-testid="post-role-footnote">{hardnessFootnote(draft)}</p>
             </section>
+            )}
           </>
         )}
       </div>
