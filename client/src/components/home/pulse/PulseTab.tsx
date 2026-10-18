@@ -17,7 +17,7 @@ import ProfileCompletionCard from '../ProfileCompletionCard'
  * Phase 3 coach, Phase 4 brand).
  *
  * The existing user_pulse_items "Since you last visited" cards (PulseSection)
- * are FOLDED IN here, per Tian's Q2 — same product, one surface, no rename.
+ * are FOLDED IN here, per the founder's Q2 — same product, one surface, no rename.
  */
 export function PulseTab() {
   const role = useAuthStore((s) => s.profile?.role)

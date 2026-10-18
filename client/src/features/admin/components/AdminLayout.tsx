@@ -170,7 +170,7 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Collapsible section state. Persisted to localStorage so Tian's chosen
+  // Collapsible section state. Persisted to localStorage so the founder's chosen
   // collapse layout sticks across reloads. The section containing the
   // active route is force-expanded below so a collapsed section never
   // hides where you currently are.

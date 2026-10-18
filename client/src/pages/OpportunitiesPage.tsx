@@ -619,7 +619,7 @@ export default function OpportunitiesPage() {
             {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
             {!showMyRoles && !coachEmpty && (
             <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
-              {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by Tian 16 Oct); category chips carry their colour dot, never a fill. */}
+              {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by the founder 16 Oct); category chips carry their colour dot, never a fill. */}
               {user && (
                 <Chip
                   label={activeRoleFilterCount > 0 ? `Filters · ${activeRoleFilterCount}` : 'Filters'}

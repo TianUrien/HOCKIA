@@ -20,7 +20,7 @@ vi.mock('@/components/FeedbackModal', () => ({ default: () => <div data-testid="
 type Viewer = { user: { id: string } | null; profile: { id: string; role: string; full_name: string; coach_recruits_for_team?: boolean } | null }
 const authState: Viewer = {
   user: { id: 'p1' },
-  profile: { id: 'p1', role: 'player', full_name: 'Tian Urien' },
+  profile: { id: 'p1', role: 'player', full_name: 'Alex Rivera' },
 }
 vi.mock('@/lib/auth', () => ({
   useAuthStore: Object.assign(
@@ -83,7 +83,7 @@ const FORBIDDEN_PLAYER_TEXT = /strong match|good match|possible match|fit score|
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
-  authState.profile = { id: 'p1', role: 'player', full_name: 'Tian Urien' }
+  authState.profile = { id: 'p1', role: 'player', full_name: 'Alex Rivera' }
   setChat([])
 })
 
@@ -94,7 +94,7 @@ describe('Hockia AI v2 — states', () => {
     const { container } = renderPage()
 
     expect(screen.getByRole('heading', { level: 1, name: 'Hockia AI' })).toBeInTheDocument()
-    expect(screen.getByText('Hi Tian')).toBeInTheDocument()
+    expect(screen.getByText('Hi Alex')).toBeInTheDocument()
     expect(screen.getByText(/Hockia AI is in beta/)).toBeInTheDocument()
     expect(screen.getByText('Try asking')).toBeInTheDocument()
     const examples = screen.getAllByTestId('discover-example-query')
