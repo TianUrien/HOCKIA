@@ -28,6 +28,7 @@ import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
 import { COACH_SIGNING_NEEDS_CLUB_NOTE, coachSigningNeedsClub } from '@/lib/coachRoles'
 import { cachedRoleApplicants, markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { UndoToast } from './UndoToast'
+import { useReviewRun } from '@/lib/reviewRun'
 import { holdDecision } from '@/lib/pendingDecisions'
 import { APPLICATION_MOVED_ON_MESSAGE, WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
@@ -301,7 +302,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
   // applicant To review, the next one To review comes up (oldest first, like
   // desktop S/M/D), with "N of M to review"; the Undo toast stays on screen.
   // Back still returns to the list. Nothing left → back to the list.
-  const run = (location.state as { run?: number } | null)?.run ?? 0
+  const run = useReviewRun((st) => st.runs[roleId] ?? 0)
+  const stepRun = useReviewRun((st) => st.step)
+  const resetRun = useReviewRun((st) => st.reset)
+  // Opened from the list (not by moving on): a new run starts at 0.
+  const advancedHere = Boolean((location.state as { advanced?: boolean } | null)?.advanced)
+  useEffect(() => { if (!pane && !advancedHere) resetRun(roleId) }, [pane, advancedHere, resetRun, roleId])
   const waitingNow = (cachedRoleApplicants(roleId) ?? []).filter((a) => a.status === 'pending')
   const reviewTotal = run + waitingNow.length
   const showCounter = review?.status === 'pending' && reviewTotal > 1 && waitingNow.some((a) => a.applicationId === applicationId)
@@ -312,7 +318,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
       .sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))[0]
     if (!next) { backToApplicants(); return }
     const from = (location.state as { from?: string } | null)?.from
-    navigate(`/dashboard/opportunities/${roleId}/applicants/${next.applicationId}`, { replace: true, state: { from, run: run + 1 } })
+    stepRun(roleId, 1)
+    navigate(`/dashboard/opportunities/${roleId}/applicants/${next.applicationId}`, { replace: true, state: { from, advanced: true } })
   }
 
   const decide = (status: 'shortlisted' | 'maybe') => {
@@ -325,7 +332,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t save that decision. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, status)
-    showUndo({ applicationId, text: decisionToast(firstName, status), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
+    showUndo({ applicationId, text: decisionToast(firstName, status), onUndo: () => { patchRoleApplicantStatus(roleId, applicationId, prev); if (!pane && prev === 'pending') stepRun(roleId, -1) } })
     if (pane) onDecided?.(status)
     else advance(prev)
   }
@@ -341,7 +348,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t send the decline. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')
-    showUndo({ applicationId, text: decisionToast(firstName, 'rejected'), onUndo: () => patchRoleApplicantStatus(roleId, applicationId, prev) })
+    showUndo({ applicationId, text: decisionToast(firstName, 'rejected'), onUndo: () => { patchRoleApplicantStatus(roleId, applicationId, prev); if (!pane && prev === 'pending') stepRun(roleId, -1) } })
     if (pane) onDecided?.('rejected')
     else advance(prev)
   }

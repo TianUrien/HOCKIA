@@ -4,7 +4,7 @@ import { Bell, X } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useAuthStore } from '@/lib/auth'
 import { INLINE_PUSH_ASK, useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
-import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
+import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix, onActionBarScreen } from '@/lib/overlaySequence'
 import {
   trackPushSubscribe,
   trackPushPromptShown,
@@ -57,7 +57,7 @@ export default function PushPrompt() {
   const installOpen = useBottomPromptActive(INSTALL_OVERLAY)
 
   const supported = push.isSupported && !push.isSubscribed && push.permission !== 'denied'
-  const onHiddenRoute = matchesRoutePrefix(location.pathname, PUSH_PROMPT_HIDDEN_PREFIXES)
+  const onHiddenRoute = matchesRoutePrefix(location.pathname, PUSH_PROMPT_HIDDEN_PREFIXES) || onActionBarScreen(location.pathname)
   const visible =
     supported &&
     signedIn &&
