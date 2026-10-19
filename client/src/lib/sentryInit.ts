@@ -29,7 +29,7 @@ import * as SentryCapacitor from '@sentry/capacitor'
 import type { CapacitorOptions } from '@sentry/capacitor'
 import { Capacitor } from '@capacitor/core'
 import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
-import { EXPECTED_REFUSAL_MESSAGES, isExpectedRefusal } from '@/lib/sentryFilters'
+import { EXPECTED_SAMPLE_RATE, expectedErrorKey } from '@/lib/sentryFilters'
 import { scrubBreadcrumb, scrubEvent } from '@/lib/sentryScrub'
 import { getAppVersion } from '@/lib/appVersion'
 
@@ -51,6 +51,19 @@ declare global {
 export function detectSentryEnvironment(): SentryEnvironment {
   if (import.meta.env.MODE !== 'production') return 'development'
   return import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl') ? 'staging' : 'production'
+}
+
+/** Routes traced at 100 % in production. */
+const FULLY_TRACED = /^\/(signup|signin|complete-profile|auth\/callback|verify-email|brands\/onboarding|onboarding)(\/|$|\?)/
+/** Home: the busiest page — half, so span volume stays inside the plan. */
+const HALF_TRACED = /^\/home(\/|$|\?)/
+
+/** Trace sampling rate for a page load or navigation (exported for tests). */
+export function tracesRateFor(environment: SentryEnvironment, name: string | undefined, parentSampled?: boolean): number {
+  if (typeof parentSampled === 'boolean') return parentSampled ? 1 : 0
+  if (environment !== 'production') return 1.0
+  const path = name && name.startsWith('/') ? name : typeof window !== 'undefined' ? window.location.pathname : ''
+  return FULLY_TRACED.test(path) ? 1.0 : HALF_TRACED.test(path) ? 0.5 : 0.3
 }
 
 /**
@@ -77,30 +90,18 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
     // tracing/replay extras wait for idle.
     integrations: [],
     tracesSampleRate: environment === 'production' ? 0.3 : 1.0,
+    // The JS side samples by route (visibility pass 2026-10-19): every page
+    // load of sign-up, sign-in and finishing a profile — where a lost member
+    // costs most — half of Home, and 30 % elsewhere. The native layer keeps the flat
+    // rate above (the plugin forwards primitives only).
+    tracesSampler: (ctx) => tracesRateFor(environment, ctx.name, ctx.parentSampled),
     // Substring-matched against the error message. These are expected
     // user-input errors from Supabase Auth — not application bugs — and
     // should not page anyone or clutter the dashboard.
     ignoreErrors: [
-      // A native OAuth attempt deliberately superseded by a newer tap — expected,
-      // handled in lib/nativeOAuth + AuthScreen; belt-and-braces here.
-      'OAuth cancelled — superseded by a newer sign-in attempt',
-      // Wrong password / wrong email entry on /signin
-      'Invalid login credentials',
-      // /signup or /signin hammered too quickly — Supabase rate limit
-      'Email rate limit exceeded',
-      // The auth server's general request limit (token refresh / sign-in
-      // retries in a burst) — the same guardrail, Sentry JAVASCRIPT-REACT-DB.
-      'Request rate limit reached',
-      // Duplicate signup attempt — UI should already guide them to /signin
-      'User already registered',
-      // Leaked-password protection (enabled 2026-08-27) rejecting a weak or
-      // breached password — the form shows the message; it is user input.
-      'Password is known to be weak',
-      // Auth endpoint cooldown after a rapid retry (resend / reset) — a
-      // guardrail firing as designed, not a failure.
-      'you can only request this after',
-      // Tried to sign in before clicking the verification email — user input.
-      'Email not confirmed',
+      // PURE NOISE only — never a member's outcome. Expected user outcomes
+      // (wrong password, rate limits, refusals…) are counted instead, sampled
+      // and info-level, in beforeSend (sentryFilters.EXPECTED_USER_ERRORS).
       // iOS WKWebView injected-script noise (Sentry JAVASCRIPT-REACT-CF,
       // 2026-09-01): no source file, symbol not in our bundle — a system or
       // reader-mode script erroring inside the webview, not our code.
@@ -112,16 +113,9 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
       // React Query cancels in-flight fetches on unmount/navigation; the
       // rejection is the mechanism working, not a failure.
       'CancelledError',
-      // Expected auth outcomes (Sentry triage 2026-09-24): the user left the
-      // OAuth flow open, or hit a signed-out page — the UI already explains.
-      'OAuth timed out after 5 minutes',
-      'Auth session missing',
       // Android WebView bridge torn down mid-call after the app was
       // backgrounded — the OS reclaimed the page, not a code path.
       'Java object is gone',
-      // Deliberate business refusals the UI already explains (blocked member,
-      // daily new-conversation allowance) — release audit 2026-10-06.
-      ...EXPECTED_REFUSAL_MESSAGES,
     ],
     beforeBreadcrumb(crumb) {
       // Navigation / fetch URLs can carry auth tokens (#access_token, ?code=).
@@ -139,10 +133,19 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
       // 2026-09-24: out of alerts, still counted). Alert rules key on
       // level:error, so these never page.
       const original = hint?.originalException
-      if (isExpectedRefusal(original)) return null
       const message = [event.message, ...(event.exception?.values?.map((v) => v.value) ?? []), original instanceof Error ? original.message : '']
         .filter((m): m is string => typeof m === 'string')
         .join('\n')
+      // Expected outcomes the UI already explains: counted (sampled, info,
+      // grouped per kind) so a surge is visible, but never paging.
+      const expected = expectedErrorKey(message, original)
+      if (expected) {
+        if (Math.random() >= EXPECTED_SAMPLE_RATE) return null
+        event.level = 'info'
+        event.tags = { ...event.tags, expected }
+        event.fingerprint = ['expected', expected]
+        return scrubEvent(event)
+      }
       if (isNetworkFailureMessage(message)) {
         if (Math.random() >= 0.25) return null
         event.level = 'info'
