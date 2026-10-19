@@ -76,7 +76,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
   const send = async () => {
     if (!vacancy || !user || phase === 'sending' || !eligibility?.eligible) return
     setPhase('sending'); setError(null)
-    const res = await submitApplication(vacancy, user.id, note, { viewerRole: profile?.role ?? null, source: 'hockia_ai' })
+    const res = await submitApplication(vacancy, user.id, note, { viewerRole: profile?.role ?? null, source: 'hockia_ai', via: 'hockia_ai' })
     if (!res.ok) { setError(res.message); setPhase('draft'); return }
     trackDbEvent('hockia_ai_apply_sent', 'vacancy', vacancy.id, { note_by_ai: draft?.kind === 'draft' && draft.byAi && note === draft.note })
     void hapticSuccess()

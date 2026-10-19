@@ -150,10 +150,11 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
     const params = new URLSearchParams(window.location.search)
     if (params.get('viewers') !== '1') return
     setViewersOpen(true)
+    trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'home' })
     params.delete('viewers')
     const qs = params.toString()
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`)
-  }, [owner])
+  }, [owner, brand.id])
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
   const countryName = country ? (country.common_name ?? country.name) : null
@@ -343,7 +344,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 </div>
               ))}
             </div>
-            <button type="button" onClick={() => setViewersOpen(true)} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
+            <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
               <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
             </button>
           </div>

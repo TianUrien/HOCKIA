@@ -4,6 +4,13 @@ import { cn } from '@/lib/utils'
 import { SectionHeader } from './primitives'
 import { useHomeV1 } from './homeV1Context'
 import { useHomePeople, type PeopleKind } from './useHomePeople'
+import { HOME_V1_MODULES, recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+
+const MODULE_BY_KIND: Record<PeopleKind, { id: string; position: number }> = {
+  new: HOME_V1_MODULES.peopleNew,
+  available: HOME_V1_MODULES.peopleAvailable,
+  pymk: HOME_V1_MODULES.peoplePymk,
+}
 
 const COPY: Record<PeopleKind, { title: string; label: string; to: string; a11y: string }> = {
   new: { title: 'New in the community', label: 'New in the community', to: '/community', a11y: 'new member' },
@@ -16,23 +23,25 @@ const COPY: Record<PeopleKind, { title: string; label: string; to: string; a11y:
  * members, green for "Available now" (H2) — first names under them. Tap a
  * face → the Community deck with that list and order. Hidden when empty.
  */
-export function PeopleRow({ kind, className }: { kind: PeopleKind; className?: string }) {
+export function PeopleRow({ kind, className, module = MODULE_BY_KIND[kind] }: { kind: PeopleKind; className?: string; /** Which slot this row fills (header or end of feed) for impressions and clicks. */ module?: { id: string; position: number } }) {
   const { data, isLoading } = useHomePeople(kind)
   const { openDeck, openDeckByIds } = useHomeV1()
   const copy = COPY[kind]
+  const impressionRef = useImpressionOnce(() => recordModuleImpression(module.id, module.position))
 
   if (isLoading) return <PeopleRowSkeleton className={className} />
   const faces = data?.faces ?? []
   if (faces.length === 0) return null
 
   const open = (i: number) => {
+    trackModuleClick(module.id, module.position, 'member_deck')
     if (data?.profiles) openDeck(data.profiles, i, copy.label)
     else openDeckByIds(faces.map((f) => f.id), i, copy.label)
   }
 
   return (
-    <section className={cn('flex flex-col gap-2 pb-4', className)} data-testid={`home-people-${kind}`}>
-      <SectionHeader title={copy.title} action="See all" to={copy.to} />
+    <section ref={impressionRef} className={cn('flex flex-col gap-2 pb-4', className)} data-testid={`home-people-${kind}`}>
+      <SectionHeader title={copy.title} action="See all" to={copy.to} onLinkClick={() => trackModuleClick(module.id, module.position, copy.to)} />
       <div className="flex gap-3.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {faces.map((f, i) => {
           const first = (f.full_name ?? '').trim().split(/\s+/)[0] || 'Member'

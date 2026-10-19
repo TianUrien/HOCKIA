@@ -31,7 +31,7 @@ describe('Hockia AI · Prepare my application', () => {
     const flow = read('../components/hockiaAi/ApplyFlow.tsx')
     expect(flow.indexOf('submitApplication(')).toBeGreaterThan(flow.indexOf('const send = async'))
     expect(flow).toContain('checkOpportunityEligibility(vacancy, profile, countries)')
-    expect(read('../components/ApplyToOpportunityModal.tsx')).toContain("submitApplication(vacancy, user.id, message, { viewerRole: profile?.role ?? null, source: 'apply_sheet' })")
+    expect(read('../components/ApplyToOpportunityModal.tsx')).toContain("submitApplication(vacancy, user.id, message, { viewerRole: profile?.role ?? null, source: source ?? 'direct', via: 'apply_sheet' })")
     expect(read('../components/hockiaAi/HockiaAiSheet.tsx')).toContain('RoleApplyActionContext.Provider value={canBuild ?')
   })
 })

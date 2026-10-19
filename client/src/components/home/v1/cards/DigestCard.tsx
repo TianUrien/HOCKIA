@@ -4,6 +4,7 @@ import { initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCar
 import { cn } from '@/lib/utils'
 import { SectionHeader } from '../primitives'
 import { useHomeV1 } from '../homeV1Context'
+import { trackCardClick } from '@/lib/homeInstrumentation'
 import type { MembersDigestFeedItem } from '@/types/homeFeed'
 
 /**
@@ -19,7 +20,10 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
   const extra = Math.max(0, item.member_count - 5)
   const showMore = extra > 0 && faces.length === 6
   const ids = item.members.map((m) => m.id)
-  const open = (i: number) => openDeckByIds(ids, i, `${item.member_count} joined this week`)
+  const open = (i: number) => {
+    trackCardClick(item.feed_item_id, item.item_type, 'member_deck')
+    openDeckByIds(ids, i, `${item.member_count} joined this week`)
+  }
 
   return (
     <article className="flex flex-col gap-2 py-4" data-testid="home-digest-card">

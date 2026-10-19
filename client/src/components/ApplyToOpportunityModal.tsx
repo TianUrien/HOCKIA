@@ -35,6 +35,8 @@ interface ApplyToVacancyModalProps {
   league?: string | null
   /** Who is behind the role (hiring club + posted-by coach): coach-aware copy. */
   identity?: RoleIdentity
+  /** Where the member came from (lib/navSource); tags application_submit. */
+  source?: string
 }
 
 const DURATION_LABELS: Record<string, string> = {
@@ -56,7 +58,7 @@ const DURATION_LABELS: Record<string, string> = {
  * Detail rows with a chevron (each opens its Edit profile field).
  */
 export default function ApplyToVacancyModal({
-  isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league, identity: identityProp,
+  isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league, identity: identityProp, source,
 }: ApplyToVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const { addToast } = useToastStore()
@@ -124,7 +126,7 @@ export default function ApplyToVacancyModal({
     setSending('sending')
     setError(null)
     try {
-      const res = await submitApplication(vacancy, user.id, message, { viewerRole: profile?.role ?? null, source: 'apply_sheet' })
+      const res = await submitApplication(vacancy, user.id, message, { viewerRole: profile?.role ?? null, source: source ?? 'direct', via: 'apply_sheet' })
       if (res.ok && res.already) {
         onSuccess(vacancy.id)
         onClose()

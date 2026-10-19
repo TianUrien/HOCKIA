@@ -10,7 +10,9 @@ import { extractErrorMessage } from '@/lib/utils'
  * Send an application — the one write shared by the Apply sheet and Hockia
  * AI's "Prepare my application" (handoff A4 → A5), so both hit the same
  * eligibility trigger, the same duplicate rule and the same messages.
- * `source` only tags the analytics event.
+ * `source` (where the member came from: home_role_card, opportunities, push,
+ * inbox, hockia_ai, direct…) and `via` (apply_sheet | hockia_ai) only tag the
+ * analytics event.
  */
 export type SubmitResult =
   | { ok: true; already: boolean }
@@ -20,10 +22,10 @@ export async function submitApplication(
   vacancy: Pick<Vacancy, 'id' | 'club_id' | 'position' | 'opportunity_type'>,
   userId: string,
   note: string,
-  opts: { viewerRole?: string | null; source?: 'apply_sheet' | 'hockia_ai' } = {},
+  opts: { viewerRole?: string | null; source?: string; via?: 'apply_sheet' | 'hockia_ai' } = {},
 ): Promise<SubmitResult> {
   if (vacancy.club_id === userId) return { ok: false, message: 'You can’t apply to your own opportunity.' }
-  Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id, source: opts.source ?? 'apply_sheet' }, level: 'info' })
+  Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id, via: opts.via ?? 'apply_sheet' }, level: 'info' })
   const trimmed = note.trim()
   const { error } = await supabase
     .from('opportunity_applications')
@@ -34,7 +36,7 @@ export async function submitApplication(
       ...(trimmed ? { metadata: { message: trimmed } } : {}),
     } as never)
   if (!error) {
-    trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined, source: opts.source ?? 'apply_sheet' })
+    trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined, source: opts.source ?? 'direct', via: opts.via ?? 'apply_sheet' })
     void trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
     return { ok: true, already: false }
   }

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { trackNextStepAction } from '@/lib/homeInstrumentation'
 import { useWeeklyVisibility } from '@/hooks/useWeeklyVisibility'
 import { useOpportunitiesForYou } from '@/hooks/useOpportunitiesForYou'
 import { useMyApplications } from '@/hooks/useMyApplications'
@@ -200,6 +201,7 @@ export function useNextStep() {
         const now = new Date().toISOString()
         setProfile({ ...profile, availability_confirmed_at: now, last_meaningful_update_at: now })
       }
+      trackNextStepAction(step.key, 'confirm_availability')
       return true
     } catch (err) {
       logger.error('[useNextStep] confirm availability failed', err)
@@ -210,6 +212,7 @@ export function useNextStep() {
   /** "Not now" on the check-in (Your activity): dismiss the Pulse item. */
   const dismiss = useCallback(async (step: NextStep) => {
     const pulseId = step.key.split(':')[1]
+    trackNextStepAction(step.key, 'dismiss')
     if (pulseId) await pulse.markDismissed(pulseId)
     setDone((prev) => new Set(prev).add(step.key))
   }, [pulse])

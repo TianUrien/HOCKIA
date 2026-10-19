@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Shield } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
@@ -17,6 +17,7 @@ import { SquircleBox } from '@/components/home/v1/primitives'
 import { WhoLookedAtYou } from './WhoLookedAtYou'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { AVAILABLE_RING } from '@/lib/homeEngagement'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
 const TIP_KEYS = new Set(['photo', 'complete', 'crest', 'umpire'])
@@ -39,6 +40,13 @@ export function ActivityScreen() {
   const refs = useTrustedReferences(profile?.id ?? '')
   // Home's views card links here with ?viewers=1: open the list straight away.
   const [showViewers, setShowViewers] = useState(() => new URLSearchParams(location.search).get('viewers') === '1')
+  // "Who viewed you" opened (gap 7): from Home's views card (?viewers=1) or from this screen.
+  const viewersSource = useRef(showViewers ? 'home' : 'pulse')
+  useEffect(() => {
+    if (!showViewers || !profile) return
+    trackDbEvent('profile_viewers_view', 'profile', profile.id, { source: viewersSource.current })
+    viewersSource.current = 'pulse'
+  }, [showViewers, profile])
   const [busy, setBusy] = useState<string | null>(null)
 
   const checkIn = steps.find((s) => s.action === 'confirm_availability')

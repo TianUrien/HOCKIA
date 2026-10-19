@@ -16,6 +16,7 @@
  */
 
 import { Capacitor } from '@capacitor/core'
+import { withSource } from '@/lib/navSource'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -161,7 +162,7 @@ export async function addPushTapListener(navigate: (to: string) => void): Promis
   const handle = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
     const data = (action?.notification?.data ?? {}) as Record<string, unknown>
     const path = safePushPath(data.url)
-    if (path) navigate(path)
+    if (path) navigate(withSource(path, 'push'))
   })
   return () => { void handle.remove() }
 }

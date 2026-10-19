@@ -34,7 +34,9 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  const targetUrl = event.notification.data?.url || '/home'
+  // `?src=push` tells the page where the member came from (lib/navSource).
+  const rawUrl = event.notification.data?.url || '/home'
+  const targetUrl = rawUrl.includes('src=') ? rawUrl : `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}src=push`
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
