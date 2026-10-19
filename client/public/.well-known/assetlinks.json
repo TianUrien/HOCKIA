@@ -1,7 +1,12 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "web",
-    "site": "https://inhockia.com"
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.inhockia.app",
+      "sha256_cert_fingerprints": [
+        "86:9C:DF:5A:84:D3:ED:64:3C:28:0B:CB:21:97:13:3D:B8:37:37:0F:59:8F:E3:96:72:DD:90:B6:F0:0F:7F:BE"
+      ]
+    }
   }
-}]
+]
