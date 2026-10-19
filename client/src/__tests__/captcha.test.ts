@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@sentry/react', () => ({ captureMessage: vi.fn() }))
 import { captchaConfigured, captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
 
 afterEach(() => { vi.unstubAllEnvs(); delete (window as { turnstile?: unknown }).turnstile })
@@ -28,5 +30,17 @@ describe('captcha (Turnstile, 2026-10-19)', () => {
   it('maps Supabase captcha refusals to plain words', () => {
     expect(captchaErrorMessage('captcha protection: request disallowed (captcha verification process failed)')).toMatch(/not a bot/)
     expect(captchaErrorMessage('Invalid login credentials')).toBeNull()
+  })
+
+  it('picks the real key for production and the always-pass test key elsewhere', async () => {
+    const seen: string[] = []
+    window.turnstile = { render: (_el, opts) => { seen.push(String(opts.sitekey)); setTimeout(() => (opts.callback as (t: string) => void)('t'), 0); return 'w' }, remove: vi.fn() }
+    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', '')
+    vi.stubEnv('MODE', 'production')
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://xtertgftujnebubxgqit.supabase.co')
+    await getCaptchaToken('login')
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://ivjkdaylalhsteyyclvl.supabase.co')
+    await getCaptchaToken('login')
+    expect(seen).toEqual(['0x4AAAAAAFbbx3EJbwS2Zs-d', '1x00000000000000000000AA'])
   })
 })

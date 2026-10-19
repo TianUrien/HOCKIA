@@ -8,9 +8,12 @@
  * One invisible widget for the whole app: `getCaptchaToken(action)` renders a
  * fresh single-use token on demand. It stays invisible for real people; only
  * when Cloudflare wants a human check does a small card appear at the bottom.
- * With no site key configured (local dev without one) it returns undefined
- * and auth calls go out without a token — fine until enforcement is on.
+ * Keys: the real HOCKIA key against production; Cloudflare's always-pass
+ * test key on staging and local dev (Supabase staging enforces with the
+ * matching test secret), so automation keeps working.
  */
+
+import * as Sentry from '@sentry/react'
 
 type TurnstileApi = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string
@@ -28,9 +31,21 @@ let scriptPromise: Promise<void> | null = null
 let widgetId: string | null = null
 let host: HTMLDivElement | null = null
 
+/** HOCKIA's widget (Cloudflare account HOCKIA, "HOCKIA auth": managed; inhockia.com,
+ *  www, staging, localhost). Site keys are public by design — every browser gets it. */
+const PRODUCTION_SITE_KEY = '0x4AAAAAAFbbx3EJbwS2Zs-d'
+/** Cloudflare's documented always-pass test key: staging and local dev, where our
+ *  automated browsers (CI E2E, device lab) would otherwise be challenged. */
+const TEST_SITE_KEY = '1x00000000000000000000AA'
+const PRODUCTION_SUPABASE_REF = 'xtertgftujnebubxgqit'
+
+/** Override → production key against the production project → test key elsewhere. */
 function siteKey(): string | undefined {
-  const k = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
-  return k && k.trim() ? k.trim() : undefined
+  const override = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim()
+  if (override) return override
+  if (import.meta.env.MODE === 'test') return undefined
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? ''
+  return supabaseUrl.includes(PRODUCTION_SUPABASE_REF) ? PRODUCTION_SITE_KEY : TEST_SITE_KEY
 }
 
 export function captchaConfigured(): boolean {
@@ -101,28 +116,41 @@ async function freshToken(action: CaptchaAction): Promise<string | undefined> {
     if (widgetId) { try { api.remove(widgetId) } catch { /* already gone */ } widgetId = null }
     return await new Promise<string | undefined>((resolve) => {
       let settled = false
-      const done = (token?: string) => {
+      const done = (token?: string, failure?: string) => {
         if (settled) return
         settled = true
         el.style.display = 'none'
+        if (!token) reportUnavailable(action, failure ?? 'no_token')
         resolve(token)
       }
-      setTimeout(() => done(undefined), TOKEN_TIMEOUT_MS)
+      setTimeout(() => done(undefined, 'timeout'), TOKEN_TIMEOUT_MS)
       widgetId = api.render(el, {
         sitekey: key,
         action,
         appearance: 'interaction-only',
         callback: (token: string) => done(token),
-        'error-callback': () => done(undefined),
-        'timeout-callback': () => done(undefined),
-        'expired-callback': () => done(undefined),
+        'error-callback': (code?: string) => done(undefined, `error_${code ?? 'unknown'}`),
+        'timeout-callback': () => done(undefined, 'challenge_timeout'),
+        'expired-callback': () => done(undefined, 'expired'),
         'before-interactive-callback': () => { el.style.display = 'block' },
         'after-interactive-callback': () => { el.style.display = 'none' },
       })
     })
   } catch {
+    reportUnavailable(action, 'script_failed')
     return undefined
   }
+}
+
+/**
+ * How often a real browser couldn't get a token. Counted as an expected
+ * outcome (sentryFilters: "captcha", sampled, info) — before production
+ * enforces, this says whether enforcing would block real members.
+ */
+function reportUnavailable(action: CaptchaAction, reason: string): void {
+  try {
+    Sentry.captureMessage(`captcha token unavailable (${action}: ${reason})`, { level: 'info', tags: { captcha_action: action, captcha_reason: reason } })
+  } catch { /* never block sign-in on reporting */ }
 }
 
 /** Supabase's refusal when the token is missing or invalid, in plain words (null for other errors). */
