@@ -5,6 +5,10 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 
+// Staging Supabase enforces Turnstile with Cloudflare's always-pass TEST secret
+// (2026-10-19), which accepts this documented dummy token from direct API sign-ins.
+const TEST_CAPTCHA_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -249,6 +253,7 @@ async function authenticateUser(
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: { captchaToken: TEST_CAPTCHA_TOKEN },
   })
 
   if (error) {
@@ -524,7 +529,7 @@ setup('@smoke authenticate as brand', async ({ page }) => {
 
   const { data: authData } = await createClient(supabaseUrl, supabaseAnonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-  }).auth.signInWithPassword({ email: TEST_BRAND.email, password: TEST_BRAND.password })
+  }).auth.signInWithPassword({ email: TEST_BRAND.email, password: TEST_BRAND.password, options: { captchaToken: TEST_CAPTCHA_TOKEN } })
 
   if (!authData?.session) return
 
