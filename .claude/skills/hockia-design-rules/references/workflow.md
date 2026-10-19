@@ -25,6 +25,8 @@ For Home specifically:
 - Propose alternatives in Figma, each with an explicit hypothesis.
 - If evidence is missing, propose a short validation with members before building.
 
+Method skills: `hockia-jobs-to-be-done` (jobs per role, evidence-tagged), `hockia-member-interviews` (Mom Test guide, consent, anonymised summaries), `hockia-working-backwards` (internal PR/FAQ). Usability review of a design: the user-level `ux-heuristics` skill if installed.
+
 ## From idea to production
 1. Read this skill and the relevant code (statuses, copy helpers, data model, existing components) so the design matches reality.
 2. Design phone first, then Android and desktop; check dark mode, empty/loading/error states.
