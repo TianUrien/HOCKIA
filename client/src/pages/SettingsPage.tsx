@@ -34,6 +34,7 @@ import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
+import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
 
 export default function SettingsPage() {
   useDocumentTitle('Settings')
@@ -383,10 +384,11 @@ export default function SettingsPage() {
       const { error: verifyError } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
         password: passwordForm.currentPassword,
+        options: { captchaToken: await getCaptchaToken('reverify') },
       })
 
       if (verifyError) {
-        throw new Error('Current password is incorrect')
+        throw new Error(captchaErrorMessage(verifyError.message) ?? 'Current password is incorrect')
       }
 
       const { error } = await supabase.auth.updateUser({
