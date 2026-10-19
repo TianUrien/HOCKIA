@@ -110,4 +110,5 @@ Persistent docs live in `docs/engineering/` (index: `docs/engineering/README.md`
 - Growth, campaigns, load → `capacity.md` (1,000-user model, load-test plan not yet run)
 - "Why is it like this?" → `decisions/` (ADRs); agent frameworks → `skills.md`
 - Designing, reviewing or implementing any UI → the `hockia-design-rules` skill (`.claude/skills/hockia-design-rules/`) + `docs/design-handoff/decisions.md`
+- Changing what a screen does for members → first answer "what did the member come to get, and how does this help?" with evidence from `docs/product/user-research.md` (rules: the skill's `references/workflow.md` › Customer obsession)
 - Update the relevant doc in the same PR as the change it describes.

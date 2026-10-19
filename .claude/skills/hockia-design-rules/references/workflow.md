@@ -6,6 +6,25 @@
 - Before writing to Figma: load the Figma skills (`figma:figma-use` before `use_figma`), search existing components and variables first, bind variables (no hard-coded values), reflow at real sizes (never `rescale()` device variants), verify with screenshots.
 - Both agents may edit the Figma file; log edits in `docs/design-handoff/CHANGELOG.md`.
 
+## Customer obsession (founder, 2026-10-19)
+Every change to a screen answers one question: **what did the member come to get, and how does this help them get it?**
+
+Before proposing changes to a screen:
+- Say who uses it, in what situation, and what they want to get done (jobs per role: `roles-and-product.md`).
+- Read the research and feedback we have (`docs/product/user-research.md`).
+- Separate evidence (with its source), hypotheses, and what's missing.
+- Never invent interviews, quotes, metrics or "validated" needs.
+- Explain which member problem each change solves.
+- Prefer clarity, less effort and task success over decoration or engagement for its own sake.
+- Say how we'll check that it's better (an event, a test with members, a before/after number).
+
+For Home specifically:
+- Treat the first visit and recurring use separately.
+- Choose the primary action from what the member needs, per role.
+- Justify the presence and order of every section.
+- Propose alternatives in Figma, each with an explicit hypothesis.
+- If evidence is missing, propose a short validation with members before building.
+
 ## From idea to production
 1. Read this skill and the relevant code (statuses, copy helpers, data model, existing components) so the design matches reality.
 2. Design phone first, then Android and desktop; check dark mode, empty/loading/error states.
