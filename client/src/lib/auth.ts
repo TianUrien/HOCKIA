@@ -27,6 +27,7 @@ import { clearShortlistsStore } from '@/hooks/useShortlists'
 import { clearSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { clearRecruitingContext } from '@/hooks/useRecruitingContext'
 import { clearSignedThumbnailCache } from '@/hooks/useSignedVideoThumbnail'
+import { getCaptchaToken } from '@/lib/captcha'
 
 interface AuthState {
   user: User | null
@@ -729,6 +730,7 @@ export const resendVerificationEmail = async (email: string): Promise<{ success:
       email: email,
       options: {
         emailRedirectTo: getAuthRedirectUrl(),
+        captchaToken: await getCaptchaToken('resend'),
       }
     })
 

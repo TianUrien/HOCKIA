@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import * as Sentry from '@sentry/react'
 import { Eye, EyeOff } from 'lucide-react'
@@ -15,6 +15,7 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { PASSWORD_HELP, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
+import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
 
 /**
  * Create with email (Figma 04 Player 114:434): email, password ("At least 8
@@ -31,6 +32,8 @@ import { PASSWORD_HELP, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProb
  */
 export default function CreateWithEmail() {
   const navigate = useNavigate()
+  // Get the bot check ready while the member types (lib/captcha).
+  useEffect(() => { warmCaptcha('signup') }, [])
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -66,10 +69,12 @@ export default function CreateWithEmail() {
       trackSignUpStart('email')
       const acq = getAttributionSnapshot()
       const intent = pendingRedirectIntent(next)
+      const captchaToken = await getCaptchaToken('signup')
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmed,
         password,
         options: {
+          captchaToken,
           emailRedirectTo: getAuthRedirectUrl(),
           // The confirmation link may open in another browser (in-app → Safari),
           // so the destination travels with the account, not only this tab.
@@ -78,7 +83,7 @@ export default function CreateWithEmail() {
       })
       if (signUpError) {
         // Password policy refusals are user input, shown in plain words — not reported.
-        const policy = passwordPolicyMessage(signUpError.message)
+        const policy = passwordPolicyMessage(signUpError.message) ?? captchaErrorMessage(signUpError.message)
         if (policy) { setError(policy); return }
         Sentry.captureException(signUpError, {
           tags: { feature: 'auth_flow' },

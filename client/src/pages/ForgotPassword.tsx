@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { Input, Button } from '@/components'
@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLimit'
+import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
 
 /**
  * ForgotPassword - Request password reset email
@@ -18,6 +19,8 @@ import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLim
  */
 export default function ForgotPassword() {
   const navigate = useNavigate()
+  // Get the bot check ready while the member types (lib/captcha).
+  useEffect(() => { warmCaptcha('reset') }, [])
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,10 +42,12 @@ export default function ForgotPassword() {
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${getSiteUrl()}/reset-password`,
+        captchaToken: await getCaptchaToken('reset'),
       })
 
       if (resetError) {
-        throw resetError
+        const captcha = captchaErrorMessage(resetError.message)
+        throw captcha ? new Error(captcha) : resetError
       }
 
       setSuccess(true)

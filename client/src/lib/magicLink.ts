@@ -18,6 +18,7 @@ import { getAuthRedirectUrl } from './siteUrl'
 import { checkLoginRateLimit, checkSignupRateLimit, formatRateLimitError } from './rateLimit'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
+import { getCaptchaToken } from '@/lib/captcha'
 
 export type MagicLinkRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -92,6 +93,7 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
+        captchaToken: await getCaptchaToken('magic_link'),
         emailRedirectTo: getAuthRedirectUrl(),
         shouldCreateUser,
         // data is written to user_metadata on FIRST sign-in only (existing

@@ -70,6 +70,8 @@ export const EXPECTED_USER_ERRORS: { key: string; match: string }[] = [
   { key: 'signup_weak_password', match: 'Password should contain at least one character' },
   { key: 'oauth_timeout', match: 'OAuth timed out after 5 minutes' },
   { key: 'oauth_superseded', match: 'OAuth cancelled — superseded by a newer sign-in attempt' },
+  // Turnstile: no token in the browser, or Supabase refused it (lib/captcha).
+  { key: 'captcha_failed', match: 'captcha' },
   // The class behind the lost sign-up of 2026-10-17: count it, never hide it.
   { key: 'auth_session_missing', match: 'Auth session missing' },
 ]

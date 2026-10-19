@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Staging Supabase enforces Turnstile with Cloudflare's always-pass TEST secret
+// (2026-10-19), which accepts this documented dummy token from direct API sign-ins.
+const TEST_CAPTCHA_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+
 /**
  * Hard-deletes the messages the smoke / messaging specs send as the E2E
  * accounts (walkthrough finding #3): they used to pile up as "E2E smoke
@@ -29,7 +33,7 @@ export default async function globalTeardown() {
     for (const email of emails) {
       const password = process.env[`${email === process.env.E2E_PLAYER_EMAIL ? 'E2E_PLAYER' : email === process.env.E2E_CLUB_EMAIL ? 'E2E_CLUB' : email === process.env.E2E_COACH_EMAIL ? 'E2E_COACH' : email === process.env.E2E_BRAND_EMAIL ? 'E2E_BRAND' : 'E2E_UMPIRE'}_PASSWORD`]
       if (!password) continue
-      const { data } = await anon.auth.signInWithPassword({ email, password })
+      const { data } = await anon.auth.signInWithPassword({ email, password, options: { captchaToken: TEST_CAPTCHA_TOKEN } })
       if (data.user) senderIds.push(data.user.id)
       await anon.auth.signOut().catch(() => undefined)
     }
