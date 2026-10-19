@@ -7,6 +7,10 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
+// Staging Supabase enforces Turnstile with Cloudflare's always-pass TEST secret
+// (2026-10-19), which accepts this documented dummy token from direct API sign-ins.
+const TEST_CAPTCHA_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+
 // ---------------------------------------------------------------------------
 // Environment
 // ---------------------------------------------------------------------------
@@ -54,7 +58,7 @@ export async function authenticateAs(
   let data: Awaited<ReturnType<typeof tmp.auth.signInWithPassword>>['data'] | null = null
   let lastError: unknown = null
   for (let attempt = 1; attempt <= 3; attempt++) {
-    const res = await tmp.auth.signInWithPassword({ email, password }).catch((e) => {
+    const res = await tmp.auth.signInWithPassword({ email, password, options: { captchaToken: TEST_CAPTCHA_TOKEN } }).catch((e) => {
       // Network-layer throw (fetch failed) rather than an auth response.
       return { data: null, error: { message: String(e?.message ?? e), status: 0 } } as never
     })

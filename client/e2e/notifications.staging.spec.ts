@@ -5,6 +5,10 @@ import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import { NotificationsPage } from './fixtures'
 
+// Staging Supabase enforces Turnstile with Cloudflare's always-pass TEST secret
+// (2026-10-19), which accepts this documented dummy token from direct API sign-ins.
+const TEST_CAPTCHA_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -31,7 +35,7 @@ async function getAuthClient(email: string, password: string) {
   const tmp = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
-  const { data, error } = await tmp.auth.signInWithPassword({ email, password })
+  const { data, error } = await tmp.auth.signInWithPassword({ email, password, options: { captchaToken: TEST_CAPTCHA_TOKEN } })
   if (error || !data.session) {
     throw new Error(`Auth failed for ${email}: ${error?.message ?? 'No session'}`)
   }
