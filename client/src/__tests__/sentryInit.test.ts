@@ -98,7 +98,10 @@ describe('initSentry — shell selection', () => {
       expect(options.enabled).toBe(false)
       expect(options.release).toBe('dev')
       expect('dsn' in options).toBe(true)
-      expect(options.ignoreErrors).toContain('This user is not available for messaging right now.')
+      // Only pure noise is muted; expected outcomes are counted (beforeSend).
+      expect(options.ignoreErrors).toContain('CancelledError')
+      expect(options.ignoreErrors).not.toContain('Invalid login credentials')
+      expect(typeof options.tracesSampler).toBe('function')
       expect(typeof options.beforeSend).toBe('function')
       expect(typeof options.beforeBreadcrumb).toBe('function')
       expect(typeof options.beforeSendTransaction).toBe('function')

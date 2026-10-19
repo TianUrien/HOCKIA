@@ -50,3 +50,35 @@ export function isExpectedRefusal(error: unknown): boolean {
   const message = typeof e.message === 'string' ? e.message : ''
   return EXPECTED_REFUSAL_MESSAGES.some((m) => message.includes(m))
 }
+
+/**
+ * Expected user-side outcomes (Sentry visibility pass, 2026-10-19). They used
+ * to be silent `ignoreErrors` — ~1,000 events in 30 days vanished, so a surge
+ * (everyone suddenly getting "Invalid login credentials" after a bad deploy)
+ * would have been invisible. Now they are COUNTED: sampled, info-level, tagged
+ * `expected:<key>` and grouped per key, so they never page but a spike shows.
+ * Pure noise (bots, extensions, cancelled fetches) stays in `ignoreErrors`.
+ */
+export const EXPECTED_USER_ERRORS: { key: string; match: string }[] = [
+  { key: 'login_wrong_password', match: 'Invalid login credentials' },
+  { key: 'login_unconfirmed', match: 'Email not confirmed' },
+  { key: 'auth_rate_limit', match: 'Email rate limit exceeded' },
+  { key: 'auth_rate_limit', match: 'Request rate limit reached' },
+  { key: 'auth_cooldown', match: 'you can only request this after' },
+  { key: 'signup_duplicate', match: 'User already registered' },
+  { key: 'signup_weak_password', match: 'Password is known to be weak' },
+  { key: 'signup_weak_password', match: 'Password should contain at least one character' },
+  { key: 'oauth_timeout', match: 'OAuth timed out after 5 minutes' },
+  { key: 'oauth_superseded', match: 'OAuth cancelled — superseded by a newer sign-in attempt' },
+  // The class behind the lost sign-up of 2026-10-17: count it, never hide it.
+  { key: 'auth_session_missing', match: 'Auth session missing' },
+]
+
+/** Share of expected outcomes sent (counts in Sentry are ×4 estimates). */
+export const EXPECTED_SAMPLE_RATE = 0.25
+
+/** The expected-outcome key for an error message or raw error, or null for a real error. */
+export function expectedErrorKey(message: string, original?: unknown): string | null {
+  if (isExpectedRefusal(original) || EXPECTED_REFUSAL_MESSAGES.some((m) => message.includes(m))) return 'refusal'
+  return EXPECTED_USER_ERRORS.find((e) => message.includes(e.match))?.key ?? null
+}

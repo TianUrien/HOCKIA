@@ -65,7 +65,10 @@ initSentry()
 // minimal init above; we only defer performance tracing and replay.
 const attachDeferredSentryIntegrations = () => {
   try {
-    Sentry.addIntegration(Sentry.browserTracingIntegration())
+    // idleTimeout 3 s (default 1 s): Home loads in waves, and requests that
+    // start after the page-load span closed were dropped as "no parent span"
+    // (~30k in 30 days, Sentry visibility pass 2026-10-19).
+    Sentry.addIntegration(Sentry.browserTracingIntegration({ idleTimeout: 3000 }))
     // Disable session replay on native — sends user interaction data to
     // sentry.io which Apple considers third-party tracking (Guideline 5.1.2)
     if (!isNativePlatform) Sentry.addIntegration(Sentry.replayIntegration())
