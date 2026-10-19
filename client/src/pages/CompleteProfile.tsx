@@ -83,6 +83,8 @@ export default function CompleteProfile() {
   const { getCountryById } = useCountries()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // The browser lost the session between sign-in and choosing a role (prod 2026-10-17).
+  const [sessionExpired, setSessionExpired] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url || '')
   // Replaced avatars are deleted only after the profile row is saved — see
   // the hook's header for the prod incident this prevents.
@@ -277,12 +279,36 @@ export default function CompleteProfile() {
 
       const userEmail = user.email || ''
 
-      // Call the RPC function to create the profile row
-      const { data: newProfile, error: rpcError } = await supabase.rpc('create_profile_for_new_user', {
+      // The RPC needs the member's session. The page can still hold a user
+      // after the client lost its token (prod 2026-10-17: "requires
+      // authentication" four times in a row, sign-up lost), so make sure a
+      // session exists first and retry once after a refresh.
+      let { data: { session } } = await supabase.auth.getSession()
+      if (!session) session = (await supabase.auth.refreshSession().catch(() => null))?.data.session ?? null
+      if (!session) {
+        onboardingBreadcrumb('role_selected.no_session', { role: selectedRole })
+        setSessionExpired(true)
+        setError('Your sign-in has expired. Sign in again to finish setting up your profile.')
+        profileCreationMutexRef.current = false
+        return
+      }
+      const createProfile = () => supabase.rpc('create_profile_for_new_user', {
         user_id: user.id,
         user_email: userEmail,
         user_role: selectedRole,
       })
+      let { data: newProfile, error: rpcError } = await createProfile()
+      if (rpcError && /requires authentication/i.test(rpcError.message)) {
+        await supabase.auth.refreshSession().catch(() => { /* the retry below reports it */ })
+        ;({ data: newProfile, error: rpcError } = await createProfile())
+        if (rpcError && /requires authentication/i.test(rpcError.message)) {
+          onboardingBreadcrumb('role_selected.no_session', { role: selectedRole, after: 'retry' })
+          setSessionExpired(true)
+          setError('Your sign-in has expired. Sign in again to finish setting up your profile.')
+          profileCreationMutexRef.current = false
+          return
+        }
+      }
 
       if (rpcError) {
         captureOnboardingError(rpcError, {
@@ -1137,7 +1163,14 @@ export default function CompleteProfile() {
     // Also the only screen for a signed-in account with NO row (status
     // 'missing'), whatever a stale pending_role / user_metadata.role says: a
     // set-up flow must never run against a row that does not exist.
-    return <ChooseRoleScreen onSelect={handleRoleSelection} busy={creatingProfile} error={error || null} />
+    return (
+      <ChooseRoleScreen
+        onSelect={handleRoleSelection}
+        busy={creatingProfile}
+        error={error || null}
+        onSignInAgain={sessionExpired ? () => { void supabase.auth.signOut().finally(() => navigate('/signin', { replace: true })) } : undefined}
+      />
+    )
   }
 
   // Player set-up (Figma 114:537 / 114:608), two steps, step 2 skippable.

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { BlurImage } from '../BlurImage'
 import { useActivityPhotos } from '@/hooks/useActivityPhotos'
@@ -21,11 +21,25 @@ const MAX_DOTS = 5
  */
 export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
   const profilePath = profilePathForRole(item.uploader_role, item.uploader_id)
-  const full = useActivityPhotos(item.uploader_id, item.day, true)
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set())
   const [index, setIndex] = useState(0)
   const [viewerAt, setViewerAt] = useState<number | null>(null)
   const trackRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLElement>(null)
+  // The full set is fetched only when the card's samples don't already hold
+  // every photo, and only once the card is near the screen — fetching every
+  // card's set on load was one request per card (Sentry N+1, 2026-10-19).
+  const needsFull = (item.count ?? 0) > (item.sample_urls?.length ?? 0)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = cardRef.current
+    if (!needsFull || near || !el) return
+    if (typeof IntersectionObserver === 'undefined') { setNear(true); return }
+    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) setNear(true) }, { rootMargin: '600px 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [needsFull, near])
+  const full = useActivityPhotos(item.uploader_id, item.day, needsFull && (near || viewerAt !== null))
 
   const urls = useMemo(() => {
     const src = full.data && full.data.length > 0 ? full.data : item.sample_urls ?? []
@@ -49,7 +63,7 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
   const dots = Array.from({ length: Math.min(n, MAX_DOTS) }, (_, i) => dotStart + i)
 
   return (
-    <article className="py-4" data-testid="home-photos-card">
+    <article ref={cardRef} className="py-4" data-testid="home-photos-card">
       <PostHeader
         authorId={item.uploader_id}
         name={item.uploader_name}

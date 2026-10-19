@@ -29,12 +29,14 @@ const mocks = vi.hoisted(() => {
     update: (patch: Record<string, unknown>) => ({ eq: async () => { updates.push(patch); return { error: null } } }),
   }))
   const signedOut = { current: false }
-  return { events, profile, user, updates, rpc, from, signedOut, signUp: vi.fn(), navigate: vi.fn() }
+  // The client's own session (null = the token was lost after sign-in).
+  const session: { current: { access_token: string } | null } = { current: { access_token: 't' } }
+  return { events, profile, user, updates, rpc, from, signedOut, session, signUp: vi.fn(), navigate: vi.fn() }
 })
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    auth: { signUp: mocks.signUp, refreshSession: async () => ({ error: null }) },
+    auth: { signUp: mocks.signUp, refreshSession: async () => ({ data: { session: mocks.session.current }, error: null }), getSession: async () => ({ data: { session: mocks.session.current } }), signOut: async () => ({ error: null }) },
     rpc: mocks.rpc,
     from: mocks.from,
     storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
@@ -136,7 +138,7 @@ import CompleteProfile from '@/pages/CompleteProfile'
 import PlayerSetupFlow from '@/components/onboarding/PlayerSetupFlow'
 import TermsGate from '@/components/TermsGate'
 import AgeGate from '@/components/AgeGate'
-import { ROLE_CARDS, roleCtaLabel, passwordProblem, aboutYouProblem, offersOpenToPlay } from '@/lib/onboardingV2'
+import { ROLE_CARDS, roleCtaLabel, passwordProblem, passwordPolicyMessage, aboutYouProblem, offersOpenToPlay } from '@/lib/onboardingV2'
 
 function LocationProbe() {
   const { pathname } = useLocation()
@@ -204,7 +206,7 @@ describe('route order: account first, then role, then set-up', () => {
     renderAuthRoutes('/signup')
     await user.click(screen.getByRole('button', { name: 'Create with email' }))
     expect(screen.getByTestId('path')).toHaveTextContent('/signup/email')
-    expect(screen.getByText('At least 8 characters')).toBeInTheDocument()
+    expect(screen.getByText('At least 8 characters, with a lowercase letter, an uppercase letter and a number')).toBeInTheDocument()
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
 
@@ -219,7 +221,7 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
 
     await user.type(email, 'new@example.com')
-    await user.type(screen.getByLabelText('Password'), 'longenough')
+    await user.type(screen.getByLabelText('Password'), 'LongEnough1')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => expect(mocks.signUp).toHaveBeenCalledTimes(1))
@@ -232,13 +234,32 @@ describe('route order: account first, then role, then set-up', () => {
     expect(mocks.events).toEqual(['sign_up_start:email', 'sign_up:pending_role'])
   })
 
-  it('password rule is exactly "At least 8 characters"', () => {
+  it('password rule matches production Auth: 8+ with lowercase, uppercase and a number', () => {
     expect(passwordProblem('short')).toMatch(/8 characters/)
-    expect(passwordProblem('abcdefgh')).toBeNull()
+    expect(passwordProblem('abcdefgh')).toMatch(/uppercase letter and a number/)
+    expect(passwordProblem('hockey2026')).toMatch(/uppercase/)
+    expect(passwordProblem('Hockey2026')).toBeNull()
+    expect(passwordPolicyMessage('Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ, 0123456789.')).toMatch(/uppercase letter and a number/)
+    expect(passwordPolicyMessage('Invalid login credentials')).toBeNull()
   })
 })
 
 describe('Choose your role (101:892)', () => {
+  it('a lost session after sign-in: no failing call, a clear "Sign in again" (Sentry JAVASCRIPT-REACT-DE)', async () => {
+    const user = userEvent.setup()
+    mocks.session.current = null
+    try {
+      render(<MemoryRouter initialEntries={['/complete-profile']}><CompleteProfile /></MemoryRouter>)
+      await user.click(await screen.findByRole('radio', { name: /^Player/ }))
+      await user.click(screen.getByRole('button', { name: 'Continue as a player' }))
+      expect(await screen.findByText(/sign-in has expired/i)).toBeInTheDocument()
+      expect(screen.getByTestId('sign-in-again')).toBeInTheDocument()
+      expect(mocks.rpc).not.toHaveBeenCalledWith('create_profile_for_new_user', expect.anything())
+    } finally {
+      mocks.session.current = { access_token: 't' }
+    }
+  })
+
   it('renders after the account exists, with the ruled copy, and creates the profile from the choice', async () => {
     const user = userEvent.setup()
     render(<MemoryRouter initialEntries={['/complete-profile']}><CompleteProfile /></MemoryRouter>)
