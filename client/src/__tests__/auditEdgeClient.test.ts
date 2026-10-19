@@ -101,7 +101,8 @@ describe('addPushTapListener', () => {
     tap({ notification: { data: { url: '//evil.example' } } })
     tap({ notification: { data: {} } })
     expect(navigate).toHaveBeenCalledTimes(1)
-    expect(navigate).toHaveBeenCalledWith('/messages/c1')
+    // Taps carry their origin for vacancy_view / application_submit (lib/navSource).
+    expect(navigate).toHaveBeenCalledWith('/messages/c1?src=push')
     dispose()
   })
 

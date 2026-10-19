@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { roleTitle } from '@/lib/homeEngagement'
+import { trackCardClick } from '@/lib/homeInstrumentation'
+import { navState } from '@/lib/navSource'
 import { RoleCoverCard } from '../RoleCoverCard'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 
@@ -17,7 +19,10 @@ export function OpportunityCard({ item }: { item: OpportunityPostedFeedItem }) {
   const { countries } = useCountries()
   const navigate = useNavigate()
   // The v2 role page, the same as Opportunities; Back returns to Home at the same scroll.
-  const open = () => navigate(`/opportunities/${item.opportunity_id}`)
+  const open = () => {
+    trackCardClick(item.feed_item_id, item.item_type, `/opportunities/${item.opportunity_id}`)
+    navigate(`/opportunities/${item.opportunity_id}`, navState('home_feed_card'))
+  }
   const roleType = item.opportunity_type ?? 'player'
   const canApply = Boolean(viewerId) && viewerId !== item.club_id
     && ((viewerRole === 'player' && roleType === 'player') || (viewerRole === 'coach' && roleType === 'coach'))

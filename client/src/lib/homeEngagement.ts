@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
+import { trackDbEvent } from '@/lib/trackDbEvent'
+import { currentSurface } from '@/lib/homeInstrumentation'
 import { positionLabel } from '@/lib/identity'
 import { getShareOrigin } from '@/lib/profileShare'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
@@ -29,7 +31,9 @@ export async function toggleCongrats(target: EngageTarget): Promise<Result & { h
       10_000,
     )
     if (error) throw error
-    return data as unknown as Result & { has_congrats?: boolean; count?: number }
+    const result = data as unknown as Result & { has_congrats?: boolean; count?: number }
+    if (result.success) trackDbEvent('congrats_toggle', target.type, target.id, { has: result.has_congrats ?? null, surface: currentSurface() })
+    return result
   } catch (err) {
     logger.error('[homeEngagement] toggleCongrats', err)
     return failed(err, 'Could not send congrats')
@@ -70,7 +74,9 @@ export async function createComment(target: EngageTarget, content: string): Prom
       15_000,
     )
     if (error) throw error
-    return data as unknown as Result & { comment_id?: string }
+    const result = data as unknown as Result & { comment_id?: string }
+    if (result.success) trackDbEvent(target.type === 'post' ? 'post_comment_create' : 'feed_item_comment_create', target.type, target.id, { surface: currentSurface() })
+    return result
   } catch (err) {
     logger.error('[homeEngagement] createComment', err)
     return failed(err, 'Could not post your comment')

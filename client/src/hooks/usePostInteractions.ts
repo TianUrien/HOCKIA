@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { withTimeout } from '@/lib/retry'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { currentSurface } from '@/lib/homeInstrumentation'
 import type { PostComment } from '@/types/homeFeed'
 
 interface LikeResult {
@@ -68,7 +69,7 @@ export function usePostInteractions() {
 
       const result = data as unknown as LikeResult
       if (result.success) {
-        trackDbEvent('post_like', 'post', postId, { liked: result.liked })
+        trackDbEvent('post_like', 'post', postId, { liked: result.liked, surface: currentSurface() })
         markPostQueriesStale()
       }
       return result
@@ -131,7 +132,7 @@ export function usePostInteractions() {
 
       const result = data as unknown as CommentCreateResult
       if (result.success) {
-        trackDbEvent('post_comment_create', 'post', postId)
+        trackDbEvent('post_comment_create', 'post', postId, { surface: currentSurface() })
         invalidatePostQueries()
       }
       return result

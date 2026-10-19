@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { navState } from '@/lib/navSource'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Shield, Plus, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -765,7 +766,7 @@ export default function OpportunitiesPage() {
               onToggleAlerts={() => void settings.toggle('notify_opportunities', true)}
               onAddCareer={() => navigate('/dashboard/profile/journey')}
               onAskReference={() => navigate('/dashboard/profile/references')}
-              onOpenRole={(id) => navigate(`/opportunities/${id}`)}
+              onOpenRole={(id) => navigate(`/opportunities/${id}`, navState('opportunities'))}
             />
           ) : (
           <>
@@ -872,7 +873,7 @@ export default function OpportunitiesPage() {
                 const d = describeRole(featured)
                 return (
                   <div className="px-5 pt-3">
-                    <FeaturedRoleCard vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`)} />
+                    <FeaturedRoleCard vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`, navState('opportunities'))} />
                   </div>
                 )
               })()}
@@ -880,7 +881,7 @@ export default function OpportunitiesPage() {
                 <RoleRail key={rail.key} title={rail.title} subtitle={rail.subtitle} onSeeAll={() => seeAll(rail.key)} testId={`rail-${rail.key}`}>
                   {rail.roles.map((v) => {
                     const d = describeRole(v)
-                    return <RailCard key={v.id} data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`)} />
+                    return <RailCard key={v.id} data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
                   })}
                 </RoleRail>
               ))}
@@ -910,7 +911,7 @@ export default function OpportunitiesPage() {
                       countryFlag={flag}
                       league={league}
                       applied={userApplications.includes(vacancy.id)}
-                      onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
+                      onOpen={() => navigate(`/opportunities/${vacancy.id}`, navState('opportunities'))}
                     />
                   )
                 })}
@@ -922,7 +923,7 @@ export default function OpportunitiesPage() {
               <div className="flex flex-col gap-9" data-testid="opportunities-desktop">
                 {featured && (() => {
                   const d = describeRole(featured)
-                  return <FeaturedRoleCard layout="wide" vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`)} />
+                  return <FeaturedRoleCard layout="wide" vacancy={featured} clubName={d.identity.displayName} clubLogo={d.identity.displayLogo} countryFlag={d.flag} league={d.league} palette={d.palette} onOpen={() => navigate(`/opportunities/${featured.id}`, navState('opportunities'))} />
                 })()}
                 {rails.map((rail) => (
                   <RoleRailDesktop
@@ -933,7 +934,7 @@ export default function OpportunitiesPage() {
                     testId={`rail-${rail.key}`}
                     cards={rail.roles.map((v) => {
                       const d = describeRole(v)
-                      return <RailCard key={v.id} fluid data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`)} />
+                      return <RailCard key={v.id} fluid data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
                     })}
                   />
                 ))}
@@ -964,7 +965,7 @@ export default function OpportunitiesPage() {
                             countryFlag={flag}
                             league={league}
                             applied={userApplications.includes(vacancy.id)}
-                            onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
+                            onOpen={() => navigate(`/opportunities/${vacancy.id}`, navState('opportunities'))}
                           />
                         )
                       })}

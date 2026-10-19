@@ -9,6 +9,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { FeedAuthorContext, useFeedAuthorContext } from '@/hooks/useFeedAuthorContext'
 import { HomeFeedItemCard } from '@/components/home/HomeFeedItemCard'
+import { HOME_V1_MODULES, recordCardImpression, recordModuleImpression, recordPostImpression, scrollMilestonesCrossed, trackFeedScroll, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { UserPostCard } from '@/components/home/cards'
 import type { Profile } from '@/components/community/PeopleListView'
 import type { HomeFeedItem, SigningMetadata } from '@/types/homeFeed'
@@ -40,6 +41,13 @@ class ItemBoundary extends Component<{ children: ReactNode }, { failed: boolean 
 /** The rail goes after the 2nd feed item (spec 65:329). */
 const RAIL_AFTER = 2
 
+/** Fires once when the card nears the viewport: card impression, post
+ *  impression (surface home_v1) and the feed-depth milestones (gaps 1, 3, 4). */
+function FeedCardSentinel({ index, onVisible, children }: { index: number; onVisible: (index: number) => void; children: ReactNode }) {
+  const ref = useImpressionOnce(() => onVisible(index))
+  return <div ref={ref}>{children}</div>
+}
+
 /**
  * The Home v1 feed (Figma t24oVt… H1 / H2): get_home_feed_v2, newest first,
  * the new card set, "Roles for you" after the 2nd item, "You're all caught up"
@@ -58,6 +66,26 @@ export function HomeV1Feed({ prependItemRef, header }: {
   const [comments, setComments] = useState<CommentsRequest | null>(null)
   const [deck, setDeck] = useState<{ members: Profile[]; start: number; label: string } | null>(null)
   const ages = useMemberAges(useMemo(() => deck?.members.map((m) => m.id) ?? [], [deck]))
+
+  // Impressions read the latest list through refs so the per-card callback stays stable.
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const hasMoreRef = useRef(hasMore)
+  hasMoreRef.current = hasMore
+  const milestonesFired = useRef(new Set<number>())
+  const onCardVisible = useCallback((index: number) => {
+    const list = itemsRef.current
+    const item = list[index]
+    if (!item) return
+    recordCardImpression(item.feed_item_id, index, item.item_type)
+    if (index === 0) recordModuleImpression(HOME_V1_MODULES.feed.id, HOME_V1_MODULES.feed.position)
+    const postId = (item as { post_id?: string }).post_id
+    if (item.item_type === 'user_post' && postId) recordPostImpression(postId, 'home_v1')
+    for (const m of scrollMilestonesCrossed(index, list.length, milestonesFired.current)) {
+      milestonesFired.current.add(m)
+      trackFeedScroll(m, index, list.length, hasMoreRef.current)
+    }
+  }, [])
 
   const authorIds = useMemo(() => {
     const ids: string[] = []
@@ -142,7 +170,9 @@ export function HomeV1Feed({ prependItemRef, header }: {
           <Fragment key={item.feed_item_id}>
             {idx > 0 && <FeedBand />}
             <ItemBoundary>
-              <FeedItem item={item} onLikeUpdate={updateItemLike} onDelete={removeItem} />
+              <FeedCardSentinel index={idx} onVisible={onCardVisible}>
+                <FeedItem item={item} onLikeUpdate={updateItemLike} onDelete={removeItem} />
+              </FeedCardSentinel>
             </ItemBoundary>
             {idx === RAIL_AFTER - 1 && (
               <ItemBoundary>
@@ -195,7 +225,7 @@ function RailSlot() {
   return (
     <>
       <FeedBand />
-      <RolesRail />
+      <RolesRail module={HOME_V1_MODULES.rolesRail} />
     </>
   )
 }

@@ -228,8 +228,8 @@ describe('category labels', () => {
 describe('feed roles open the v2 role page (17 Oct 2026)', () => {
   it('Home rail and both feed cards navigate to /opportunities/:id; the old pop-up is gone', () => {
     expect(src('components/home/cards/OpportunityPostedCard.tsx')).toContain('navigate(`/opportunities/${item.opportunity_id}`)')
-    expect(src('components/home/v1/cards/OpportunityCard.tsx')).toContain('navigate(`/opportunities/${item.opportunity_id}`)')
-    expect(src('components/home/v1/RolesRail.tsx')).toContain('navigate(`/opportunities/${o.id}`)')
+    expect(src('components/home/v1/cards/OpportunityCard.tsx')).toContain("navigate(`/opportunities/${item.opportunity_id}`, navState('home_feed_card'))")
+    expect(src('components/home/v1/RolesRail.tsx')).toContain("navigate(`/opportunities/${o.id}`, navState('home_role_card'))")
     expect(src('pages/HomePage.tsx')).toContain('useScrollRestore()')
   })
 })

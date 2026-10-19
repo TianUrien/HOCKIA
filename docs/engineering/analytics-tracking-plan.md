@@ -86,6 +86,7 @@ columns.
 | `notification_click` | Push or in-app notification tapped | kind | Notification CTR | 509 |
 | `search` / `search_result_click` | Hockia AI search | intent | AI usage (1 query / 30 d in `discovery_events`) | 24 / 3 |
 | `cta_click` / `home_module_click` / `landing_scroll_depth` | Landing and Home | placement | Landing conversion | 56 / 37 / 270 |
+| `home_card_impression` / `home_card_click` / `home_feed_scroll` / `next_step_impression` / `next_step_action` / `profile_viewers_view` / `congrats_toggle` / `feed_item_comment_create` | Home v1 (§4.6, 2026-10-19) | module_id, position, item_type, destination, source, surface | Home rethink | new |
 | `app_rating_prompt_*` | Rating prompt | — | Store ratings | 66 / 35 / 2 |
 | `reference_request` / `reference_respond` / `reference_*` | References | — | Trust loop (1 request / 30 d) | 1 / 0 |
 | `product_view` / `brand_product_click` | Brand pages | — | Brand value | 6 / — |
@@ -131,6 +132,35 @@ then removed. Admin-gated reads only.
 Not switched on. GA4 + Supabase already cover reach and product events; PostHog would add
 session replay and funnels on the same events at the cost of a second consent-gated SDK and
 another place to look. Decision deferred until there is a question the admin cannot answer.
+
+### 4.6 Home v1 instrumentation — added 2026-10-19
+Source: `docs/product/user-research.md` › Gaps 1–8 (Home usage analytics, 2026-10-19) and
+the founder's choices the same day: events land in Supabase `events` (mirrored to PostHog
+when it has a key), GA4 untouched; feed depth as 25/50/75/100 % milestones plus the last
+card seen; the "New signing" item type stays until two weeks of data say otherwise.
+Code: `client/src/lib/homeInstrumentation.ts`, `client/src/lib/navSource.ts`, the Home v1
+components, `OpportunityDetailPage`, `submitApplication`, push tap handlers.
+
+| Gap | Event / field | Fires when | Properties |
+|---|---|---|---|
+| 1 | `home_card_impression` (entity `feed_item`) | A feed card nears the viewport, once per card per session | `module_id` = `v1_feed`, `position` (0-based index), `item_type` |
+| 2 | `home_module_impressions` rows (table) | A Home v1 module nears the viewport, once per hour | `module_id` ∈ `v1_next_step` 0 · `v1_people_new` / `v1_people_available` 1 · `v1_feed` 2 · `v1_roles_rail` 3 · `v1_end_of_feed` 4 · `v1_people_pymk` 5 · `v1_roles_rail_end` / `v1_people_available_end` 6 |
+| 3 | `home_feed_scroll` | The member's deepest visible card crosses 25/50/75/100 % of the cards loaded so far (each once per Home visit) | `milestone`, `last_index`, `loaded`, `has_more` — 100 % means the last loaded card, not the end of the feed; `v1_end_of_feed` in the impressions table is the true end |
+| 4 | `surface` on `post_impression`, `post_like`, `post_comment_create`, new `congrats_toggle`, new `feed_item_comment_create` | As before; `surface` is derived from the route (`home_v1`, `community`, `profile`, `pulse`, …) | `surface`; `congrats_toggle` adds `has` |
+| 5 | `destination` on `home_module_click`; new `home_card_click` | A module or feed card tap that leaves Home or opens a sheet | `destination` with ids replaced by `:id` (`/opportunities/:id`, `/community`, `member_deck`, `compose`) |
+| 6 | `source` on `vacancy_view` and `application_submit` (+ `via`) | Role page open / application sent | `source` ∈ `home_role_card`, `home_feed_card`, `home_next_step`, `opportunities`, `inbox`, `hockia_ai`, `push`, `direct`; `via` ∈ `apply_sheet`, `hockia_ai`. Carried by router state (`navState`) or `?src=` (push taps, web and native) |
+| 7 | `profile_viewers_view` (entity `profile`) | "Who viewed you" opens on Your activity or the brand profile | `source` ∈ `home` (from the views card), `pulse`, `profile` |
+| 8 | `next_step_impression`, `next_step_action` | The Next step card on screen / acted on | `key` = step family only (`photo`, `roles`, `views`, `quiet`, `checkin`, …), `action` ∈ `open`, `compose`, `confirm_availability`, `dismiss`, `surface` |
+
+Why gap 8 is an event and not `pulse_items.seen_at`: since Home v1 (11 Oct) players, coaches
+and clubs never see the Pulse item list — the Next step card and Your activity replaced it —
+so `seen_at` is only stamped on the brand and umpire dashboards (`PulseSection`, which stamps
+every loaded item whether or not it was scrolled to). The card impression is what members
+actually saw. Dismissals still reach `mark_pulse_dismissed` for the check-in.
+
+Questions these answer: which Home cards get seen and tapped, how far people scroll, which
+surface starts role views and applications, and whether "who viewed you" is a reason to open
+the app. First read after two weeks of data (≈ 2 Nov 2026).
 
 ## 5. Conventions and QA
 - Names: `object_action`, lowercase, underscores; context in properties, not in the name.
