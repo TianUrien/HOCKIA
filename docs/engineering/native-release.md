@@ -224,6 +224,14 @@ did not include this binary's UUID.
 
 ## 6. Traps collected from past builds
 
+- Export ONLY the three `SENTRY_*` variables for `cap:build`. Sourcing the whole `client/.env`
+  (`set -a; . ./.env`) also exports the staging `VITE_SUPABASE_URL`, and process environment beats
+  `.env.production` in Vite — `assert-prod-bundle` then refuses the staging binary (19 Oct 2026).
+  Use `export $(grep -E "^SENTRY_(AUTH_TOKEN|ORG|PROJECT)=" .env | xargs)`.
+- The device lab syncs with `HOCKIA_LAB=1`, which writes `webContentsDebuggingEnabled: true` into the
+  gitignored synced configs. `cap:build` without that variable resets it; confirm `false` in
+  `ios/App/App/capacitor.config.json` before archiving.
+
 - `npm run build && npx cap sync` is **not** `cap:build`: without the
   `app.html` → `index.html` swap the native entry is the prerendered landing.
 - `assert-prod-bundle` matches the staging **endpoint**; the bare staging
@@ -249,6 +257,25 @@ Source: PRs #247–#249.
   - Why: with `contentInset: 'automatic'` the layout viewport is 12 pt shorter than the screen.
 - **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
 - **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
+
+## Changes in iOS 1.3.21 (34) and Android 1.22 (24) — 2026-10-19
+
+Source: main 14b53642 (release #379). Everything shipped on the web between 16 and 19 Oct reaches the
+apps here. Pre-flight audit and lab runs: docs/engineering/device-lab.md; findings in the 19 Oct memory.
+
+- **Hockia AI**: apply with a drafted note, "Ask Hockia AI about this role", applicant summaries for
+  clubs, chat history (90 days), choice cards with a recommended option, and next steps that add a
+  photo, write a bio or add links — nothing saved without a tap.
+- **Home**: the views cards open who viewed you ("View"); brand card no longer opens the composer.
+- **Sign-in and sign-up**: the role step checks the session first (a lost sign-up on 17 Oct); the
+  password rule matches production Auth; Turnstile bot check sent on every auth call (not yet enforced
+  in production — enforce only after this build is on real phones). Apple sign-in works again
+  (expired client secret renewed 19 Oct; renew before 2027-04-20).
+- **Android only**: `allowBackup` off; https App Links for inhockia.com (`assetlinks.json` carries the
+  Play app-signing certificate, Google verifier `linked: true`).
+- **Stale-chunk recovery** after a web release; photo cards on Home fetch lazily (N+1).
+- Verified by the device lab on iPhone 17 Pro Max and Android small phone (core, club, Hockia AI
+  journeys), deep links on both, before archiving.
 
 ## Changes in iOS 1.3.20 (33) and Android 1.21 (23) — 2026-10-16
 
