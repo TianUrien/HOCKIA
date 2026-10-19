@@ -25,7 +25,10 @@ export type CaptchaAction = 'login' | 'signup' | 'reset' | 'magic_link' | 'resen
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
 const SCRIPT_TIMEOUT_MS = 8000
-const TOKEN_TIMEOUT_MS = 45000
+/** No token and no visible check: give up quickly (the server decides) rather than stall sign-in. */
+const TOKEN_TIMEOUT_MS = 12000
+/** A visible "confirm you're human" check is on screen: the person is responding, give them time. */
+const INTERACTIVE_TIMEOUT_MS = 60000
 
 let scriptPromise: Promise<void> | null = null
 let widgetId: string | null = null
@@ -123,7 +126,7 @@ async function freshToken(action: CaptchaAction): Promise<string | undefined> {
         if (!token) reportUnavailable(action, failure ?? 'no_token')
         resolve(token)
       }
-      setTimeout(() => done(undefined, 'timeout'), TOKEN_TIMEOUT_MS)
+      let timer = setTimeout(() => done(undefined, 'timeout'), TOKEN_TIMEOUT_MS)
       widgetId = api.render(el, {
         sitekey: key,
         action,
@@ -132,7 +135,11 @@ async function freshToken(action: CaptchaAction): Promise<string | undefined> {
         'error-callback': (code?: string) => done(undefined, `error_${code ?? 'unknown'}`),
         'timeout-callback': () => done(undefined, 'challenge_timeout'),
         'expired-callback': () => done(undefined, 'expired'),
-        'before-interactive-callback': () => { el.style.display = 'block' },
+        'before-interactive-callback': () => {
+          el.style.display = 'block'
+          clearTimeout(timer)
+          timer = setTimeout(() => done(undefined, 'interactive_timeout'), INTERACTIVE_TIMEOUT_MS)
+        },
         'after-interactive-callback': () => { el.style.display = 'none' },
       })
     })
