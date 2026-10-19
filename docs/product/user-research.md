@@ -18,6 +18,11 @@ Source: read-only aggregate queries (events, home feed items, posts, application
 - The pulse availability check-in is mostly dismissed.
 - Members who did recruiting actions **and** media/social returned more often than recruiting-only members (correlation only; selection bias likely; no media-only group to compare).
 
+### Congrats and comments — production check, 2026-10-19
+Source: the code agent reproduced the RPC path on staging (rolled-back transaction) and checked production functions, grants, triggers and logs.
+- The features **work end to end**. The zero rows are **zero supply**: no "New signing" post has ever been created; the member posts of the last 90 days are plain text, which offer likes but not comments; most recent references are still pending, so no reference card was generated.
+- Read: the social layer isn't broken, it's unused — a product signal, not an engineering one.
+
 ## Hypotheses (to test)
 - H1 — Members open Home to learn **what changed for them** (replies, views, roles that fit, applicants waiting), not to browse social content. Test: interviews per role + card impressions/CTR once tracked.
 - H2 — **Signings and market moves** (who signed where, new roles, who is available) are the community content members value; photos and highlights belong on profiles as a portfolio. Test: interviews; compare engagement of signing/role items vs media items.
@@ -33,10 +38,11 @@ Source: read-only aggregate queries (events, home feed items, posts, application
 6. A source property on role views and application submits (Home card, Opportunities, push, Inbox…).
 7. An event when someone views "who viewed you".
 8. Reliable seen time on pulse items.
-9. Verify Congrats and comments work end to end (zero rows may be a bug).
+9. ~~Verify Congrats and comments work end to end~~ — checked 2026-10-19: they work; zero rows = zero supply.
 10. Decide on a "New signing" feed item type.
 
 ## Research log
 | Date | Method | Scope | Outcome |
 |---|---|---|---|
 | 2026-10-19 | Analytics (aggregate) | Home usage by role, 30/90 days | Evidence above; gaps 1–10 |
+| 2026-10-19 | Production check | Congrats / comments pipeline | Works; zero supply (gap 9 closed) |
