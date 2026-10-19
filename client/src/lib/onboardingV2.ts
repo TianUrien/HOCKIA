@@ -36,12 +36,25 @@ export function roleCtaLabel(role: OnboardingRole | null): string {
 
 // ── Create with email ────────────────────────────────────────────────────────
 
-/** Figma 114:434 helper: "At least 8 characters". The project's Supabase
- *  password policy is length-only (config.toml), so this is the whole rule. */
+/** Production Supabase Auth requires 8+ characters with a lowercase letter,
+ *  an uppercase letter and a number (local config.toml is length-only, which
+ *  is how sign-up drifted: Sentry JAVASCRIPT-REACT-DC/DF, 2026-10-18).
+ *  Settings and Reset password already enforce the same rule. */
 export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_HELP = `At least ${PASSWORD_MIN_LENGTH} characters, with a lowercase letter, an uppercase letter and a number`
+const PASSWORD_MIX = 'Add a lowercase letter, an uppercase letter and a number.'
 
 export function passwordProblem(password: string): string | null {
   if (password.length < PASSWORD_MIN_LENGTH) return `Use at least ${PASSWORD_MIN_LENGTH} characters.`
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) return PASSWORD_MIX
+  return null
+}
+
+/** Supabase's own password-policy refusal, in plain words (null for other errors). */
+export function passwordPolicyMessage(message: string | undefined): string | null {
+  if (!message) return null
+  if (/at least one character of each/i.test(message)) return PASSWORD_MIX
+  if (/password should be at least/i.test(message)) return `Use at least ${PASSWORD_MIN_LENGTH} characters.`
   return null
 }
 

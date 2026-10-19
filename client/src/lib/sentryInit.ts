@@ -88,6 +88,9 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
       'Invalid login credentials',
       // /signup or /signin hammered too quickly — Supabase rate limit
       'Email rate limit exceeded',
+      // The auth server's general request limit (token refresh / sign-in
+      // retries in a burst) — the same guardrail, Sentry JAVASCRIPT-REACT-DB.
+      'Request rate limit reached',
       // Duplicate signup attempt — UI should already guide them to /signin
       'User already registered',
       // Leaked-password protection (enabled 2026-08-27) rejecting a weak or
