@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:enableOnBackInvokedCallback="true"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -34,6 +34,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="hockia" android:host="app.inhockia.com" />
+            </intent-filter>
+
+            <!-- Android App Links: https://inhockia.com/… opens the app (verified against
+                 /.well-known/assetlinks.json, which must carry the Play app-signing SHA-256).
+                 Same NativeDeepLinkRouter as the hockia:// filter above; iOS has had this
+                 via applinks:inhockia.com since the AASA shipped. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="inhockia.com" />
+                <data android:host="www.inhockia.com" />
+                <data android:host="app.inhockia.com" />
             </intent-filter>
         </activity>
 
