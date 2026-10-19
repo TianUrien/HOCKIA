@@ -30,6 +30,7 @@ import { trackLogin, trackLoginFailed } from '@/lib/analytics'
 import { reportAuthFlowError } from '@/lib/sentryHelpers'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
+import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -40,6 +41,8 @@ export default function AuthScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()
+  // Get the bot check ready while the member types (lib/captcha).
+  useEffect(() => { warmCaptcha('login') }, [])
 
   // `?next=` preservation — passed through OAuth + magic link so members who
   // clicked "Apply to Opportunity X" return where they started.
@@ -130,8 +133,11 @@ export default function AuthScreen() {
         setError(formatRateLimitError(rateLimit))
         return
       }
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const captchaToken = await getCaptchaToken('login')
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
       if (signInError) {
+        const captcha = captchaErrorMessage(signInError.message)
+        if (captcha) { setError(captcha); return }
         reportAuthFlowError('password_signin', signInError, { emailDomain: email.split('@')[1] ?? null })
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
           trackLoginFailed('password', 'unverified')
