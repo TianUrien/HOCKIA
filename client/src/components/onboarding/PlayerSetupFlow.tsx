@@ -25,6 +25,7 @@ import { positionLabel } from '@/lib/identity'
 import { SetupSignOut } from './SetupSignOut'
 import {
   OPEN_TO_PLAY_HELPER,
+  OPEN_TO_PLAY_NEEDS_DOB,
   OPEN_TO_PLAY_UNDER_18,
   PHOTO_HELPER,
   PLAYER_POSITIONS,
@@ -533,7 +534,14 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
             </div>
           ) : (
             <div className="rounded-card bg-surface-muted px-4 py-3" data-testid="open-to-play-row">
-              <p className="text-secondary text-ink-2">{OPEN_TO_PLAY_UNDER_18}</p>
+              {(profile?.date_of_birth ?? draft.dateOfBirth) ? (
+                <p className="text-secondary text-ink-2">
+                  {OPEN_TO_PLAY_UNDER_18}{' '}
+                  <a href="/juniors-waitlist" className="font-semibold text-brand-primary" data-testid="juniors-waitlist-link">Juniors waitlist</a>
+                </p>
+              ) : (
+                <p className="text-secondary text-ink-2">{OPEN_TO_PLAY_NEEDS_DOB}</p>
+              )}
             </div>
           )}
 
