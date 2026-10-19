@@ -14,7 +14,7 @@ import { POST_AUTH_NEXT_KEY, pendingRedirectIntent, stashRedirectIntent } from '
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
-import { PASSWORD_MIN_LENGTH, passwordProblem } from '@/lib/onboardingV2'
+import { PASSWORD_HELP, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
 
 /**
  * Create with email (Figma 04 Player 114:434): email, password ("At least 8
@@ -77,6 +77,9 @@ export default function CreateWithEmail() {
         },
       })
       if (signUpError) {
+        // Password policy refusals are user input, shown in plain words — not reported.
+        const policy = passwordPolicyMessage(signUpError.message)
+        if (policy) { setError(policy); return }
         Sentry.captureException(signUpError, {
           tags: { feature: 'auth_flow' },
           extra: { payload: { emailDomain: trimmed.split('@')[1] ?? null } },
@@ -156,7 +159,7 @@ export default function CreateWithEmail() {
                 {shown ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
-            <p id="signup-password-help" className="mt-1.5 text-caption text-ink-3">At least {PASSWORD_MIN_LENGTH} characters</p>
+            <p id="signup-password-help" className="mt-1.5 text-caption text-ink-3">{PASSWORD_HELP}</p>
           </div>
           <FormError>{error}</FormError>
         </div>

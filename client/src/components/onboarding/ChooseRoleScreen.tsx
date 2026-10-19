@@ -31,9 +31,11 @@ interface ChooseRoleScreenProps {
   onSelect: (role: OnboardingRole) => void | Promise<void>
   busy?: boolean
   error?: string | null
+  /** Shown when the session expired mid-signup: sign out and back in to finish. */
+  onSignInAgain?: () => void
 }
 
-export default function ChooseRoleScreen({ onSelect, busy = false, error }: ChooseRoleScreenProps) {
+export default function ChooseRoleScreen({ onSelect, busy = false, error, onSignInAgain }: ChooseRoleScreenProps) {
   const [role, setRole] = useState<OnboardingRole | null>(null)
 
   return (
@@ -88,6 +90,9 @@ export default function ChooseRoleScreen({ onSelect, busy = false, error }: Choo
       </div>
       <div className="mt-auto space-y-3 pt-8">
         <FormError>{error}</FormError>
+        {onSignInAgain && (
+          <Button block variant="secondary" onClick={onSignInAgain} data-testid="sign-in-again">Sign in again</Button>
+        )}
         <Button block loading={busy} disabled={!role || !ONBOARDING_ROLES.includes(role)} onClick={() => role && void onSelect(role)}>
           {roleCtaLabel(role)}
         </Button>

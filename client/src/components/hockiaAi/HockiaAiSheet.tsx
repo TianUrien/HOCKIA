@@ -103,7 +103,11 @@ export function HockiaAiSheet() {
   }, [isPending, sendMessage, setDetent, roleContext])
 
   // Grabber: drag down to step down (large → medium → closed), up to grow.
-  const onPointerDown = (e: React.PointerEvent) => { dragStart.current = e.clientY; (e.target as HTMLElement).setPointerCapture?.(e.pointerId) }
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragStart.current = e.clientY
+    // A pointer that's already gone (cancelled touch) can't be captured; the drag still works.
+    try { (e.target as HTMLElement).setPointerCapture?.(e.pointerId) } catch { /* no active pointer */ }
+  }
   const onPointerMove = (e: React.PointerEvent) => { if (dragStart.current !== null) setDrag(Math.max(-120, e.clientY - dragStart.current)) }
   const onPointerUp = () => {
     if (dragStart.current === null) return
