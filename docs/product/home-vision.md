@@ -20,13 +20,17 @@ Professionals have an agent; almost nobody in field hockey does. HOCKIA gives ev
 5. Brings you deals: gear, sponsorship, courses, kit, only when they fit you and where you are.
 It never promises outcomes ("I'll get you signed"); it promises work ("I'll put you in front of the right clubs"). Nothing is sent or saved without the member's tap. Beta label stays while it is beta.
 
-## What Home is (revised)
-1. **Your moment**, if something happened to you: the club's note, the invite, the offer, with the face or crest of who did it. Human, short, with its action.
-2. **This week in your hockey**: what moved across HOCKIA this week, newest first and bounded to the week: signings, people who became available, new roles, and what members posted (the Saturday match, the new team, a goal). One simple reaction and comments; no big counters; no infinite scroll. When the week is done, it says so.
-3. **The agent, quietly**: attached to actions ("Want a reply drafted?" under the club's note; "Your application is ready" under a role that fits) and, at most once a day, a small "While you were away" line. Never the screen's headline, never a first-person title.
-4. **Posting has a reason**: a Sunday nudge ("How did the match go?"), a suggestion to announce a signing, and photos and highlights that also build the profile portfolio.
+## What Home is (revised again, 2026-10-20)
+The member declares a hockey goal; Home is built around it. The psychology behind it (hypotheses, from the Jobs work): a player wants to know where they stand, looks at other players to place themselves and copy a path, needs a concrete next step, and wants to be seen by the right clubs. Four blocks, in this order:
 
-Per role, the same shape: a player's moment is a reply, an invite, an offer; a club's moment is applicants waiting or a confirmed availability; a brand's moment is ambassador matches; an umpire's is an appointment. "This week in your hockey" is shared by everyone.
+1. **Your path**: the goal ("Play in Europe next season", "Move up a division", "Find a club where I moved", "Get a sponsor", "Keep playing"), the next step, and what the agent already prepared, one tap each. The agent works here and only here.
+2. **Where you stand**: a market read for the goal, with real counts however small ("This window, 6 clubs in Europe are looking for left backs in your category; 2 ask for an EU passport, which you have") and the interest in you (views, shortlists). We measure the market, never the person.
+3. **Players like you**: public moves and posts of members with your position, category, country and level, with name and photo: signings, new clubs, match posts. Never ordered as "better"; newest first. This is the "I can do that too" and the map of how.
+4. **The moves**: who went where across HOCKIA (signings, new roles, people now open to play, member posts), the transfer page of hockey. One reaction and comments; bounded to the week.
+
+Posts live inside blocks 3 and 4 as stories of people on the same path. The agent never narrates; "while you were away" is at most one line inside Your path.
+
+Per role, the same shape with a different goal: a club's goal is a squad to fill; a coach's is a job or a team; a brand's is ambassadors and markets; an umpire's is appointments.
 
 ## How brands fit: deals, not ads
 A brand publishes offers and partnership proposals with a target (roles, location, never nationality, or "no location"). The member's agent brings a deal only when it fits a fact about them and where they are: "A deal I found for you: kit for your first season at X, from a shop in your city." At most one per Home visit, labelled, mutable, admin-reviewed while free; brands see aggregates only. Details: `proposals/brand-reach.md`.
