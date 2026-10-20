@@ -38,7 +38,7 @@ import Terms from '@/pages/Terms'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
-import { isStaleChunkMessage } from '@/lib/sentryFilters'
+import { isStaleChunkMessage, STALE_EXPORT_MESSAGE } from '@/lib/sentryFilters'
 import { STALE_CHUNK_KEY, recoverFromStaleChunk } from '@/lib/swUpdate'
 import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import NativePushBridge from '@/components/NativePushBridge'
@@ -51,7 +51,13 @@ function lazyWithRetry<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
 ) {
   return lazy(() =>
-    importFn().catch((error: Error) => {
+    importFn().then((mod) => {
+      // The chunk loaded but carries no component: an old deploy's file
+      // answering a new shell's import (JAVASCRIPT-REACT-DP / -DM). Treat
+      // it like a failed chunk load so the recovery below runs.
+      if (!mod || typeof mod.default === 'undefined') throw new Error(STALE_EXPORT_MESSAGE)
+      return mod
+    }).catch((error: Error) => {
       // Chrome, Firefox and Safari word the stale-chunk failure differently
       // (incl. the HTML-served-as-JS MIME error, JAVASCRIPT-REACT-3) — the
       // signature list lives in lib/sentryFilters.
