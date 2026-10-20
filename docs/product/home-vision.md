@@ -20,17 +20,18 @@ Professionals have an agent; almost nobody in field hockey does. HOCKIA gives ev
 5. Brings you deals: gear, sponsorship, courses, kit, only when they fit you and where you are.
 It never promises outcomes ("I'll get you signed"); it promises work ("I'll put you in front of the right clubs"). Nothing is sent or saved without the member's tap. Beta label stays while it is beta.
 
-## What Home is (revised again, 2026-10-20)
-The member declares a hockey goal; Home is built around it. The psychology behind it (hypotheses, from the Jobs work): a player wants to know where they stand, looks at other players to place themselves and copy a path, needs a concrete next step, and wants to be seen by the right clubs. Four blocks, in this order:
+## The thesis (2026-10-20, final for now)
+Instagram turns attention into advertising. HOCKIA turns attention into **intention**, and intention into outcomes. Three layers:
 
-1. **Your path**: the goal ("Play in Europe next season", "Move up a division", "Find a club where I moved", "Get a sponsor", "Keep playing"), the next step, and what the agent already prepared, one tap each. The agent works here and only here.
-2. **Where you stand**: a market read for the goal, with real counts however small ("This window, 6 clubs in Europe are looking for left backs in your category; 2 ask for an EU passport, which you have") and the interest in you (views, shortlists). We measure the market, never the person.
-3. **Players like you**: public moves and posts of members with your position, category, country and level, with name and photo: signings, new clubs, match posts. Never ordered as "better"; newest first. This is the "I can do that too" and the map of how.
-4. **The moves**: who went where across HOCKIA (signings, new roles, people now open to play, member posts), the transfer page of hockey. One reaction and comments; bounded to the week.
+1. **The hockey world, for everyone, no question asked.** Home always opens with the life of the sport: who signed where, highlights, someone's Saturday match, who became open to play, new roles, players like you. Entertainment with surprise, all hockey and all real. Nobody has to know what they want.
+2. **The intention engine underneath.** What a member does says what they want: the highlights they watch, the roles they open, the "open to play" they confirm, the questions they ask Hockia AI, what they post. HOCKIA infers an intention with a confidence level and **shows it to the member to confirm or correct** ("Looks like you're interested in playing in Belgium. Is that right?"). One tap declares it; nobody fills a form. With an intention, the same Home re-orders: Your path on top, Where you stand computed for it, Players like you refined, the agent preparing things. Without one, Home is the hockey world. The member always sees and controls the why.
+3. **Brands enter at the moment, not in the feed at large.** Intentions define moments, and moments are where a brand is welcome instead of intrusive: signed abroad → gear and services in the new city; wants to play abroad → insurance, agencies, language; watches goalkeeper highlights → a goalkeeper-gear brand's video, as content; a club posts a role → team kits; season start in a country → pre-season gear. A brand targets intention and location, never people; enters as labelled content or offers, capped per visit; the member can say "not now" or "never this brand"; the brand gets aggregate numbers only.
 
-Posts live inside blocks 3 and 4 as stories of people on the same path. The agent never narrates; "while you were away" is at most one line inside Your path.
+Why this is "Instagram, but modern": Instagram ranks to keep you; HOCKIA ranks to move you (every item carries an action). Instagram asks you to post; HOCKIA gives you reasons (Sunday, a signing, a goal) and every post builds the profile, which is the CV. Instagram guesses who you are to sell to you; HOCKIA shows what it understood and lets you correct it.
 
-Per role, the same shape with a different goal: a club's goal is a squad to fill; a coach's is a job or a team; a brand's is ambassadors and markets; an umpire's is appointments.
+Blocks (from the earlier drafts, re-ordered): the hockey world leads; Your path appears only with an intention; Where you stand and Players like you sharpen with it; the "what do you want next" question is a confirmation HOCKIA proposes when it has detected something, not a gate.
+
+Per role, the same thesis: a club's intention is a squad to fill (inferred from roles posted and reviews); a coach's is a job or a team; a brand's is its markets and ambassadors; an umpire's is appointments.
 
 ## How brands fit: deals, not ads
 A brand publishes offers and partnership proposals with a target (roles, location, never nationality, or "no location"). The member's agent brings a deal only when it fits a fact about them and where they are: "A deal I found for you: kit for your first season at X, from a shop in your city." At most one per Home visit, labelled, mutable, admin-reviewed while free; brands see aggregates only. Details: `proposals/brand-reach.md`.
