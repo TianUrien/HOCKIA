@@ -24,6 +24,21 @@ const SCRIM: Record<NonNullable<RoleCoverProps['scrim']>, string> = {
   none: '',
 }
 
+// Crest watermark (ruling 2026-10-20): crests are uploaded as JPEG/PNG on a
+// white square, and the old luminosity blend kept that square as a pale,
+// hard-edged tile over the cover. `multiply` makes white disappear into the
+// club gradient and keeps the crest's own colours as a deeper tint; the
+// radial mask feathers the square's edges so what remains reads as a mark,
+// not a pasted image. The hero sits lower so the crest is not cut by the top.
+const WATERMARK_MASK = 'radial-gradient(closest-side, #000 58%, rgba(0,0,0,0.6) 76%, transparent 100%)'
+const WATERMARK: Record<NonNullable<RoleCoverProps['scrim']>, CSSProperties> = {
+  card: { right: '-10%', top: '-2%', width: '70%' },
+  hero: { right: '-6%', top: '8%', width: '64%' },
+  band: { right: '-8%', top: '-30%', width: '60%' },
+  portrait: { right: '-10%', top: '-2%', width: '70%' },
+  none: { right: '-10%', top: '-2%', width: '70%' },
+}
+
 /**
  * Cover fallback ladder (Figma "Cover fallback ladder" 157:426, ruling 5):
  * the role's photo → a generated cover in the CLUB's crest colours (gradient
@@ -41,7 +56,7 @@ export function RoleCover({ coverUrl, crestUrl, palette, scrim = 'card', classNa
         <div
           aria-hidden="true"
           className="pointer-events-none absolute"
-          style={{ right: '-14%', top: '-10%', width: '72%', aspectRatio: '1', backgroundImage: `url("${crest}")`, backgroundPosition: 'center', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', opacity: 0.17, mixBlendMode: 'luminosity', transform: 'rotate(-8deg)' }}
+          style={{ ...WATERMARK[scrim], aspectRatio: '1', backgroundImage: `url("${crest}")`, backgroundPosition: 'center', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', opacity: 0.55, mixBlendMode: 'multiply', transform: 'rotate(-8deg)', WebkitMaskImage: WATERMARK_MASK, maskImage: WATERMARK_MASK }}
         />
       )}
       {scrim !== 'none' && <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ backgroundImage: SCRIM[scrim] }} />}
