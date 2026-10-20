@@ -5,15 +5,15 @@ When something has no photo (today: every opportunity), its cover is generated f
 Why: a category-coloured cover clashed with clubs' crests; covers must feel like the club.
 
 ## Fallback ladder (opportunity covers)
-1. **Photo** — optional cover photo uploaded at publish (`opportunities.cover_url`; moderated through the admin takedown flow). Scrim + glass chips.
-2. **Crest cover** — gradient from the crest's dominant colour, glow from its second colour, crest watermark.
-3. **Coach cover** — independent coach: HOCKIA violet + the coach's photo as a soft monochrome circle watermark; avatar circle, not a crest tile. A coach recruiting **for** a club uses that club's crest, never their face.
-4. **Monogram** — club without a crest: HOCKIA violet + the club's initials set very large.
+1. **Photo**: optional cover photo uploaded at publish (`opportunities.cover_url`; moderated through the admin takedown flow). Scrim + glass chips.
+2. **Crest cover**: gradient from the crest's dominant colour, glow from its second colour, crest watermark.
+3. **Coach cover**: independent coach: HOCKIA violet + the coach's photo as a soft monochrome circle watermark; avatar circle, not a crest tile. A coach recruiting **for** a club uses that club's crest, never their face.
+4. **Monogram**: club without a crest: HOCKIA violet + the club's initials set very large.
 
 ## Palette extraction (one extractor app-wide)
 `client/src/lib/crestPalette.ts` (`CREST_PALETTE_VERSION`), stored on `club_crest_colors` / `world_club_crest_colors`; the older single `color` derives from the same palette so Home, Community, Profile and Opportunities agree (ADR 0009).
 - Ignore transparent, near-white (L > 0.93) and near-black (L < 0.06) pixels; keep saturated buckets (s ≥ 0.30); group into 30° hue families weighted pixels × saturation.
-- **Yellows/golds (hue 35–75°) count 25 % for the background and become the glow** — darkened gold reads olive/brown.
+- **Yellows/golds (hue 35–75°) count 25 % for the background and become the glow**: darkened gold reads olive/brown.
 - Stops: HSL(h, min(s, 0.85) × 0.9, 0.46) → (h, s, 0.27) → (h, s, 0.11) at 135°; glow = second colour at 38 % alpha, radial from top-left.
 - Yellow-only crest (black & amber) → warm near-black base + gold glow. Monochrome crest → graphite on covers (Community cards keep their pre-approved violet).
 - A manual "pick your club colours" override (`source: "manual"`) is planned and is never overwritten by the automatic pass.
