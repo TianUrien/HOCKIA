@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import { logger } from '../lib/logger'
 import { trackDbEvent } from '../lib/trackDbEvent'
+import { readNavSource } from '../lib/navSource'
 import { trackVacancyView } from '../lib/analytics'
 import type { Opportunity } from '../lib/supabase'
 import Header from '../components/Header'
@@ -23,6 +24,8 @@ export default function OpportunityDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const routerLocation = useLocation()
+  // Where the member came from (Home card, Opportunities, push, inbox…): tags vacancy_view and application_submit.
+  const navSource = readNavSource(location)
   const { user, profile } = useAuthStore()
 
   // X-close behavior: if the user arrived via in-app navigation (from the
@@ -291,6 +294,7 @@ export default function OpportunityDetailPage() {
     trackDbEvent('vacancy_view', 'vacancy', opportunity.id, {
       position: opportunity.position ?? undefined,
       location: opportunity.location_city ?? undefined,
+      source: navSource,
     })
     void trackVacancyView(opportunity.id, opportunity.position ?? undefined, opportunity.location_city ?? undefined)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -493,6 +497,7 @@ export default function OpportunityDetailPage() {
           publisherRole={club.role}
           league={leagueForPhone}
           identity={identity}
+          source={navSource}
           onSuccess={(vacancyId) => {
             void vacancyId
             // ⚡ OPTIMISTIC UPDATE: Instant UI feedback

@@ -348,7 +348,11 @@ if (typeof window !== 'undefined') {
 export function initWebVitals() {
   if (typeof window === 'undefined') return;
 
-  import('web-vitals').then(({ onCLS, onFCP, onLCP, onTTFB, onINP }) => {
+  // Crawlers and some extensions hand back an empty module (JAVASCRIPT-REACT-DN / -DH);
+  // vitals are a nice-to-have, so an odd import never becomes an unhandled rejection.
+  import('web-vitals').then((vitals) => {
+    if (!vitals || typeof vitals.onCLS !== 'function') return
+    const { onCLS, onFCP, onLCP, onTTFB, onINP } = vitals
     const logVital = (metric: { name: string; value: number; rating: string }) => {
       const isDev = import.meta.env.DEV;
       if (isDev) {
@@ -373,7 +377,7 @@ export function initWebVitals() {
     onLCP(logVital);
     onTTFB(logVital);
     onINP(logVital);
-  });
+  }).catch(() => { /* vitals unavailable: nothing to measure */ });
 }
 
 /**

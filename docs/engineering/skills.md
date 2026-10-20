@@ -139,6 +139,19 @@ plugins (they run `npx protect-mcp` on every tool call).
 | Checked | Baseline vs with-skill on four prompts (2026-10-16): with the skill the answers followed every ruling checked; without it they reintroduced rejected patterns (Save, activity pills, location flags, unspecified category colours) |
 | Remove | `rm -rf .claude/skills/hockia-design-rules` |
 
+### 2.9 `hockia-jobs-to-be-done`, `hockia-member-interviews`, `hockia-working-backwards` (written in-house)
+
+| | |
+|---|---|
+| Source | Written for this repository on 2026-10-19 from the public methods (Jobs to Be Done, *The Mom Test*-style interviewing, Amazon Working Backwards PR/FAQ). Third-party skills with similar names were reviewed first and not taken: their licence is CC BY-NC-SA (non-commercial), and the press-release one modelled invented statistics and quotes. No upstream text copied; no licence file needed |
+| Files | One `SKILL.md` each |
+| What it is for | Grounding product and screen changes in what members come to get: evidence-tagged jobs per role, interview guides with consent and anonymised summaries (adults only), and internal PR/FAQs with an evidence-vs-assumption table |
+| Triggers | Redesigning or adding a screen (e.g. the Home rethink), deciding a primary action or section order, planning member interviews, writing a PR/FAQ |
+| Rules shared with the design skill | Customer obsession checks (`hockia-design-rules/references/workflow.md`); evidence lives in `docs/product/user-research.md`; never invent interviews, quotes or metrics |
+| Remove | `rm -rf .claude/skills/hockia-jobs-to-be-done .claude/skills/hockia-member-interviews .claude/skills/hockia-working-backwards` |
+
+User-level, not in the repository: `ux-heuristics` (wondelai/skills, MIT), installed 2026-10-19 with local edits (affiliate tags removed, numeric score replaced by a qualitative verdict, evidence and mobile rules added).
+
 Not taken from vercel-labs: `react-best-practices` (416 KB, 13 Next-only rules
 to prune; revisit if the bundle-budget work wants it), `deploy-to-vercel`
 (its script uploads a tarball of the project to a third-party endpoint),

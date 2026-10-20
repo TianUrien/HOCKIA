@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Check, LineChart, User } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { SquircleBox } from './primitives'
 import { FaceCircle } from './FaceCircle'
 import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
+import { HOME_V1_MODULES, recordModuleImpression, recordNextStepImpression, trackModuleClick, trackNextStepAction, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { navState } from '@/lib/navSource'
 
 /**
  * Next step (Figma 60:140 / H5 64:326): ONE purple card, the highest-priority
@@ -23,6 +25,12 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
   // Motion 95:1012 §3: the resolved card leaves (−24 pt, 150 ms), the next enters (+24 pt, 250 ms).
   const [leaving, setLeaving] = useState<string | null>(null)
   const [entering, setEntering] = useState<string | null>(null)
+  const impressionRef = useImpressionOnce(() => recordModuleImpression(HOME_V1_MODULES.nextStep.id, HOME_V1_MODULES.nextStep.position))
+
+  // Which step was actually on screen (gap 8: the card replaced Pulse items).
+  // Only once the list has settled — while loading, the first slot changes as each source resolves.
+  const activeKey = !loading && steps.length > 0 ? steps[Math.min(index, steps.length - 1)].key : null
+  useEffect(() => { if (activeKey) recordNextStepImpression(activeKey) }, [activeKey])
 
   if (loading && steps.length <= 1) return <NextStepSkeleton />
   if (steps.length === 0) return null
@@ -30,7 +38,12 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
 
   const act = async (step: NextStep) => {
     void hapticLight()
-    if (step.action === 'compose') { onCompose(); return }
+    if (step.action === 'compose') {
+      trackNextStepAction(step.key, 'compose', 'home_v1')
+      trackModuleClick(HOME_V1_MODULES.nextStep.id, HOME_V1_MODULES.nextStep.position, 'compose')
+      onCompose()
+      return
+    }
     if (step.action === 'confirm_availability') {
       setBusy(step.key)
       const i = steps.indexOf(step)
@@ -47,7 +60,11 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
       }
       return
     }
-    if (step.to) navigate(step.to)
+    if (step.to) {
+      trackNextStepAction(step.key, 'open', 'home_v1')
+      trackModuleClick(HOME_V1_MODULES.nextStep.id, HOME_V1_MODULES.nextStep.position, step.to)
+      navigate(step.to, navState('home_next_step'))
+    }
   }
 
   const onScroll = () => {
@@ -56,7 +73,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
   }
 
   return (
-    <section aria-label="Next step" className="flex flex-col items-center gap-2 px-4 pb-4 pt-2" data-testid="home-next-step">
+    <section ref={impressionRef} aria-label="Next step" className="flex flex-col items-center gap-2 px-4 pb-4 pt-2" data-testid="home-next-step">
       <div
         ref={trackRef}
         onScroll={onScroll}

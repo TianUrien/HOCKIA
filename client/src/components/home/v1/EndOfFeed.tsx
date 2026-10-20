@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
+import { HOME_V1_MODULES, recordModuleImpression, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { PeopleRow } from './PeopleRow'
 import { RolesRail } from './RolesRail'
 
@@ -11,8 +12,9 @@ import { RolesRail } from './RolesRail'
 export function EndOfFeed() {
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const clubSide = role === 'club'
+  const impressionRef = useImpressionOnce(() => recordModuleImpression(HOME_V1_MODULES.endOfFeed.id, HOME_V1_MODULES.endOfFeed.position))
   return (
-    <section className="pb-6" data-testid="home-end-of-feed">
+    <section ref={impressionRef} className="pb-6" data-testid="home-end-of-feed">
       <div className="flex flex-col items-center gap-1 px-8 pb-6 pt-7 text-center">
         <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-hockia-soft">
           <Check className="h-6 w-6 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
@@ -21,7 +23,9 @@ export function EndOfFeed() {
         <p className="text-secondary text-ink-2">New signings and highlights will show up here.</p>
       </div>
       <PeopleRow kind="pymk" />
-      {clubSide ? <PeopleRow kind="available" /> : <RolesRail className="flex flex-col gap-2 pb-4" />}
+      {clubSide
+        ? <PeopleRow kind="available" module={HOME_V1_MODULES.endPeopleAvailable} />
+        : <RolesRail className="flex flex-col gap-2 pb-4" module={HOME_V1_MODULES.endRolesRail} />}
     </section>
   )
 }

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
+import { navState } from '@/lib/navSource'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
@@ -86,7 +87,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
     ['League', league],
   ]
 
-  const viewRole = () => navigate(`/opportunities/${role.id}`)
+  const viewRole = () => navigate(`/opportunities/${role.id}`, navState('inbox'))
   const apply = async () => {
     setOpening(true)
     try {
