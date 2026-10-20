@@ -8902,6 +8902,21 @@ export type Database = {
           state: string
         }[]
       }
+      compute_club_fit_batch: {
+        Args: {
+          p_opportunity_id: string
+          p_owner_id: string
+          p_player_ids: string[]
+          p_region: string
+          p_target: string
+        }
+        Returns: {
+          components: Json
+          player_id: string
+          score: number
+          state: string
+        }[]
+      }
       compute_product_health_score: { Args: never; Returns: Json }
       compute_profile_completeness_pct: {
         Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }
