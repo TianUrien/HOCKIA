@@ -29,7 +29,7 @@ Instagram turns attention into advertising. HOCKIA turns attention into **intent
 
 Why this is "Instagram, but modern": Instagram ranks to keep you; HOCKIA ranks to move you (every item carries an action). Instagram asks you to post; HOCKIA gives you reasons (Sunday, a signing, a goal) and every post builds the profile, which is the CV. Instagram guesses who you are to sell to you; HOCKIA shows what it understood and lets you correct it.
 
-Blocks (from the earlier drafts, re-ordered): the hockey world leads; Your path appears only with an intention; Where you stand and Players like you sharpen with it; the "what do you want next" question stays in onboarding and on the first visit (founder, 2026-10-20), with the fixed options plus **Other** and a free-text field; skipping is allowed. Answers and free text are stored as internal data and measured (`goal_set {option, has_text}`), and the intention engine refines or confirms them over time.
+Blocks (from the earlier drafts, re-ordered): the hockey world leads; Your path appears only with an intention; Where you stand and Players like you sharpen with it; the "what do you want next" question stays in onboarding and on the first visit (founder, 2026-10-20), with the fixed options plus **Other** and a free-text field; the member can pick up to three; skipping is allowed. Answers and free text are stored as internal data and measured (`goal_set {option, has_text}`), and the intention engine refines or confirms them over time.
 
 Per role, the same thesis: a club's intention is a squad to fill (inferred from roles posted and reviews); a coach's is a job or a team; a brand's is its markets and ambassadors; an umpire's is appointments.
 
