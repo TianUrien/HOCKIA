@@ -1,6 +1,6 @@
 # Brand reach — offers with a target (PR/FAQ)
 
-Internal Working Backwards document. Proposal for the founder, 2026-10-20. Not approved for build. No real numbers: every target is marked **[TARGET]** and every unproven claim **[NEEDS EVIDENCE]**. Quotes are illustrative.
+Internal Working Backwards document. Proposal for the founder, 2026-10-20. **Framing update (same day):** under the Home vision "everyone has an agent" (`../home-vision.md`), a brand offer reaches a member as *a deal the member's agent brought* ("A deal I found for you…"), never as an ad card. The targeting, surfaces, limits and privacy rules below are unchanged. Not approved for build. No real numbers: every target is marked **[TARGET]** and every unproven claim **[NEEDS EVIDENCE]**. Quotes are illustrative.
 
 ## Press release (as if it shipped)
 

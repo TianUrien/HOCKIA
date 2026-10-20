@@ -21,6 +21,7 @@
 - Club preview: Message only, no Add friend (the club page keeps the friendship button); facts League / Based in / Friends here.
 
 ## Home (live)
+- Direction (2026-10-20, not built): Home becomes the member's **agent's desk** — Hockia AI speaks in first person about what it did, found and needs decided; one tap per item; calm when nothing happened; no feed, likes or comments on Home; brand offers appear only as deals the agent brings. See `docs/product/home-vision.md`.
 - Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). Approved, not yet shipped (2026-10-16): a views card always opens who viewed you (CTA "View"), never the composer; a card's action must match its title. Today the brand card still says "Post" and the player card "Activity". Roles rail for players; clubs see applicant next steps instead.
 - Grouped digests for automatic events (≥ 4 items), media grouped per day; "New in the community" faces row opens the Community deck.
 - New signing posts only by clubs: the club tags a member (notified, can remove the tag; 18+ only). Card = light grey surface, faint violet pitch, two overlapping circles (player photo + crest), "NEW SIGNING".
@@ -52,6 +53,7 @@
 - Chat header may show activity only if the user allows it.
 
 ## Hockia AI (approved 2026-10-16)
+- Hockia AI is every member's agent (2026-10-20): player's agent, club's sporting director, brand's partnerships desk, umpire's liaison. It promises work, never outcomes; facts, never judgements about people.
 - Hockia AI is the name of the whole intelligence layer: what it knows about the viewer and their roles, hockey knowledge, rules in code (fit, ranking, suggestions) and the language model. In copy, intelligence features belong to Hockia AI (2026-10-16).
 - Direction, not yet designed: the clubs' and recruiting coaches' recruiting context becomes Hockia AI's context. Default = the open role in use; Hockia AI sets or changes it with confirmation and replaces the context form. Fit and reasons stay rule-based (template reasons). Switching between open roles works without the language model or the daily limit.
 - Mascot: violet vinyl-toy figure with a right-handed field hockey stick and a headband "mind light" (calm glow · thinking sweep · idea flash). Friendly, curious, smart; explains, doesn't hype; gender-neutral; CG assets (Blender). Avatars at 32–40 pt show head + headband only.
