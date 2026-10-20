@@ -3,8 +3,8 @@
 Evidence-based definition of what HOCKIA is for and what each role is, does and gets (code on staging, 2026-10-16). The strategic rulings at the end are the founder's; everything else describes the shipped product.
 
 ## The product
-- **What it is:** the network where field hockey people get found and hired — players, coaches and umpires build a professional profile; clubs and recruiting coaches publish roles and recruit with trust and context; brands reach athletes.
-- **Reason to exist / North Star:** the recruiting loop — a role is posted → the right people see it → they apply or are invited → the recruiter replies → offer → signing (`docs/engineering/analytics-tracking-plan.md`). Every role's design should feed this loop.
+- **What it is:** the network where field hockey people get found and hired, players, coaches and umpires build a professional profile; clubs and recruiting coaches publish roles and recruit with trust and context; brands reach athletes.
+- **Reason to exist / North Star:** the recruiting loop, a role is posted → the right people see it → they apply or are invited → the recruiter replies → offer → signing (`docs/engineering/analytics-tracking-plan.md`). Every role's design should feed this loop.
 - **Price:** free for every role ("Free for players, coaches, clubs, umpires and brands"). No paid tier is approved.
 - **Age:** an 18+ platform for person roles (date of birth declared at sign-up; under-18 → age gate and juniors waitlist). Clubs and brands attest they are run by adults.
 - **Role is chosen once** and can't be changed without support. Admin is not a role (a JWT flag for the admin portal).
@@ -13,7 +13,7 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 ## Player
 - **Who:** an adult field hockey player (any level) looking for a club, a move abroad, a better team or a paid contract.
 - **Promise:** "Build the profile that gets you found by clubs."
-- **Job to be done:** be found and chosen — show position, level, passports/EU eligibility, availability, video and references so recruiters trust them; find roles that fit and apply in one tap.
+- **Job to be done:** be found and chosen, show position, level, passports/EU eligibility, availability, video and references so recruiters trust them; find roles that fit and apply in one tap.
 - **Success looks like:** complete profile → applications that get replies → invite/offer → signing.
 - **Onboarding:** name, date of birth, category, position (required); photo, second position, current club, league, base, up to 2 passports, Open to play (optional/skippable).
 - **Profile:** Overview (Plays at, Available, Nationalities/passports/permits), Open roles, Videos (highlights; full matches recruiter-only by default), References (gold), Career, Posts, About; sponsor/ambassador line; owner-only stats.
@@ -23,8 +23,8 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 - **Emails:** shortlisted / not selected (never "maybe"), one batched no-reply expiry, matching new roles, digests, weekly availability check-in, reference reminders.
 
 ## Coach (two modes)
-- **Who:** a coach looking for coaching work — and, if they run a team, recruiting players for it.
-- **Promise:** "Find coaching opportunities — and recruit players if you also manage a team."
+- **Who:** a coach looking for coaching work, and, if they run a team, recruiting players for it.
+- **Promise:** "Find coaching opportunities, and recruit players if you also manage a team."
 - **Mode is set at onboarding:** "Do you recruit players for a team?" (required, nothing preselected). Yes = recruiting coach (`coach_recruits_for_team`): adds My roles and Find players.
 - **Candidate coach can:** apply to coaching roles, references, friends, posts; Hockia AI: find clubs hiring.
 - **Recruiting coach also can:** post roles for the club they recruit for (shown "Posted by <coach>" with the club as the hiring entity and the club's crest), review applicants, Find players, Shortlist, fit, AI opinion, role-description draft, invites and offers; Opportunities shows Roles · Applied · My roles.
@@ -34,7 +34,7 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 ## Club
 - **Who:** a field hockey club (or its manager) that needs players or coaches.
 - **Promise:** "Recruit field hockey players with trust and context."
-- **Job to be done:** fill roles with the right people quickly — post once, get fitting applicants, review fast, reach out to available players, sign.
+- **Job to be done:** fill roles with the right people quickly, post once, get fitting applicants, review fast, reach out to available players, sign.
 - **Success looks like:** roles posted → applicants reviewed within the reply window → offers → signings (and announcing them).
 - **Onboarding:** crest (optional), name, country, city, 18+ operator attestation; link to the club directory or skip; lands on Opportunities.
 - **Profile:** cover carousel, crest + verified, "Recruiting now" only with an open role, Open roles, Squad, Posts, Comments, About; owner: recruiting card + private views.
@@ -46,18 +46,18 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 ## Umpire
 - **Who:** a field hockey official building an officiating career.
 - **Promise:** "Keep your officiating history in one place."
-- **Job today:** a credible officiating profile — federation, level, formats, languages, appointments timeline, references — and a network of officials.
+- **Job today:** a credible officiating profile, federation, level, formats, languages, appointments timeline, references, and a network of officials.
 - **Can:** appointments, references (since 2026-04), friends, messages, posts, Community "Umpires" tab; Hockia AI: find officials, add an appointment.
-- **Can't yet:** apply to anything — Opportunities is browse-only ("Umpire appointments and assessments will live here when we open them"); no umpire role types; can't post roles.
+- **Can't yet:** apply to anything. Opportunities is browse-only ("Umpire appointments and assessments will live here when we open them"); no umpire role types; can't post roles.
 - **Profile:** Overview (federation without a flag, level, available for appointments), Appointments, References, Posts, About (languages are umpire-only). No Career section.
 - **Note:** the only role still on the legacy 3-step onboarding wizard.
 
 ## Brand
 - **Who:** a field hockey company (equipment, apparel, nutrition, tech, coaching services, recruiting, media…).
-- **Promise:** "Build your brand in the hockey community" — reach and recruit athletes as ambassadors.
+- **Promise:** "Build your brand in the hockey community", reach and recruit athletes as ambassadors.
 - **Can:** profile with cover, logo, products (taps to store counted with consent), updates in the feed, followers, invite ambassadors (players only, two-sided), "Open to partners" (default off), owner stats (views, search appearances); Hockia AI: find ambassadors.
 - **Never:** posts roles, applies, references, friends (followers instead), recruiter tools.
-- **Direction (2026-10-20, not built):** offers with a target — roles + location (never nationality), shown in Community › Brands, ≤ 1 labelled card per Home visit when it fits, and under Hockia AI answers; admin-reviewed while free; aggregate stats only; members can mute. See `docs/product/proposals/brand-reach.md`.
+- **Direction (2026-10-20, not built):** offers with a target, roles + location (never nationality), shown in Community › Brands, ≤ 1 labelled card per Home visit when it fits, and under Hockia AI answers; admin-reviewed while free; aggregate stats only; members can mute. See `docs/product/proposals/brand-reach.md`.
 - **Home Next step:** profile views + search appearances; tapping opens who viewed you ("View"), not the composer (2026-10-16).
 
 ## Known gaps and inconsistencies (fix or decide)

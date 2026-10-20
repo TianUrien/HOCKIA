@@ -1,6 +1,6 @@
 ---
 name: hockia-member-interviews
-description: Plan, run and summarise short discovery interviews with HOCKIA members (players, coaches, clubs, umpires, brands) in the Mom Test style — past behaviour, not opinions about ideas — with consent and privacy built in. Use when a HOCKIA decision lacks evidence (e.g. "what should Home be?"), when the founder wants to talk to users, when writing an interview guide or recruiting message, or when turning interview notes into findings for docs/product/user-research.md.
+description: Plan, run and summarise short discovery interviews with HOCKIA members (players, coaches, clubs, umpires, brands) in the Mom Test style, past behaviour, not opinions about ideas, with consent and privacy built in. Use when a HOCKIA decision lacks evidence (e.g. "what should Home be?"), when the founder wants to talk to users, when writing an interview guide or recruiting message, or when turning interview notes into findings for docs/product/user-research.md.
 ---
 
 # HOCKIA member interviews
@@ -15,7 +15,7 @@ Short conversations that tell us what members actually do and need. The founder 
 5. **No incentives that cost money** unless the founder decides.
 
 ## Recruiting message (adapt; founder sends)
-"Hi <first name>, I'm building HOCKIA. Could I ask you about how you <find clubs / recruit players / …> — 20 minutes, no preparation? It's to make the app more useful, not to sell anything. Happy to do it whenever suits you."
+"Hi <first name>, I'm building HOCKIA. Could I ask you about how you <find clubs / recruit players / …>, 20 minutes, no preparation? It's to make the app more useful, not to sell anything. Happy to do it whenever suits you."
 
 ## Consent and privacy
 - At the start: what it's for, how notes are kept, that they can skip any question or stop. Ask before recording.
@@ -24,7 +24,7 @@ Short conversations that tell us what members actually do and need. The founder 
 
 ## The guide (Mom Test rules)
 Ask about the **last time** something happened, not opinions or futures. Don't pitch, don't show designs until the end, don't ask "would you use…".
-1. Context: "Tell me about your hockey right now — where you play/coach, what's next for you."
+1. Context: "Tell me about your hockey right now, where you play/coach, what's next for you."
 2. Last real episode: "The last time you <looked for a club / needed a player / changed team>, what did you do, step by step?" → "Who helped? What was hardest? What did it cost you (time, money, missed chance)?"
 3. Current tools: "Where do you hear about <roles / players / moves>? What do you check most often?" (WhatsApp, agents, Instagram, federations, HOCKIA.)
 4. HOCKIA in their week: "When did you last open HOCKIA? What were you looking for? Did you find it?" → "What do you look at first? What do you skip?"
@@ -34,7 +34,7 @@ Follow-ups: "Why?", "What happened next?", "Can you show me?" Avoid leading word
 
 ## After: summarise (per interview, then per round)
 ```
-Interview <n> — role, region, level, active|lapsed, date
+Interview <n>, role, region, level, active|lapsed, date
 Did (past behaviour, facts):
 Pains (their words paraphrased, anonymised):
 Workarounds / alternatives:
