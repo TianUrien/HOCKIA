@@ -33,6 +33,12 @@ import { EXPECTED_SAMPLE_RATE, expectedErrorKey } from '@/lib/sentryFilters'
 import { scrubBreadcrumb, scrubEvent } from '@/lib/sentryScrub'
 import { getAppVersion } from '@/lib/appVersion'
 
+/** Events from an iOS simulator or Android emulator (Sentry's native device context). */
+function isSimulatorEvent(event: { contexts?: Record<string, unknown> | undefined }): boolean {
+  const device = event.contexts?.device as { simulator?: unknown } | undefined
+  return device?.simulator === true
+}
+
 export type SentryEnvironment = 'development' | 'staging' | 'production'
 export type SentryShell = 'native' | 'web'
 
@@ -122,9 +128,14 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
       return scrubBreadcrumb(crumb)
     },
     beforeSendTransaction(event) {
+      if (isSimulatorEvent(event)) return null
       return scrubEvent(event)
     },
     beforeSend(event, hint) {
+      // Our own simulator / emulator runs (release builds launched from Xcode,
+      // the device lab) are not members: their app hangs and errors only hide
+      // real ones (JAVASCRIPT-REACT-DR, 2026-10-19).
+      if (isSimulatorEvent(event)) return null
       // Network failures (Safari "Load failed", Chrome "Failed to fetch"): the
       // request never reached the server — offline, a blocked ISP, a dropped
       // connection. Nothing in the app to fix, and they hide real errors in

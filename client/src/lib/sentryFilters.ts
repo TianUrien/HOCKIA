@@ -14,7 +14,13 @@
  *   - Safari, when Vercel's SPA fallback serves HTML for the missing chunk:
  *                     "… is not a valid JavaScript MIME type"
  */
+/** Thrown by App.tsx lazyWithRetry when a chunk loads but no longer exports
+ *  what this shell expects — an older deploy's file served to a newer shell
+ *  (JAVASCRIPT-REACT-DP "reading 'AdminGuard'", -DM "e._result.default"). */
+export const STALE_EXPORT_MESSAGE = 'Stale chunk: missing export'
+
 const STALE_CHUNK_SIGNATURES = [
+  STALE_EXPORT_MESSAGE.toLowerCase(),
   'failed to fetch dynamically imported module',
   'error loading dynamically imported module',
   'importing a module script failed',
