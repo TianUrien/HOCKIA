@@ -47,32 +47,71 @@ const clearActorCache = () => {
   actorCacheTimestamps.clear()
 }
 
-const fetchActorProfile = async (actorId: string): Promise<ActorProfile | null> => {
-  const now = Date.now()
-  const cachedTs = actorCacheTimestamps.get(actorId)
-  
-  if (cachedTs && now - cachedTs < ACTOR_CACHE_TTL_MS) {
-    return actorProfileCache.get(actorId) ?? null
-  }
+// Realtime delivers one event per row: marking a page of notifications seen
+// fires an UPDATE for each, and every event used to read its actor with its
+// own `profiles?id=eq.<actor>` request, repeating the same three or four
+// actors (Sentry N+1 JAVASCRIPT-REACT-CX, 2026-10-19). Actors asked for in
+// the same tick now share one `id IN (…)` read, and a second request for an
+// actor already in flight waits on the first.
+const ACTOR_BATCH_MAX = 50
+const ACTOR_SELECT = 'id, full_name, role, username, avatar_url, base_location'
 
+type ActorWaiter = { actorId: string; resolve: (p: ActorProfile | null) => void }
+const actorQueue: ActorWaiter[] = []
+const actorInFlight = new Map<string, Promise<ActorProfile | null>>()
+let actorFlushTimer: ReturnType<typeof setTimeout> | null = null
+
+/** One read for every actor queued in this tick; waiters get their own row. */
+async function flushActorQueue(): Promise<void> {
+  actorFlushTimer = null
+  const batch = actorQueue.splice(0, ACTOR_BATCH_MAX)
+  if (actorQueue.length > 0) actorFlushTimer = setTimeout(() => { void flushActorQueue() }, 0)
+  if (batch.length === 0) return
+  const ids = Array.from(new Set(batch.map((w) => w.actorId)))
+  const found = new Map<string, ActorProfile>()
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, full_name, role, username, avatar_url, base_location')
-      .eq('id', actorId)
-      .single()
-
-    if (error || !data) {
-      return null
+      .select(ACTOR_SELECT)
+      .in('id', ids)
+    if (error) throw error
+    const now = Date.now()
+    for (const row of (data ?? []) as ActorProfile[]) {
+      found.set(row.id, row)
+      actorProfileCache.set(row.id, row)
+      actorCacheTimestamps.set(row.id, now)
     }
-
-    actorProfileCache.set(actorId, data)
-    actorCacheTimestamps.set(actorId, now)
-    return data
   } catch (err) {
-    logger.warn('[NOTIFICATIONS] Failed to fetch actor profile', { actorId, error: err })
-    return null
+    logger.warn('[NOTIFICATIONS] Failed to fetch actor profiles', { actorIds: ids, error: err })
   }
+  for (const w of batch) w.resolve(found.get(w.actorId) ?? null)
+}
+
+/** The actor's profile: cached for 5 min, otherwise batched with every other
+ *  actor requested in the same tick and deduped while the read is in flight. */
+export const fetchActorProfile = (actorId: string): Promise<ActorProfile | null> => {
+  const cachedTs = actorCacheTimestamps.get(actorId)
+  if (cachedTs && Date.now() - cachedTs < ACTOR_CACHE_TTL_MS) {
+    return Promise.resolve(actorProfileCache.get(actorId) ?? null)
+  }
+  const pending = actorInFlight.get(actorId)
+  if (pending) return pending
+  const promise = new Promise<ActorProfile | null>((resolve) => {
+    actorQueue.push({ actorId, resolve })
+    if (!actorFlushTimer) actorFlushTimer = setTimeout(() => { void flushActorQueue() }, 0)
+  }).finally(() => { actorInFlight.delete(actorId) })
+  actorInFlight.set(actorId, promise)
+  return promise
+}
+
+/** The actor as the store already knows it: from the same notification (an
+ *  UPDATE event) or any other notification by the same actor. Null when the
+ *  store has no name for that actor yet, so the caller reads the profile. */
+export function knownActor(notifications: NotificationRecord[], notificationId: string, actorId: string): ActorProfile | null {
+  const same = notifications.find((n) => n.id === notificationId)
+  const hit = same?.actor.id === actorId && same.actor.fullName ? same : notifications.find((n) => n.actor.id === actorId && n.actor.fullName)
+  if (!hit) return null
+  return { id: actorId, full_name: hit.actor.fullName, role: hit.actor.role, username: hit.actor.username, avatar_url: hit.actor.avatarUrl, base_location: hit.actor.baseLocation }
 }
 
 const mapRealtimeNotification = (row: ProfileNotificationRow, actorProfile?: ActorProfile | null): NotificationRecord => ({
@@ -382,10 +421,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
           const row = record as ProfileNotificationRow
           const actorId = row.actor_profile_id
 
-          // Fetch actor profile to display sender info immediately
+          // Sender info for the row: an UPDATE (seen / read / cleared) is for a
+          // notification the store already holds with its actor, so reuse that
+          // and only read the profile for an actor we have never seen.
           let actorProfile: ActorProfile | null = null
           if (actorId) {
-            actorProfile = await fetchActorProfile(actorId)
+            actorProfile = knownActor(get().notifications, row.id, actorId) ?? (await fetchActorProfile(actorId))
           }
 
           const normalized = mapRealtimeNotification(row, actorProfile)
