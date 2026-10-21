@@ -4,12 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Clock, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { ConversationRow } from './ConversationRow'
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { ConversationSkeleton } from '@/components/Skeleton'
 import { identityLine } from '@/lib/identity'
-import { formatInboxTime } from '@/lib/inboxTime'
-import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useClubInboxMeta } from '@/hooks/useClubInbox'
 import { clubInboxRoleLine, inboxWaitingNotice } from '@/lib/clubInbox'
@@ -175,33 +173,17 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             const roleLine = m ? clubInboxRoleLine(row.other_participant_role, m.detail, m.applied) : identityLine(row.other_participant_role)
             return (
               <li key={row.conversation_id} className="group">
-                {/* List item / Conversation (Figma 494:2377): avatar 52, name +
-                    date, meta, preview; the divider starts at the text. */}
-                <button
-                  type="button"
-                  onClick={() => navigate(`/messages/${row.conversation_id}`)}
-                  className="flex w-full items-center gap-3 pl-4 text-left transition-colors active:bg-surface-muted"
-                  data-testid="conversation-row"
-                >
-                  <EntityAvatar src={row.other_participant_avatar} name={name} role={row.other_participant_role} size={52} />
-                  <span className="min-w-0 flex-1 border-b border-line py-3 pr-4 group-last:border-b-0">
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{name}</span>
-                      <span className="shrink-0 text-secondary text-ink-3" data-testid="conversation-date">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
-                    </span>
-                    <span className="block truncate text-secondary text-ink-2">{roleLine}</span>
-                    <span className="mt-0.5 flex items-center gap-2">
-                      <span className={cn('min-w-0 flex-1 truncate text-[14px] leading-[19px]', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>
-                      {/* Dot, never a number. Amber = the club owes a first
-                          reply (club only); brand purple = unread. */}
-                      {m?.waiting ? (
-                        <span aria-label="Waiting for your first reply" className="h-2 w-2 shrink-0 rounded-full bg-[#b45309]" data-testid="inbox-waiting-dot" />
-                      ) : unread ? (
-                        <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="inbox-unread-dot" />
-                      ) : null}
-                    </span>
-                  </span>
-                </button>
+                <ConversationRow
+                  name={name}
+                  avatarUrl={row.other_participant_avatar}
+                  role={row.other_participant_role}
+                  at={row.conversation_last_message_at ?? row.last_message_sent_at}
+                  contextLine={roleLine}
+                  preview={preview}
+                  unread={unread}
+                  waiting={Boolean(m?.waiting)}
+                  onSelect={() => navigate(`/messages/${row.conversation_id}`)}
+                />
               </li>
             )
           })}

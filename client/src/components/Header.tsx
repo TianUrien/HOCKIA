@@ -225,11 +225,11 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                     key={path}
                     onClick={() => handleNavigate(path)}
                     className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive(path)
+                      (isActive(path) || (path === '/inbox' && isActive('/messages')))
                         ? 'text-hockia-primary bg-hockia-primary/10'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
-                    aria-current={isActive(path) ? 'page' : undefined}
+                    aria-current={(isActive(path) || (path === '/inbox' && isActive('/messages'))) ? 'page' : undefined}
                   >
                     <div className="flex items-center gap-2">
                       <Icon className="w-4.5 h-4.5" />

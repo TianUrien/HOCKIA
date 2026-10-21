@@ -6,7 +6,7 @@ test.describe('Messaging - Full Flow', () => {
   test('player can open messages page and see heading', async ({ page }) => {
     await page.goto('/messages')
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 20000 })
   })
 
@@ -43,7 +43,7 @@ test.describe('Messaging - Full Flow', () => {
   test('conversation appears in sidebar after sending', async ({ page }) => {
     await page.goto('/messages')
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 20000 })
 
     // After previous test has sent messages, the E2E club should appear in conversations
@@ -116,7 +116,7 @@ test.describe('Messaging - Mobile', () => {
     await page.goto('/messages')
 
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 20000 })
   })
 
