@@ -14,6 +14,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search, Building2, MapPin, Trophy, Plus, CheckCircle, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { normalizeClubNameCasing } from '@/lib/clubNameCasing'
 import { Button } from '@/components'
 import ClubClaimConfirmModal from './ClubClaimConfirmModal'
 
@@ -358,7 +359,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
         // Create and claim new club
          
         const { data, error } = await supabase.rpc('create_and_claim_world_club', {
-          p_club_name: newClubName.trim(),
+          p_club_name: normalizeClubNameCasing(newClubName),
           p_country_id: selectedCountry.country_id,
           p_province_id: selectedRegion?.id ?? undefined,
           p_profile_id: profileId,
@@ -377,7 +378,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
         onComplete({
           mode: 'created',
           worldClubId: data?.club_id,
-          clubName: newClubName.trim(),
+          // Same casing the directory stores (server rule, lib/clubNameCasing mirror).
+          clubName: normalizeClubNameCasing(newClubName),
           countryId: selectedCountry.country_id,
           countryName: selectedCountry.country_name || '',
           regionId: selectedRegion?.id,

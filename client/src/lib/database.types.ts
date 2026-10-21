@@ -7757,6 +7757,20 @@ export type Database = {
           name: string
         }[]
       }
+      admin_world_club_near_duplicates: {
+        Args: { p_limit?: number; p_threshold?: number }
+        Returns: {
+          a_id: string
+          a_is_claimed: boolean
+          a_name: string
+          b_id: string
+          b_is_claimed: boolean
+          b_name: string
+          country_name: string
+          similarity: number
+        }[]
+      }
+      normalize_club_name_casing: { Args: { p_name: string }; Returns: string }
       admin_delete_email_campaign: {
         Args: { p_campaign_id: string }
         Returns: Json
