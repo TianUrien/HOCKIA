@@ -75,6 +75,8 @@ BEGIN
   SELECT count(*) INTO v_n FROM club_reminder_candidates('reminders') c WHERE c.applicant_id = c_player;
   v_out := v_out || E'\n' || format('%s A4 a known minor is in no row (rows=%s)', CASE WHEN v_n = 0 THEN 'PASS' ELSE 'FAIL' END, v_n);
   UPDATE profiles SET date_of_birth = (current_date - interval '25 years')::date, frozen_minor_at = NULL WHERE id = c_player;
+  -- A known minor is frozen by the age gate, which withdraws their applications: put the fixtures back.
+  UPDATE opportunity_applications SET status = 'pending' WHERE id IN (a_last, a_new);
 
   INSERT INTO user_blocks (blocker_id, blocked_id) VALUES (c_club, c_player);
   SELECT count(*) INTO v_n FROM club_reminder_candidates('reminders') c WHERE c.applicant_id = c_player;

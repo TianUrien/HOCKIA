@@ -682,3 +682,93 @@ export function reminderCopyFromMetadata(kind: string, metadata: Record<string, 
   }
   return { title: title ?? 'Players are waiting for your answer', body: body ?? 'Some applications close soon.' }
 }
+
+// ── Grouped new-application push (20261021160000) ────────────────────────────
+//
+// Founder, 21 Oct 2026: clubs must not get one notification per application.
+// Once application_response_settings.batched_application_pushes_since is set,
+// send-push stands down for each vacancy_application_received row and the
+// club_new_applications job sends ONE push per publisher per hour instead,
+// straight to send-push (no extra notification row: the bell keeps one row per
+// applicant). Never in quiet hours: the batch waits for 08:00 local.
+
+/** The notification kind the grouped push is sent as (its preferences and tag). */
+export const NEW_APPLICATIONS_PUSH_KIND = 'vacancy_application_received'
+
+export interface NewApplicationsPush {
+  title: string
+  summary: string
+  target_url: string
+  /** The record send-push receives (shaped like a profile_notifications row). */
+  record: {
+    recipient_profile_id: string
+    actor_profile_id: string | null
+    kind: typeof NEW_APPLICATIONS_PUSH_KIND
+    metadata: Record<string, unknown>
+  }
+}
+
+/**
+ * One push for every application since the last one, in applied order.
+ *   One:            "Ana applied for Women's midfielder" · "Tap to review the application."
+ *   One role, many: "3 new applicants for Women's midfielder" · "Ana and 2 more applied."
+ *   Several roles:  "4 new applicants for your roles" · "Ana and 3 more applied."
+ * Tap: the applicant (one), the role's Applicants (one role), else Opportunities.
+ */
+export function buildNewApplicationsPush(publisherId: string, items: ApplicantItem[]): NewApplicationsPush {
+  const title = newApplicationsSubject(items)
+  const summary = items.length === 1
+    ? 'Tap to review the application.'
+    : `${capitalise(namesPhrase(items.map((i) => i.firstName)))} applied.`
+  const target = reviewTarget(items)
+  return {
+    title, summary, target_url: target,
+    record: {
+      recipient_profile_id: publisherId,
+      // One applicant: the actor (send-push resolves the name); several: none.
+      actor_profile_id: items.length === 1 ? items[0].applicantId : null,
+      kind: NEW_APPLICATIONS_PUSH_KIND,
+      metadata: {
+        batched: true,
+        title, summary, target_url: target,
+        count: items.length,
+        ...singleIds(items),
+      },
+    },
+  }
+}
+
+/** Grouped pushes wait out quiet hours (22:00–08:00 publisher local time). */
+export function newApplicationsPushAllowedNow(now: Date, tz: string): boolean {
+  return !isQuietHour(localParts(now, tz).hour)
+}
+
+/**
+ * Whether send-push stands down for this notification: an individual
+ * new-application row created at or after the batching switch. The grouped
+ * push itself (metadata.batched) always goes; so does everything else.
+ */
+export function pushStandsDownForBatch(
+  kind: string,
+  metadata: Record<string, unknown> | null | undefined,
+  createdAt: string | null | undefined,
+  batchedSince: string | null | undefined,
+): boolean {
+  if (kind !== NEW_APPLICATIONS_PUSH_KIND || metadata?.batched === true || !batchedSince) return false
+  const since = Date.parse(batchedSince)
+  if (Number.isNaN(since)) return false
+  // A row without a readable created_at is new by definition (the webhook fires on insert).
+  const created = createdAt ? Date.parse(createdAt) : NaN
+  return Number.isNaN(created) || created >= since
+}
+
+/** Push copy for the grouped push from its metadata; never empty. */
+export function newApplicationsCopyFromMetadata(metadata: Record<string, unknown> | null | undefined): { title: string; body: string } {
+  const title = typeof metadata?.title === 'string' && metadata.title.trim() ? metadata.title : null
+  const body = typeof metadata?.summary === 'string' && metadata.summary.trim() ? metadata.summary : null
+  return { title: title ?? 'New applicants', body: body ?? 'New applications are waiting for you.' }
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}

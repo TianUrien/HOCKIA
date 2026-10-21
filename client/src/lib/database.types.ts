@@ -676,6 +676,7 @@ export type Database = {
       application_response_settings: {
         Row: {
           batched_application_emails_since: string | null
+          batched_application_pushes_since: string | null
           club_reminders_enabled: boolean
           digest_enabled: boolean
           expiry_days: number
@@ -688,6 +689,7 @@ export type Database = {
         }
         Insert: {
           batched_application_emails_since?: string | null
+          batched_application_pushes_since?: string | null
           club_reminders_enabled?: boolean
           digest_enabled?: boolean
           expiry_days?: number
@@ -700,6 +702,7 @@ export type Database = {
         }
         Update: {
           batched_application_emails_since?: string | null
+          batched_application_pushes_since?: string | null
           club_reminders_enabled?: boolean
           digest_enabled?: boolean
           expiry_days?: number
