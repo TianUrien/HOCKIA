@@ -104,13 +104,13 @@ export function ShareLinkManager({
               placeholder="Link name (e.g., YC Application)"
               value={newTokenName}
               onChange={(e) => setNewTokenName(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               autoFocus
             />
             <select
               value={expiresInDays ?? ''}
               onChange={(e) => setExpiresInDays(e.target.value ? Number(e.target.value) : undefined)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             >
               <option value="">Never expires</option>
               <option value="7">7 days</option>

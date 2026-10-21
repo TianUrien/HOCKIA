@@ -134,7 +134,7 @@ export function ShortLinksPanel() {
   }
 
   const maxClicks = rows.reduce((m, r) => Math.max(m, r.click_count), 0)
-  const field = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400'
+  const field = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30 focus:border-purple-400'
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5" data-testid="short-links-panel">

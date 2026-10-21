@@ -130,7 +130,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name"
           aria-label="Search connections by name"
-          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
         />
       </div>
 

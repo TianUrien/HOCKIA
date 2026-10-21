@@ -205,7 +205,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder="Type DELETE"
             disabled={isDeleting}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             autoComplete="off"
             id={confirmationFieldId}
           />

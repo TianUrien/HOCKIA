@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { useAIOpinion } from '@/hooks/useAIOpinion'
 import type { AIOpinionFeedbackRating, AIOpinionCandidate } from '@/hooks/useAIOpinion'
+import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import {
   trackAIOpinionViewed,
   trackAIOpinionRegenerated,
@@ -167,11 +168,11 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
-            HOCKIA AI · fit opinion
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
+            HOCKIA AI · fit opinion <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
-            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your team scope.
+            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your recruiting context.
           </p>
         </div>
       </header>
@@ -340,7 +341,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 onChange={(e) => setReasonText(e.target.value.slice(0, 500))}
                 rows={2}
                 placeholder="e.g. the level comparison was inverted, or it missed a key fact…"
-                className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus:ring-1 focus:ring-hockia-primary/30"
+                className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary/30"
               />
               <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px]">
                 <button

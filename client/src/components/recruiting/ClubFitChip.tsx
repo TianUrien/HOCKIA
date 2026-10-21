@@ -3,10 +3,9 @@
  * recruiting fit, with tap-to-expand reasoning that works inside
  * parent button elements (MemberTile, carousel cards).
  *
- * Design language: three vertical bars in HOCKIA purple, filled
- * progressively (1/2/3 bars = lower/possible/strong fit). Universal
- * cell-signal metaphor — more bars = stronger signal. Monochromatic
- * so there's no traffic-light color guessing.
+ * Design language: the one Fit badge (design audit 2026-10-21, B3):
+ * Strong / Possible with a bar meter, never a percentage; a lower fit
+ * renders nothing.
  *
  * Render contract: a `<span role="button">` (NOT an actual `<button>`)
  * so the chip can safely live inside another `<button>` like
@@ -30,6 +29,7 @@ import { createPortal } from 'react-dom'
 import { useClubFit } from '@/hooks/useClubFit'
 import { clubFitStateLabel, type ClubFitState } from '@/lib/clubFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
+import { FitBadge } from '@/components/ui/FitBadge'
 
 /** The minimal fit shape this chip renders. Both ClubFitResult and
  *  CoachFitResult satisfy it, so the chip is the single visual surface for
@@ -59,12 +59,6 @@ interface ClubFitChipProps {
   className?: string
 }
 
-const STATE_TO_BARS: Record<ClubFitState, 1 | 2 | 3> = {
-  green: 3,
-  yellow: 2,
-  grey: 1,
-}
-
 /**
  * Module-level "currently open chip" closer. After F5/F15 portaled
  * each popover to document.body, the old "click another chip → close
@@ -92,34 +86,6 @@ function unregisterActiveChip(close: () => void) {
   if (activeChipCloser === close) {
     activeChipCloser = null
   }
-}
-
-/** Three-bar signal indicator. Heights grow left→right; filled bars
- *  in HOCKIA purple, unfilled in a subtle gray. Pure visual — the
- *  surrounding chip owns the accessible label. */
-function SignalBars({ filled }: { filled: 1 | 2 | 3 }) {
-  return (
-    <span className="inline-flex items-end gap-[2px] h-3" aria-hidden="true">
-      <span
-        className={[
-          'w-[3px] rounded-sm transition-colors h-[5px]',
-          filled >= 1 ? 'bg-hockia-primary' : 'bg-gray-200',
-        ].join(' ')}
-      />
-      <span
-        className={[
-          'w-[3px] rounded-sm transition-colors h-[8px]',
-          filled >= 2 ? 'bg-hockia-primary' : 'bg-gray-200',
-        ].join(' ')}
-      />
-      <span
-        className={[
-          'w-[3px] rounded-sm transition-colors h-[11px]',
-          filled >= 3 ? 'bg-hockia-primary' : 'bg-gray-200',
-        ].join(' ')}
-      />
-    </span>
-  )
 }
 
 export default function ClubFitChip({
@@ -191,9 +157,9 @@ export default function ClubFitChip({
     }
   }, [handleActivate])
 
-  if (!fit.isApplicable) return null
+  // One Fit badge (audit B3): Strong / Possible only; a lower fit shows nothing.
+  if (!fit.isApplicable || fit.state === 'grey') return null
 
-  const bars = STATE_TO_BARS[fit.state]
   const label = clubFitStateLabel(fit.state)
   const tooltip = fit.reasons.length > 0
     ? `${label} — ${fit.reasons.join(' · ')}`
@@ -219,7 +185,7 @@ export default function ClubFitChip({
         aria-expanded={open}
         aria-controls={popoverId}
       >
-        <SignalBars filled={bars} />
+        <FitBadge state={fit.state} />
         {open && (
           <ReasoningPopover
             id={popoverId}
@@ -236,12 +202,6 @@ export default function ClubFitChip({
   }
 
   // ── Pill variant: bars + label, also tappable for the popover ────
-  const textClass = (() => {
-    if (fit.state === 'green') return 'text-hockia-primary font-semibold'
-    if (fit.state === 'yellow') return 'text-gray-800 font-medium'
-    return 'text-gray-500'
-  })()
-
   return (
     <span
       ref={chipRef}
@@ -251,10 +211,9 @@ export default function ClubFitChip({
       onKeyDown={handleKeyDown}
       onMouseDown={(e) => e.stopPropagation()}
       className={[
-        'relative inline-flex items-center gap-1.5 text-[11px] leading-none cursor-pointer',
+        'relative inline-flex items-center cursor-pointer',
         'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
         'hover:opacity-80 transition-opacity',
-        textClass,
         className,
       ].join(' ')}
       title={tooltip}
@@ -262,8 +221,7 @@ export default function ClubFitChip({
       aria-expanded={open}
       aria-controls={popoverId}
     >
-      <SignalBars filled={bars} />
-      {label}
+      <FitBadge state={fit.state} />
       {open && (
         <ReasoningPopover
           id={popoverId}

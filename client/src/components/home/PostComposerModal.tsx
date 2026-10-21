@@ -1028,7 +1028,7 @@ export function PostComposerModal({
                           value={personSearch}
                           onChange={(e) => handlePersonSearch(e.target.value)}
                           placeholder="Search for a player or coach..."
-                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EA580C]/30 focus:border-[#EA580C]"
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/30 focus:border-[#EA580C]"
                           autoComplete="off"
                           enterKeyHint="search"
                           autoCapitalize="none"
@@ -1146,7 +1146,7 @@ export function PostComposerModal({
                           value={clubSearch}
                           onChange={(e) => handleClubSearch(e.target.value)}
                           placeholder="Search for a club..."
-                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                           autoComplete="off"
                           enterKeyHint="search"
                           autoCapitalize="none"
@@ -1279,7 +1279,7 @@ export function PostComposerModal({
                       value={customClubName}
                       onChange={(e) => setCustomClubName(e.target.value)}
                       placeholder="Club name"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                     />
 
                     {/* Logo upload */}
@@ -1357,7 +1357,7 @@ export function PostComposerModal({
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
                 spellCheck
-                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-3 border-0 focus:outline-none focus:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
+                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-3 border-0 focus:outline-none focus-visible:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
                 style={{ minHeight: mode === 'transfer' ? '60px' : '100px' }}
               />
               {/* Remaining count only inside the last 50 characters, lightest ink. */}

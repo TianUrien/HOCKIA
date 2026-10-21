@@ -757,7 +757,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     ref={opportunityTypeRef}
                     value={formData.opportunity_type}
                     onChange={(e) => handleInputChange('opportunity_type', e.target.value as 'player' | 'coach')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     title="Opportunity type"
                   >
                     <option value="player">Player position</option>
@@ -774,7 +774,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     id={priorityFieldId}
                     value={formData.priority || ''}
                     onChange={(e) => handleInputChange('priority', e.target.value as 'low' | 'medium' | 'high')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     title="Priority level"
                   >
                     <option value="low">Low</option>
@@ -797,7 +797,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   maxLength={TITLE_MAX}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder={
@@ -831,7 +831,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   type="text"
                   value={formData.organization_name ?? ''}
                   onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="e.g., Melbourne Hockey Club, Youth Academy"
                   autoCapitalize="words"
                   inputMode="text"
@@ -854,7 +854,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onChange={(e) => handleInputChange('position', e.target.value || undefined)}
                     aria-required={formData.opportunity_type === 'player' ? 'true' : undefined}
                     aria-invalid={errors.position ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.position ? 'border-red-500' : 'border-gray-300'
                     }`}
                     title="Position"
@@ -897,7 +897,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.gender ? 'border-red-500' : 'border-gray-300'
                     }`}
                     title="Category"
@@ -955,7 +955,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       value={formData.recruitment_problem || ''}
                       onChange={(e) => handleInputChange('recruitment_problem', e.target.value || undefined)}
                       aria-label="Recruitment problem"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     >
                       <option value="">Optional</option>
                       {RECRUITMENT_PROBLEM_OPTIONS.map((o) => (
@@ -970,7 +970,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.level_sought || ''}
                         onChange={(e) => handleInputChange('level_sought', e.target.value || undefined)}
                         aria-label="Level sought"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {LEVEL_SOUGHT_OPTIONS.map((o) => (
@@ -990,7 +990,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.compensation || ''}
                         onChange={(e) => handleInputChange('compensation', e.target.value || undefined)}
                         aria-label="Compensation"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {COMPENSATION_OPTIONS.map((o) => (
@@ -1020,7 +1020,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
                   maxLength={DESCRIPTION_MAX}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent resize-none"
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "Describe the player opportunity, training environment, and development pathway..."
@@ -1084,7 +1084,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="date"
                     value={formData.start_date || ''}
                     onChange={(e) => handleInputChange('start_date', e.target.value || null)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   />
                   {formData.opportunity_type === 'player' && (
                     <MustNiceToggle
@@ -1106,7 +1106,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="text"
                     value={formData.duration_text || ''}
                     onChange={(e) => handleInputChange('duration_text', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="e.g., 12 months"
                   />
                 </div>
@@ -1169,7 +1169,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="Add a requirement..."
                 />
                 <button
@@ -1274,7 +1274,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newCustomBenefit}
                   onChange={(e) => setNewCustomBenefit(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addCustomBenefit()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
@@ -1311,7 +1311,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('application_deadline', e.target.value || null)}
                   aria-invalid={errors.application_deadline ? true : undefined}
                   aria-describedby={errors.application_deadline ? `${applicationDeadlineFieldId}-error` : undefined}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
                     errors.application_deadline ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -1331,7 +1331,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="email"
                     value={formData.contact_email || ''}
                     onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="info@elitehockeyacademy.com"
                     inputMode="email"
                     autoCapitalize="none"
@@ -1349,7 +1349,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="tel"
                     value={formData.contact_phone || ''}
                     onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="+31 20 123 4567"
                     inputMode="tel"
                     autoComplete="tel"

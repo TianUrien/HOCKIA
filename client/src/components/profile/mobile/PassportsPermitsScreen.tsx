@@ -56,7 +56,7 @@ const DRAFT_ERROR: Record<WorkPermitDraftError, string> = {
   dates_out_of_order: 'The start date is after the expiry date.',
 }
 
-const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30'
 const fieldLabel = 'mb-1.5 block text-secondary font-semibold text-ink-2'
 
 let draftSeq = 0

@@ -204,7 +204,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   onChange={(e) => setBody(e.target.value.slice(0, MAX_BODY_LENGTH))}
                   rows={5}
                   placeholder="What happened, what you expected, anything that would help us understand…"
-                  className="mt-1 w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary/40"
+                  className="mt-1 w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary/40"
                   data-testid="feedback-body"
                 />
                 <div className="mt-1 flex items-center justify-between text-[11px]">
@@ -228,7 +228,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   type="checkbox"
                   checked={isUrgent}
                   onChange={(e) => setIsUrgent(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary/40"
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-hockia-primary focus-visible:ring-hockia-primary/40"
                 />
                 <span>
                   <span className="block text-sm font-medium text-gray-900">

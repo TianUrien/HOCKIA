@@ -132,7 +132,7 @@ export function VerifyProfileDialog({
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="https://federation.example/panels/umpires"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 disabled={isSubmitting}
                 autoFocus
               />
@@ -156,7 +156,7 @@ export function VerifyProfileDialog({
                   : 'Why is this verification being revoked? (helpful for future admins)'
               }
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent resize-none"
               disabled={isSubmitting}
             />
           </div>
@@ -176,10 +176,10 @@ export function VerifyProfileDialog({
             <button
               onClick={handleConfirm}
               disabled={isConfirmDisabled}
-              className={`flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                 isVerify
-                  ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                  : 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500'
+                  ? 'bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500'
+                  : 'bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500'
               }`}
             >
               {isSubmitting ? (

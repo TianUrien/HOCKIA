@@ -248,7 +248,7 @@ export function AdminPlayers() {
             const val = e.target.value
             setDaysFilter(val === 'all' ? null : Number(val) as DaysFilter)
           }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
         >
           <option value="7">Last 7 days</option>
           <option value="30">Last 30 days</option>

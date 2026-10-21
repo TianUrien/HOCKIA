@@ -103,16 +103,17 @@ describe('member card fit chip', () => {
   it('shows green "Strong fit" and yellow "Possible fit"', () => {
     const { rerender } = render(<RecruiterCandidateCard member={member} fitState="green" onPreview={() => {}} />)
     expect(screen.getByText('Strong fit')).toBeInTheDocument()
-    expect(screen.getByText('Open to play')).toBeInTheDocument()
+    // No availability chip over faces (audit B1).
+    expect(screen.queryByText('Open to play')).toBeNull()
     expect(screen.getByText('Player · Midfielder')).toBeInTheDocument()
     rerender(<RecruiterCandidateCard member={member} fitState="yellow" onPreview={() => {}} />)
     expect(screen.getByText('Possible fit')).toBeInTheDocument()
   })
   it('shows nothing for a grey fit or when no fit is passed (players never get one)', () => {
     const { rerender } = render(<RecruiterCandidateCard member={member} fitState="grey" onPreview={() => {}} />)
-    expect(screen.queryByTestId('fit-chip')).toBeNull()
+    expect(screen.queryByTestId('fit-badge')).toBeNull()
     rerender(<RecruiterCandidateCard member={member} onPreview={() => {}} />)
-    expect(screen.queryByTestId('fit-chip')).toBeNull()
+    expect(screen.queryByTestId('fit-badge')).toBeNull()
   })
   it('tapping the card calls onPreview (club view passes "open the profile")', () => {
     const open = vi.fn()

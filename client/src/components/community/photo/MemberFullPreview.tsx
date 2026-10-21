@@ -3,7 +3,7 @@ import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -50,7 +50,10 @@ import {
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import type { Profile } from '../PeopleListView'
-import { FitPill } from './FitPill'
+
+// Recruiters' "Why this fit" on the desktop deck: its own chunk (verdict + Hockia AI opinion).
+const RecruiterFitExplain = lazy(() => import('@/components/recruiting/RecruiterFitExplain'))
+import { FitBadge } from '@/components/ui/FitBadge'
 
 /**
  * Member preview, full screen (Figma Community P7–P12, P16, P22–P24). Opens
@@ -125,10 +128,12 @@ interface MemberPreviewBodyProps extends MemberFullPreviewProps {
   contextLabel?: string
   /** Immersive: the details panel opened or closed (the deck pauses its gestures). */
   onDetailsChange?: (open: boolean) => void
+  /** Desktop (≥ 1024, audit B2): photo column + the details content + a footer action bar. */
+  desktop?: boolean
 }
 
 /** The preview's content — photo area, summary panel and action bar — for one member. */
-function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true, immersive = false, contextLabel, onDetailsChange }: MemberPreviewBodyProps) {
+function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true, immersive = false, contextLabel, onDetailsChange, desktop = false }: MemberPreviewBodyProps) {
   const { user, profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -147,6 +152,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   // Phone-deck measurement goes to the DB event log: GA4 is skipped inside the native apps.
   const trackAction = (action: 'message' | 'add_friend' | 'shortlist' | 'full_profile') => {
     if (immersive) trackDbEvent('member_preview_action', 'profile', member.id, { action, viewed_role: member.role, surface: details ? 'details' : 'photo' })
+    else if (desktop) trackDbEvent('member_preview_action', 'profile', member.id, { action, viewed_role: member.role, surface: 'desktop' })
   }
 
   const isClub = member.role === 'club'
@@ -330,7 +336,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const recruiterActions = recruiterView.enabled
   const fitState = fit ?? recruiterView.fit?.state ?? null
   const fitLabel = fitChipLabel(fitState)
-  const fitPillText = fitLabel && recruiterView.fitRole ? `${fitLabel} for ${recruiterView.fitRole.title}` : fitLabel
+  const fitPillText = fitLabel
+  const fitSuffix = fitLabel && recruiterView.fitRole ? `for ${recruiterView.fitRole.title}` : null
   const onShortlist = () => {
     trackAction('shortlist')
     void hapticLight()
@@ -480,28 +487,27 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     : rolePreviewGradient(member.role)
   const brandLogo = isBrand ? member.brand_logo_url ?? member.avatar_url : null
 
-  if (immersive) {
-    return (
-      <ImmersivePage
-        member={member}
-        name={name}
-        firstName={firstName}
-        title={title}
-        isPerson={isPerson}
-        isClub={isClub}
-        current={current}
-        shownSrc={shownSrc}
-        setShownSrc={setShownSrc}
-        markFailed={(src) => setFailed((s) => new Set(s).add(src))}
-        shownCount={shown.length}
-        photoIndex={photoIndex}
-        stepPhoto={stepPhoto}
-        noPhotoBackground={noPhotoBackground}
-        crest={crest}
-        brandLogo={brandLogo}
-        contextLabel={contextLabel}
-        onClose={onClose}
-        menu={user && !friendship.isOwnProfile ? (
+  if (immersive || desktop) {
+    const pageProps: ImmersivePageProps = {
+      member: member,
+      name: name,
+      firstName: firstName,
+      title: title,
+      isPerson: isPerson,
+      isClub: isClub,
+      current: current,
+      shownSrc: shownSrc,
+      setShownSrc: setShownSrc,
+      markFailed: (src) => setFailed((s) => new Set(s).add(src)),
+      shownCount: shown.length,
+      photoIndex: photoIndex,
+      stepPhoto: stepPhoto,
+      noPhotoBackground: noPhotoBackground,
+      crest: crest,
+      brandLogo: brandLogo,
+      contextLabel: contextLabel,
+      onClose: onClose,
+      menu: user && !friendship.isOwnProfile ? (
           <ProfileActionMenu
             targetId={member.id}
             targetName={name}
@@ -511,40 +517,47 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             triggerClassName={IMMERSIVE_GLASS_BUTTON}
             iconClassName="h-[22px] w-[22px] text-white"
           />
-        ) : null}
-        fitPill={fitPillText && fitState ? <FitPill state={fitState} label={fitPillText} /> : null}
-        incomingRequest={!fitPillText && friendship.isIncomingRequest && !recruiterActions}
-        nationalities={nationalities}
-        place={place}
-        idLine={(() => {
+        ) : null,
+      fitPill: fitPillText && fitState ? <FitBadge state={fitState} surface="photo" suffix={fitSuffix} /> : null,
+      incomingRequest: !fitPillText && friendship.isIncomingRequest && !recruiterActions,
+      nationalities: nationalities,
+      place: place,
+      idLine: (() => {
           if (!isPerson) return subLine
           const club = member.current_club?.trim() || null
           return [...subParts, club].filter(Boolean).join(' · ')
-        })()}
-        facts={facts}
-        playsAt={(() => {
+        })(),
+      facts: facts,
+      playsAt: (() => {
           if (member.role !== 'player' && member.role !== 'coach') return null
           const club = member.current_club?.trim() || null
           if (!club) return null
           const team = member.role === 'player' ? teamLabel(member.playing_category) : coachTeam
           return { label: member.role === 'coach' ? 'Coaches at' : 'Plays at', value: [club, team].filter(Boolean).join(' · '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
-        })()}
-        references={isPerson ? member.accepted_reference_count ?? 0 : 0}
-        hasHighlights={isPerson && Boolean(member.highlight_video_url)}
-        about={about}
-        details={details}
-        setDetails={(open) => {
+        })(),
+      references: isPerson ? member.accepted_reference_count ?? 0 : 0,
+      hasHighlights: isPerson && Boolean(member.highlight_video_url),
+      about: about,
+      details: details,
+      setDetails: (open) => {
           if (open) {
             trackDbEvent('member_preview_more_open', 'profile', member.id, { viewed_role: member.role })
             void hapticSelection()
           }
           setDetails(open)
-        }}
-        photoActions={buildActions('photo')}
-        panelActions={buildActions('panel')}
-        messageBlockedReason={messageBlockedReason}
-        onViewProfile={viewProfile}
-        sheets={(
+        },
+      photoActions: buildActions('photo'),
+      panelActions: buildActions('panel'),
+      messageBlockedReason: messageBlockedReason,
+      onViewProfile: viewProfile,
+      fitState,
+      // Founder decision 2026-10-21: recruiters keep the explained fit on
+      // desktop, inside the deck. Clubs and recruiting coaches only, on
+      // player and coach candidates; never players, brands or umpires.
+      fitExplain: desktop && viewerRecruits && (member.role === 'player' || member.role === 'coach')
+        ? <Suspense fallback={null}><RecruiterFitExplain member={member} /></Suspense>
+        : null,
+      sheets: (
           <>
             {recruiterActions && (
               <ShortlistRoleSheet
@@ -563,9 +576,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
               action={signIn ?? undefined}
             />
           </>
-        )}
-      />
-    )
+        ),
+    }
+    return immersive ? <ImmersivePage {...pageProps} /> : <DesktopPage {...pageProps} />
   }
 
   return (
@@ -647,7 +660,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             {isClub && current && crest && (
               <LogoTile src={crest} name={name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
             )}
-            {fitPillText && fitState && <FitPill state={fitState} label={fitPillText} />}
+            {fitPillText && fitState && <FitBadge state={fitState} surface="photo" suffix={fitSuffix} />}
             {!fitPillText && friendship.isIncomingRequest && !recruiterActions && (
               <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
                 <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />
@@ -663,7 +676,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         {/* Summary panel */}
         <div ref={panelRef} className="relative -mt-6 flex shrink-0 flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
           <div aria-hidden="true" className="flex justify-center">
-            <span className="h-[5px] w-9 rounded-[3px] bg-line" />
+            <span className="h-[5px] w-9 rounded-[3px] bg-line lg:hidden" />
           </div>
           {facts.length > 0 && (
             // Narrow deck cards (< 360 pt, Figma sizing audit): the first fact
@@ -763,11 +776,12 @@ const prefersReducedMotion = () =>
  * device nudges the card 40 pt with "Swipe for the next member" (P20). Past
  * the last member: "You've seen everyone" (P21). Reduce Motion: cross-fade.
  */
-/** Phones get the vertical deck (ruling 2026-10-21); desktop and single previews keep the classic shell. */
+/** Phones: the vertical deck (ruling 2026-10-21), or the classic sheet for a single preview. Desktop: the deck with arrows (audit B2). */
 const PHONE_QUERY = '(max-width: 1023px)'
 export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
   const isPhone = useMediaQuery(PHONE_QUERY)
-  if (props.deck && isPhone) return <VerticalMemberDeck {...props} deck={props.deck} />
+  if (!isPhone) return <DesktopMemberDeck {...props} />
+  if (props.deck) return <VerticalMemberDeck {...props} deck={props.deck} />
   return <ClassicMemberPreview {...props} />
 }
 
@@ -1171,6 +1185,9 @@ interface ImmersivePageProps {
   messageBlockedReason: string | null
   onViewProfile: () => void
   sheets: React.ReactNode
+  /** Desktop, recruiters only: the fit state and the "Why this fit" content. */
+  fitState?: FitState | null
+  fitExplain?: React.ReactNode
 }
 
 /**
@@ -1337,7 +1354,7 @@ function ImmersivePage(p: ImmersivePageProps) {
             onTouchCancel={onPanelTouchEnd}
             data-testid="member-vdeck-details"
           >
-            <div aria-hidden="true" className="flex justify-center pb-1"><span className="h-[5px] w-9 rounded-[3px] bg-line" /></div>
+            <div aria-hidden="true" className="flex justify-center pb-1"><span className="h-[5px] w-9 rounded-[3px] bg-line lg:hidden" /></div>
             <div className="flex items-center gap-3">
               {avatar ? (
                 <img src={avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
@@ -1409,6 +1426,282 @@ function DetailTile({ label, value, detail = null }: { label: string; value: str
       <span className="text-[16px] leading-[22px] text-ink-1">{value}</span>
       {detail && <span className="text-[13px] leading-[18px] text-ink-2">{detail}</span>}
     </div>
+  )
+}
+
+// ── Desktop (≥ 1024 px): the deck with arrows (ruling 2026-10-21, design audit
+// B2). The same member data and detail tiles as the phone panel, a photo
+// column, ‹ › arrows, "3 of N", Esc to close, ← / → to page, and a footer
+// action bar (Primary by relationship, Message, See full profile).
+
+/** One member on the desktop deck: photo column + details + footer actions. */
+function DesktopPage(p: ImmersivePageProps) {
+  const [whyOpen, setWhyOpen] = useState(false)
+  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
+  return (
+    <div className="flex h-full w-full overflow-hidden bg-white" data-member-id={p.member.id} data-testid="member-desktop-page">
+      {/* Photo column */}
+      <div className="relative h-full w-[44%] max-w-[440px] shrink-0 overflow-hidden" style={{ backgroundImage: p.noPhotoBackground }}>
+        {p.current ? (
+          <img
+            key={p.current}
+            ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
+            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
+            decoding="async"
+            onError={() => p.markFailed(p.current!)}
+            onLoad={(e) => {
+              if (p.isClub && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < 600) p.markFailed(p.current!)
+              else p.setShownSrc(p.current!)
+            }}
+          />
+        ) : (
+          <span aria-hidden="true" className="absolute inset-0">
+            <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
+            {p.isClub && p.crest ? (
+              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
+            ) : p.brandLogo ? (
+              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-1/2 h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
+            ) : (
+              <span className="absolute left-1/2 top-1/2 flex h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[1.5px] border-white/40 bg-white/[0.14] text-[52px] font-bold text-white">
+                {initialsOf(p.name)}
+              </span>
+            )}
+          </span>
+        )}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[120px]" style={{ backgroundImage: TOP_SCRIM }} />
+        {p.shownCount > 1 && (
+          <>
+            <button type="button" aria-label="Previous photo" onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize" />
+            <button type="button" aria-label="Next photo" onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize" />
+            <div aria-hidden="true" className="absolute inset-x-4 top-4 flex gap-1">
+              {Array.from({ length: p.shownCount }, (_, i) => (
+                <span key={i} className={`h-[3px] flex-1 rounded-[2px] ${i === p.photoIndex ? 'bg-white/95' : 'bg-white/[0.35]'}`} />
+              ))}
+            </div>
+          </>
+        )}
+        {p.menu && <div className="absolute right-4 top-6">{p.menu}</div>}
+        {(p.fitPill || p.incomingRequest) && (
+          <div className="pointer-events-none absolute inset-x-4 bottom-4 flex flex-col items-start gap-1.5">
+            {p.fitPill}
+            {p.incomingRequest && (
+              <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
+                <span className="h-[7px] w-[7px] rounded-full bg-brand-soft" aria-hidden="true" />
+                <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Details + footer action bar */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-7 pb-5 pt-7" data-testid="member-desktop-details">
+          <div className="flex items-center gap-3 pr-12">
+            {p.isClub && p.current && p.crest && (
+              <LogoTile src={p.crest} name={p.name} eager className="h-14 w-14 shrink-0 rounded-[16px] border border-line p-[5px]" initialsClassName="text-[18px]" />
+            )}
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h2 className="line-clamp-2 text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-ink-1">{p.title}</h2>
+              {p.idLine && <p className="line-clamp-2 text-[16px] leading-[22px] text-ink-2">{p.idLine}</p>}
+            </div>
+          </div>
+          {p.fitExplain && (
+            <div className="flex flex-col gap-3" data-testid="member-desktop-why">
+              <button
+                type="button"
+                onClick={() => setWhyOpen((v) => !v)}
+                aria-expanded={whyOpen}
+                className="flex min-h-[48px] items-center gap-2.5 rounded-[14px] border border-line px-3.5 text-left hover:bg-surface-subtle"
+                data-testid="member-desktop-why-toggle"
+              >
+                <FitBadge state={p.fitState} />
+                <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">Why this fit</span>
+                <ChevronDown className={`h-5 w-5 shrink-0 text-ink-3 transition-transform ${whyOpen ? 'rotate-180' : ''}`} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {whyOpen && p.fitExplain}
+            </div>
+          )}
+          {p.isPerson ? (
+            <>
+              {p.playsAt && <DetailTile label={p.playsAt.label} value={p.playsAt.value} detail={p.playsAt.detail} />}
+              {p.nationalities.length > 0 && (
+                <div className="flex flex-col gap-[3px] rounded-[14px] bg-surface-muted px-3.5 py-2.5">
+                  <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
+                  <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
+                  {hasEuPassport(p.nationalities) && (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> EU passport</span>
+                  )}
+                </div>
+              )}
+              {p.place && <DetailTile label="Based in" value={p.place} />}
+              {(p.references > 0 || p.hasHighlights) && (
+                <div className="flex gap-2">
+                  {p.references > 0 && (
+                    <div className="flex min-w-0 flex-1 flex-col gap-[3px] rounded-[14px] bg-gold-soft px-3.5 py-2.5" data-testid="member-desktop-references">
+                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">References</span>
+                      <span className="text-[16px] leading-[22px] text-ink-1">{p.references} accepted</span>
+                    </div>
+                  )}
+                  {p.hasHighlights && (
+                    <button type="button" onClick={p.onViewProfile} className="flex min-h-[44px] min-w-0 flex-1 flex-col items-start gap-[3px] rounded-[14px] bg-hockia-soft px-3.5 py-2.5 text-left text-hockia-primary">
+                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">Highlights</span>
+                      <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> Watch</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            p.facts.map((f) => <DetailTile key={f.label} label={f.label} value={f.value} />)
+          )}
+          {p.about && <p className="line-clamp-6 whitespace-pre-line text-[16px] leading-[22px] text-ink-1">{p.about}</p>}
+        </div>
+        <div className="shrink-0 border-t border-line px-7 py-4" data-testid="member-preview-actions">
+          <div className="flex items-center gap-2.5">
+            {p.panelActions && <div className="flex min-w-0 flex-1 gap-2.5">{p.panelActions}</div>}
+            <button
+              type="button"
+              onClick={p.onViewProfile}
+              className={`flex h-12 shrink-0 items-center gap-1 rounded-full px-4 text-[15px] font-semibold text-hockia-primary hover:bg-brand-soft ${p.panelActions ? '' : 'mx-auto'}`}
+              data-testid="member-preview-full-profile"
+            >
+              See full profile <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
+          {p.messageBlockedReason && (
+            <p id="member-preview-message-note" className="mt-2 text-[13px] leading-[18px] text-ink-2">{p.messageBlockedReason}</p>
+          )}
+        </div>
+      </div>
+      {p.sheets}
+    </div>
+  )
+}
+
+/**
+ * Desktop deck shell: the card centred on a dim, ‹ › arrows either side,
+ * "3 of N" under it. Esc closes; ← / → page; a click on the dim closes. A
+ * single preview (no list) has no arrows or pager. Past the last member:
+ * "You've seen everyone". Same DB events as the phone deck.
+ */
+function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
+  const { onClose, onBlocked } = props
+  const deck = props.deck
+  const members = useMemo(() => deck?.members ?? [props.member], [deck?.members, props.member])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [nested, setNested] = useState(false)
+  const [index, setIndex] = useState(() => Math.min(Math.max(deck?.startIndex ?? 0, 0), Math.max(members.length - 1, 0)))
+  const paged = Boolean(deck) && members.length > 1
+  const atEnd = paged && index >= members.length
+  const member = atEnd ? null : members[index] ?? props.member
+
+  useBodyScrollLock(true)
+  useFocusTrap({ containerRef, isActive: !nested })
+
+  const seen = useRef(new Set<string>())
+  useEffect(() => {
+    trackDbEvent('member_preview_open', 'profile', member?.id, { source: deck ? 'grid' : 'single', context: deck?.contextLabel ?? null, surface: 'desktop' })
+    const seenSet = seen.current
+    return () => { trackDbEvent('member_preview_depth', 'community', undefined, { members_seen: seenSet.size }) }
+    // Once per deck open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => { if (member) seen.current.add(member.id) }, [member])
+
+  // Warm the neighbours so an arrow lands on a loaded card.
+  useEffect(() => {
+    if (!paged) return
+    const near = [-1, 1, 2].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
+    void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
+    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+      for (const m of near) preloadImage(firstPhotoOf(m))
+    })
+  }, [paged, index, members])
+
+  const go = useCallback((dir: 1 | -1) => {
+    if (!paged) return
+    const next = index + dir
+    if (next < 0 || next > members.length) return
+    trackDbEvent('member_preview_swipe', 'profile', members[next]?.id, { direction: dir > 0 ? 'next' : 'prev' })
+    setIndex(next)
+  }, [paged, index, members])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (nested || !isTopFocusTrap(containerRef.current)) return
+      if (e.key === 'Escape') { e.preventDefault(); onClose() }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); go(1) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1) }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [go, onClose, nested])
+
+  const arrow = 'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_4px_16px_rgba(41,16,96,0.18)] transition-opacity hover:bg-surface-subtle disabled:pointer-events-none disabled:opacity-0'
+
+  return createPortal(
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={member ? `${member.full_name?.trim() || 'Member'} preview${paged ? `, ${index + 1} of ${members.length}` : ''}` : 'End of the list'}
+      tabIndex={-1}
+      data-testid="member-preview"
+      data-deck="desktop"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 px-6 py-6 animate-fade-in focus:outline-none"
+    >
+      <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-black/60" data-testid="member-deck-dim" />
+      {deck?.contextLabel && (
+        <p className="relative text-[13px] font-semibold leading-[18px] text-white/80" data-testid="member-deck-context">{deck.contextLabel}</p>
+      )}
+      <div className="pointer-events-none relative flex w-full items-center justify-center gap-4">
+        {paged && (
+          <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous member" className={`pointer-events-auto ${arrow}`} data-testid="member-deck-prev">
+            <ChevronLeft className="h-6 w-6" strokeWidth={2} />
+          </button>
+        )}
+        <div
+          className="pointer-events-auto relative flex h-[min(680px,calc(100dvh-140px))] w-[min(960px,calc(100vw-176px))] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_64px_rgba(15,15,20,0.35)]"
+          data-testid="member-deck-card"
+        >
+          {member ? (
+            <MemberPreviewBody
+              key={member.id}
+              member={member}
+              onClose={onClose}
+              age={deck?.ageOf?.(member.id) ?? (member.id === props.member.id ? props.age ?? null : null)}
+              fit={deck?.fitOf?.(member.id) ?? (member.id === props.member.id ? props.fit ?? null : null)}
+              crestColor={deck?.crestOf?.(member.id) ?? (member.id === props.member.id ? props.crestColor ?? null : null)}
+              onBlocked={onBlocked}
+              onNestedModal={setNested}
+              desktop
+              contextLabel={deck?.contextLabel}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col">
+              <DeckEnd onAdjustFilters={() => { onClose(); deck?.onAdjustFilters?.() }} onBack={onClose} />
+            </div>
+          )}
+          <button type="button" onClick={onClose} aria-label="Close preview" className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-surface-muted text-ink-1 hover:bg-line" data-testid="member-preview-close">
+            <X className="h-5 w-5" strokeWidth={2} />
+          </button>
+        </div>
+        {paged && (
+          <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label="Next member" className={`pointer-events-auto ${arrow}`} data-testid="member-deck-next">
+            <ChevronRight className="h-6 w-6" strokeWidth={2} />
+          </button>
+        )}
+      </div>
+      {paged && (
+        <p className="relative text-[13px] font-semibold leading-[18px] tabular-nums text-white/90" data-testid="member-deck-pager" aria-live="polite">
+          {Math.min(index + 1, members.length)} of {members.length}
+        </p>
+      )}
+    </div>,
+    document.body,
   )
 }
 

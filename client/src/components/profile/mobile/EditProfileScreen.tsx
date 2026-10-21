@@ -428,7 +428,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
               {editing === 'about' && (
                 <>
-                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary" placeholder="A few lines about you and your hockey." />
+                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary" placeholder="A few lines about you and your hockey." />
                   {BIO_MAX - (d<string>('bio') ?? '').length <= 50 && <p className="text-right text-caption text-ink-3">{BIO_MAX - (d<string>('bio') ?? '').length}</p>}
                 </>
               )}

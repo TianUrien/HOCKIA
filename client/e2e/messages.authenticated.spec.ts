@@ -16,7 +16,7 @@ test.describe('Messages Page - Authenticated', () => {
   test('displays messages page', async ({ page }) => {
     // Should see the messages page heading
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 10000 })
   })
 
@@ -59,14 +59,14 @@ test.describe('Messages Page - Mobile', () => {
   test('mobile messages page loads', async ({ page }) => {
     // Should see the messages page heading
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 10000 })
   })
 
   test('mobile view shows conversation list', async ({ page }) => {
     // On mobile, should see the messages heading and either empty state or conversations
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 10000 })
     
     // Should also show either conversations or empty state

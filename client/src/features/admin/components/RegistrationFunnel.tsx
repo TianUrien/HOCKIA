@@ -99,7 +99,7 @@ export function RegistrationFunnel() {
             value={role}
             onChange={(e) => setRole(e.target.value)}
             aria-label="Filter registration funnel by role"
-            className="text-xs font-medium border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white capitalize focus:outline-none focus:ring-2 focus:ring-purple-200"
+            className="text-xs font-medium border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 bg-white capitalize focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-200"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>{r === 'all' ? 'All roles' : r}</option>

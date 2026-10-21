@@ -233,7 +233,7 @@ export default function ApplyToVacancyModal({
               aria-label={`${noteHeading(identity)} (optional)`}
               rows={3}
               maxLength={600}
-              className="mt-2 min-h-[96px] w-full resize-none rounded-[16px] bg-surface-subtle px-3.5 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
+              className="mt-2 min-h-[96px] w-full resize-none rounded-[16px] bg-surface-subtle px-3.5 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary"
             />
             <p className="pt-1 text-right text-caption text-ink-3" aria-live="polite">{message.length} / 600</p>
           </>

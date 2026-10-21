@@ -209,7 +209,7 @@ export function AdminOutreach() {
             placeholder="Search by email, name, or club..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 min-w-[200px] text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             autoComplete="off"
             enterKeyHint="search"
             autoCapitalize="none"
@@ -219,7 +219,7 @@ export function AdminOutreach() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="">All statuses</option>
             <option value="imported">Imported</option>
@@ -236,7 +236,7 @@ export function AdminOutreach() {
             placeholder="Filter by country..."
             value={filterCountry}
             onChange={(e) => setFilterCountry(e.target.value)}
-            className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           />
         </div>
       </div>

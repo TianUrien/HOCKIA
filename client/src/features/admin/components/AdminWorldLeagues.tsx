@@ -203,7 +203,7 @@ export function AdminWorldLeagues() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="League name..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export function AdminWorldLeagues() {
               id="league-country-filter"
               value={filters.country_id ?? ''}
               onChange={(e) => handleFilterChange('country_id', e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={loadingCountries}
             >
               <option value="">All countries</option>
@@ -234,7 +234,7 @@ export function AdminWorldLeagues() {
               id="league-region-filter"
               value={filters.province_id ?? ''}
               onChange={(e) => handleFilterChange('province_id', e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={!filters.country_id || loadingProvinces}
             >
               <option value="">All regions</option>

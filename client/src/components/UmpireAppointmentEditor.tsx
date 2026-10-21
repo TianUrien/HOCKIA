@@ -463,7 +463,7 @@ export default function UmpireAppointmentEditor({
                   meta.value === 'certification' ? 'FIH Level 2' :
                   'FIH World Panel'
                 }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 autoFocus
                 maxLength={160}
@@ -482,7 +482,7 @@ export default function UmpireAppointmentEditor({
                   meta.value === 'appointment' ? 'EuroHockey · FIH · England Hockey' :
                   'FIH · USA Field Hockey · EuroHockey'
                 }
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 maxLength={120}
               />
@@ -499,7 +499,7 @@ export default function UmpireAppointmentEditor({
                     value={form.match_level}
                     onChange={(e) => setForm({ ...form, match_level: e.target.value })}
                     placeholder="U21 International · National League"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
                   />
@@ -513,7 +513,7 @@ export default function UmpireAppointmentEditor({
                     onChange={(e) =>
                       setForm({ ...form, match_format: e.target.value as FormState['match_format'] })
                     }
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent bg-white"
                     disabled={submitting}
                     aria-label="Match format"
                   >
@@ -538,7 +538,7 @@ export default function UmpireAppointmentEditor({
                     value={form.location_city}
                     onChange={(e) => setForm({ ...form, location_city: e.target.value })}
                     placeholder="e.g., Port Jervis, NY"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
                   />
@@ -552,7 +552,7 @@ export default function UmpireAppointmentEditor({
                     value={form.location_country}
                     onChange={(e) => setForm({ ...form, location_country: e.target.value })}
                     placeholder="Netherlands"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
                   />
@@ -569,7 +569,7 @@ export default function UmpireAppointmentEditor({
                   type="date"
                   value={form.start_date}
                   onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   disabled={submitting}
                   aria-label={meta.fields.start_date}
                 />
@@ -583,7 +583,7 @@ export default function UmpireAppointmentEditor({
                     type="date"
                     value={form.end_date}
                     onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     aria-label={meta.fields.end_date ?? 'End date'}
                   />
@@ -611,7 +611,7 @@ export default function UmpireAppointmentEditor({
                         : 'Panel duties, tenure, role on the board?'
                 }
                 rows={3}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent resize-none"
                 disabled={submitting}
                 maxLength={600}
               />

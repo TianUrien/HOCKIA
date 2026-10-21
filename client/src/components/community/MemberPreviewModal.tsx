@@ -32,7 +32,7 @@ import {
   Check,
   ShieldCheck,
 } from 'lucide-react'
-import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import RolePlaceholder from '@/components/RolePlaceholder'
@@ -51,7 +51,6 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackEvent, trackProtectedActionBlocked } from '@/lib/analytics'
-import { getMemberTier, calculateTier } from '@/lib/profileTier'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { resolveConversationRoute } from '@/lib/startConversation'
@@ -295,12 +294,6 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   // initials block was the previous purple fallback; replaced by
   // RolePlaceholder. Computation removed.
 
-  // Prefer the server's canonical profile_completeness_pct (same value the grid
-  // card shows) so the preview tier and the card never disagree; fall back to
-  // the client estimator only when the column is absent (2d unification).
-  const tier = member.profile_completeness_pct != null
-    ? calculateTier(member.profile_completeness_pct)
-    : getMemberTier(member)
   const positions = [member.position, member.secondary_position]
     .filter((value, index, self): value is string => {
       if (!value) return false
@@ -413,9 +406,6 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <RoleBadge role={member.role} />
-                {member.role !== 'brand' && member.role !== 'umpire' && (
-                  <TierBadge tier={tier} size="sm" />
-                )}
                 {member.role === 'umpire' && member.umpire_level && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-surface-grouped px-2 py-0.5 text-xs font-medium text-ink-2">
                     <Shield className="w-3 h-3" />

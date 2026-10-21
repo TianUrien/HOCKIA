@@ -3,31 +3,26 @@
  * zones for every role (Player / Coach / Club / Brand / Umpire) so a grid of
  * mixed roles lines up perfectly, with two middle-zone modes:
  *
- *   NEUTRAL  (no active recruiting scope) → availability chip + substance line
- *   CONTEXT  (a club/coach has an active scope) → verdict chip + bar + "% match"
+ *   NEUTRAL  (no active recruiting scope) → photo + identity lines only
+ *   CONTEXT  (a club/coach has an active scope) → the one Fit badge (audit B3:
+ *            Strong / Possible with a bar meter, never a percentage)
  *
  * Fixed-height zones top-to-bottom so every card is equal-height regardless of
  * how much data a member has (placeholders never collapse a zone):
  *   role pill · avatar (+online dot, persons only) · name · detail line ·
  *   nationality · location/club · MIDDLE (neutral|context) · TRUST · ACTION
  *
- * UI ONLY — the verdict/evidence/score data is computed upstream and passed
- * through unchanged. Purple is reserved for the match zone (chip, bar fill, %)
- * and the connected Friends state; nowhere else. The CONTEXT chip's four tiers
- * (Excellent/Good/Possible/Out of scope) derive from the verdict strength
- * bands so chip + bar + % can never disagree, with a hard `pass → Out of
- * scope` cap for wrong-fit candidates.
+ * UI ONLY — the verdict/fit data is computed upstream and passed through
+ * unchanged. No chips over faces (founder ruling 2026-10-11).
  */
 import { useState } from 'react'
-import { Check, Minus, ShieldCheck } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import { DualNationalityDisplay } from '@/components'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
-import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
-import { availabilityLabel } from '@/lib/availabilityLabel'
-import { openRolesLabel } from '@/hooks/useOpenRoleCounts'
-import { FitChip } from '@/components/club/FitChip'
+import { fitStateFromVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdict'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { useAuthStore } from '@/lib/auth'
 
@@ -186,19 +181,6 @@ function locationLine(member: RecruiterCardMember): string | null {
   }
 }
 
-/** Role-appropriate availability chip for the neutral middle zone. ONLY a
- *  positive, role-specific signal (green) when the member has explicitly opted
- *  in; nothing otherwise — never a "not looking" state. Single source of truth:
- *  availabilityLabel. */
-function availabilityChip(member: RecruiterCardMember): { label: string } | null {
-  // Card / Member (Figma 501:6648): a club reads "Recruiting" when it has at
-  // least one open role — never a count (players never see counts). Other
-  // roles keep their own opt-in label ("Open to play", "Open to coach"…).
-  if (member.role === 'club') return (member.open_role_count ?? 0) > 0 ? { label: 'Recruiting' } : null
-  const label = (openRolesLabel(member.open_role_count) ? 'Recruiting' : null) ?? availabilityLabel(member.role, member)
-  return label ? { label } : null
-}
-
 /** Soft, deterministic, non-purple initials tint (purple is reserved for the
  *  match zone). */
 const AVATAR_TINTS = [
@@ -213,16 +195,6 @@ function tintFor(name: string): string {
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
   return AVATAR_TINTS[h % AVATAR_TINTS.length]
-}
-
-/** CONTEXT chip styles, keyed on the shared display tier (recruiterDisplayTier)
- *  so the chip word ALWAYS matches the preview sheet + full profile for the
- *  same candidate. The bar + % render the independent strength value. */
-const CHIP: Record<VerdictDisplayTier, { label: string; chipClass: string; icon: typeof Check; barClass: string; pctClass: string }> = {
-  excellent: { label: 'Excellent',    icon: Check, chipClass: 'bg-[#EEEDFE] text-[#3C3489]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
-  good:      { label: 'Good',         icon: Check, chipClass: 'bg-[#F4F2FE] text-[#5B51B0]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
-  possible:  { label: 'Possible',     icon: Check, chipClass: 'bg-[#F7F6FD] text-[#6B62C0]', barClass: 'bg-[#A9A4E6]', pctClass: 'text-[#6B62C0]' },
-  out:       { label: 'Outside your context', icon: Minus, chipClass: 'bg-gray-100 text-gray-600',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
 }
 
 /** Role noun for the tile's second line: "Player", "Coach", "Club"… */
@@ -270,8 +242,8 @@ function tileDetail(member: RecruiterCardMember): string {
  *   Name
  *   Player · Midfielder
  *   🇦🇷 Argentina
- * In CONTEXT mode (a recruiter with an active scope) the pill is the verdict
- * chip and a "% match" line joins the text block. Tap → preview.
+ * In CONTEXT mode (a recruiter with an active scope) the Fit badge joins the
+ * text block. Tap → preview.
  */
 export default function RecruiterCandidateCard({ member, verdict: verdictProp, fitState: fitStateProp = null, onPreview, opensProfile = false, priority = false }: RecruiterCandidateCardProps) {
   // Fit is club-only: a player viewer never gets a verdict, % or fit chip,
@@ -296,25 +268,16 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
 
   const hasNationality = Boolean(member.nationality_country_id || member.nationality)
 
-  // ── CONTEXT mode (verdict present) ──────────────────────────────────────
+  // ── CONTEXT mode (verdict present): the one Fit badge, never a % (audit B3).
   const inContext = Boolean(verdict)
-  const pct = Math.round((verdict?.strength ?? 0) * 100)
-  const chipState: VerdictDisplayTier = verdict ? recruiterDisplayTier(verdict) : 'out'
-  const chip = CHIP[chipState]
-  const ChipIcon = chip.icon
-  const matchSuffix =
-    chipState === 'out' && verdict?.caveats[0] ? `· ${verdict.caveats[0]}` : 'for your search'
-
-  // ── NEUTRAL mode (no verdict) ───────────────────────────────────────────
-  const availability = availabilityChip(member)
+  const badgeState: FitState | null = inContext ? fitStateFromVerdict(verdict) : fitState
+  const badgeLabel = fitChipLabel(badgeState)
 
   // Round 6: say where the tap goes — the full profile or the preview.
   const tapHint = opensProfile ? 'Opens profile.' : 'Tap to preview.'
-  const ariaLabel = inContext
-    ? `${name} · ${chip.label} (${pct}% match). ${tapHint}`
-    : fitState && fitChipLabel(fitState)
-      ? `${name} · ${detailLine(member)}, ${fitChipLabel(fitState)}. ${tapHint}`
-      : `${name} · ${detailLine(member)}. ${tapHint}`
+  const ariaLabel = badgeLabel
+    ? `${name} · ${detailLine(member)}, ${badgeLabel}. ${tapHint}`
+    : `${name} · ${detailLine(member)}. ${tapHint}`
 
   return (
     <button
@@ -342,17 +305,6 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
             {initials}
           </div>
         )}
-        {inContext ? (
-          <span className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${chip.chipClass}`}>
-            <ChipIcon className="h-3 w-3" aria-hidden="true" />
-            {chip.label}
-          </span>
-        ) : availability ? (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white px-[7px] py-[3px] text-[11px] font-semibold text-[#1b8a3f]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
-            {availability.label}
-          </span>
-        ) : null}
       </div>
 
       {/* ── Text block ── */}
@@ -372,24 +324,11 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
               fallbackText={member.nationality}
               mode="line"
             />
-          ) : (
-            <span>Nationality not listed</span>
-          )}
+          ) : null}
         </div>
-        {!inContext && fitChipLabel(fitState) && (
+        {badgeLabel && (
           <div className="mt-1.5">
-            <FitChip state={fitState} />
-          </div>
-        )}
-        {inContext && (
-          <div className="mt-1.5">
-            <div className="h-[3px] w-full overflow-hidden rounded-full bg-gray-100" aria-hidden="true">
-              <div className={`h-full rounded-full ${chip.barClass} transition-[width] duration-300`} style={{ width: `${pct}%` }} />
-            </div>
-            <p className="mt-1 flex items-center gap-1 text-[11px] leading-none">
-              <span className={`font-semibold ${chip.pctClass}`}>{pct}%</span>
-              <span className="truncate text-gray-500">match {matchSuffix}</span>
-            </p>
+            <FitBadge state={badgeState} />
           </div>
         )}
       </div>

@@ -198,7 +198,7 @@ export function EditWorldLeagueModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter league name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               required
             />
             {!isCreating && league?.logical_id && (
@@ -217,7 +217,7 @@ export function EditWorldLeagueModal({
               id="league-country"
               value={countryId ?? ''}
               onChange={(e) => handleCountryChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={loadingCountries}
               required
             >
@@ -246,7 +246,7 @@ export function EditWorldLeagueModal({
                   id="league-region"
                   value={provinceId ?? ''}
                   onChange={(e) => setProvinceId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">No region / National level</option>
                   {provinces.map((p) => (
@@ -276,7 +276,7 @@ export function EditWorldLeagueModal({
               value={tier ?? ''}
               onChange={(e) => setTier(e.target.value ? parseInt(e.target.value, 10) : null)}
               placeholder="e.g. 1 (premier), 2 (second), ..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             />
           </div>
 
@@ -291,7 +291,7 @@ export function EditWorldLeagueModal({
               min={0}
               value={displayOrder}
               onChange={(e) => setDisplayOrder(parseInt(e.target.value, 10) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             />
           </div>
 

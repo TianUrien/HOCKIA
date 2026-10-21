@@ -102,9 +102,9 @@ function DateOfBirthPicker({
     ? cn(fieldSelectCompact, error && fieldErrorRing)
     : cn(
       'w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg',
-      'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent',
       'transition-all duration-200 text-gray-700',
-      error && 'border-red-500 focus:ring-red-500',
+      error && 'border-red-500 focus-visible:ring-red-500',
     )
 
   return (

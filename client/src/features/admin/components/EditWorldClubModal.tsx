@@ -441,7 +441,7 @@ export function EditWorldClubModal({
               value={clubName}
               onChange={(e) => setClubName(e.target.value)}
               placeholder="Enter club name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               required
             />
             {!isCreating && (
@@ -460,7 +460,7 @@ export function EditWorldClubModal({
               id="club-country"
               value={countryId ?? ''}
               onChange={(e) => handleCountryChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={loadingCountries}
               required
             >
@@ -489,7 +489,7 @@ export function EditWorldClubModal({
                   id="club-region"
                   value={provinceId ?? ''}
                   onChange={(e) => handleProvinceChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">No region / National</option>
                   {provinces.map((p) => (
@@ -524,7 +524,7 @@ export function EditWorldClubModal({
                     id="club-women-league"
                     value={womenLeagueId ?? ''}
                     onChange={(e) => setWomenLeagueId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">None / Not applicable</option>
                     {leagues.map((l) => (
@@ -555,7 +555,7 @@ export function EditWorldClubModal({
                     id="club-men-league"
                     value={menLeagueId ?? ''}
                     onChange={(e) => setMenLeagueId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">None / Not applicable</option>
                     {leagues.map((l) => (

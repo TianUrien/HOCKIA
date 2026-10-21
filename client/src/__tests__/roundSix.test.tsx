@@ -69,7 +69,7 @@ describe('Fit card: which role it measures', () => {
   it('the card names the role; a goalkeeper role on a midfielder shows with no chip', () => {
     render(<FitForRoleCard role={gk} player={player} fit={fit('grey', { gender_match: 1, competition_proximity: 1, availability: 1, recency: 1, position_match: 0, role_position: 'goalkeeper', candidate_position: 'midfielder' })} />)
     expect(screen.getByTestId('fit-card-title').textContent).toBe('Fit for [QA] Goalkeeper R6')
-    expect(screen.queryByTestId('fit-chip')).toBeNull()
+    expect(screen.queryByTestId('fit-badge')).toBeNull()
     expect(screen.getByText('Midfielder · the role is for a Goalkeeper')).toBeTruthy()
     expect(screen.queryByText(/matches$/)).toBeNull()
   })
@@ -80,7 +80,7 @@ describe('Fit card: which role it measures', () => {
   it('green keeps the chip and the role name', () => {
     render(<FitForRoleCard role={mid} player={player} fit={fit('green', { gender_match: 1, competition_proximity: 1, availability: 1, recency: 1, position_match: 1, role_position: 'midfielder', candidate_position: 'midfielder' })} />)
     expect(screen.getByTestId('fit-card-title').textContent).toBe('Fit for [QA] Midfielder R6')
-    expect(screen.getByTestId('fit-chip').textContent).toContain('Strong fit')
+    expect(screen.getByTestId('fit-badge').textContent).toContain('Strong fit')
   })
   it('the profile hook reads the context of the profile\'s kind (not a coach role)', () => {
     const hook = src('hooks/useClubViewOfPlayer.ts')
@@ -113,7 +113,7 @@ describe('category mismatch', () => {
   })
   it('women on a Men\'s role renders without a chip', () => {
     render(<FitForRoleCard role={{ id: 'm', title: 'Men’s midfielder', gender: 'Men' }} player={{ playing_category: 'adult_women', full_name: 'Alex' }} fit={{ state: 'grey', components: { gender_match: 0, competition_proximity: 1, availability: 1, recency: 1 }, playerLeagueBanded: true, clubLeagueBanded: true }} />)
-    expect(screen.queryByTestId('fit-chip')).toBeNull()
+    expect(screen.queryByTestId('fit-badge')).toBeNull()
     expect(screen.getByText(/the role is for Men’s$/)).toBeTruthy()
   })
   it('the migration caps a confirmed category miss and keeps the security model', () => {
@@ -248,9 +248,10 @@ describe('Community card accessibility label', () => {
     expect(label).toMatch(/Tap to preview\.$/)
     expect(label).not.toContain('Opens profile')
   })
-  it('Community passes opensProfile on the direct-to-profile branches', () => {
+  it('Community cards open the member deck on every screen size (audit B1: one photo grid, no direct-to-profile branch)', () => {
     const plv = src('components/community/PeopleListView.tsx')
-    expect(plv.match(/opensProfile/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(plv).toContain('<MemberPhotoGrid')
+    expect(plv).not.toContain('RecruiterCandidateCard')
   })
 })
 

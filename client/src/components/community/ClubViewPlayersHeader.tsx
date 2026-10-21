@@ -26,7 +26,7 @@ export function ClubViewPlayersHeader({ sort, onSort }: { sort: SortOption; onSo
           <select
             value={sort}
             onChange={(e) => onSort(e.target.value as SortOption)}
-            className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 text-right [text-align-last:right] text-[15px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+            className="min-h-[36px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 text-right [text-align-last:right] text-[15px] font-semibold text-hockia-primary focus:outline-none focus-visible:ring-0"
             data-testid="club-view-sort"
           >
             {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

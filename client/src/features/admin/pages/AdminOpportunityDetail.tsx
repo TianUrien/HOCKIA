@@ -406,7 +406,7 @@ export function AdminOpportunityDetail() {
               setStatusFilter(e.target.value as ApplicationStatus | 'all')
               setPage(0)
             }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All statuses</option>
             <option value="pending">Unsorted</option>

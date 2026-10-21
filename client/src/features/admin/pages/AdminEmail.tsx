@@ -398,7 +398,7 @@ export function AdminEmail() {
           <select
             value={daysFilter}
             onChange={(e) => setDaysFilter(Number(e.target.value) as DaysFilter)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -753,7 +753,7 @@ export function AdminEmail() {
                 placeholder="Search name or email..."
                 value={contactSearch}
                 onChange={(e) => { setContactSearch(e.target.value); setContactPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-56 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-56 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -762,7 +762,7 @@ export function AdminEmail() {
                 value={contactCountry}
                 onChange={(e) => { setContactCountry(e.target.value); setContactPage(1) }}
                 aria-label="Contact country filter"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="">All</option>
                 {countries.map(c => (
@@ -902,7 +902,7 @@ export function AdminEmail() {
               <select
                 value={engTemplateKey}
                 onChange={(e) => { setEngTemplateKey(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="">All</option>
                 {templates.data.map(t => (
@@ -915,7 +915,7 @@ export function AdminEmail() {
               <select
                 value={engStatus}
                 onChange={(e) => { setEngStatus(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="">All</option>
                 <option value="delivered_not_opened">Delivered (not opened)</option>
@@ -931,7 +931,7 @@ export function AdminEmail() {
               <select
                 value={engRole}
                 onChange={(e) => { setEngRole(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="">All</option>
                 <option value="player">Player</option>
@@ -945,7 +945,7 @@ export function AdminEmail() {
               <select
                 value={engCountry}
                 onChange={(e) => { setEngCountry(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="">All</option>
                 {countries.map(c => (
@@ -960,7 +960,7 @@ export function AdminEmail() {
                 aria-label="Filter from date"
                 value={engSince}
                 onChange={(e) => { setEngSince(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -970,7 +970,7 @@ export function AdminEmail() {
                 aria-label="Filter to date"
                 value={engUntil}
                 onChange={(e) => { setEngUntil(e.target.value); setEngPage(1) }}
-                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
             </div>
           </div>

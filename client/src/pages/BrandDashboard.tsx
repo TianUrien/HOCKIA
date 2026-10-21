@@ -10,10 +10,9 @@ import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, NextStepCard, WelcomeValueCard, FreshnessCard, SearchAppearancesCard, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
+import { Avatar, Button, NextStepCard, WelcomeValueCard, FreshnessCard, SearchAppearancesCard, RoleBadge, ScrollableTabs, VerifiedBadge } from '@/components'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { PulseSection } from '@/components/home/PulseSection'
-import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
@@ -562,7 +561,6 @@ export default function BrandDashboard() {
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <RoleBadge role="brand" />
-                {!strengthLoading && <TierBadge tier={calculateTier(percentage)} />}
               </div>
 
               {/* Availability — one-tap "Open to partners" toggle (drives the

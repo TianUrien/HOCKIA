@@ -160,7 +160,7 @@ export default function MoveToShortlistMenu({
                 if (e.key === 'Escape') { setCreating(false); setDraft('') }
               }}
               placeholder="New list name"
-              className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
+              className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-xs focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
             />
             <button
               type="button"

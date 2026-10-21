@@ -7,6 +7,8 @@ import { useAuthStore } from '@/lib/auth'
 import { prefetchWorldClubLogos } from './useWorldClubLogo'
 import { useRecruitingScope } from './useRecruitingScope'
 import { computeScopedVerdicts, isInScope, type ScopedCandidateRow } from '@/lib/scopedVerdicts'
+import { fitStateFromVerdict } from '@/lib/recruiterVerdict'
+import type { FitState } from '@/lib/clubRecruiting'
 
 /**
  * The club Pulse match layer (Home V2 Phase 2): fetch a wide
@@ -39,8 +41,8 @@ export interface ScopedMatch {
   avatar_url: string | null
   position: string | null
   role: string
-  /** Match % — verdict.strength × 100, the same number the grid shows. */
-  pct: number
+  /** The one Fit badge state (audit B3): never a percentage. */
+  fit: FitState | null
   inScope: boolean
 }
 
@@ -137,7 +139,7 @@ export function useScopedMatches(enabled: boolean) {
         avatar_url: m.avatar_url,
         position: m.position,
         role: m.role,
-        pct: Math.round((verdicts.get(m.id)?.strength ?? 0) * 100),
+        fit: fitStateFromVerdict(verdicts.get(m.id)),
         inScope: isInScope(verdicts.get(m.id)),
       })),
     }

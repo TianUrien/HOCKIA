@@ -559,7 +559,7 @@ export function BrandForm({
           id="brand-category"
           value={formData.category}
           onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as BrandCategory | '' }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-transparent"
           required
         >
           {/* Explicit placeholder so brands don't silently land on
@@ -601,7 +601,7 @@ export function BrandForm({
           maxLength={2000}
           autoCapitalize="sentences"
           spellCheck
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-transparent resize-none"
         />
       </div>
 

@@ -175,7 +175,7 @@ export default function WorldSearchDropdown({
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => { if (query.trim().length > 0) setShowDropdown(true) }}
           onKeyDown={handleKeyDown}
-          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+          className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus:border-transparent shadow-sm"
           autoComplete="off"
           enterKeyHint="search"
           autoCapitalize="none"

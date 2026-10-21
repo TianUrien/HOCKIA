@@ -298,7 +298,7 @@ export function EditUserModal({
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   aria-label="Full name"
                 />
               </div>
@@ -313,7 +313,7 @@ export function EditUserModal({
                   type="text"
                   value={formData.base_location}
                   onChange={(e) => setFormData(prev => ({ ...prev, base_location: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   aria-label="Base location"
                 />
               </div>
@@ -345,7 +345,7 @@ export function EditUserModal({
                       id="admin-edit-position"
                       value={formData.position}
                       onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       aria-label="Position"
                     >
                       <option value="">Select position</option>
@@ -364,7 +364,7 @@ export function EditUserModal({
                       id="admin-edit-secondary-position"
                       value={formData.secondary_position}
                       onChange={(e) => setFormData(prev => ({ ...prev, secondary_position: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       aria-label="Secondary position"
                     >
                       <option value="">None</option>
@@ -433,7 +433,7 @@ export function EditUserModal({
                       id="admin-edit-specialization"
                       value={formData.coach_specialization}
                       onChange={(e) => setFormData(prev => ({ ...prev, coach_specialization: e.target.value as CoachSpecialization | '' }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       aria-label="Coach specialization"
                     >
                       <option value="">No specialization</option>
@@ -453,7 +453,7 @@ export function EditUserModal({
                         type="text"
                         value={formData.coach_specialization_custom}
                         onChange={(e) => setFormData(prev => ({ ...prev, coach_specialization_custom: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                         placeholder="e.g., Team Manager"
                         aria-label="Custom specialization title"
                       />
@@ -483,7 +483,7 @@ export function EditUserModal({
                       value={formData.umpire_level}
                       onChange={(e) => setFormData((prev) => ({ ...prev, umpire_level: e.target.value }))}
                       placeholder="e.g., FIH International, National, Regional"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       maxLength={120}
                       aria-label="Umpire level"
                     />
@@ -499,7 +499,7 @@ export function EditUserModal({
                       value={formData.federation}
                       onChange={(e) => setFormData((prev) => ({ ...prev, federation: e.target.value }))}
                       placeholder="e.g., FIH, England Hockey, USA Field Hockey"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       maxLength={120}
                       aria-label="Federation"
                     />
@@ -519,7 +519,7 @@ export function EditUserModal({
                         value={formData.umpire_since}
                         onChange={(e) => setFormData((prev) => ({ ...prev, umpire_since: e.target.value }))}
                         placeholder="e.g., 2018"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                         aria-label="Umpiring since year"
                       />
                     </div>
@@ -536,7 +536,7 @@ export function EditUserModal({
                             officiating_specialization: e.target.value as '' | 'outdoor' | 'indoor' | 'both',
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent bg-white"
                         aria-label="Officiating specialization"
                       >
                         <option value="">Not specified</option>
@@ -557,7 +557,7 @@ export function EditUserModal({
                       value={formData.languages}
                       onChange={(e) => setFormData((prev) => ({ ...prev, languages: e.target.value }))}
                       placeholder="English, Spanish, Dutch"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                       aria-label="Languages (comma separated)"
                     />
                     <p className="mt-1 text-xs text-gray-500">
@@ -577,7 +577,7 @@ export function EditUserModal({
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="e.g., User requested correction of nationality"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent resize-none"
                 />
               </div>
             </div>

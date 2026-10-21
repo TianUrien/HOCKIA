@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Search, MessageCircle, X, Plus } from 'lucide-react'
+import { Search, MessageCircle, X, Plus, Pencil } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -19,7 +19,11 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { useClubApplicationWith } from '@/hooks/useClubInbox'
+import { useClubApplicationWith, useClubInboxMeta } from '@/hooks/useClubInbox'
+import { IconButton } from '@/components/ui/IconButton'
+import { InboxActivity } from '@/components/inbox/InboxActivity'
+import { InboxRequestsSegment, InboxSegmentControl } from '@/components/inbox/InboxSegments'
+import { inboxSegmentFromPath, inboxSegmentPath, useRefreshInboxEdges, type InboxSegment } from '@/lib/inboxSegments'
 import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
 import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
 import { ThreadSkeleton } from '@/components/ScreenSkeletons'
@@ -590,6 +594,24 @@ export default function MessagesPage() {
   const { data: chatApplication = null } = useClubApplicationWith(user?.id ?? null, selectedConversation?.otherParticipant?.id ?? null, clubV2Chat)
   const hasActiveConversation = Boolean(selectedConversationId)
 
+  // Desktop: one master-detail inbox (design audit 2026-10-21, B4). /inbox,
+  // /inbox/:segment, /messages and /messages/:id all render this page; the
+  // segment comes from the path and a thread always belongs to Messages.
+  const segment: InboxSegment = isPhone ? 'messages' : inboxSegmentFromPath(location.pathname)
+  const setSegment = useCallback((next: InboxSegment) => {
+    navigate(inboxSegmentPath(next))
+  }, [navigate])
+  useRefreshInboxEdges(!isPhone)
+  // Clubs: the applicant context line ("Player · Midfielder · Applied") and the
+  // amber "owes a first reply" dot, as in the phone Inbox.
+  const clubMetaRows = useMemo(
+    () => combinedConversations
+      .filter((c) => !c.isPending && c.otherParticipant?.id)
+      .map((c) => ({ conversation_id: c.id, other_participant_id: c.otherParticipant!.id, last_message_sender_id: c.lastMessage?.sender_id ?? null })),
+    [combinedConversations],
+  )
+  const { data: clubMeta } = useClubInboxMeta(user?.id ?? null, clubMetaRows, !isPhone && viewerProfile?.role === 'club')
+
   // Title: chat thread shows the other participant's name when known so
   // the browser tab + history reflects which conversation is open.
   // Falls back to "Messages" for the list view or while a thread is
@@ -597,7 +619,7 @@ export default function MessagesPage() {
   useDocumentTitle(
     selectedConversation?.otherParticipant?.full_name
       ? `${selectedConversation.otherParticipant.full_name} • Messages`
-      : 'Messages',
+      : isPhone || !location.pathname.startsWith('/inbox') ? 'Messages' : 'Inbox',
   )
   const shouldHideGlobalHeader = Boolean(isMobile && hasActiveConversation)
   const conversationListKey = shouldHideGlobalHeader ? 'immersive-hidden' : 'list-visible'
@@ -1031,19 +1053,19 @@ export default function MessagesPage() {
   // the bottom of ChatWindowV2 ends up below the fold.
   const rootContainerClasses = isMobile
     ? 'flex flex-1 min-h-0 flex-col bg-white pt-[var(--app-header-offset)]'
-    : 'flex h-[100dvh] flex-col bg-gray-100 pt-[var(--app-header-offset)]'
+    : 'flex h-[100dvh] flex-col bg-surface-muted pt-[var(--app-header-offset)]'
 
   const mainPaddingClasses = isMobile
     ? shouldHideGlobalHeader
       ? 'mx-auto w-full max-w-7xl px-0'
       : 'mx-auto w-full max-w-7xl px-4 pb-4 pt-4'
-    : 'mx-auto w-full max-w-5xl flex-1 min-h-0 px-4 py-6 lg:px-6 flex flex-col'
+    : 'mx-auto w-full max-w-[1248px] flex-1 min-h-0 px-4 py-6 lg:px-6 flex flex-col'
 
   const containerClasses = shouldHideGlobalHeader
     ? 'flex min-h-0 flex-1 flex-col bg-white md:flex-row'
     : isMobile
       ? 'flex min-h-0 flex-1 flex-col bg-white md:flex-row'
-      : 'flex flex-1 min-h-0 flex-row overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm'
+      : 'flex flex-1 min-h-0 flex-row overflow-hidden rounded-[20px] border border-line bg-white shadow-sm'
 
   if (isPhone && !selectedConversationId && !newConversationTargetId) {
     return <Navigate to="/inbox" replace />
@@ -1057,7 +1079,7 @@ export default function MessagesPage() {
           <div className={containerClasses}>
             {/* Left: Conversations list skeleton */}
             <div
-              className={`flex w-full flex-shrink-0 flex-col border-r border-gray-200 md:w-80 lg:w-[340px] ${
+              className={`flex w-full flex-shrink-0 flex-col border-r border-gray-200 md:w-80 lg:w-[380px] ${
                 hasActiveConversation ? 'hidden md:flex' : 'flex'
               }`}
             >
@@ -1092,41 +1114,37 @@ export default function MessagesPage() {
         <div className={containerClasses}>
           {/* Left Column - Conversations List */}
           <div
-            className={`flex w-full flex-shrink-0 flex-col overflow-hidden border-r border-gray-200 md:w-80 lg:w-[340px] ${
+            className={`flex w-full flex-shrink-0 flex-col overflow-hidden border-r border-line md:w-80 lg:w-[380px] ${
               hasActiveConversation ? 'hidden md:flex' : 'flex'
             }`}
           >
-            {/* Header */}
-            <div className="flex-shrink-0 p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-xl font-bold text-gray-900">Messages</h1>
-                {/* Pill button replaces the previous icon-only round button.
-                    User feedback: "+ button has no label/tooltip" — aria-label
-                    and title were already set, but on touch (iOS Safari) title
-                    doesn't render and the bare "+" icon left users guessing.
-                    Visible "New" label removes the discoverability gap and
-                    bumps the tap target above iOS HIG's 44px minimum. */}
-                <button
-                  type="button"
-                  onClick={() => setIsNewMessageModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 h-10 pl-3 pr-3.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
-                  aria-label="New message"
-                >
-                  <Plus className="w-4 h-4" />
-                  New
-                </button>
+            {/* Header: title, New message (an icon, never a second Primary,
+                audit B6), the segments on desktop, then search for Messages. */}
+            <div className="flex-shrink-0 border-b border-line px-4 pb-3 pt-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h1 className="text-[22px] font-bold leading-7 text-ink-1">{isPhone ? 'Messages' : 'Inbox'}</h1>
+                <IconButton label="New message" onClick={() => setIsNewMessageModalOpen(true)}>
+                  <Pencil className="h-[22px] w-[22px]" strokeWidth={1.8} />
+                </IconButton>
               </div>
-              
+              {!isPhone && (
+                <div className={segment === 'messages' ? 'mb-3' : undefined} data-testid="inbox-desktop-segments">
+                  <InboxSegmentControl value={segment} onChange={setSegment} />
+                </div>
+              )}
+
               {/* Search Bar */}
+              {segment === 'messages' && (
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={2} aria-hidden="true" />
                 <input
                   type="search"
                   data-keyboard-shortcut="search"
-                  placeholder="Search conversations..."
+                  placeholder="Search"
+                  aria-label="Search conversations"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400"
+                  className="h-10 w-full rounded-[12px] bg-surface-muted pl-10 pr-10 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 [&::-webkit-search-cancel-button]:hidden"
                   autoComplete="off"
                   enterKeyHint="search"
                   autoCapitalize="none"
@@ -1137,18 +1155,23 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-500"
+                    className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-3"
                     aria-label="Clear search"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
+              )}
             </div>
 
-            {/* Conversations List */}
+            {/* Conversations List (or the Requests / Activity segment on desktop) */}
             <div className="flex-1 min-h-0 overflow-y-auto">
-              {error ? (
+              {segment === 'requests' ? (
+                <div className="pt-2"><InboxRequestsSegment /></div>
+              ) : segment === 'activity' ? (
+                <div className="pt-2"><InboxActivity /></div>
+              ) : error ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                   <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3">
                     <MessageCircle className="w-7 h-7 text-red-400" />
@@ -1164,7 +1187,7 @@ export default function MessagesPage() {
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                  <div className="w-14 h-14 bg-gradient-to-r from-hockia-primary/20 to-hockia-secondary/20 rounded-full flex items-center justify-center mb-3">
+                  <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft">
                     <MessageCircle className="w-7 h-7 text-hockia-primary" />
                   </div>
                   <h3 className="text-base font-semibold text-gray-900 mb-1">No messages yet</h3>
@@ -1174,7 +1197,7 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     onClick={() => setIsNewMessageModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
+                    className="inline-flex h-11 items-center gap-2 rounded-full bg-hockia-primary px-5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90"
                   >
                     <Plus className="w-4 h-4" />
                     New message
@@ -1189,6 +1212,7 @@ export default function MessagesPage() {
                     onSelectConversation={handleSelectConversation}
                     currentUserId={user?.id || ''}
                     variant={isMobile ? 'compact' : 'default'}
+                    clubMeta={clubMeta}
                   />
                   {hasMoreConversations && !searchQuery && (
                     <div className="border-t border-gray-100 p-3">
@@ -1228,13 +1252,13 @@ export default function MessagesPage() {
             ) : selectedConversationId ? (
               <ThreadSkeleton onBack={handleBackToList} />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center bg-gray-50 p-6 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <MessageCircle className="w-8 h-8 text-gray-400" />
+              <div className="flex h-full flex-col items-center justify-center bg-surface-subtle p-6 text-center" data-testid="inbox-detail-empty">
+                <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+                  <MessageCircle className="h-8 w-8 text-ink-3" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Select a conversation</h3>
-                <p className="text-sm text-gray-500">
-                  Choose a conversation from the list to start messaging
+                <h3 className="mb-1 text-[17px] font-semibold text-ink-1">Select a conversation</h3>
+                <p className="text-secondary text-ink-2">
+                  {segment === 'messages' ? 'Your conversations open here.' : 'Open Messages to read a conversation.'}
                 </p>
               </div>
             )}

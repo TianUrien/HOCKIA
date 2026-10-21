@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { MessageCircle, User, Globe, MapPin, Shield, Building2, Activity } from 'lucide-react'
-import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay } from '@/components'
+import { Avatar, RoleBadge, VerifiedBadge, NationalityCardDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
-import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { trackProtectedActionBlocked } from '@/lib/analytics'
@@ -38,12 +37,6 @@ interface MemberCardProps {
   accepted_reference_count?: number
   coach_specialization?: string | null
   coach_specialization_custom?: string | null
-  /**
-   * Profile completeness band (Just started → Getting there → Looking good → All set),
-   * derived client-side from the member's profile-strength estimate. When
-   * provided, rendered as a TierBadge in the badge row. Omit to render no badge.
-   */
-  tier?: ProfileTier
   /** Admin-granted verification flag (from profiles.is_verified or brands.is_verified). */
   isVerified?: boolean
   /** ISO timestamp for the current verification — powers the tooltip date. */
@@ -78,7 +71,6 @@ export default function MemberCard({
   accepted_reference_count,
   coach_specialization,
   coach_specialization_custom,
-  tier,
   isVerified,
   verifiedAt,
   umpireLevel,
@@ -204,7 +196,6 @@ export default function MemberCard({
               size="sm"
               className="!shadow-none"
             />
-            {tier && <TierBadge tier={tier} size="sm" />}
             {(accepted_reference_count ?? 0) > 0 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-soft text-gold text-[10px] font-medium">
                 <Shield className="w-2.5 h-2.5" />

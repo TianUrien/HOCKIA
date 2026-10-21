@@ -158,7 +158,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
           <input
             type="search"
             placeholder="Search players by name..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoFocus

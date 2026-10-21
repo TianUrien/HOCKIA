@@ -408,7 +408,7 @@ export function AdminDirectory() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name, email, or ID..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 autoComplete="off"
                 enterKeyHint="search"
                 autoCapitalize="none"
@@ -424,7 +424,7 @@ export function AdminDirectory() {
               setRoleFilter(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             aria-label="Filter by role"
             title="Filter by role"
           >
@@ -442,7 +442,7 @@ export function AdminDirectory() {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             aria-label="Filter by status"
             title="Filter by status"
           >
@@ -458,7 +458,7 @@ export function AdminDirectory() {
               setTestFilter(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             aria-label="Filter by account type"
             title="Filter by account type"
           >

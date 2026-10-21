@@ -966,7 +966,7 @@ export default function GalleryManager({
                       value={captionText}
                       onChange={(e) => setCaptionText(e.target.value.slice(0, 200))}
                       placeholder="Caption (optional, max 200 chars)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 text-sm"
                     />
                     {item.type === 'photo' && (
                       <input
@@ -974,7 +974,7 @@ export default function GalleryManager({
                         value={altText}
                         onChange={(e) => setAltText(e.target.value)}
                         placeholder="Alt text for accessibility (optional)"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                       />
                     )}
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">

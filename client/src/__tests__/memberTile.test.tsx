@@ -17,7 +17,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────
 
-// MemberTile imports `{ RoleBadge, TierBadge, ... }` from the @/components
+// MemberTile imports `{ RoleBadge, VerifiedBadge, ... }` from the @/components
 // barrel, which transitively loads modules that import @/lib/supabase.
 // In CI (no .env.local) the supabase module throws at load-time on missing
 // env vars, taking the whole test file with it. This stub lets the module
@@ -434,5 +434,15 @@ describe('MemberTile — click behavior', () => {
     renderTile({ id: 'bid-1', role: 'brand', full_name: 'Pro X', brandSlug: null })
     await userEvent.click(screen.getByRole('button', { name: /Pro X/i }))
     expect(navigateMock).toHaveBeenCalledWith('/marketplace')
+  })
+})
+
+describe('MemberTile: no completeness tier words (founder decision 2026-10-21)', () => {
+  it('never renders Strong profile / Looking good / Getting there / Just started, whatever tier is passed', () => {
+    for (const tier of ['elite', 'rising', 'active', 'rookie'] as const) {
+      const view = renderTile({ tier })
+      expect(view.container.textContent).not.toMatch(/Strong profile|Looking good|Getting there|Just started|All set/)
+      view.unmount()
+    }
   })
 })

@@ -304,7 +304,7 @@ export default function QuestionDetailPage() {
                         <textarea
                           value={editAnswerText}
                           onChange={(e) => setEditAnswerText(e.target.value)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50 resize-none"
                           rows={4}
                           maxLength={1500}
                           aria-label="Edit your answer"
@@ -383,7 +383,7 @@ export default function QuestionDetailPage() {
                 maxLength={1500}
                 autoCapitalize="sentences"
                 spellCheck
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 resize-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50 resize-none"
               />
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-gray-400">

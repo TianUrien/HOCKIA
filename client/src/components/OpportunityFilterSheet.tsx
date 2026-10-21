@@ -65,7 +65,7 @@ export default function OpportunityFilterSheet({
               value={location}
               onChange={(e) => onSetLocation(e.target.value)}
               placeholder="City or Country"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none transition-colors"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none transition-colors"
             />
           </div>
 

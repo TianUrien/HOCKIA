@@ -69,7 +69,7 @@ export default function JuniorsWaitlistPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="mt-5 w-full h-11 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-hockia-primary focus:border-transparent text-center"
+              className="mt-5 w-full h-11 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent text-center"
             />
             {phase === 'error' && (
               <p className="text-sm text-red-600 mt-2" role="alert">
