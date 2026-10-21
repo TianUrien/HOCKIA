@@ -180,7 +180,7 @@ export function trackLogin(method: string): void {
 }
 
 /** Track a FAILED login attempt — the half the funnel was missing. `reason` is a
- *  coarse, non-PII bucket (bad_credentials / unverified / no_user / exception). */
+ *  coarse, non-PII bucket (bad_credentials / unverified / no_user / network / exception). */
 export function trackLoginFailed(method: string, reason: string): void {
   trackEvent({
     action: 'login_failed',
