@@ -35,6 +35,8 @@ export function ambassadorInviteError(raw: string | null | undefined): { message
       return { message: 'Invite already sent.', already: true }
     case 'Player is already an ambassador':
       return { message: 'Already one of your ambassadors.', already: true }
+    case 'Player not available':
+      return { message: 'This player can’t be invited.', already: false }
     case 'Only players can be ambassadors':
       return { message: 'Only players can be ambassadors.', already: false }
     default:
