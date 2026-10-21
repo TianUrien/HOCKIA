@@ -176,7 +176,7 @@ export function AdminFeatureUsage() {
             aria-label="Filter by time period"
             value={daysFilter}
             onChange={(e) => setDaysFilter(Number(e.target.value) as DaysFilter)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>

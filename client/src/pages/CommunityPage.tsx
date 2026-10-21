@@ -409,7 +409,7 @@ export default function CommunityPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search players, coaches, clubs"
-                  className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                  className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
                   autoComplete="off"
                   enterKeyHint="search"
                   autoCapitalize="none"
@@ -495,7 +495,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus-visible:ring-0"
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>

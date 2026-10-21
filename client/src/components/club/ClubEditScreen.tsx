@@ -42,7 +42,7 @@ const TITLE: Record<Field, string> = {
   website: 'Website', links: 'Social links', contact: 'Contact email',
 }
 
-const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30'
 
 function Row({ label, value, onClick, locked, placeholder = 'Add', multiline }: {
   label: string
@@ -314,7 +314,7 @@ export default function ClubEditScreen() {
 
               {editing === 'about' && (
                 <>
-                  <textarea autoFocus value={d<string>('club_bio') ?? ''} maxLength={CLUB_BIO_MAX} rows={7} onChange={(e) => set({ club_bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" placeholder="Your club, your teams and the league you play in." />
+                  <textarea autoFocus value={d<string>('club_bio') ?? ''} maxLength={CLUB_BIO_MAX} rows={7} onChange={(e) => set({ club_bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30" placeholder="Your club, your teams and the league you play in." />
                   {bioLeft <= 50 && <p className="text-right text-caption text-ink-3">{bioLeft}</p>}
                 </>
               )}

@@ -112,7 +112,7 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
                 value={block.text || ''}
                 onChange={(e) => updateBlock(index, { text: e.target.value })}
                 placeholder="Text content (supports {{variables}})"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-y min-h-[60px]"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 resize-y min-h-[60px]"
               />
               {block.type === 'heading' && (
                 <select
@@ -155,13 +155,13 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
                 value={block.text || ''}
                 onChange={(e) => updateBlock(index, { text: e.target.value })}
                 placeholder="Button label"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <input
                 value={block.url || ''}
                 onChange={(e) => updateBlock(index, { url: e.target.value })}
                 placeholder="URL (e.g. {{cta_url}})"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
             </div>
           )}
@@ -172,13 +172,13 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
                 value={block.label || ''}
                 onChange={(e) => updateBlock(index, { label: e.target.value })}
                 placeholder="Note label (optional)"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <textarea
                 value={block.text || ''}
                 onChange={(e) => updateBlock(index, { text: e.target.value })}
                 placeholder="Note content (supports {{variables}})"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-y min-h-[60px]"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 resize-y min-h-[60px]"
               />
               <label className="flex items-center gap-1 text-xs text-gray-500">
                 <input
@@ -198,25 +198,25 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
                 value={block.name_var || ''}
                 onChange={(e) => updateBlock(index, { name_var: e.target.value })}
                 placeholder="Name variable"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <input
                 value={block.avatar_var || ''}
                 onChange={(e) => updateBlock(index, { avatar_var: e.target.value })}
                 placeholder="Avatar URL variable"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <input
                 value={block.label || ''}
                 onChange={(e) => updateBlock(index, { label: e.target.value })}
                 placeholder="Label (optional)"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 col-span-2"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 col-span-2"
               />
               <input
                 value={(block.detail_vars || []).join(', ')}
                 onChange={(e) => updateBlock(index, { detail_vars: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                 placeholder="Detail vars (comma-separated)"
-                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 col-span-2"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 col-span-2"
               />
             </div>
           )}
@@ -227,19 +227,19 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
                 value={block.label || ''}
                 onChange={(e) => updateBlock(index, { label: e.target.value })}
                 placeholder="Card label (optional)"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <input
                 value={block.title || ''}
                 onChange={(e) => updateBlock(index, { title: e.target.value })}
                 placeholder="Title (supports {{variables}})"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
               <input
                 value={block.subtitle || ''}
                 onChange={(e) => updateBlock(index, { subtitle: e.target.value })}
                 placeholder="Subtitle (optional)"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               />
             </div>
           )}
@@ -249,7 +249,7 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
               value={block.conversations_var || 'conversations'}
               onChange={(e) => updateBlock(index, { conversations_var: e.target.value })}
               placeholder="Conversations variable name"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             />
           )}
 

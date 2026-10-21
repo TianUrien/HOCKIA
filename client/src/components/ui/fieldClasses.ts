@@ -17,7 +17,7 @@ export const fieldLabel = `mb-1.5 block ${fieldLabelText}`
 
 /** Text field without horizontal padding (pickers set their own for icons). */
 export const fieldInputBase =
-  'h-[50px] w-full rounded-[12px] bg-surface-muted text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary'
+  'h-[50px] w-full rounded-[12px] bg-surface-muted text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary'
 export const fieldInput = `${fieldInputBase} px-3.5`
 
 /** Trailing chevron (ink-4) for a native `<select>`. The data URI has no

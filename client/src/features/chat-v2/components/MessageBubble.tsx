@@ -282,7 +282,7 @@ export function MessageBubble({
               }}
               onKeyDown={handleEditorKeyDown}
               rows={1}
-              className="w-full resize-none rounded-2xl border border-purple-300 bg-white px-3.5 py-2 text-[15px] leading-relaxed text-gray-900 shadow-sm outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
+              className="w-full resize-none rounded-2xl border border-purple-300 bg-white px-3.5 py-2 text-[15px] leading-relaxed text-gray-900 shadow-sm outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-200"
               aria-label="Edit message"
             />
             <div className="mt-1.5 flex items-center justify-end gap-2">

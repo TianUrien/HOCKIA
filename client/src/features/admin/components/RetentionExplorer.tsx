@@ -134,7 +134,7 @@ export function RetentionExplorer() {
   }
 
   const selectClass =
-    'text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-200'
+    'text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-200'
 
   return (
     <div className="space-y-4">

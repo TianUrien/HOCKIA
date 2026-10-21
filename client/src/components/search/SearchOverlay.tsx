@@ -378,7 +378,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players, clubs, posts..."
-                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
+                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
                 autoComplete="off"
                 autoFocus
                 enterKeyHint="search"

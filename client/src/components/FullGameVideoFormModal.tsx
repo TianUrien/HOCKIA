@@ -287,7 +287,7 @@ export default function FullGameVideoFormModal({
                   value={positionPlayed}
                   onChange={(e) => setPositionPlayed(e.target.value)}
                   disabled={isSaving}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 disabled:opacity-60"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 disabled:opacity-60"
                 >
                   {POSITIONS.map((p) => (
                     <option key={p} value={p}>
@@ -325,7 +325,7 @@ export default function FullGameVideoFormModal({
                 maxLength={500}
                 rows={2}
                 placeholder="e.g. Tournament final, captained the team."
-                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 disabled:opacity-60"
+                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 disabled:opacity-60"
               />
             </div>
 

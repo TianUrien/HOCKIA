@@ -168,7 +168,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                   value={description}
                   onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                   rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
                   placeholder="A few words about this video"
                 />
               </div>

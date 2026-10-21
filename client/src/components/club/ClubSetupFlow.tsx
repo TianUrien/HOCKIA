@@ -202,7 +202,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
         <div className="mt-5">
           <label htmlFor="club-setup-name" className={label}>Club name</label>
-          <input id="club-setup-name" value={draft.name} maxLength={CLUB_NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder="Your club’s name" className={cn(field, 'placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30')} />
+          <input id="club-setup-name" value={draft.name} maxLength={CLUB_NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder="Your club’s name" className={cn(field, 'placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30')} />
         </div>
 
         <div className="mt-5 flex gap-3">

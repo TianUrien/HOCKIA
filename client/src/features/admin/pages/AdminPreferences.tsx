@@ -334,7 +334,7 @@ function UserDrillDown({ prefKey }: { prefKey: PreferenceKey }) {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           />
           {search && (
             <button
@@ -351,7 +351,7 @@ function UserDrillDown({ prefKey }: { prefKey: PreferenceKey }) {
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           aria-label="Filter by role"
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
         >
           <option value="">All roles</option>
           <option value="player">Player</option>

@@ -257,7 +257,7 @@ function ShortlistItemRow({
             onBlur={commitNote}
             rows={2}
             placeholder="Add a private note…"
-            className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none resize-none"
+            className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none resize-none"
           />
           {savingNote && (
             <p className="text-[10px] text-gray-400 mt-0.5">Saving…</p>

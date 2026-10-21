@@ -496,7 +496,7 @@ function VisibilityToggle({
           checked={visibility === 'recruiters'}
           onChange={(e) => onChange(e.target.checked ? 'recruiters' : 'public')}
           disabled={saving}
-          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
         />
         <div>
           <span className="text-sm font-medium text-gray-900">Recruiters only</span>

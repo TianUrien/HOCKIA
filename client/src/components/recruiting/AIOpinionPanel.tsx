@@ -340,7 +340,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 onChange={(e) => setReasonText(e.target.value.slice(0, 500))}
                 rows={2}
                 placeholder="e.g. the level comparison was inverted, or it missed a key fact…"
-                className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus:ring-1 focus:ring-hockia-primary/30"
+                className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary/30"
               />
               <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px]">
                 <button

@@ -128,9 +128,9 @@ export function AskQuestionModal({
                 spellCheck
                 className={`w-full px-4 py-3 rounded-lg border transition-colors ${
                   titleLength > 120
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                } focus:outline-none focus:ring-2 focus:ring-opacity-50`}
+                    ? 'border-red-300 focus:border-red-500 focus-visible:ring-red-500'
+                    : 'border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500'
+                } focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50`}
                 required
               />
               <div className="flex justify-end mt-1">
@@ -149,7 +149,7 @@ export function AskQuestionModal({
                 id="question-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as QuestionCategory)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 bg-white"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50 bg-white"
               >
                 {QUESTION_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -175,9 +175,9 @@ export function AskQuestionModal({
                 spellCheck
                 className={`w-full px-4 py-3 rounded-lg border transition-colors resize-none ${
                   bodyLength > 1500
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                } focus:outline-none focus:ring-2 focus:ring-opacity-50`}
+                    ? 'border-red-300 focus:border-red-500 focus-visible:ring-red-500'
+                    : 'border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500'
+                } focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50`}
               />
               <div className="flex justify-end mt-1">
                 <span className={`text-xs ${bodyLength > 1500 ? 'text-red-500' : 'text-gray-400'}`}>

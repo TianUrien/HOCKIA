@@ -148,7 +148,7 @@ export default function RequestFeedbackModal({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent resize-y"
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-y"
             aria-label="Message template"
           />
         </label>

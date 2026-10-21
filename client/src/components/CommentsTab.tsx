@@ -516,7 +516,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   placeholder={composerPlaceholderFor(profileRole)}
                   autoCapitalize="sentences"
                   spellCheck
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus:ring-hockia-primary"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus-visible:ring-hockia-primary"
                 />
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>Min {MIN_LENGTH} characters</span>
@@ -655,7 +655,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         rows={4}
                         autoCapitalize="sentences"
                         spellCheck
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus:ring-hockia-primary"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus-visible:ring-hockia-primary"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>Min {MIN_LENGTH} characters</span>

@@ -14,8 +14,7 @@ function NavDot({ className }: { className: string }) {
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
  *  screen, founder ruling 2026-09-19) drop the app header below lg.
- *  `onNewPost`: Home v1 (Figma 60:131) — the violet wordmark, "+" New post
- *  and Search on phones. */
+ *  `onNewPost`: Home v1 (Figma 60:131) — "+" New post and Search on phones. */
 /**
  * Home v1 motion (95:1012 §1): on phones the header slides away when the page
  * scrolls down > 8 pt and returns on any scroll up > 4 pt; always shown within
@@ -128,7 +127,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo & Tagline */}
+          {/* Logo */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -136,21 +135,15 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
               aria-label="HOCKIA, go home"
             >
+              {/* One wordmark colour on every app page: brand violet (design
+                  audit B5). The tagline pill is marketing only, not app chrome. */}
               <img
-                src={onNewPost ? '/brand/wordmark/hockia-wordmark-violet.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
+                src="/brand/wordmark/hockia-wordmark-violet.svg"
                 alt=""
                 className="h-8"
               />
             </button>
             
-            {/* #c2410c, not the #ff9500 brand orange: white on #ff9500 is
-                2.20:1, well under the 4.5:1 WCAG AA needs for text this size,
-                and this tagline sits on every authenticated page. Darkening
-                the background (founder's call over darkening the text) takes
-                it to 5.18:1 while keeping the badge orange. */}
-            <span className="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#c2410c]">
-              Where field hockey sticks together.
-            </span>
           </div>
 
           {/* Mobile header (Figma 03 Player, Home v2): wordmark + Search only.

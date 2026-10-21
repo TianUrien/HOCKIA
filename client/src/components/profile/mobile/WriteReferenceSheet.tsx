@@ -65,7 +65,7 @@ export default function WriteReferenceSheet({ open, onClose, forName, relationsh
             rows={5}
             aria-label="Your reference"
             placeholder={`What did ${who} bring to the team? Be specific. Clubs read these.`}
-            className="w-full resize-none rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
+            className="w-full resize-none rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary"
           />
           {remaining <= 50 && <span className="pointer-events-none absolute bottom-2.5 right-3 text-caption text-ink-3">{remaining}</span>}
         </div>

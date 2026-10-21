@@ -140,7 +140,7 @@ export function MultiCategorySelector({
           checked={isAny}
           disabled={disabled}
           onChange={toggleAny}
-          className="w-4 h-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary"
+          className="w-4 h-4 rounded border-gray-300 text-hockia-primary focus-visible:ring-hockia-primary"
         />
         <label htmlFor={`${idPrefix}-any`} className="text-sm text-gray-700 select-none cursor-pointer">
           {CATEGORY_LABELS.any}{' '}

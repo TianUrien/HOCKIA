@@ -666,7 +666,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         {/* Summary panel */}
         <div ref={panelRef} className="relative -mt-6 flex shrink-0 flex-col gap-5 rounded-t-[28px] bg-white px-5 pb-6 pt-5">
           <div aria-hidden="true" className="flex justify-center">
-            <span className="h-[5px] w-9 rounded-[3px] bg-line" />
+            <span className="h-[5px] w-9 rounded-[3px] bg-line lg:hidden" />
           </div>
           {facts.length > 0 && (
             // Narrow deck cards (< 360 pt, Figma sizing audit): the first fact
@@ -1341,7 +1341,7 @@ function ImmersivePage(p: ImmersivePageProps) {
             onTouchCancel={onPanelTouchEnd}
             data-testid="member-vdeck-details"
           >
-            <div aria-hidden="true" className="flex justify-center pb-1"><span className="h-[5px] w-9 rounded-[3px] bg-line" /></div>
+            <div aria-hidden="true" className="flex justify-center pb-1"><span className="h-[5px] w-9 rounded-[3px] bg-line lg:hidden" /></div>
             <div className="flex items-center gap-3">
               {avatar ? (
                 <img src={avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />

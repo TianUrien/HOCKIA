@@ -214,7 +214,7 @@ export function AdminDeviceUsers() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search name, email, or username"
-              className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200 w-72"
+              className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-200 w-72"
             />
           </div>
           <button

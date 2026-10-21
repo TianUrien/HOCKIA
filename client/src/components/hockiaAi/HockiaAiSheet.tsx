@@ -185,7 +185,7 @@ export function HockiaAiSheet() {
         data-detent={detent}
       >
         <div className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} data-testid="hockia-ai-grabber" aria-hidden="true">
-          <span className="h-[5px] w-10 rounded-full bg-ink-4/60" />
+          <span className="h-[5px] w-10 rounded-full bg-ink-4/60 lg:hidden" />
         </div>
 
         {large && !history ? (

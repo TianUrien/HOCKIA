@@ -389,7 +389,7 @@ export default function AdminWorld() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Club name or ID..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -400,7 +400,7 @@ export default function AdminWorld() {
                   id="world-country"
                   value={filters.country_id ?? ''}
                   onChange={(e) => handleFilterChange('country_id', e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   disabled={loadingCountries}
                 >
                   <option value="">All countries</option>
@@ -418,7 +418,7 @@ export default function AdminWorld() {
                   id="world-region"
                   value={filters.province_id ?? ''}
                   onChange={(e) => handleFilterChange('province_id', e.target.value ? parseInt(e.target.value, 10) : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                   disabled={!filters.country_id || loadingProvinces}
                 >
                   <option value="">All regions</option>
@@ -436,7 +436,7 @@ export default function AdminWorld() {
                   id="world-claimed"
                   value={filters.is_claimed === undefined ? '' : filters.is_claimed ? 'yes' : 'no'}
                   onChange={(e) => handleFilterChange('is_claimed', e.target.value === '' ? undefined : e.target.value === 'yes')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">All</option>
                   <option value="yes">Claimed only</option>
@@ -450,7 +450,7 @@ export default function AdminWorld() {
                   id="world-source"
                   value={filters.created_from ?? ''}
                   onChange={(e) => handleFilterChange('created_from', e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">All sources</option>
                   <option value="seed">Seed Data</option>
@@ -743,7 +743,7 @@ export default function AdminWorld() {
                   value={forceClaimProfileId}
                   onChange={(e) => setForceClaimProfileId(e.target.value)}
                   placeholder="e.g., a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-4"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent mb-4"
                 />
                 <div className="flex gap-3">
                   <button

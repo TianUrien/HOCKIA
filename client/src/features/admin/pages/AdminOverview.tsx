@@ -163,7 +163,7 @@ export function AdminOverview() {
             value={daysFilter}
             onChange={(e) => setDaysFilter(Number(e.target.value) as DaysFilter)}
             title="Time period filter"
-            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>

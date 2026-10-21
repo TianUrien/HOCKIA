@@ -106,7 +106,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 w-full rounded-[12px] bg-surface-muted pl-10 pr-10 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40 [&::-webkit-search-cancel-button]:hidden"
+            className="h-10 w-full rounded-[12px] bg-surface-muted pl-10 pr-10 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 [&::-webkit-search-cancel-button]:hidden"
             data-testid="inbox-search"
           />
           {query && (

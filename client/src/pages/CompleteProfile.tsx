@@ -1528,7 +1528,7 @@ export default function CompleteProfile() {
                           value={formData.umpireLevel}
                           onChange={(e) => setFormData({ ...formData, umpireLevel: e.target.value })}
                           placeholder="Start typing…"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
                         />
@@ -1553,7 +1553,7 @@ export default function CompleteProfile() {
                           value={formData.federation}
                           onChange={(e) => setFormData({ ...formData, federation: e.target.value })}
                           placeholder="e.g., FIH, England Hockey, CAH"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
                         />
@@ -1578,7 +1578,7 @@ export default function CompleteProfile() {
                           value={formData.umpireSince}
                           onChange={(e) => setFormData({ ...formData, umpireSince: e.target.value })}
                           placeholder="e.g., 2018"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           autoComplete="off"
                         />
                       </div>
@@ -1657,7 +1657,7 @@ export default function CompleteProfile() {
                             value={formData.pendingLanguage}
                             onChange={(e) => setFormData({ ...formData, pendingLanguage: e.target.value })}
                             placeholder="e.g., English, Spanish, Dutch"
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                             autoComplete="off"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -1789,7 +1789,7 @@ export default function CompleteProfile() {
                       value={formData.clubBio}
                       onChange={(e) => setFormData({ ...formData, clubBio: e.target.value })}
                       placeholder="Tell us about your club..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       rows={4}
                     />
                   </div>

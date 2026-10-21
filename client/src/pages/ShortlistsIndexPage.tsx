@@ -106,7 +106,7 @@ export default function ShortlistsIndexPage() {
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
               placeholder="e.g. Women's pre-season trials"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleCreate()
                 if (e.key === 'Escape') { setCreating(false); setDraftName('') }
@@ -209,7 +209,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               if (e.key === 'Enter') commitRename()
               if (e.key === 'Escape') { setDraft(list.name); setEditing(false) }
             }}
-            className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
+            className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded text-sm focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
           />
         ) : (
           <Link to={`/dashboard/shortlists/${list.id}`} className="flex-1 min-w-0">

@@ -203,7 +203,7 @@ export default function ShortlistScreen() {
             onChange={(e) => setNoteText(e.target.value.slice(0, NOTE_MAX))}
             rows={4}
             aria-label="Note"
-            className="w-full resize-none rounded-card bg-surface-grouped p-3 text-[16px] text-ink-1 outline-none focus:ring-2 focus:ring-hockia-primary"
+            className="w-full resize-none rounded-card bg-surface-grouped p-3 text-[16px] text-ink-1 outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary"
           />
           <div className="flex gap-2.5 pt-3">
             {noteFor?.note && (

@@ -164,7 +164,7 @@ export function AdminAuditLog() {
             setActionFilter(e.target.value)
             setPage(1)
           }}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
           aria-label="Filter by action"
           title="Filter by action"
         >
@@ -182,7 +182,7 @@ export function AdminAuditLog() {
             setTargetTypeFilter(e.target.value)
             setPage(1)
           }}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
           aria-label="Filter by target type"
           title="Filter by target type"
         >

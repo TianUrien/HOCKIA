@@ -194,7 +194,7 @@ export function AdminNetworking() {
             aria-label="Filter by time period"
             value={daysFilter}
             onChange={(e) => setDaysFilter(Number(e.target.value) as DaysFilter)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -208,7 +208,7 @@ export function AdminNetworking() {
             aria-label="Filter by role"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="">All Roles</option>
             <option value="player">Players</option>
@@ -223,7 +223,7 @@ export function AdminNetworking() {
             type="checkbox"
             checked={excludeTest}
             onChange={(e) => setExcludeTest(e.target.checked)}
-            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            className="rounded border-gray-300 text-purple-600 focus-visible:ring-purple-500"
           />
           Exclude test accounts
         </label>
