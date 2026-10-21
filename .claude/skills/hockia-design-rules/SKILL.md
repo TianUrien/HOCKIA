@@ -13,7 +13,7 @@ HOCKIA is a networking app for field hockey: players, coaches, clubs, umpires an
 2. The newest dated founder ruling in writing: `docs/design-handoff/decisions.md`, ADRs in `docs/engineering/decisions/`, this skill (each rule here carries its date where it matters).
 3. `CLAUDE.md` and `docs/engineering/*.md` (engineering constraints: grants, hidden-profile fences, bundle budgets, native clients).
 4. Figma variables and components (source of truth for tokens and component anatomy).
-5. Your own taste, last. If you think a rule is wrong, say so and ask; don't deviate silently.
+5. Your own taste comes last. If you think a rule is wrong, say so and ask; don't deviate silently.
 
 When code and design disagree, decide with the founder, then update both the losing side and `docs/design-handoff/decisions.md` so they don't drift.
 

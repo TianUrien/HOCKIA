@@ -48,10 +48,10 @@ Internal Working Backwards document. Proposal for the founder, 2026-10-20. **Fra
 ## Evidence vs assumption
 | Claim in the PR | Evidence (source, date) | Status | How to test |
 |---|---|---|---|
-| Brands want targeted reach inside HOCKIA |, | needs evidence | ask active brands to draft offers; count published offers in 4 weeks |
-| Members value hockey-specific offers |, | hypothesis | offer_open and offer_contact per impression; mute rate |
-| Exclusivity to field hockey = zero waste for brands | roles-and-product.md (every member is a hockey role) | evidenced (structural) |, |
-| One labelled card per Home visit doesn't hurt return |, | needs evidence | Home return rate 2/4 weeks before vs after; mute rate |
+| Brands want targeted reach inside HOCKIA | none yet | needs evidence | ask active brands to draft offers; count published offers in 4 weeks |
+| Members value hockey-specific offers | none yet | hypothesis | offer_open and offer_contact per impression; mute rate |
+| Exclusivity to field hockey = zero waste for brands | roles-and-product.md (every member is a hockey role) | evidenced (structural) | not needed |
+| One labelled card per Home visit doesn't hurt return | none yet | needs evidence | Home return rate 2/4 weeks before vs after; mute rate |
 | Location matching works with city/country text | profiles store city + country (Google Places) | evidenced (data exists) | match quality review on a sample (aggregate) |
 | Brands accept aggregate-only reporting | ChatGPT ads model (2026 guides) as precedent | hypothesis | brand feedback after first 4 weeks |
 

@@ -13,12 +13,12 @@
 - Suggestion reasons in "HOCKIA suggests" are templates filled from profile fields, not free AI text (2026-10-04). Exception: Hockia AI applicant summaries may be AI-written (2026-10-16), within the Safety rules below.
 
 ## Claims (UI, AI, email, marketing)
-Never promise placements, signings, contracts, guarantees or rankings; never "accurate AI". Never invent metrics, percentages, completeness scores, "replies in ~1 day" or "4× views", show real data or nothing. Label sample data as illustrative. Hockia AI is labelled **Beta** everywhere.
+Never promise placements, signings, contracts, guarantees or rankings; never "accurate AI". Never invent metrics, percentages, completeness scores, "replies in ~1 day" or "4× views": show real data or nothing. Label sample data as illustrative. Hockia AI is labelled **Beta** everywhere.
 
 ## Privacy
 - Hidden profiles (admin-blocked or frozen minors) are excluded from every list, count, RPC, view, digest and AI read, counts included (repo `CLAUDE.md` invariant; RLS alone doesn't cover SECURITY DEFINER or service-role reads).
 - Date of birth is owner/admin/server-only; others see age ("Clubs see your age, never the date"). Never "fix" access by re-granting the column.
-- If a date of birth means the user is under 18: never save silently, explain what changes for under-18 accounts (age gate) and ask first.
+- If a date of birth means the user is under 18: never save silently: explain what changes for under-18 accounts (age gate) and ask first.
 - Work permits follow the existing owner/recruiter visibility rules.
 - No activity or last-seen signals on profiles, cards, Community or recruiter fit; only the chat header may show activity, and only if the user allows it.
 - Chats with Hockia AI are private and deletable.

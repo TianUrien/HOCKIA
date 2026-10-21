@@ -132,18 +132,19 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
       const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.applicant)
       const ids = list.map((r) => r.id)
       const target = fitTarget((role as Vacancy).gender)
-      const [{ data: views }, fits] = await Promise.all([
+      // One fit read for the whole list (compute_club_fit_batch, 2026-10-20):
+      // closed and withdrawn applications get no fit, so they are not asked for.
+      const fitWanted = target ? list.filter((r) => r.status !== 'no_response' && r.status !== 'withdrawn' && r.status !== 'filled') : []
+      const [{ data: views }, { data: fitRows }] = await Promise.all([
         ids.length ? supabase.from('application_views').select('application_id').eq('viewer_id', clubId).in('application_id', ids) : Promise.resolve({ data: [] }),
-        Promise.all(list.map(async (r) => {
-          if (r.status === 'no_response' || r.status === 'withdrawn' || r.status === 'filled' || !target) return [r.id, null] as const
-          const { data } = await supabase.rpc('compute_club_fit', { p_owner_id: clubId, p_player_id: r.applicant!.id, p_target: target, p_region: null as unknown as string, p_opportunity_id: roleId })
-          const row = (data as { state: FitState; components: FitComponents }[] | null)?.[0] ?? null
-          return [r.id, row ? { state: row.state, components: row.components } : null] as const
-        })),
+        fitWanted.length
+          ? supabase.rpc('compute_club_fit_batch', { p_owner_id: clubId, p_player_ids: fitWanted.map((r) => r.applicant!.id), p_target: target as string, p_region: null as unknown as string, p_opportunity_id: roleId })
+          : Promise.resolve({ data: [] }),
       ])
       if (cancelled) return
       const viewed = new Set(((views ?? []) as { application_id: string }[]).map((v) => v.application_id))
-      const fitById = new Map(fits)
+      const fitByPlayer = new Map(((fitRows ?? []) as { player_id: string; state: FitState; components: FitComponents }[]).map((f) => [f.player_id, { state: f.state, components: f.components }]))
+      const fitById = new Map(fitWanted.map((r) => [r.id, fitByPlayer.get(r.applicant!.id) ?? null] as const))
       const applicants: Applicant[] = list.map((r) => {
         const a = r.applicant!
         return {

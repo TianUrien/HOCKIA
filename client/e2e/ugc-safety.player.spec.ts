@@ -148,18 +148,25 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
       return
     }
 
-    // Click the first post menu
-    await postOptions.first().click()
-
     // Should show either Report (other's post) or Edit/Delete (own post).
-    // Home v1 cards (Figma H10) say "Report post" / "Delete post".
+    // Home v1 cards (Figma H10) say "Report post" / "Delete post". A card the
+    // viewer is the subject of (a reference or signing about them, e.g. the
+    // one the DB integration job leaves at the top of the staging feed) offers
+    // only Share / Copy link, so look through the first few cards for one
+    // that has a Report or an owner action.
     const reportBtn = page.getByText(/^Report( post)?$/).first()
-    const editBtn = page.getByText(/^(Edit|Delete) post$/).first()
+    const editBtn = page.getByText(/^(Edit|Delete) (post|question)$/).first()
+    const cards = Math.min(await postOptions.count(), 5)
+    let found = false
+    for (let i = 0; i < cards && !found; i++) {
+      await postOptions.nth(i).click()
+      found =
+        (await reportBtn.isVisible({ timeout: 3000 }).catch(() => false)) ||
+        (await editBtn.isVisible({ timeout: 1000 }).catch(() => false))
+      if (!found) await page.keyboard.press('Escape')
+    }
 
-    const hasReport = await reportBtn.isVisible({ timeout: 3000 }).catch(() => false)
-    const hasEdit = await editBtn.isVisible({ timeout: 1000 }).catch(() => false)
-
-    // At least one menu option should be visible
-    expect(hasReport || hasEdit).toBe(true)
+    // At least one card's menu should offer Report or an owner action
+    expect(found).toBe(true)
   })
 })

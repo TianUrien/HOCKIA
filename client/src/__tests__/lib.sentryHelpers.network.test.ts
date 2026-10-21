@@ -18,3 +18,15 @@ describe('isNetworkFailureMessage', () => {
     expect(isNetworkFailureMessage(null)).toBe(false)
   })
 })
+
+describe('isNetworkFailureError', () => {
+  it('recognises supabase-js retryable fetch errors, status 0, and network TypeErrors', async () => {
+    const { isNetworkFailureError } = await import('@/lib/sentryHelpers')
+    expect(isNetworkFailureError(Object.assign(new Error('Failed to fetch'), { name: 'AuthRetryableFetchError', status: 0 }))).toBe(true)
+    expect(isNetworkFailureError({ name: 'FetchError', message: 'boom', status: 0 })).toBe(true)
+    expect(isNetworkFailureError(new TypeError('Load failed'))).toBe(true)
+    expect(isNetworkFailureError(Object.assign(new Error('Invalid login credentials'), { name: 'AuthApiError', status: 400 }))).toBe(false)
+    expect(isNetworkFailureError(null)).toBe(false)
+    expect(isNetworkFailureError('Load failed')).toBe(false)
+  })
+})

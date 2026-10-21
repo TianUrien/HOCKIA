@@ -19,7 +19,7 @@ Why: a category-coloured cover clashed with clubs' crests; covers must feel like
 - A manual "pick your club colours" override (`source: "manual"`) is planned and is never overwritten by the automatic pass.
 
 ## Rendering recipe
-`radial-gradient(120% 90% at 18% 22%, <glow>61, transparent 60%), linear-gradient(135deg, stop0, stop1 55%, stop2)`; crest watermark 16–17 % opacity, `mix-blend-mode: luminosity`, rotated −8°, top-right, ~72 % of card width; bottom scrim for white text. Featured card bottom strip = stop2 at 62 % + backdrop blur 24 (App Store "Get" strip).
+`radial-gradient(120% 90% at 18% 22%, <glow>61, transparent 60%), linear-gradient(135deg, stop0, stop1 55%, stop2)`; crest watermark ~55 % opacity, `mix-blend-mode: multiply` (so the crest file's white square vanishes into the gradient and the crest keeps its own colours as a deeper tint), edges feathered with a radial mask, rotated −8°, top-right, ~70 % of card width (hero: ~64 %, top ≈ 8 % so the crest is never cut by the top edge; ruling 2026-10-20, replaces the 17 % luminosity watermark); bottom scrim for white text. Featured card bottom strip = stop2 at 62 % + backdrop blur 24 (App Store "Get" strip).
 
 ## Other no-photo treatments
 - **Club cards (Community)** without a cover photo: crest-colour gradient + full field hockey pitch lines (~12 %) + large crisp crest on a white padded tile; covers smaller than 600 px fall back to this.

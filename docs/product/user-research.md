@@ -4,7 +4,7 @@ What we know about what members come to HOCKIA to get. Used by every product and
 
 Rules for this file:
 - **Evidence** has a date and a source (analytics query, interview round, support tickets). **Hypotheses** say how we'd test them. **Gaps** say what to measure.
-- Aggregates only. No names, quotes that identify someone, user ids or emails, this repo is public (ADR 0006). Detailed reports live outside the repo; reference them by date.
+- Aggregates only. No names, quotes that identify someone, user ids or emails: this repo is public (ADR 0006). Detailed reports live outside the repo; reference them by date.
 - Never write a need as "validated" without evidence here.
 
 ## Evidence
@@ -25,7 +25,7 @@ Source: the code agent reproduced the RPC path on staging (rolled-back transacti
 
 ## Hypotheses (to test)
 - H1. Members open Home to learn **what changed for them** (replies, views, roles that fit, applicants waiting), not to browse social content. Test: interviews per role + card impressions/CTR once tracked.
-- H2, **Signings and market moves** (who signed where, new roles, who is available) are the community content members value; photos and highlights belong on profiles as a portfolio. Test: interviews; compare engagement of signing/role items vs media items.
+- H2. **Signings and market moves** (who signed where, new roles, who is available) are the community content members value; photos and highlights belong on profiles as a portfolio. Test: interviews; compare engagement of signing/role items vs media items.
 - H3. Clubs want Home to be a **to-do** (who to answer, who is available); players want **chances** (roles that fit, who looked at them). Test: interviews by role.
 - H4. A Hockia AI briefing ("what changed and what I'd do next", with options) is clearer than a feed. Test: prototype test with members of each role.
 
