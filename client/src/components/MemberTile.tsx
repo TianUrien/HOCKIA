@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Building2, Shield } from 'lucide-react'
-import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -274,7 +274,8 @@ export default function MemberTile(props: MemberTileProps) {
         </span>
       ) : null
     }
-    return props.tier ? <TierBadge tier={props.tier} size="sm" /> : null
+    // No completeness tier words on a person (founder decision 2026-10-21).
+    return null
   })()
 
   return (

@@ -254,7 +254,7 @@ export const EVIDENCE_TOOLTIP =
   'Evidence Level reflects how much verifiable information this profile provides for evaluation: video, references, a provable level. It does not rate skill or talent.'
 
 /** What the profile is missing, as a plain list (audit A2: no completeness
- *  percentage or "Strong profile" score in recruiter views). */
+ *  percentage or completeness tier word in recruiter views). */
 export function missingLine(rows: { label: string; present: boolean }[]): string | null {
   const missing = rows.filter((r) => !r.present).map((r) => r.label)
   if (missing.length === 0) return null

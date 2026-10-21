@@ -9,14 +9,12 @@ import {
   FriendshipButton,
   RoleBadge,
   SocialLinksDisplay,
-  TierBadge,
   VerifiedBadge,
 } from '@/components'
 import Button from '@/components/Button'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { getInitials, cn } from '@/lib/utils'
-import { calculateTier } from '@/lib/profileTier'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { Profile } from '@/lib/supabase'
 import type { SocialLinks } from '@/lib/socialLinks'
@@ -61,6 +59,7 @@ interface ClubHeroCardProps {
   isOwnProfile: boolean
   /** Roster size — drives the Members credibility stat. */
   memberCount?: number | null
+  /** Kept for callers; the hero shows the next missing item, never a tier or percentage. */
   completionPercentage?: number
   completionLoading?: boolean
   completionBuckets?: ProfileStrengthBucket[]
@@ -91,7 +90,6 @@ export default function ClubHeroCard({
   readOnly,
   isOwnProfile,
   memberCount,
-  completionPercentage = 0,
   completionLoading = false,
   completionBuckets,
   onBucketAction,
@@ -307,19 +305,6 @@ export default function ClubHeroCard({
 
           <div className="flex flex-wrap items-center gap-2.5">
             <RoleBadge role="club" />
-            {!readOnly && (
-              completionLoading ? (
-                // Reserve the badge's row footprint while strength loads so the
-                // meta row doesn't reflow — and so we never flash a tier
-                // computed from the still-understated percentage.
-                <span
-                  className="inline-block h-5 w-20 rounded-full bg-gray-200 animate-pulse"
-                  aria-hidden="true"
-                />
-              ) : (
-                <TierBadge tier={calculateTier(completionPercentage)} />
-              )
-            )}
             <SocialLinksDisplay
               links={profile.social_links as SocialLinks | null | undefined}
               iconSize="sm"

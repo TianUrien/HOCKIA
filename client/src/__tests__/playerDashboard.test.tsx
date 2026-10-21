@@ -36,11 +36,9 @@ vi.mock('@/components', () => ({
   ReferencesTab: () => <div data-testid="references-tab">References tab</div>,
   PublicViewBanner: () => <div data-testid="public-view-banner" />,
   RoleBadge: () => <span data-testid="role-badge">Role badge</span>,
-  TierBadge: () => <span data-testid="tier-badge">Tier</span>,
   TrustBadge: () => <span data-testid="trust-badge" />,
   VerifiedBadge: () => <span data-testid="verified-badge" />,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
-  ProfileHealthCard: () => <div data-testid="profile-health-card">Profile Health</div>,
   SocialLinksDisplay: () => <div data-testid="social-links-display" />,
   // Spy stub: surfaces showLastActive + lastActiveAt as data attributes
   // so integration tests can assert the value flows through from the
