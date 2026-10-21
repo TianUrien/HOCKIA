@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   trackDbEvent: vi.fn(),
 }))
 
+// No real client: CI has no Supabase env vars, and the module throws without them.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+vi.mock('@/lib/startConversation', () => ({ resolveConversationRoute: vi.fn(() => Promise.resolve('/messages')) }))
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => mocks.isPhone }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: mocks.trackDbEvent }))
 vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn(), trackProtectedActionBlocked: vi.fn() }))
