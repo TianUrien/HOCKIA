@@ -36,6 +36,7 @@ export function RolesRail({ className, module = HOME_V1_MODULES.rolesRail }: { c
             crestUrl={o.club_avatar_url}
             title={roleTitle(o.position, o.gender, o.title)}
             subtitle={o.club_name ?? ''}
+            roleId={o.id}
             onOpen={() => {
               trackModuleClick(module.id, module.position, `/opportunities/${o.id}`)
               navigate(`/opportunities/${o.id}`, navState('home_role_card'))

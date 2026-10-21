@@ -5,6 +5,7 @@ import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, isPaid, roleBenefits,
 import { HOCKIA_FALLBACK } from '@/lib/crestPalette'
 import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
+import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 
 export interface FeaturedRoleCardProps {
   vacancy: Vacancy
@@ -27,6 +28,7 @@ export interface FeaturedRoleCardProps {
  */
 export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, league, palette, onOpen, now, layout = 'phone' }: FeaturedRoleCardProps) {
   const press = usePressSpring<HTMLButtonElement>()
+  const prefetch = useRolePrefetch(vacancy.id, press.ref)
   const headline = roleHeadline(vacancy)
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
@@ -45,6 +47,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
         type="button"
         onClick={onOpen}
         {...press.handlers}
+        {...prefetch.handlers}
         className="group block w-full text-left transition-transform duration-200 [transform-origin:center] [will-change:transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
         aria-label={`Featured role: ${headline.title} at ${clubName}`}
         data-testid="featured-role"
@@ -79,6 +82,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
       type="button"
       onClick={onOpen}
       {...press.handlers}
+      {...prefetch.handlers}
       className="block w-full text-left [transform-origin:center] [will-change:transform]"
       aria-label={`Featured role: ${headline.title} at ${clubName}`}
       data-testid="featured-role"

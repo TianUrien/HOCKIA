@@ -43,6 +43,7 @@ import { STALE_CHUNK_KEY, recoverFromStaleChunk } from '@/lib/swUpdate'
 import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
+import { loadOpportunityDetail } from '@/lib/prefetchRole'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
 // Uses sessionStorage guard to prevent infinite reload loops.
@@ -88,7 +89,8 @@ const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
 const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
 const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
-const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDetailPage'))
+// Same import function the role cards prefetch with (lib/prefetchRole).
+const OpportunityDetailPage = lazyWithRetry(loadOpportunityDetail)
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
 const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
 const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantsEntry })))

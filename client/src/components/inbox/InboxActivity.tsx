@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { ActivityListSkeleton } from '@/components/ScreenSkeletons'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import type { NotificationRecord } from '@/lib/api/notifications'
@@ -57,11 +57,7 @@ export function InboxActivity() {
   }
 
   if (loading && rows.length === 0) {
-    return (
-      <div className="flex justify-center py-12 text-ink-3">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
-    )
+    return <ActivityListSkeleton />
   }
 
   return (

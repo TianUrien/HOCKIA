@@ -117,6 +117,10 @@ export class HockiaPage {
     await this.page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {
       // No spinner found, that's fine
     })
+    // Full screens load with skeletons now (components/ScreenSkeletons.tsx, test ids end in "-skeleton").
+    await this.page.waitForSelector('[data-testid$="-skeleton"]', { state: 'hidden', timeout: 30000 }).catch(() => {
+      // No skeleton found, that's fine
+    })
   }
 }
 
