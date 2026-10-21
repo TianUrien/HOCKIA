@@ -40,8 +40,8 @@ function WorldClubPill({ claimed }: { claimed: boolean }) {
         claimed ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
       }`}
       title={claimed
-        ? 'Active on HOCKIA — you can message them inside the platform'
-        : 'In the global directory — not yet active on HOCKIA'}
+        ? 'Active on HOCKIA. You can message them inside the platform'
+        : 'In the global directory. Not yet active on HOCKIA'}
     >
       <Globe2 className="w-2.5 h-2.5" aria-hidden="true" />
       {claimed ? 'Claimed' : 'Directory'}
@@ -223,7 +223,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             {result.provenance === 'self_described' && (
               <p className="mt-1 text-xs">
                 <span className="inline-flex items-center rounded-full bg-surface-grouped px-1.5 py-0.5 text-[10px] font-semibold text-ink-2">
-                  Bio mention — not verified
+                  Bio mention · not verified
                 </span>
               </p>
             )}

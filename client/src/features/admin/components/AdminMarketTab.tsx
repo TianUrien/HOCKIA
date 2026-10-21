@@ -235,7 +235,7 @@ export function AdminMarketTab() {
         {recommendations.length === 0 ? (
           <p className="text-sm text-gray-500 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-green-500" />
-            No rules firing right now — the marketplace has no urgent gaps by current thresholds.
+            No rules firing right now. The marketplace has no urgent gaps by current thresholds.
           </p>
         ) : (
           <ol className="space-y-3">
@@ -294,7 +294,7 @@ export function AdminMarketTab() {
 
       {/* ── Balance matrix ────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h3 className="text-sm font-semibold text-gray-900">Market balance — demand vs supply</h3>
+        <h3 className="text-sm font-semibold text-gray-900">Market balance: demand vs supply</h3>
         <p className="text-xs text-gray-500 mb-3">
           Per cell: vacancies (last {data.meta.demand_window_days}d) · active open-to-play players · applications.
           Chips mark segments where demand outruns supply.
@@ -496,7 +496,7 @@ export function AdminMarketTab() {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Open-vacancy posting quality</h3>
           <p className="text-xs text-gray-400 mb-2">
-            8-point best-practice checklist — not correlation-derived at current volume
+            8-point best-practice checklist, not correlation-derived at current volume
           </p>
           {data.open_vacancy_quality.length === 0 ? (
             <p className="text-sm text-gray-500">No open vacancies</p>
@@ -582,7 +582,7 @@ export function AdminMarketTab() {
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Silent supply · {data.player_behavior.silent_supply.count}
               </p>
-              <p className="text-xs text-gray-400">Active open-to-play, never applied — activation targets</p>
+              <p className="text-xs text-gray-400">Active open-to-play, never applied: activation targets</p>
               {data.player_behavior.silent_supply.players.length > 0 && (
                 <p className="text-xs text-gray-600 mt-0.5 truncate">
                   {data.player_behavior.silent_supply.players.map((p) => p.name ?? '—').join(', ')}
@@ -593,7 +593,7 @@ export function AdminMarketTab() {
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Burned · {data.player_behavior.burned.count}
               </p>
-              <p className="text-xs text-gray-400">Applied 7+ days ago, never got any response — churn risk</p>
+              <p className="text-xs text-gray-400">Applied 7+ days ago, never got any response: churn risk</p>
               {data.player_behavior.burned.players.length > 0 && (
                 <ul className="text-xs text-gray-600 mt-0.5 space-y-0.5">
                   {data.player_behavior.burned.players.map((p) => (
@@ -610,7 +610,7 @@ export function AdminMarketTab() {
 
       <p className="text-xs text-gray-400">
         Computed {new Date(data.meta.computed_at + 'Z').toLocaleString()} · demand window{' '}
-        {data.meta.demand_window_days}d · test accounts excluded · medians, not means — counts are
+        {data.meta.demand_window_days}d · test accounts excluded · medians, not means. Counts are
         small while the marketplace grows, so absolute numbers are shown throughout.
       </p>
     </div>

@@ -36,13 +36,13 @@ interface CommentsTabProps {
  * profile being commented on. */
 function composerPlaceholderFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
-    return "Share a note about this umpire's officiating — fair decisions, professionalism, knowledge of the laws..."
+    return "Share a note about this umpire's officiating: fair decisions, professionalism, knowledge of the laws..."
   }
   if (role === 'coach') {
     return "Tell clubs and players why this coach stands out..."
   }
   if (role === 'club') {
-    return 'Share your experience with this club — culture, facilities, professionalism...'
+    return 'Share your experience with this club: culture, facilities, professionalism...'
   }
   return 'Tell clubs, coaches, and players why this profile stands out...'
 }
@@ -57,7 +57,7 @@ function emptyStateCopyFor(
   isOwner: boolean,
 ): string {
   if (isOwner) {
-    return 'No comments yet — ask a player, coach, or visitor to leave one.'
+    return 'No comments yet. Ask a player, coach, or visitor to leave one.'
   }
   if (role === 'umpire') {
     return 'Be the first to share a note about this umpire.'
@@ -92,15 +92,15 @@ function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
  * comment on themselves — guides them on whom to ask. */
 function ownerInviteHintFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
-    return "You can't leave a comment on your own profile, but other members can — ask a colleague, umpire manager, or coach to share one."
+    return "You can't leave a comment on your own profile, but other members can. Ask a colleague, umpire manager, or coach to share one."
   }
   if (role === 'club') {
-    return "You can't leave a comment on your own club page, but members can — ask a player, coach, or visitor to share their experience."
+    return "You can't leave a comment on your own club page, but members can. Ask a player, coach, or visitor to share their experience."
   }
   if (role === 'brand') {
-    return "You can't leave a comment on your own brand page, but members can — ask an ambassador or partner to share their experience."
+    return "You can't leave a comment on your own brand page, but members can. Ask an ambassador or partner to share their experience."
   }
-  return "You can't leave a comment on your own profile, but other members can — ask a teammate or coach to share one."
+  return "You can't leave a comment on your own profile, but other members can. Ask a teammate or coach to share one."
 }
 
 type CommentRating = Database['public']['Enums']['comment_rating']
@@ -134,7 +134,7 @@ const COMMENT_COMPOSER_INFO = (
   <div className="space-y-2 text-sm text-gray-100">
     <p className="font-semibold text-white">Posting tips</p>
     <ul className="list-disc space-y-1 pl-4 text-gray-200">
-      <li>Stay constructive—your profile name is shown with every comment.</li>
+      <li>Stay constructive. Your profile name is shown with every comment.</li>
       <li>Reference specific games, training moments, or character traits.</li>
       <li>Respect the minimum length and select a sentiment before submitting.</li>
     </ul>

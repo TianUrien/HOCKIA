@@ -129,7 +129,7 @@ export function RetentionCard({
           </p>
           {lowConfidence && (
             <p className="text-[11px] text-amber-700 mt-0.5">
-              Small cohort — read as a direction, not a rate
+              Small cohort: read as a direction, not a rate
             </p>
           )}
         </>
@@ -168,7 +168,7 @@ export function RetentionSignals({ periodDays = 90 }: { periodDays?: number }) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Retention — do members come back?</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Retention: do members come back?</h3>
           <p className="text-xs text-gray-500">
             Signups in the last {periodDays} days ·{' '}
             {summary ? RETENTION_METHOD_LABEL[summary.method] : 'returned that week (days N–N+6)'} ·{' '}

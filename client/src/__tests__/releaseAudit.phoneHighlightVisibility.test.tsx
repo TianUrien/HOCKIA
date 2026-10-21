@@ -78,7 +78,7 @@ describe('Videos screen (phone)', () => {
   it('a player viewer gets a locked tile, not the link, when it is recruiters-only', () => {
     mount('recruiters', 'public')
     expect(screen.queryByRole('link', { name: /linked highlight/i })).toBeNull()
-    expect(screen.getByTestId('locked-video-tile')).toHaveAccessibleName(/Highlight — for clubs & recruiting coaches only/)
+    expect(screen.getByTestId('locked-video-tile')).toHaveAccessibleName(/Highlight · for clubs & recruiting coaches only/)
     expect(screen.getByText('Videos · 1')).toBeInTheDocument()
   })
   it('a club sees the link when it is recruiters-only', () => {

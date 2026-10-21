@@ -216,7 +216,7 @@ export function RegistrationFunnel() {
           {byCountry.length > 0 && (
             <div className="mt-5 pt-5 border-t border-gray-100">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Top countries</h4>
-              <p className="text-[11px] text-gray-400 mb-3">Where known — most accounts have no country yet, shown as “Unknown”.</p>
+              <p className="text-[11px] text-gray-400 mb-3">Where known. Most accounts have no country yet, shown as “Unknown”.</p>
               <div className="flex flex-wrap gap-2">
                 {byCountry.map((c) => (
                   <span key={c.country} className="inline-flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1">
@@ -229,7 +229,7 @@ export function RegistrationFunnel() {
           )}
 
           <p className="mt-5 text-[11px] text-gray-400 leading-relaxed">
-            “Role selected” is ~100% because role is chosen at signup — it’s not a drop-off point.
+            “Role selected” is ~100% because role is chosen at signup, so it’s not a drop-off point.
             The anonymous top of funnel (visits → sign-up CTA → wall → signup started) is the
             GA4 estimate card above.
           </p>

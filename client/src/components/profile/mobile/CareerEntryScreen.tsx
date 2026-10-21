@@ -248,7 +248,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
               }}
             />
             {/* The picker carries its own tip while nothing is linked. */}
-            {worldClubId && <p className="mt-1.5 text-caption text-ink-3">Claimed on Hockia — crest, league and city fill in from the club.</p>}
+            {worldClubId && <p className="mt-1.5 text-caption text-ink-3">Claimed on Hockia. Crest, league and city fill in from the club.</p>}
           </div>
         ) : (
           <div>
@@ -356,7 +356,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
               />
             </li>
           </ul>
-          <p className="mt-1.5 text-caption text-ink-3">Short and factual — titles, promotions, captaincy, awards. Clubs read these first.</p>
+          <p className="mt-1.5 text-caption text-ink-3">Short and factual: titles, promotions, captaincy, awards. Clubs read these first.</p>
         </div>
 
         <div>
@@ -368,7 +368,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
             </button>
             <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="min-w-0 flex-1 text-left">
               <span className="block text-row font-semibold text-ink-1">{uploading ? 'Uploading…' : imageUrl ? 'Replace photo' : 'Add a photo'}</span>
-              <span className="block text-caption text-ink-3">Optional — a team shot or a moment from this season.</span>
+              <span className="block text-caption text-ink-3">Optional. A team shot or a moment from this season.</span>
             </button>
             {imageUrl ? (
               <button type="button" onClick={() => setImageUrl(null)} aria-label="Remove photo" className="flex h-9 w-9 items-center justify-center text-ink-3"><X className="h-4 w-4" /></button>

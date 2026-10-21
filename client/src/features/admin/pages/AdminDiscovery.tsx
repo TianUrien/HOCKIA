@@ -411,7 +411,7 @@ export function AdminDiscovery() {
             </span>
           </div>
           <p className="text-xs text-gray-400 mb-4">
-            Most “0 cards” responses are correct — greetings, advice, applicant recommendations, clarifying
+            Most “0 cards” responses are correct: greetings, advice, applicant recommendations, clarifying
             questions. Only “No matching profiles” are genuine search/supply gaps worth acting on.
           </p>
           {isLoading ? (

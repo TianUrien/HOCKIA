@@ -144,7 +144,7 @@ export function MultiCategorySelector({
         />
         <label htmlFor={`${idPrefix}-any`} className="text-sm text-gray-700 select-none cursor-pointer">
           {CATEGORY_LABELS.any}{' '}
-          <span className="text-gray-400 font-normal">— open to all categories</span>
+          <span className="text-gray-400 font-normal">(open to all categories)</span>
         </label>
       </div>
     </div>

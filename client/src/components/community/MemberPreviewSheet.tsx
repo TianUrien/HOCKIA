@@ -146,7 +146,7 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
 
   return (
     <>
-      <BottomSheet open onClose={onClose} ariaLabel={`${name} — preview`}>
+      <BottomSheet open onClose={onClose} ariaLabel={`${name} · preview`}>
         <div className="px-5 pb-3 pt-1">
           <div className="flex justify-end">
             <button type="button" onClick={onClose} aria-label="Close preview" className="-mr-2 flex h-8 w-8 items-center justify-center rounded-full text-ink-4">

@@ -263,7 +263,7 @@ export function offerCardState(opts: {
     case 'declined':
       return closed(player ? 'You declined this offer' : offerDeclinedLine(who, opts.declineReason))
     case 'superseded':
-      return closed('Updated — see the newer offer below')
+      return closed('Updated. See the newer offer below')
     case 'withdrawn':
       return closed(player ? 'The club withdrew this offer' : 'You withdrew this offer')
     case 'expired':
@@ -277,7 +277,7 @@ export function offerCardState(opts: {
 /** "Sam declined — Moving abroad next season" (club-facing; grey). */
 export function offerDeclinedLine(firstName: string, reason: string | null | undefined): string {
   const r = reason?.trim()
-  return r ? `${firstName} declined — ${r}` : `${firstName} declined`
+  return r ? `${firstName} declined: ${r}` : `${firstName} declined`
 }
 
 /**
@@ -288,7 +288,7 @@ export function offerDeclinedLine(firstName: string, reason: string | null | und
 export function offerDeclinedNote(firstName: string, offer: Pick<OfferRow, 'status' | 'decline_reason'> | null | undefined): string | null {
   if (offer?.status !== 'declined') return null
   const r = offer.decline_reason?.trim()
-  return r ? `${firstName} declined your offer — “${r}”` : `${firstName} declined your offer.`
+  return r ? `${firstName} declined your offer: “${r}”` : `${firstName} declined your offer.`
 }
 
 // ── Road to signing (D4.1) ──

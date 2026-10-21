@@ -786,7 +786,7 @@ export default function GalleryManager({
                   <Loader2 className="h-4 w-4 animate-spin text-hockia-primary" />
                   {videoPhase === 'creating' && 'Preparing upload…'}
                   {videoPhase === 'uploading' && 'Uploading video…'}
-                  {videoPhase === 'processing' && 'Processing video — this can take a minute.'}
+                  {videoPhase === 'processing' && 'Processing video. This can take a minute.'}
                 </span>
                 {videoPhase === 'uploading' && (
                   <span className="flex items-center gap-3">
@@ -870,7 +870,7 @@ export default function GalleryManager({
           </p>
           {canAddVideo && (
             <p className="mt-2 text-sm text-gray-500">
-              Videos: MP4, MOV or WebM • Up to 3 minutes — use <span className="font-medium text-hockia-primary">Add Video</span>
+              Videos: MP4, MOV or WebM • Up to 3 minutes. Use <span className="font-medium text-hockia-primary">Add Video</span>
             </p>
           )}
         </div>
@@ -1209,7 +1209,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">
         <AlertCircle className="h-6 w-6 text-red-400" />
-        <span className="text-xs">Processing failed — delete and re-upload</span>
+        <span className="text-xs">Processing failed. Delete and re-upload</span>
       </div>
     )
   }

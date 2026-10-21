@@ -209,7 +209,7 @@ Deno.serve(async (req: Request) => {
           <a href="${renewUrl}" style="display:inline-block;background:#6d28d9;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Renew for 30 days</a>
         </div>
         <p style="font-size:13px;color:#6b7280;line-height:1.5;margin-top:16px;">
-          Done recruiting for this role? Nothing to do — it stays closed, and any waiting applications will close automatically so nobody is left in limbo.
+          Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.
         </p>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
           You can also manage this opportunity <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6d28d9;">in the app</a>.
@@ -228,7 +228,7 @@ Deno.serve(async (req: Request) => {
       `Still recruiting for this role? Renew it with a fresh 30-day deadline in one click:`,
       renewUrl,
       '',
-      'Done recruiting for this role? Nothing to do — it stays closed, and any waiting applications will close automatically so nobody is left in limbo.',
+      'Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.',
     ].join('\n')
 
     const rendered = await renderTemplate(supabase, 'opportunity_renewal', {

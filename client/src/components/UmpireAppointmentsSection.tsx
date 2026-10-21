@@ -106,7 +106,7 @@ function formatDate(value: string | null): string | null {
 function formatDateRange(start: string | null, end: string | null): string | null {
   const s = formatDate(start)
   const e = formatDate(end)
-  if (s && e && start !== end) return `${s} — ${e}`
+  if (s && e && start !== end) return `${s} · ${e}`
   if (s) return s
   if (e) return e
   return null

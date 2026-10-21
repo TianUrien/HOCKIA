@@ -242,7 +242,7 @@ describe('Invite sheet (D3.2)', () => {
     inv.declined = ['r1']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
     // The active role was passed on → said so, nothing preselected, the club picks.
-    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player — choose another role.')
+    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player. Choose another role.')
     expect(screen.getAllByTestId('invite-role')).toHaveLength(2)
     expect(screen.getAllByTestId('invite-role').every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true)
     expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)

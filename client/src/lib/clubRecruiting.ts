@@ -182,13 +182,13 @@ export function fitPositionRow(c: FitComponents): FitRow | null {
   if (typeof c.position_match !== 'number' || !c.role_position) return null
   const role = fitPositionLabel(c.role_position) ?? 'this position'
   const primary = fitPositionLabel(c.candidate_position)
-  if (c.position_match >= 1) return { key: 'position', label: 'Position', ok: true, detail: `Plays ${role} — matches` }
+  if (c.position_match >= 1) return { key: 'position', label: 'Position', ok: true, detail: `Plays ${role} · matches` }
   if (c.position_match > 0) {
-    return { key: 'position', label: 'Position', ok: false, detail: `${primary ?? 'Another position'} — plays ${role} as a second position` }
+    return { key: 'position', label: 'Position', ok: false, detail: `${primary ?? 'Another position'} · plays ${role} as a second position` }
   }
   return {
     key: 'position', label: 'Position', ok: false,
-    detail: primary ? `${primary} — the role is for a ${role}` : `No position on the profile yet — the role is for a ${role}`,
+    detail: primary ? `${primary} · the role is for a ${role}` : `No position on the profile yet. The role is for a ${role}`,
   }
 }
 
@@ -237,9 +237,9 @@ export function fitRows(c: FitComponents, ctx: {
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
     detail: (c.gender_match ?? 0) >= 1
-      ? `${ctx.playerCategoryLabel ?? 'Category'} — matches ${roleWord}`
+      ? `${ctx.playerCategoryLabel ?? 'Category'} · matches ${roleWord}`
       // Round 6: a category mismatch is a no-chip miss — say what the role is for.
-      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} — ${team ? `the role is for ${team}` : 'doesn’t match this role'}` : 'No playing category on the profile yet',
+      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} · ${team ? `the role is for ${team}` : 'doesn’t match this role'}` : 'No playing category on the profile yet',
   }
   const open: FitRow = {
     key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,
@@ -251,12 +251,12 @@ export function fitRows(c: FitComponents, ctx: {
   // Neutral wording — no pronouns on any club surface (founder ruling 2026-09-26).
   if (!ctx.playerLeagueKnown) {
     levelDetail = ctx.playerLeagueSelfReported
-      ? 'Can’t compare yet — league is self-reported'
+      ? 'Can’t compare yet: league is self-reported'
       : ctx.playerClub
-        ? `Can’t compare yet — Club: ${ctx.playerClub} has no league on Hockia.`
-        : 'Can’t compare yet — no club with a league on the profile.'
+        ? `Can’t compare yet. Club: ${ctx.playerClub} has no league on Hockia.`
+        : 'Can’t compare yet. No club with a league on the profile.'
   } else if (!ctx.clubLeagueKnown) {
-    levelDetail = 'Can’t compare yet — your league has no level on Hockia.'
+    levelDetail = 'Can’t compare yet. Your league has no level on Hockia.'
   } else if (prox >= 0.75) {
     levelDetail = 'Plays at a level close to yours'
   } else if (prox > 0) {

@@ -88,8 +88,8 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
         activeGradient: 'from-blue-500 to-indigo-500',
         tooltip:
           role === 'player'
-            ? 'Broader than playing — trials, transfers, sponsorships, or other offers.'
-            : 'Broader than coaching — consulting, clinics, sponsorships, or other offers.',
+            ? 'Broader than playing: trials, transfers, sponsorships, or other offers.'
+            : 'Broader than coaching: consulting, clinics, sponsorships, or other offers.',
       },
     ]
   }

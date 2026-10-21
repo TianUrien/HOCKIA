@@ -36,7 +36,7 @@ export default function WriteReferenceSheet({ open, onClose, forName, relationsh
 
   const send = async () => {
     const value = text.trim()
-    if (value.length < 20) { setError('A few sentences, please — clubs read these.'); return }
+    if (value.length < 20) { setError('A few sentences, please. Clubs read these.'); return }
     const ok = await onSend(value)
     if (!ok) setError('Could not send that. Please try again.')
   }
@@ -64,7 +64,7 @@ export default function WriteReferenceSheet({ open, onClose, forName, relationsh
             onChange={(e) => { setText(e.target.value.slice(0, MAX)); setError(null) }}
             rows={5}
             aria-label="Your reference"
-            placeholder={`What did ${who} bring to the team? Be specific — clubs read these.`}
+            placeholder={`What did ${who} bring to the team? Be specific. Clubs read these.`}
             className="w-full resize-none rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus:ring-1 focus:ring-inset focus:ring-hockia-primary"
           />
           {remaining <= 50 && <span className="pointer-events-none absolute bottom-2.5 right-3 text-caption text-ink-3">{remaining}</span>}

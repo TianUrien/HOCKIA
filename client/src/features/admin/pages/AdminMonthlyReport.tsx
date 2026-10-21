@@ -195,7 +195,7 @@ export function AdminMonthlyReport() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Monthly Report</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Platform snapshot — {MONTH_NAMES[month - 1]} {year} vs. {month === 1 ? MONTH_NAMES[11] : MONTH_NAMES[month - 2]} {month === 1 ? year - 1 : year}
+            Platform snapshot: {MONTH_NAMES[month - 1]} {year} vs. {month === 1 ? MONTH_NAMES[11] : MONTH_NAMES[month - 2]} {month === 1 ? year - 1 : year}
           </p>
         </div>
 

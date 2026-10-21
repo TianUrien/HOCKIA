@@ -40,7 +40,7 @@ const COACH_PROMPTS: string[] = [
 const CLUB_PROMPTS: string[] = [
   "What's new at your club?",
   'Tell people about a recent match.',
-  'Welcoming someone new — player, coach, staff, sponsor?',
+  'Welcoming someone new? Player, coach, staff, sponsor?',
   'A moment from training worth sharing?',
   'Anything coming up your members should know about?',
 ]
@@ -48,7 +48,7 @@ const CLUB_PROMPTS: string[] = [
 const BRAND_PROMPTS: string[] = [
   "What's new with your brand?",
   'Launching a product? Tell the community.',
-  'Behind the scenes worth sharing — design, factory, team?',
+  'Behind the scenes worth sharing? Design, factory, team?',
   'Welcome a new ambassador or partner.',
   'Spotlight an athlete you support.',
 ]
@@ -60,7 +60,7 @@ const UMPIRE_PROMPTS: string[] = [
   'Share a course you completed, a federation update, or your year in numbers...',
   'Just completed a course or clinic? Tell your peers.',
   'Federation update worth passing on?',
-  'Reflecting on your season — in aggregate, not specifics?',
+  'Reflecting on your season? Share the big picture, not specifics.',
   'New panel or credential? Share the milestone.',
 ]
 

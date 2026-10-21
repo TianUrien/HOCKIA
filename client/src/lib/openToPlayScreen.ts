@@ -65,5 +65,5 @@ export function openToPlayConsent(open: boolean, position: string | null | undef
     : `Turn this on and Hockia can suggest your profile to clubs looking for ${article} ${who}. While it’s off, you aren’t suggested.`
 }
 
-export const UNDER_18_COPY = 'Open to play is for players 18 and over. Until then clubs aren’t suggested your profile — you can still keep it up to date.'
-export const DOB_REQUIRED_COPY = 'Open to play is for players 18 and over. Add your date of birth to turn it on — it never shows on your profile.'
+export const UNDER_18_COPY = 'Open to play is for players 18 and over. Until then clubs aren’t suggested your profile. You can still keep it up to date.'
+export const DOB_REQUIRED_COPY = 'Open to play is for players 18 and over. Add your date of birth to turn it on. It never shows on your profile.'

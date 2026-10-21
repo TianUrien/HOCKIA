@@ -209,7 +209,7 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
           >
             <span className="min-w-0 flex-1">
               <span className="block text-row font-semibold text-ink-1">Only members with an EU passport</span>
-              <span className="block truncate text-secondary text-ink-2">Either nationality counts — dual passports included</span>
+              <span className="block truncate text-secondary text-ink-2">Either nationality counts, dual passports included</span>
             </span>
             <span className={cn('flex h-7 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold', filters.euOnly ? 'bg-positive-soft text-positive' : 'bg-white text-ink-2')}>
               <span className={cn('h-1.5 w-1.5 rounded-full', filters.euOnly ? 'bg-positive' : 'bg-ink-4')} />

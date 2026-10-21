@@ -142,7 +142,7 @@ export function AdminAIOpinions() {
             AI Opinion Analytics
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Section F — verdict generations + recruiter feedback. Quantitative
+            Section F: verdict generations + recruiter feedback. Quantitative
             funnel data is also in GA4 under <code>ai_opinion_*</code> events.
           </p>
         </div>
@@ -531,7 +531,7 @@ function FeedbackRow({
                     {row.citations.map((c, i) => (
                       <li key={`${c.field}-${i}`} className="text-gray-700">
                         <code className="text-purple-700 mr-1">{c.field}</code>
-                        — {c.claim}
+                        · {c.claim}
                       </li>
                     ))}
                   </ul>

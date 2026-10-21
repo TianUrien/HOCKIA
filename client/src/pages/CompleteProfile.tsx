@@ -990,7 +990,7 @@ export default function CompleteProfile() {
       if (isPersonRole) {
         const dob = formData.dateOfBirth || formSnapshot.dateOfBirth || ''
         if (!dob) {
-          throw new Error('Please enter your date of birth — HOCKIA is an 18+ platform.')
+          throw new Error('Please enter your date of birth. HOCKIA is an 18+ platform.')
         }
         const { data: dobResult, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
         if (dobError) {
@@ -998,7 +998,7 @@ export default function CompleteProfile() {
         }
         const outcome = (dobResult as { outcome?: string } | null)?.outcome
         if (outcome === 'invalid_dob') {
-          throw new Error('That date of birth doesn’t look right — please check it.')
+          throw new Error('That date of birth doesn’t look right. Please check it.')
         }
         if (outcome === 'frozen') {
           // Under 18: account frozen server-side; do NOT complete onboarding.
@@ -1316,7 +1316,7 @@ export default function CompleteProfile() {
               {userRole === 'club' && 'Complete Club Profile'}
             </h3>
             <p className="text-gray-600 mb-6">
-              {isWizardFlow ? `Step ${currentStep} of 3 — ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
+              {isWizardFlow ? `Step ${currentStep} of 3 · ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
             </p>
 
             {/* Step indicator — umpire wizard only.

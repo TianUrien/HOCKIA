@@ -25,6 +25,7 @@ export const SUMMARY_SYSTEM = [
   'You may compare applicants on those facts and say who closes first.',
   'Never mention or guess age, gender, nationality, appearance or anything not given. No scores, percentages, rankings or recommendations to sign someone.',
   'No emoji, no lists, no placeholders. Reply with the summary only.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
 const POS = ['primary', 'secondary', 'no', 'n/a'] as const

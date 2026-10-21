@@ -832,11 +832,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         if (dobError) throw dobError
         const outcome = (dobResult as { outcome?: string } | null)?.outcome
         if (outcome === 'invalid_dob') {
-          throw new Error('That date of birth doesn’t look right — please check it.')
+          throw new Error('That date of birth doesn’t look right. Please check it.')
         }
         if (outcome === 'already_set') {
           // Unreachable through the UI (the field locks once set) — defensive.
-          throw new Error('Your date of birth is locked — contact HOCKIA support to change it.')
+          throw new Error('Your date of birth is locked. Contact HOCKIA support to change it.')
         }
         // 'frozen' needs no special handling here: the profile refresh below
         // re-reads the row and the AgeGate goodbye screen takes over.
@@ -1138,7 +1138,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     player specialises in, beyond position. Optional. */}
                 <SpecialistSkillsSelect
                   label="Specialist skills"
-                  hint="Optional — what you specialise in beyond your position. Helps recruiters find the exact player they need."
+                  hint="Optional. What you specialise in beyond your position. Helps recruiters find the exact player they need."
                   value={formData.specialist_skills}
                   onChange={(next) => setFormData({ ...formData, specialist_skills: next })}
                   position={formData.position}
@@ -1231,7 +1231,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <span>
                       <span className="font-medium">Open to Opportunities</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Broader than playing — trials, transfers, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
+                        Broader than playing: trials, transfers, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
                       </span>
                     </span>
                   </label>
@@ -1406,7 +1406,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <span>
                       <span className="font-medium">Open to Opportunities</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Broader than coaching — consulting, clinics, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
+                        Broader than coaching: consulting, clinics, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
                       </span>
                     </span>
                   </label>
@@ -1421,7 +1421,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Recruitment preferences</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Optional — sharpens your matches with recruiters. Never shown as a requirement on your profile.
+                    Optional. Sharpens your matches with recruiters. Never shown as a requirement on your profile.
                   </p>
                 </div>
 
@@ -1736,7 +1736,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     rows={4}
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent resize-none"
-                    placeholder="Share a short professional summary — career highlights, officiating philosophy, tournaments you've worked."
+                    placeholder="Share a short professional summary: career highlights, officiating philosophy, tournaments you've worked."
                   />
                   <p
                     className={`mt-1 text-xs text-right ${

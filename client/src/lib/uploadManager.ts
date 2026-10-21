@@ -91,7 +91,7 @@ function formatUploadError(raw: string): string {
   if (lower.includes('mime type') || lower.includes('content type') || lower.includes('not allowed'))
     return 'This file type is not supported. Use MP4, MOV, or WebM.'
   if (lower.includes('network error') || lower.includes('failed to fetch'))
-    return 'Network error — please check your connection and try again.'
+    return 'Network error. Please check your connection and try again.'
   if (lower.includes('provider_not_configured'))
     return 'Video uploads are temporarily unavailable. Please try again later.'
   return raw
@@ -237,7 +237,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           for (;;) {
             if (isCancelled()) return
             if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-              throw new Error('Still processing — check back in a few minutes.')
+              throw new Error('Still processing. Check back in a few minutes.')
             }
             await new Promise((r) => setTimeout(r, POLL_MS))
             const { data: row } = await supabase

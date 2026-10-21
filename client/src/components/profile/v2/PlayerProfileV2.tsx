@@ -587,7 +587,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI</span>
-                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines — you check it first</span>
+                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first</span>
                 </span>
               </button>
             </div>

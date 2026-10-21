@@ -140,7 +140,7 @@ export function useNativeVideoUpload() {
     while (!cancelRef.current) {
       if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
         // Not an error per se — processing can finish later; tell the user.
-        setError('Still processing — check back in a few minutes.')
+        setError('Still processing. Check back in a few minutes.')
         setPhase('error')
         return createData.videoId
       }

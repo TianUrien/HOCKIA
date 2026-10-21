@@ -98,7 +98,7 @@ function buildBottleneckExplanation(score: ProductHealthScore): string {
     case 'content': {
       const c = diagnostics.content
       if (c.low_data_confidence) {
-        return 'Low data confidence — too few posts to score reliably.'
+        return 'Low data confidence: too few posts to score reliably.'
       }
       return `${c.posts_with_comment_pct}% of posts received a comment. Target: 30%.`
     }
@@ -129,7 +129,7 @@ function buildNextActionSuggestion(score: ProductHealthScore): string {
     case 'retention':
       return 'Find what brought returning users back and double down. Onboarding-completed-but-never-returned users are the cohort to investigate.'
     case 'role_balance':
-      return 'Imbalance detected — one role is doing the heavy lifting. Recruit users on the missing side of the marketplace.'
+      return 'Imbalance detected: one role is doing the heavy lifting. Recruit users on the missing side of the marketplace.'
     case 'activation':
       return 'Tighten the path from signup to first meaningful action. Check the empty-state CTAs for new users by role.'
     case 'content':
@@ -192,7 +192,7 @@ function Sparkline({
   if (points.length === 0) {
     return (
       <div className="text-xs text-gray-400 italic">
-        No history yet — daily snapshot starts running 02:00 UTC.
+        No history yet. The daily snapshot starts running 02:00 UTC.
       </div>
     )
   }
@@ -296,7 +296,7 @@ export function ProductHealthHero() {
             HOCKIA Product Health Score
           </div>
           <p className="text-xs text-gray-500">
-            Strict score — only value-producing loops count. Computed {new Date(score.computed_at).toLocaleString()}.
+            Strict score: only value-producing loops count. Computed {new Date(score.computed_at).toLocaleString()}.
           </p>
         </div>
         <button

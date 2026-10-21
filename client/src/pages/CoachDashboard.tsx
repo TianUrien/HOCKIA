@@ -214,7 +214,7 @@ export default function CoachDashboard({
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
-      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)

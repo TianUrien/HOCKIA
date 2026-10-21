@@ -70,10 +70,10 @@ describe('whatsappShareUrl', () => {
   })
 
   it('encodes special characters in the role-specific message', () => {
-    // The em-dash, apostrophe, and curly quote in our copy must round-trip
+    // The curly apostrophe in our copy must round-trip
     const wa = whatsappShareUrl('coach', 'https://x.test/c/1')
     const decoded = decodeURIComponent(wa.split('text=')[1])
-    expect(decoded).toContain('—')
+    expect(decoded).toContain('’')
     expect(decoded).toContain('https://x.test/c/1')
   })
 })

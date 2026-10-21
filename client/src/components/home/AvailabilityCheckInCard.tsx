@@ -65,7 +65,7 @@ function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
     case 'player':
       return {
         question: 'Are you still open to play?',
-        rationale: 'Confirming weekly keeps your profile fresh — clubs trust active players.',
+        rationale: 'Confirming weekly keeps your profile fresh. Clubs trust active players.',
       }
     case 'coach':
       return recruitsForTeam
@@ -75,7 +75,7 @@ function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
           }
         : {
             question: 'Still open to coaching opportunities?',
-            rationale: 'Confirming weekly keeps your profile fresh — clubs trust active coaches.',
+            rationale: 'Confirming weekly keeps your profile fresh. Clubs trust active coaches.',
           }
     case 'umpire':
       return {
@@ -164,7 +164,7 @@ export function AvailabilityCheckInCard({
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Confirmed — thanks for checking in.</p>
+            <p className="text-sm font-semibold text-gray-900">Confirmed. Thanks for checking in.</p>
             <p className="text-xs text-gray-600 mt-0.5">Your profile stays fresh for another 60 days.</p>
           </div>
         </div>

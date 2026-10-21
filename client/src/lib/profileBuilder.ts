@@ -121,10 +121,10 @@ export async function readForProfile(text: string, att: BuilderAttachments): Pro
 
 export function builderErrorCopy(reason: Exclude<BuilderResult, { ok: true }>['reason']): string {
   switch (reason) {
-    case 'limit': return 'You’ve used today’s profile reads. Everything else in Hockia works as usual — try again tomorrow.'
+    case 'limit': return 'You’ve used today’s profile reads. Everything else in Hockia works as usual. Try again tomorrow.'
     case 'cv_too_large': return 'That CV is too large for me. Try a PDF under 4 MB.'
     case 'nothing': return 'Write a few lines about your clubs and seasons, or attach your CV, photos or links.'
-    default: return 'Oops, I lost the signal for a second. Your message is safe — tap to try again.'
+    default: return 'Oops, I lost the signal for a second. Your message is safe. Tap to try again.'
   }
 }
 
@@ -251,10 +251,10 @@ export async function stillMissing(userId: string, role: string | null | undefin
   ])
   const q = (p ?? {}) as { position?: string | null; highlight_video_url?: string | null; avatar_url?: string | null; nationality_country_id?: number | null }
   const out: MissingItem[] = []
-  if (role === 'player' && !q.position) out.push({ key: 'position', title: 'Your position and best side', detail: 'One line is enough — e.g. “left back, strong on the reverse”' })
+  if (role === 'player' && !q.position) out.push({ key: 'position', title: 'Your position and best side', detail: 'One line is enough, e.g. “left back, strong on the reverse”' })
   if (!career) out.push({ key: 'career', title: 'Your clubs and seasons', detail: 'Write them in your own words, or attach your CV' })
   if (role === 'player' && !q.highlight_video_url) out.push({ key: 'video', title: 'A highlights video', detail: 'Paste a YouTube or Vimeo link' })
   if (!q.avatar_url) out.push({ key: 'photo', title: 'A profile photo', detail: 'Add it from Edit profile' })
-  if (!q.nationality_country_id) out.push({ key: 'passport', title: 'Your passports', detail: 'Just the countries — never a document' })
+  if (!q.nationality_country_id) out.push({ key: 'passport', title: 'Your passports', detail: 'Just the countries, never a document' })
   return out.slice(0, 3)
 }

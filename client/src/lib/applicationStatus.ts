@@ -175,13 +175,13 @@ export async function isApplicationMovedOnError(err: unknown): Promise<boolean> 
 export function applicationReasonPlayerCopy(code: string | null | undefined): string | null {
   switch (code) {
     case 'position_filled':
-      return 'The position looks to be covered already — this is about timing, not your level. Openings still looking for your position may be a better fit.'
+      return 'The position looks to be covered already. This is about timing, not your level. Openings still looking for your position may be a better fit.'
     case 'different_position':
       return "They're prioritising a different position for this opening. Opportunities matching your position are likely a stronger fit."
     case 'different_level':
       return "They're looking for a different level for this particular opening. Keep building your profile and proven experience."
     case 'timing':
-      return "The timing or availability didn't line up for this one — worth keeping them on your radar for the future."
+      return "The timing or availability didn't line up for this one. It’s worth keeping them on your radar for the future."
     case 'location':
       return "The location or relocation didn't work out for this opening."
     case 'eligibility':
@@ -189,7 +189,7 @@ export function applicationReasonPlayerCopy(code: string | null | undefined): st
     case 'profile_incomplete':
       return 'Adding more detail to your profile could help clubs picture you faster next time.'
     case 'video_missing':
-      return 'Clubs often want footage before moving forward — a highlight reel or full-match video could strengthen future applications.'
+      return 'Clubs often want footage before moving forward. A highlight reel or full-match video could strengthen future applications.'
     case 'other':
       return null
     default:
@@ -211,24 +211,24 @@ export function applicationStatusFallbackMessage(
   const reasonCopy = applicationReasonPlayerCopy(reason)
   switch (status) {
     case 'shortlisted':
-      return "Good news — you've been shortlisted. Keep your profile sharp while the club reviews."
+      return "Good news: you've been shortlisted. Keep your profile sharp while the club reviews."
     case 'maybe':
       return reasonCopy
-        ? `The club replied — no final decision yet. ${reasonCopy}`
-        : 'The club replied — no final decision yet.'
+        ? `The club replied. No final decision yet. ${reasonCopy}`
+        : 'The club replied. No final decision yet.'
     case 'rejected':
       return reasonCopy
-        ? `You weren't selected this time. ${reasonCopy} Keep going — the right fit is out there.`
-        : "You weren't selected this time. It often comes down to fit, not ability — keep applying."
+        ? `You weren't selected this time. ${reasonCopy} Keep going. The right fit is out there.`
+        : "You weren't selected this time. It often comes down to fit, not ability. Keep applying."
     case 'no_response':
       // No AI pass for expiries (application-feedback only covers real club
       // responses) — this deterministic line IS the player-facing message.
       // Neutral about the club: they may have answered off-platform.
-      return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting — your energy is better spent on what's open now."
+      return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting. Your energy is better spent on what's open now."
     case 'filled':
       // Deterministic like no_response (application-feedback doesn't cover
       // it). Same words as the 'filled' notification.
-      return 'This role has been filled. Thanks for applying — new roles are open.'
+      return 'This role has been filled. Thanks for applying. New roles are open.'
     default:
       return null
   }

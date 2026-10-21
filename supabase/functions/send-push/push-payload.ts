@@ -415,7 +415,7 @@ export function buildPushPayload(
         case 'filled':
           // Founder copy 2026-09-26; names the role by its title; mirrors client config.ts.
           title = `${club} filled the role`
-          body = `${typedTitle ?? humanPos ?? 'The role'} has been filled. Thanks for applying — new roles are open.`
+          body = `${typedTitle ?? humanPos ?? 'The role'} has been filled. Thanks for applying. New roles are open.`
           break
         default:
           title = `${club} updated your application`

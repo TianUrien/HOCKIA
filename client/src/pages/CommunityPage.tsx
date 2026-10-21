@@ -522,7 +522,7 @@ export default function CommunityPage() {
                           Showing <span className="font-semibold">{scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole)}</span>, ranked for your recruiting context.
                         </>
                       ) : (
-                        <>Showing everyone — your scope still personalises ranking.</>
+                        <>Showing everyone. Your scope still personalises ranking.</>
                       )}
                     </span>
                   </p>

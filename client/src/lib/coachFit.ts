@@ -194,19 +194,19 @@ export function computeCoachFit(
     specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
     const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
     if (specialization_match === 1) {
-      pushReason(`Specializes as ${soughtLabel} — matches the role you're recruiting.`, 'positive')
+      pushReason(`Specializes as ${soughtLabel}, which matches the role you're recruiting.`, 'positive')
     } else if (candidate.coach_specialization) {
       pushReason(
-        `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)} — not ${soughtLabel}.`,
+        `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)}, not ${soughtLabel}.`,
         'caveat',
       )
     } else {
-      pushReason('Coaching specialization not added yet — no role match info.')
+      pushReason('Coaching specialization not added yet. No role match info.')
     }
   } else {
     // Open coach search — no role to rank on. Neutral note (NOT a caveat —
     // the recruiter didn't ask for a specific role).
-    pushReason('Open coach search — ranked on team category, track record, and availability.')
+    pushReason('Open coach search: ranked on team category, track record, and availability.')
   }
 
   // ── Category match (tiebreak) ──
@@ -219,11 +219,11 @@ export function computeCoachFit(
       : 0
   if (target) {
     if (category_match === 1) {
-      pushReason(`Coaches ${target.toLowerCase()}'s teams — matches your team category.`, 'positive')
+      pushReason(`Coaches ${target.toLowerCase()}'s teams, which matches your team category.`, 'positive')
     } else if (Array.isArray(candidate.coaching_categories) && candidate.coaching_categories.length > 0) {
       pushReason(`Coaches a different team category from ${target.toLowerCase()}'s.`, 'caveat')
     } else {
-      pushReason('Coaching categories not added yet — no category match info.')
+      pushReason('Coaching categories not added yet. No category match info.')
     }
   }
 

@@ -27,7 +27,7 @@ interface ApplicationSentProps {
  * shown only to a player who has none yet. The tip speaks about clubs in
  * general and never about what other applicants were asked (privacy).
  */
-export const FULL_MATCH_TIP = 'Add a full match video now — it’s what clubs ask for most after an application.'
+export const FULL_MATCH_TIP = 'Add a full match video now. It’s what clubs ask for most after an application.'
 
 export function ApplicationSent({ clubName, clubLogo, publisherRole, identity, roleLine, onClose }: ApplicationSentProps) {
   const navigate = useNavigate()

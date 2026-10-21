@@ -725,7 +725,7 @@ function buildRecommendationBullets(
   // 1. Triage acknowledgment first when not Unsorted — the owner needs to
   //    see we know what they've already labelled.
   if (a.triage_status === 'shortlisted') push('You marked this candidate Good fit')
-  else if (a.triage_status === 'maybe') push('Worth a second look — you marked this Maybe')
+  else if (a.triage_status === 'maybe') push('Worth a second look: you marked this Maybe')
 
   // 2. Position match against the opening. Player opps only — coach opps
   //    don't have a structured position (CASI's Coach opening has null
@@ -733,7 +733,7 @@ function buildRecommendationBullets(
   //    "Plays  — matches your  opening" bullet flagged in CASI verification).
   if (opp.opportunity_type === 'player' && a.position) {
     if (a.position === opp.position) {
-      push(`Plays ${formatPosition(a.position)} — matches your ${formatPosition(opp.position)} opening`)
+      push(`Plays ${formatPosition(a.position)}, matching your ${formatPosition(opp.position)} opening`)
     } else if (a.secondary_position === opp.position) {
       push(`Plays ${formatPosition(a.position)}, can also cover ${formatPosition(opp.position)}`)
     }
@@ -743,7 +743,7 @@ function buildRecommendationBullets(
   if (opp.eu_passport_required) {
     const hasEu = (a.nationality_country_id != null && euCountryIds.has(a.nationality_country_id))
       || (a.nationality2_country_id != null && euCountryIds.has(a.nationality2_country_id))
-    if (hasEu) push('EU passport confirmed — your opening requires one')
+    if (hasEu) push('EU passport confirmed: your opening requires one')
   }
 
   // 4. Availability.
@@ -803,7 +803,7 @@ function buildRecommendationCaveats(
       && opp.position
       && a.position !== opp.position
       && a.secondary_position !== opp.position) {
-    return [`Position mismatch — applied to your ${formatPosition(opp.position)} opening but plays ${formatPosition(a.position)}`]
+    return [`Position mismatch: applied to your ${formatPosition(opp.position)} opening but plays ${formatPosition(a.position)}`]
   }
   if (fitLevel === 'needs_more_info') return []
   if (a.accepted_reference_count === 0) {
@@ -820,7 +820,7 @@ function buildRecommendationCaveats(
   }
   const pct = a.profile_completeness_pct ?? 100
   if (pct < 40) {
-    return [`Profile is ${pct}% complete — still thin overall`]
+    return [`Profile is ${pct}% complete, still thin overall`]
   }
   return []
 }
@@ -838,10 +838,10 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
   if (b.pending > 0) parts.push(`${b.pending} Unsorted`)
   if (b.rejected > 0) parts.push(`${b.rejected} Not a fit`)
   const breakdown = parts.join(', ')
-  const headline = `For your ${opportunityLabel(opp)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied — ${breakdown}.`
+  const headline = `For your ${opportunityLabel(opp)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied: ${breakdown}.`
   if (pool === 0) {
     if (b.rejected > 0) {
-      return `${headline} All have been marked Not a fit; I won't override that — want me to look outside your pipeline?`
+      return `${headline} All have been marked Not a fit; I won't override that. Want me to look outside your pipeline?`
     }
     return headline
   }
@@ -1226,7 +1226,7 @@ async function handleOwnApplicantsIntent(params: {
         if (matchedCards.length > 0) {
           const headline = matchedCards.length === 1
             ? `Here's what I have on ${matchedCards[0].applicant_name ?? nameFromQuery} for your ${formatPosition(matchedCards[0].opening_position)} opening.`
-            : `I found ${matchedCards.length} applicants matching "${nameFromQuery}" — open any to see the full profile.`
+            : `I found ${matchedCards.length} applicants matching "${nameFromQuery}". Open any to see the full profile.`
           return respond({
             kind: 'recommendation' as ResponseKind,
             ai_message: headline,
@@ -1300,10 +1300,10 @@ async function handleOwnApplicantsIntent(params: {
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
       const n = secondaryOpps[0].pool.length
-      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening — want me to surface those next?`
+      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening. Want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
       const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
-      secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
+      secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings. Want me to look at them too?`
     }
 
     // Explicit "Show {position} applicants" chips — one per secondary
@@ -1324,14 +1324,14 @@ async function handleOwnApplicantsIntent(params: {
     // Honest about thin data on the recommendations.
     const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
     const lowDataNote = thinData
-      ? ` Some of these profiles are still thin — I've called out what's there, not what's missing.`
+      ? ` Some of these profiles are still thin. I've called out what's there, not what's missing.`
       : ''
 
     // B7 — when the user asked for the negative cut, lead with the reverse
     // framing so the cards aren't misread as "top picks". Owner sees both
     // the headline (pool view) and what they're now looking at.
     const aiMessage = negativeIntent
-      ? `${buildRecruitmentOrientation(primary.opp)} You asked who doesn't fit — leading with the position mismatches and weakest profiles.${lowDataNote}`
+      ? `${buildRecruitmentOrientation(primary.opp)} You asked who doesn't fit, so I'm leading with the position mismatches and weakest profiles.${lowDataNote}`
       : buildRecruitmentOrientation(primary.opp) + lowDataNote
 
     return respond({
@@ -1641,7 +1641,7 @@ async function runKeywordFallback(params: {
     const fallbackMessage = isTransientLlmError
       ? (result.total === 0
           ? "The AI search is busy right now and I couldn't find a quick keyword match. Try again in a moment, or rephrase your search."
-          : "The AI search is busy right now — here are some keyword matches in the meantime. Try again in a moment for the full AI response.")
+          : "The AI search is busy right now. Here are some keyword matches in the meantime. Try again in a moment for the full AI response.")
       : (result.total === 0
           ? "I couldn't complete the full AI response and didn't find a quick match either."
           : "I couldn't complete the full AI response, but here are some relevant matches.")
@@ -1856,7 +1856,7 @@ async function handleRoleAsk(params: {
     meter.usage = data.usage ?? null
     const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
     step('write', 'Wrote the answer', 'done')
-    return text(answer || 'I’m not sure about that one — the club can tell you best.')
+    return text(answer || 'I’m not sure about that one. The club can tell you best.')
   } catch (err) {
     captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'role_ask' } })
     return text('I can’t answer about this role right now. Try again in a moment.', 'soft_error')
@@ -2166,7 +2166,7 @@ async function handleRequest(req: Request): Promise<Response> {
           summary: null,
           applied: null,
           kind: 'cap_reached' as ResponseKind,
-          ai_message: "You've reached today's limit — try again tomorrow.",
+          ai_message: "You've reached today's limit. Try again tomorrow.",
           suggested_actions: [] as SuggestedAction[],
         }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
       }
@@ -2292,7 +2292,7 @@ async function handleRequest(req: Request): Promise<Response> {
       const recoveryActions = getRecoveryActions(lastApplied, recoveryRole)
       const recoveryMessage = lastApplied?.role_summary
         ? `Since the ${lastApplied.role_summary} search didn't find anything, here are the next angles to try:`
-        : "Let's try a different angle — pick one of these to keep going:"
+        : "Let's try a different angle. Pick one of these to keep going:"
 
       const recoveryMeta = {
         _meta: {
@@ -2799,12 +2799,12 @@ async function handleRequest(req: Request): Promise<Response> {
     // ~0 LLM tokens and ~0ms LLM latency.
     if (intent.confidence === 'high' && (intent.entity_type === 'opportunities' || intent.entity_type === 'products')) {
       const oppSuffix = userContext?.role === 'player'
-        ? ' — they are filtered for players by default.'
+        ? '. They are filtered for players by default.'
         : userContext?.role === 'coach'
-          ? ' — switch the filter to coaching roles in the page header.'
+          ? '. Switch the filter to coaching roles in the page header.'
           : '.'
       const productSuffix = userContext?.role === 'brand'
-        ? ' — and add your own products from the brand dashboard.'
+        ? '. You can also add your own products from the brand dashboard.'
         : '.'
       const cannedMessage = intent.entity_type === 'opportunities'
         ? `Searching opportunities through Hockia AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
@@ -3308,7 +3308,7 @@ async function handleRequest(req: Request): Promise<Response> {
         } else if (claimedCount > 0) {
           wcAiMessage = `${opening} All are active on HOCKIA, so you can message them directly.${topNote}`
         } else {
-          wcAiMessage = `${opening} None are claimed yet, so you'll need to reach out externally — but they're real clubs worth exploring.${topNote}`
+          wcAiMessage = `${opening} None are claimed yet, so you'll need to reach out externally, but they're real clubs worth exploring.${topNote}`
         }
         // Phase 4 audit P1-1 — DO NOT append llmResult.message here. The LLM
         // generates that field at parse-time before knowing the count, so it
@@ -4321,7 +4321,7 @@ async function handleRequest(req: Request): Promise<Response> {
     if (result.total === 0) {
       // Phase 3e — broaden hint references the auto-seeded category, not gender.
       const broadenHint = categorySource === 'context' && effectiveCategory
-        ? ` I filtered by your category (${effectiveCategory.replace('_', ' ')}) — want me to broaden that?`
+        ? ` I filtered by your category (${effectiveCategory.replace('_', ' ')}). Want me to broaden that?`
         : ''
       aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
@@ -4365,7 +4365,7 @@ async function handleRequest(req: Request): Promise<Response> {
             regionLabel: geoSoftening.regionLabel,
           })
         : geoLabel
-          ? `I found ${shown} ${noun} based in ${geoLabel} — say "broaden the location" to widen this.`
+          ? `I found ${shown} ${noun} based in ${geoLabel}. Say "broaden the location" to widen this.`
           : `I found ${shown} ${noun} for you.`
     }
 
@@ -4575,7 +4575,7 @@ async function handleRequest(req: Request): Promise<Response> {
           provenance_label: prov === 'verified'
             ? (intlVerifiedLabel.get(r.id) ?? null)
             : prov === 'self_described'
-              ? 'Mentions it in their bio — not verified'
+              ? 'Mentions it in their bio (not verified)'
               : null,
         }
       }
@@ -4684,7 +4684,7 @@ async function handleRequest(req: Request): Promise<Response> {
             } satisfies DiscoverProfilesParams as unknown as Database['public']['Functions']['discover_profiles']['Args']))
             const natTotal = (cntData as { total?: number } | null)?.total ?? 0
             if (natTotal > 0) {
-              pivot = ` ${natTotal} ${intlCountryLabel} ${entityNoun} (by nationality) ${natTotal === 1 ? 'is' : 'are'} on HOCKIA — want to see them?`
+              pivot = ` ${natTotal} ${intlCountryLabel} ${entityNoun} (by nationality) ${natTotal === 1 ? 'is' : 'are'} on HOCKIA. Want to see them?`
               const pivotAction: SuggestedAction = {
                 label: `Show ${intlCountryLabel} ${entityNoun}`,
                 intent: { type: 'free_text', query: `${entityNoun} from ${intlCountryLabel}` },

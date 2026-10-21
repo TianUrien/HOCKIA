@@ -116,7 +116,7 @@ export function RoleHealthCard({ role }: RoleHealthCardProps) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
         <p className="text-sm text-gray-400">
-          No {role}s yet — nothing to score.
+          No {role}s yet, nothing to score.
         </p>
       </div>
     )
@@ -186,7 +186,7 @@ export function RoleHealthCard({ role }: RoleHealthCardProps) {
           </ul>
         </div>
       ) : (
-        <p className="text-sm text-gray-400">All required fields filled — nothing to flag.</p>
+        <p className="text-sm text-gray-400">All required fields filled, nothing to flag.</p>
       )}
     </div>
   )

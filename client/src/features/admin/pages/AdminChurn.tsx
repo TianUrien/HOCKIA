@@ -135,7 +135,7 @@ export function AdminChurn() {
           Same service as the Overview cards, so identical filters give
           identical numbers; the sections below are the churn-side view. */}
       <section aria-label="Cohort retention">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Cohort retention — D7 / D15 / D30</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Cohort retention: D7 / D15 / D30</h2>
         <p className="text-sm text-gray-500 mb-3">
           Filter and segment the curve, then export exactly what you see.
         </p>

@@ -101,7 +101,7 @@ export function useFriendship(profileId: string): FriendshipState {
     }
 
     if (isIncomingRequest) {
-      addToast('This member already sent you a request—check your notifications.', 'info')
+      addToast('This member already sent you a request. Check your notifications.', 'info')
       return
     }
 

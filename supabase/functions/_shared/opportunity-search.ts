@@ -499,8 +499,8 @@ export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLa
   const where = geoLabel ? ` in ${geoLabel}` : ''
   const hasNarrowing = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
   return hasNarrowing
-    ? `There are no ${noun.plural}${where}${benefitsPhrase(criteria)} you can apply to right now. New roles are posted all the time — you can widen the search or browse every open role.`
-    : `There are no open roles${where} you can apply to right now. New roles are posted all the time — keep your profile up to date so clubs can find you too.`
+    ? `There are no ${noun.plural}${where}${benefitsPhrase(criteria)} you can apply to right now. New roles are posted all the time. You can widen the search or browse every open role.`
+    : `There are no open roles${where} you can apply to right now. New roles are posted all the time. Keep your profile up to date so clubs can find you too.`
 }
 
 /**
@@ -521,7 +521,7 @@ export function buildIneligibleMessage(
   if (!widened || widened.count === 0) return `${head}.`
   const n = widened.count === 1 ? `is 1 ${noun.singular}` : `are ${widened.count} ${noun.plural}`
   const elsewhere = widened.region ? `elsewhere in ${widened.region}` : 'elsewhere in the world'
-  return `${head} — here ${n} you can apply to ${elsewhere}.`
+  return `${head}. Here ${n} you can apply to ${elsewhere}.`
 }
 
 // ── Orchestration (pure) ───────────────────────────────────────────────────

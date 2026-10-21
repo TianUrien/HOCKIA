@@ -82,13 +82,13 @@ interface StatusContext {
 function reasonCopy(reason: string | null): string | null {
   switch (reason) {
     case 'position_filled':
-      return 'The position looks to be covered already — this is about timing, not your level. Openings still looking for your position may be a better fit.'
+      return 'The position looks to be covered already. This is about timing, not your level. Openings still looking for your position may be a better fit.'
     case 'different_position':
       return "They're prioritising a different position for this opening. Opportunities matching your position are likely a stronger fit."
     case 'different_level':
       return "They're looking for a different level for this particular opening. Keep building your profile and proven experience."
     case 'timing':
-      return "The timing or availability didn't line up for this one — worth keeping them on your radar for the future."
+      return "The timing or availability didn't line up for this one. It's worth keeping them on your radar for the future."
     case 'location':
       return "The location or relocation didn't work out for this opening."
     case 'eligibility':
@@ -96,7 +96,7 @@ function reasonCopy(reason: string | null): string | null {
     case 'profile_incomplete':
       return 'Adding more detail to your profile could help clubs picture you faster next time.'
     case 'video_missing':
-      return 'Clubs often want footage before moving forward — a highlight reel or full-match video could strengthen future applications.'
+      return 'Clubs often want footage before moving forward. A highlight reel or full-match video could strengthen future applications.'
     default:
       return null
   }
@@ -106,15 +106,15 @@ function fallbackMessage(ctx: StatusContext): string {
   const reason = reasonCopy(ctx.reason)
   switch (ctx.status) {
     case 'shortlisted':
-      return `Good news — ${ctx.clubName} shortlisted you for ${ctx.position}. They're interested; keep your profile sharp while they review.`
+      return `Good news: ${ctx.clubName} shortlisted you for ${ctx.position}. They're interested; keep your profile sharp while they review.`
     case 'maybe':
       return reason
         ? `${ctx.clubName} is still considering you for ${ctx.position}. ${reason}`
-        : `${ctx.clubName} is still considering your application for ${ctx.position}. No decision yet — hang tight.`
+        : `${ctx.clubName} is still considering your application for ${ctx.position}. No decision yet, so hang tight.`
     case 'rejected':
       return reason
-        ? `You weren't selected for ${ctx.position} this time. ${reason} Keep going — the right fit is out there.`
-        : `You weren't selected for ${ctx.position} this time. It usually comes down to fit, not ability — keep applying.`
+        ? `You weren't selected for ${ctx.position} this time. ${reason} Keep going. The right fit is out there.`
+        : `You weren't selected for ${ctx.position} this time. It usually comes down to fit, not ability. Keep applying.`
     default:
       return `Your application for ${ctx.position} is in and awaiting review.`
   }
@@ -128,6 +128,7 @@ RULES (strict):
 - NEVER blame the player or imply they aren't good enough. A "not selected" outcome is about fit and timing, not their worth.
 - Do not invent facts. Use ONLY the status, the club's stated reason, the position and the club name provided.
 - No false hope and no filler. If they weren't selected, say so kindly and, where a reason is given, reflect it and offer ONE constructive next step.
+- Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - Output JSON exactly: {"message": "..."} and nothing else.`
 }
 
@@ -139,6 +140,7 @@ RULES (strict):
 - Thank them for applying for the named role with the named club.
 - Say kindly that they weren't selected this time. Reflect the club's stated reason honestly; never blame the player or imply they aren't good enough.
 - Where the reason allows, offer ONE constructive next step. No false hope, no filler, no invented facts.
+- Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - Output JSON exactly: {"message": "..."} and nothing else.`
 }
 

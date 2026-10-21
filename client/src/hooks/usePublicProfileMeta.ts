@@ -33,10 +33,10 @@ export function usePublicProfileMeta(input: PublicProfileMetaInput): void {
   useEffect(() => {
     if (!displayName) return
 
-    const title = `${displayName} — ${capitalize(roleLabel)} | HOCKIA`
+    const title = `${displayName} · ${capitalize(roleLabel)} | HOCKIA`
     const desc = description
       ? truncate(description, 155)
-      : `${displayName}'s public ${roleLabel} profile on HOCKIA — career, references, and more.`
+      : `${displayName}'s public ${roleLabel} profile on HOCKIA: career, references, and more.`
 
     document.title = title
 

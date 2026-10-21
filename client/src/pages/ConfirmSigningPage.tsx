@@ -101,7 +101,7 @@ export default function ConfirmSigningPage() {
           return
         }
         await navigator.clipboard.writeText(url ? `${text} ${url}` : text)
-        addToast('Copied — paste it anywhere', 'success')
+        addToast('Copied. Paste it anywhere', 'success')
       } catch (err) {
         if (!(err instanceof Error && err.name === 'AbortError')) addToast('Couldn’t share. Please try again.', 'error')
       }

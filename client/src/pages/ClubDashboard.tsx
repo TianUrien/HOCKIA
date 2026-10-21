@@ -172,7 +172,7 @@ export default function ClubDashboard({
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
-      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)

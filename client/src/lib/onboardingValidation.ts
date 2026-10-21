@@ -69,7 +69,7 @@ export function validateOnboardingStep(
     // sign-up) on an error for a field two steps back. The 18+ check itself
     // remains server-authoritative (declare_date_of_birth).
     if (!formData.dateOfBirth) {
-      return 'Date of birth is required — HOCKIA is an 18+ platform.'
+      return 'Date of birth is required. HOCKIA is an 18+ platform.'
     }
     return null
   }

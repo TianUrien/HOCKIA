@@ -163,13 +163,13 @@ export function describeSoftening(step: GeoSofteningStep, o: SofteningCopyInput)
       const sameLabel = !city || !country || city.toLowerCase() === country.toLowerCase()
       return sameLabel
         ? `${found.charAt(0).toUpperCase()}${found.slice(1)} in ${country ?? asked}.`
-        : `No ${o.noun} in ${city} itself — ${found} elsewhere in ${country}.`
+        : `No ${o.noun} in ${city} itself, but ${found} elsewhere in ${country}.`
     }
     case 'region':
       return region
-        ? `No ${o.noun} in ${asked} on HOCKIA yet — ${found} elsewhere in ${region}.`
-        : `No ${o.noun} in ${asked} on HOCKIA yet — ${found} nearby.`
+        ? `No ${o.noun} in ${asked} on HOCKIA yet, but ${found} elsewhere in ${region}.`
+        : `No ${o.noun} in ${asked} on HOCKIA yet, but ${found} nearby.`
     case 'worldwide':
-      return `No ${o.noun} in ${asked} on HOCKIA yet — ${found} from elsewhere in the world.`
+      return `No ${o.noun} in ${asked} on HOCKIA yet, but ${found} from elsewhere in the world.`
   }
 }

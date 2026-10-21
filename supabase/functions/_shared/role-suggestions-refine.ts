@@ -131,6 +131,7 @@ Rules:
 - Never mention refs (P1), ids, scores, numbers of a ranking or the word "rank". Use names.
 - Gender-neutral language: use the player's name or "they", never he/she/his/her.
 - No markdown, no bullet points, no emojis.
+- Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - Players never see this conversation; still, be respectful and factual.`
 
 export const REFINE_TOOL = {
@@ -237,7 +238,7 @@ export function normalizeRefineResult(raw: unknown, candidates: RefineCandidate[
 }
 
 /** Fallback copy when there's nothing to refine, or the model returned nothing usable. */
-export const REFINE_EMPTY_POOL = 'There are no suggestions for this role yet — Hockia checks again tonight.'
+export const REFINE_EMPTY_POOL = 'There are no suggestions for this role yet. Hockia checks again tonight.'
 export const REFINE_FALLBACK = 'I couldn’t match that against the suggested players’ profiles. Try asking about one fact, like a passport or a start date.'
 
 const UUID_ONLY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

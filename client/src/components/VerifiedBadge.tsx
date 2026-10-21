@@ -42,7 +42,7 @@ export default function VerifiedBadge({
   const iconClass = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'
   const grantedLabel = verifiedAt ? formatGrantedDate(verifiedAt) : ''
   const tooltip = grantedLabel
-    ? `Verified by HOCKIA — ${grantedLabel}`
+    ? `Verified by HOCKIA · ${grantedLabel}`
     : 'Verified by HOCKIA'
 
   return (

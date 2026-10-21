@@ -35,6 +35,7 @@ export const APPLY_NOTE_SYSTEM = [
   'No promises, no superlatives, no comparisons with other players, no salary talk.',
   'If the role needs an EU passport and the member has one, mention it once. Mention when they can start only if it is given.',
   'No emoji, no hashtags, no placeholders. Reply with the note only.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
 const POSITION: Record<string, string> = { goalkeeper: 'goalkeeper', defender: 'defender', midfielder: 'midfielder', forward: 'forward' }

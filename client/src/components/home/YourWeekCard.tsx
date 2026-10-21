@@ -92,7 +92,7 @@ export function YourWeekCard() {
   if (clubV2) {
     return (
       <div className="overflow-hidden rounded-[18px] bg-surface-grouped" data-testid="your-week-card">
-        <Link to="/pulse" className="flex h-12 items-center justify-between pl-4 pr-3.5 active:bg-[#e9e9ef]" aria-label="Your week — open Pulse">
+        <Link to="/pulse" className="flex h-12 items-center justify-between pl-4 pr-3.5 active:bg-[#e9e9ef]" aria-label="Your week: open Pulse">
           <h2 className="text-body font-semibold text-ink-1">Your week</h2>
           <ChevronRight className="h-5 w-5 text-ink-3" strokeWidth={1.75} aria-hidden="true" />
         </Link>
@@ -118,7 +118,7 @@ export function YourWeekCard() {
     <Link
       to="/pulse"
       className="block overflow-hidden rounded-[18px] bg-surface-grouped transition-colors active:bg-[#e9e9ef]"
-      aria-label="Your week — open Pulse"
+      aria-label="Your week: open Pulse"
       data-testid="your-week-card"
     >
       {/* Figma Home v2 · Your week: 17/semibold title with a chevron, a hairline,

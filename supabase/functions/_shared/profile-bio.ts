@@ -24,6 +24,7 @@ Rules:
 - First person ("I play…"), warm and plain. 2 to 4 sentences, under ${BIO_MAX} characters each.
 - Never mention age, date of birth, gender, looks, religion, health, or contact details (email, phone, links, handles).
 - No promises or superlatives ("best", "guaranteed", "world-class"). No hashtags or emojis.
+- Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - If facts are thin, keep it short and honest rather than padding.
 - Write two different drafts: the first follows the focus most closely (it is the recommended one); the second takes a slightly different angle.
 - The language is English unless the member's instruction asks otherwise.`

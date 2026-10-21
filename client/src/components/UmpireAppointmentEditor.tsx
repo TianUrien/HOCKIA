@@ -68,7 +68,7 @@ const ENTRY_TYPES: EntryTypeMeta[] = [
     value: 'milestone',
     label: 'Milestone',
     icon: Trophy,
-    hint: 'A career milestone — first international, 100th match, award.',
+    hint: 'A career milestone: first international, 100th match, award.',
     fields: {
       event_name: 'Title',
       organizer: 'Sanctioning body',
@@ -603,11 +603,11 @@ export default function UmpireAppointmentEditor({
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder={
                   meta.value === 'appointment'
-                    ? "What did you officiate — final, pool stage, specific matches?"
+                    ? "What did you officiate: final, pool stage, specific matches?"
                     : meta.value === 'milestone'
                       ? 'What made this milestone memorable?'
                       : meta.value === 'certification'
-                        ? 'Anything worth noting — exam details, assessors, score?'
+                        ? 'Anything worth noting: exam details, assessors, score?'
                         : 'Panel duties, tenure, role on the board?'
                 }
                 rows={3}

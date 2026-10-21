@@ -152,7 +152,7 @@ export function VerifyProfileDialog({
               onChange={(e) => setNotes(e.target.value)}
               placeholder={
                 isVerify
-                  ? 'Anything worth recording — e.g., verified level matches FIH Panel listing.'
+                  ? 'Anything worth recording, e.g. verified level matches FIH Panel listing.'
                   : 'Why is this verification being revoked? (helpful for future admins)'
               }
               rows={3}
