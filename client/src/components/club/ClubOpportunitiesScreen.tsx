@@ -20,6 +20,7 @@ import { RoleActions } from './RoleActions'
 import { PostRoleStartSheet } from './PostRoleStartSheet'
 import { useYourReplies } from '@/hooks/useYourReplies'
 import { yourRepliesCopy } from '@/lib/yourReplies'
+import { ClubRoleCardSkeleton } from '@/components/ScreenSkeletons'
 
 
 /**
@@ -304,6 +305,10 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
+        {/* First load: role-card skeletons in the same grid, so the cards land without a jump. */}
+        {data.loading && roles.length === 0 && (desktop
+          ? <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-roles-loading"><ClubRoleCardSkeleton /><ClubRoleCardSkeleton /></div>
+          : <div className="flex flex-col gap-3.5" data-testid="club-roles-loading"><ClubRoleCardSkeleton /><ClubRoleCardSkeleton /></div>)}
         {(() => {
           const cards = roles.map((r) => (r.status === 'draft'
             ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />

@@ -8,6 +8,7 @@ import CoachDashboard from './CoachDashboard'
 import ClubDashboard from './ClubDashboard'
 import BrandDashboard from './BrandDashboard'
 import UmpireDashboard from './UmpireDashboard'
+import { ProfileSkeleton } from '@/components/ScreenSkeletons'
 
 // Module-level set so we only report each unrecognised role once per session.
 // The component re-renders on auth-store updates; without dedup we'd capture
@@ -85,15 +86,9 @@ export default function DashboardRouter() {
 
   }, [user, profile, loading, navigate, hasCompletedOnboardingRedirect, setHasCompletedOnboardingRedirect, profileStatus])
 
+  // Profile-shaped skeleton while auth settles (no spinner on a full screen).
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-hockia-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    return <ProfileSkeleton variant={profile?.role === 'club' ? 'club' : 'person'} />
   }
 
   if (!profile) {
@@ -130,14 +125,7 @@ export default function DashboardRouter() {
 
   // If profile incomplete, show loading (useEffect will redirect)
   if (!profile.onboarding_completed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-hockia-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading your profile...</p>
-        </div>
-      </div>
-    )
+    return <ProfileSkeleton variant={profile.role === 'club' ? 'club' : 'person'} />
   }
 
   // Route based on role

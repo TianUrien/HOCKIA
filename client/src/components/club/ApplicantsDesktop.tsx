@@ -24,6 +24,7 @@ import { shortDayOf, applicantChipFor, closedApplicantTag, clubRoadTag } from '@
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
+import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 
 type ChipId = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
@@ -223,6 +224,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
               </div>
             )}
             {!data.loading && !data.error && list.length === 0 && <p className="text-row text-ink-3">{emptyCopy[chip]}</p>}
+            {data.loading && !data.error && list.length === 0 && <ApplicantRowsSkeleton />}
 
             <div className="flex flex-col gap-2" data-testid="applicants-list">
               {list.map((a) => {

@@ -28,7 +28,7 @@ describe('captcha (Turnstile, 2026-10-19)', () => {
   })
 
   it('maps Supabase captcha refusals to plain words', () => {
-    expect(captchaErrorMessage('captcha protection: request disallowed (captcha verification process failed)')).toMatch(/not a bot/)
+    expect(captchaErrorMessage('captcha protection: request disallowed (captcha verification process failed)')).toMatch(/security check/)
     expect(captchaErrorMessage('Invalid login credentials')).toBeNull()
   })
 

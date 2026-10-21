@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryClient } from '@/lib/queryClient'
 import { qk } from '@/lib/queryKeys'
+import { createTickBatcher } from '@/lib/tickBatcher'
 
 /**
  * Up to 5 photos per member for the Community preview and swipe deck, in the
@@ -14,6 +15,8 @@ import { qk } from '@/lib/queryKeys'
  * progress bars). RLS on the photo tables keeps hidden profiles' photos out.
  */
 const STALE_MS = 5 * 60 * 1000
+/** Members per get_member_photos call (same cap as the grid batch below). */
+const BATCH_SIZE = 60
 
 type Row = { profile_id: string; url: string; ord: number }
 
@@ -40,12 +43,20 @@ export async function prefetchMemberPhotos(profileIds: string[]): Promise<void> 
   }
 }
 
+/** Cards that mount in the same tick (Home's role rail, the feed) share ONE get_member_photos call. */
+const memberPhotosBatcher = createTickBatcher<string[]>(fetchPhotos, { max: BATCH_SIZE })
+
+/** One member's photos, batched with every other member asked for in the same tick. */
+export async function fetchMemberPhotosBatched(profileId: string): Promise<string[]> {
+  return (await memberPhotosBatcher.load(profileId)) ?? []
+}
+
 export function useMemberPhotos(profileId: string | null | undefined) {
   return useQuery({
     queryKey: qk.memberPhotos(profileId ?? 'none'),
     enabled: Boolean(profileId),
     staleTime: STALE_MS,
-    queryFn: async () => (await fetchPhotos([profileId as string])).get(profileId as string) ?? [],
+    queryFn: () => fetchMemberPhotosBatched(profileId as string),
   })
 }
 

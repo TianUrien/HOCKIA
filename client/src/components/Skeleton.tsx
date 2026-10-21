@@ -28,9 +28,9 @@ export default function Skeleton({
   const getAnimationStyles = () => {
     switch (animation) {
       case 'pulse':
-        return 'animate-pulse'
+        return 'animate-pulse motion-reduce:animate-none'
       case 'wave':
-        return 'animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]'
+        return 'animate-shimmer motion-reduce:animate-none bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%]'
       case 'none':
       default:
         return ''

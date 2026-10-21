@@ -62,6 +62,7 @@ type PublicProfile = PublicPlayerProfileShape | PublicCoachProfileShape
 // regression test can import the constant without dragging the .tsx page
 // into the test bundle (and to satisfy the react-refresh lint rule).
 import { PUBLIC_PROFILE_FIELDS } from '@/lib/publicProfileFields'
+import { ProfileSkeleton } from '@/components/ScreenSkeletons'
 
 export default function PublicPlayerProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
@@ -238,14 +239,7 @@ export default function PublicPlayerProfile() {
   })
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    )
+    return <ProfileSkeleton variant="person" />
   }
 
   if (error || !profile) {

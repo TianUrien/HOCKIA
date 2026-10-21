@@ -22,6 +22,7 @@ import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useClubApplicationWith } from '@/hooks/useClubInbox'
 import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
 import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
+import { ThreadSkeleton } from '@/components/ScreenSkeletons'
 
 interface ConversationDBRow {
   id: string
@@ -1225,18 +1226,7 @@ export default function MessagesPage() {
                 isImmersiveMobile={shouldHideGlobalHeader}
               />
             ) : selectedConversationId ? (
-              <div className="flex h-full flex-col items-center justify-center bg-gray-50 p-6 text-center">
-                <div className="w-12 h-12 animate-spin rounded-full border-2 border-purple-200 border-t-purple-500 mb-3"></div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Loading conversation...</h3>
-                <p className="text-sm text-gray-500">Fetching messages</p>
-                <button
-                  type="button"
-                  onClick={handleBackToList}
-                  className="mt-4 text-sm font-medium text-purple-600 hover:text-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 rounded"
-                >
-                  Back to conversations
-                </button>
-              </div>
+              <ThreadSkeleton onBack={handleBackToList} />
             ) : (
               <div className="flex h-full flex-col items-center justify-center bg-gray-50 p-6 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">

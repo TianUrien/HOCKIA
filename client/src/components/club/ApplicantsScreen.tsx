@@ -24,6 +24,7 @@ import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { shortDayOf } from '@/lib/signing'
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
+import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
 
@@ -191,6 +192,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
       )}
       {data.error && <p className="px-4 py-3 text-row text-ink-2">{data.error}</p>}
       {!data.loading && !data.error && list.length === 0 && <p className="px-4 py-3 text-row text-ink-3">{emptyCopy[chip]}</p>}
+      {data.loading && !data.error && list.length === 0 && <div className="px-4"><ApplicantRowsSkeleton /></div>}
 
       <div className="flex flex-col gap-2.5 px-4">
         {list.map((a) => {

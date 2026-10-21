@@ -34,9 +34,22 @@ Principles the code follows:
 
 ## 2. Authentication
 
-- Supabase Auth with email/password, Google OAuth and magic links. The client
-  uses the implicit flow with a project-specific storage key
+- Supabase Auth. Sign-in methods (updated 2026-10-21, source: the auth
+  screens in code): email and password (default), Apple, Google, Facebook
+  (behind a feature flag) and magic link (secondary). The client uses the
+  implicit flow with a project-specific storage key
   (`client/src/lib/supabase.ts`).
+- Bot check: an invisible Cloudflare Turnstile widget (`client/src/lib/captcha.ts`)
+  sends a single-use token with email and password sign-in, sign-up, password
+  reset and magic-link requests (PRs #370, #371, #373, #374). Supabase Auth
+  rejects those requests without a valid token once captcha is enforced, so
+  there is no client-side bypass. OAuth sign-in does not need a token.
+  Fallback (2026-10-21): the widget host stays rendered, a failed token is
+  retried once with a fresh widget and script tag, and a refusal on sign-in
+  shows a "Try again" card plus the Apple and Google buttons. Failures that
+  survive the retry are reported to Sentry once per request (action, reason,
+  attempt count); a check left unanswered or the app going to the background
+  is not reported.
 - Admin access is a JWT `app_metadata` claim checked server-side by
   `is_platform_admin()`; the client only hides UI (`features/admin/README.md`).
 - Native apps are first-party clients identified by their WebView origin

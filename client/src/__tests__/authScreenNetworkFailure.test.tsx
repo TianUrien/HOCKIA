@@ -12,6 +12,7 @@ import { vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   trackLoginFailed: vi.fn(),
+  resetCaptcha: vi.fn(),
 }))
 
 vi.mock('@/lib/oauthSignIn', () => ({ startOAuthSignIn: vi.fn() }))
@@ -40,7 +41,9 @@ vi.mock('@/lib/rateLimit', () => ({
 vi.mock('@/lib/captcha', () => ({
   getCaptchaToken: vi.fn(() => Promise.resolve('token')),
   warmCaptcha: vi.fn(),
-  captchaErrorMessage: () => null,
+  resetCaptcha: mocks.resetCaptcha,
+  CAPTCHA_FAILED_COPY: 'We couldn’t finish the security check. Check your connection and try again.',
+  captchaErrorMessage: (m?: string) => (m && /captcha/i.test(m) ? 'captcha' : null),
 }))
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { signInWithPassword: mocks.signInWithPassword, signInWithOAuth: vi.fn() } },
@@ -85,6 +88,22 @@ describe('AuthScreen — sign-in on a failed connection', () => {
     await submit()
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Incorrect email or password.'))
     expect(mocks.trackLoginFailed).toHaveBeenCalledWith('password', 'bad_credentials')
+  })
+
+  it('a refused bot check is not a dead end: Try again resets the widget and signs in', async () => {
+    const error = Object.assign(new Error('captcha protection: request disallowed (no captcha response)'), { name: 'AuthApiError', status: 400 })
+    mocks.signInWithPassword.mockResolvedValueOnce({ data: { user: null, session: null }, error })
+    mocks.signInWithPassword.mockResolvedValueOnce({ data: { user: { id: 'u1' }, session: {} }, error: null })
+    await submit()
+    const card = await screen.findByTestId('captcha-failed')
+    expect(card).toHaveTextContent('We couldn’t finish the security check. Check your connection and try again.')
+    expect(card).toHaveTextContent('You can also continue with Apple or Google above.')
+    expect(mocks.trackLoginFailed).toHaveBeenCalledWith('password', 'captcha')
+    expect(screen.queryByText('Incorrect email or password.')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }))
+    await waitFor(() => expect(mocks.signInWithPassword).toHaveBeenCalledTimes(2))
+    expect(mocks.resetCaptcha).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(screen.queryByTestId('captcha-failed')).not.toBeInTheDocument())
   })
 
   it('names the connection when the call throws a network TypeError (Safari "Load failed")', async () => {

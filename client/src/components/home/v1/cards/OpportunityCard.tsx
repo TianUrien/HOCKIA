@@ -42,6 +42,7 @@ export function OpportunityCard({ item }: { item: OpportunityPostedFeedItem }) {
         title={roleTitle(item.position, item.gender, item.title)}
         subtitle={where}
         onOpen={open}
+        roleId={item.opportunity_id}
         cta={
           <button
             type="button"
