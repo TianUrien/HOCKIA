@@ -163,3 +163,17 @@ const NETWORK_FAILURE_RE = /\b(Load failed|Failed to fetch|NetworkError when att
 export function isNetworkFailureMessage(message: string | null | undefined): boolean {
   return typeof message === 'string' && NETWORK_FAILURE_RE.test(message)
 }
+
+/**
+ * The same failure as an error object: a fetch that never reached Supabase.
+ * supabase-js returns these instead of throwing (`AuthRetryableFetchError`,
+ * status 0), so a sign-in on a dropped connection used to read as a wrong
+ * password (Sentry JAVASCRIPT-REACT-CV, Android on cellular, 2026-10-21).
+ */
+export function isNetworkFailureError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const e = error as { name?: unknown; message?: unknown; status?: unknown }
+  if (e.name === 'AuthRetryableFetchError') return true
+  if (e.status === 0 && typeof e.message === 'string') return true
+  return isNetworkFailureMessage(typeof e.message === 'string' ? e.message : null)
+}
