@@ -195,6 +195,7 @@ function ShortlistItemRow({
           src={p.avatar_url}
           alt={p.full_name ?? 'Player'}
           initials={getInitials(p.full_name)}
+          role="player"
           size="md"
         />
         <div className="min-w-0 flex-1">

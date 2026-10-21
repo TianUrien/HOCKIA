@@ -429,7 +429,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           place={place}
           nationalities={nationalities}
           instagram={instagram}
-          role="player"
+          // Coaches get the coach (teal) no-photo hero, never player blue (Batch C).
+          role={isCoach ? 'coach' : 'player'}
           owner={owner}
           fitPill={fitPill}
           badge={recruitsForTeam ? 'Recruiting players' : null}

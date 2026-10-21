@@ -282,7 +282,7 @@ export default function HeroIdentityCard({
               fetchPriority="high"
               enablePreview
               previewTitle={profile.full_name ?? undefined}
-              role="player"
+              role={role}
             />
             {isOwnerView && onEdit && (
               <button

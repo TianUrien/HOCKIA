@@ -362,7 +362,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                   {heroImageUrl ? (
                     <img src={heroImageUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                   ) : (
-                    <div className="absolute inset-0"><RolePlaceholder role={member.role} label="" /></div>
+                    <div className="absolute inset-0"><RolePlaceholder role={member.role} name={member.full_name} label="" /></div>
                   )}
                 </div>
               </div>

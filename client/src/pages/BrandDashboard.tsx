@@ -995,7 +995,8 @@ export default function BrandDashboard() {
                         >
                           <Avatar
                             src={follower.avatar_url}
-                            initials={follower.full_name?.slice(0, 2) || '?'}
+                            initials={getInitials(follower.full_name)}
+                            role={follower.role}
                             size="sm"
                           />
                           <div className="flex-1 min-w-0">

@@ -18,16 +18,23 @@ export function cn(...inputs: ClassValue[]) {
  * and ApplicantCard. All produced the same 2-letter uppercase initials;
  * minor variations (filter Boolean vs length>0) merged into one.
  */
+/**
+ * Initials, letters only (design audit 2026-10-21, Batch C): bracketed and
+ * parenthesised tags are dropped ("[QA] iOS Layout" → "IL"), digits and
+ * punctuation never become initials, then the first letter of the first and
+ * last remaining words ("Ana María López" → "AL"). "?" when nothing is left.
+ */
 export function getInitials(name: string | null | undefined): string {
-  if (!name) return '?'
-  const initials = name
-    .trim()
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-  return initials || '?'
+  const firstLetters = (text: string) => text
+    .split(/\s+/)
+    .map((w) => w.match(/\p{L}/u)?.[0])
+    .filter((c): c is string => Boolean(c))
+  const raw = name ?? ''
+  const stripped = firstLetters(raw.replace(/\[[^\]]*\]|\([^)]*\)/g, ' '))
+  // A name that is only a tag ("[QA]") keeps its letters rather than "?".
+  const letters = stripped.length > 0 ? stripped : firstLetters(raw)
+  const picked = letters.length > 1 ? [letters[0], letters[letters.length - 1]] : letters.slice(0, 1)
+  return picked.join('').toUpperCase() || '?'
 }
 
 /**

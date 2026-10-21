@@ -152,7 +152,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
                     onContextMenu={(e) => { e.preventDefault(); setActionsFor(c) }}
                   >
                     <Link to={path ?? '#'} className="shrink-0" aria-label={`${c.author_name ?? 'Member'} — view profile`}>
-                      <Avatar src={c.author_avatar} initials={initialsOf(c.author_name)} size="sm" />
+                      <Avatar src={c.author_avatar} initials={initialsOf(c.author_name)} role={c.author_role ?? undefined} size="sm" />
                     </Link>
                     <div className="min-w-0 flex-1 select-none">
                       <p className="text-secondary text-ink-1">
@@ -172,7 +172,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
 
           {enabled ? (
             <div className="flex items-end gap-2.5 border-t border-line px-4 pb-2 pt-2.5">
-              <Avatar src={viewer?.avatar_url} initials={initialsOf(viewer?.full_name)} size="sm" className="mb-1.5 shrink-0" />
+              <Avatar src={viewer?.avatar_url} initials={initialsOf(viewer?.full_name)} role={viewer?.role ?? undefined} size="sm" className="mb-1.5 shrink-0" />
               <div className="flex min-h-[44px] flex-1 items-end rounded-[22px] bg-surface-muted pl-4 pr-1">
                 <textarea
                   ref={inputRef}

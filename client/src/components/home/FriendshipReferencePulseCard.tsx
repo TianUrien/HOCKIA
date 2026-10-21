@@ -1,4 +1,5 @@
 import { Shield, X } from 'lucide-react'
+import { getInitials } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import { useAuthStore } from '@/lib/auth'
@@ -100,7 +101,7 @@ export function FriendshipReferencePulseCard({
         <Avatar
           src={friendAvatar}
           alt={friendName ?? 'New connection'}
-          initials={friendName?.slice(0, 2) ?? '??'}
+          initials={getInitials(friendName)}
           size="md"
         />
         <div className="flex-1 min-w-0">

@@ -1,5 +1,7 @@
 import { nationalityCountries } from '@/lib/nationality'
 import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import RolePlaceholder from '@/components/RolePlaceholder'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
@@ -685,7 +687,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
                       {p.avatarUrl ? (
                         <img src={getImageUrl(p.avatarUrl, 'avatar-sm') ?? p.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-ink-2">{initialsOf(p.fullName)}</span>
+                        <RolePlaceholder role={isRoleAvatarRole(p.role) ? p.role : 'player'} name={p.fullName} label="" />
                       )}
                     </span>
                   ))}
@@ -1340,7 +1342,7 @@ function ImmersivePage(p: ImmersivePageProps) {
               {avatar ? (
                 <img src={avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
               ) : (
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[15px] font-semibold text-ink-2">{initialsOf(p.name)}</span>
+                <span className="block h-12 w-12 shrink-0 overflow-hidden rounded-full"><RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} name={p.name} label="" /></span>
               )}
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p className="line-clamp-2 text-[22px] font-bold leading-[27px] tracking-[-0.006em] text-ink-1">{p.title}</p>

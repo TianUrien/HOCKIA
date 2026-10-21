@@ -395,7 +395,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               // tapping a tile and opening this modal stays visually
               // consistent. Profile is still flagged photo-missing in DB.
               <div className="absolute inset-0">
-                <RolePlaceholder role={member.role} label="" />
+                <RolePlaceholder role={member.role} name={member.full_name} label="" />
               </div>
             )}
             {/* No green dot on the avatar: it read as an online signal (audit A3). */}

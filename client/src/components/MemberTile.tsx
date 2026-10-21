@@ -307,7 +307,7 @@ export default function MemberTile(props: MemberTileProps) {
                 />
               ) : (
                 <div className="absolute inset-0">
-                  <RolePlaceholder role={props.role} label="" />
+                  <RolePlaceholder role={props.role} name={props.full_name} label="" />
                 </div>
               )}
             </div>

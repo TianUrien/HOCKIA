@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { roleGradientStops } from '@/lib/communityCard'
 import Avatar from '@/components/Avatar'
 
 vi.mock('@/components/ProfileImagePreviewProvider', () => ({
@@ -126,52 +127,37 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(container.querySelector('img')).toBeNull()
   })
 
-  it('renders the role-specific palette per role (smoke check across all 5 via Avatar)', () => {
-    // End-to-end check: Avatar with each of the 5 roles produces a
-    // RolePlaceholder whose first gradient stop matches that role's
-    // bgFrom hex. Catches regressions where a future refactor swaps a
-    // dashboard's hardcoded role and shows the wrong colour.
-    const expected: Record<string, string> = {
-      player: '#DBEAFE',
-      coach: '#D1FAE5',
-      club: '#FFEDD5',
-      brand: '#FFE4E6',
-      umpire: '#E6E6EC',
-    }
-    for (const [role, expectedFirstStop] of Object.entries(expected)) {
-      const { container, unmount } = render(<Avatar role={role} alt="X" />)
+  // Batch C (2026-10-21): one no-photo treatment, the role gradient
+  // (lib/communityCard roleGradientStops) + white initials, letters only.
+  it('renders the role gradient per role (smoke check across all 5 via Avatar)', () => {
+    for (const role of ['player', 'coach', 'club', 'brand', 'umpire'] as const) {
+      const { container, unmount } = render(<Avatar role={role} alt="Ana López" initials="AL" />)
       const stop = container.querySelector('linearGradient stop')
-      expect(stop?.getAttribute('stop-color')).toBe(expectedFirstStop)
+      expect(stop?.getAttribute('stop-color')).toBe(roleGradientStops(role)[0])
+      expect(container.querySelector('[data-testid="role-placeholder-initials"]')?.textContent).toBe('AL')
       unmount()
     }
   })
 
-  it('falls back to player palette when role corruption bypasses the type guard (defence-in-depth)', () => {
-    // RolePlaceholder uses `PALETTES[role] ?? PALETTES.player` as a last-
-    // line-of-defence so a future caller that bypasses isRoleAvatarRole
-    // (e.g. with a stale cached query result) still renders something
-    // legible instead of empty stops/transparent fills.
+  it('falls back to the player gradient when role corruption bypasses the type guard (defence-in-depth)', () => {
     const { container } = render(
       // Cast to bypass the TS narrowing — simulating runtime corruption.
       <RolePlaceholder role={'definitely-not-a-role' as 'player'} label="X" />,
     )
     const stop = container.querySelector('linearGradient stop')
-    expect(stop?.getAttribute('stop-color')).toBe('#DBEAFE') // player bgFrom
+    expect(stop?.getAttribute('stop-color')).toBe(roleGradientStops('player')[0])
   })
 
-  it('all 5 role palettes have a unique fill colour (deuteranopia separation guard)', () => {
-    // Locks the palette so a future refactor can't accidentally make two
-    // roles render with the same silhouette colour. Player blue and coach
-    // green are the closest pair on the deuteranopia axis but still
-    // distinguishable; this test fails fast if anyone collapses them.
-    const fills = new Set<string>()
-    for (const role of ['player', 'coach', 'club', 'brand', 'umpire'] as const) {
-      const { container, unmount } = render(<RolePlaceholder role={role} label="x" />)
-      const path = container.querySelector('path')
-      const fill = path?.getAttribute('fill') ?? ''
-      fills.add(fill)
-      unmount()
-    }
-    expect(fills.size).toBe(5)
+  it('all 5 roles have a distinct gradient, and coaches are never player blue', () => {
+    const firsts = new Set(['player', 'coach', 'club', 'brand', 'umpire'].map((r) => roleGradientStops(r)[0]))
+    expect(firsts.size).toBe(5)
+    expect(roleGradientStops('coach')[0]).not.toBe(roleGradientStops('player')[0])
+  })
+
+  it('no silhouette: initials only, letters only ("[QA] iOS Layout" → IL)', () => {
+    const { container } = render(<RolePlaceholder role="coach" name="[QA] iOS Layout" label="" />)
+    expect(container.querySelector('path')).toBeNull()
+    expect(container.querySelector('circle')).toBeNull()
+    expect(container.querySelector('[data-testid="role-placeholder-initials"]')?.textContent).toBe('IL')
   })
 })

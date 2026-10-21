@@ -23,7 +23,9 @@ describe('Community photo card lines (Figma 6:100)', () => {
   })
 
   it('initials skip brackets and numbers', () => {
-    expect(initialsOf('[QA] Safe Area')).toBe('QA')
+    // Batch C (2026-10-21): bracketed tags are dropped.
+    expect(initialsOf('[QA] Safe Area')).toBe('SA')
+    expect(initialsOf('[QA] iOS Layout')).toBe('IL')
     expect(initialsOf('QA Test Club 03')).toBe('QC')
     expect(initialsOf('Tomás Sosa')).toBe('TS')
     expect(initialsOf('')).toBe('?')
