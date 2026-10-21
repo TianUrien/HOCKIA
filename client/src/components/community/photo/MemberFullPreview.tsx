@@ -4,7 +4,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, MessageSquare, Star, UserPlus, Users, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MessageSquare, Play, Star, UserPlus, Users, X } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { animateSpring, springValue, stopSpring, type SpringValue } from '@/lib/spring'
+import { EuBadge } from '@/components/ui/NationalityBadges'
+import { hasEuPassport } from '@/lib/nationality'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
@@ -110,10 +116,16 @@ interface MemberPreviewBodyProps extends MemberFullPreviewProps {
   onNestedModal?: (open: boolean) => void
   /** False for the neighbours peeking in the deck: rendered, not counted as a preview. */
   active?: boolean
+  /** Phones (ruling 2026-10-21): one member per screen, full-bleed photo, a "More" details panel. */
+  immersive?: boolean
+  /** Immersive top row label ("All members · Newest"). */
+  contextLabel?: string
+  /** Immersive: the details panel opened or closed (the deck pauses its gestures). */
+  onDetailsChange?: (open: boolean) => void
 }
 
 /** The preview's content — photo area, summary panel and action bar — for one member. */
-function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true }: MemberPreviewBodyProps) {
+function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true, immersive = false, contextLabel, onDetailsChange }: MemberPreviewBodyProps) {
   const { user, profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -122,6 +134,14 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const [signIn, setSignIn] = useState<'view' | 'message' | 'connect' | null>(null)
   const [sending, setSending] = useState(false)
   const [rolePicker, setRolePicker] = useState(false)
+  // Immersive only: the "More" details panel over the photo (Figma V3).
+  const [details, setDetails] = useState(false)
+  useEffect(() => { setDetails(false) }, [member.id])
+  useEffect(() => { if (active) onDetailsChange?.(details) }, [active, details, onDetailsChange])
+  // Phone-deck measurement goes to the DB event log: GA4 is skipped inside the native apps.
+  const trackAction = (action: 'message' | 'add_friend' | 'shortlist' | 'full_profile') => {
+    if (immersive) trackDbEvent('member_preview_action', 'profile', member.id, { action, viewed_role: member.role, surface: details ? 'details' : 'photo' })
+  }
 
   const isClub = member.role === 'club'
   const isBrand = member.role === 'brand'
@@ -181,6 +201,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
 
   const viewProfile = () => {
     if (!requireMember('view')) return
+    trackAction('full_profile')
     trackEvent({ action: 'community_preview_view_profile', category: 'community', label: member.role })
     onClose()
     navigate(profilePath(member), { state: { from: location.pathname + location.search } })
@@ -194,6 +215,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
 
   const message = async () => {
     if (!requireMember('message') || !user) return
+    trackAction('message')
     void hapticLight()
     setSending(true)
     try {
@@ -304,18 +326,31 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const fitLabel = fitChipLabel(fitState)
   const fitPillText = fitLabel && recruiterView.fitRole ? `${fitLabel} for ${recruiterView.fitRole.title}` : fitLabel
   const onShortlist = () => {
+    trackAction('shortlist')
     void hapticLight()
     if (recruiterView.roles.length === 0) void recruiterView.shortlistDefault()
     else if (recruiterView.roles.length === 1) void recruiterView.shortlistForRole(recruiterView.roles[0])
     else setRolePicker(true)
   }
 
+  // One set of actions, three surfaces: the classic sheet / deck card, the
+  // immersive photo (Figma V1: glass secondary) and the details panel (V3).
   // Inside the narrower deck card the labels stay on one line ("See open roles").
   // Deck card (Figma correction 2026-10-11): real type sizes, buttons 48 high.
-  const btnSize = framed ? 'h-12 gap-1.5 px-2.5 text-[15px]' : 'h-[52px] gap-2 px-4 text-[16px]'
+  const buildActions = (surface: 'card' | 'photo' | 'panel') => {
+  const btnSize = surface !== 'card' || framed ? 'h-12 gap-1.5 px-2.5 text-[15px]' : 'h-[52px] gap-2 px-4 text-[16px]'
   const primary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-hockia-primary ${btnSize} font-semibold text-white ${PRESS} disabled:opacity-60`
-  const secondary = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border-[1.5px] border-line bg-white ${btnSize} font-semibold text-ink-1 ${PRESS} active:bg-surface-muted disabled:text-ink-4`
-  const muted = `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-surface-muted ${btnSize} font-semibold text-ink-2`
+  const secondary = surface === 'photo'
+    ? `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border border-white/[0.28] bg-white/[0.18] ${btnSize} font-semibold text-white ${GLASS} ${PRESS} disabled:text-white/50`
+    : surface === 'panel'
+      ? `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-surface-muted ${btnSize} font-semibold text-ink-1 ${PRESS} disabled:text-ink-4`
+      : `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border-[1.5px] border-line bg-white ${btnSize} font-semibold text-ink-1 ${PRESS} active:bg-surface-muted disabled:text-ink-4`
+  const muted = surface === 'photo'
+    ? `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full border border-white/[0.28] bg-white/[0.18] ${btnSize} font-semibold text-white/80 ${GLASS}`
+    : `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-surface-muted ${btnSize} font-semibold text-ink-2`
+  const iconSquare = surface === 'photo'
+    ? `flex shrink-0 items-center justify-center rounded-full border border-white/[0.28] bg-white/[0.18] h-12 w-12 text-white ${GLASS} disabled:text-white/50`
+    : `flex shrink-0 items-center justify-center rounded-full border-[1.5px] ${surface !== 'card' || framed ? 'h-12 w-12' : 'h-[52px] w-[52px]'} border-line bg-white text-ink-1 disabled:text-ink-4`
 
   const messageButton = (variant: 'primary' | 'secondary') => (
     <button
@@ -330,7 +365,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     </button>
   )
 
-  const actions = (() => {
+  return (() => {
     if (friendship.isOwnProfile) return null
     if (isClub) {
       return (member.open_role_count ?? 0) > 0 ? (
@@ -371,7 +406,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             onClick={() => void message()}
             disabled={sending || Boolean(messageBlockedReason)}
             aria-label="Message"
-            className={`flex shrink-0 items-center justify-center rounded-full border-[1.5px] ${framed ? 'h-12 w-12' : 'h-[52px] w-[52px]'} border-line bg-white text-ink-1 disabled:text-ink-4`}
+            className={iconSquare}
             data-testid="member-preview-message"
           >
             <MessageSquare className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
@@ -403,7 +438,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       <>
         <button
           type="button"
-          onClick={() => { if (requireMember('connect')) { void hapticLight(); void friendship.sendRequest() } }}
+          onClick={() => { if (requireMember('connect')) { trackAction('add_friend'); void hapticLight(); void friendship.sendRequest() } }}
           disabled={friendship.mutating || friendship.loading}
           className={primary}
           data-testid="member-preview-friend"
@@ -414,6 +449,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       </>
     )
   })()
+  }
+  const actions = buildActions('card')
 
   // ── Photo area background when there is no photo to show
   const crest = isClub && member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-xl') ?? member.avatar_url : null
@@ -421,6 +458,94 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     ? (crest ? crestGradient(crestColor) : CLUB_BRAND_GRADIENT)
     : rolePreviewGradient(member.role)
   const brandLogo = isBrand ? member.brand_logo_url ?? member.avatar_url : null
+
+  if (immersive) {
+    return (
+      <ImmersivePage
+        member={member}
+        name={name}
+        firstName={firstName}
+        title={title}
+        isPerson={isPerson}
+        isClub={isClub}
+        current={current}
+        shownSrc={shownSrc}
+        setShownSrc={setShownSrc}
+        markFailed={(src) => setFailed((s) => new Set(s).add(src))}
+        shownCount={shown.length}
+        photoIndex={photoIndex}
+        stepPhoto={stepPhoto}
+        noPhotoBackground={noPhotoBackground}
+        crest={crest}
+        brandLogo={brandLogo}
+        contextLabel={contextLabel}
+        onClose={onClose}
+        menu={user && !friendship.isOwnProfile ? (
+          <ProfileActionMenu
+            targetId={member.id}
+            targetName={name}
+            actionName={firstName}
+            leadingItems={[{ key: 'share', label: 'Share profile', onSelect: () => void share() }]}
+            onBlocked={() => { onClose(); onBlocked?.(member) }}
+            triggerClassName={IMMERSIVE_GLASS_BUTTON}
+            iconClassName="h-[22px] w-[22px] text-white"
+          />
+        ) : null}
+        fitPill={fitPillText && fitState ? <FitPill state={fitState} label={fitPillText} /> : null}
+        incomingRequest={!fitPillText && friendship.isIncomingRequest && !recruiterActions}
+        nationalities={nationalities}
+        place={place}
+        idLine={(() => {
+          if (!isPerson) return subLine
+          const club = member.current_club?.trim() || null
+          return [...subParts, club].filter(Boolean).join(' · ')
+        })()}
+        facts={facts}
+        playsAt={(() => {
+          if (member.role !== 'player' && member.role !== 'coach') return null
+          const club = member.current_club?.trim() || null
+          if (!club) return null
+          const team = member.role === 'player' ? teamLabel(member.playing_category) : coachTeam
+          return { label: member.role === 'coach' ? 'Coaches at' : 'Plays at', value: [club, team].filter(Boolean).join(' · '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
+        })()}
+        references={isPerson ? member.accepted_reference_count ?? 0 : 0}
+        hasHighlights={isPerson && Boolean(member.highlight_video_url)}
+        about={about}
+        details={details}
+        setDetails={(open) => {
+          if (open) {
+            trackDbEvent('member_preview_more_open', 'profile', member.id, { viewed_role: member.role })
+            void hapticSelection()
+          }
+          setDetails(open)
+        }}
+        photoActions={buildActions('photo')}
+        panelActions={buildActions('panel')}
+        messageBlockedReason={messageBlockedReason}
+        onViewProfile={viewProfile}
+        sheets={(
+          <>
+            {recruiterActions && (
+              <ShortlistRoleSheet
+                open={rolePicker}
+                roles={recruiterView.roles}
+                shortlistedRoleIds={recruiterView.shortlistedRoleIds}
+                appliedRoleId={recruiterView.application?.role.id ?? null}
+                onPick={(role) => { setRolePicker(false); void recruiterView.shortlistForRole(role) }}
+                onClose={() => setRolePicker(false)}
+              />
+            )}
+            <SignInPromptModal
+              isOpen={signIn !== null}
+              onClose={() => setSignIn(null)}
+              title={signIn === 'message' ? 'Sign in to message' : signIn === 'connect' ? 'Sign in to add friends' : 'Sign in to view profile'}
+              action={signIn ?? undefined}
+            />
+          </>
+        )}
+      />
+    )
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white" data-member-id={member.id}>
@@ -617,7 +742,15 @@ const prefersReducedMotion = () =>
  * device nudges the card 40 pt with "Swipe for the next member" (P20). Past
  * the last member: "You've seen everyone" (P21). Reduce Motion: cross-fade.
  */
+/** Phones get the vertical deck (ruling 2026-10-21); desktop and single previews keep the classic shell. */
+const PHONE_QUERY = '(max-width: 1023px)'
 export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
+  const isPhone = useMediaQuery(PHONE_QUERY)
+  if (props.deck && isPhone) return <VerticalMemberDeck {...props} deck={props.deck} />
+  return <ClassicMemberPreview {...props} />
+}
+
+function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
   const { deck, onClose, onBlocked } = props
   const containerRef = useRef<HTMLDivElement>(null)
   const [nested, setNested] = useState(false)
@@ -968,6 +1101,551 @@ function preloadImage(raw: string | null) {
   img.decoding = 'async'
   img.src = src
   void img.decode?.().catch(() => undefined)
+}
+
+// ── Phones: the vertical deck (founder ruling 2026-10-21, Figma 01 Community ·
+// "Vertical deck on phones" V0–V3). Desktop keeps the classic deck above.
+
+/** Glass round button over the photo (Figma V1 top row: black 32 % + 14 % white hairline). */
+const IMMERSIVE_GLASS_BUTTON = `flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.14] bg-black/[0.32] text-white ${GLASS} ${PRESS}`
+/** Figma V1 scrims: top 45 → 0 % over 140 pt; bottom 0 → 25 % (35 %) → 85 % over 420 pt. */
+const TOP_SCRIM = 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)'
+const BOTTOM_SCRIM = 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.85) 100%)'
+
+interface ImmersivePageProps {
+  member: Profile
+  name: string
+  firstName: string
+  title: string
+  isPerson: boolean
+  isClub: boolean
+  current: string | null
+  shownSrc: string | null
+  setShownSrc: (src: string) => void
+  markFailed: (src: string) => void
+  shownCount: number
+  photoIndex: number
+  stepPhoto: (dir: 1 | -1) => void
+  noPhotoBackground: string
+  crest: string | null
+  brandLogo: string | null
+  contextLabel?: string
+  onClose: () => void
+  menu: React.ReactNode
+  fitPill: React.ReactNode
+  incomingRequest: boolean
+  nationalities: ReturnType<typeof nationalityCountries>
+  place: string | null
+  /** Position · category · club (people); the classic sub line for clubs and brands. */
+  idLine: string
+  facts: { label: string; value: string }[]
+  playsAt: { label: string; value: string; detail: string | null } | null
+  references: number
+  hasHighlights: boolean
+  about: string | null
+  details: boolean
+  setDetails: (open: boolean) => void
+  photoActions: React.ReactNode
+  panelActions: React.ReactNode
+  messageBlockedReason: string | null
+  onViewProfile: () => void
+  sheets: React.ReactNode
+}
+
+/**
+ * One member per screen (Figma V1): full-bleed photo, top and bottom scrims,
+ * the top row (close · list label · menu), photo progress, identity over the
+ * photo, a "More" chevron and the action bar fixed above the home indicator.
+ * "More" opens the details panel (V3, sheet r28): head, Plays at,
+ * nationalities with EU, Based in, references (gold) and highlights, bio, the
+ * same actions and See full profile. Tap the photo or drag the panel down to close it.
+ */
+function ImmersivePage(p: ImmersivePageProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  useSquircle(panelRef, { tl: 28, tr: 28 })
+  // Drag the panel down (from its top, content not scrolled) to close it.
+  const drag = useRef<{ y: number; dy: number } | null>(null)
+  const [panelDy, setPanelDy] = useState(0)
+  const onPanelTouchStart = (e: React.TouchEvent) => {
+    const el = panelRef.current
+    if (el && el.scrollTop > 0) return
+    drag.current = { y: e.touches[0].clientY, dy: 0 }
+  }
+  const onPanelTouchMove = (e: React.TouchEvent) => {
+    if (!drag.current) return
+    const dy = Math.max(0, e.touches[0].clientY - drag.current.y)
+    drag.current.dy = dy
+    setPanelDy(dy)
+  }
+  const onPanelTouchEnd = () => {
+    const dy = drag.current?.dy ?? 0
+    drag.current = null
+    setPanelDy(0)
+    if (dy > 90) p.setDetails(false)
+  }
+  useEffect(() => {
+    if (!p.details) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); p.setDetails(false) } }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [p, p.details])
+
+  const avatar = p.member.avatar_url ? getImageUrl(p.member.avatar_url, 'avatar-md') ?? p.member.avatar_url : null
+  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
+
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-surface-inverse" data-member-id={p.member.id} data-testid="member-vdeck-page">
+      {/* Photo, full bleed; the member's colour sits behind it while it loads. */}
+      <div className="absolute inset-0" style={{ backgroundImage: p.noPhotoBackground }}>
+        {p.current ? (
+          <img
+            key={p.current}
+            ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
+            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
+            decoding="async"
+            onError={() => p.markFailed(p.current!)}
+            onLoad={(e) => {
+              if (p.isClub && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth < 600) p.markFailed(p.current!)
+              else p.setShownSrc(p.current!)
+            }}
+          />
+        ) : (
+          <span aria-hidden="true" className="absolute inset-0">
+            <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
+            {p.isClub && p.crest ? (
+              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-[26%] h-[150px] w-[150px] -translate-x-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
+            ) : p.brandLogo ? (
+              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-[28%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
+            ) : (
+              <span className="absolute left-1/2 top-[28%] flex h-[140px] w-[140px] -translate-x-1/2 items-center justify-center rounded-full border-[1.5px] border-white/40 bg-white/[0.14] text-[52px] font-bold text-white">
+                {initialsOf(p.name)}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
+      <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[140px]" style={{ backgroundImage: TOP_SCRIM }} />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[420px] max-h-[60%]" style={{ backgroundImage: BOTTOM_SCRIM }} />
+
+      {/* Tap the left / right half for the previous / next photo (vertical swipes are members). */}
+      {p.shownCount > 1 && (
+        <>
+          <button type="button" aria-label="Previous photo" onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2" />
+          <button type="button" aria-label="Next photo" onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2" />
+        </>
+      )}
+
+      {/* Top row and photo progress */}
+      <div className="absolute inset-x-4 top-[calc(env(safe-area-inset-top)+4px)] flex h-11 items-center gap-2">
+        <button type="button" onClick={p.onClose} aria-label="Close preview" className={IMMERSIVE_GLASS_BUTTON} data-testid="member-preview-close">
+          <ChevronDown className="h-[22px] w-[22px]" strokeWidth={2} />
+        </button>
+        <p className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold leading-[18px] text-white/[0.92]" data-testid="member-deck-context">{p.contextLabel}</p>
+        {p.menu ?? <span className="h-11 w-11 shrink-0" aria-hidden="true" />}
+      </div>
+      {p.shownCount > 1 && (
+        <div aria-hidden="true" className="absolute inset-x-4 top-[calc(env(safe-area-inset-top)+56px)] flex gap-1">
+          {Array.from({ length: p.shownCount }, (_, i) => (
+            <span key={i} className={`h-[3px] flex-1 rounded-[2px] ${i === p.photoIndex ? 'bg-white/95' : 'bg-white/[0.35]'}`} />
+          ))}
+        </div>
+      )}
+
+      {/* Identity, More and the action bar, bottom up from the home indicator. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col pb-[max(env(safe-area-inset-bottom),12px)]">
+        <div data-preview-identity="" className="flex flex-col items-start gap-1.5 px-4">
+          {p.isClub && p.current && p.crest && (
+            <LogoTile src={p.crest} name={p.name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
+          )}
+          {p.fitPill}
+          {p.incomingRequest && (
+            <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
+              <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />
+              <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
+            </span>
+          )}
+          <h2 className="line-clamp-2 text-[30px] font-bold leading-9 tracking-[-0.015em] text-white">{p.title}</h2>
+          {p.idLine && <p className="line-clamp-2 text-[16px] leading-[22px] text-white/[0.92]">{p.idLine}</p>}
+          {p.nationalities.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5" data-testid="member-vdeck-nationalities">
+              {p.nationalities.map((c) => (
+                <span key={c.id} className={`flex h-7 items-center rounded-full border border-white/[0.22] bg-white/[0.16] px-2.5 text-[13px] font-semibold leading-[18px] text-white ${GLASS}`}>
+                  {[c.flag, c.name].filter(Boolean).join(' ')}
+                </span>
+              ))}
+              {hasEuPassport(p.nationalities) && <EuBadge className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
+            </div>
+          )}
+          {p.isPerson && p.place && <p className="line-clamp-2 text-[13px] leading-[18px] text-white/80">Based in {p.place}</p>}
+        </div>
+        <div className="flex justify-center pt-1.5">
+          <button
+            type="button"
+            onClick={() => p.setDetails(true)}
+            aria-label={`More about ${p.firstName}`}
+            aria-expanded={p.details}
+            className="pointer-events-auto flex h-11 w-16 items-center justify-center text-white"
+            data-testid="member-vdeck-more"
+          >
+            <ChevronUp className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+          </button>
+        </div>
+        <div data-vdeck-actions="" className="pointer-events-auto px-4 pt-0.5 transition-opacity duration-200 group-data-[dragging=true]:opacity-0">
+          {p.photoActions && <div className="flex gap-2.5">{p.photoActions}</div>}
+          {p.messageBlockedReason && (
+            <p id="member-preview-message-note" className="mt-2 text-center text-[13px] leading-[18px] text-white/80">{p.messageBlockedReason}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Details panel (Figma V3) */}
+      {p.details && (
+        <div className="absolute inset-0 z-10" data-vdeck-panel="">
+          <button type="button" aria-label="Close details" onClick={() => p.setDetails(false)} className="absolute inset-0 bg-black/[0.35] animate-fade-in" />
+          <div
+            ref={panelRef}
+            role="region"
+            aria-label={`About ${p.name}`}
+            className="absolute inset-x-0 bottom-0 flex max-h-[78%] flex-col gap-3 overflow-y-auto overscroll-contain rounded-t-[28px] bg-white px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 animate-slide-in-up"
+            style={{ transform: panelDy > 0 ? `translateY(${panelDy}px)` : undefined, transition: panelDy > 0 ? 'none' : 'transform 0.2s ease-out' }}
+            onTouchStart={onPanelTouchStart}
+            onTouchMove={onPanelTouchMove}
+            onTouchEnd={onPanelTouchEnd}
+            onTouchCancel={onPanelTouchEnd}
+            data-testid="member-vdeck-details"
+          >
+            <div aria-hidden="true" className="flex justify-center pb-1"><span className="h-[5px] w-9 rounded-[3px] bg-line" /></div>
+            <div className="flex items-center gap-3">
+              {avatar ? (
+                <img src={avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[15px] font-semibold text-ink-2">{initialsOf(p.name)}</span>
+              )}
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <p className="line-clamp-2 text-[22px] font-bold leading-[27px] tracking-[-0.006em] text-ink-1">{p.title}</p>
+                {p.idLine && <p className="line-clamp-2 text-[16px] leading-[22px] text-ink-2">{p.idLine}</p>}
+              </div>
+            </div>
+            {p.isPerson ? (
+              <>
+                {p.playsAt && (
+                  <DetailTile label={p.playsAt.label} value={p.playsAt.value} detail={p.playsAt.detail} />
+                )}
+                {p.nationalities.length > 0 && (
+                  <div className="flex flex-col gap-[3px] rounded-[14px] bg-surface-muted px-3.5 py-2.5">
+                    <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
+                    <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
+                    {hasEuPassport(p.nationalities) && (
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge /> EU passport</span>
+                    )}
+                  </div>
+                )}
+                {p.place && <DetailTile label="Based in" value={p.place} />}
+                {(p.references > 0 || p.hasHighlights) && (
+                  <div className="flex gap-2">
+                    {p.references > 0 && (
+                      <div className="flex min-w-0 flex-1 flex-col gap-[3px] rounded-[14px] bg-gold-soft px-3.5 py-2.5" data-testid="member-vdeck-references">
+                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">References</span>
+                        <span className="text-[16px] leading-[22px] text-ink-1">{p.references} accepted</span>
+                      </div>
+                    )}
+                    {p.hasHighlights && (
+                      <button type="button" onClick={p.onViewProfile} className="flex min-w-0 flex-1 flex-col items-start gap-[3px] rounded-[14px] bg-hockia-soft px-3.5 py-2.5 text-left text-hockia-primary" data-testid="member-vdeck-highlights">
+                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">Highlights</span>
+                        <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> Watch</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              p.facts.map((f) => <DetailTile key={f.label} label={f.label} value={f.value} />)
+            )}
+            {p.about && <p className="whitespace-pre-line text-[16px] leading-[22px] text-ink-1">{p.about}</p>}
+            {p.panelActions && <div className="flex gap-2.5 pt-1">{p.panelActions}</div>}
+            <button
+              type="button"
+              onClick={p.onViewProfile}
+              className="mx-auto flex min-h-[44px] items-center gap-1 px-2 text-[14px] font-semibold text-hockia-primary"
+              data-testid="member-preview-full-profile"
+            >
+              See full profile <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      )}
+      {p.sheets}
+    </div>
+  )
+}
+
+function DetailTile({ label, value, detail = null }: { label: string; value: string; detail?: string | null }) {
+  return (
+    <div className="flex flex-col gap-[3px] rounded-[14px] bg-surface-muted px-3.5 py-2.5">
+      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">{label}</span>
+      <span className="text-[16px] leading-[22px] text-ink-1">{value}</span>
+      {detail && <span className="text-[13px] leading-[18px] text-ink-2">{detail}</span>}
+    </div>
+  )
+}
+
+/** Figma notes: the deck spring (response 0.48 · damping 0.82). */
+const VDECK_SPRING = { response: 0.48, damping: 0.82 } as const
+const VDECK_HINT_KEY = 'hockia.community.vdeckHintSeen'
+/** A release past this share of the screen (or a flick) moves to the next member. */
+const VDECK_PAGE_SHARE = 0.18
+const VDECK_CLOSE_DISTANCE = 110
+
+/**
+ * Phones: swipe up = next member, down = previous, one per screen with snap.
+ * Dragging down past the first member closes the deck (as today). Photo
+ * steps stay on taps (left / right half). The action bar fades while the
+ * finger moves. First open only: "Swipe up for the next member" for 2 s.
+ * Android: the system back closes the deck.
+ */
+function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPreviewDeck }) {
+  const { deck, onClose, onBlocked } = props
+  const members = deck.members
+  const containerRef = useRef<HTMLDivElement>(null)
+  const stripRef = useRef<HTMLDivElement>(null)
+  const [nested, setNested] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [index, setIndex] = useState(() => Math.min(Math.max(deck.startIndex, 0), Math.max(members.length - 1, 0)))
+  const atEnd = index >= members.length
+  const member = atEnd ? null : members[index]
+  const [height, setHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 852))
+
+  useEffect(() => {
+    void setStatusBarForBackground('dark-bg')
+    return () => { void setStatusBarForBackground('light-bg') }
+  }, [])
+  useBodyScrollLock(true)
+  useFocusTrap({ containerRef, isActive: !nested })
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const measure = () => setHeight(el.clientHeight || window.innerHeight)
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
+
+  // Measurement (DB event log: GA4 is skipped inside the native apps).
+  const seen = useRef(new Set<string>())
+  useEffect(() => {
+    const first = members[Math.min(Math.max(deck.startIndex, 0), members.length - 1)]
+    trackDbEvent('member_preview_open', 'profile', first?.id, { source: 'grid', context: deck.contextLabel })
+    const seenSet = seen.current
+    return () => { trackDbEvent('member_preview_depth', 'community', undefined, { members_seen: seenSet.size }) }
+    // Once per deck open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => { if (member) seen.current.add(member.id) }, [member])
+
+  // Preload: the next members' data and first photos, so a swipe never shows black.
+  useEffect(() => {
+    const near = [-1, 1, 2, 3].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
+    void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
+    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+      for (const m of near) preloadImage(firstPhotoOf(m))
+    })
+  }, [index, members])
+
+  // ── Strip position (px). The spring runs in PAGES (1 = one screen): its
+  // settle thresholds are tuned for unit-scale values, so in px a landing
+  // took seconds to "finish". React re-renders only when a page lands.
+  const offset = useRef(0)
+  const heightRef = useRef(height)
+  heightRef.current = height
+  const spring = useRef<SpringValue | null>(null)
+  const applyOffset = useCallback((y: number) => {
+    offset.current = y
+    if (stripRef.current) stripRef.current.style.transform = `translate3d(0, ${y}px, 0)`
+  }, [])
+  useEffect(() => {
+    spring.current = springValue(0, (pages) => applyOffset(pages * heightRef.current))
+    return () => { if (spring.current) stopSpring(spring.current) }
+  }, [applyOffset])
+  // After the index moves, the landed page is the same element one slot over: rest at 0 in the same frame.
+  useLayoutEffect(() => {
+    if (spring.current) { stopSpring(spring.current); spring.current.x = 0; spring.current.v = 0 }
+    applyOffset(0)
+  }, [index, applyOffset])
+  const settling = useRef(false)
+  const setDragging = (on: boolean) => { if (containerRef.current) containerRef.current.dataset.dragging = on ? 'true' : 'false' }
+
+  // ── One-time hint
+  const [hint, setHint] = useState(false)
+  const hintTimer = useRef<number | null>(null)
+  const endHint = useCallback(() => {
+    if (hintTimer.current !== null) { window.clearTimeout(hintTimer.current); hintTimer.current = null }
+    setHint((shown) => {
+      if (shown) { try { window.localStorage.setItem(VDECK_HINT_KEY, '1') } catch { /* private mode */ } }
+      return false
+    })
+  }, [])
+  useEffect(() => {
+    if (members.length < 2) return
+    let seenHint = false
+    try { seenHint = window.localStorage.getItem(VDECK_HINT_KEY) === '1' } catch { /* private mode */ }
+    if (seenHint) return
+    setHint(true)
+    hintTimer.current = window.setTimeout(endHint, 2000)
+    return () => { if (hintTimer.current !== null) window.clearTimeout(hintTimer.current) }
+  }, [members.length, endHint])
+
+  const go = useCallback((dir: 1 | -1, v?: number) => {
+    const next = index + dir
+    if (settling.current || next < 0 || next > members.length || !spring.current) return
+    trackDbEvent('member_preview_swipe', 'profile', members[next]?.id, { direction: dir > 0 ? 'next' : 'prev' })
+    endHint()
+    settling.current = true
+    spring.current.x = offset.current / height
+    animateSpring(spring.current, -dir, {
+      ...VDECK_SPRING,
+      v: v === undefined ? undefined : v / height,
+      onDone: () => {
+        settling.current = false
+        setDragging(false)
+        void hapticSelection()
+        setIndex(next)
+      },
+    })
+  }, [index, members, height, endHint])
+  const snapBack = useCallback(() => {
+    if (!spring.current) return
+    spring.current.x = offset.current / heightRef.current
+    animateSpring(spring.current, 0, { ...VDECK_SPRING, onDone: () => setDragging(false) })
+  }, [])
+
+  // Keyboard and Android back
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!isTopFocusTrap(containerRef.current) || detailsOpen) return
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowDown') go(1)
+      if (e.key === 'ArrowUp') go(-1)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [go, onClose, detailsOpen])
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return
+    const sub = CapacitorApp.addListener('backButton', () => onClose())
+    return () => { void sub.then((h) => h.remove()) }
+  }, [onClose])
+
+  // ── Gestures
+  const touch = useRef<{ x: number; y: number; t: number; axis: 'x' | 'y' | null } | null>(null)
+  const moved = useRef(false)
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (settling.current || detailsOpen || nested) return
+    if ((e.target as HTMLElement).closest('[data-vdeck-panel]')) return
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: performance.now(), axis: null }
+    moved.current = false
+  }
+  const onTouchMove = (e: React.TouchEvent) => {
+    const s0 = touch.current
+    if (!s0) return
+    const mx = e.touches[0].clientX - s0.x
+    const my = e.touches[0].clientY - s0.y
+    if (!s0.axis) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return
+      if (Math.abs(mx) > Math.abs(my)) { touch.current = null; return }
+      s0.axis = 'y'
+      setDragging(true)
+      if (spring.current) stopSpring(spring.current)
+    }
+    moved.current = true
+    if (hint) endHint()
+    // Past the last page the strip resists; past the first it follows (to close).
+    const resist = atEnd && my < 0
+    applyOffset(resist ? my / 3 : my)
+  }
+  const onTouchEnd = () => {
+    const s0 = touch.current
+    touch.current = null
+    if (!s0?.axis) return
+    const y = offset.current
+    const dt = Math.max(performance.now() - s0.t, 1)
+    const velocity = (y / dt) * 1000
+    const flick = Math.abs(y) > 30 && Math.abs(velocity) > 500
+    if ((y <= -height * VDECK_PAGE_SHARE || (flick && y < 0)) && !atEnd) go(1, velocity)
+    else if ((y >= height * VDECK_PAGE_SHARE || (flick && y > 0)) && index > 0) go(-1, velocity)
+    else if (index === 0 && y > VDECK_CLOSE_DISTANCE) onClose()
+    else snapBack()
+  }
+  // A drag must not also count as a tap on the photo halves.
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (moved.current) { e.stopPropagation(); e.preventDefault(); moved.current = false }
+  }
+
+  const slots = [index - 1, index, index + 1].filter((k) => k >= 0 && k <= members.length)
+
+  return createPortal(
+    <div
+      ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={member ? `${member.full_name?.trim() || 'Member'} preview, ${index + 1} of ${members.length}` : 'End of the list'}
+      tabIndex={-1}
+      data-testid="member-preview"
+      data-deck="vertical"
+      data-dragging="false"
+      className="group fixed inset-0 z-50 overflow-hidden bg-surface-inverse animate-fade-in"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+      onClickCapture={onClickCapture}
+    >
+      <div ref={stripRef} className="absolute inset-0 will-change-transform">
+        {slots.map((k) => {
+          const isEnd = k === members.length
+          const isActive = k === index
+          return (
+            <div
+              key={isEnd ? 'end' : members[k].id}
+              inert={!isActive}
+              aria-hidden={!isActive || undefined}
+              className="absolute inset-x-0 flex flex-col"
+              style={{ top: (k - index) * height, height }}
+              data-testid={isActive ? 'member-deck-card' : undefined}
+            >
+              {isEnd ? (
+                <div className="flex h-full flex-col bg-white pb-[max(env(safe-area-inset-bottom),12px)] pt-[env(safe-area-inset-top)]">
+                  <DeckEnd onAdjustFilters={() => { onClose(); deck.onAdjustFilters?.() }} onBack={onClose} />
+                </div>
+              ) : (
+                <MemberPreviewBody
+                  member={members[k]}
+                  onClose={onClose}
+                  age={deck.ageOf?.(members[k].id) ?? null}
+                  fit={deck.fitOf?.(members[k].id) ?? null}
+                  crestColor={deck.crestOf?.(members[k].id) ?? null}
+                  onBlocked={onBlocked}
+                  onNestedModal={isActive ? setNested : undefined}
+                  active={isActive}
+                  immersive
+                  contextLabel={deck.contextLabel}
+                  onDetailsChange={isActive ? setDetailsOpen : undefined}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {hint && (
+        <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+72px)] z-20 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg animate-fade-in" role="status" data-testid="member-vdeck-hint">
+          <ChevronUp className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} aria-hidden="true" />
+          <span className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-ink-1">Swipe up for the next member</span>
+        </div>
+      )}
+    </div>,
+    document.body,
+  )
 }
 
 /** Past the last member (Figma P21). */
