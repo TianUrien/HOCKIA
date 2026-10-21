@@ -1,4 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import { isLowResCover } from '@/lib/coverQuality'
+import RolePlaceholder from '@/components/RolePlaceholder'
 import { coverBackground, type CrestPalette } from '@/lib/crestPalette'
 import { getImageUrl } from '@/lib/imageUrl'
 
@@ -47,11 +49,13 @@ const WATERMARK: Record<NonNullable<RoleCoverProps['scrim']>, CSSProperties> = {
  * tints a cover. White text always reads: the bottom scrim is on top.
  */
 export function RoleCover({ coverUrl, crestUrl, palette, scrim = 'card', className, style, children }: RoleCoverProps) {
-  const photo = coverUrl ? getImageUrl(coverUrl, 'feed-full') ?? coverUrl : null
+  // A photo under 600 px (natural width) falls back to the crest cover (Batch C).
+  const [lowResFor, setLowResFor] = useState<string | null>(null)
+  const photo = coverUrl && lowResFor !== coverUrl ? getImageUrl(coverUrl, 'feed-full') ?? coverUrl : null
   const crest = !photo && crestUrl ? getImageUrl(crestUrl, 'avatar-xl') ?? crestUrl : null
   return (
     <div className={`relative overflow-hidden ${className ?? ''}`} style={{ background: photo ? '#0f0f14' : coverBackground(palette), ...style }} data-testid="role-cover" data-cover={photo ? 'photo' : palette ? 'crest' : 'fallback'}>
-      {photo && <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />}
+      {photo && <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" onLoad={(e) => { if (coverUrl && isLowResCover(e.currentTarget.naturalWidth)) setLowResFor(coverUrl) }} />}
       {crest && (
         <div
           aria-hidden="true"
@@ -80,10 +84,10 @@ export function CrestTile({ src, name, size, radius, className }: { src: string 
   const url = src ? getImageUrl(src, size > 40 ? 'avatar-md' : 'avatar-sm') ?? src : null
   const pad = Math.round(size * 0.09)
   return (
-    <span className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden bg-white ${className ?? ''}`} style={{ width: size, height: size, borderRadius: radius, boxShadow: 'inset 0 0 0 0.5px rgba(15,15,20,0.08)' }} aria-hidden="true">
+    <span className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden ${url ? 'bg-white' : ''} ${className ?? ''}`} style={{ width: size, height: size, borderRadius: radius, boxShadow: 'inset 0 0 0 0.5px rgba(15,15,20,0.08)' }} aria-hidden="true">
       {url
         ? <img src={url} alt="" className="h-full w-full object-contain" style={{ padding: pad }} loading="lazy" decoding="async" />
-        : <span className="text-secondary font-semibold text-ink-2">{name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')}</span>}
+        : <RolePlaceholder role="club" name={name} label="" />}
     </span>
   )
 }
