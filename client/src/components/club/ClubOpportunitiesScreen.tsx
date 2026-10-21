@@ -254,7 +254,10 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
               />
             </div>
           )}
-          <button type="button" onClick={postRole} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-primary px-5 text-[16px] font-semibold text-white transition-opacity hover:opacity-90" data-testid="desktop-post-role">
+          {/* One Primary per screen (audit B6): while a reply is owed the
+              Primary is the role card's "Review N applicants", so Post a role
+              steps down to Tonal. */}
+          <button type="button" onClick={postRole} className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-5 text-[16px] font-semibold transition-colors', rolesWithPending.length > 0 ? 'bg-brand-soft text-brand-primary hover:bg-brand-soft-hover' : 'bg-brand-primary text-white hover:bg-brand-primary-hover')} data-testid="desktop-post-role" data-emphasis={rolesWithPending.length > 0 ? 'tonal' : 'primary'}>
             <Plus className="h-5 w-5" strokeWidth={2.2} /> Post a role
           </button>
         </div>
