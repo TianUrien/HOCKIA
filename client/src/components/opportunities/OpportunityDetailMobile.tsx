@@ -21,7 +21,7 @@ import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
   APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView, clubNoteFromFeedback,
-  compensationText, formatDurationText, genderPill, postedLine, roleBenefits, roleHeadline,
+  closesSoonLabel, compensationText, formatDurationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { daysUntil, isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -183,7 +183,7 @@ export function OpportunityDetailMobile({
   const duration = formatDurationText(vacancy.duration_text)
   const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? 'Open' : 'Open'
   const applyBySub = vacancy.application_deadline
-    ? (deadlineDays !== null && deadlineDays >= 0 ? (deadlineDays === 0 ? 'Closes today' : `Closes in ${deadlineDays} day${deadlineDays === 1 ? '' : 's'}`) : 'Deadline passed')
+    ? (deadlineDays !== null && deadlineDays >= 0 ? closesSoonLabel(vacancy.application_deadline) : 'Deadline passed')
     : 'Until filled'
   const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(' · ').toUpperCase()
   const words = vacancy.description?.trim() ?? ''
@@ -250,7 +250,7 @@ export function OpportunityDetailMobile({
           )}
         </div>
         {onBehalfNote(identity) && <p className="pt-2 text-caption text-ink-3">{onBehalfNote(identity)}</p>}
-        <p className="pt-2 text-caption text-ink-3">{postedLine(vacancy, new Date(), closed)}</p>
+        <p className="pt-2 text-caption text-ink-3">{postedOnlyLine(vacancy, new Date(), closed)}</p>
       </div>
 
       {!closed && !isPublisher && (
@@ -353,7 +353,6 @@ export function OpportunityDetailMobile({
             </span>
           ))}
           {askRow('Available', `${startsValue}${duration ? ` · ${duration}` : ''}`)}
-          {!closed && askRow('Apply by', vacancy.application_deadline ? `${applyByValue} · ${applyBySub}` : 'Open until filled')}
         </div>
         {!closed && !isPublisher && relevant && (
           <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3 py-2.5 text-secondary text-positive" data-testid="role-eligibility">

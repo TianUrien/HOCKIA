@@ -59,7 +59,7 @@ describe('status pill and club line', () => {
 })
 
 describe('Community segments (phone)', () => {
-  it('the selected segment is soft purple on the phone (Chip ruling); desktop keeps ink', async () => {
+  it('the selected segment is soft purple on every breakpoint (Chip ruling, audit A4)', async () => {
     Element.prototype.scrollIntoView = () => {}
     const { MemoryRouter } = await import('react-router-dom')
     const { CommunitySegments } = await import('@/components/community/CommunitySegments')
@@ -67,6 +67,6 @@ describe('Community segments (phone)', () => {
     const sel = screen.getAllByRole('tab').find((t) => t.getAttribute('aria-selected') === 'true')!
     expect(sel.className).toContain('bg-brand-soft')
     expect(sel.className).toContain('text-brand-primary')
-    expect(sel.className).toContain('lg:bg-ink-1')
+    expect(sel.className).not.toContain('lg:bg-ink-1')
   })
 })

@@ -21,7 +21,7 @@ describe('roleStatus', () => {
   it('closing wins over new; ≤ 5 days is amber; later deadlines show the day', () => {
     expect(roleStatus(vac({ application_deadline: iso(9) }), now)).toEqual({ label: 'Closes in 9 days', tone: 'ink' })
     expect(roleStatus(vac({ application_deadline: iso(3) }), now)).toEqual({ label: 'Closes in 3 days', tone: 'amber' })
-    expect(roleStatus(vac({ application_deadline: iso(1) }), now)?.label).toBe('Closes in 1 day')
+    expect(roleStatus(vac({ application_deadline: iso(1) }), now)?.label).toBe('Closes tomorrow')
     expect(roleStatus(vac({ application_deadline: iso(40) }), now)?.label).toMatch(/^Closes \d{1,2} \w{3}$/)
     expect(roleStatus(vac(), now)).toEqual({ label: 'New', tone: 'brand' })
     expect(roleStatus(vac({ created_at: new Date(now.getTime() - 20 * 86_400_000).toISOString() }), now)).toBeNull()

@@ -23,8 +23,8 @@ export interface FeaturedRoleCardProps {
 /**
  * Featured card (Figma O1 147:283, App Store "Today" style): 440 pt, r28,
  * the role's cover (photo or generated from the club's crest colours), an
- * eyebrow "FEATURED ROLE · CLOSES IN 9 DAYS", the title, the club row with a
- * white "View" pill, and glass chips. The whole card is one tap target.
+ * eyebrow "FEATURED ROLE · CLOSES IN 9 DAYS", the title, the club row and glass
+ * chips. No button on the card: the whole card is the one tap target (audit A5).
  */
 export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, league, palette, onOpen, now, layout = 'phone' }: FeaturedRoleCardProps) {
   const press = usePressSpring<HTMLButtonElement>()
@@ -69,7 +69,6 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
               <span className="block truncate text-[17px] font-semibold leading-[22px] text-white">{clubName}</span>
               {place && <span className="block truncate text-secondary text-white/75">{place}</span>}
             </span>
-            <span className="inline-flex h-10 shrink-0 items-center rounded-full bg-white/95 px-[22px] text-[16px] font-semibold leading-[21px] text-ink-1">View role</span>
           </div>
         </RoleCover>
       </button>
@@ -97,7 +96,6 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
               <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{clubName}</span>
               {place && <span className="block truncate text-secondary text-white/80">{place}</span>}
             </span>
-            <span className="inline-flex h-9 shrink-0 items-center rounded-full bg-white px-[18px] text-[14px] font-semibold leading-[19px] text-brand-primary">View</span>
           </div>
           {(pill || chips.length > 0) && (
             <div className="flex flex-wrap gap-1.5">

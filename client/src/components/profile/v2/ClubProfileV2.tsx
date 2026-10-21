@@ -277,7 +277,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
         >
           <div className="flex flex-col gap-2.5 px-4">
             {openRoles.slice(0, owner ? 3 : 2).map((r) => (
-              <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => openRole(r.id)} />
+              <RoleRow key={r.id} role={r} onOpen={() => openRole(r.id)} />
             ))}
             {owner && openRoles.length > 3 && (
               <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">See all {openRoles.length} roles</button>

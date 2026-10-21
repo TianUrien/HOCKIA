@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { closesSoonLabel, deadlineDaysLeft } from '@/lib/opportunityCopy'
 import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
@@ -196,11 +197,10 @@ export default function VacancyDetailView({
   // Deadline
   let deadlineText: string | null = null
   if (vacancy.application_deadline) {
-    const daysLeft = Math.ceil((new Date(vacancy.application_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    const daysLeft = deadlineDaysLeft(vacancy.application_deadline) ?? 0
     if (daysLeft >= 0) {
-      if (daysLeft === 0) deadlineText = 'Closes today'
-      else if (daysLeft === 1) deadlineText = 'Closes tomorrow'
-      else deadlineText = `${daysLeft} days left`
+      // The shared countdown (≤ 14 days only; the date is already on the line).
+      deadlineText = closesSoonLabel(vacancy.application_deadline)
     } else {
       // A lapsed deadline is informational only — the opportunity stays open
       // (and applyable) until the creator closes it by status.

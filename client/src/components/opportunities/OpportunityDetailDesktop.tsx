@@ -18,7 +18,7 @@ import { humanizeToken, positionLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
   APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView,
-  compensationText, genderPill, postedLine, roleBenefits, roleHeadline,
+  compensationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -216,7 +216,7 @@ export function OpportunityDetailDesktop({
             )}
           </div>
           {onBehalfNote(identity) && <p className="pt-2 text-caption text-ink-3">{onBehalfNote(identity)}</p>}
-          <p className="pt-2 text-caption text-ink-3">{postedLine(vacancy, new Date(), closed)}</p>
+          <p className="pt-2 text-caption text-ink-3">{postedOnlyLine(vacancy, new Date(), closed)}</p>
 
           {!closed && hasApplied && ownApplicationSlot && <section className="pt-4">{ownApplicationSlot}</section>}
 
@@ -301,7 +301,6 @@ export function OpportunityDetailDesktop({
                   </span>
                 ))}
                 {askRow('Available', `${startsValue}${duration ? ` · ${duration}` : ''}`)}
-                {!closed && askRow('Apply by', vacancy.application_deadline ? `${applyByValue} · ${applyBySub}` : 'Open until filled')}
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">

@@ -296,7 +296,9 @@ describe('closed role pages', () => {
     expect(postedLine({ ...v, closed_at: null }, now, true)).toBe('Posted 3 days ago · Closed')
     const phone = read('../components/opportunities/OpportunityDetailMobile.tsx')
     expect(phone).toContain("!vacancy.compensation && !closed ? askWhenApplying(identity)")
-    expect(phone).toContain("{!closed && askRow('Apply by'")
+    // Audit A5: the deadline shows in the hero chip and the Apply-by tile only.
+    expect(phone).not.toContain("askRow('Apply by'")
+    expect(phone).toContain('postedOnlyLine(vacancy, new Date(), closed)')
   })
 })
 

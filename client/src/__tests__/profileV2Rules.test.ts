@@ -57,12 +57,14 @@ describe('self-declared sponsor label', () => {
 
 describe('open-role status line', () => {
   const now = new Date('2026-10-11T15:00:00Z')
-  it('counts down the last 30 days, then says New for fresh roles', () => {
+  it('uses the shared deadline label (countdown only at 14 days or fewer), then New for fresh roles', () => {
     expect(roleStatusLine('2026-10-11', null, now)).toBe('Closes today')
     expect(roleStatusLine('2026-10-12', null, now)).toBe('Closes tomorrow')
     expect(roleStatusLine('2026-10-23', null, now)).toBe('Closes in 12 days')
-    expect(roleStatusLine('2027-01-01', '2026-10-09T00:00:00Z', now)).toBe('New')
-    expect(roleStatusLine('2027-01-01', '2026-09-01T00:00:00Z', now)).toBeNull()
+    expect(roleStatusLine('2026-11-05', null, now)).toBe('Closes 5 Nov')
+    expect(roleStatusLine('2027-01-01', '2026-10-09T00:00:00Z', now)).toBe('Closes 1 Jan')
+    expect(roleStatusLine(null, '2026-10-09T00:00:00Z', now)).toBe('New')
+    expect(roleStatusLine(null, '2026-09-01T00:00:00Z', now)).toBeNull()
     expect(roleStatusLine(null, null, now)).toBeNull()
   })
 })

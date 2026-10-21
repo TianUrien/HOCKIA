@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { closesLabel } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { Hourglass, ChevronRight } from 'lucide-react'
 import { Avatar } from '@/components'
@@ -23,9 +24,8 @@ const POSITION = 2
 function urgencyLabel(deadline: string | null): string | null {
   const days = daysUntilDeadline(deadline)
   if (days == null || days > 7) return null
-  if (days <= 0) return 'Closes today'
-  if (days === 1) return 'Closes tomorrow'
-  return `Closes in ${days}d`
+  if (days < 0) return null
+  return closesLabel(deadline)
 }
 
 function OpportunityRailCard({ item, onOpen }: {

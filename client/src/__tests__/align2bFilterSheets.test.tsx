@@ -45,7 +45,8 @@ describe('OpportunityFiltersSheet', () => {
     expect(selected.className).not.toContain('bg-ink-1')
     const idle = screen.getByRole('button', { name: 'Housing' })
     expect(idle.getAttribute('aria-pressed')).toBe('false')
-    expect(idle.className).toContain('bg-surface-grouped')
+    expect(idle.className).toContain('border-line') // outline on white (audit A4)
+    expect(idle.className).toContain('bg-white')
   })
 
   it('the button shows the live count of the draft and applies it', () => {
@@ -106,7 +107,7 @@ describe('CommunityFiltersDrawer', () => {
     expect(forward.getAttribute('aria-pressed')).toBe('true')
     expect(forward.className).toContain('bg-brand-soft')
     // Phone sheet (Figma P13): Availability · Position · Team — role lives in the grid chips.
-    expect(screen.getByRole('button', { name: 'Open to play' }).className).toContain('bg-surface-grouped')
+    expect(screen.getByRole('button', { name: 'Open to play' }).className).toContain('border-line')
     expect(screen.getByRole('button', { name: 'Women’s' }).getAttribute('aria-pressed')).toBe('false')
     expect(screen.queryByRole('button', { name: 'Clubs' })).toBeNull()
   })

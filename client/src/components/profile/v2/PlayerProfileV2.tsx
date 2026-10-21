@@ -537,7 +537,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         >
           <div className="flex flex-col gap-2.5 px-4">
             {coachRoles.slice(0, owner ? 3 : 2).map((r) => (
-              <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => navigate(`/opportunities/${r.id}`)} />
+              <RoleRow key={r.id} role={r} onOpen={() => navigate(`/opportunities/${r.id}`)} />
             ))}
             {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open roles right now.</p>}
             {owner && coachRoles.length > 3 && (
