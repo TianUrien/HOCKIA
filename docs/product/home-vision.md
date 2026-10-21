@@ -33,6 +33,11 @@ Blocks (from the earlier drafts, re-ordered): the hockey world leads; Your path 
 
 Per role, the same thesis: a club's intention is a squad to fill (inferred from roles posted and reviews); a coach's is a job or a team; a brand's is its markets and ambassadors; an umpire's is appointments.
 
+## The unit: the Move (2026-10-21, concept)
+Instagram's unit is the post; LinkedIn's is the job. HOCKIA's is the **move**: who · verb · what · where · when, with optional proof (a photo, a signing card) and one action. Verbs: Signed, Needs (a club or coach asks), Open to play, Played, Moving, Looking, Shortlisted. Everything already built maps to a verb (a role = Needs; an application or availability = Open to play; a signing = Signed; a post with a photo = Played), so the model unifies recruiting, community and intention without new concepts for the member.
+
+Home then has two things only: **Your next move** (one card: ask up to three moves or Other with free text, skippable and measured; once set, the move with a market read in real counts, the actions ready and the agent line attached to an action) and **Moves this week** (one card shape, newest first, across HOCKIA, bounded to the week). "Make a move" replaces "New post": one verb, one line, optional photo; Open to play and Moving are structured and feed Opportunities, Find players and the intention engine. Brands attach to a move (a labelled line under a Signed-abroad or Needs move, by location, at most one per visit), never float. Figma: page 02, section "HM"; prototype shared with the founder.
+
 ## How brands fit: deals, not ads
 A brand publishes offers and partnership proposals with a target (roles, location, never nationality, or "no location"). The member's agent brings a deal only when it fits a fact about them and where they are: "A deal I found for you: kit for your first season at X, from a shop in your city." At most one per Home visit, labelled, mutable, admin-reviewed while free; brands see aggregates only. Details: `proposals/brand-reach.md`.
 
