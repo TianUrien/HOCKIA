@@ -1,4 +1,5 @@
 import { nationalityCountries } from '@/lib/nationality'
+import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
@@ -130,6 +131,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const navigate = useNavigate()
   const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
+  // Brands have followers, not friends (audit A7): Message + Invite as ambassador.
+  const personGate = personActionGate(viewer?.role, member.role)
+  const ambassador = useAmbassadorInvite(personGate.inviteAmbassador ? member.id : null, addToast)
   const { countries } = useCountries()
   const [signIn, setSignIn] = useState<'view' | 'message' | 'connect' | null>(null)
   const [sending, setSending] = useState(false)
@@ -376,6 +380,21 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       ) : messageButton('primary')
     }
     if (isBrand) return messageButton('primary')
+    if (!personGate.addFriend) {
+      const tonal = surface === 'photo'
+        ? secondary
+        : `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-brand-soft ${btnSize} font-semibold text-brand-primary ${PRESS} disabled:opacity-60`
+      return (
+        <>
+          {messageButton('primary')}
+          {personGate.inviteAmbassador && (
+            <button type="button" onClick={() => void ambassador.invite()} disabled={ambassador.state !== 'idle'} className={tonal} data-testid="member-preview-invite-ambassador">
+              {ambassador.state === 'sent' && <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />} {ambassador.label}
+            </button>
+          )}
+        </>
+      )
+    }
     if (recruiterActions) {
       return (
         <>

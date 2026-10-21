@@ -8,7 +8,8 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useAuthStore } from '@/lib/auth'
 import { greetingName } from '@/lib/profile'
-import { COMPOSER_MAX_LENGTH, HOCKIA_AI_TITLE, exampleQueriesFor } from '@/lib/hockiaAi'
+import { CHECK_PROFILE_AGAINST_ROLE, COMPOSER_MAX_LENGTH, HOCKIA_AI_TITLE, aiIntroFor, exampleQueriesFor, isRecruiterProfile } from '@/lib/hockiaAi'
+import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { SPRING, cssSpring, prefersReducedMotion } from '@/lib/spring'
 import { hapticLight, hapticSelection } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
@@ -62,7 +63,11 @@ export function HockiaAiSheet() {
   const reduced = prefersReducedMotion()
   useBodyScrollLock(open)
 
-  const examples = useMemo(() => exampleQueriesFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null), [profile])
+  // Recruiters: "Find available players for <role>" names the active recruiting role (audit A7).
+  const { active: recruitingRole } = useRecruitingContext()
+  const recruiter = isRecruiterProfile(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)
+  const activeRoleTitle = recruiter ? recruitingRole?.label ?? null : null
+  const examples = useMemo(() => exampleQueriesFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null, activeRoleTitle), [profile, activeRoleTitle])
   const firstName = greetingName(profile)
   // "Fill my profile for me" (handoff P0–P3): players and coaches (ruling 2026-10-18).
   const canBuild = profile?.role === 'player' || profile?.role === 'coach'
@@ -133,7 +138,7 @@ export function HockiaAiSheet() {
   ) : null
   // Figma B4 178:603: three suggestions for the open role.
   const roleSuggestions = roleContext ? [
-    { eyebrow: 'ASK', label: 'Do I fit this role?', run: () => send('Do I fit this role?') },
+    { eyebrow: 'ASK', label: CHECK_PROFILE_AGAINST_ROLE, run: () => send(CHECK_PROFILE_AGAINST_ROLE) },
     ...(canBuild ? [{ eyebrow: 'DO IT FOR ME', label: 'Prepare my application', run: () => prepareApplication(roleContext) }] : []),
     { eyebrow: 'LEARN', label: roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club?', run: () => send(roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club about this role?') },
   ] : []
@@ -232,7 +237,7 @@ export function HockiaAiSheet() {
                 <MascotHello height={96} className="-ml-1 shrink-0" />
                 <div className="min-w-0 flex-1 pt-3">
                   <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this role. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'}</p>
+                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this role. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)}</p>
                 </div>
               </div>
               {roleContext ? (

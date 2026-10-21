@@ -71,40 +71,63 @@ const DEFAULT_EXAMPLES = [
 /** Founder example 2026-10-03: a precise role question a player can copy. */
 export const ROLE_EXAMPLE = 'Goalkeeper roles in Serie A1 with no passport requirement'
 
+/**
+ * Role-aware choices (design audit 2026-10-21, A7): each role gets prompts
+ * for its own job. Recruiters (clubs and recruiting coaches) find players,
+ * draft a role and summarise applicants; brands find ambassadors; umpires
+ * work on their officiating record; players keep theirs. No reference to a
+ * Marketplace.
+ */
 const ROLE_EXAMPLES: Record<string, string[]> = {
   player: ['What should I improve in my profile?', 'What clubs would suit me?', ROLE_EXAMPLE],
-  club: [
-    'What can I do next on HOCKIA?',
-    'Show me available defenders for my team',
-    'Show me coaches with head-coach experience',
-  ],
   brand: [
-    "What's missing from my brand profile?",
-    'Players who could be ambassadors',
-    'How do I get more visibility on the Marketplace?',
+    'Find players who could be ambassadors',
+    'What’s missing from my brand profile?',
+    'How can athletes find my brand?',
   ],
   umpire: [
-    'What should I improve in my profile?',
-    'Show me umpires from my country',
-    'How can I get more visibility?',
+    'What should I add to my officiating record?',
+    'Show me umpires based in my country',
+    'How do I add an appointment?',
   ],
 }
 
-/** Coaches: candidate-only coaches never get recruiter prompts they can't act on. */
-function coachExamples(coachRecruitsForTeam: boolean): string[] {
-  return coachRecruitsForTeam
-    ? ['Players I could recommend for my staff', 'Show me clubs hiring head coaches', 'What should I add to my profile?']
-    : ['What should I add to my profile?', 'Show me clubs hiring head coaches', 'Who should I connect with?']
+/** Recruiters (club or recruiting coach): "Find available players for <role>", "Draft a role", "Summarise my applicants". */
+export function recruiterExamples(activeRoleTitle?: string | null): string[] {
+  const role = activeRoleTitle?.trim()
+  return [role ? `Find available players for ${role}` : 'Find available players for my open role', 'Draft a role', 'Summarise my applicants']
+}
+
+/** Candidate coaches never get recruiter prompts they can't act on. */
+const CANDIDATE_COACH_EXAMPLES = ['What should I add to my profile?', 'Show me clubs hiring head coaches', 'Who should I connect with?']
+
+type AiViewer = { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined
+
+export function isRecruiterProfile(profile: AiViewer): boolean {
+  return profile?.role === 'club' || (profile?.role === 'coach' && Boolean(profile.coach_recruits_for_team))
 }
 
 /** Three "Try asking" rows for the first-use screen. */
-export function exampleQueriesFor(
-  profile: { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined,
-): string[] {
-  if (profile?.role === 'coach') return coachExamples(profile.coach_recruits_for_team ?? false)
+export function exampleQueriesFor(profile: AiViewer, activeRoleTitle?: string | null): string[] {
+  if (isRecruiterProfile(profile)) return recruiterExamples(activeRoleTitle)
+  if (profile?.role === 'coach') return CANDIDATE_COACH_EXAMPLES
   const examples = profile?.role ? ROLE_EXAMPLES[profile.role] : null
   return examples && examples.length > 0 ? examples : DEFAULT_EXAMPLES
 }
+
+/** The medium-detent greeting line, per role (audit A7). */
+export function aiIntroFor(profile: AiViewer): string {
+  if (isRecruiterProfile(profile)) return 'Ask me to find available players, draft a role or summarise your applicants.'
+  switch (profile?.role) {
+    case 'brand': return 'Ask me to find players who could be your ambassadors, or anything about hockey.'
+    case 'umpire': return 'Ask me about your officiating record, other umpires, or anything about hockey.'
+    case 'coach': return 'Ask me to find coaching roles, or anything about hockey.'
+    default: return 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'
+  }
+}
+
+/** Replaces "Do I fit?": facts about the profile against the role, not a verdict (audit A7). */
+export const CHECK_PROFILE_AGAINST_ROLE = 'Check my profile against this role'
 
 /** "From 24 open roles · updated today"; null when the pool size is unknown. */
 export function fromOpenRolesCaption(total: number | null | undefined): string | null {

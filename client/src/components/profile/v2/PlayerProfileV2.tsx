@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -112,6 +113,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const viewer = useAuthStore((s) => s.profile)
+  // Brands have followers, not friends (audit A7): Message (Primary) + Invite as ambassador (Tonal, players only).
+  const personGate = personActionGate(viewer?.role, profile.role)
+  const ambassador = useAmbassadorInvite(personGate.inviteAmbassador && readOnly && !isOwnProfile ? profile.id : null, addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const owner = !readOnly
   const visitor = readOnly && !isOwnProfile
@@ -355,7 +359,14 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         { key: 'shortlist', label: recruiter.shortlisted ? 'Shortlisted' : 'Shortlist', icon: <Star className={cn('h-5 w-5', recruiter.shortlisted && 'fill-current')} strokeWidth={1.8} />, tone: recruiter.shortlisted ? 'done' : 'primary', onClick: recruiter.onShortlist, disabled: recruiter.busy, testId: 'profile-shortlist' },
         messageButton,
       ]
-    : viewer?.role === 'brand' ? [friendButton] : [friendButton, messageButton]
+    : !personGate.addFriend
+      ? [
+          { ...messageButton, tone: 'primary' as const },
+          ...(personGate.inviteAmbassador
+            ? [{ key: 'ambassador', label: ambassador.label, icon: ambassador.state === 'sent' ? <Check className="h-5 w-5" strokeWidth={2.4} /> : undefined, tone: 'tonal' as const, onClick: () => void ambassador.invite(), disabled: ambassador.state !== 'idle', testId: 'profile-invite-ambassador' }]
+            : []),
+        ]
+      : [friendButton, messageButton]
   // Recruiters: Add friend moves into ⋯ (Shortlist owns the primary button).
   const leadingMenuItems = showRecruiter && !friendship.isFriend && signedIn
     ? [{ key: 'friend', label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend', onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]

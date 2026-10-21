@@ -260,7 +260,8 @@ describe('lib/hockiaAi', () => {
     expect(exampleQueriesFor({ role: 'player' })).toHaveLength(3)
     expect(exampleQueriesFor({ role: 'club' })).toHaveLength(3)
     expect(exampleQueriesFor({ role: 'club' })).not.toContain(ROLE_EXAMPLE)
-    expect(exampleQueriesFor({ role: 'coach', coach_recruits_for_team: true })[0]).toMatch(/staff/)
+    // Audit A7: recruiting coaches get the recruiter choices.
+    expect(exampleQueriesFor({ role: 'coach', coach_recruits_for_team: true })[0]).toMatch(/^Find available players for/)
     expect(exampleQueriesFor(null)).toHaveLength(3)
   })
 

@@ -1,4 +1,5 @@
 import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
+import { roleViewerGate } from '@/lib/roleViewerGate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -104,6 +105,9 @@ export function OpportunityDetailMobile({
   // Withdrawn (D4): one grey state in the footer too — never next to an "Applied" button.
   const withdrawn = hasApplied && applicationStatus === 'withdrawn'
   const closedView = closedRoleView({ isClosed, hasApplied, isPublisher })
+  // Who can act here (audit A7): non-applicants get a plain end note + Message, never apply copy.
+  const viewerGate = roleViewerGate({ viewerRole: profile?.role, roleType: vacancy.opportunity_type, isPublisher, signedIn: Boolean(profile) })
+  const showApplyCopy = viewerGate.applyCopy || hasApplied
   const closed = closedView !== 'open'
   const roleStat = closed ? null : roleStatus(vacancy)
   const deadlineDays = daysUntil(vacancy.application_deadline)
@@ -328,7 +332,7 @@ export function OpportunityDetailMobile({
               icon={NOTE_TILE.icon}
               tileClass={NOTE_TILE.tileClass}
               title={compensationText(vacancy)}
-              detail={!vacancy.compensation && !closed ? askWhenApplying(identity) : null}
+              detail={!vacancy.compensation && !closed && showApplyCopy ? askWhenApplying(identity) : null}
               type="note"
             />
           )}
@@ -372,6 +376,13 @@ export function OpportunityDetailMobile({
         </section>
       )}
 
+      {!showApplyCopy && !closed && viewerGate.note && (
+        <section className="px-4 pb-6 pt-7">
+          <p className="rounded-[12px] bg-surface-subtle px-3.5 py-3 text-row text-ink-2" data-testid="role-viewer-note">{viewerGate.note}</p>
+        </section>
+      )}
+
+      {showApplyCopy && (
       <section className="px-4 pb-6 pt-7">
         <h2 className="text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink-1">How applying works</h2>
         <ol className="mt-3 flex flex-col gap-3">
@@ -384,6 +395,7 @@ export function OpportunityDetailMobile({
         </ol>
         <p className="mt-3 text-caption text-ink-3">Contact details stay private until the club replies.</p>
       </section>
+      )}
       </div>
 
       {!isPublisher && !closed && (canApply || hasApplied) && (
@@ -418,6 +430,15 @@ export function OpportunityDetailMobile({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Can't apply here (coach on a player role, brand, umpire): Message only (audit A7). */}
+      {!isPublisher && !closed && !canApply && !hasApplied && viewerGate.messageOnly && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t-[0.5px] border-line bg-white/92 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px] lg:hidden" data-testid="role-message-bar">
+          <button type="button" onClick={onMessage} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full border border-line bg-white text-body font-semibold text-ink-1 active:opacity-90">
+            <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
+          </button>
         </div>
       )}
 
