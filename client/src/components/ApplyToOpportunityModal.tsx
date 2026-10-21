@@ -21,6 +21,7 @@ import { hapticSuccess } from '@/lib/haptics'
 import { Check } from 'lucide-react'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
+import { requestPushAsk } from '@/lib/pushAsk'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -156,16 +157,20 @@ export default function ApplyToVacancyModal({
     }
   }
 
+  // Closing the Application sent screen is a moment of intent: the one-time
+  // notification ask may follow (lib/pushAsk.ts, audit A1).
+  const closeSent = () => { setSent(false); setSending('idle'); setMessage(''); onClose(); requestPushAsk('apply') }
+
   if (sent) {
     return (
-      <BottomSheet open={isOpen} onClose={() => { setSent(false); setSending('idle'); setMessage(''); onClose() }} ariaLabel="Application sent" initialFocus="panel">
+      <BottomSheet open={isOpen} onClose={closeSent} ariaLabel="Application sent" initialFocus="panel">
         <ApplicationSent
           clubName={displayClub}
           clubLogo={clubLogo ?? null}
           publisherRole={publisherRole}
           identity={identity}
           roleLine={roleLine}
-          onClose={() => { setSent(false); setSending('idle'); setMessage(''); onClose() }}
+          onClose={closeSent}
         />
       </BottomSheet>
     )

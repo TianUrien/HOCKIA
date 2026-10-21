@@ -22,6 +22,7 @@ import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
+import { requestPushAsk } from '@/lib/pushAsk'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -658,6 +659,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         trackVacancyCreate(vacancyData.position || vacancyData.opportunity_type || 'unknown')
         if (resolvedStatus === 'open') {
           addToast('Opportunity published. Candidates can apply now.', 'success')
+          // Posting a role is a moment of intent: the one-time notification ask (audit A1).
+          requestPushAsk('role_posted')
         } else {
           addToast('Draft saved. Publish when you\'re ready to go live.', 'info')
         }
