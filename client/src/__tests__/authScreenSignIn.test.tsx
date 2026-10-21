@@ -41,7 +41,7 @@ vi.mock('@/lib/rateLimit', () => ({
   checkSignupRateLimit: vi.fn(),
   formatRateLimitError: vi.fn(),
 }))
-vi.mock('@/lib/sentryHelpers', () => ({ reportAuthFlowError: vi.fn() }))
+vi.mock('@/lib/sentryHelpers', () => ({ reportAuthFlowError: vi.fn(), isNetworkFailureError: () => false }))
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { signInWithPassword: vi.fn(), signInWithOAuth: vi.fn() } },
 }))

@@ -27,7 +27,10 @@ import { sendMagicLink } from '@/lib/magicLink'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { useAuthStore } from '@/lib/auth'
 import { trackLogin, trackLoginFailed } from '@/lib/analytics'
-import { reportAuthFlowError } from '@/lib/sentryHelpers'
+import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
+
+/** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
+const NETWORK_ERROR_COPY = 'Couldn’t reach HOCKIA. Check your connection and try again.'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
@@ -139,6 +142,13 @@ export default function AuthScreen() {
         const captcha = captchaErrorMessage(signInError.message)
         if (captcha) { setError(captcha); return }
         reportAuthFlowError('password_signin', signInError, { emailDomain: email.split('@')[1] ?? null })
+        // The request never reached Supabase (offline, dropped cellular):
+        // say so, instead of blaming the password.
+        if (isNetworkFailureError(signInError)) {
+          trackLoginFailed('password', 'network')
+          setError(NETWORK_ERROR_COPY)
+          return
+        }
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
           trackLoginFailed('password', 'unverified')
           navigate(`/verify-email?email=${encodeURIComponent(email)}&reason=unverified_signin`)
@@ -157,9 +167,10 @@ export default function AuthScreen() {
       trackLogin('password')
       // The auth store's onAuthStateChange redirects via the effect above.
     } catch (err) {
-      trackLoginFailed('password', 'exception')
+      const network = isNetworkFailureError(err)
+      trackLoginFailed('password', network ? 'network' : 'exception')
       reportAuthFlowError('password_signin.catch', err, { emailDomain: email.split('@')[1] ?? null })
-      setError(err instanceof Error ? err.message : 'Sign in failed.')
+      setError(network ? NETWORK_ERROR_COPY : err instanceof Error ? err.message : 'Sign in failed.')
     } finally {
       setLoading(false)
     }
