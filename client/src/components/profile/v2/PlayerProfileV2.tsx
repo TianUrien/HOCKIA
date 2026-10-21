@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
@@ -586,8 +587,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               <button type="button" onClick={() => showAi('profile', 'builder')} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI</span>
-                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first</span>
+                  <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI <BetaPill onSoft testId="profile-fill-with-ai-beta" /></span>
+                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first.</span>
                 </span>
               </button>
             </div>

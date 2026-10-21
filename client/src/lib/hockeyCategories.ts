@@ -26,8 +26,9 @@ export const COACH_UMPIRE_CATEGORIES: readonly CoachUmpireCategory[] = [
 ]
 
 export const CATEGORY_LABELS: Record<CoachUmpireCategory, string> = {
-  adult_women: 'Adult women',
-  adult_men: 'Adult men',
+  // Same words as lib/opportunityCopy genderPill (design audit A6, 2026-10-21).
+  adult_women: "Women's",
+  adult_men: "Men's",
   girls: 'Girls',
   boys: 'Boys',
   mixed: 'Mixed',
@@ -113,12 +114,12 @@ export const OPPORTUNITY_GENDERS: readonly OpportunityGender[] = [
  */
 export const PLAYER_ROLE_GENDERS: readonly OpportunityGender[] = ['Men', 'Women', 'Mixed']
 
-/** UI label for an opportunity_gender value. 'Men' → "Adult men" so a club
- * vacancy posted before Phase 3d still reads naturally in the new vocabulary. */
+/** UI label for an opportunity_gender value: 'Men' → "Men's", the same word
+ * as lib/opportunityCopy genderPill (design audit A6). */
 export function opportunityGenderToDisplay(value: string | null | undefined): string {
   if (!value) return ''
-  if (value === 'Men') return 'Adult men'
-  if (value === 'Women') return 'Adult women'
+  if (value === 'Men') return "Men's"
+  if (value === 'Women') return "Women's"
   if (value === 'Girls') return 'Girls'
   if (value === 'Boys') return 'Boys'
   if (value === 'Mixed') return 'Mixed'

@@ -163,7 +163,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                   <Briefcase className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Browse Opportunities</p>
+                  <p className="text-sm font-medium text-gray-900">Browse opportunities</p>
                   <p className="text-xs text-gray-500">Find your next move</p>
                 </div>
               </Link>

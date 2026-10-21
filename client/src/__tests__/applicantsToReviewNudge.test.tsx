@@ -28,7 +28,8 @@ describe('ApplicantsToReview nudge', () => {
         <ApplicantsToReview totals={totals} loading={false} />
       </MemoryRouter>,
     )
-    expect(screen.getByText('Answer every applicant. Players remember the clubs that reply.')).toBeInTheDocument()
+    expect(screen.getByText('Answer every applicant.')).toBeInTheDocument()
+    expect(screen.queryByText(/remember the clubs/)).toBeNull()
     expect(screen.queryByText(/respond fast|quick replies|within 3 days/i)).toBeNull()
     expect(fromSpy).not.toHaveBeenCalledWith('publisher_responsiveness')
   })

@@ -554,7 +554,7 @@ export function TopCommunityMembersCarousel({
           <p className="text-sm text-gray-500">
             {scope?.targetPosition === 'goalkeeper'
               ? 'No exact goalkeeper matches found in your community yet.'
-              : 'No in-scope candidates found for this search yet.'}
+              : 'No candidates match your context for this search yet.'}
           </p>
         </div>
       ) : (

@@ -122,7 +122,7 @@ describe('role page failed read', () => {
     renderPage()
     const state = await screen.findByTestId('role-load-failed')
     expect(state).toHaveTextContent('Couldn’t reach HOCKIA. Check your connection and try again.')
-    expect(screen.queryByText('Opportunity Not Found')).toBeNull()
+    expect(screen.queryByText('Role not found')).toBeNull()
     mocks.single.mockResolvedValueOnce({ data: role, error: null })
     await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByTestId('role-title')).toHaveTextContent('Goalkeeper for the first team')
@@ -132,7 +132,7 @@ describe('role page failed read', () => {
   it('a real missing role still reads as not found', async () => {
     mocks.single.mockResolvedValueOnce({ data: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } })
     renderPage()
-    expect(await screen.findByText('Opportunity Not Found')).toBeInTheDocument()
+    expect(await screen.findByText('Role not found')).toBeInTheDocument()
     expect(screen.queryByTestId('role-load-failed')).toBeNull()
   })
 })

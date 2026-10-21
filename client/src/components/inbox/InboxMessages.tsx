@@ -153,7 +153,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         <div className="px-5 py-12 text-center">
           <p className="text-row font-semibold text-ink-1">{query ? 'No conversations match' : 'No messages yet'}</p>
           <p className="mt-1 text-secondary text-ink-2">
-            {query ? 'Try another name.' : role === 'club' ? 'Messages from players, coaches and clubs show up here.' : 'Clubs answer messages far more often than they update applications.'}
+            {query ? 'Try another name.' : role === 'club' ? 'Messages from players, coaches and clubs show up here.' : 'Messages with clubs, players and coaches show up here.'}
           </p>
           {!query && (
             <button type="button" onClick={onCompose} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'mt-4' })}>

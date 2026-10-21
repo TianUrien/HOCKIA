@@ -75,11 +75,11 @@ export default function RecruiterVerdictCard({ verdict, className = '', showMatc
         <p className={`text-sm font-bold ${style.headlineClass}`}>{verdict.headline}</p>
         {showMatchPercent ? (
           <span className="ml-auto text-xs font-semibold text-hockia-primary">
-            {matchPct}% <span className="font-normal text-gray-400">{verdict.scoped ? 'for your scope' : 'general fit'}</span>
+            {matchPct}% <span className="font-normal text-gray-400">{verdict.scoped ? 'for your context' : 'general fit'}</span>
           </span>
         ) : (
           <span className="ml-auto text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-            {verdict.scoped ? 'for your scope' : 'general fit'}
+            {verdict.scoped ? 'for your context' : 'general fit'}
           </span>
         )}
       </div>

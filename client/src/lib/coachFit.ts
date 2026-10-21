@@ -128,17 +128,17 @@ export function normalizeSpec(s: string | null | undefined): string | null {
 /** Human label for a coach specialization value (enum or profile form). */
 export function humanizeCoachSpecialization(spec: string): string {
   const known: Record<string, string> = {
-    head_coach: 'Head Coach',
-    head: 'Head Coach',
-    assistant_coach: 'Assistant Coach',
-    assistant: 'Assistant Coach',
-    youth_coach: 'Youth Coach',
-    youth: 'Youth Coach',
-    goalkeeper_coach: 'Goalkeeper Coach',
-    goalkeeper: 'Goalkeeper Coach',
-    strength_conditioning: 'Strength & Conditioning',
-    performance_analyst: 'Performance Analyst',
-    sports_scientist: 'Sports Scientist',
+    head_coach: 'Head coach',
+    head: 'Head coach',
+    assistant_coach: 'Assistant coach',
+    assistant: 'Assistant coach',
+    youth_coach: 'Youth coach',
+    youth: 'Youth coach',
+    goalkeeper_coach: 'Goalkeeper coach',
+    goalkeeper: 'Goalkeeper coach',
+    strength_conditioning: 'Strength & conditioning',
+    performance_analyst: 'Performance analyst',
+    sports_scientist: 'Sports scientist',
     other_coach: 'Other',
     other: 'Other',
   }

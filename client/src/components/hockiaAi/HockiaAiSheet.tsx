@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BetaPill } from './BetaPill'
 import { ArrowUp, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverChat } from '@/hooks/useDiscover'
@@ -31,10 +32,6 @@ const PLACEHOLDER = 'Ask Hockia AI…'
 /** "LEARN" for questions, "FIND" for searches (Figma B2 / A1 eyebrows). */
 function eyebrowFor(q: string): 'LEARN' | 'FIND' {
   return /^(how|what|when|why|is|can|do|does|should|which)\b/i.test(q.trim()) ? 'LEARN' : 'FIND'
-}
-
-function BetaPill() {
-  return <span className="rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="hockia-ai-beta">Beta</span>
 }
 
 /**

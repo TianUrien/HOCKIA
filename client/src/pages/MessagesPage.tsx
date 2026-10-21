@@ -1177,7 +1177,7 @@ export default function MessagesPage() {
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
                   >
                     <Plus className="w-4 h-4" />
-                    New Message
+                    New message
                   </button>
                 </div>
               ) : (

@@ -27,8 +27,8 @@ describe('CATEGORY_LABELS', () => {
 
 describe('categoryToDisplay', () => {
   it('returns labelled strings for valid categories', () => {
-    expect(categoryToDisplay('adult_women')).toBe('Adult women')
-    expect(categoryToDisplay('adult_men')).toBe('Adult men')
+    expect(categoryToDisplay('adult_women')).toBe("Women's")
+    expect(categoryToDisplay('adult_men')).toBe("Men's")
     expect(categoryToDisplay('girls')).toBe('Girls')
     expect(categoryToDisplay('boys')).toBe('Boys')
     expect(categoryToDisplay('mixed')).toBe('Mixed')
@@ -45,8 +45,8 @@ describe('categoryToDisplay', () => {
 
 describe('categoriesToDisplay', () => {
   it('joins multiple specific categories with commas', () => {
-    expect(categoriesToDisplay(['adult_women', 'girls'])).toBe('Adult women, Girls')
-    expect(categoriesToDisplay(['adult_men', 'boys', 'mixed'])).toBe('Adult men, Boys, Mixed')
+    expect(categoriesToDisplay(['adult_women', 'girls'])).toBe("Women's, Girls")
+    expect(categoriesToDisplay(['adult_men', 'boys', 'mixed'])).toBe("Men's, Boys, Mixed")
   })
 
   it("collapses to 'Any category' when the array is the sentinel", () => {
@@ -117,9 +117,9 @@ describe('playingCategoryToLegacyGender', () => {
 // ────────────────────────────────────────────────────────────────────────
 
 describe('opportunityGenderToDisplay', () => {
-  it('renders legacy Men / Women as the new "Adult" labels', () => {
-    expect(opportunityGenderToDisplay('Men')).toBe('Adult men')
-    expect(opportunityGenderToDisplay('Women')).toBe('Adult women')
+  it('renders legacy Men / Women with the opportunityCopy words (audit A6)', () => {
+    expect(opportunityGenderToDisplay('Men')).toBe("Men's")
+    expect(opportunityGenderToDisplay('Women')).toBe("Women's")
   })
 
   it('renders Girls / Boys / Mixed verbatim', () => {

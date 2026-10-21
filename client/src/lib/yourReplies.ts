@@ -8,12 +8,12 @@
  * without a reply (no_response). Still waiting = pending, not failed, so it
  * is left out; a withdrawal is the player's choice and is left out too.
  * Shown only from YOUR_REPLIES_MIN counted applicants. Neutral surface, no
- * comparisons with other clubs; Figma's one line after the count is kept
- * (founder ruling 2026-10-18).
+ * comparisons with other clubs. The line after the count ('Players remember
+ * the clubs that answer') was an invented claim and is withdrawn (design
+ * audit 2026-10-21, A6): the detail states the fact only.
  */
 export const YOUR_REPLIES_DAYS = 30
 export const YOUR_REPLIES_MIN = 5
-export const REPLIES_NUDGE = 'Players remember the clubs that answer.'
 
 const ANSWERED = new Set(['shortlisted', 'maybe', 'rejected', 'offered', 'accepted', 'signed_pending_confirmation', 'signed', 'filled'])
 const UNANSWERED = new Set(['no_response'])
@@ -34,7 +34,6 @@ export function yourReplies(statuses: string[]): YourReplies | null {
 export function yourRepliesCopy(r: YourReplies): { title: string; detail: string | null } {
   return {
     title: `You answered ${r.answered} of ${r.total} applicants`,
-    // Founder ruling 2026-10-18: keep Figma's line after the count.
-    detail: r.unanswered === 0 ? null : `${r.unanswered === 1 ? '1 closed' : `${r.unanswered} closed`} without a reply. ${REPLIES_NUDGE}`,
+    detail: r.unanswered === 0 ? null : `${r.unanswered === 1 ? '1 closed' : `${r.unanswered} closed`} without a reply.`,
   }
 }

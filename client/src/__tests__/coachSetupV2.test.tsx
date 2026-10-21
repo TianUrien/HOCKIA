@@ -236,7 +236,7 @@ describe('step 2 · Your coaching (586:849 / 587:911)', () => {
     expect(screen.getByText('Pick every category you coach.')).toBeInTheDocument()
     expect(screen.getByText('Current club Optional')).toBeInTheDocument()
     expect(screen.getByText('Yes adds My roles and Find players to your app. You can change this in Settings.')).toBeInTheDocument()
-    for (const chip of ['Adult women', 'Adult men', 'Girls', 'Boys', 'Mixed', 'Any category']) {
+    for (const chip of ["Women's", "Men's", 'Girls', 'Boys', 'Mixed', 'Any category']) {
       expect(screen.getByRole('button', { name: chip })).toHaveAttribute('aria-pressed', 'false')
     }
     const recruit = screen.getByRole('radiogroup', { name: 'Do you recruit players for a team?' })
@@ -281,9 +281,9 @@ describe('step 2 · Your coaching (586:849 / 587:911)', () => {
     const onFinished = renderFlow()
     await user.selectOptions(screen.getByLabelText('Specialization'), 'other')
     await user.type(screen.getByLabelText('Role title'), 'Team manager')
-    await user.click(screen.getByRole('button', { name: 'Adult women' }))
-    await user.click(screen.getByRole('button', { name: 'Adult men' }))
-    expect(screen.getByRole('button', { name: 'Adult women' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: "Women's" }))
+    await user.click(screen.getByRole('button', { name: "Men's" }))
+    expect(screen.getByRole('button', { name: "Women's" })).toHaveAttribute('aria-pressed', 'true')
     await user.click(screen.getByRole('button', { name: 'Pick club' }))
     await user.click(screen.getByRole('radio', { name: /Yes, I recruit for my team/ }))
     expect(screen.getByRole('radio', { name: /Yes, I recruit for my team/ })).toHaveAttribute('aria-checked', 'true')

@@ -222,7 +222,7 @@ const CHIP: Record<VerdictDisplayTier, { label: string; chipClass: string; icon:
   excellent: { label: 'Excellent',    icon: Check, chipClass: 'bg-[#EEEDFE] text-[#3C3489]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
   good:      { label: 'Good',         icon: Check, chipClass: 'bg-[#F4F2FE] text-[#5B51B0]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
   possible:  { label: 'Possible',     icon: Check, chipClass: 'bg-[#F7F6FD] text-[#6B62C0]', barClass: 'bg-[#A9A4E6]', pctClass: 'text-[#6B62C0]' },
-  out:       { label: 'Out of scope', icon: Minus, chipClass: 'bg-gray-100 text-gray-600',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
+  out:       { label: 'Outside your context', icon: Minus, chipClass: 'bg-gray-100 text-gray-600',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
 }
 
 /** Role noun for the tile's second line: "Player", "Coach", "Club"… */

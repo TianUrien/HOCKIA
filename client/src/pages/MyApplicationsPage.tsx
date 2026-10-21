@@ -127,7 +127,7 @@ export default function MyApplicationsPage() {
             <div className="rounded-card bg-surface-muted px-4 py-3.5" data-testid="no-reply-help">
               <p className="text-row font-semibold text-ink-1">No reply after two weeks?</p>
               <p className="mt-1 text-secondary text-ink-2">
-                Send the club a message. Clubs answer messages far more often than they update applications — and a full match video is the thing they ask for most.
+                Send the club a message to ask where your application stands.
               </p>
               {/* Link button (Figma Button, Style: Link, Small): brand text, no chevron. */}
               <button

@@ -363,13 +363,14 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Opportunity Not Found</h1>
-            <p className="text-gray-600 mb-6">This opportunity may have been removed.</p>
+            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">Role not found</h1>
+            <p className="mb-6 text-row text-ink-2">This role may have been removed.</p>
             <button
+              type="button"
               onClick={() => navigate('/opportunities')}
-              className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90"
             >
-              Browse Opportunities
+              Browse opportunities
             </button>
           </div>
         </div>

@@ -803,7 +803,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "e.g., Senior Women's First XI Opportunity"
-                      : "e.g., Head Coach - Youth Development"
+                      : "e.g., Head coach, youth development"
                   }
                   aria-invalid={errors.title ? true : undefined}
                   aria-describedby={titleErrorId}
@@ -869,7 +869,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       </>
                     ) : (
                       <>
-                        <option value="head_coach">Head Coach</option>
+                        <option value="head_coach">Head coach</option>
                         <option value="assistant_coach">Assistant Coach</option>
                         <option value="youth_coach">Youth Coach</option>
                       </>
@@ -907,8 +907,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         values stay as the legacy enum for back-compat. Girls /
                         Boys on coach roles only: player roles are adult-only (founder
                         ruling 2026-09-25; the DB rejects them). */}
-                    <option value="Men">Adult men</option>
-                    <option value="Women">Adult women</option>
+                    <option value="Men">Men's</option>
+                    <option value="Women">Women's</option>
                     <option value="Mixed">Mixed</option>
                     {formData.opportunity_type !== 'player' && (
                       <>
@@ -1005,7 +1005,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level. Change it if you're recruiting above or below. Mark any criterion "Must have" to require it. Players who miss it read as "Out of scope".</p>
+                  <p className="text-[11px] text-gray-400">Level pre-fills from your club’s level. Change it if you’re recruiting above or below. Mark any criterion “Must have” to require it. Players who miss it read as “Outside your context”.</p>
                 </div>
               )}
 
