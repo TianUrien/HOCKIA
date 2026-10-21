@@ -472,7 +472,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                         {c.flag && <span aria-hidden="true">{c.flag}</span>}{c.name}
                       </span>
                     ))}
-                    {nats.some((c) => c.isEu) && <EuBadge />}
+                    {nats.some((c) => c.isEu) && <EuBadge surface="light" />}
                   </div>
                 )}
                 {fitLine && review.status !== 'withdrawn' && (

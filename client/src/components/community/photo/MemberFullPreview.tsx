@@ -1294,7 +1294,7 @@ function ImmersivePage(p: ImmersivePageProps) {
                   {[c.flag, c.name].filter(Boolean).join(' ')}
                 </span>
               ))}
-              {hasEuPassport(p.nationalities) && <EuBadge className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
+              {hasEuPassport(p.nationalities) && <EuBadge surface="photo" className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
             </div>
           )}
           {p.isPerson && p.place && <p className="line-clamp-2 text-[13px] leading-[18px] text-white/80">Based in {p.place}</p>}
@@ -1357,7 +1357,7 @@ function ImmersivePage(p: ImmersivePageProps) {
                     <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
                     <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
                     {hasEuPassport(p.nationalities) && (
-                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge /> EU passport</span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> EU passport</span>
                     )}
                   </div>
                 )}
