@@ -162,6 +162,24 @@ Questions these answer: which Home cards get seen and tapped, how far people scr
 surface starts role views and applications, and whether "who viewed you" is a reason to open
 the app. First read after two weeks of data (≈ 2 Nov 2026).
 
+### 4.7 Community vertical deck on phones (added 2026-10-21)
+
+Source: founder ruling 2026-10-21, Figma 01 Community · "Vertical deck on phones" (notes card).
+All five go to the DB event log through `trackDbEvent`, because GA4 is skipped inside the
+native apps and the vertical deck only exists on phones. The classic deck (wider screens)
+keeps its GA4 events (`community_deck_swipe`, `community_preview_open`).
+
+| Event | When | Properties |
+|---|---|---|
+| `member_preview_open` | The deck opens from the grid (entity: the first member) | `source: grid`, `context` (list label) |
+| `member_preview_swipe` | A page lands on another member (entity: that member) | `direction: next \| prev` |
+| `member_preview_more_open` | "More" opens the details panel | `viewed_role` |
+| `member_preview_action` | Message, Add friend, Shortlist or See full profile from the deck | `action`, `viewed_role`, `surface: photo \| details` |
+| `member_preview_depth` | The deck closes | `members_seen` (distinct members shown in that open) |
+
+Questions these answer: how many members a phone visitor sees per open, whether "More" is
+used, and which surface (photo or details) starts a message or a friend request.
+
 ## 5. Conventions and QA
 - Names: `object_action`, lowercase, underscores; context in properties, not in the name.
 - Every new event lands in this file with the decision it informs; an event nobody reads is
