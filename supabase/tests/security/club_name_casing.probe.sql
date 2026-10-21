@@ -23,8 +23,9 @@ DECLARE
     ['mcDonald park', 'mcDonald Park'],
     ['TSV  münchen   ost', 'TSV München Ost'],
     ['club atlético san isidro', 'Club Atlético San Isidro'],
-    ['hc 1926', 'Hc 1926'],
-    ['the hague hc', 'The Hague Hc'],
+    ['hc 1926', 'HC 1926'],
+    ['the hague hc', 'The Hague HC'],
+    ['dublin fc', 'Dublin FC'],
     ['Already Fine HC', 'Already Fine HC']
   ];
   v_i int;

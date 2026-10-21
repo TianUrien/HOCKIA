@@ -8,7 +8,8 @@
 --      lowercase (hyphenated parts count as words), except common particles
 --      (de, del, of, the, van, ...) when they are not the first word. Words with
 --      any uppercase letter or digit are kept exactly as typed ("HC", "A1",
---      "McDonald"). Spelling and accents never change. The client mirror is
+--      "McDonald"); common club abbreviations typed in lowercase ("hc", "fc",
+--      "tsv") become uppercase. Spelling and accents never change. The client mirror is
 --      client/src/lib/clubNameCasing.ts (keep both in step).
 --   2. applies it on every INSERT into world_clubs (BEFORE INSERT trigger).
 --      club_name_normalized keeps being set by the creating RPCs
@@ -44,6 +45,11 @@ DECLARE
     'de','del','della','di','da','do','dos','das','la','le','les','el','los','las',
     'y','e','of','the','and','van','von','der','den','het','du','des','et','a','en','at','on'
   ];
+  -- Club-type abbreviations typed in lowercase become uppercase ("the hague hc"
+  -- -> "The Hague HC"), never "Hc".
+  c_acronyms constant text[] := ARRAY[
+    'hc','fc','sc','ac','hv','mhc','whc','thc','hhc','rhc','lhc','bhc','chc','tsv','sv','vfl','vfb','tc','rc','cd','cf','ymca'
+  ];
   v_clean text;
   v_words text[];
   v_parts text[];
@@ -68,8 +74,10 @@ BEGIN
     v_parts := string_to_array(v_word, '-');
     v_out_parts := ARRAY[]::text[];
     FOREACH v_part IN ARRAY v_parts LOOP
+      IF v_part <> '' AND v_part = ANY (c_acronyms) THEN
+        v_part := upper(v_part);
       -- Entirely lowercase letters: no uppercase, no digit, at least one cased letter.
-      IF v_part <> ''
+      ELSIF v_part <> ''
          AND v_part = lower(v_part)
          AND v_part <> upper(v_part)
          AND v_part !~ '[0-9]'

@@ -8,13 +8,19 @@
  * Trim and collapse inner whitespace; capitalise the first letter of every
  * word that is entirely lowercase (hyphenated parts count as words), except
  * the particles below when they are not the first word. A word with any
- * uppercase letter or digit stays exactly as typed ("HC", "A1", "McDonald").
+ * uppercase letter or digit stays exactly as typed ("HC", "A1", "McDonald");
+ * common club abbreviations typed in lowercase ("hc", "fc") become uppercase.
  * Spelling and accents never change.
  */
 
 const PARTICLES = new Set([
   'de', 'del', 'della', 'di', 'da', 'do', 'dos', 'das', 'la', 'le', 'les', 'el', 'los', 'las',
   'y', 'e', 'of', 'the', 'and', 'van', 'von', 'der', 'den', 'het', 'du', 'des', 'et', 'a', 'en', 'at', 'on',
+])
+
+/** Club-type abbreviations typed in lowercase become uppercase ("hc" -> "HC"). */
+const ACRONYMS = new Set([
+  'hc', 'fc', 'sc', 'ac', 'hv', 'mhc', 'whc', 'thc', 'hhc', 'rhc', 'lhc', 'bhc', 'chc', 'tsv', 'sv', 'vfl', 'vfb', 'tc', 'rc', 'cd', 'cf', 'ymca',
 ])
 
 function isEntirelyLowercase(part: string): boolean {
@@ -43,7 +49,8 @@ export function normalizeClubNameCasing(name: string | null | undefined): string
         .split('-')
         .map((part) => {
           let out = part
-          if (isEntirelyLowercase(part) && !(!first && PARTICLES.has(part))) out = capitaliseFirstLetter(part)
+          if (ACRONYMS.has(part)) out = part.toUpperCase()
+          else if (isEntirelyLowercase(part) && !(!first && PARTICLES.has(part))) out = capitaliseFirstLetter(part)
           if (part !== '') first = false
           return out
         })

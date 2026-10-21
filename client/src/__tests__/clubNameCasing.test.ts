@@ -16,8 +16,8 @@ const CLUB_NAME_CASING_CASES: Array<[string, string]> = [
   ['mcDonald park', 'mcDonald Park'],
   ['TSV  münchen   ost', 'TSV München Ost'],
   ['club atlético san isidro', 'Club Atlético San Isidro'],
-  ['hc 1926', 'Hc 1926'],
-  ['the hague hc', 'The Hague Hc'],
+  ['hc 1926', 'HC 1926'],
+  ['the hague hc', 'The Hague HC'],
   ['Already Fine HC', 'Already Fine HC'],
 ]
 
@@ -35,6 +35,13 @@ describe('normalizeClubNameCasing (mirror of public.normalize_club_name_casing)'
 
   it('never changes letters other than the first of a lowercase word', () => {
     expect(normalizeClubNameCasing('hockey club')!.toLowerCase()).toBe('hockey club')
+  })
+
+  it('upper-cases club abbreviations typed in lowercase, never "Hc"', () => {
+    expect(normalizeClubNameCasing('the hague hc')).toBe('The Hague HC')
+    expect(normalizeClubNameCasing('dublin fc')).toBe('Dublin FC')
+    expect(normalizeClubNameCasing('tsv mannheim')).toBe('TSV Mannheim')
+    expect(normalizeClubNameCasing('Hc Rotterdam')).toBe('Hc Rotterdam') // mixed case stays as typed
   })
 
   it('keeps null and empty input', () => {
