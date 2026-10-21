@@ -69,8 +69,17 @@ Verified patterns:
 - **Realtime** is used in exactly four places: `hooks/useChat.ts`,
   `lib/notifications.ts`, `lib/unread.ts`, `pages/MessagesPage.tsx`.
 - **Auth** uses Supabase Auth with the implicit flow and a custom storage key
-  (`lib/supabase.ts`); Google OAuth and magic links are supported
-  (`lib/oauthSignIn.ts`, `lib/magicLink.ts`, `lib/nativeOAuth.ts`).
+  (`lib/supabase.ts`). Sign-in methods (updated 2026-10-21, source: code in
+  `pages/AuthScreen.tsx` and `components/auth/OAuthButtons.tsx`):
+  email and password (the default form), Apple, Google, Facebook (behind a
+  feature flag, `hooks/useFacebookLoginEnabled.ts`) and magic link
+  (secondary). Code: `lib/oauthSignIn.ts`, `lib/magicLink.ts`,
+  `lib/nativeOAuth.ts`. Email and password sign-in, sign-up, password reset
+  and magic links send an invisible Cloudflare Turnstile token
+  (`lib/captcha.ts`, PRs #370, #371, #373, #374); OAuth does not need one.
+  Since 2026-10-21 a failed token is retried once with a fresh widget, and a
+  captcha refusal on sign-in shows a "Try again" card that also points to
+  Apple and Google.
 - **Native wrappers** add push notifications, camera, haptics, splash, status
   bar, badge, in-app browser, deep-link routing
   (`components/NativeDeepLinkRouter.tsx`) and an update prompt driven by the

@@ -33,7 +33,7 @@ import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 const NETWORK_ERROR_COPY = 'Couldn’t reach HOCKIA. Check your connection and try again.'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
-import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
+import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, resetCaptcha, warmCaptcha } from '@/lib/captcha'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -63,6 +63,8 @@ export default function AuthScreen() {
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [inApp] = useState(() => detectInAppBrowser().isInAppBrowser)
   const [cooldown, setCooldown] = useState(0)
+  /** The bot check could not be completed: show the retry card instead of a dead end. */
+  const [captchaFailed, setCaptchaFailed] = useState(false)
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -84,15 +86,17 @@ export default function AuthScreen() {
   }, [user, profile, profileStatus, authLoading, navigate, next])
 
   // ── Magic link ──
-  const handleSendMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSendMagicLink = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (loading || cooldown > 0) return
     setError(null)
     setUserNotFound(false)
+    setCaptchaFailed(false)
     setLoading(true)
     try {
       const result = await sendMagicLink({ email, intent: 'signin' })
       if (!result.ok) {
+        if (result.captchaFailed) { setCaptchaFailed(true); return }
         setError(result.error ?? 'Could not send the link.')
         if (result.userNotFound) setUserNotFound(true)
         return
@@ -125,10 +129,11 @@ export default function AuthScreen() {
   }
 
   // ── Password ──
-  const handlePasswordSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handlePasswordSignIn = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (loading) return
     setError(null)
+    setCaptchaFailed(false)
     setLoading(true)
     try {
       const rateLimit = await checkLoginRateLimit(email)
@@ -139,8 +144,13 @@ export default function AuthScreen() {
       const captchaToken = await getCaptchaToken('login')
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } })
       if (signInError) {
-        const captcha = captchaErrorMessage(signInError.message)
-        if (captcha) { setError(captcha); return }
+        // Supabase refused the bot check (no token, or an expired one):
+        // offer "Try again" with a fresh widget and the OAuth buttons above.
+        if (captchaErrorMessage(signInError.message)) {
+          trackLoginFailed('password', 'captcha')
+          setCaptchaFailed(true)
+          return
+        }
         reportAuthFlowError('password_signin', signInError, { emailDomain: email.split('@')[1] ?? null })
         // The request never reached Supabase (offline, dropped cellular):
         // say so, instead of blaming the password.
@@ -174,6 +184,13 @@ export default function AuthScreen() {
     } finally {
       setLoading(false)
     }
+  }
+
+  /** "Try again" after a failed bot check: drop the old widget and token, then resend. */
+  const retryAfterCaptcha = () => {
+    resetCaptcha()
+    if (passwordMode) void handlePasswordSignIn()
+    else void handleSendMagicLink()
   }
 
   const onBack = () => {
@@ -276,6 +293,20 @@ export default function AuthScreen() {
         )}
 
         {error && !userNotFound && <FormError>{error}</FormError>}
+        {captchaFailed && (
+          <div className="rounded-[12px] bg-status-danger-soft px-3.5 py-3" role="alert" data-testid="captcha-failed">
+            <p className="text-secondary text-status-danger">{CAPTCHA_FAILED_COPY}</p>
+            <p className="mt-1 text-secondary text-ink-2">You can also continue with Apple or Google above.</p>
+            <button
+              type="button"
+              onClick={retryAfterCaptcha}
+              disabled={loading}
+              className="mt-1 h-11 text-secondary font-semibold text-brand-primary disabled:opacity-40"
+            >
+              Try again
+            </button>
+          </div>
+        )}
         {userNotFound && (
           <div className="rounded-[12px] bg-surface-grouped px-3.5 py-3" role="alert">
             <p className="text-secondary font-semibold text-ink-1">No account found for this email.</p>
