@@ -142,7 +142,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Build your club’s roster — players and coaches can accept to join.</p>
+        <p className="text-sm text-gray-500 mb-4">Build your club’s roster. Players and coaches can accept to join.</p>
 
         {/* Segmented control */}
         <div className="flex p-1 mb-5 rounded-xl bg-gray-100">

@@ -19,7 +19,7 @@ Principle (approved 2026-10-16 from a tappable prototype): everything responds t
 | Hockia AI mascot | headband light: calm glow, thinking sweep (also the typing indicator), idea flash on success; wave plays once when the sheet opens, then crossfades into idle |
 
 ## Haptics (`client/src/lib/haptics.ts`)
-Only where they confirm something: selection on chips and segments; light on opening a card/sheet and on the drag-dismiss threshold; success on sent/saved. Never on every button. iOS WKWebView has no vibration API — native only.
+Only where they confirm something: selection on chips and segments; light on opening a card/sheet and on the drag-dismiss threshold; success on sent/saved. Never on every button. iOS WKWebView has no vibration API: native only.
 
 ## Reduce Motion
 No expansion, drag scale or parallax: 200 ms crossfades; mascot shows posters instead of clips.

@@ -46,14 +46,14 @@ describe('computeRecruiterVerdict', () => {
 
   it('green fit + strong proven + strong interest → Pursue, highlights from positives only', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('green', { positives: ['Plays Adult men — matches your team category.'] }),
+      fit: fit('green', { positives: ['Plays Adult men, which matches your team category.'] }),
       evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     expect(r.tier).toBe('pursue')
     expect(r.headline).toBe('Excellent')
     expect(r.highlights).toEqual([
-      'Plays Adult men — matches your team category.',
+      'Plays Adult men, which matches your team category.',
       'Full match footage available.',
       'Open to relocating.',
     ])
@@ -88,14 +88,14 @@ describe('computeRecruiterVerdict', () => {
 
   it('grey fit (category mismatch) can never be Pursue/Worth considering — capped at Longshot', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('grey', { caveats: ['Plays Adult women — different from your team category.'] }),
+      fit: fit('grey', { caveats: ['Plays Adult women, which is different from your team category.'] }),
       evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     // Raw points (0 + 1.2 + 1.6 = 2.8) clear pursue, but the grey cap pulls
     // it back: doesn't fit → at best a longshot.
     expect(r.tier).toBe('longshot')
-    expect(r.caveats).toContain('Plays Adult women — different from your team category.')
+    expect(r.caveats).toContain('Plays Adult women, which is different from your team category.')
   })
 
   it('grey fit from a POSITION mismatch (goalkeeper scope, midfielder) → never Excellent (the Arquera bug)', () => {
@@ -104,7 +104,7 @@ describe('computeRecruiterVerdict', () => {
     // confirmed position mismatch; this proves the verdict caps it at
     // "Possible" even with strong evidence + interest.
     const r = computeRecruiterVerdict({
-      fit: fit('grey', { caveats: ['Primary position is Midfielder — not Goalkeeper.'] }),
+      fit: fit('grey', { caveats: ['Primary position is Midfielder, not Goalkeeper.'] }),
       evidence: evidence('strong', { reasons: ['Highlight video available.'] }),
       interest: interest('strong', { positives: ['Open to relocating.'] }),
       hasOpeningScope: true,
@@ -113,7 +113,7 @@ describe('computeRecruiterVerdict', () => {
     expect(recruiterDisplayTier(r)).toBe('possible')
     expect(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)]).toBe('Possible')
     expect(r.headline).not.toBe('Excellent')
-    expect(r.caveats).toContain('Primary position is Midfielder — not Goalkeeper.')
+    expect(r.caveats).toContain('Primary position is Midfielder, not Goalkeeper.')
   })
 
   it('required position mismatch (must-have) → Out of scope, not just Possible', () => {
@@ -122,7 +122,7 @@ describe('computeRecruiterVerdict', () => {
         isApplicable: true,
         state: 'grey',
         positives: [],
-        caveats: ['Primary position is Midfielder — not Goalkeeper.'],
+        caveats: ['Primary position is Midfielder, not Goalkeeper.'],
         hardFail: true,
         hardFailReasons: ['Plays Midfielder, not the Goalkeeper you require.'],
       },
@@ -403,13 +403,13 @@ describe('computeRecruiterVerdict — must-have hard cap (Phase 3)', () => {
         positives: [],
         caveats: [],
         hardFail: true,
-        hardFailReasons: ["Won't relocate to Spain — only wants Argentina."],
+        hardFailReasons: ["Won't relocate to Spain. Only wants Argentina."],
       },
     })
     expect(r.tier).toBe('pass')
     expect(r.caveats).toEqual([
       'Plays Defender, not the Forward you require.',
-      "Won't relocate to Spain — only wants Argentina.",
+      "Won't relocate to Spain. Only wants Argentina.",
     ])
   })
 

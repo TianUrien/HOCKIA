@@ -71,7 +71,7 @@ describe('1 · invite sheet when the active role was passed on', () => {
   it('says so, preselects nothing, and keeps Send disabled until the club picks a role', async () => {
     inv.declined = ['r1']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
-    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Ana passed on Midfielder · Men’s 1st player — choose another role.')
+    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Ana passed on Midfielder · Men’s 1st player. Choose another role.')
     const rows = screen.getAllByTestId('invite-role')
     expect(rows).toHaveLength(3)
     expect(rows.every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true)

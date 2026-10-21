@@ -16,28 +16,28 @@ type Role = 'club' | 'coach' | 'brand' | 'umpire' | string
 
 const COPY: Record<string, { headline: string; sub: string; cta: string; to: string; Icon: typeof Users }> = {
   club: {
-    headline: 'Your recruiting week, at a glance — coming soon.',
+    headline: 'Your recruiting week, at a glance. Coming soon.',
     sub: 'Meanwhile, review who applied and keep your roles moving.',
     cta: 'Review applicants',
     to: '/dashboard',
     Icon: Users,
   },
   coach: {
-    headline: 'Your coaching week, at a glance — coming soon.',
+    headline: 'Your coaching week, at a glance. Coming soon.',
     sub: 'Meanwhile, find roles and manage who you’re recruiting.',
     cta: 'Go to your dashboard',
     to: '/dashboard',
     Icon: Briefcase,
   },
   brand: {
-    headline: 'Your brand’s reach, at a glance — coming soon.',
+    headline: 'Your brand’s reach, at a glance. Coming soon.',
     sub: 'Meanwhile, find athletes to partner with and manage your products.',
     cta: 'Go to your dashboard',
     to: '/dashboard',
     Icon: Sparkles,
   },
   umpire: {
-    headline: 'Your umpiring week, at a glance — coming soon.',
+    headline: 'Your umpiring week, at a glance. Coming soon.',
     sub: 'Meanwhile, keep your profile and appointments up to date.',
     cta: 'Go to your dashboard',
     to: '/dashboard',

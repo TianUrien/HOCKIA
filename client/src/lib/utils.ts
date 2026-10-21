@@ -239,7 +239,7 @@ const TECHNICAL_ERROR_MAP: [RegExp, string][] = [
   [/duplicate key|unique.?constraint|already exists/i, 'This already exists. Try refreshing the page.'],
   [/violates check constraint/i, 'Some of the data provided is invalid. Please review and try again.'],
   [/violates foreign key/i, 'A related record is missing or was deleted.'],
-  [/not found|does not exist/i, 'The item was not found — it may have been deleted.'],
+  [/not found|does not exist/i, 'The item was not found. It may have been deleted.'],
   [/rate limit|too many requests|429/i, 'Too many requests. Please wait a moment and try again.'],
   [/timeout|timed out|deadline exceeded/i, 'The request timed out. Please try again.'],
   [/network|fetch|ERR_INTERNET|ECONNREFUSED|ENOTFOUND/i, 'Network error. Please check your connection and try again.'],

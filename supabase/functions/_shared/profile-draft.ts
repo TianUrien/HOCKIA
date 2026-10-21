@@ -67,6 +67,7 @@ export const PROFILE_DRAFT_SYSTEM = [
   'Passports: country names only. Ignore any ID or passport numbers.',
   'A CV or a club page may list many things: keep only this member\'s own clubs, seasons, leagues and roles.',
   'Photos: for each one, say whether it shows an identity document. Do not describe people.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
 export interface CareerProposal {

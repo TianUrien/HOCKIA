@@ -199,7 +199,7 @@ describe('Hockia AI v2 — states', () => {
     ])
     renderPage()
     const card = screen.getByTestId('ai-notice-card')
-    expect(card).toHaveTextContent("You've reached today's limit — try again tomorrow.")
+    expect(card).toHaveTextContent("You've reached today's limit. Try again tomorrow.")
     expect(card).toHaveAttribute('data-tone', 'neutral')
     expect(screen.getAllByTestId('ai-chip').map(c => c.textContent)).toEqual(['Open roles for me'])
   })

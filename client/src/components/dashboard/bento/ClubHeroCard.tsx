@@ -344,7 +344,7 @@ export default function ClubHeroCard({
               </h3>
               <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
                 {completionPercentage >= 100
-                  ? 'Your club profile is fully built — players and coaches see complete clubs first.'
+                  ? 'Your club profile is fully built. Players and coaches see complete clubs first.'
                   : 'Keep going! A complete club profile attracts more players and coaches.'}
               </p>
             </div>

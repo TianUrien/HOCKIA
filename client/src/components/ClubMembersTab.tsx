@@ -274,7 +274,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No members yet</h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto">
             {isOwner
-              ? 'Invite players and coaches to build your club’s roster — they’ll appear here once they accept.'
+              ? 'Invite players and coaches to build your club’s roster. They’ll appear here once they accept.'
               : 'Players and coaches who join this club will appear here.'}
           </p>
           {isOwner && (

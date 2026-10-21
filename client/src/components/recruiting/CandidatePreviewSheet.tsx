@@ -84,7 +84,7 @@ function strengthExplanation(
   if (completeness >= 50) {
     const present = rows.filter((r) => r.present).map((r) => r.label.toLowerCase())
     const lead = present.slice(0, 3).join(', ')
-    return { tier: 'Good profile', tone: 'text-gray-800', why: lead ? `Core details on record — ${lead}.` : 'Core details on record.' }
+    return { tier: 'Good profile', tone: 'text-gray-800', why: lead ? `Core details on record: ${lead}.` : 'Core details on record.' }
   }
   const gap = missing.slice(0, 3).join(', ')
   return { tier: 'Limited profile', tone: 'text-gray-600', why: gap ? `Still missing ${gap}.` : 'Key details still missing.' }

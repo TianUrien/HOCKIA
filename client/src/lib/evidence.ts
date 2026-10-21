@@ -251,4 +251,4 @@ export function evidenceDisplayLabel(result: EvidenceResult): string {
 /** Non-rating tooltip copy — the guardrail that keeps the pill read as
  *  information-completeness, not a public quality score. */
 export const EVIDENCE_TOOLTIP =
-  'Evidence Level reflects how much verifiable information this profile provides for evaluation — video, references, a provable level. It does not rate skill or talent.'
+  'Evidence Level reflects how much verifiable information this profile provides for evaluation: video, references, a provable level. It does not rate skill or talent.'

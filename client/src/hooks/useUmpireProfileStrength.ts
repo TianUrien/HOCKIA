@@ -170,7 +170,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         id: 'availability',
         label: 'Mark yourself available',
         hint: 'Turn on "Open to umpire".',
-        unlockCopy: 'Clubs and federations filter for available umpires — set it to appear.',
+        unlockCopy: 'Clubs and federations filter for available umpires. Set it to appear.',
         weight: 5,
         completed: available,
         actionId: 'profile-tab',

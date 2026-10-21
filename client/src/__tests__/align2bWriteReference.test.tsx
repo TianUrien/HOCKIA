@@ -33,7 +33,7 @@ describe('WriteReferenceSheet', () => {
   it('asks "How do you know <first name>?" and prompts with the first name', () => {
     renderSheet()
     expect(screen.getByTestId('write-reference-question').textContent).toBe('How do you know Valentina?')
-    expect(screen.getByLabelText('Your reference').getAttribute('placeholder')).toBe('What did Valentina bring to the team? Be specific — clubs read these.')
+    expect(screen.getByLabelText('Your reference').getAttribute('placeholder')).toBe('What did Valentina bring to the team? Be specific. Clubs read these.')
   })
 
   it('never uses a gendered pronoun', () => {

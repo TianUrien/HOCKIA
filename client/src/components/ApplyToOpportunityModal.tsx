@@ -96,7 +96,7 @@ export default function ApplyToVacancyModal({
     ? `${displayClub} asks for an EU passport and yours is ${nationalityWord}, so this role can’t take your application. You can still message the club.`
     : `${(eligibility.reason ?? 'This role is for another team category.').replace(/\.$/, '')}, so this role can’t take your application. You can still message the club.`
   const blockedFooter = blockedByPassport
-    ? 'Nothing was sent. Passports are edited from Edit profile — if you get an EU passport later, this role reopens for you.'
+    ? 'Nothing was sent. Passports are edited from Edit profile. If you get an EU passport later, this role reopens for you.'
     : 'Nothing was sent. Your team category is edited from Edit profile.'
   const messageClub = () => {
     onClose()

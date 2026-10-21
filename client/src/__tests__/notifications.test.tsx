@@ -340,7 +340,7 @@ describe('getNotificationConfig', () => {
     const filled = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'filled' } })
     expect(getNotificationConfig(filled).getTitle(filled)).toBe('CASI filled the role')
     expect(getNotificationConfig(filled).getDescription?.(filled)).toBe(
-      'Arquera — Club Atlético de San Isidro (CASI) has been filled. Thanks for applying — new roles are open.',
+      'Arquera — Club Atlético de San Isidro (CASI) has been filled. Thanks for applying. New roles are open.',
     )
     // Round 4: the role's title wins over the position enum.
     const filledPos = createNotification({
@@ -348,19 +348,19 @@ describe('getNotificationConfig', () => {
       metadata: { ...meta, status: 'filled', position: 'midfielder', vacancy_title: 'U21 women midfielder' },
     })
     expect(getNotificationConfig(filledPos).getDescription?.(filledPos)).toBe(
-      'U21 women midfielder has been filled. Thanks for applying — new roles are open.',
+      'U21 women midfielder has been filled. Thanks for applying. New roles are open.',
     )
     const filledNoTitle = createNotification({
       kind: 'vacancy_application_status',
       metadata: { status: 'filled', position: 'midfielder' },
     })
     expect(getNotificationConfig(filledNoTitle).getDescription?.(filledNoTitle)).toBe(
-      'Midfielder has been filled. Thanks for applying — new roles are open.',
+      'Midfielder has been filled. Thanks for applying. New roles are open.',
     )
     const filledBare = createNotification({ kind: 'vacancy_application_status', metadata: { status: 'filled' } })
     expect(getNotificationConfig(filledBare).getTitle(filledBare)).toBe('The club filled the role')
     expect(getNotificationConfig(filledBare).getDescription?.(filledBare)).toBe(
-      'The role has been filled. Thanks for applying — new roles are open.',
+      'The role has been filled. Thanks for applying. New roles are open.',
     )
   })
 

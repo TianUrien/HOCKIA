@@ -72,7 +72,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
       <div className="flex flex-col gap-3.5 px-5 pb-6 pt-1" data-testid="decline-sheet">
         <div className="pt-1">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">Decline {firstName}?</h2>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? `Pick a reason. Hockia writes ${firstName} a kind note from it — change anything before it goes.` : 'Pick a reason. Hockia turns it into a kind note — change anything before it goes.'}</p>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? `Pick a reason. Hockia writes ${firstName} a kind note from it. Change anything before it goes.` : 'Pick a reason. Hockia turns it into a kind note. Change anything before it goes.'}</p>
         </div>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
           {DECLINE_REASON_CHIPS.map((r) => (

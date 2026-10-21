@@ -305,7 +305,7 @@ Deno.test('round 5: roles exist where asked but none the viewer can apply to →
   assertEquals(widened.ineligibleInAsked, 2)
   assertEquals(
     buildIneligibleMessage(widened.criteria, widened.askedLabel, { count: widened.matched.length, region: widened.widenedRegion }),
-    'There are open roles in England, but none you can apply to right now — here is 1 open role you can apply to elsewhere in Europe.',
+    'There are open roles in England, but none you can apply to right now. Here is 1 open role you can apply to elsewhere in Europe.',
   )
 
   // No roles there at all → the old "no roles" path (ineligibleInAsked 0).

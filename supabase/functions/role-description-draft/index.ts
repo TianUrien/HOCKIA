@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
               'If a detail is missing, leave it out. Never write placeholders, brackets or blanks for the club to fill.',
               'Write the team naturally, e.g. "a midfielder for our men\'s team", never "a Men midfielder".',
               'No emoji, no hashtags, no headings, no bullet points.',
+              'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
               'Reply with the text only.',
             ].join('\n'),
           }],

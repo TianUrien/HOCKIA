@@ -97,7 +97,7 @@ export function CohortRetention() {
                     <td className="py-2 pr-4 text-right text-gray-900">{r.signups}</td>
                     <td className="py-2 pr-4 text-right">
                       {immature ? (
-                        <span className="text-gray-400" title="Cohort younger than 14 days — week-2 not final">
+                        <span className="text-gray-400" title="Cohort younger than 14 days: week-2 not final">
                           {r.week2_returners} · pending
                         </span>
                       ) : (

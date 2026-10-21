@@ -246,7 +246,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-subtle p-3.5">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
             <p className="text-secondary leading-[18px] text-ink-2">
-              Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? ` — ${toReviewClosedNote(p)}` : ''}.
+              Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? `. ${toReviewClosedNote(p)}` : ''}.
             </p>
           </div>
         </div>

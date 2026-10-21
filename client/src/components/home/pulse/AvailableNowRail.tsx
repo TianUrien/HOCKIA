@@ -34,7 +34,7 @@ export function AvailableNowRail({ matches, loading, voice = 'club', poolRole = 
   return (
     <section ref={ref} className="mb-6">
       <SectionHeader
-        title={voice === 'coach' ? 'Available now — fit your search' : 'Available now — fit your team'}
+        title={voice === 'coach' ? 'Available now: fit your search' : 'Available now: fit your team'}
         chip={{ label: 'Open', tone: 'new' }}
         action={
           <button

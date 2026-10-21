@@ -189,7 +189,7 @@ export function computeInterest(
     if (oppNorm && excludedNorms.includes(oppNorm)) {
       mobility = 0
       add(`Excluded ${oppRaw} from the countries they'd consider.`, 'caveat')
-      if (options.locationRequired) hardFailReasons.push(`Excluded ${oppRaw} — the location you require.`)
+      if (options.locationRequired) hardFailReasons.push(`Excluded ${oppRaw}, the location you require.`)
     } else if (willingness === 'home_only') {
       if (homeNorm && oppNorm) {
         if (homeNorm === oppNorm) {
@@ -199,7 +199,7 @@ export function computeInterest(
           mobility = 0
           add(`Only wants to stay in ${homeName ?? 'their home country'}.`, 'caveat')
           if (options.locationRequired) {
-            hardFailReasons.push(`Won't relocate to ${oppRaw} — only wants ${homeName ?? 'their home country'}.`)
+            hardFailReasons.push(`Won't relocate to ${oppRaw}. Only wants ${homeName ?? 'their home country'}.`)
           }
         }
       } else {
@@ -255,8 +255,8 @@ export function computeInterest(
       if (absDiff === 0) {
         add(
           proven
-            ? `Has proven ${oppLabel} — matches what you're recruiting.`
-            : `Targeting ${oppLabel} — matches what you're recruiting.`,
+            ? `Has proven ${oppLabel}, which matches what you're recruiting.`
+            : `Targeting ${oppLabel}, which matches what you're recruiting.`,
           'positive',
         )
       } else if (diff > 0) {
@@ -276,7 +276,7 @@ export function computeInterest(
       } else {
         add(
           proven
-            ? `Below the level they've proven${absDiff >= 2 ? ' — likely over-qualified' : ''}.`
+            ? `Below the level they've proven${absDiff >= 2 ? ', likely over-qualified' : ''}.`
             : `Below the level they say they're targeting.`,
           'caveat',
         )
@@ -313,10 +313,10 @@ export function computeInterest(
         candPref === 'either' ? 'Open to paid or development.' : 'This opening is open on compensation.'
     } else if (candPref === 'paid' && oppComp === 'paid') {
       compScore = 1
-      compReason = 'Wants paid — this is a paid role.'
+      compReason = 'Wants paid, and this is a paid role.'
     } else if (candPref === 'development' && oppComp === 'unpaid_development') {
       compScore = 1
-      compReason = 'Looking for a development role — matches.'
+      compReason = 'Looking for a development role, which matches.'
     } else if (candPref === 'paid' && oppComp === 'unpaid_development') {
       compScore = 0.1
       compReason = 'Wants paid; this is a development role.'
@@ -335,7 +335,7 @@ export function computeInterest(
   const startDate = options.targetStartDate || null
   if (availFrom && startDate) {
     if (availFrom <= startDate) {
-      add(`Available from ${formatAvailableFrom(availFrom)} — in time for the start.`, 'positive')
+      add(`Available from ${formatAvailableFrom(availFrom)}, in time for the start.`, 'positive')
       measured.push({ score: 1, weight: WEIGHTS.availability })
     } else {
       add(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start.`, 'caveat')

@@ -152,7 +152,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       <p className="text-sm font-medium text-gray-700">No vouches yet</p>
       <p className="mt-1 text-xs text-gray-500">
         {primaryName
-          ? `${primaryName} hasn't received any trusted references yet — these are vouches from coaches, teammates, or clubs that verify a member's hockey on HOCKIA.`
+          ? `${primaryName} hasn't received any trusted references yet. These are vouches from coaches, teammates, or clubs that verify a member's hockey on HOCKIA.`
           : 'Trusted references are vouches from coaches, teammates, or clubs that verify a member\'s hockey on HOCKIA.'}
       </p>
     </div>

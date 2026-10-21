@@ -300,7 +300,7 @@ function Notifications({ back }: { back: () => void }) {
           can't be changed teaches people to distrust the screen. */}
       <SettingsGroup
         label="Channels"
-        footer={<>Turn push off and nothing below arrives that way. In-app notifications always stay on.{user?.email ? <> Email goes to {user.email} — choose what arrives per type below.</> : null}</>}
+        footer={<>Turn push off and nothing below arrives that way. In-app notifications always stay on.{user?.email ? <> Email goes to {user.email}. Choose what arrives per type below.</> : null}</>}
       >
         <SettingsRow
           title="Push notifications"
@@ -309,7 +309,7 @@ function Notifications({ back }: { back: () => void }) {
         />
       </SettingsGroup>
 
-      <SettingsGroup label="Tell me about" trailingLabels={['Push', 'Email']} footer="Push and Email move together for now — each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.">
+      <SettingsGroup label="Tell me about" trailingLabels={['Push', 'Email']} footer="Push and Email move together for now. Each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.">
         {kindsFor(profile?.role).map((k) => {
           const on = read<boolean>(k.column, true)
           return (
@@ -319,8 +319,8 @@ function Notifications({ back }: { back: () => void }) {
               subtitle={k.subtitle}
               trailing={
                 <span className="flex shrink-0 gap-2">
-                  <SettingsSwitch label={`${k.title} — push`} checked={on && pushOn} disabled={!pushOn || busy === k.column} onChange={() => void toggle(k.column, true)} />
-                  <SettingsSwitch label={`${k.title} — email`} checked={on} disabled={busy === k.column} onChange={() => void toggle(k.column, true)} />
+                  <SettingsSwitch label={`${k.title} · push`} checked={on && pushOn} disabled={!pushOn || busy === k.column} onChange={() => void toggle(k.column, true)} />
+                  <SettingsSwitch label={`${k.title} · email`} checked={on} disabled={busy === k.column} onChange={() => void toggle(k.column, true)} />
                 </span>
               }
             />
@@ -364,7 +364,7 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
       )}
 
       <SettingsGroup label="Visibility">
-        <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them — and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
+        <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them, and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
         <SettingsRow title="Show when I was last active" subtitle="“Active today” in Chat." trailing={<SettingsSwitch label="Show when I was last active" checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
         {/* Clubs set their contact email under Settings › Club (D1.22). */}
         {profile?.role !== 'club' && (

@@ -173,7 +173,7 @@ describe('step 1 · About you (586:806)', () => {
     expect(screen.getByText('Step 1 of 2')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'About you' })).toBeInTheDocument()
     expect(screen.getByText('A clear coaching photo gets more views.')).toBeInTheDocument()
-    expect(screen.getByText('Can’t be changed later. Never shown on your profile — only your age is.')).toBeInTheDocument()
+    expect(screen.getByText('Can’t be changed later. Never shown on your profile. Only your age is.')).toBeInTheDocument()
     expect(screen.getByText('Second nationality Optional')).toBeInTheDocument()
     expect(screen.queryByText(/category/i)).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Continue' })).toHaveLength(1)

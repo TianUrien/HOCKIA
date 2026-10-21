@@ -174,7 +174,7 @@ describe('3 · the decline reason reaches the club', () => {
 
   it('club card: "<name> declined — <reason>", grey; without a reason just "<name> declined"', () => {
     const withReason = offerCardState({ viewer: 'club', status: 'declined', openUntil: null, playerFirstName: 'Sam', declineReason: 'Moving abroad next season', now: NOW })
-    expect(withReason.line).toBe('Sam declined — Moving abroad next season')
+    expect(withReason.line).toBe('Sam declined: Moving abroad next season')
     expect(withReason.muted).toBe(true)
     expect(withReason.deadlineTone).toBe('grey')
     expect(offerCardState({ viewer: 'club', status: 'declined', openUntil: null, playerFirstName: 'Sam', declineReason: '  ', now: NOW }).line).toBe('Sam declined')
@@ -187,7 +187,7 @@ describe('3 · the decline reason reaches the club', () => {
 
   it('applicant review: a grey note under the road only after the newest offer was declined', () => {
     const offer = { status: 'declined' as const, decline_reason: 'Moving abroad next season' }
-    expect(offerDeclinedNote('Sam', offer)).toBe('Sam declined your offer — “Moving abroad next season”')
+    expect(offerDeclinedNote('Sam', offer)).toBe('Sam declined your offer: “Moving abroad next season”')
     expect(offerDeclinedNote('Sam', { status: 'declined', decline_reason: null })).toBe('Sam declined your offer.')
     expect(offerDeclinedNote('Sam', { status: 'live', decline_reason: null })).toBeNull()
     expect(offerDeclinedNote('Sam', null)).toBeNull()

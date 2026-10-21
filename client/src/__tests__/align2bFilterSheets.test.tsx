@@ -32,7 +32,7 @@ describe('OpportunityFiltersSheet', () => {
     const onClose = vi.fn()
     render(
       <OpportunityFiltersSheet open onClose={onClose} value={{ ...EMPTY_ROLE_FILTERS, type: 'player' }} onApply={onApply}
-        countFor={(d: RoleFilters) => (d.position ? 2 : 6)} passportHint="Argentine — 4 of 14 open roles" {...over} />,
+        countFor={(d: RoleFilters) => (d.position ? 2 : 6)} passportHint="Argentine · 4 of 14 open roles" {...over} />,
     )
     return { onApply, onClose }
   }
@@ -69,7 +69,7 @@ describe('OpportunityFiltersSheet', () => {
     const { onApply } = renderSheet()
     const sw = screen.getByRole('switch', { name: 'Only roles my passports qualify for' })
     expect(sw.getAttribute('aria-checked')).toBe('false')
-    expect(screen.getByText('Argentine — 4 of 14 open roles')).toBeTruthy()
+    expect(screen.getByText('Argentine · 4 of 14 open roles')).toBeTruthy()
     fireEvent.click(sw)
     expect(sw.getAttribute('aria-checked')).toBe('true')
     fireEvent.click(screen.getByTestId('opportunity-filter-show'))

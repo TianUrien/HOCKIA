@@ -342,7 +342,7 @@ describe('D5.2 · refine', () => {
     const { container } = renderAt(<SuggestRefineScreen roleId="r1" />, '/x')
     const card = screen.getByTestId('ai-notice-card')
     expect(card.getAttribute('data-tone')).toBe('neutral')
-    expect(card.textContent).toBe("You've reached today's limit — try again tomorrow.")
+    expect(card.textContent).toBe("You've reached today's limit. Try again tomorrow.")
     expect(screen.queryByTestId('ai-chip')).toBeNull()
     noAmber(container)
   })

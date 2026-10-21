@@ -134,7 +134,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               type="button"
               onClick={() => handleNavigate(user ? '/home' : '/')}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
-              aria-label="HOCKIA — go home"
+              aria-label="HOCKIA, go home"
             >
               <img
                 src={onNewPost ? '/brand/wordmark/hockia-wordmark-violet.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
@@ -266,7 +266,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Hockia AI"
-                  title="Hockia AI — ask anything about clubs, players, opportunities"
+                  title="Hockia AI: ask anything about clubs, players, opportunities"
                   aria-current={isActive('/discover') ? 'page' : undefined}
                 >
                   <Sparkles className="w-5 h-5" />

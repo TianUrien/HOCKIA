@@ -11,7 +11,7 @@ import { toEvidence, type SuggestionEvidence, type SuggestionRoleContext } from 
 
 export const SUGGESTS_TITLE = 'Hockia suggests'
 export const SUGGESTS_FOOTNOTE = 'Only players who are open to play and over 18. Players never see where they rank.'
-export const SUGGESTS_EMPTY = 'No players fit this role yet — Hockia checks again tonight.'
+export const SUGGESTS_EMPTY = 'No players fit this role yet. Hockia checks again tonight.'
 export const SUGGESTS_COMPOSER_PLACEHOLDER = 'Ask Hockia: EU passport, start in January…'
 export const SUGGESTS_LOAD_ERROR = 'Couldn’t load suggestions. Pull to try again.'
 export const REFINE_TITLE = 'Hockia AI'

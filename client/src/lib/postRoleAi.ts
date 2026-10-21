@@ -112,6 +112,6 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
 /** Why Hockia AI couldn't draft, in the toast. */
 export function aiDraftFailedCopy(reason: string | null | undefined): string {
   return reason === 'limit'
-    ? 'You’ve used today’s Hockia AI drafts. Your words are in “About the role” — fill in the rest.'
-    : 'Hockia AI couldn’t draft this right now. Your words are in “About the role” — fill in the rest.'
+    ? 'You’ve used today’s Hockia AI drafts. Your words are in “About the role”. Fill in the rest.'
+    : 'Hockia AI couldn’t draft this right now. Your words are in “About the role”. Fill in the rest.'
 }

@@ -218,14 +218,14 @@ Deno.serve(async (req: Request) => {
     const entryHtml = (e: StatusEntry) => e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
            <div style="font-size:15px;font-weight:600;color:#111827;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
-           <div style="font-size:13px;color:#6b7280;margin-top:2px;">${escapeHtml(e.vacancy_title)} — keep your profile sharp while they review.</div>
+           <div style="font-size:13px;color:#6b7280;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
          </td></tr>`
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
            <div style="font-size:15px;font-weight:600;color:#111827;">${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
            ${e.note
              ? `<div style="font-size:14px;color:#111827;margin-top:8px;padding:12px 14px;background:#f4f4f7;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
-             : `<div style="font-size:13px;color:#6b7280;margin-top:2px;">It often comes down to fit, not ability — a clear answer beats silence, and the right opening is out there.</div>`}
+             : `<div style="font-size:13px;color:#6b7280;margin-top:2px;">It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.</div>`}
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">See your application →</a>` : ''}
          </td></tr>`
 

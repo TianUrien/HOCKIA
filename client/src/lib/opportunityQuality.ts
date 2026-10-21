@@ -51,7 +51,7 @@ export function assessPostingQuality(input: PostingQualityInput): PostingQuality
     {
       key: 'compensation',
       label: 'Compensation',
-      hint: 'Players filter hard on this — even a range beats silence.',
+      hint: 'Players filter hard on this. Even a range beats silence.',
       met: !!input.compensation && input.compensation.trim() !== '',
     },
     {

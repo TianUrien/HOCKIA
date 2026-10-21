@@ -133,7 +133,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
       <BottomSheet open={declining} onClose={() => setDeclining(false)} ariaLabel="Decline the offer">
         <div className="px-5 pb-3 pt-1">
           <h2 className="text-[22px] font-bold leading-7 text-ink-1">Decline this offer?</h2>
-          <p className="mt-1 text-row text-ink-2">The club will be told. You can say why — it’s optional.</p>
+          <p className="mt-1 text-row text-ink-2">The club will be told. You can say why (it’s optional).</p>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value.slice(0, DECLINE_REASON_MAX))}

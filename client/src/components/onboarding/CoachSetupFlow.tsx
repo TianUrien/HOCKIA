@@ -243,7 +243,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: draft.dateOfBirth })
         if (dobError) throw new Error('Could not save your date of birth. Please try again.')
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right — please check it.')
+        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right. Please check it.')
         if (outcome === 'frozen') {
           await fetchProfile(user.id, { force: true })
           return
@@ -422,7 +422,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
                   error={aboutErrors.dateOfBirth}
                   required
                 />
-                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile — only your age is.</p>
+                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile. Only your age is.</p>
               </div>
             )}
 

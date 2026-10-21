@@ -20,11 +20,11 @@ export const COMPOSER_PLACEHOLDER = 'Ask about clubs, players or roles'
 export const COMPOSER_MAX_LENGTH = 500
 /** Existing beta copy, reused verbatim. */
 export const BETA_NOTE =
-  'Hockia AI is in beta — it can help you explore HOCKIA, but answers may sometimes be incomplete or inaccurate.'
+  'Hockia AI is in beta. It can help you explore HOCKIA, but answers may sometimes be incomplete or inaccurate.'
 export const TRY_ASKING_EYEBROW = 'Try asking'
-export const CAP_REACHED_COPY = "You've reached today's limit — try again tomorrow."
-export const CONNECTION_ERROR_COPY = "I had trouble connecting just now — let's try a different angle."
-export const SOFT_ERROR_DEFAULT_COPY = "I had trouble with that one — let's try a different angle."
+export const CAP_REACHED_COPY = "You've reached today's limit. Try again tomorrow."
+export const CONNECTION_ERROR_COPY = "I had trouble connecting just now. Let's try a different angle."
+export const SOFT_ERROR_DEFAULT_COPY = "I had trouble with that one. Let's try a different angle."
 export const SEARCHING_LABEL = 'Searching'
 
 export const OPEN_ROLES_ROUTE = '/opportunities'

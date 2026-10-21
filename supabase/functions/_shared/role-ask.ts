@@ -16,6 +16,7 @@ export const ROLE_ASK_SYSTEM = [
   'Describe experience by its facts (clubs, leagues, seasons); never rate it (no "solid", "strong", "impressive").',
   'For questions about the city, club life or the league: answer briefly and generally; never invent club facts, salaries or results.',
   'If you do not know, say so and suggest asking the club. No emoji, no lists of more than 3 items, no placeholders.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
 const SCORE_RE = /\d{1,3}\s?%|\b(percent|score|rank(ed|ing)?|chances? (of|are)|guarantee[sd]?|definitely (get|be))\b/i

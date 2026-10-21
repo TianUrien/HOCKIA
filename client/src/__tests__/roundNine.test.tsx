@@ -297,7 +297,7 @@ describe('5 · notification copy: a role posted without a typed title names the 
     const generated = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s midfielder', position: 'midfielder' })
     expect(getNotificationConfig(generated).getDescription?.(generated)).toBe("You're being considered for Midfielder.")
     const filled = notification({ status: 'filled', club_name: 'E2E Test FC', vacancy_title: "Women's head coach", position: 'head_coach' })
-    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe('Head Coach has been filled. Thanks for applying — new roles are open.')
+    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe('Head Coach has been filled. Thanks for applying. New roles are open.')
     const typed = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s 1st XI midfielder', position: 'midfielder' })
     expect(getNotificationConfig(typed).getDescription?.(typed)).toBe("You're being considered for Men’s 1st XI midfielder.")
     expect(isGeneratedHeadline('Mixed forward', 'Forward')).toBe(true)

@@ -65,7 +65,7 @@ export function PulseSection() {
   if (items.length === 0 && !hadItemsThisMount) return null
 
   return (
-    <section className="mb-6" aria-label="Pulse — what changed since your last visit">
+    <section className="mb-6" aria-label="Pulse: what changed since your last visit">
       <header className="mb-3">
         <h2 className="text-sm font-semibold text-gray-700">Since you last visited</h2>
       </header>

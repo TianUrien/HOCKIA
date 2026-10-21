@@ -19,7 +19,7 @@ export const ONBOARDING_ROLES: readonly OnboardingRole[] = ['player', 'coach', '
  *  never "appointments" (founder ruling 2026-10-03). Gender-neutral. */
 export const ROLE_CARDS: ReadonlyArray<{ role: OnboardingRole; title: string; detail: string }> = [
   { role: 'player', title: 'Player', detail: 'Build the profile that gets you found by clubs' },
-  { role: 'coach', title: 'Coach', detail: 'Find coaching opportunities — and recruit players if you also manage a team' },
+  { role: 'coach', title: 'Coach', detail: 'Find coaching opportunities, and recruit players if you also manage a team' },
   { role: 'club', title: 'Club', detail: 'Recruit field hockey players with trust and context' },
   { role: 'brand', title: 'Brand', detail: 'Build your brand in the hockey community' },
   { role: 'umpire', title: 'Umpire', detail: 'Keep your officiating history in one place' },

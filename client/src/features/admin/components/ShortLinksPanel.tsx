@@ -79,7 +79,7 @@ export function ShortLinksPanel() {
     if (!SHORT_LINK_CODE_RE.test(f.code)) return 'Code: 2–32 characters, lowercase letters, digits and hyphens.'
     if (isNew && rows.some((r) => r.code === f.code)) return `"${f.code}" is already taken.`
     if (!isValidDestination(f.destination.trim())) return 'Destination must be an in-app path (/opportunities), an https:// URL, or "store".'
-    if (!f.utm_source.trim()) return 'utm_source is what the report will attribute signups to — it is required.'
+    if (!f.utm_source.trim()) return 'utm_source is what the report will attribute signups to, so it is required.'
     for (const [k, v] of [['utm_source', f.utm_source], ['utm_medium', f.utm_medium], ['utm_campaign', f.utm_campaign], ['utm_content', f.utm_content]] as const) {
       if ((v ?? '').trim().length > 64) return `${k}: 64 characters at most.`
     }
@@ -141,7 +141,7 @@ export function ShortLinksPanel() {
       <div className="flex items-start justify-between gap-3 mb-1">
         <div className="flex items-center gap-2">
           <Link2 className="w-4 h-4 text-purple-500" />
-          <h3 className="text-sm font-semibold text-gray-900">Short links — tagged entry points</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Short links: tagged entry points</h3>
         </div>
         {!form && (
           <button
@@ -157,7 +157,7 @@ export function ShortLinksPanel() {
       <p className="text-xs text-gray-500 mb-4">
         Put <span className="font-mono">{origin.replace(/^https?:\/\//, '')}/l/&lt;code&gt;</span> in a bio, a post or on a
         QR. Every visit is counted, and a member who signs up after it is attributed to the link's channel. Retire a
-        link with the toggle — codes are never reused.
+        link with the toggle. Codes are never reused.
       </p>
 
       {form && (
@@ -207,7 +207,7 @@ export function ShortLinksPanel() {
             {channel && (
               <span className={`block mt-1 text-[11px] ${channel.group === 'other' ? 'text-amber-600' : 'text-gray-500'}`} data-testid="short-link-channel">
                 {channel.group === 'other'
-                  ? `Not a known channel — will report as its own source "${channel.source}". Check the spelling.`
+                  ? `Not a known channel. It will report as its own source "${channel.source}". Check the spelling.`
                   : `Reports as ${displaySource(channel.source)} · ${displayGroup(channel.group)}`}
               </span>
             )}

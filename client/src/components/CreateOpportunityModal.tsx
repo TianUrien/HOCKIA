@@ -643,7 +643,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         if (error) throw error
         const isStillDraft = resolvedStatus === 'draft'
         if (isStillDraft) {
-          addToast('Draft updated — publish when you\'re ready to go live.', 'info')
+          addToast('Draft updated. Publish when you\'re ready to go live.', 'info')
         } else {
           addToast('Opportunity updated successfully.', 'success')
         }
@@ -657,9 +657,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         trackDbEvent('opportunity_create', 'vacancy', undefined, { type: vacancyData.opportunity_type })
         trackVacancyCreate(vacancyData.position || vacancyData.opportunity_type || 'unknown')
         if (resolvedStatus === 'open') {
-          addToast('Opportunity published — candidates can apply now.', 'success')
+          addToast('Opportunity published. Candidates can apply now.', 'success')
         } else {
-          addToast('Draft saved — publish when you\'re ready to go live.', 'info')
+          addToast('Draft saved. Publish when you\'re ready to go live.', 'info')
         }
         clearVacancyDraft()
       }
@@ -927,7 +927,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 <div>
                   <SpecialistSkillsSelect
                     label="Specialist skills wanted"
-                    hint="Optional — the specialism you most need. We'll surface players who match."
+                    hint="Optional. The specialism you most need. We'll surface players who match."
                     value={formData.specialist_skills_wanted || []}
                     onChange={(next) => handleInputChange('specialist_skills_wanted', next)}
                     position={formData.position}
@@ -1002,7 +1002,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level — change it if you're recruiting above or below. Mark any criterion "Must have" to require it — players who miss it read as "Out of scope".</p>
+                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level. Change it if you're recruiting above or below. Mark any criterion "Must have" to require it. Players who miss it read as "Out of scope".</p>
                 </div>
               )}
 
@@ -1382,7 +1382,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             </div>
             {postingQuality.missing.length === 0 ? (
               <p className="text-sm text-green-700">
-                Complete posting — this is what strong vacancies look like.
+                Complete posting. This is what strong vacancies look like.
               </p>
             ) : (
               <>
@@ -1393,7 +1393,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   {postingQuality.missing.map((c) => (
                     <li key={c.key} className="text-xs text-gray-600">
                       <span className="font-medium text-gray-800">{c.label}</span>
-                      <span className="text-gray-400"> — {c.hint}</span>
+                      <span className="text-gray-400">: {c.hint}</span>
                     </li>
                   ))}
                 </ul>

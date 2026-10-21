@@ -150,7 +150,7 @@ export default function AppRatingPrompt() {
           {rating >= 1 && (
             <div className="mt-3">
               <label className="text-xs font-medium text-gray-700">
-                {isPositive ? 'Thanks! 🎉 Anything you love or want more of?' : 'Thanks for the honesty — what can we improve?'}
+                {isPositive ? 'Thanks! 🎉 Anything you love or want more of?' : 'Thanks for the honesty. What can we improve?'}
                 <span className="font-normal text-gray-400"> (optional)</span>
               </label>
               <textarea
@@ -179,7 +179,7 @@ export default function AppRatingPrompt() {
               </div>
               {submitError && (
                 <p className="mt-2 text-xs text-rose-600" role="alert">
-                  Couldn’t send your feedback — please try again.
+                  Couldn’t send your feedback. Please try again.
                 </p>
               )}
             </div>

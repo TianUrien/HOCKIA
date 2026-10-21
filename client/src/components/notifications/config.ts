@@ -95,7 +95,7 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
       const role = typedTitle ?? humanPos ?? 'The role'
-      return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying — new roles are open.` }
+      return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying. New roles are open.` }
     }
     default:
       return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
@@ -370,7 +370,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
         : `${count} applications are no longer active`
     },
     getDescription: () =>
-      "Applications close automatically after a while without an update on HOCKIA — never a reflection on you. Fresh opportunities are open now.",
+      "Applications close automatically after a while without an update on HOCKIA. It’s never a reflection on you. Fresh opportunities are open now.",
     getRoute: () => '/opportunities',
   },
   // B2 · publisher reminders. The server writes the copy (first names only,
@@ -400,7 +400,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     // Role-agnostic copy. The notification fires for every role (player,
     // coach, club, brand, umpire); "so scouts can find you" implied a
     // recruitment relationship that doesn't apply to brand or umpire.
-    getDescription: () => 'Great work — keep it fresh so the right people find you.',
+    getDescription: () => 'Great work. Keep it fresh so the right people find you.',
     getRoute: () => '/dashboard/profile',
   },
   account_verified: {

@@ -124,7 +124,7 @@ Deno.test('city rung still contrasts when the labels genuinely differ', () => {
       noun: 'clubs', nounSingular: 'club', count: 1,
       cityLabel: 'London', countryLabel: 'England',
     }),
-    'No clubs in London itself — here is 1 club elsewhere in England.',
+    'No clubs in London itself, but here is 1 club elsewhere in England.',
   )
 })
 

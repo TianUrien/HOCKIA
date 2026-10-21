@@ -36,7 +36,7 @@ export default function SignInPromptModal({
   isOpen,
   onClose,
   title = 'Sign in to continue',
-  message = 'Create a free HOCKIA profile — clubs, coaches and players are already here.',
+  message = 'Create a free HOCKIA profile. Clubs, coaches and players are already here.',
   action,
 }: SignInPromptModalProps) {
   const navigate = useNavigate()

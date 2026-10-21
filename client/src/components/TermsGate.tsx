@@ -182,7 +182,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
             disabled={loading}
             className="w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
           >
-            {loading ? 'Accepting...' : 'I Agree — Continue'}
+            {loading ? 'Accepting...' : 'I agree and continue'}
           </button>
         </div>
       </div>

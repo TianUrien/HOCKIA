@@ -61,8 +61,8 @@ function buildCopy(item: PulseItem): CelebrationCopy | null {
       return {
         title: 'First reference accepted',
         subtitle: name
-          ? `${name} endorsed your profile — recruiters can see it now.`
-          : 'A coach or peer endorsed your profile — recruiters can see it now.',
+          ? `${name} endorsed your profile. Recruiters can see it now.`
+          : 'A coach or peer endorsed your profile. Recruiters can see it now.',
       }
     }
     case 'first_highlight_video':

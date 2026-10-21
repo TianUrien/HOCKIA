@@ -218,7 +218,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
-      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)

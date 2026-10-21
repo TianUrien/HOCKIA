@@ -74,6 +74,7 @@ export const ROLE_DRAFT_SYSTEM = [
   'Players: goalkeeper, defender (full back, centre back, left/right back, sweeper), midfielder, forward (striker, winger).',
   'Under-18 player roles do not exist: a player role is Men, Women or Mixed only.',
   'The description is "About the role": first person plural, warm and plain, 3–5 short sentences, under 600 characters, no emoji, no placeholders.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '')

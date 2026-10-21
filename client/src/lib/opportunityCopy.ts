@@ -154,7 +154,7 @@ export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline
 }
 
 export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {
-  if (!v.application_deadline) return 'No deadline — closes when filled'
+  if (!v.application_deadline) return 'No deadline · closes when filled'
   return `Apply by ${dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline}`
 }
 

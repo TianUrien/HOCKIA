@@ -137,7 +137,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           Mark {info.applicant_name ?? 'this applicant'} as Not a fit?
         </h1>
         <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-          For {info.opportunity_title ?? 'your opportunity'}. They&apos;ll be notified honestly — a
+          For {info.opportunity_title ?? 'your opportunity'}. They&apos;ll be notified honestly. A
           clear answer beats silence.
         </p>
         <button
@@ -235,7 +235,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
               </div>
               <h1 className="text-lg font-bold text-gray-900 mt-4">{name} marked as Not a fit</h1>
               <p className="text-sm text-gray-600 mt-2">
-                They&apos;ll be notified honestly — a clear answer beats silence.
+                They&apos;ll be notified honestly. A clear answer beats silence.
               </p>
               {cta()}
             </>
@@ -249,7 +249,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           </div>
           <h1 className="text-lg font-bold text-gray-900 mt-4">This application was already handled</h1>
           <p className="text-sm text-gray-600 mt-2">
-            {name}&apos;s application isn&apos;t pending anymore — it was already responded to. Nothing
+            {name}&apos;s application isn&apos;t pending anymore. It was already responded to. Nothing
             was changed.
           </p>
           {cta('Open in HOCKIA')}
@@ -264,8 +264,8 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <h1 className="text-lg font-bold text-gray-900 mt-4">This link was already used</h1>
           <p className="text-sm text-gray-600 mt-2">
             {info.action === 'renew'
-              ? 'This opportunity was already renewed with this link — nothing was changed.'
-              : 'Your response was recorded the first time — nothing was changed.'}
+              ? 'This opportunity was already renewed with this link. Nothing was changed.'
+              : 'Your response was recorded the first time. Nothing was changed.'}
           </p>
           {cta('Open in HOCKIA')}
         </>

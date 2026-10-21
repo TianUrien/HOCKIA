@@ -46,7 +46,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
           <h1 className="text-2xl font-bold text-gray-900">HOCKIA is 18+ for now</h1>
           <p className="text-sm text-gray-600 mt-4 leading-relaxed">
             Your profile is <strong>saved, not deleted</strong>. We&apos;re building
-            HOCKIA Juniors — a version with protections designed for young players —
+            HOCKIA Juniors, a version with protections designed for young players,
             and you&apos;ll be the first to know when it opens. Everything you built
             here will be waiting for you.
           </p>
@@ -54,8 +54,8 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
             Questions, or want your data removed? Write to{' '}
             <a href="mailto:team@inhockia.com" className="text-hockia-primary font-medium">
               team@inhockia.com
-            </a>{' '}
-            — we answer every message.
+            </a>.
+            We answer every message.
           </p>
           <button
             type="button"
@@ -93,7 +93,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
         if (rpcError) throw rpcError
         const outcome = (data as { outcome?: string } | null)?.outcome
         if (outcome === 'invalid_dob') {
-          setError('That date doesn’t look right — please check it.')
+          setError('That date doesn’t look right. Please check it.')
           return
         }
         // 'confirmed' clears the gate; 'frozen' flips this component into
@@ -114,7 +114,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
           <h2 className="text-xl font-bold text-gray-900">Confirm your date of birth</h2>
           <p className="text-sm text-gray-600 mt-1 leading-relaxed">
             HOCKIA is an 18+ platform. Confirm your date of birth to keep your
-            full profile active — it stays private and is never shown to other
+            full profile active. It stays private and is never shown to other
             members (only your age is).
           </p>
           <div className="mt-5">

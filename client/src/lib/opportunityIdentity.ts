@@ -110,5 +110,5 @@ export function applySubline(id: RoleIdentity): string {
 /** Application sent: who reviews. */
 export function sentLine(id: RoleIdentity): string {
   const who = id.postedBy ? id.postedBy.firstName : id.hiringClub?.name ?? 'The club'
-  return `${who} will review your profile. We’ll let you know when they reply — you can follow it in Applied.`
+  return `${who} will review your profile. We’ll let you know when they reply. You can follow it in Applied.`
 }

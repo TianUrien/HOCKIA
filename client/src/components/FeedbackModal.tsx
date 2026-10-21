@@ -145,7 +145,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
               <CheckCircle2 className="h-7 w-7 text-emerald-600" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900">Thanks — we got it.</h3>
+            <h3 className="text-base font-semibold text-gray-900">Thanks, we got it.</h3>
             <p className="mt-1 text-sm text-gray-500">
               We&apos;ll follow up if we have questions.
             </p>
@@ -232,7 +232,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 />
                 <span>
                   <span className="block text-sm font-medium text-gray-900">
-                    This is urgent — affecting my work
+                    This is urgent (affecting my work)
                   </span>
                   <span className="block text-xs text-gray-500 mt-0.5">
                     Use sparingly so the urgent label keeps its signal.

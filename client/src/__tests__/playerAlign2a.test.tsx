@@ -435,7 +435,7 @@ describe('Application sent', () => {
   })
 
   it('the tip reads exactly as approved and says nothing about other applicants', async () => {
-    expect(FULL_MATCH_TIP).toBe('Add a full match video now — it’s what clubs ask for most after an application.')
+    expect(FULL_MATCH_TIP).toBe('Add a full match video now. It’s what clubs ask for most after an application.')
     sent()
     const tip = await screen.findByTestId('full-match-nudge')
     expect(tip).toHaveTextContent(FULL_MATCH_TIP)

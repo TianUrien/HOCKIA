@@ -1,8 +1,8 @@
 # Figma files, handoff and review workflow
 
 ## Figma
-- **"New-Hockia"** — the design system file: tokens, components (page "03 · Components"), rebuilt screens. Node ids in `docs/design-handoff/components.md` and `screens.md`.
-- **"New Hockia 2 · Draft"** — the redesign lab (Community, Home, Profile, Opportunities, Hockia AI, Nationality pages with handoff spec boards). Refer to files by name, page and node id only (public repo: no file keys or links here).
+- **"New-Hockia"**, the design system file: tokens, components (page "03 · Components"), rebuilt screens. Node ids in `docs/design-handoff/components.md` and `screens.md`.
+- **"New Hockia 2 · Draft"**, the redesign lab (Community, Home, Profile, Opportunities, Hockia AI, Nationality pages with handoff spec boards). Refer to files by name, page and node id only (public repo: no file keys or links here).
 - Before writing to Figma: load the Figma skills (`figma:figma-use` before `use_figma`), search existing components and variables first, bind variables (no hard-coded values), reflow at real sizes (never `rescale()` device variants), verify with screenshots.
 - Both agents may edit the Figma file; log edits in `docs/design-handoff/CHANGELOG.md`.
 

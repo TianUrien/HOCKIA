@@ -256,7 +256,7 @@ export default function UmpireDashboard({
 
   useEffect(() => {
     document.title = profile?.full_name
-      ? `${profile.full_name} — Umpire | HOCKIA`
+      ? `${profile.full_name} · Umpire | HOCKIA`
       : 'Umpire | HOCKIA'
   }, [profile?.full_name])
 
@@ -535,7 +535,7 @@ export default function UmpireDashboard({
                     </h3>
                     <p className="text-sm text-gray-700 mb-3">
                       Your level and federation are what clubs and fellow umpires look for first.
-                      Take a minute now — you can always refine it later.
+                      Take a minute now. You can always refine it later.
                     </p>
                     <button
                       type="button"

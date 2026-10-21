@@ -114,4 +114,4 @@ export function applicationCardDetail(app: ClubApplication, expiryDays = DEFAULT
 }
 
 /** Empty new chat with an applicant (D1.21). */
-export const APPLICANT_CHAT_EMPTY = { title: 'No messages yet', body: 'A short hello goes a long way — most applicants never hear back.' }
+export const APPLICANT_CHAT_EMPTY = { title: 'No messages yet', body: 'A short hello goes a long way. Most applicants never hear back.' }

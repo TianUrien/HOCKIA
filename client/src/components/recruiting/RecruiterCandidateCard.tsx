@@ -311,10 +311,10 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
   // Round 6: say where the tap goes — the full profile or the preview.
   const tapHint = opensProfile ? 'Opens profile.' : 'Tap to preview.'
   const ariaLabel = inContext
-    ? `${name} — ${chip.label} (${pct}% match). ${tapHint}`
+    ? `${name} · ${chip.label} (${pct}% match). ${tapHint}`
     : fitState && fitChipLabel(fitState)
-      ? `${name} — ${detailLine(member)}, ${fitChipLabel(fitState)}. ${tapHint}`
-      : `${name} — ${detailLine(member)}. ${tapHint}`
+      ? `${name} · ${detailLine(member)}, ${fitChipLabel(fitState)}. ${tapHint}`
+      : `${name} · ${detailLine(member)}. ${tapHint}`
 
   return (
     <button
