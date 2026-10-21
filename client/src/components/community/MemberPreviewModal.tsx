@@ -34,7 +34,6 @@ import {
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
-import { availabilityLabel } from '@/lib/availabilityLabel'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
@@ -292,8 +291,6 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
 
   const heroSrc = isBrand ? (member.brand_logo_url ?? member.avatar_url) : member.avatar_url
   const heroImageUrl = heroSrc ? getImageUrl(heroSrc, 'avatar-lg') : null
-  // Positive, role-specific availability signal (or null) — single source.
-  const availLabel = availabilityLabel(member.role, member)
 
   // initials block was the previous purple fallback; replaced by
   // RolePlaceholder. Computation removed.
@@ -401,13 +398,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 <RolePlaceholder role={member.role} label="" />
               </div>
             )}
-            {availLabel && (
-              <span
-                className="absolute top-3 right-3 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                aria-label={availLabel}
-                title={availLabel}
-              />
-            )}
+            {/* No green dot on the avatar: it read as an online signal (audit A3). */}
           </div>
 
           {/* Content */}

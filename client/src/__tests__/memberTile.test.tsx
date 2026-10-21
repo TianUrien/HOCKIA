@@ -364,14 +364,11 @@ describe('MemberTile — layout robustness', () => {
     expect(img?.getAttribute('src')).toContain('logo.png')
   })
 
-  it('shows green dot when player is open_to_play', () => {
-    renderTile({ role: 'player', open_to_play: true })
-    expect(screen.getByLabelText('Open to play')).toBeInTheDocument()
-  })
-
-  it('shows green dot when coach is open_to_coach', () => {
-    renderTile({ role: 'coach', open_to_coach: true })
-    expect(screen.getByLabelText('Open to coach')).toBeInTheDocument()
+  // Audit A3 (2026-10-21): the green avatar dot read as an online signal and
+  // is gone; availability shows as the labelled pill instead.
+  it('shows no green avatar dot for an open_to_play player', () => {
+    const { container } = renderTile({ role: 'player', open_to_play: true })
+    expect(container.querySelector('.bg-emerald-500.ring-2')).toBeNull()
   })
 
   it('hides green dot when player is not open_to_play', () => {

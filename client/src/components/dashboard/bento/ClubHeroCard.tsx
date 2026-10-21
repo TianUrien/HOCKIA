@@ -15,7 +15,6 @@ import {
 import Button from '@/components/Button'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
-import CompletionArc from './CompletionArc'
 import { getInitials, cn } from '@/lib/utils'
 import { calculateTier } from '@/lib/profileTier'
 import { derivePublicContactEmail } from '@/lib/profile'
@@ -336,19 +335,27 @@ export default function ClubHeroCard({
           (RecruitmentSummaryCard et al.) down on initial load. */}
       {!readOnly && (
         <div className="mt-6 pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-5">
-            <CompletionArc percentage={completionPercentage} loading={completionLoading} />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-900 leading-tight">
-                Club profile complete
-              </h3>
-              <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
-                {completionPercentage >= 100
-                  ? 'Your club profile is fully built. Players and coaches see complete clubs first.'
-                  : 'Keep going! A complete club profile attracts more players and coaches.'}
-              </p>
-            </div>
-          </div>
+          {/* The next missing item, never a completeness % (audit A2). */}
+          {(() => {
+            if (completionLoading) return <span className="block h-5 w-48 rounded-full bg-gray-200 animate-pulse" aria-hidden="true" />
+            const next = completionBuckets?.find((b) => !b.completed) ?? null
+            return (
+              <div className="min-w-0" data-testid="club-hero-next-step">
+                <h3 className="text-base font-semibold text-gray-900 leading-tight">
+                  {next ? `Next: ${next.label}` : 'Your club profile has every section filled in'}
+                </h3>
+                {next && (
+                  <button
+                    type="button"
+                    onClick={() => onBucketAction?.(next)}
+                    className="mt-2 inline-flex min-h-[44px] items-center text-sm font-semibold text-hockia-primary"
+                  >
+                    {BUCKET_ACTION_LABEL[next.id] ?? 'Add'}
+                  </button>
+                )}
+              </div>
+            )
+          })()}
 
           {completionBuckets && completionBuckets.length > 0 && (
             <div className="mt-5 pt-4 border-t border-gray-100">

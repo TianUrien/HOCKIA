@@ -232,7 +232,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
             previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players and coaches see', onSelect: props.onViewPublic }]}
           />
           {stepCopy && step && (
-            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
+            <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
           )}
           <RecruitingCard
             pending={pending}

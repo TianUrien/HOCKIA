@@ -142,7 +142,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
       },
       {
         id: 'journey',
-        label: 'Career History',
+        label: 'Career history',
         hint: 'Add at least one experience entry',
         unlockCopy: 'Shows where you have coached and the teams you have developed.',
         weight: 15,

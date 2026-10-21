@@ -439,7 +439,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             ]}
           />
           {stepCopy && step && (
-            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
+            <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
           )}
           {isCoach && (recruitsForTeam || coachRoles.length > 0) && props.onPostRole && (
             <div className="pt-3">

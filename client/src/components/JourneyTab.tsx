@@ -212,7 +212,7 @@ export default function JourneyTab({
   profileId,
   readOnly = false,
   variant = 'tab',
-  title = 'Career History',
+  title = 'Career history',
 }: JourneyTabProps) {
   const { getCountryById } = useCountries()
   const { user } = useAuthStore()

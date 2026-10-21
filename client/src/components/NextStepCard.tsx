@@ -9,8 +9,8 @@ type BucketLike = {
 }
 
 interface NextStepCardProps<TBucket extends BucketLike = BucketLike> {
-  /** Completion percentage (0-100) */
-  percentage: number
+  /** Unused since audit A2 (no percentage shown); kept so callers compile. */
+  percentage?: number
   /** List of completion buckets */
   buckets: TBucket[]
   /** Whether data is loading */
@@ -41,7 +41,6 @@ interface NextStepCardProps<TBucket extends BucketLike = BucketLike> {
  * (empty hook state — should not happen in practice).
  */
 export default function NextStepCard<TBucket extends BucketLike>({
-  percentage,
   buckets,
   loading = false,
   onBucketAction,
@@ -49,8 +48,6 @@ export default function NextStepCard<TBucket extends BucketLike>({
   if (loading) return null
   if (buckets.length === 0) return null
 
-  const completedCount = buckets.filter(b => b.completed).length
-  const remaining = buckets.length - completedCount
   const nextBucket = buckets.find(b => !b.completed)
   const isComplete = !nextBucket
 
@@ -63,24 +60,8 @@ export default function NextStepCard<TBucket extends BucketLike>({
       />
 
       <div className="relative">
-        {/* Progress summary — gamified level-up framing.
-            The percentage label is owned by the Hero CompletionArc on the
-            Bento landing; this card keeps only the bar + steps-left line so
-            the two surfaces don't repeat the same number side-by-side. */}
-        <div className="mb-4">
-          <p className="text-sm font-semibold text-gray-900 mb-2">Your profile</p>
-          <div className="h-1.5 overflow-hidden rounded-full bg-white/70 ring-1 ring-inset ring-hockia-primary/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-hockia-primary to-[#ec4899] transition-all duration-500 ease-out"
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1.5">
-            {isComplete
-              ? `All ${buckets.length} steps complete`
-              : `${remaining} step${remaining === 1 ? '' : 's'} left to complete`}
-          </p>
-        </div>
+        {/* No progress bar or percentage (audit A2): the next missing item only. */}
+        <p className="text-sm font-semibold text-gray-900 mb-4">Your profile</p>
 
         {/* Body — celebratory state when complete, next-step CTA otherwise */}
         {isComplete ? (
@@ -96,7 +77,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
                 Your profile is fully built
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed mt-1">
-                Keep it fresh — clubs and coaches see updated profiles first.
+                Keep it up to date as your season changes.
               </p>
             </div>
           </div>

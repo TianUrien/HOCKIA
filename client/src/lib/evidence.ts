@@ -217,10 +217,10 @@ export function evidenceChecklist(
   })
   rows.push({ key: 'club', label: 'Current club', present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
   rows.push({ key: 'league', label: 'League on record', present: candidate.competition_level_band != null })
-  // Labelled "Career History" — the recruiter-facing product language used
+  // Labelled "Career history" — the recruiter-facing product language used
   // across HOCKIA (matches the data: career_history / career_entry_count).
   // The row KEY stays 'career'; only the display label is user-facing.
-  rows.push({ key: 'career', label: 'Career History', present: (candidate.career_entry_count ?? 0) > 0 })
+  rows.push({ key: 'career', label: 'Career history', present: (candidate.career_entry_count ?? 0) > 0 })
   rows.push({
     key: 'open',
     label: isCoach ? 'Open to coach' : 'Open to play',
@@ -252,3 +252,11 @@ export function evidenceDisplayLabel(result: EvidenceResult): string {
  *  information-completeness, not a public quality score. */
 export const EVIDENCE_TOOLTIP =
   'Evidence Level reflects how much verifiable information this profile provides for evaluation: video, references, a provable level. It does not rate skill or talent.'
+
+/** What the profile is missing, as a plain list (audit A2: no completeness
+ *  percentage or "Strong profile" score in recruiter views). */
+export function missingLine(rows: { label: string; present: boolean }[]): string | null {
+  const missing = rows.filter((r) => !r.present).map((r) => r.label)
+  if (missing.length === 0) return null
+  return `Missing: ${missing.map((m, i) => (i === 0 ? m : m.charAt(0).toLowerCase() + m.slice(1))).join(', ')}`
+}

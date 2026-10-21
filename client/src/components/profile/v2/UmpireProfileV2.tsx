@@ -259,7 +259,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
       {owner && (
         <>
           <OwnerButtons onEdit={props.onEdit} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players, clubs and leagues see', onSelect: props.onViewPublic }]} />
-          {stepCopy && step && <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
+          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
           <PrivateStats stats={stats} emptyText="Your stats appear here once people start viewing you" />
         </>
       )}

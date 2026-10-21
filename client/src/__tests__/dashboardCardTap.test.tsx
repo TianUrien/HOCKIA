@@ -25,8 +25,8 @@ describe('DashboardCard — whole-card tap', () => {
 
   it('navigates when the title is tapped', async () => {
     const onCta = vi.fn()
-    render(<DashboardCard icon={Play} title="Career History" ctaLabel="View all" onCtaClick={onCta} />)
-    await userEvent.click(screen.getByText('Career History'))
+    render(<DashboardCard icon={Play} title="Career history" ctaLabel="View all" onCtaClick={onCta} />)
+    await userEvent.click(screen.getByText('Career history'))
     expect(onCta).toHaveBeenCalledTimes(1)
   })
 
