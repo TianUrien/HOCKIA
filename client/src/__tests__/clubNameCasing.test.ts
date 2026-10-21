@@ -44,6 +44,12 @@ describe('normalizeClubNameCasing (mirror of public.normalize_club_name_casing)'
     expect(normalizeClubNameCasing('Hc Rotterdam')).toBe('Hc Rotterdam') // mixed case stays as typed
   })
 
+  it('keeps German and Dutch particles lowercase inside a name', () => {
+    expect(normalizeClubNameCasing('Der Club an der Alster')).toBe('Der Club an der Alster')
+    expect(normalizeClubNameCasing('hockeyclub aan de amstel')).toBe('Hockeyclub aan de Amstel')
+    expect(normalizeClubNameCasing('te awamutu Hockey Club')).toBe('Te Awamutu Hockey Club')
+  })
+
   it('keeps null and empty input', () => {
     expect(normalizeClubNameCasing(null)).toBeNull()
     expect(normalizeClubNameCasing('   ')).toBe('')

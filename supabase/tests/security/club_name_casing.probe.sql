@@ -26,6 +26,7 @@ DECLARE
     ['hc 1926', 'HC 1926'],
     ['the hague hc', 'The Hague HC'],
     ['dublin fc', 'Dublin FC'],
+    ['Der Club an der Alster', 'Der Club an der Alster'],
     ['Already Fine HC', 'Already Fine HC']
   ];
   v_i int;

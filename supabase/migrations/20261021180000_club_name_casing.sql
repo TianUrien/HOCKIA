@@ -43,7 +43,9 @@ AS $function$
 DECLARE
   c_particles constant text[] := ARRAY[
     'de','del','della','di','da','do','dos','das','la','le','les','el','los','las',
-    'y','e','of','the','and','van','von','der','den','het','du','des','et','a','en','at','on'
+    'y','e','of','the','and','van','von','der','den','het','du','des','et','a','en','at','on',
+    -- German, Dutch, French, Catalan particles ("Der Club an der Alster", "aan de Amstel")
+    'an','am','im','auf','zu','zum','zur','und','aan','op','te','ter','in','al','au','aux','sur','i'
   ];
   -- Club-type abbreviations typed in lowercase become uppercase ("the hague hc"
   -- -> "The Hague HC"), never "Hc".
