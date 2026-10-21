@@ -4,6 +4,7 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-21 | No verification of clubs, brands or users for now: no verified badge work, no verification flow. Design must not depend on a "verified" signal for trust (use real facts: crest, roles posted, replies, references) | Founder |
 | 2026-10-21 | Vertical deck as built (PR #393): the details panel has no permit line and no "since" until that data is loaded; the tile reads "Nationalities and passports"; the EU badge is the app component (solid, 189:14 style) on the photo and in the panel; Highlights reads "Watch" and opens the full profile so video visibility rules hold. Figma updated to match | Founder (via code agent) |
 | 2026-10-21 | Community preview on phones: swipe vertically between members (one member per screen, snap), not horizontally; a "More" tap slides up a details panel with current club and category, nationalities with EU and "Based in", references count and a highlights-video button; Message / Add friend / Shortlist stay fixed at the bottom as today. Desktop keeps the deck with arrows | Founder |
 | 2026-10-21 | Words stay plain: the tab is Home; the question is "What's your goal?" (personal); "This week in hockey" for the shared feed. Differentiate by depth (usability, simple navigation, what members really want, measured), not by coining words. "Move" stays as the internal unit and as the verb on cards | Founder |
