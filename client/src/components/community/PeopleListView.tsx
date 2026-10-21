@@ -7,8 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2, Search, Users } from 'lucide-react'
-import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
-import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
+import { useNavigationType } from 'react-router-dom'
 import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError, isNetworkFailureError } from '@/lib/sentryHelpers'
@@ -16,8 +15,6 @@ import { NETWORK_ERROR_COPY, couldntLoadTitle } from '@/lib/networkCopy'
 import { CommunitySkeletons } from './CommunitySkeletons'
 import { skeletonKindFor } from '@/lib/communitySkeleton'
 import { isOpenToAny } from '@/lib/hockeyCategories'
-import { MemberPreviewModal } from './MemberPreviewModal'
-import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import { scopeFilters } from '@/lib/recruitingScopeFilters'
@@ -56,8 +53,8 @@ import { useOwnLeague } from '@/hooks/useScouting'
 import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { contextFitTarget, keepAdultPlayers, type ContextLike } from '@/lib/findPlayers'
-import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
-import { recruiterDisplayTier } from '@/lib/recruiterVerdict'
+import { rankCommunityClubView } from '@/lib/communityClubView'
+import { fitStateFromVerdict } from '@/lib/recruiterVerdict'
 import type { FitState } from '@/lib/clubRecruiting'
 import { MemberPhotoGrid } from './photo/MemberPhotoGrid'
 import { PROFILES_SELECT } from '@/lib/communitySelect'
@@ -182,9 +179,6 @@ interface PeopleListViewProps {
    *  Player cards carry the server fit chip, "Best fit" ranks by
    *  compute_club_fit then evidence, and a card opens the full profile. */
   clubView?: boolean
-  /** Phone + a club or a coach who recruits: player and coach cards open the
-   *  full profile instead of a preview (D1.17; founder 2026-09-27 for coaches). */
-  recruiterDirectProfiles?: boolean
 }
 
 /** Player has at least one video proof signal (highlight or full-game). */
@@ -206,10 +200,8 @@ const memberEvidence = (m: Profile) =>
 const EMPTY_CATEGORIES: PlayingCategory[] = []
 const EMPTY_IDS: number[] = []
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, onEuCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, onEuCountChange, scopeReshaping = false, clubView = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
-  const navigate = useNavigate()
-  const location = useLocation()
   // `loading` flips false once the auth session + profile resolve.
   // Gating the fetch on it prevents the historical double-fire:
   //   render 1 — profile null → viewerScope='anon' → fetch as anon
@@ -293,6 +285,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const scopeCategories = scopeNarrow?.categories ?? EMPTY_CATEGORIES
   const scopeCountryIds = scopeNarrow?.countryIds ?? EMPTY_IDS
   const scopeLocation = scopeNarrow?.location ?? null
+  const scopeHasNarrowing = Boolean(scopeNarrow && (scopeNarrow.categories.length || scopeNarrow.countryIds.length || scopeNarrow.location))
 
   // Club view fit (D1.17 · DEV NOTE 355:905) — server fit for the active
   // context, the same source Find players reads.
@@ -312,9 +305,6 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const blockKey = useMemo(() => [...blockedIds].sort().join(','), [blockedIds])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
-  const [previewMember, setPreviewMember] = useState<Profile | null>(null)
-  // For recruiter candidate evaluation: track the member + their match score for the lightweight preview sheet
-  const [candidatePreview, setCandidatePreview] = useState<{ member: Profile } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   // The member read failed (not an expired session): the phone grid shows
   // "Couldn't load members · Try again" (Figma Community P6).
@@ -340,8 +330,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Responsive page size — reacts to viewport changes
   const isMobile = useMediaQuery('(max-width: 767px)')
   const pageSize = isMobile ? 12 : 24
-  // Photo-first Community (Figma New Hockia 2 · Community handoff v1) is the
-  // phone layout; desktop keeps the unified card grid.
+  // Photo-first Community (Figma New Hockia 2 · Community handoff v1) on every
+  // screen size: desktop ports the phone card and deck (design audit B1).
   const isPhone = useMediaQuery('(max-width: 1023px)')
 
   // Total count for the current role + test-visibility scope. Runs
@@ -1324,27 +1314,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // "No members found" empty state only renders once genuinely settled — never
   // as a flash while a re-fetch is in flight (e.g. right after clearing a
   // recruiting scope, which re-fetches under a new role filter).
-  // Full profile in club mode; back returns here (D1.16 back label).
-  const openProfile = (path: string) => navigate(path, { state: { from: `${location.pathname}${location.search}` } })
-
-  // Phone photo cards: the fit pill for recruiters — the server fit in club
-  // view, else the verdict tier of an active scope (Excellent/Good → Strong
-  // fit, Possible → Possible fit, nothing below).
+  // Photo cards: the Fit badge for recruiters — the server fit in club view,
+  // else the verdict of an active context (one Fit badge, audit B3).
   const fitById = useMemo(() => {
     const map = new Map<string, FitState | null>()
-    if (!isPhone) return map
     if (clubView) {
       for (const [id, f] of clubFit.fit) map.set(id, f.state)
       return map
     }
     for (const source of [matchById, coachMatchById]) {
-      for (const [id, { verdict }] of source) {
-        const tier = recruiterDisplayTier(verdict)
-        map.set(id, tier === 'excellent' || tier === 'good' ? 'green' : tier === 'possible' ? 'yellow' : null)
-      }
+      for (const [id, { verdict }] of source) map.set(id, fitStateFromVerdict(verdict))
     }
     return map
-  }, [isPhone, clubView, clubFit.fit, matchById, coachMatchById])
+  }, [clubView, clubFit.fit, matchById, coachMatchById])
 
   // The deck's top label (Figma P18): what this list is · how it's sorted.
   const ROLE_TITLE = { player: 'Players', coach: 'Coaches', club: 'Clubs', brand: 'Brands', umpire: 'Umpires' } as const
@@ -1371,168 +1353,49 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           </span>
         </div>
       )}
-      {isPhone ? (
-        showSkeletons ? (
-          <CommunitySkeletons kind={skeletonKindFor(roleFilter)} layout="phone" />
-        ) : (!isBusy && loadError && displayedMembers.length === 0) ? (
-          <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center" role="alert">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-ink-2">
-              <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
-            </span>
-            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
-            <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
-            <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
-              Try again
-            </button>
-          </div>
-        ) : (!isBusy && displayedMembers.length === 0) ? (
-          <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
-              <Search className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
-            </span>
-            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed ? 'No members match' : 'No members yet'}</h3>
-            <p className="mt-2 text-row text-ink-2">
-              {isNarrowed ? 'Try a different search or fewer filters. New members join every week.' : 'New members join every week.'}
-            </p>
-            {isNarrowed && (
-              <button type="button" onClick={clearFilters} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-line bg-white px-6 text-row font-semibold text-ink-1">
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className={['mb-6 transition-opacity duration-300 ease-out', isReshaping ? 'opacity-40' : 'opacity-100'].join(' ')}>
-              <MemberPhotoGrid
-                members={displayedMembers}
-                fitById={fitById}
-                deckMembers={filteredMembers}
-                contextLabel={deckContextLabel}
-                onAdjustFilters={() => state.setShowFilters(true)}
-              />
-            </div>
-            {hasMore && <div ref={sentinelRef} className="h-1" />}
-            {hasMore && (
-              <div className="flex justify-center py-6">
-                <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
-              </div>
-            )}
-          </>
-        )
-      ) : showSkeletons ? (
-        <CommunitySkeletons kind={skeletonKindFor(roleFilter)} layout="desktop" />
+      {showSkeletons ? (
+        <CommunitySkeletons kind={skeletonKindFor(roleFilter)} layout={isPhone ? 'phone' : 'desktop'} />
       ) : (!isBusy && loadError && displayedMembers.length === 0) ? (
-        <div className="flex flex-col items-center rounded-[20px] border border-line bg-white px-6 py-12 text-center" role="alert" data-testid="community-load-failed">
-          <h3 className="text-[20px] font-semibold leading-6 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
+        <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center" role="alert" data-testid="community-load-failed">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-ink-2">
+            <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
+          </span>
+          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
           <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
-          <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90">
+          <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
             Try again
           </button>
         </div>
       ) : (!isBusy && displayedMembers.length === 0) ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🔍</span>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No members found</h3>
-          <p className="text-gray-500 mb-4">
-            {scopeNarrow && (scopeNarrow.categories.length || scopeNarrow.countryIds.length || scopeNarrow.location)
+        <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+            <Search className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed || scopeHasNarrowing ? 'No members match' : 'No members yet'}</h3>
+          <p className="mt-2 text-row text-ink-2">
+            {scopeHasNarrowing
               ? 'No players match your recruiting context yet. Tap “Show everyone” to widen, or change the context.'
-              : isNarrowed
-                ? 'Try adjusting your search or filters to see more results.'
-                : 'No members yet.'}
+              : isNarrowed ? 'Try a different search or fewer filters. New members join every week.' : 'New members join every week.'}
           </p>
           {isNarrowed && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
-            >
+            <button type="button" onClick={clearFilters} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-line bg-white px-6 text-row font-semibold text-ink-1">
               Clear filters
             </button>
           )}
         </div>
       ) : (
         <>
-          <div className={[
-            (playerMatchActive || coachMatchActive)
-              ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
-              // No-context grid: auto-rows-fr makes every tile in a row the
-              // same length. The tile's key rows (avatar → name → role →
-              // nationality) stay top-aligned and its footer is pinned to the
-              // bottom (mt-auto), so cards match length AND line up.
-              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8',
-            // Crossfade during a reshape: dim the outgoing cards while the
-            // re-ranked set loads, then fade back to full opacity. No blank
-            // skeleton swap, so the page never visually resets.
-            'transition-opacity duration-300 ease-out',
-            isReshaping ? 'opacity-40' : 'opacity-100',
-          ].join(' ')}>
-            {displayedMembers.map((member, i) => {
-              // Scoped recruiter view → the premium evaluation card for the
-              // candidates the active scope ranks (players under a player
-              // scope, coaches under a coach scope); everyone else keeps the
-              // compact tile. The card is role-agnostic; only the score
-              // source differs (Club Fit vs Coach Fit).
-              // Club view (D1.17): player cards get the server fit chip and
-              // open the full profile in club mode — clubs skip the Member
-              // preview (DEV NOTE 355:905). Other roles list as usual.
-              if (clubView && member.role === 'player') {
-                return (
-                  <RecruiterCandidateCard
-                    key={member.id}
-                    member={member}
-                    fitState={clubFit.fit.get(member.id)?.state ?? null}
-                    onPreview={() => openProfile(`/players/id/${member.id}`)}
-                    opensProfile
-                    priority={i < 4}
-                  />
-                )
-              }
-              // Coaches (and players outside club view) open the full profile
-              // for recruiters on phone too — no preview step.
-              const directPath = recruiterDirectProfiles ? recruiterCardProfilePath(member) : null
-              const md = matchById.get(member.id)
-              if (playerMatchActive && member.role === 'player' && md) {
-                return (
-                  <RecruiterCandidateCard
-                    key={member.id}
-                    member={member}
-                    verdict={md.verdict}
-                    onPreview={() => setCandidatePreview({ member })}
-                    priority={i < 4}
-                  />
-                )
-              }
-              const cmd = coachMatchById.get(member.id)
-              if (coachMatchActive && member.role === 'coach' && cmd) {
-                return (
-                  <RecruiterCandidateCard
-                    key={member.id}
-                    member={member}
-                    verdict={cmd.verdict}
-                    onPreview={directPath ? () => openProfile(directPath) : () => setCandidatePreview({ member })}
-                    opensProfile={!!directPath}
-                    priority={i < 4}
-                  />
-                )
-              }
-              // NEUTRAL mode — the SAME unified card, no recruiting scope.
-              // Opens the general member preview (the scoped branches above
-              // open the recruiter CandidatePreviewSheet instead).
-              return (
-                <RecruiterCandidateCard
-                  key={member.id}
-                  member={member}
-                  onPreview={directPath ? () => openProfile(directPath) : () => setPreviewMember(member)}
-                  opensProfile={!!directPath}
-                  priority={i < 4}
-                />
-              )
-            })}
+          {/* One photo-first grid on every screen size (audit B1): phones two
+              per row, desktop four or five; clubs always full width. */}
+          <div className={['mb-6 transition-opacity duration-300 ease-out', isReshaping ? 'opacity-40' : 'opacity-100'].join(' ')}>
+            <MemberPhotoGrid
+              members={displayedMembers}
+              fitById={fitById}
+              deckMembers={filteredMembers}
+              contextLabel={deckContextLabel}
+              onAdjustFilters={() => state.setShowFilters(true)}
+            />
           </div>
-
-          {/* Infinite scroll sentinel */}
           {hasMore && <div ref={sentinelRef} className="h-1" />}
           {hasMore && (
             <div className="flex justify-center py-6">
@@ -1541,16 +1404,6 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           )}
         </>
       )}
-
-      <MemberPreviewModal
-        member={previewMember}
-        onClose={() => setPreviewMember(null)}
-      />
-
-      <CandidatePreviewSheet
-        member={candidatePreview?.member ?? null}
-        onClose={() => setCandidatePreview(null)}
-      />
     </div>
   )
 }

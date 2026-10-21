@@ -248,9 +248,10 @@ describe('Community card accessibility label', () => {
     expect(label).toMatch(/Tap to preview\.$/)
     expect(label).not.toContain('Opens profile')
   })
-  it('Community passes opensProfile on the direct-to-profile branches', () => {
+  it('Community cards open the member deck on every screen size (audit B1: one photo grid, no direct-to-profile branch)', () => {
     const plv = src('components/community/PeopleListView.tsx')
-    expect(plv.match(/opensProfile/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(plv).toContain('<MemberPhotoGrid')
+    expect(plv).not.toContain('RecruiterCandidateCard')
   })
 })
 

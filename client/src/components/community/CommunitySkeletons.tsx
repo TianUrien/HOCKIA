@@ -1,4 +1,3 @@
-import { MemberTileSkeleton } from '@/components/Skeleton'
 import type { CommunitySkeletonKind } from '@/lib/communitySkeleton'
 
 /**
@@ -21,8 +20,8 @@ function Bars() {
 export function CommunitySkeletons({ kind, layout }: { kind: CommunitySkeletonKind; layout: 'phone' | 'desktop' }) {
   if (kind === 'club') {
     return (
-      <div className={layout === 'phone' ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'} aria-busy="true" aria-label="Loading clubs" data-testid="community-skeleton-club">
-        {[...Array(layout === 'phone' ? 3 : 6)].map((_, i) => (
+      <div className={layout === 'phone' ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 gap-4'} aria-busy="true" aria-label="Loading clubs" data-testid="community-skeleton-club">
+        {[...Array(3)].map((_, i) => (
           <div key={i} className="flex h-[188px] flex-col justify-end gap-1.5 rounded-[24px] bg-surface-muted p-4" data-testid="club-card-skeleton">
             <span className="mb-1.5 h-12 w-12 rounded-[14px] bg-line" />
             <Bars />
@@ -33,7 +32,7 @@ export function CommunitySkeletons({ kind, layout }: { kind: CommunitySkeletonKi
   }
   if (kind === 'brand') {
     return (
-      <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5'} aria-busy="true" aria-label="Loading brands" data-testid="community-skeleton-brand">
+      <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5'} aria-busy="true" aria-label="Loading brands" data-testid="community-skeleton-brand">
         {[...Array(layout === 'phone' ? 6 : 15)].map((_, i) => (
           <div key={i} className="flex aspect-[3/4] flex-col items-center justify-between rounded-[20px] bg-surface-muted p-3" data-testid="brand-card-skeleton">
             <span className="mt-6 h-16 w-16 rounded-[16px] bg-line" />
@@ -43,20 +42,14 @@ export function CommunitySkeletons({ kind, layout }: { kind: CommunitySkeletonKi
       </div>
     )
   }
-  if (layout === 'phone') {
-    return (
-      <div className="grid grid-cols-2 gap-3" aria-busy="true" aria-label="Loading members" data-testid="community-skeleton-person">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="flex aspect-[3/4] flex-col justify-end gap-1.5 rounded-[20px] bg-surface-muted p-3" data-testid="member-tile-skeleton">
-            <Bars />
-          </div>
-        ))}
-      </div>
-    )
-  }
+  // People: the photo card shape on every screen size (audit B1).
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5" aria-busy="true" aria-label="Loading members" data-testid="community-skeleton-person">
-      {[...Array(15)].map((_, i) => <MemberTileSkeleton key={i} />)}
+    <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5'} aria-busy="true" aria-label="Loading members" data-testid="community-skeleton-person">
+      {[...Array(layout === 'phone' ? 6 : 15)].map((_, i) => (
+        <div key={i} className="flex aspect-[3/4] flex-col justify-end gap-1.5 rounded-[20px] bg-surface-muted p-3" data-testid="member-tile-skeleton">
+          <Bars />
+        </div>
+      ))}
     </div>
   )
 }
