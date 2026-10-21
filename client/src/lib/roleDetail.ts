@@ -43,6 +43,15 @@ export const ROLE_DETAIL_TTL_MS = 30_000
 
 const cache = new Map<string, { at: number; result: Promise<RoleDetailResult> }>()
 
+// A warmed read belongs to the viewer who made it: drop everything when the
+// session changes (sign-in, sign-out, account switch), so the next account
+// never opens a role from the previous viewer's read.
+try {
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') cache.clear()
+  })
+} catch { /* test doubles without auth */ }
+
 function runQuery(id: string): Promise<RoleDetailResult> {
   return Promise.resolve(
     supabase.from('opportunities').select(ROLE_DETAIL_SELECT).eq('id', id).single(),
