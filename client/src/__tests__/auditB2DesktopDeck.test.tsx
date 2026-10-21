@@ -19,7 +19,7 @@ vi.mock('@/lib/startConversation', () => ({ resolveConversationRoute: vi.fn(() =
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: mocks.trackDbEvent }))
 vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn(), trackProtectedActionBlocked: vi.fn() }))
-vi.mock('@/lib/auth', () => ({ useAuthStore: () => ({ user: { id: 'viewer' }, profile: { id: 'viewer', role: mocks.viewerRole } }) }))
+vi.mock('@/lib/auth', () => ({ useAuthStore: () => ({ user: { id: 'viewer' }, profile: { id: 'viewer', role: mocks.viewerRole, coach_recruits_for_team: mocks.viewerRole === 'coach' } }) }))
 vi.mock('@/lib/toast', () => ({ useToastStore: (sel: (s: { addToast: () => void }) => unknown) => sel({ addToast: vi.fn() }) }))
 vi.mock('@/lib/ambassadorInvite', async (orig) => ({
   ...(await orig<typeof import('@/lib/ambassadorInvite')>()),
@@ -50,6 +50,7 @@ vi.mock('@/components/ProfileActionMenu', () => ({ default: () => <button type="
 vi.mock('@/components/SignInPromptModal', () => ({ default: () => null }))
 vi.mock('@/components/profile/ClubViewCards', () => ({ ShortlistRoleSheet: () => null }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useLocation: () => ({ pathname: '/community', search: '' }) }))
+vi.mock('@/components/recruiting/RecruiterFitExplain', () => ({ default: () => <div data-testid="recruiter-fit-explain">Plays your position</div> }))
 
 import { MemberFullPreview } from '@/components/community/photo/MemberFullPreview'
 import type { Profile } from '@/components/community/PeopleListView'
@@ -162,7 +163,7 @@ describe('Desktop member deck', () => {
     const bar = within(screen.getByTestId('member-preview-actions'))
     expect(bar.getByTestId('member-preview-shortlist').className).toContain('bg-hockia-primary')
     expect(bar.getByTestId('member-preview-message').className).not.toContain('bg-hockia-primary')
-    expect(card().getByTestId('fit-badge')).toHaveTextContent('Strong fit')
+    for (const badge of card().getAllByTestId('fit-badge')) expect(badge).toHaveTextContent('Strong fit')
     expect(screen.getByTestId('member-deck-card').textContent).not.toMatch(/%/)
   })
 
@@ -170,5 +171,33 @@ describe('Desktop member deck', () => {
     renderDeck()
     fireEvent.click(within(screen.getByTestId('member-preview-actions')).getByTestId('member-preview-full-profile'))
     expect(mocks.trackDbEvent).toHaveBeenCalledWith('member_preview_action', 'profile', 'm1', expect.objectContaining({ action: 'full_profile', surface: 'desktop' }))
+  })
+
+  it('recruiters get "Why this fit" in the details column; it opens the explained fit inline', async () => {
+    for (const role of ['club', 'coach']) {
+      mocks.viewerRole = role
+      mocks.recruiter = true
+      const view = render(<MemberFullPreview member={members[0]} onClose={vi.fn()} deck={{ members, startIndex: 0, contextLabel: 'Players · Best fit' }} />)
+      const toggle = card().getByTestId('member-desktop-why-toggle')
+      expect(toggle).toHaveTextContent('Why this fit')
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      fireEvent.click(toggle)
+      expect(await card().findByTestId('recruiter-fit-explain')).toHaveTextContent('Plays your position')
+      // Inline in the deck, not a second dialog.
+      expect(screen.getAllByRole('dialog')).toHaveLength(1)
+      expect(screen.getByTestId('member-deck-card').textContent).not.toMatch(/%/)
+      view.unmount()
+    }
+  })
+
+  it('players, brands and umpires never get "Why this fit"', () => {
+    for (const role of ['player', 'brand', 'umpire']) {
+      mocks.viewerRole = role
+      mocks.recruiter = false
+      const view = render(<MemberFullPreview member={members[0]} onClose={vi.fn()} deck={{ members, startIndex: 0, contextLabel: 'All members' }} />)
+      expect(screen.queryByTestId('member-desktop-why')).toBeNull()
+      expect(screen.queryByText('Why this fit')).toBeNull()
+      view.unmount()
+    }
   })
 })

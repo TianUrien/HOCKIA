@@ -41,15 +41,11 @@ import RolePlaceholder from '@/components/RolePlaceholder'
 import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
 import { missingLine, computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
-import { useClubFit } from '@/hooks/useClubFit'
-import { useCoachFit } from '@/hooks/useCoachFit'
-import { useEvidence } from '@/hooks/useEvidence'
-import { useInterest } from '@/hooks/useInterest'
-import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
 import RecruiterVerdictCard from './RecruiterVerdictCard'
+import { useCandidateVerdict } from '@/hooks/useCandidateVerdict'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { isOpenToAny } from '@/lib/hockeyCategories'
-import { useRecruitingContext, useHasActiveRecruitingScope, useActiveRecruitingTargetProblem } from '@/hooks/useRecruitingContext'
+import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -77,86 +73,10 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   const contentRef = useRef<HTMLDivElement>(null)
   const [isViewing, setIsViewing] = useState(false)
 
-  // Fit (reasons/positives/caveats) for the "why this matches" section — Club
-  // Fit for players, Coach Fit for coaches. Both hooks read the active context
-  // from the store, return the SAME shape, and self-gate to null candidates,
-  // so the reasons reflect the scope the card ranked by. Both are called
-  // unconditionally (hooks rule); only one gets a non-null candidate.
+  // Fit + the explanation-led verdict (shared with the desktop deck's
+  // "Why this fit", audit follow-up 2026-10-21): hooks/useCandidateVerdict.
+  const { verdict } = useCandidateVerdict(member)
   const isCoach = member?.role === 'coach'
-  const clubFit = useClubFit(
-    member && member.role === 'player'
-      ? {
-          id: member.id,
-          role: member.role,
-          playing_category: member.playing_category ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-          // Resolve the proven band so competition_proximity matches the grid
-          // + profile (which both pass it) — else the preview verdict could
-          // diverge on the level dimension.
-          competition_level_band: getClubLevelBand(member.current_world_club_id ?? null, categoryToBandTarget(member.playing_category ?? null)),
-          open_to_play: member.open_to_play ?? null,
-          open_to_coach: member.open_to_coach ?? null,
-          open_to_opportunities: member.open_to_opportunities ?? null,
-          last_active_at: member.last_active_at ?? null,
-          position: member.position ?? null,
-          secondary_position: member.secondary_position ?? null,
-          specialist_skills: member.specialist_skills ?? null,
-        }
-      : null,
-  )
-  const coachFit = useCoachFit(
-    member && member.role === 'coach'
-      ? {
-          id: member.id,
-          role: member.role,
-          coach_specialization: member.coach_specialization ?? null,
-          coaching_categories: member.coaching_categories ?? null,
-        }
-      : null,
-  )
-  const fit = isCoach ? coachFit : clubFit
-
-  // Proven + Interested lenses + the recruitment-problem weighting, fused into
-  // the SAME explanation-led verdict the full profile (ScoutingCard) and the
-  // grid card lead with — so all three surfaces read one tier for one candidate.
-  const evidence = useEvidence(
-    member
-      ? {
-          role: member.role,
-          highlight_video_url: member.highlight_video_url ?? null,
-          full_game_video_count: member.full_game_video_count ?? null,
-          accepted_reference_count: member.accepted_reference_count ?? null,
-          is_verified: member.is_verified ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-        }
-      : null,
-  )
-  const interest = useInterest(
-    member
-      ? {
-          role: member.role,
-          relocation_willingness: member.relocation_willingness ?? null,
-          relocation_countries_open: member.relocation_countries_open ?? null,
-          relocation_countries_excluded: member.relocation_countries_excluded ?? null,
-          available_from: member.available_from ?? null,
-          home_country_id: member.base_country_id ?? member.nationality_country_id ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-          playing_category: member.playing_category ?? null,
-          level_target: member.level_target ?? null,
-          opportunity_preference: member.opportunity_preference ?? null,
-        }
-      : null,
-  )
-  const hasOpeningScope = useHasActiveRecruitingScope()
-  const scopeProblem = useActiveRecruitingTargetProblem()
-  const verdict = computeRecruiterVerdict({
-    fit,
-    evidence,
-    interest,
-    hasOpeningScope,
-    problem: scopeProblem,
-    candidateRole: member?.role ?? null,
-  })
 
   const clubLogo = useWorldClubLogo(member?.current_world_club_id ?? null)
 

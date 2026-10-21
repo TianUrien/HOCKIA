@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { useAIOpinion } from '@/hooks/useAIOpinion'
 import type { AIOpinionFeedbackRating, AIOpinionCandidate } from '@/hooks/useAIOpinion'
+import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import {
   trackAIOpinionViewed,
   trackAIOpinionRegenerated,
@@ -167,11 +168,11 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
-            HOCKIA AI · fit opinion
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
+            HOCKIA AI · fit opinion <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
-            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your team scope.
+            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your recruiting context.
           </p>
         </div>
       </header>

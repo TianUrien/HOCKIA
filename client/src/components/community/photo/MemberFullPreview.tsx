@@ -3,7 +3,7 @@ import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -50,6 +50,9 @@ import {
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import type { Profile } from '../PeopleListView'
+
+// Recruiters' "Why this fit" on the desktop deck: its own chunk (verdict + Hockia AI opinion).
+const RecruiterFitExplain = lazy(() => import('@/components/recruiting/RecruiterFitExplain'))
 import { FitBadge } from '@/components/ui/FitBadge'
 
 /**
@@ -547,6 +550,13 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       panelActions: buildActions('panel'),
       messageBlockedReason: messageBlockedReason,
       onViewProfile: viewProfile,
+      fitState,
+      // Founder decision 2026-10-21: recruiters keep the explained fit on
+      // desktop, inside the deck. Clubs and recruiting coaches only, on
+      // player and coach candidates; never players, brands or umpires.
+      fitExplain: desktop && viewerRecruits && (member.role === 'player' || member.role === 'coach')
+        ? <Suspense fallback={null}><RecruiterFitExplain member={member} /></Suspense>
+        : null,
       sheets: (
           <>
             {recruiterActions && (
@@ -1175,6 +1185,9 @@ interface ImmersivePageProps {
   messageBlockedReason: string | null
   onViewProfile: () => void
   sheets: React.ReactNode
+  /** Desktop, recruiters only: the fit state and the "Why this fit" content. */
+  fitState?: FitState | null
+  fitExplain?: React.ReactNode
 }
 
 /**
@@ -1423,6 +1436,7 @@ function DetailTile({ label, value, detail = null }: { label: string; value: str
 
 /** One member on the desktop deck: photo column + details + footer actions. */
 function DesktopPage(p: ImmersivePageProps) {
+  const [whyOpen, setWhyOpen] = useState(false)
   const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
   return (
     <div className="flex h-full w-full overflow-hidden bg-white" data-member-id={p.member.id} data-testid="member-desktop-page">
@@ -1494,6 +1508,22 @@ function DesktopPage(p: ImmersivePageProps) {
               {p.idLine && <p className="line-clamp-2 text-[16px] leading-[22px] text-ink-2">{p.idLine}</p>}
             </div>
           </div>
+          {p.fitExplain && (
+            <div className="flex flex-col gap-3" data-testid="member-desktop-why">
+              <button
+                type="button"
+                onClick={() => setWhyOpen((v) => !v)}
+                aria-expanded={whyOpen}
+                className="flex min-h-[48px] items-center gap-2.5 rounded-[14px] border border-line px-3.5 text-left hover:bg-surface-subtle"
+                data-testid="member-desktop-why-toggle"
+              >
+                <FitBadge state={p.fitState} />
+                <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">Why this fit</span>
+                <ChevronDown className={`h-5 w-5 shrink-0 text-ink-3 transition-transform ${whyOpen ? 'rotate-180' : ''}`} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {whyOpen && p.fitExplain}
+            </div>
+          )}
           {p.isPerson ? (
             <>
               {p.playsAt && <DetailTile label={p.playsAt.label} value={p.playsAt.value} detail={p.playsAt.detail} />}
