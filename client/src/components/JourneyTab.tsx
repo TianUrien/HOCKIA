@@ -1205,7 +1205,7 @@ export default function JourneyTab({
           </button>
           <Button onClick={handleSaveActiveEntry} disabled={isSaving} className="inline-flex items-center gap-2">
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit2 className="h-4 w-4" />}
-            {isSaving ? 'Saving…' : mode === 'new' ? 'Save Entry' : 'Save Changes'}
+            {isSaving ? 'Saving…' : mode === 'new' ? 'Save entry' : 'Save changes'}
           </Button>
         </div>
       </div>
@@ -1290,7 +1290,7 @@ export default function JourneyTab({
                     className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" />
-                    Add Entry
+                    Add entry
                   </Button>
                 </div>
                 {isEditingExistingEntry && (
@@ -1315,7 +1315,7 @@ export default function JourneyTab({
             {!readOnly && (
               <Button onClick={startNewEntryForm} className="inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                Add Entry
+                Add entry
               </Button>
             )}
           </div>
@@ -1520,7 +1520,7 @@ export default function JourneyTab({
               className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus className="h-4 w-4" />
-              Add Entry
+              Add entry
             </Button>
           </div>
         )}

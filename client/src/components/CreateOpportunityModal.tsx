@@ -35,7 +35,7 @@ interface CreateVacancyModalProps {
   editingVacancy?: Vacancy | null
   /** Initial opportunity_type when creating a new opportunity. Lets
    *  the coach dashboard launch the modal pre-set to 'coach' so users
-   *  don't land on a "Player Position" form. Ignored when editing. */
+   *  don't land on a "Player position" form. Ignored when editing. */
   initialOpportunityType?: 'player' | 'coach'
   /** Club speed CS3 · Post again: a closed role whose details seed a NEW
    *  role. Start date and deadline start empty; it saves as a new row. */
@@ -701,7 +701,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             </div>
             <div>
               <h2 id={titleId} className="text-xl font-bold text-gray-900">
-                {editingVacancy ? 'Edit Opportunity' : templateVacancy ? 'Post again' : 'Create New Opportunity'}
+                {editingVacancy ? 'Edit opportunity' : templateVacancy ? 'Post again' : 'Create new opportunity'}
               </h2>
               <p id={subtitleId} className="text-sm text-gray-600">
                 {editingVacancy 
@@ -742,7 +742,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Basic information</h3>
             </div>
 
             <div className="space-y-4">
@@ -750,7 +750,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Opportunity Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTypeFieldId}>
-                    Opportunity Type <span className="text-red-500">*</span>
+                    Opportunity type <span className="text-red-500">*</span>
                   </label>
                   <select
                     id={opportunityTypeFieldId}
@@ -760,15 +760,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
                     title="Opportunity type"
                   >
-                    <option value="player">Player Position</option>
-                    <option value="coach">Coach Position</option>
+                    <option value="player">Player position</option>
+                    <option value="coach">Coach position</option>
                   </select>
                 </div>
 
                 {/* Priority Level */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={priorityFieldId}>
-                    Priority Level
+                    Priority level
                   </label>
                   <select
                     id={priorityFieldId}
@@ -787,7 +787,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               {/* Opportunity Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTitleFieldId}>
-                  Opportunity Title <span className="text-red-500">*</span>
+                  Opportunity title <span className="text-red-500">*</span>
                 </label>
                 <input
                   id={opportunityTitleFieldId}
@@ -1077,7 +1077,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={startDateFieldId}>
-                    Start Date
+                    Start date
                   </label>
                   <input
                     id={startDateFieldId}
@@ -1178,7 +1178,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Requirement
+                  Add requirement
                 </button>
               </div>
             </div>
@@ -1186,7 +1186,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
           {/* Benefits Package */}
           <section className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits Package</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits package</h3>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
               {BENEFIT_OPTIONS.map((benefit) => {
@@ -1241,7 +1241,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">💡</span>
-              <h3 className="text-lg font-semibold text-gray-900">Additional Custom Benefits</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Additional custom benefits</h3>
             </div>
             
             <div className="space-y-3">
@@ -1283,7 +1283,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Custom Benefit
+                  Add custom benefit
                 </button>
               </div>
             </div>
@@ -1293,14 +1293,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">📅</span>
-              <h3 className="text-lg font-semibold text-gray-900">Application Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Application details</h3>
             </div>
 
             <div className="space-y-4">
               {/* Application Deadline */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={applicationDeadlineFieldId}>
-                  Application Deadline
+                  Application deadline
                 </label>
                 <input
                   id={applicationDeadlineFieldId}
@@ -1324,7 +1324,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Contact Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactEmailFieldId}>
-                    Contact Email
+                    Contact email
                   </label>
                   <input
                     id={contactEmailFieldId}
@@ -1342,7 +1342,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Contact Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactPhoneFieldId}>
-                    Contact Phone
+                    Contact phone
                   </label>
                   <input
                     id={contactPhoneFieldId}
@@ -1427,7 +1427,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               disabled={isLoading}
               className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
             >
-              {isLoading ? 'Saving…' : 'Update Opportunity'}
+              {isLoading ? 'Saving…' : 'Update opportunity'}
             </Button>
           ) : (
             <>

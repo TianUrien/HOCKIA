@@ -697,7 +697,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <User className="w-4 h-4" />
-              View Profile
+              View profile
             </button>
           </div>
         </div>

@@ -1448,7 +1448,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
               onClick={clearFilters}
               className="px-6 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
             >
-              Clear Filters
+              Clear filters
             </button>
           )}
         </div>

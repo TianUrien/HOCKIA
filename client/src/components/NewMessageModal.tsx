@@ -186,7 +186,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
         {/* Section Label */}
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-          {searchTerm.trim() ? 'Search Results' : 'Recent Conversations'}
+          {searchTerm.trim() ? 'Search results' : 'Recent conversations'}
         </p>
 
         {/* Results List */}

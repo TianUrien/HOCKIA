@@ -388,7 +388,7 @@ export default function VacancyDetailView({
               <>
                 <div className="border-t border-gray-100 my-5" />
                 <div className="mb-5">
-                  <h2 className="text-base font-semibold text-gray-900 mb-2">About This Opportunity</h2>
+                  <h2 className="text-base font-semibold text-gray-900 mb-2">About this opportunity</h2>
                   <p className="text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
                 </div>
               </>
@@ -397,7 +397,7 @@ export default function VacancyDetailView({
             {/* Benefits */}
             {vacancy.benefits && vacancy.benefits.length > 0 && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Benefits Included</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Benefits included</p>
                 <div className="flex items-center flex-wrap gap-2.5">
                   {vacancy.benefits.map((benefit) => {
                     const config = BENEFIT_CONFIG[benefit.toLowerCase()]
@@ -417,7 +417,7 @@ export default function VacancyDetailView({
             {/* Custom Benefits */}
             {vacancy.custom_benefits && vacancy.custom_benefits.length > 0 && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Additional Benefits</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Additional benefits</p>
                 <ul className="space-y-1.5">
                   {vacancy.custom_benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
@@ -458,7 +458,7 @@ export default function VacancyDetailView({
             {/* Deadline — never on a closed role (it no longer takes applications). */}
             {vacancy.application_deadline && !closed && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Application Deadline</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Application deadline</p>
                 <div className="flex items-center gap-2 text-[15px] text-gray-600">
                   <Calendar className="w-4 h-4 text-red-500" />
                   <span className="font-medium">{formatDate(vacancy.application_deadline)}</span>
@@ -633,7 +633,7 @@ export default function VacancyDetailView({
               )}
               {!hideClubProfileButton && !isPublisher && (
                 <Button onClick={handleClubClick} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
-                  {publisherRole === 'coach' ? 'View Profile' : 'View Club'}
+                  {publisherRole === 'coach' ? 'View profile' : 'View club'}
                 </Button>
               )}
               {isPublisher && (

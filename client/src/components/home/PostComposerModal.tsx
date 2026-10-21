@@ -1401,9 +1401,9 @@ export function PostComposerModal({
               {isSubmitting
                 ? (mode === 'transfer' ? 'Announcing...' : 'Posting...')
                 : isEdit
-                  ? 'Save Changes'
+                  ? 'Save changes'
                   : mode === 'transfer'
-                    ? (isClubRole ? 'Announce Signing' : 'Announce Transfer')
+                    ? (isClubRole ? 'Announce signing' : 'Announce transfer')
                     // "Publish post" — distinct from the "Post" mode tab
                     // above so the dialog has no two same-named controls.
                     // (Avoids "Share post", which is already the share-
