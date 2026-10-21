@@ -10,7 +10,7 @@
 Player, Coach, Club, Umpire, Brand. Role badges use the role colours. Coaches may recruit for a team (`coach_recruits_for_team`); a coach posting a role for a club is shown as "Posted by" with the club as the hiring entity.
 
 ## Categories (teams)
-Men's, Women's, Mixed (adult); Girls, Boys (youth; coach roles only — player roles are adult only). Display labels follow `lib/opportunityCopy.ts`; stored values are the legacy enum (`Men`, `Women`, `Girls`, `Boys`, `Mixed`).
+Men's, Women's, Mixed (adult); Girls, Boys (youth; coach roles only: player roles are adult only). Display labels follow `lib/opportunityCopy.ts`; stored values are the legacy enum (`Men`, `Women`, `Girls`, `Boys`, `Mixed`).
 
 ## Vocabulary
 - "Role" / "opportunity" for a club or coach posting; "Apply", "Applied", "Shortlisted", "Maybe", "Not selected" (player view), "Declined" (recruiter view), "Closed".

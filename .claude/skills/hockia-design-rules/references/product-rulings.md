@@ -8,19 +8,20 @@
 - A person's flag = nationality. The two nationality fields (`nationality_country_id`, `nationality2_country_id`) are the passports; EU status is computed, never typed.
 - Person cards: up to 2 flags (≈17 pt so they never wrap) + "EU" badge · age · city (no flag on the city).
 - Profile hero: one glass pill per nationality (flag + country name) + EU badge, then "Based in <city>, <country>".
-- Profile overview: full-width "Nationalities, passports & permits" tile — one line per nationality, "EU passport" tag on EU ones, permits as one line ("🇪🇸 Spain · Residency · until Jun 2027"); never truncated.
+- Profile overview: full-width "Nationalities, passports & permits" tile, one line per nationality, "EU passport" tag on EU ones, permits as one line ("🇪🇸 Spain · Residency · until Jun 2027"); never truncated.
 - Member preview: every nationality named (+ EU), place as text.
 - Club and brand flags = their country (location).
 - Location input: Google Places autocomplete; no proximity search wanted.
 
 ## Community (live)
 - Photo-first grid, newest first for people and clubs, no interleaving; clubs are always full-width cards; Clubs tab available.
-- Person card = 3 lines over the scrim: name (no age) / role · team / nationality flags + EU · age · city. No chips on person cards (no "Open to play" — it covers faces; no category, no status). Clubs show a glass "Recruiting now" only with an open opportunity.
-- Tap opens a full-screen preview deck (swipe between members, "3 of N" pager with 44 pt prev/next). Recruiters get Shortlist + fit in the preview. Anyone can message anyone (server rate-limited).
+- Person card = 3 lines over the scrim: name (no age) / role · team / nationality flags + EU · age · city. No chips on person cards (no "Open to play", it covers faces; no category, no status). Clubs show a glass "Recruiting now" only with an open opportunity.
+- Tap opens a full-screen preview deck. Phones (2026-10-21): swipe vertically between members, one per screen with snap; "More" slides up a details panel (club and category, nationalities + EU + Based in, references, highlights video). Desktop keeps the deck with arrows and the "3 of N" pager. Recruiters get Shortlist + fit in the preview. Anyone can message anyone (server rate-limited).
 - Recruiting context (clubs, recruiting coaches): one UI everywhere, the "Ranked for" pill + sheet (open roles, saved contexts, No context, New context); the word is "context", never "scope". An active player context narrows the Community grid by team + region and ranks by fit, using rules only (2026-10-16).
 - Club preview: Message only, no Add friend (the club page keeps the friendship button); facts League / Based in / Friends here.
 
 ## Home (live)
+- Direction (2026-10-20, thesis, not built): the hockey world first (mixed cards, each with an action), personalised by an inferred intention the member confirms or corrects; brands only at intention moments as labelled content or offers, capped. Earlier same-day drafts superseded. Previous note: Your path → Where you stand (market read, real counts) → Players like you (public facts, name and photo, never ranked) → The moves. Earlier same-day drafts (agent desk, human-first week) are superseded. Previous note: your moment → "This week in your hockey" (all HOCKIA, bounded to the week, one reaction + comments) → the agent attached to actions and one daily line at most. The earlier "agent's desk" with first-person headlines is superseded (read as too AI). Original note:. Hockia AI speaks in first person about what it did, found and needs decided; one tap per item; calm when nothing happened; no feed, likes or comments on Home; brand offers appear only as deals the agent brings. See `docs/product/home-vision.md`.
 - Very visual, little text. "Next step" card on top (photo/crest/logo first, then the highest-value missing item; brands: profile views + search appearances). Approved, not yet shipped (2026-10-16): a views card always opens who viewed you (CTA "View"), never the composer; a card's action must match its title. Today the brand card still says "Post" and the player card "Activity". Roles rail for players; clubs see applicant next steps instead.
 - Grouped digests for automatic events (≥ 4 items), media grouped per day; "New in the community" faces row opens the Community deck.
 - New signing posts only by clubs: the club tags a member (notified, can remove the tag; 18+ only). Card = light grey surface, faint violet pitch, two overlapping circles (player photo + crest), "NEW SIGNING".
@@ -39,7 +40,7 @@
 ## Opportunities v2 (2026-10-16)
 - App Store structure: featured card + themed rails (Roles for you · Paid, with housing · Closing soon ≤ 14 days) + full list. Featured = most relevant role that takes the viewer's application and matches their position, else soonest deadline, else newest; needs ≥ 3 roles in the list. A rail hides under 2 cards.
 - Role cards carry no button: the card opens Role detail, where Message + Apply live; applied roles show a Neutral "Applied" tag.
-- Category chips (ruby / ocean / violet; Girls/Boys outline — coach roles only; player roles are adult only). Hero chips: Position · Category · status.
+- Category chips (ruby / ocean / violet; Girls/Boys outline, coach roles only; player roles are adult only). Hero chips: Position · Category · status.
 - Coach posting for a club: HIRING CLUB + POSTED BY identity; "Posted by <coach>" on cards; coach-aware copy.
 - Covers from club crest palettes; optional cover photo at publish (moderated).
 - Apply sheet = the real modal: Available from / Passport / Contact (editable), optional note ≤ 600, "Your profile, career and highlights are sent automatically".
@@ -52,6 +53,7 @@
 - Chat header may show activity only if the user allows it.
 
 ## Hockia AI (approved 2026-10-16)
+- Hockia AI is every member's agent (2026-10-20): player's agent, club's sporting director, brand's partnerships desk, umpire's liaison. It promises work, never outcomes; facts, never judgements about people.
 - Hockia AI is the name of the whole intelligence layer: what it knows about the viewer and their roles, hockey knowledge, rules in code (fit, ranking, suggestions) and the language model. In copy, intelligence features belong to Hockia AI (2026-10-16).
 - Direction, not yet designed: the clubs' and recruiting coaches' recruiting context becomes Hockia AI's context. Default = the open role in use; Hockia AI sets or changes it with confirmation and replaces the context form. Fit and reasons stay rule-based (template reasons). Switching between open roles works without the language model or the daily limit.
 - Mascot: violet vinyl-toy figure with a right-handed field hockey stick and a headband "mind light" (calm glow · thinking sweep · idea flash). Friendly, curious, smart; explains, doesn't hype; gender-neutral; CG assets (Blender). Avatars at 32–40 pt show head + headband only.

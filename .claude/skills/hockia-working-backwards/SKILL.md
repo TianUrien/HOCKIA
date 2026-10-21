@@ -1,6 +1,6 @@
 ---
 name: hockia-working-backwards
-description: Write an internal HOCKIA PR/FAQ (Working Backwards) before designing or building a significant feature or screen change — a short "announcement" of the member benefit plus an FAQ that exposes risks, open questions and what we'd need to prove. Use when the founder is deciding a strategic change (e.g. a new Home, Hockia AI capabilities, club tools), when a feature's value isn't clear yet, or to align design and code agents on why something exists. Internal planning only; never a public press release, never with invented numbers.
+description: Write an internal HOCKIA PR/FAQ (Working Backwards) before designing or building a significant feature or screen change, a short "announcement" of the member benefit plus an FAQ that exposes risks, open questions and what we'd need to prove. Use when the founder is deciding a strategic change (e.g. a new Home, Hockia AI capabilities, club tools), when a feature's value isn't clear yet, or to align design and code agents on why something exists. Internal planning only; never a public press release, never with invented numbers.
 ---
 
 # HOCKIA Working Backwards (PR/FAQ)
@@ -13,7 +13,7 @@ Start from the member's benefit, write it as if it shipped, then let the FAQ try
 
 ## Honesty rules
 - No statistics, quotes or customer names unless sourced in `user-research.md`. Use placeholders: **[TARGET: …]** for goals we'd set, **[NEEDS EVIDENCE: …]** for claims we can't back yet.
-- Any member quote is marked *illustrative* and invented only to show the intended feeling — never presented as real.
+- Any member quote is marked *illustrative* and invented only to show the intended feeling, never presented as real.
 - Benefits are what HOCKIA does ("clubs see who is available this week"), not outcomes we can't guarantee ("get signed").
 
 ## The PR (one page, plain language)
@@ -23,8 +23,8 @@ Subtitle: who it's for and what changes for them
 Problem: the job and the pain today (cite evidence or mark [NEEDS EVIDENCE])
 Solution: what the member does now, step by step, in their words
 How it works: 3–5 bullets, no jargon
-Founder quote: why we built it (illustrative is fine — it's ours)
-Member quote: *illustrative* — the feeling we want
+Founder quote: why we built it (illustrative is fine, it's ours)
+Member quote: *illustrative*, the feeling we want
 Get started: where in the app it lives
 ```
 

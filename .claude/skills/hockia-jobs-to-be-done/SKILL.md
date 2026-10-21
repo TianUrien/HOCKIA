@@ -8,31 +8,31 @@ description: Define what HOCKIA members come to get done (Jobs to Be Done) for a
 A member doesn't want a feed, a card or a chat. They want progress in their hockey life: a club, a player, a reply, a signing, a sponsor. This skill turns "what should this screen be?" into "what job did the member hire HOCKIA to do here, and does this screen do it?"
 
 ## Inputs to read first
-- `.claude/skills/hockia-design-rules/references/roles-and-product.md` — roles, promises, what each can and can't do, the recruiting loop (North Star), strategic rulings.
-- `docs/product/user-research.md` — evidence, hypotheses, gaps. Only cite what is there (or new evidence the founder provides in the conversation, with its source).
-- The screen as shipped (code on `staging`, Figma) — what it actually offers today.
+- `.claude/skills/hockia-design-rules/references/roles-and-product.md`, roles, promises, what each can and can't do, the recruiting loop (North Star), strategic rulings.
+- `docs/product/user-research.md`, evidence, hypotheses, gaps. Only cite what is there (or new evidence the founder provides in the conversation, with its source).
+- The screen as shipped (code on `staging`, Figma), what it actually offers today.
 
 ## Evidence rules (non-negotiable)
 - Tag every job, pain, gain and situation as **[Evidence: source, date]** or **[Hypothesis]**.
-- If no research is supplied, the whole output is a hypothesis map — say so at the top.
+- If no research is supplied, the whole output is a hypothesis map, say so at the top.
 - No numbers, percentages, quotes or "users say" unless they come from a cited source. Write "to measure: …" instead.
 - Aggregates only; never name members (public repo, privacy).
 - Never judge members by age, gender, nationality or appearance. Under-18s are not HOCKIA members (waitlist only).
 
 ## Method
-1. **Who and when.** Pick one role (player, coach — candidate or recruiting, club, umpire, brand) and one situation: first visit, a normal weekday open, a moment of need (season ending, window opening, injury, contract ending, a role to fill).
+1. **Who and when.** Pick one role (player, coach, candidate or recruiting, club, umpire, brand) and one situation: first visit, a normal weekday open, a moment of need (season ending, window opening, injury, contract ending, a role to fill).
 2. **The job statement.** "When [situation], I want to [motivation], so I can [outcome]." One functional job, then the emotional ("feel taken seriously by clubs") and social ("be seen as a professional") sides.
-3. **Pains** — what makes it hard today (in hockey and in HOCKIA). **Gains** — what "it worked" looks like for them.
-4. **Current alternatives** — what they do instead: WhatsApp groups, agents, coach referrals, Instagram, federation sites, word of mouth. HOCKIA competes with these, not with Instagram's feed.
-5. **Fit check for the screen** — for each section of the screen: which job does it serve? If none, it's a candidate to remove or move. Name the primary action per role.
-6. **How we'd know** — the event or test that would show the job got done (e.g. "applications started from Home", "clubs reply within the window").
+3. **Pains**, what makes it hard today (in hockey and in HOCKIA). **Gains**, what "it worked" looks like for them.
+4. **Current alternatives**, what they do instead: WhatsApp groups, agents, coach referrals, Instagram, federation sites, word of mouth. HOCKIA competes with these, not with Instagram's feed.
+5. **Fit check for the screen**, for each section of the screen: which job does it serve? If none, it's a candidate to remove or move. Name the primary action per role.
+6. **How we'd know**, the event or test that would show the job got done (e.g. "applications started from Home", "clubs reply within the window").
 
 ## Output template
 ```
-# Jobs — <screen or feature>, <role>
+# Jobs, <screen or feature>, <role>
 Status: hypothesis map | partly evidenced
 ## Situation
-## Core job  — When …, I want to …, so I can …   [Evidence|Hypothesis]
+## Core job . When …, I want to …, so I can …   [Evidence|Hypothesis]
 ## Emotional / social jobs
 ## Pains (ranked)                 [tag each]
 ## Gains (what success looks like) [tag each]
