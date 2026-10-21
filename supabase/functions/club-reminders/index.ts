@@ -8,6 +8,10 @@
  *       hour at most, listing every application since the last one. Replaces
  *       notify-application's immediate per-application email (it stands down
  *       once application_response_settings.batched_application_emails_since is set).
+ *       Same run, once batched_application_pushes_since is set: ONE grouped
+ *       push per publisher per hour (20261021160000), sent straight to
+ *       send-push, which stands down for the per-application push. Never in
+ *       quiet hours (22:00–08:00 local): the applications wait for 08:00.
  *   { "mode": "reminders" }         hourly at :05 — day 10 "Closing soon" and
  *       day 13 "Last call" at 09:00 in the publisher's country timezone, ONE
  *       email per publisher per local day (combined, Last call first) and one
@@ -27,11 +31,13 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { createLogger, sendTrackedEmail } from '../_shared/email-sender.ts'
 import {
+  buildNewApplicationsPush,
   buildReminderNotification,
   type CandidateRow,
   groupByPublisher,
   localParts,
   newApplicationsDue,
+  newApplicationsPushAllowedNow,
   planPublisherReminders,
   timezoneForCountry,
   toApplicantItems,
@@ -54,6 +60,8 @@ Deno.serve(async (req: Request) => {
   const unauthorized = assertServiceRole(req)
   if (unauthorized) return unauthorized
 
+  // Proven service role by assertServiceRole; reused for the send-push call.
+  const callerAuth = req.headers.get('Authorization') ?? req.headers.get('authorization')
   const correlationId = crypto.randomUUID().slice(0, 8)
   const logger = createLogger('CLUB_REMINDERS', correlationId)
 
@@ -99,6 +107,27 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Grouped new-application pushes ride on the same 10-minute run.
+    if (mode === 'new_applications') {
+      const { data: pushData, error: pushError } = await supabase.rpc('club_reminder_candidates', {
+        p_mode: 'new_application_pushes', p_now: now.toISOString(),
+      })
+      if (pushError) {
+        logger.error('push candidates failed', { error: pushError.message })
+        stats.failed += 1
+      } else {
+        for (const [publisherId, list] of groupByPublisher((pushData ?? []) as unknown as CandidateRow[])) {
+          try {
+            await runNewApplicationsPush(publisherId, list)
+          } catch (err) {
+            stats.failed += 1
+            logger.error('publisher push failed', { publisherId, error: err instanceof Error ? err.message : String(err) })
+            captureException(err, { functionName: 'club-reminders', correlationId, extra: { publisherId, mode: 'new_application_pushes' } })
+          }
+        }
+      }
+    }
+
     logger.info('done', stats)
     return json(200, { success: true, ...stats })
 
@@ -132,6 +161,55 @@ Deno.serve(async (req: Request) => {
       await finish(batchId as string, result.success)
       if (result.success) stats.emails += 1
       else stats.failed += 1
+    }
+
+    // ── grouped new-application push ──────────────────────────────────────
+    async function runNewApplicationsPush(publisherId: string, list: CandidateRow[]) {
+      const head = list[0]
+      if (!newApplicationsDue(head.last_new_applications_email_at, now)) { stats.notDue += 1; return }
+      const tz = timezoneForCountry(head.publisher_country_code)
+      if (!newApplicationsPushAllowedNow(now, tz)) { stats.notDue += 1; return }
+      const items = toApplicantItems(list, tz)
+      if (items.length === 0) { stats.notDue += 1; return }
+      if (dryRun) { stats.pushes += 1; return }
+
+      const { data: batchId, error: claimError } = await supabase.rpc('club_reminder_claim', {
+        p_publisher_id: publisherId,
+        p_channel: 'push',
+        p_batch_kind: 'new_applications',
+        p_local_date: localParts(now, tz).date,
+        p_items: items.map((i) => ({ application_id: i.applicationId, kind: 'new_application' })),
+      })
+      if (claimError) throw new Error(`push claim failed: ${claimError.message}`)
+      if (!batchId) { stats.notDue += 1; return }
+
+      const push = buildNewApplicationsPush(publisherId, items)
+      const sent = await sendPush(push.record)
+      // A skipped push (no device, push off) is a finished send; only a failed
+      // call releases the claim so the next run retries it.
+      await finish(batchId as string, sent.ok)
+      if (sent.ok) {
+        stats.pushes += 1
+      } else {
+        stats.failed += 1
+        logger.warn('push send failed', { publisherId, status: sent.status, body: sent.body })
+      }
+    }
+
+    // send-push only accepts a service-role JWT (_shared/webhook-auth.ts). The
+    // runtime's SUPABASE_SERVICE_ROLE_KEY is not one (staging, 21 Oct 2026:
+    // 401), so forward the caller's bearer, which assertServiceRole above
+    // already proved is the service role (pg_cron's Vault key).
+    async function sendPush(record: unknown): Promise<{ ok: boolean; status: number; body: string }> {
+      const url = Deno.env.get('SUPABASE_URL')
+      if (!url || !callerAuth) return { ok: false, status: 0, body: 'SUPABASE_URL or caller bearer missing' }
+      const res = await fetch(`${url.replace(/\/$/, '')}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: { Authorization: callerAuth, 'Content-Type': 'application/json' },
+        body: JSON.stringify(record),
+      })
+      const body = (await res.text()).slice(0, 200)
+      return { ok: res.ok, status: res.status, body }
     }
 
     // ── day 10 / day 13 ───────────────────────────────────────────────────
