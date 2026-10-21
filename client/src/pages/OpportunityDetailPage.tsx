@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -23,7 +24,6 @@ import { isNetworkFailureError } from '@/lib/sentryHelpers'
 import { RoleDetailSkeleton } from '@/components/ScreenSkeletons'
 
 /** The app's failed-load words (sign-in, Community): the connection, not the member. */
-const NETWORK_ERROR_COPY = 'Couldn’t reach HOCKIA. Check your connection and try again.'
 
 /** PostgREST "no row" for `.single()`: the role is gone or not visible to this viewer. */
 function isRowNotFound(error: unknown): boolean {

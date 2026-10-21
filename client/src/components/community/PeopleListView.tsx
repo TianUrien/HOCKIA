@@ -11,9 +11,11 @@ import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
 import { logger } from '@/lib/logger'
-import { isAuthExpiredError } from '@/lib/sentryHelpers'
+import { isAuthExpiredError, isNetworkFailureError } from '@/lib/sentryHelpers'
+import { NETWORK_ERROR_COPY, couldntLoadTitle } from '@/lib/networkCopy'
+import { CommunitySkeletons } from './CommunitySkeletons'
+import { skeletonKindFor } from '@/lib/communitySkeleton'
 import { isOpenToAny } from '@/lib/hockeyCategories'
-import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
@@ -365,6 +367,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           queryKey: qk.communityCount(roleFilter ?? 'all', `${meInScope ? `search-total:${me?.id}` : 'search-total'}|blocks:${blockKey}`),
           staleTime: 30_000,
           retry: false,
+          // Offline must fail (not pause) so the grid shows the retry state (audit A9).
+          networkMode: 'always',
           // The count comes from the same server search as the grid
           // (community_search_members `total`, no rows fetched), so it applies
           // the same rules — 18+ players, hidden profiles, test visibility.
@@ -468,6 +472,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         queryKey,
         staleTime: 30_000,
         retry: false,
+        // Offline must fail (not pause) so the grid shows the retry state (audit A9).
+        networkMode: 'always',
         queryFn: async () => monitor.measure('fetch_community_members', async () => {
           const { data, error } = await supabase.rpc('community_search_members', rpcParams)
           if (error) throw error
@@ -554,6 +560,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
       filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive, blockKey, scopeCategories, scopeCountryIds])
 
+  // Back online after a failed load: try again by itself, keeping what was shown (audit A9).
+  useEffect(() => {
+    if (!loadError || typeof window === 'undefined') return
+    const onOnline = () => { void fetchMembers() }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [loadError, fetchMembers])
+
   // Role sync moved to CommunityPage (it owns the filter state now).
 
   // Initial load — gated on authLoading so we don't fire as 'anon'
@@ -586,6 +600,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           queryKey: qk.communitySearch(clubFacing ? `${viewerScope}:club` : viewerScope, roleKey, query),
           staleTime: 20_000,
           retry: false,
+          // Offline must fail (not pause) so the grid shows the retry state (audit A9).
+          networkMode: 'always',
           queryFn: async () => {
             const searchTerm = `%${query}%`
             let dbQuery = supabase
@@ -679,6 +695,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           logger.debug('[PeopleListView] search: session expired mid-fetch (ignored)')
         } else {
           logger.error('Error searching members:', error)
+          if (isNetworkFailureError(error)) setLoadError(true)
         }
       } finally {
         setIsSearching(false)
@@ -1356,22 +1373,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       )}
       {isPhone ? (
         showSkeletons ? (
-          <div className="grid grid-cols-2 gap-3" aria-busy="true" aria-label="Loading members">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex aspect-[3/4] flex-col justify-end gap-1.5 rounded-[20px] bg-surface-muted p-3" data-testid="member-tile-skeleton">
-                <span className="h-2.5 w-[64%] rounded-full bg-line" />
-                <span className="h-2.5 w-[46%] rounded-full bg-line" />
-                <span className="h-2.5 w-[37%] rounded-full bg-line" />
-              </div>
-            ))}
-          </div>
+          <CommunitySkeletons kind={skeletonKindFor(roleFilter)} layout="phone" />
         ) : (!isBusy && loadError && displayedMembers.length === 0) ? (
           <div className="flex flex-col items-center px-6 pb-10 pt-16 text-center" role="alert">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-ink-2">
               <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
             </span>
-            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">Couldn’t load members</h3>
-            <p className="mt-2 text-row text-ink-2">Check your connection and try again.</p>
+            <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
+            <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
             <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
               Try again
             </button>
@@ -1411,10 +1420,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           </>
         )
       ) : showSkeletons ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-          {[...Array(15)].map((_, i) => (
-            <MemberTileSkeleton key={i} />
-          ))}
+        <CommunitySkeletons kind={skeletonKindFor(roleFilter)} layout="desktop" />
+      ) : (!isBusy && loadError && displayedMembers.length === 0) ? (
+        <div className="flex flex-col items-center rounded-[20px] border border-line bg-white px-6 py-12 text-center" role="alert" data-testid="community-load-failed">
+          <h3 className="text-[20px] font-semibold leading-6 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
+          <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
+          <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90">
+            Try again
+          </button>
         </div>
       ) : (!isBusy && displayedMembers.length === 0) ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">

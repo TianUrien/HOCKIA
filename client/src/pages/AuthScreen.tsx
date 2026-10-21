@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
@@ -30,7 +31,6 @@ import { trackLogin, trackLoginFailed } from '@/lib/analytics'
 import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 
 /** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
-const NETWORK_ERROR_COPY = 'Couldn’t reach HOCKIA. Check your connection and try again.'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, resetCaptcha, warmCaptcha } from '@/lib/captcha'
