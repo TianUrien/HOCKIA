@@ -1,7 +1,7 @@
 import { Check, Minus, Star } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { IconButton } from '@/components/ui/IconButton'
-import { FitChip } from './FitChip'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { InviteAction } from './InviteAction'
 import { getImageUrl } from '@/lib/imageUrl'
 import { personRoleLine } from '@/lib/clubRecruiting'
@@ -12,7 +12,7 @@ import type { ReasonLine } from '@/lib/suggestionReasons'
 /**
  * Card / Suggestion (Figma "New-Hockia" D5.1 398:83): rank (ink-3), Avatar 48,
  * name, "role · positions · flags", the Fit badge (existing club-only
- * FitChip), up to 4 reason lines (met = green check, missing = grey dash —
+ * FitBadge), up to 4 reason lines (met = green check, missing = grey dash —
  * never amber), then the card's two actions: Muted star = Shortlist (the
  * role's own list), Tonal "Invite" (InviteAction + InviteSheet and its
  * limits). No Primary per card.
@@ -44,7 +44,7 @@ export function SuggestionCard({ suggestion: s, rank, flags, reasons, shortliste
           <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{name}</span>
           <span className="block truncate text-[14px] leading-[19px] text-ink-2">{[roleLine, flags].filter(Boolean).join(' · ')}</span>
           {(s.fit_state === 'green' || s.fit_state === 'yellow') && (
-            <span className="block pt-1"><FitChip state={s.fit_state} /></span>
+            <span className="block pt-1"><FitBadge state={s.fit_state} /></span>
           )}
         </span>
       </button>

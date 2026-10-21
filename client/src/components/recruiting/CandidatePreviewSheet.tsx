@@ -419,7 +419,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                     <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
                   </div>
                 )}
-                <RecruiterVerdictCard verdict={verdict} showMatchPercent />
+                <RecruiterVerdictCard verdict={verdict} />
               </div>
             )}
 

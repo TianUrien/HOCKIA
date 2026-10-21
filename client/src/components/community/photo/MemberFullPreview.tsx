@@ -50,7 +50,7 @@ import {
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import type { Profile } from '../PeopleListView'
-import { FitPill } from './FitPill'
+import { FitBadge } from '@/components/ui/FitBadge'
 
 /**
  * Member preview, full screen (Figma Community P7–P12, P16, P22–P24). Opens
@@ -330,7 +330,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const recruiterActions = recruiterView.enabled
   const fitState = fit ?? recruiterView.fit?.state ?? null
   const fitLabel = fitChipLabel(fitState)
-  const fitPillText = fitLabel && recruiterView.fitRole ? `${fitLabel} for ${recruiterView.fitRole.title}` : fitLabel
+  const fitPillText = fitLabel
+  const fitSuffix = fitLabel && recruiterView.fitRole ? `for ${recruiterView.fitRole.title}` : null
   const onShortlist = () => {
     trackAction('shortlist')
     void hapticLight()
@@ -512,7 +513,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             iconClassName="h-[22px] w-[22px] text-white"
           />
         ) : null}
-        fitPill={fitPillText && fitState ? <FitPill state={fitState} label={fitPillText} /> : null}
+        fitPill={fitPillText && fitState ? <FitBadge state={fitState} surface="photo" suffix={fitSuffix} /> : null}
         incomingRequest={!fitPillText && friendship.isIncomingRequest && !recruiterActions}
         nationalities={nationalities}
         place={place}
@@ -647,7 +648,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             {isClub && current && crest && (
               <LogoTile src={crest} name={name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
             )}
-            {fitPillText && fitState && <FitPill state={fitState} label={fitPillText} />}
+            {fitPillText && fitState && <FitBadge state={fitState} surface="photo" suffix={fitSuffix} />}
             {!fitPillText && friendship.isIncomingRequest && !recruiterActions && (
               <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
                 <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />

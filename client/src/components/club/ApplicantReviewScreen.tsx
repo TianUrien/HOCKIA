@@ -43,6 +43,7 @@ import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { nationalityCountries } from '@/lib/nationality'
 import { fitChipLabel } from '@/lib/clubRecruiting'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { EuBadge } from '@/components/ui/NationalityBadges'
 import type { Json } from '@/lib/database.types'
 
@@ -475,9 +476,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                     {nats.some((c) => c.isEu) && <EuBadge surface="light" />}
                   </div>
                 )}
-                {fitLine && review.status !== 'withdrawn' && (
-                  <p className={cn('flex items-center gap-2 rounded-[12px] px-3.5 py-2.5 text-secondary', review.fit?.state === 'green' ? 'bg-positive-soft text-positive' : 'bg-surface-subtle text-ink-2')} data-testid="review-fit-line">
-                    <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> {fitLine}
+                {fitLine && review.fit?.state && review.status !== 'withdrawn' && (
+                  <p className="flex" data-testid="review-fit-line">
+                    <FitBadge state={review.fit.state} />
                   </p>
                 )}
                 {statusNote && <p className="rounded-[12px] bg-surface-subtle px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}

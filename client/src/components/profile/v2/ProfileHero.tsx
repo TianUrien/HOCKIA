@@ -6,6 +6,8 @@ import { BlurImage } from '@/components/home/v1/BlurImage'
 import { NationalityPills } from '@/components/ui/NationalityBadges'
 import type { NationalityCountry } from '@/lib/nationality'
 import { cn } from '@/lib/utils'
+import { FitBadge } from '@/components/ui/FitBadge'
+import type { FitState } from '@/lib/clubRecruiting'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 
 /**
@@ -30,7 +32,8 @@ export interface ProfileHeroProps {
   role: CommunityRole
   owner: boolean
   /** Recruiters only: STRONG / POSSIBLE FIT pill above the name. */
-  fitPill?: { label: string; tone: 'green' | 'yellow' } | null
+  /** Recruiters only: the one Fit badge (audit B3), glass over the photo. */
+  fitPill?: { state: FitState; suffix: string | null } | null
   onBack?: () => void
   onShare: () => void
   /** Public: the ⋯ menu (report / block), rendered by the host. */
@@ -117,8 +120,8 @@ export function ProfileHero({ photos, name, age, roleLine, place, nationalities 
           </span>
         )}
         {fitPill && (
-          <span className={cn('mb-1 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-semibold uppercase tracking-[0.02em] text-white', fitPill.tone === 'green' ? 'bg-[#15803d]' : 'bg-[#b45309]')} data-testid="profile-fit-pill">
-            <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true" /> {fitPill.label}
+          <span className="mb-1 flex" data-testid="profile-fit-pill">
+            <FitBadge state={fitPill.state} surface="photo" suffix={fitPill.suffix} />
           </span>
         )}
         <h1 className="text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-white" data-testid="profile-hero-name">

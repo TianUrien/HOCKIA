@@ -4,13 +4,13 @@ import { ChevronRight } from 'lucide-react'
 import { Avatar } from '@/components'
 import type { ScopedMatch } from '@/hooks/useScopedMatches'
 import { SectionHeader } from './SectionHeader'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
 
 /**
  * "Available now — fit your team" (club Pulse, Home V2 Phase 2): the top
- * in-scope candidates as a horizontal rail. The % is verdict.strength — the
- * SAME number the community grid shows, shown only for in-scope candidates
- * (near-misses fill slots without a %; hard-fails were excluded upstream).
+ * in-scope candidates as a horizontal rail, each with the one Fit badge
+ * (Strong / Possible, never a percentage; hard-fails were excluded upstream).
  * Collapses when the pool has no rankable candidates (§C).
  */
 const MODULE_ID = 'available_now'
@@ -71,14 +71,8 @@ export function AvailableNowRail({ matches, loading, voice = 'club', poolRole = 
             <p className="truncate text-xs text-gray-500">
               {positionLabel(m.position) ?? roleLabel(m.role)}
             </p>
-            {m.inScope ? (
-              <p className="mt-1 text-sm font-black text-hockia-primary">{m.pct}% match</p>
-            ) : (
-              // Near-miss filler (longshot tier): labeled with Community's
-              // display vocabulary so a %-less card reads as intended, not as
-              // a missing number (QA: "2 fit" + 3 cards looked inconsistent).
-              <p className="mt-1 text-xs font-semibold text-gray-400">Possible</p>
-            )}
+            {/* The one Fit badge (audit B3): Strong / Possible, never a %. */}
+            {m.fit && <span className="mt-1.5 flex justify-center"><FitBadge state={m.fit} /></span>}
           </button>
         ))}
       </div>

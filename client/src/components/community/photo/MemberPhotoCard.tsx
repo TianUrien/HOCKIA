@@ -6,7 +6,7 @@ import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import monogramRing from '@/assets/community/monogram-ring.svg'
-import { FitPill } from './FitPill'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import type { NationalityCountry } from '@/lib/nationality'
 
@@ -93,7 +93,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
       <span className="relative flex w-full min-w-0 flex-col gap-0.5">
         {fitLabel && fit && (
           <span className="mb-1">
-            <FitPill state={fit} label={fitLabel} />
+            <FitBadge state={fit} surface="photo" />
           </span>
         )}
         <span className="truncate text-[16px] font-semibold leading-5 text-white">{name}</span>

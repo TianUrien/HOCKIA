@@ -166,7 +166,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const showRecruiter = recruiter.enabled && !minor
   const fitLabel = showRecruiter && recruiter.fit ? fitChipLabel(recruiter.fit.state) : null
   const fitPill = fitLabel && recruiter.fit && recruiter.fit.state !== 'grey'
-    ? { label: [fitLabel, recruiter.fitRoleTitle].filter(Boolean).join(' · '), tone: recruiter.fit.state === 'green' ? 'green' as const : 'yellow' as const }
+    ? { state: recruiter.fit.state, suffix: recruiter.fitRoleTitle ? `· ${recruiter.fitRoleTitle}` : null }
     : null
 
   // Hero photos: the gallery (first = cover), else the avatar.

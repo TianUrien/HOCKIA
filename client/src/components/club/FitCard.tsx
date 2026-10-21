@@ -1,5 +1,5 @@
 import { Check, Minus } from 'lucide-react'
-import { FitChip } from './FitChip'
+import { FitBadge } from '@/components/ui/FitBadge'
 import type { FitRow, FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,7 @@ export function FitCard({ state, rows, className, title = 'Fit for this role' }:
     <div className={cn('flex flex-col gap-3 rounded-2xl bg-surface-grouped p-4', className)} data-testid="fit-card">
       <div className="flex items-center justify-between gap-3">
         <span className="min-w-0 truncate text-row font-semibold text-ink-1" data-testid="fit-card-title">{title}</span>
-        <FitChip state={state} />
+        <FitBadge state={state} />
       </div>
       {rows.map((r) => (
         <div key={r.key} className="flex items-start gap-2.5">
