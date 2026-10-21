@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
 import { Loader2, Search, Shield, X, ImagePlus, CircleHelp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -996,7 +997,7 @@ export function PostComposerModal({
                       role="radio"
                       aria-checked={active}
                       onClick={select}
-                      className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1'}`}
+                      className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${chipTone(active)}`}
                     >
                       {value === 'question' && <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />}
                       {label}

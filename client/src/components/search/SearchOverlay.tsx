@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { onOpenSearchOverlay } from '@/lib/searchOverlayBus'
@@ -414,9 +415,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
                     className={`px-3.5 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
-                      activeTab === tab.key
-                        ? 'bg-hockia-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      chipTone(activeTab === tab.key)
                     }`}
                   >
                     {tab.label}

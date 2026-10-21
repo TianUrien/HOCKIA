@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill } from '@/lib/opportunityCopy'
@@ -72,7 +73,7 @@ export function Chips({ values, options, onToggle, label }: { values: string[]; 
             type="button"
             aria-pressed={on}
             onClick={() => onToggle(o.value)}
-            className={cn('flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[15px]', on ? 'bg-hockia-soft font-medium text-hockia-primary' : 'bg-surface-grouped text-ink-1')}
+            className={cn('flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[15px]', chipTone(on), on && 'font-medium')}
           >
             {on && <Check className="h-4 w-4" strokeWidth={2.2} />}
             {o.label}
