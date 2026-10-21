@@ -899,7 +899,7 @@ export async function forceClaimWorldClub(
     throw new Error('Profile not found. Please check the profile ID.')
   }
   if (targetProfile.role !== 'club') {
-    throw new Error(`Profile has role "${targetProfile.role}" — only club profiles can claim world clubs.`)
+    throw new Error(`Profile has role "${targetProfile.role}". Only club profiles can claim world clubs.`)
   }
 
   const { data: club, error: clubError } = await supabase

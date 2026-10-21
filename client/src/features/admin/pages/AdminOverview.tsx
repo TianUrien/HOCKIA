@@ -228,7 +228,7 @@ export function AdminOverview() {
                 metric="stickiness"
                 align="right"
                 value={ccStats?.wau_mau_ratio ?? 0}
-                interpretation={`${ccStats?.wau_mau_ratio ?? 0}% of monthly actives came back this week — random once-a-month visits alone would give ~23%, so a real weekly habit exists.`}
+                interpretation={`${ccStats?.wau_mau_ratio ?? 0}% of monthly actives came back this week. Random once-a-month visits alone would give ~23%, so a real weekly habit exists.`}
               />
             </span>
           )}
@@ -722,7 +722,7 @@ export function AdminOverview() {
                   {errorBudget ? `${errorBudget.remaining.toFixed(2)}%` : '—'}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {errorBudget?.status === 'exceeded' ? 'Budget exceeded — investigate errors' :
+                  {errorBudget?.status === 'exceeded' ? 'Budget exceeded: investigate errors' :
                    errorBudget?.status === 'warning' ? 'Budget running low' :
                    'Remaining of 1% budget (last hour)'}
                 </p>

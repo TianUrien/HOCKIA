@@ -94,7 +94,7 @@ export default function CreateWithEmail() {
           return
         }
         if (/validate email|invalid format|invalid email/i.test(signUpError.message)) {
-          setError('That email address doesn’t look right — please check it.')
+          setError('That email address doesn’t look right. Please check it.')
           return
         }
         setError(extractErrorMessage(signUpError, 'Sign up failed. Please try again.'))

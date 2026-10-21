@@ -603,7 +603,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
               <h2 className={`${H2} pb-2`}>References</h2>
               <div className="grid grid-cols-2 gap-3">
                 {acceptedReferences.length === 0
-                  ? <p className="col-span-2 text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>
+                  ? <p className="col-span-2 text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia. Coaches and teammates can write one.</p>
                   : acceptedReferences.slice(0, 2).map((r) => (
                     <ReferenceCard key={r.id} reference={r} onOpen={() => navigate(`/players/id/${p.id}/references`, { state: { from: location.pathname } })} />
                   ))}
@@ -862,7 +862,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
             <h2 className="px-5 pb-2 pt-[22px] text-[22px] font-bold leading-7 tracking-[-0.176px] text-ink-1">References</h2>
             <div className="flex flex-col gap-3 px-5 pb-7">
               {acceptedReferences.length === 0
-                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>
+                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia. Coaches and teammates can write one.</p>
                 : acceptedReferences.slice(0, 2).map((r) => (
                   <ReferenceCard key={r.id} reference={r} onOpen={() => navigate(`/players/id/${p.id}/references`, { state: { from: location.pathname } })} />
                 ))}

@@ -258,7 +258,7 @@ export function AdminEmailTemplateEditor() {
                   )}
                   <p className="text-xs text-gray-500">
                     {new Date(v.created_at).toLocaleString()}
-                    {v.change_note && ` — ${v.change_note}`}
+                    {v.change_note && ` · ${v.change_note}`}
                   </p>
                 </div>
                 {v.version_number !== detail.template.current_version && (

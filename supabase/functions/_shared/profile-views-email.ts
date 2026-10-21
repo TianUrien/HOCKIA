@@ -104,9 +104,9 @@ export function composeTrendLine(totalViews: number, viewsPrior7d: number | null
   if (viewsPrior7d === null || viewsPrior7d === undefined) return ''
   const views = totalViews === 1 ? '1 profile view' : `${totalViews} profile views`
   if (viewsPrior7d === 0) return `${views} this week.`
-  if (totalViews > viewsPrior7d) return `${views} this week — up from ${viewsPrior7d} the week before.`
-  if (totalViews < viewsPrior7d) return `${views} this week — down from ${viewsPrior7d} the week before.`
-  return `${views} this week — same as the week before.`
+  if (totalViews > viewsPrior7d) return `${views} this week, up from ${viewsPrior7d} the week before.`
+  if (totalViews < viewsPrior7d) return `${views} this week, down from ${viewsPrior7d} the week before.`
+  return `${views} this week, the same as the week before.`
 }
 
 

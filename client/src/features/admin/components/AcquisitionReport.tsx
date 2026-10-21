@@ -66,7 +66,7 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
     <div className="bg-white rounded-2xl border border-gray-200 p-5" data-testid="acquisition-report">
       <div className="flex items-center gap-2 mb-1">
         <Compass className="w-4 h-4 text-purple-500" />
-        <h3 className="text-sm font-semibold text-gray-900">Acquisition — where new members come from</h3>
+        <h3 className="text-sm font-semibold text-gray-900">Acquisition: where new members come from</h3>
       </div>
       <p className="text-xs text-gray-500 mb-4">
         Signups in the last {days} days by the first identifiable source that brought them. Auth providers are never a
@@ -141,7 +141,7 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
                   </>
                 ) : (
                   <div className="text-xs text-gray-600">
-                    No identifiable source yet in this window — every signup was direct or unknown. Tagged links
+                    No identifiable source yet in this window: every signup was direct or unknown. Tagged links
                     (below) are how a source becomes visible here.
                   </div>
                 )}

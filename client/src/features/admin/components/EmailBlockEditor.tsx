@@ -254,7 +254,7 @@ export function EmailBlockEditor({ blocks, onChange }: EmailBlockEditorProps) {
           )}
 
           {block.type === 'divider' && (
-            <p className="text-xs text-gray-400 italic">Horizontal divider — no configuration needed</p>
+            <p className="text-xs text-gray-400 italic">Horizontal divider, no configuration needed</p>
           )}
         </div>
       </div>

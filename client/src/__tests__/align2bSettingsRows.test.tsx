@@ -98,9 +98,9 @@ describe('Settings · notifications and privacy rows', () => {
     renderAt('notifications')
     expect(screen.getByText('Push')).toBeTruthy()
     expect(screen.getByText('Email')).toBeTruthy()
-    expect(screen.getByRole('switch', { name: 'Messages — push' })).toBeTruthy()
-    expect(screen.getByRole('switch', { name: 'Messages — email' })).toBeTruthy()
-    expect(screen.getByText(/Push and Email move together for now — each type has one setting\./)).toBeTruthy()
+    expect(screen.getByRole('switch', { name: 'Messages · push' })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: 'Messages · email' })).toBeTruthy()
+    expect(screen.getByText(/Push and Email move together for now\. Each type has one setting\./)).toBeTruthy()
   })
 
   it('privacy: one-switch rows, the full-match radio list and Blocked members "None"', () => {

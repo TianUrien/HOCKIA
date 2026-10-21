@@ -67,7 +67,7 @@ export default function ApplicantsList() {
   // QA-flagged: the applicants route was leaving the default index.html
   // title in the browser tab, making back-button context + pinned tabs
   // useless. Reflect the opportunity title once it loads.
-  useDocumentTitle(opportunity?.title ? `Applicants — ${opportunity.title}` : 'Applicants')
+  useDocumentTitle(opportunity?.title ? `Applicants · ${opportunity.title}` : 'Applicants')
   const [applications, setApplications] = useState<OpportunityApplicationWithApplicant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

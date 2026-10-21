@@ -123,7 +123,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <Loader2 className="h-10 w-10 animate-spin text-hockia-primary" />
               <p className="font-semibold text-gray-900">Processing your video…</p>
-              <p className="text-sm text-gray-500">Cloudflare is preparing it for smooth playback. This can take a minute or two — you can keep using HOCKIA.</p>
+              <p className="text-sm text-gray-500">Cloudflare is preparing it for smooth playback. This can take a minute or two. You can keep using HOCKIA.</p>
             </div>
           ) : phase === 'uploading' || phase === 'creating' ? (
             <div className="py-4">

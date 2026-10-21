@@ -132,7 +132,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4" data-testid="profile-builder">
         <div className="flex flex-col gap-4 pb-4 pt-1">
           <AssistantTurn>
-            <p className="text-[16px] leading-[22px] text-ink-1">{firstName ? `${firstName}, tell me about ${playerish}` : `Tell me about ${playerish}`} — your clubs and seasons, your passports and anything else clubs should know. Add your CV, photos or links with <span className="font-semibold">+</span>.</p>
+            <p className="text-[16px] leading-[22px] text-ink-1">{firstName ? `${firstName}, tell me about ${playerish}` : `Tell me about ${playerish}`}: your clubs and seasons, your passports and anything else clubs should know. Add your CV, photos or links with <span className="font-semibold">+</span>.</p>
             <p className="mt-1.5 text-caption text-ink-3">I read it and show you everything before it goes on your profile. Nothing is saved until you confirm.</p>
           </AssistantTurn>
 
@@ -177,7 +177,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
                 </ul>
               )}
               {count === 0 ? (
-                <p className="text-[16px] leading-[22px] text-ink-1" data-testid="builder-nothing">I couldn’t find anything new to add — your profile may already have it. Tell me more, or attach your CV.</p>
+                <p className="text-[16px] leading-[22px] text-ink-1" data-testid="builder-nothing">I couldn’t find anything new to add. Your profile may already have it. Tell me more, or attach your CV.</p>
               ) : (
                 <>
                   <p className="text-[16px] leading-[22px] text-ink-1">Here’s what I’ll add. Tap anything to fix it, or save it all.</p>
@@ -221,7 +221,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
                           ))}
                         </div>
                         <p className="text-caption text-ink-2">{[draft.videos[0] && `Highlights video · ${draft.videos[0].title}`, keptPhotos.length > 0 && `${keptPhotos.length} ${keptPhotos.length === 1 ? 'photo' : 'photos'} to your gallery`].filter(Boolean).join(' · ')}</p>
-                        {draft.photos.some((x) => !x.ok) && <p className="text-caption text-ink-2" data-testid="builder-id-photo">I left out {draft.photos.filter((x) => !x.ok).length === 1 ? 'a photo that looks' : 'photos that look'} like an ID document. Passports are just the country — never a document.</p>}
+                        {draft.photos.some((x) => !x.ok) && <p className="text-caption text-ink-2" data-testid="builder-id-photo">I left out {draft.photos.filter((x) => !x.ok).length === 1 ? 'a photo that looks' : 'photos that look'} like an ID document. Passports are just the country, never a document.</p>}
                       </Group>
                     )}
 
@@ -278,7 +278,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
                     </span>
                   </div>
                 )}
-                {outcome.failed.length > 0 && <p className="mt-2 text-secondary text-status-danger" data-testid="builder-save-failed">I couldn’t save your {outcome.failed.join(', ')}. Try again in a moment — the rest is saved.</p>}
+                {outcome.failed.length > 0 && <p className="mt-2 text-secondary text-status-danger" data-testid="builder-save-failed">I couldn’t save your {outcome.failed.join(', ')}. Try again in a moment. The rest is saved.</p>}
                 {missing.length > 0 ? (
                   <>
                     <p className="mt-2.5 text-[16px] leading-[22px] text-ink-1">{missing.length === 1 ? 'One thing clubs often ask for is still missing:' : 'A few things clubs often ask for are still missing:'}</p>

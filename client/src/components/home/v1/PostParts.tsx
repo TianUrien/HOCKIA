@@ -36,7 +36,7 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profileP
   return (
     <div className="flex items-center gap-2.5 pb-2 pl-4 pr-2" data-author={authorId}>
       {profilePath ? (
-        <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${display} — view profile`}>{identity}</Link>
+        <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${display} · view profile`}>{identity}</Link>
       ) : (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
       )}

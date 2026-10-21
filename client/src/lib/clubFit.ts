@@ -323,11 +323,11 @@ export function computeClubFit(
   // is not penalised this way; it's just missing info.
   const categoryMismatch = Boolean(candidate.playing_category) && gender_match === 0
   if (gender_match === 1 && candidate.playing_category) {
-    pushReason(`Plays ${humanizeCategory(candidate.playing_category)} — matches ${target.toLowerCase()}'s team category.`, 'positive')
+    pushReason(`Plays ${humanizeCategory(candidate.playing_category)}, which matches ${target.toLowerCase()}'s team category.`, 'positive')
   } else if (candidate.playing_category) {
-    pushReason(`Plays ${humanizeCategory(candidate.playing_category)} — different from your team's category.`, 'caveat')
+    pushReason(`Plays ${humanizeCategory(candidate.playing_category)}, which is different from your team's category.`, 'caveat')
   } else {
-    pushReason('Playing category not added yet — no match info.')
+    pushReason('Playing category not added yet. No match info.')
   }
 
   // Competition proximity — cross-country via curated level_band_global.
@@ -340,9 +340,9 @@ export function computeClubFit(
   } else if (competition_proximity > 0) {
     pushReason('Plays at a different league level from your team.')
   } else if (candidate.competition_level_band == null) {
-    pushReason('Current league not linked — level comparison unavailable.')
+    pushReason('Current league not linked. Level comparison unavailable.')
   } else if (viewerProfile.competition_level_band == null) {
-    pushReason("Your team's league level isn't set — level comparison unavailable.")
+    pushReason("Your team's league level isn't set. Level comparison unavailable.")
   }
 
   // Availability — the open flag only (no activity signal, ruling 2026-10-11).
@@ -369,13 +369,13 @@ export function computeClubFit(
   if (hasTargetPosition) {
     const tp = humanizePosition(options!.targetPosition!)
     if (positionFit >= 1) {
-      pushReason(`Plays ${tp} — matches the position you're recruiting.`, 'positive')
+      pushReason(`Plays ${tp}, which matches the position you're recruiting.`, 'positive')
     } else if (positionFit > 0) {
       pushReason(`Plays ${tp} as a secondary position.`, 'positive')
     } else if (candidate.position) {
-      pushReason(`Primary position is ${humanizePosition(candidate.position)} — not ${tp}.`, 'caveat')
+      pushReason(`Primary position is ${humanizePosition(candidate.position)}, not ${tp}.`, 'caveat')
     } else {
-      pushReason('Position not added yet — no position match info.')
+      pushReason('Position not added yet. No position match info.')
     }
   }
 
@@ -431,7 +431,7 @@ export function computeClubFit(
   if (positionRequiredEffective && hasTargetPosition && Boolean(candidate.position) && positionFit === 0) {
     hardFailReasons.push(
       isGoalkeeperScope && !options?.positionRequired
-        ? `Plays ${humanizePosition(candidate.position!)} — not a goalkeeper. Goalkeeper is a specialist position, so this isn't a position fit.`
+        ? `Plays ${humanizePosition(candidate.position!)}, not a goalkeeper. Goalkeeper is a specialist position, so this isn't a position fit.`
         : `Plays ${humanizePosition(candidate.position!)}, not the ${humanizePosition(options!.targetPosition!)} you require.`,
     )
   }

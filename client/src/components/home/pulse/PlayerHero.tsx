@@ -24,9 +24,9 @@ const VOICE = {
   player: {
     moduleId: 'player_hero',
     emptyHeadline: 'Let clubs find you this week.',
-    emptySub: 'Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp — active players get seen far more.',
+    emptySub: 'Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp. Active players get seen far more.',
     /** Already open to play: no nudge to do what's done. */
-    emptySubWhenOpen: 'Clubs are most active on Mondays. Keep your profile sharp — active players get seen far more.',
+    emptySubWhenOpen: 'Clubs are most active on Mondays. Keep your profile sharp. Active players get seen far more.',
     viewersTarget: '/dashboard/profile?tab=profile&section=viewers',
   },
   coach: {

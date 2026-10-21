@@ -376,7 +376,7 @@ export function OpportunityDetailMobile({
       <section className="px-4 pb-6 pt-7">
         <h2 className="text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink-1">How applying works</h2>
         <ol className="mt-3 flex flex-col gap-3">
-          {['Send your profile — no CV needed', reviewsLine(identity), 'You’ll see every update in Applied'].map((step, i) => (
+          {['Send your profile, no CV needed', reviewsLine(identity), 'You’ll see every update in Applied'].map((step, i) => (
             <li key={step} className="flex items-center gap-3 text-[14px] leading-[19px] text-ink-1">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-secondary font-semibold text-ink-1">{i + 1}</span>
               {step}

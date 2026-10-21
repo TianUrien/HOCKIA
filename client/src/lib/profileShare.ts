@@ -82,24 +82,24 @@ interface RoleCopy {
 const COPY: Record<ShareableRole, RoleCopy> = {
   player: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA profile — hockey background, videos, and references: ${url}`,
+      `Here’s my HOCKIA profile: hockey background, videos, and references: ${url}`,
     emailSubject: 'My HOCKIA player profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA profile — it has my hockey background, videos, and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my HOCKIA profile. It has my hockey background, videos, and references:\n\n${url}\n\nThanks!`,
   },
   coach: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA coaching profile — experience, background, and references: ${url}`,
+      `Here’s my HOCKIA coaching profile: experience, background, and references: ${url}`,
     emailSubject: 'My HOCKIA coaching profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA coaching profile — it has my coaching experience, background, and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my HOCKIA coaching profile. It has my coaching experience, background, and references:\n\n${url}\n\nThanks!`,
   },
   umpire: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA umpire profile — officiating background and references: ${url}`,
+      `Here’s my HOCKIA umpire profile: officiating background and references: ${url}`,
     emailSubject: 'My HOCKIA umpire profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA umpire profile — it has my officiating background and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my HOCKIA umpire profile. It has my officiating background and references:\n\n${url}\n\nThanks!`,
   },
   club: {
     shortMessage: (url) =>

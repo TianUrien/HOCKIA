@@ -105,7 +105,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
 
         {(phase === 'draft' || phase === 'sending') && vacancy && (
           <Turn>
-            <p className="text-[16px] leading-[22px] text-ink-1">{eligibility?.eligible ? 'Done drafting. Check it and send when you’re happy — nothing goes out until you tap Send.' : 'I checked this role first:'}</p>
+            <p className="text-[16px] leading-[22px] text-ink-1">{eligibility?.eligible ? 'Done drafting. Check it and send when you’re happy. Nothing goes out until you tap Send.' : 'I checked this role first:'}</p>
             {eligibility && !eligibility.eligible ? (
               <div className="mt-2.5 rounded-[16px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" data-testid="apply-not-eligible">
                 {(eligibility.reason ?? 'This role is for another team category.').replace(/\.$/, '')}, so this role can’t take your application. You can still message the club.
@@ -129,7 +129,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
                   {editing ? (
                     <textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, 600))} rows={5} autoFocus aria-label="Note to the club" className="mt-1.5 w-full resize-none rounded-[12px] border border-line p-2.5 text-[15px] leading-[21px] text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" data-testid="apply-note-input" />
                   ) : (
-                    <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-[21px] text-ink-1" data-testid="apply-note">{note || 'No note — your profile is the application.'}</p>
+                    <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-[21px] text-ink-1" data-testid="apply-note">{note || 'No note. Your profile is the application.'}</p>
                   )}
                 </div>
                 {error && <p className="px-3.5 pb-1 text-secondary text-status-danger" role="alert">{error}</p>}

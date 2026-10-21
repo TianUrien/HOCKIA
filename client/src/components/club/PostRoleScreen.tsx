@@ -420,7 +420,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                   <button type="button" onClick={removeCover} className="mt-1 h-9 text-secondary font-semibold text-status-danger" data-testid="post-role-cover-remove">Remove photo</button>
                 </>
               ) : (
-                <p className="mt-2 text-secondary text-ink-2">No photo? We build a cover from your crest in your club colours — it already looks finished.</p>
+                <p className="mt-2 text-secondary text-ink-2">No photo? We build a cover from your crest in your club colours. It already looks finished.</p>
               )}
             </section>
             <div className="px-5 pt-5">
@@ -562,7 +562,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                     <p className="min-w-0 flex-1 text-secondary leading-[18px] text-ink-1">I filled this in from what you wrote. Check each part, then post. Nothing is live yet.</p>
                   </div>
                 ) : (
-                  <p className="rounded-[16px] bg-surface-subtle px-3.5 py-3 text-secondary leading-[18px] text-ink-1" data-testid="post-again-note">Same details as your closed role. Dates and applicants start fresh — add a start date if you have one, then post. Nothing is live yet.</p>
+                  <p className="rounded-[16px] bg-surface-subtle px-3.5 py-3 text-secondary leading-[18px] text-ink-1" data-testid="post-again-note">Same details as your closed role. Dates and applicants start fresh. Add a start date if you have one, then post. Nothing is live yet.</p>
                 )}
                 {checkSummary(draft, { fromClub }).map((sec) => (
                   <div key={sec.key} className="flex flex-col gap-1 rounded-[16px] bg-surface-subtle px-4 py-3" data-testid={`ai-summary-${sec.key}`}>
@@ -580,8 +580,8 @@ export default function PostRoleScreen({ draftId }: Props) {
                     {sec.key === 'about' && aboutOpen ? null : sec.lines.map((line, i) => (
                       <p key={i} className={cn('text-body text-ink-1', sec.key === 'about' && 'line-clamp-3')}>{line}</p>
                     ))}
-                    {sec.neededMissing.length > 0 && <p className="text-secondary font-semibold text-status-warning">Needed — {sec.neededMissing.join(', ')}</p>}
-                    {sec.optionalMissing.length > 0 && !(sec.key === 'about' && aboutOpen) && <p className="text-secondary text-ink-3">Not set · optional — {sec.optionalMissing.join(', ')}</p>}
+                    {sec.neededMissing.length > 0 && <p className="text-secondary font-semibold text-status-warning">Needed: {sec.neededMissing.join(', ')}</p>}
+                    {sec.optionalMissing.length > 0 && !(sec.key === 'about' && aboutOpen) && <p className="text-secondary text-ink-3">Not set · optional: {sec.optionalMissing.join(', ')}</p>}
                   </div>
                 ))}
               </div>

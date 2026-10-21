@@ -255,7 +255,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                   type="button"
                   onClick={onSetDefault}
                   aria-label="Make this the default list"
-                  title="Make default — quick-saves land here"
+                  title="Make default. Quick-saves land here"
                   className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
                 >
                   <Star className="w-4 h-4" />

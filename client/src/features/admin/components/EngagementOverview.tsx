@@ -132,13 +132,13 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
         />
         <MetricTile
           label="Weekly Active Users"
-          info={<InfoTip metric="wau" interpretation={`${wau} people were active in the last 7 complete days${stickiness !== null ? ` — ${stickiness}% of everyone active this month came back within 7 days` : ''}.`} />}
+          info={<InfoTip metric="wau" interpretation={`${wau} people were active in the last 7 complete days${stickiness !== null ? ` · ${stickiness}% of everyone active this month came back within 7 days` : ''}.`} />}
           value={wau.toLocaleString()}
           sub={stickiness !== null ? `${stickiness}% of monthly actives returned this week` : 'last 7 complete days'}
         />
         <MetricTile
           label="Monthly Active Users"
-          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used HOCKIA in the last 30 complete days — the product's current reach.`} />}
+          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used HOCKIA in the last 30 complete days: the product's current reach.`} />}
           value={mau.toLocaleString()}
           sub="active in the last 30 complete days"
         />
@@ -149,7 +149,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <MetricTile
           label={`New Users (${days}d)`}
-          info={<InfoTip metric="newUsers" interpretation={`${data?.new_users_period ?? 0} people joined in the last ${days} days, vs ${data?.new_users_prev ?? 0} in the previous ${days} — growth separated from engagement.`} />}
+          info={<InfoTip metric="newUsers" interpretation={`${data?.new_users_period ?? 0} people joined in the last ${days} days, vs ${data?.new_users_prev ?? 0} in the previous ${days}. Growth separated from engagement.`} />}
           value={`+${(data?.new_users_period ?? 0).toLocaleString()}`}
           sub={
             <span className={newUsersDelta >= 0 ? 'text-emerald-600' : 'text-red-500'}>
@@ -159,7 +159,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
         />
         <MetricTile
           label="Activated (photo + position)"
-          info={<InfoTip metric="activation" value={data?.activation_pct} interpretation={`Of the ${data?.activation_cohort ?? 0} people who joined in the last ${days} days, ${data?.activation_activated ?? 0} completed onboarding, added a photo and set their position — ready to be found and contacted.`} />}
+          info={<InfoTip metric="activation" value={data?.activation_pct} interpretation={`Of the ${data?.activation_cohort ?? 0} people who joined in the last ${days} days, ${data?.activation_activated ?? 0} completed onboarding, added a photo and set their position, ready to be found and contacted.`} />}
           value={`${data?.activation_pct ?? 0}%`}
           sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users · onboarding + photo + position`}
         />
@@ -176,7 +176,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MetricTile
           label="Weekly Contributors"
-          info={<InfoTip metric="contributors" interpretation={`${data?.contributors_7d ?? 0} people created something in the last 7 complete days — posts, photos, videos, comments, messages or opportunities.`} />}
+          info={<InfoTip metric="contributors" interpretation={`${data?.contributors_7d ?? 0} people created something in the last 7 complete days: posts, photos, videos, comments, messages or opportunities.`} />}
           value={(data?.contributors_7d ?? 0).toLocaleString()}
           sub={`of ${data?.wau ?? wau} weekly actives`}
         />
@@ -198,7 +198,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
         />
         <MetricTile
           label="Content Created (7d)"
-          info={<InfoTip metric="contentCreation" interpretation="Fresh content this week — what members will find when they come back." />}
+          info={<InfoTip metric="contentCreation" interpretation="Fresh content this week: what members will find when they come back." />}
           value={
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm font-semibold text-gray-800">
               <span className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5 text-gray-400" />{content?.photos ?? 0} photos</span>
@@ -212,7 +212,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       </div>
 
       {/* ── 4. NORTH STAR — THE RECRUITING LOOP ───────────────────────── */}
-      <SectionHeading title="North Star — Real Connections" hint="the recruiting loop, from a role posted to a signing" />
+      <SectionHeading title="North Star: Real Connections" hint="the recruiting loop, from a role posted to a signing" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <RecruitingFunnelCard days={days} />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">

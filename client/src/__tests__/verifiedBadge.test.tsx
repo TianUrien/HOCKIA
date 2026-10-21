@@ -45,7 +45,7 @@ describe('VerifiedBadge', () => {
   it('tolerates a malformed verifiedAt without throwing', () => {
     render(<VerifiedBadge verified={true} verifiedAt="not-a-date" />)
     const badge = screen.getByRole('img', { name: /verified profile/i })
-    // Falls through to the plain tooltip rather than "Verified by HOCKIA — ".
+    // Falls through to the plain tooltip rather than "Verified by HOCKIA · ".
     expect(badge.getAttribute('title')).toBe('Verified by HOCKIA')
   })
 })

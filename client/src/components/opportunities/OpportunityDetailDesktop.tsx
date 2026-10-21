@@ -321,7 +321,7 @@ export function OpportunityDetailDesktop({
             <section className="pt-9">
               <h2 className={H2}>How applying works</h2>
               <ol className="mt-3.5 grid grid-cols-3 gap-3">
-                {['Send your profile — no CV needed', reviewsLine(identity), 'You’ll see every update in Applied'].map((step, i) => (
+                {['Send your profile, no CV needed', reviewsLine(identity), 'You’ll see every update in Applied'].map((step, i) => (
                   <li key={step} className={`${CARD} flex items-center gap-3 px-4 py-3.5 text-[14px] leading-[19px] text-ink-1`}>
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-secondary font-semibold text-ink-1">{i + 1}</span>
                     {step}

@@ -133,7 +133,7 @@ export function generateReminderEmailHtml(
   <div style="padding: 0 0 24px 0;">
 
     <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Add trust to your HOCKIA profile</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on HOCKIA — they could vouch for your hockey.</p>
+    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on HOCKIA. They could vouch for your hockey.</p>
 
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -154,7 +154,7 @@ export function generateReminderEmailHtml(
     </p>
 
     <p style="color: #374151; margin: 0 0 24px 0; font-size: 15px; line-height: 1.6;">
-      One reference is usually enough to make a difference — and asking takes about a minute.
+      One reference is usually enough to make a difference, and asking takes about a minute.
     </p>
 
     <div style="text-align: center; margin: 32px 0;">
@@ -191,11 +191,11 @@ export function generateReminderEmailText(
     '',
     `Hi ${firstName},`,
     '',
-    `You're connected with ${friendName} on HOCKIA — they could vouch for your hockey.`,
+    `You're connected with ${friendName} on HOCKIA. They could vouch for your hockey.`,
     '',
     'References are short vouches from coaches, teammates and clubs you\'ve connected with on HOCKIA. They appear on your profile and give the clubs and coaches scouting on HOCKIA more confidence in your background.',
     '',
-    'One reference is usually enough to make a difference — and asking takes about a minute.',
+    'One reference is usually enough to make a difference, and asking takes about a minute.',
     '',
     `Ask ${friendFirst} for a reference:`,
     ctaUrl,

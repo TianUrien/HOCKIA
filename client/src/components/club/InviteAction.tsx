@@ -40,7 +40,7 @@ export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied
       onClick={onInvite}
       disabled={!!limitReason}
       title={limitReason ?? undefined}
-      aria-label={limitReason ? `Invite to apply — ${limitReason}` : 'Invite to apply'}
+      aria-label={limitReason ? `Invite to apply · ${limitReason}` : 'Invite to apply'}
       className="relative flex h-9 items-center rounded-full bg-hockia-soft px-4 text-row font-semibold text-hockia-primary before:absolute before:-inset-1 before:content-[''] disabled:opacity-40"
       data-testid="invite-button"
     >

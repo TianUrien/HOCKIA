@@ -57,7 +57,7 @@ function MediaItem({
     return (
       <button
         type="button"
-        aria-label={`Play video — ${alt}`}
+        aria-label={`Play video · ${alt}`}
         className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
         onClick={onClick}
       >
@@ -80,7 +80,7 @@ function MediaItem({
   return (
     <button
       type="button"
-      aria-label={`View image — ${alt}`}
+      aria-label={`View image · ${alt}`}
       className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
       onClick={onClick}
     >
@@ -119,7 +119,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
 
   // Per-item alt: "Post by Author Name — image 2 of 5".
   const altFor = (i: number, total: number) =>
-    total > 1 ? `${altPrefix} — image ${i + 1} of ${total}` : altPrefix
+    total > 1 ? `${altPrefix} · image ${i + 1} of ${total}` : altPrefix
 
   if (!media || media.length === 0) return null
 

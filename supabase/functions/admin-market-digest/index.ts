@@ -45,7 +45,7 @@ function buildHtml(payload: any, recs: MarketRecommendation[]): string {
   const responseRate = h.total_apps > 0 ? Math.round((h.responded_apps / h.total_apps) * 100) : null
 
   const recRows = recs.length === 0
-    ? `<p style="color:#6b7280;font-size:14px;">No rules fired this week — the marketplace has no
+    ? `<p style="color:#6b7280;font-size:14px;">No rules fired this week. The marketplace has no
        actionable alerts. (Silence means below-threshold, not missing data.)</p>`
     : recs.map((r, i) => `
       <tr>
@@ -64,7 +64,7 @@ function buildHtml(payload: any, recs: MarketRecommendation[]): string {
   const burned = (payload.player_behavior?.burned?.players ?? []) as any[]
   const burnedBlock = burned.length === 0 ? '' : `
     <h3 style="font-size:14px;color:#111827;margin:24px 0 6px;">Players waiting on a first response</h3>
-    <p style="font-size:12px;color:#6b7280;margin:0 0 8px;">Applied, never answered — personal outreach beats any campaign.</p>
+    <p style="font-size:12px;color:#6b7280;margin:0 0 8px;">Applied, never answered. Personal outreach beats any campaign.</p>
     ${burned.map((p) => `<div style="font-size:13px;color:#374151;padding:2px 0;">
       ${p.name ?? '—'} · ${p.applications} app${p.applications === 1 ? '' : 's'} · last ${p.days_since_last_app}d ago
     </div>`).join('')}`
@@ -123,7 +123,7 @@ function buildText(payload: any, recs: MarketRecommendation[]): string {
     'Next best actions:',
     ...(recs.length === 0
       ? ['  (no rules fired this week)']
-      : recs.map((r, i) => `  ${i + 1}. [${r.owner}] ${r.title} — ${r.detail}`)),
+      : recs.map((r, i) => `  ${i + 1}. [${r.owner}] ${r.title} · ${r.detail}`)),
     '',
     `Open vacancies: ${h.open_vacancies} · Active supply: ${h.active_supply} · ` +
     `Pending apps: ${h.pending_apps}/${h.total_apps} · Cold: ${h.cold_vacancies}`,

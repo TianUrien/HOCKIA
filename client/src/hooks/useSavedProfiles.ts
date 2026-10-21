@@ -325,7 +325,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
             return
           }
         } else {
-          addToast('Saved — see your saved list in the dashboard', 'success')
+          addToast('Saved. See your saved list in the dashboard', 'success')
         }
       }
     } finally {

@@ -519,7 +519,7 @@ export default function OpportunitiesPage() {
   const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
   const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
-  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
+  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} · ${eligibleCount} of ${vacancies.length} open roles` : null
 
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 

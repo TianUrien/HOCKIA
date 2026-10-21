@@ -180,8 +180,8 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
         setSaving(false)
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (dobError || outcome === 'invalid_dob') return setError('That date of birth doesn’t look right — please check it.')
-        if (outcome === 'already_set') return setError('Your date of birth is locked — contact Hockia support to change it.')
+        if (dobError || outcome === 'invalid_dob') return setError('That date of birth doesn’t look right. Please check it.')
+        if (outcome === 'already_set') return setError('Your date of birth is locked. Contact Hockia support to change it.')
         await refreshProfile()
         return setEditing(null)
       }

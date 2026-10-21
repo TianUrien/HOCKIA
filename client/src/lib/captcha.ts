@@ -164,6 +164,6 @@ function reportUnavailable(action: CaptchaAction, reason: string): void {
 export function captchaErrorMessage(message: string | undefined): string | null {
   if (!message) return null
   return /captcha/i.test(message)
-    ? 'We couldn’t confirm you’re not a bot. Please try again — if it keeps happening, check your connection or try another browser.'
+    ? 'We couldn’t confirm you’re not a bot. Please try again. If it keeps happening, check your connection or try another browser.'
     : null
 }

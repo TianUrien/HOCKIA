@@ -128,7 +128,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
           <button type="button" onClick={() => { setSheet(null); postAgain() }} className="flex items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left disabled:opacity-50" data-testid="role-actions-post-again">
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] leading-[22px] text-brand-primary">Post again</span>
-              <span className="block text-secondary text-ink-2">A new role with the same details. Dates and applicants start fresh — you check it before it goes live.</span>
+              <span className="block text-secondary text-ink-2">A new role with the same details. Dates and applicants start fresh. You check it before it goes live.</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>

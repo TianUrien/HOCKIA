@@ -20,7 +20,7 @@ describe('Toast message correctness', () => {
     const source = readFileSync(MODAL_SOURCE, 'utf-8')
 
     expect(source).toContain("Draft saved")
-    expect(source).toContain("publish when you")
+    expect(source).toContain("Publish when you")
     expect(source).toContain("ready to go live.")
     expect(source).toContain("'info'")
     expect(source).not.toContain('Opportunity created successfully.')

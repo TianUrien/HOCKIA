@@ -71,10 +71,10 @@ function clubBacklogRules(mi: MarketPayload): MarketRecommendation[] {
     .map((c) => ({
       id: `backlog:${c.club_profile_id}`,
       priority: 1 as const,
-      title: `Nudge ${c.club_name ?? 'a club'} — ${c.pending_backlog} players waiting`,
+      title: `Nudge ${c.club_name ?? 'a club'}: ${c.pending_backlog} players waiting`,
       detail:
         `${c.pending_backlog} application${c.pending_backlog === 1 ? '' : 's'} pending, the oldest for ` +
-        `${c.oldest_pending_days} days. Applicants who hear nothing stop applying — a personal ` +
+        `${c.oldest_pending_days} days. Applicants who hear nothing stop applying. A personal ` +
         `nudge here protects the whole marketplace.`,
       owner: 'Ops' as const,
     }))
@@ -121,7 +121,7 @@ function funnelRule(mi: MarketPayload): MarketRecommendation[] {
       title: 'Vacancies get viewed but not applied to',
       detail:
         `${vf.viewed} of ${vf.published} vacancies were viewed but only ${vf.applied} received an ` +
-        `application — a conversion problem, not a traffic problem. Look at posting quality and ` +
+        `application: a conversion problem, not a traffic problem. Look at posting quality and ` +
         `apply-flow friction before spending on acquisition.`,
       owner: 'Product',
     })
@@ -140,7 +140,7 @@ function responseRateRule(mi: MarketPayload): MarketRecommendation[] {
     title: `Only ${Math.round(rate * 100)}% of applications ever get a response`,
     detail:
       `${total_apps - responded_apps} of ${total_apps} applications are still unanswered. ` +
-      `This is the biggest silent killer of a talent marketplace — players who apply into silence ` +
+      `This is the biggest silent killer of a talent marketplace: players who apply into silence ` +
       `don't apply twice. Work the club backlog list below, and consider automated reminders.`,
     owner: 'Ops',
   }]
@@ -158,7 +158,7 @@ function burnedCohortRule(mi: MarketPayload): MarketRecommendation[] {
     detail:
       `Every one of their applications is still unanswered, the most recent from ` +
       `${b.players[0]?.days_since_last_app ?? '?'}+ days ago (${names}${b.count > 3 ? ', …' : ''}). ` +
-      `They are the likeliest churners on the platform — a personal message beats any campaign here.`,
+      `They are the likeliest churners on the platform. A personal message beats any campaign here.`,
     owner: 'Ops',
   }]
 }
@@ -181,8 +181,8 @@ function postingQualityRule(mi: MarketPayload): MarketRecommendation[] {
     priority: 2,
     title: `${weak.length} open vacancies are under-specified (quality below 50)`,
     detail:
-      `Most commonly missing: ${topMissing}. Complete postings attract more applicants — ` +
-      `help these clubs fill the gaps (see the quality list below), and consider making ` +
+      `Most commonly missing: ${topMissing}. Complete postings attract more applicants. ` +
+      `Help these clubs fill the gaps (see the quality list below), and consider making ` +
       `the posting flow nudge for these fields.`,
     owner: 'Product',
   }]
@@ -197,7 +197,7 @@ function corridorRule(mi: MarketPayload): MarketRecommendation[] {
     title: `Your strongest corridor: ${top.from_country} → ${top.to_country}`,
     detail:
       `${top.applications} applications flow from ${top.from_country} players to ` +
-      `${top.to_country} vacancies. Marketplace liquidity is corridor-shaped — recruiting ` +
+      `${top.to_country} vacancies. Marketplace liquidity is corridor-shaped: recruiting ` +
       `more ${top.from_country} players and more ${top.to_country} clubs compounds; ` +
       `treat them as one market in campaigns.`,
     owner: 'Growth',

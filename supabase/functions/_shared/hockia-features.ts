@@ -37,7 +37,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'manage_opportunities',
     label: 'My posted opportunities',
     summary:
-      'Review, edit, close or reopen the opportunities you have published — and see how many applications each has — in the Opportunities section of your dashboard.',
+      'Review, edit, close or reopen the opportunities you have published (and see how many applications each has) in the Opportunities section of your dashboard.',
     route: '/dashboard/profile/opportunities',
     roles: ['club', 'coach'],
   },
@@ -61,7 +61,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'apply_to_opportunity',
     label: 'Browse opportunities',
     summary:
-      'Players and coaches apply from the Opportunities page — open a role and use "Apply Now". Clubs and recruiting coaches publish roles; brands and umpires can browse roles but can\'t post them.',
+      'Players and coaches apply from the Opportunities page: open a role and use "Apply Now". Clubs and recruiting coaches publish roles; brands and umpires can browse roles but can\'t post them.',
     route: '/opportunities',
     roles: ['player', 'coach'],
   },
@@ -101,7 +101,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'references',
     label: 'References',
     summary:
-      'References are endorsements from people you have worked with — a trust signal for players, coaches and umpires. Request and manage them in the References area of your dashboard.',
+      'References are endorsements from people you have worked with: a trust signal for players, coaches and umpires. Request and manage them in the References area of your dashboard.',
     route: '/dashboard/profile/references',
     roles: ['player', 'coach', 'umpire'],
   },
@@ -109,7 +109,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'my_network',
     label: 'My Network',
     summary:
-      'My Network is your social hub — connections, comments and posts on your own profile (plus references for players, coaches and umpires) — inside your dashboard.',
+      'My Network is your social hub: connections, comments and posts on your own profile (plus references for players, coaches and umpires), inside your dashboard.',
     // Routes to the Connections section: it is a valid dashboard section
     // for every role (the unified "community" section does not exist on the
     // club dashboard, so it cannot be the shared destination).
@@ -120,7 +120,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'journey',
     label: 'My Journey',
     summary:
-      'Journey is your career timeline — clubs, roles and milestones over time. Add and edit entries from the Journey section of your dashboard.',
+      'Journey is your career timeline: clubs, roles and milestones over time. Add and edit entries from the Journey section of your dashboard.',
     route: '/dashboard/profile/journey',
     roles: ['player', 'coach'],
   },
@@ -136,7 +136,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'edit_profile',
     label: 'My dashboard',
     summary:
-      'Edit your profile — name, bio, location and role-specific fields — from your dashboard using the Edit button.',
+      'Edit your profile (name, bio, location and role-specific fields) from your dashboard using the Edit button.',
     route: '/dashboard/profile',
     roles: [],
   },
@@ -152,7 +152,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'discover',
     label: 'Discover',
     summary:
-      'Discover is HOCKIA\'s AI search — ask in natural language to find players, coaches, clubs and brands.',
+      'Discover is HOCKIA\'s AI search. Ask in natural language to find players, coaches, clubs and brands.',
     route: '/discover',
     roles: [],
   },
@@ -160,7 +160,7 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'community',
     label: 'Community',
     summary:
-      'Community is the HOCKIA member directory and Q&A — browse members and ask or answer questions.',
+      'Community is the HOCKIA member directory and Q&A. Browse members and ask or answer questions.',
     route: '/community',
     roles: [],
   },
@@ -172,9 +172,9 @@ const FEATURE_BY_KEY = new Map(HOCKIA_FEATURES.map(f => [f.key, f]))
 export function renderFeatureKnowledge(): string {
   const lines = HOCKIA_FEATURES.map(f => {
     const who = f.roles.length === 0 ? 'all roles' : f.roles.join(', ')
-    return `- ${f.key} — ${f.summary} (Available to: ${who}.)`
+    return `- ${f.key}: ${f.summary} (Available to: ${who}.)`
   })
-  return `HOCKIA FEATURE MAP (source of truth — do not invent features):\n${lines.join('\n')}`
+  return `HOCKIA FEATURE MAP (source of truth; do not invent features):\n${lines.join('\n')}`
 }
 
 /**

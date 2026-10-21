@@ -102,7 +102,7 @@ function buildNudge(
     case 'journey-stale':
       return {
         id,
-        message: `Your last career history update was ${period} ago — add a recent moment to keep clubs current.`,
+        message: `Your last career history update was ${period} ago. Add a recent moment to keep clubs current.`,
         ctaLabel: 'Update career history',
         action: { type: 'tab', tab: 'journey' },
         daysSince,
@@ -110,7 +110,7 @@ function buildNudge(
     case 'gallery-stale':
       return {
         id,
-        message: `Your Gallery hasn't been updated in ${period} — a fresh photo or clip shows you're active.`,
+        message: `Your Gallery hasn't been updated in ${period}. A fresh photo or clip shows you're active.`,
         ctaLabel: 'Add to Gallery',
         action: { type: 'tab', tab: 'profile' },
         daysSince,
@@ -118,7 +118,7 @@ function buildNudge(
     case 'bio-stale':
       return {
         id,
-        message: `Your bio is ${period} old — a refresh helps clubs see where you're at now.`,
+        message: `Your bio is ${period} old. A refresh helps clubs see where you're at now.`,
         ctaLabel: 'Edit bio',
         action: { type: 'edit-profile' },
         daysSince,
@@ -126,7 +126,7 @@ function buildNudge(
     case 'posts-stale':
       return {
         id,
-        message: `Your last post was ${period} ago — a fresh update keeps followers engaged.`,
+        message: `Your last post was ${period} ago. A fresh update keeps followers engaged.`,
         ctaLabel: 'New post',
         action: { type: 'tab', tab: 'posts' },
         daysSince,
@@ -134,7 +134,7 @@ function buildNudge(
     case 'products-stale':
       return {
         id,
-        message: `Your products haven't been updated in ${period} — refresh stock or add a new item.`,
+        message: `Your products haven't been updated in ${period}. Refresh stock or add a new item.`,
         ctaLabel: 'Manage products',
         action: { type: 'tab', tab: 'products' },
         daysSince,
@@ -142,7 +142,7 @@ function buildNudge(
     case 'media-stale':
       return {
         id,
-        message: `Club media hasn't been updated in ${period} — fresh photos show the club is active.`,
+        message: `Club media hasn't been updated in ${period}. Fresh photos show the club is active.`,
         ctaLabel: 'Add media',
         action: { type: 'tab', tab: 'overview' },
         daysSince,

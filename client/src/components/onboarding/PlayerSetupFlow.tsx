@@ -234,7 +234,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: draft.dateOfBirth })
         if (dobError) throw new Error('Could not save your date of birth. Please try again.')
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right — please check it.')
+        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right. Please check it.')
         if (outcome === 'frozen') {
           await fetchProfile(user.id, { force: true })
           return
@@ -389,7 +389,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
             ) : (
               <div>
                 <DateOfBirthPicker appearance="field" label="Date of birth" value={draft.dateOfBirth} onChange={(next) => set({ dateOfBirth: next })} required />
-                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile — only your age is.</p>
+                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile. Only your age is.</p>
               </div>
             )}
 
@@ -463,7 +463,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         className="flex flex-1 flex-col pt-4"
       >
         <h1 className="text-title text-ink-1">Where you play</h1>
-        <p className="mt-1.5 text-row text-ink-2">All optional — you can add these later from your profile.</p>
+        <p className="mt-1.5 text-row text-ink-2">All optional. You can add these later from your profile.</p>
 
         <div className="mt-6 space-y-4">
           <WorldClubSearch

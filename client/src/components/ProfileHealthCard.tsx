@@ -59,7 +59,7 @@ export default function ProfileHealthCard<TBucket extends BucketLike>({
 
   const comparativeCopy = (() => {
     if (isComplete) {
-      return 'Your profile has the signals recruiters look for. Keep it fresh — clubs see updated profiles first.'
+      return 'Your profile has the signals recruiters look for. Keep it fresh. Clubs see updated profiles first.'
     }
     if (missingHighSignal.length === 0) {
       // Recruiter-grade signals all present, only smaller items missing.

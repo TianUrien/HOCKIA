@@ -53,7 +53,7 @@ describe('DashboardCard — whole-card tap', () => {
   it('activates on keyboard Enter when the card is focused', async () => {
     const onCta = vi.fn()
     render(<DashboardCard icon={Play} title="Media" ctaLabel="Manage media" onCtaClick={onCta} />)
-    const card = screen.getByRole('button', { name: 'Media — Manage media' })
+    const card = screen.getByRole('button', { name: 'Media · Manage media' })
     card.focus()
     await userEvent.keyboard('{Enter}')
     expect(onCta).toHaveBeenCalledTimes(1)

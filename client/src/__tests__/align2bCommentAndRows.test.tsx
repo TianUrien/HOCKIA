@@ -71,10 +71,10 @@ describe('DetailRowItem', () => {
 describe('SwitchCardRow', () => {
   it('is one switch with the title as its name', () => {
     const onChange = vi.fn()
-    render(<SwitchCardRow title="Only roles my passports qualify for" description="Argentine — 4 of 14 open roles" checked onChange={onChange} />)
+    render(<SwitchCardRow title="Only roles my passports qualify for" description="Argentine · 4 of 14 open roles" checked onChange={onChange} />)
     const sw = screen.getByRole('switch', { name: 'Only roles my passports qualify for' })
     expect(sw.getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByText('Argentine — 4 of 14 open roles')).toBeTruthy()
+    expect(screen.getByText('Argentine · 4 of 14 open roles')).toBeTruthy()
     fireEvent.click(sw)
     expect(onChange).toHaveBeenCalledTimes(1)
   })

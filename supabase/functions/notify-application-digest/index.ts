@@ -311,7 +311,7 @@ Deno.serve(async (req: Request) => {
       `You have ${rows.length} application${rows.length === 1 ? '' : 's'} waiting for your response (oldest: ${oldest} day${oldest === 1 ? '' : 's'}).`,
       '',
       ...shown.map((r) =>
-        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} — ${r.opportunity_title} — waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
+        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} · ${r.opportunity_title} · waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
       ),
       overflow > 0 ? `...and ${overflow} more.` : '',
       '',

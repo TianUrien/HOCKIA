@@ -42,7 +42,7 @@ export function ProfileVideoTile({ video, portrait = false, locked = false, canW
 
   if (dead) {
     return (
-      <button ref={ref} type="button" onClick={onOpen} aria-label={`${video.title} — video unavailable`} className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-2 text-center', className)}>
+      <button ref={ref} type="button" onClick={onOpen} aria-label={`${video.title} · video unavailable`} className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-2 text-center', className)}>
         <VideoOff className="h-5 w-5 text-ink-4" strokeWidth={1.8} aria-hidden="true" />
         <span className="text-caption text-ink-3">Video unavailable</span>
       </button>
@@ -82,7 +82,7 @@ export function LockedVideoTile({ label = 'Full match', onOpen, className }: { l
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${label} — for clubs & recruiting coaches only`}
+      aria-label={`${label} · for clubs & recruiting coaches only`}
       data-testid="locked-video-tile"
       className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-3 text-center', className)}
     >

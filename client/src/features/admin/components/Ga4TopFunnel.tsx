@@ -108,7 +108,7 @@ export function Ga4TopFunnel() {
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-600 break-words">
               {isPermissionError
-                ? 'GA4 access not granted yet — enable the Analytics Data API and add the service account as a property Viewer.'
+                ? 'GA4 access not granted yet. Enable the Analytics Data API and add the service account as a property Viewer.'
                 : gaError}
             </p>
             <button
@@ -125,7 +125,7 @@ export function Ga4TopFunnel() {
           <Lock className="w-6 h-6 text-gray-500 mx-auto mb-2" />
           <p className="text-sm text-gray-500">GA4 top-of-funnel isn’t connected yet.</p>
           <p className="text-xs text-gray-400 mt-1">
-            Add the GA4 service-account secrets to enable this card — the funnel below (Supabase) is unaffected.
+            Add the GA4 service-account secrets to enable this card. The funnel below (Supabase) is unaffected.
           </p>
         </div>
       ) : (
@@ -176,7 +176,7 @@ export function Ga4TopFunnel() {
 
           <p className="mt-5 text-[11px] text-gray-400 leading-relaxed">
             Flows into “Account created” in the Registration Funnel below (exact, from Supabase).
-            We don’t show conversion % across the two — they’re different sources at different precision.
+            We don’t show conversion % across the two: they’re different sources at different precision.
             New events (CTA click, wall click) will read “—” until GA4 accrues data over the next days.
           </p>
         </>

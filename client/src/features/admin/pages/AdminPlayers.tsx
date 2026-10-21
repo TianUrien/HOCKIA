@@ -133,7 +133,7 @@ export function AdminPlayers() {
     const result: { value: string; label: string; color: string }[] = [
       {
         value: `${worstStep.conversion}%`,
-        label: `conversion at "${worstStep.label}" — biggest bottleneck`,
+        label: `conversion at "${worstStep.label}": biggest bottleneck`,
         color: 'text-red-600',
       },
       {

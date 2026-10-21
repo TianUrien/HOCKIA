@@ -164,7 +164,7 @@ Deno.serve(async (req: Request) => {
       : `${entries.length} of your applications have closed`
 
     const listHtml = entries
-      .map((e) => `<li style="margin:4px 0;color:#374151;font-size:14px;"><strong>${escapeHtml(e.title)}</strong> — ${escapeHtml(e.publisher)}</li>`)
+      .map((e) => `<li style="margin:4px 0;color:#374151;font-size:14px;"><strong>${escapeHtml(e.title)}</strong> · ${escapeHtml(e.publisher)}</li>`)
       .join('')
 
     const html = `<!DOCTYPE html>
@@ -181,7 +181,7 @@ Deno.serve(async (req: Request) => {
         </p>
         ${single ? '' : `<ul style="padding-left:18px;margin:8px 0;">${listHtml}</ul>`}
         <p style="font-size:14px;color:#374151;line-height:1.55;">
-          Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting — some conversations simply continue elsewhere. Here's what's open right now:
+          Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         <div style="margin-top:20px;">
@@ -201,9 +201,9 @@ Deno.serve(async (req: Request) => {
       single
         ? `Your application for "${entries[0].title}" is no longer active on HOCKIA.`
         : `These applications are no longer active on HOCKIA:`,
-      ...(single ? [] : entries.map((e) => `- ${e.title} — ${e.publisher}`)),
+      ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
       '',
-      "Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting — some conversations simply continue elsewhere.",
+      "Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting. Some conversations simply continue elsewhere.",
       suggestionsText(suggestions, HOCKIA_BASE_URL),
       '',
       `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,

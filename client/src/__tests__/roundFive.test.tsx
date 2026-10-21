@@ -98,21 +98,21 @@ describe('fit: Position row', () => {
 
   it('wrong position names both sides; never ticked', () => {
     const row = fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: 'midfielder' })
-    expect(row).toEqual({ key: 'position', label: 'Position', ok: false, detail: 'Midfielder — the role is for a Goalkeeper' })
+    expect(row).toEqual({ key: 'position', label: 'Position', ok: false, detail: 'Midfielder · the role is for a Goalkeeper' })
   })
   it('primary match is ticked', () => {
-    expect(fitPositionRow({ position_match: 1, role_position: 'goalkeeper', candidate_position: 'goalkeeper' })?.detail).toBe('Plays Goalkeeper — matches')
+    expect(fitPositionRow({ position_match: 1, role_position: 'goalkeeper', candidate_position: 'goalkeeper' })?.detail).toBe('Plays Goalkeeper · matches')
     expect(fitPositionRow({ position_match: 1, role_position: 'goalkeeper', candidate_position: 'goalkeeper' })?.ok).toBe(true)
   })
   it('secondary match and no position are explained, not ticked', () => {
     const second = fitPositionRow({ position_match: 0.5, role_position: 'goalkeeper', candidate_position: 'defender', candidate_secondary_position: 'goalkeeper' })
-    expect(second?.detail).toBe('Defender — plays Goalkeeper as a second position')
+    expect(second?.detail).toBe('Defender · plays Goalkeeper as a second position')
     expect(second?.ok).toBe(false)
-    expect(fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: null })?.detail).toBe('No position on the profile yet — the role is for a Goalkeeper')
+    expect(fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: null })?.detail).toBe('No position on the profile yet. The role is for a Goalkeeper')
   })
   it('coach roles use the coach vocabulary', () => {
-    expect(fitPositionRow({ position_match: 0, role_position: 'head_coach', candidate_position: 'assistant_coach' })?.detail).toBe('Assistant coach — the role is for a Head coach')
-    expect(fitPositionRow({ position_match: 0, role_position: 'other_coach', candidate_position: 'head_coach' })?.detail).toBe('Head coach — the role is for a Other')
+    expect(fitPositionRow({ position_match: 0, role_position: 'head_coach', candidate_position: 'assistant_coach' })?.detail).toBe('Assistant coach · the role is for a Head coach')
+    expect(fitPositionRow({ position_match: 0, role_position: 'other_coach', candidate_position: 'head_coach' })?.detail).toBe('Head coach · the role is for a Other')
   })
   it('comes first when the role has a position; absent otherwise (old cache rows too)', () => {
     const withPos = fitRows({ gender_match: 1, position_match: 0, role_position: 'goalkeeper', candidate_position: 'forward' }, ctx)
@@ -290,7 +290,7 @@ describe('closed role pages', () => {
   it('no "closes when filled" on a closed role', () => {
     const now = new Date('2026-09-27T12:00:00Z')
     const v = { created_at: '2026-09-24T12:00:00Z', application_deadline: null, closed_at: '2026-09-26T12:00:00Z' }
-    expect(postedLine(v, now)).toBe('Posted 3 days ago · No deadline — closes when filled')
+    expect(postedLine(v, now)).toBe('Posted 3 days ago · No deadline · closes when filled')
     // Round 9: day first (lib/dayFirst).
     expect(postedLine(v, now, true)).toMatch(/^Posted 3 days ago · Closed 2[56] Sep 2026$/)
     expect(postedLine({ ...v, closed_at: null }, now, true)).toBe('Posted 3 days ago · Closed')

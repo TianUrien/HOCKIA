@@ -121,13 +121,13 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
         <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Role</p>
         {choosing && passedActiveRole && (
           <p className="pb-2 text-secondary leading-[18px] text-ink-2" role="status" data-testid="invite-passed-active">
-            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)} — choose another role.
+            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)}. Choose another role.
           </p>
         )}
         {loading ? (
           <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">Loading roles…</p>
         ) : roles.length === 0 ? (
-          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post a role first — an invite is always to one of your open roles.</p>
+          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post a role first. An invite is always to one of your open roles.</p>
         ) : (
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Role">
             {(picking || choosing ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {

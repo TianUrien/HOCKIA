@@ -78,7 +78,7 @@ export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, pro
   return (
     <div className="flex items-center gap-2.5 px-5 pb-2.5 pt-3.5">
       {path ? (
-        <Link to={path} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${displayName} — view profile`}>
+        <Link to={path} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${displayName} · view profile`}>
           {identity}
         </Link>
       ) : (

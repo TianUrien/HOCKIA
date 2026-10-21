@@ -109,7 +109,7 @@ export default function DashboardCard({
         onPointerLeave: clearPressed,
         role: 'button' as const,
         tabIndex: 0,
-        'aria-label': `${title} — ${ctaLabel}`,
+        'aria-label': `${title} · ${ctaLabel}`,
       }
     : {}
 

@@ -240,7 +240,7 @@ export function RetentionExplorer() {
         </div>
         <p className="text-[11px] text-gray-500 mt-2">
           Cohort entry = account created. Eligible = the day-N window has fully elapsed (UTC).
-          Percentages are always retained ÷ eligible; a blank cell means nobody is eligible yet — not 0%.
+          Percentages are always retained ÷ eligible; a blank cell means nobody is eligible yet, not 0%.
         </p>
       </div>
 
