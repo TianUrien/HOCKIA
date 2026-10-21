@@ -3,7 +3,11 @@
  * Mirrors the client-side config at client/src/components/notifications/config.ts.
  */
 
-import { reminderCopyFromMetadata, reminderRouteFromMetadata } from '../_shared/club-reminders.ts'
+import {
+  newApplicationsCopyFromMetadata,
+  reminderCopyFromMetadata,
+  reminderRouteFromMetadata,
+} from '../_shared/club-reminders.ts'
 
 export interface PushPayload {
   title: string
@@ -358,6 +362,17 @@ export function buildPushPayload(
       }
     }
     case 'vacancy_application_received': {
+      // Grouped push from club-reminders (20261021160000): one per publisher
+      // per hour; the server wrote the copy and the tap target.
+      if (metadata?.batched === true) {
+        const copy = newApplicationsCopyFromMetadata(metadata)
+        return {
+          title: copy.title,
+          body: copy.body,
+          url: safeInternalPath(getString(metadata, 'target_url')) ?? reminderRouteFromMetadata(metadata),
+          tag: 'application',
+        }
+      }
       // Producer emits 'opportunity_title' (not 'vacancy_title'), and the
       // applicant's name arrives as the notification ACTOR — there is no
       // applicant_name metadata key. Reading the wrong keys made every

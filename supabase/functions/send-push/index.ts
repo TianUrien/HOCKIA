@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { buildPushPayload, PUSH_PREFERENCE_COLUMNS, pushAllowed, shouldPushWebhookEvent } from './push-payload.ts'
+import { NEW_APPLICATIONS_PUSH_KIND, pushStandsDownForBatch } from '../_shared/club-reminders.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
 import { sendApnsNotification, isApnsConfigured } from './apns.ts'
 
@@ -29,6 +30,12 @@ import { sendApnsNotification, isApnsConfigured } from './apns.ts'
  * UPDATE event is pushed only when created_at moved (the upsert re-stamps
  * it; marking read / seen / cleared never touches it), so reading a
  * notification can never re-push it.
+ *
+ * Grouped new-application pushes (20261021160000): once
+ * application_response_settings.batched_application_pushes_since is set, an
+ * individual vacancy_application_received row from that instant is NOT pushed
+ * (its in-app row stays); club-reminders calls this function directly with
+ * one grouped record per publisher per hour (metadata.batched = true).
  *
  * Preferences: notify_push is the master switch; each kind is also gated by
  * its per-type column (pushPreferenceColumn in push-payload.ts).
@@ -96,6 +103,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabase = getServiceClient()
+
+    // Grouped mode: the hourly club-reminders push replaces this one.
+    if (kind === NEW_APPLICATIONS_PUSH_KIND && metadata.batched !== true) {
+      const { data: settings, error: settingsError } = await supabase
+        .from('application_response_settings')
+        .select('batched_application_pushes_since')
+        .limit(1)
+        .maybeSingle()
+      // Fail open: if the switch cannot be read, push as before (never lose the push).
+      if (settingsError) console.warn('[send-push] settings read failed:', settingsError.message)
+      const since = (settings as { batched_application_pushes_since?: string | null } | null)?.batched_application_pushes_since ?? null
+      if (pushStandsDownForBatch(kind, metadata, record.created_at ?? null, since)) {
+        return new Response(
+          JSON.stringify({ skipped: true, reason: 'batched_by_club_reminders' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     // Master switch + the per-type setting for this kind.
     const { data: profile } = await supabase
