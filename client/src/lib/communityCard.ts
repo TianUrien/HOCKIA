@@ -5,6 +5,7 @@
  * words for the same member.
  */
 import { brandCategoryLabel, coachSpecialtyLabel, positionLabel } from '@/lib/identity'
+import { getInitials } from '@/lib/utils'
 
 export type CommunityRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -139,11 +140,9 @@ export function cardPlaceLine(age: number | null | undefined, place: string | nu
 
 /** Up to two initials for the no-photo monogram. */
 export function initialsOf(name: string | null | undefined): string {
-  // Words that carry a letter, first letter of each ("[QA] Safe Area" → QA,
-  // "QA Test Club 03" → QC): brackets and numbers never become initials.
-  const words = (name ?? '').split(/\s+/).map((w) => w.match(/\p{L}/u)?.[0]).filter((c): c is string => Boolean(c))
-  const letters = words.length > 1 ? [words[0], words[words.length - 1]] : words.slice(0, 1)
-  return letters.join('').toUpperCase() || '?'
+  // One rule app-wide (lib/utils getInitials): letters only, bracketed tags
+  // dropped ("[QA] Safe Area" → SA, "QA Test Club 03" → QC).
+  return getInitials(name)
 }
 
 /**
@@ -157,6 +156,11 @@ const ROLE_GRADIENT: Record<CommunityRole, [string, string]> = {
   umpire: ['rgb(91, 91, 107)', 'rgb(37, 37, 46)'],
   brand: ['rgb(190, 18, 60)', 'rgb(95, 9, 30)'],
   club: ['rgb(108, 43, 217)', 'rgb(52, 18, 120)'],
+}
+
+/** The two gradient stops for a role (the no-photo SVG in RolePlaceholder). */
+export function roleGradientStops(role: string | null | undefined): [string, string] {
+  return ROLE_GRADIENT[role as CommunityRole] ?? ROLE_GRADIENT.player
 }
 
 export function roleGradient(role: CommunityRole): string {

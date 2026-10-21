@@ -95,6 +95,11 @@ export const colors = {
     "women-soft": "#ffe4e6",
     "men-soft": "#e0f2fe",
     "mixed-soft": "#f1eafd"
+  },
+  "eu": {
+    "ink": "#003399",
+    "soft": "#e6edff",
+    "solid": "#003399d9"
   }
 }
 

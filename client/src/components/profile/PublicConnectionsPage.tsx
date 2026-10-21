@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { useNavigate } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { Avatar } from '@/components'
@@ -142,9 +143,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
             aria-pressed={roleFilter === f.value}
             className={cn(
               'rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
-              roleFilter === f.value
-                ? 'bg-hockia-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              chipTone(roleFilter === f.value)
             )}
           >
             {f.label}

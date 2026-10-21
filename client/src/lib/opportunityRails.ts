@@ -2,8 +2,7 @@ import type { Vacancy } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
 import type { Country } from '@/hooks/useCountries'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
-import { isPaid } from '@/lib/opportunityCopy'
-import { dayFirst } from '@/lib/dayFirst'
+import { closesLabel, deadlineDaysLeft, isPaid } from '@/lib/opportunityCopy'
 
 /**
  * Opportunities v2 list structure (founder ruling 3 + 16 Oct 2026 answers):
@@ -43,12 +42,11 @@ export function isNewRole(v: Pick<Vacancy, 'created_at'>, now = new Date()): boo
  * otherwise nothing. Closing wins over New: it is the one the player acts on.
  */
 export function roleStatus(v: Pick<Vacancy, 'created_at' | 'application_deadline'>, now = new Date()): { label: string; tone: 'brand' | 'ink' | 'amber' } | null {
-  const days = daysUntil(v.application_deadline, now)
-  if (days !== null && days >= 0) {
-    if (days === 0) return { label: 'Closes today', tone: 'amber' }
-    if (days <= CLOSING_SOON_DAYS) return { label: `Closes in ${days} day${days === 1 ? '' : 's'}`, tone: days <= 5 ? 'amber' : 'ink' }
-    const day = dayFirst(v.application_deadline, { year: 'never', now })
-    return day ? { label: `Closes ${day}`, tone: 'ink' } : null
+  // One shared label (lib/opportunityCopy closesLabel, audit A5).
+  const days = deadlineDaysLeft(v.application_deadline, now)
+  const label = closesLabel(v.application_deadline, now)
+  if (days !== null && days >= 0 && label) {
+    return { label, tone: days <= 5 ? 'amber' : 'ink' }
   }
   if (isNewRole(v, now)) return { label: 'New', tone: 'brand' }
   return null

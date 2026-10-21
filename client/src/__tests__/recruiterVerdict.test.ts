@@ -131,7 +131,7 @@ describe('computeRecruiterVerdict', () => {
       hasOpeningScope: true,
     })
     expect(r.tier).toBe('pass')
-    expect(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)]).toBe('Out of scope')
+    expect(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)]).toBe('Outside your context')
     expect(r.caveats).toContain('Plays Midfielder, not the Goalkeeper you require.')
   })
 
@@ -142,7 +142,7 @@ describe('computeRecruiterVerdict', () => {
       interest: interest('low', { caveats: ['Excluded that country.'] }),
     })
     expect(r.tier).toBe('pass') // yellow(1) + low(−0.8) = 0.2
-    expect(r.headline).toBe('Out of scope')
+    expect(r.headline).toBe('Outside your context')
     expect(r.caveats[0]).toBe('Excluded that country.')
   })
 
@@ -317,7 +317,7 @@ describe('recruiterDisplayTier + DISPLAY_TIER_LABELS', () => {
       excellent: 'Excellent',
       good: 'Good',
       possible: 'Possible',
-      out: 'Out of scope',
+      out: 'Outside your context',
     })
   })
 
@@ -362,7 +362,7 @@ describe('computeRecruiterVerdict — must-have hard cap (Phase 3)', () => {
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     expect(r.tier).toBe('pass')
-    expect(r.headline).toBe('Out of scope')
+    expect(r.headline).toBe('Outside your context')
     // the must-have reason LEADS the caveats
     expect(r.caveats[0]).toBe('Plays Midfielder, not the Goalkeeper you require.')
     // strength pinned to the floor so the bar can't contradict the headline

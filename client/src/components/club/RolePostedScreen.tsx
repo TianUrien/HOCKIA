@@ -8,6 +8,7 @@ import { trackPushSubscribe } from '@/lib/analytics'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useFindForRole } from '@/hooks/useFindForRole'
 import { INLINE_PUSH_ASK, useBottomPrompt } from '@/lib/bottomPrompt'
+import { markPushAskDone } from '@/lib/pushAsk'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { IconButton } from '@/components/ui/IconButton'
 import { DEFAULT_EXPIRY_DAYS } from '@/lib/clubRecruiting'
@@ -102,7 +103,9 @@ export default function RolePostedScreen({ roleId }: Props) {
   useBottomPrompt(INLINE_PUSH_ASK, showPush)
   // Leaving with the card still up counts as one dismissal.
   const leave = (to: string, state?: unknown) => {
-    if (showPush) recordDismissal()
+    // This card is the club's one notification ask (audit A1): once seen,
+    // the global ask sheet never follows.
+    if (showPush) { recordDismissal(); markPushAskDone(profile?.id) }
     navigate(to, { replace: true, state })
   }
   const done = () => leave('/opportunities', { highlight: roleId })
@@ -122,6 +125,7 @@ export default function RolePostedScreen({ roleId }: Props) {
       await push.subscribe()
       trackPushSubscribe('prompt')
       setTurnedOn(true)
+      markPushAskDone(profile?.id)
     } catch {
       // Denied or failed: the hook logs it; the card hides once permission is denied.
     }

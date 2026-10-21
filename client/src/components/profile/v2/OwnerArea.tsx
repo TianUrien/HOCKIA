@@ -1,6 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Briefcase, ChevronRight, Eye, Lock, Pencil } from 'lucide-react'
+import {
+  Award, BookOpen, Briefcase, CalendarDays, Camera, ChevronRight, CircleCheck, Crosshair, Eye, FileText, Flag, Image as ImageIcon, Images,
+  Landmark, Link2, Lock, Mail, MapPin, Medal, MessageSquare, Pencil, PenLine, Route, Shield, Sparkles, Trophy, UserPlus, Video,
+  type LucideIcon,
+} from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { SquircleBox } from '@/components/home/v1/primitives'
 import { cn } from '@/lib/utils'
@@ -42,29 +46,35 @@ export function OwnerButtons({ onEdit, previews }: {
   )
 }
 
-/** Progress ring for the strength card (the completeness %). */
-function Ring({ pct }: { pct: number }) {
-  const r = 22
-  const c = 2 * Math.PI * r
+/** Icon per next-step part (audit A2: the next missing item, never a %). */
+const STEP_ICONS: Record<string, LucideIcon> = {
+  photo: Camera, crest: Shield, logo: ImageIcon, position: Crosshair, current_club: Shield, league: Trophy,
+  passport: BookOpen, base_location: MapPin, video: Video, open_to_play: CircleCheck, availability: CalendarDays,
+  bio: PenLine, career: Route, references: Award, work_permit: FileText, nationality_base: Flag,
+  specialization: Crosshair, gallery: Images, friends: UserPlus, open_to_coach: CircleCheck, level: Medal,
+  federation: Landmark, available: CircleCheck, appointments: CalendarDays, country: Flag, year_founded: CalendarDays,
+  contact: Mail, media: Images, posts: MessageSquare, links: Link2, ambassadors: UserPlus,
+}
+
+/** The next missing item's own icon in a white tile. */
+export function NextStepIcon({ stepKey }: { stepKey: string }) {
+  const Icon = STEP_ICONS[stepKey] ?? Sparkles
   return (
-    <span className="relative flex h-14 w-14 shrink-0 items-center justify-center" aria-hidden="true">
-      <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
-        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(108,43,217,0.15)" strokeWidth="5" />
-        <circle cx="28" cy="28" r={r} fill="none" stroke="#6c2bd9" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(100, Math.max(0, pct)) / 100)} />
-      </svg>
-      <span className="absolute text-caption font-semibold tabular-nums text-hockia-primary">{pct}%</span>
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-hockia-primary" aria-hidden="true" data-testid="next-step-icon">
+      <Icon className="h-6 w-6" strokeWidth={1.8} />
     </span>
   )
 }
 
 /** The ONE primary card: the next step (ring + copy + CTA), or a role-specific card (applicants …). */
-export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual, secondary = false }: {
-  pct?: number | null
+export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, secondary = false }: {
+  /** The next missing part's key: shows that item's icon (never a completeness %). */
+  stepKey?: string | null
   title: string
   subtitle: string
   cta: string
   onAction: () => void
-  /** Replaces the ring (e.g. applicant faces). */
+  /** Replaces the step icon (e.g. applicant faces). */
   visual?: ReactNode
   /** Another card owns the screen's one primary button: white pill, brand text. */
   secondary?: boolean
@@ -72,7 +82,7 @@ export function PrimaryCard({ pct, title, subtitle, cta, onAction, visual, secon
   return (
     <div className="px-4 pt-3">
       <SquircleBox className="flex items-center gap-3 bg-hockia-soft px-4 py-3.5" >
-        {visual ?? (typeof pct === 'number' ? <Ring pct={pct} /> : null)}
+        {visual ?? (stepKey ? <NextStepIcon stepKey={stepKey} /> : null)}
         <span className="min-w-0 flex-1">
           <span className="block line-clamp-2 text-body font-semibold text-ink-1">{title}</span>
           <span className="block line-clamp-2 text-secondary text-ink-2">{subtitle}</span>

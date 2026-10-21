@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { closesSoonLabel } from '@/lib/opportunityCopy'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
 import { clubNoteFromFeedback, formatDurationText } from '@/lib/opportunityCopy'
@@ -60,7 +61,7 @@ export function roleDates(vacancy: Vacancy) {
   const duration = formatDurationText(vacancy.duration_text)
   const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? 'Open' : 'Open'
   const applyBySub = vacancy.application_deadline
-    ? (deadlineDays !== null && deadlineDays >= 0 ? (deadlineDays === 0 ? 'Closes today' : `Closes in ${deadlineDays} day${deadlineDays === 1 ? '' : 's'}`) : 'Deadline passed')
+    ? (deadlineDays !== null && deadlineDays >= 0 ? closesSoonLabel(vacancy.application_deadline) : 'Deadline passed')
     : 'Until filled'
   return { deadlineDays, startsValue, duration, applyByValue, applyBySub }
 }

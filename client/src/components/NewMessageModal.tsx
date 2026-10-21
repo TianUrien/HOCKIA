@@ -155,7 +155,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">New Message</h2>
+              <h2 className="text-xl font-bold text-gray-900">New message</h2>
               <p className="text-sm text-gray-500">Start a conversation</p>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
         {/* Section Label */}
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-          {searchTerm.trim() ? 'Search Results' : 'Recent Conversations'}
+          {searchTerm.trim() ? 'Search results' : 'Recent conversations'}
         </p>
 
         {/* Results List */}

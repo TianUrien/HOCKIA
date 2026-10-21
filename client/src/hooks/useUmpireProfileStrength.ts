@@ -128,7 +128,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
       },
       {
         id: 'career',
-        label: 'Career History',
+        label: 'Career history',
         hint: 'Add a career milestone, certification, or panel.',
         unlockCopy: 'Concrete history is a strong credibility signal beyond the badge.',
         weight: 10,

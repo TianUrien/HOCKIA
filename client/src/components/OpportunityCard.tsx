@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import Avatar from './Avatar'
 import { roleTeamLabel } from '@/lib/opportunityCopy'
-import { getTimeAgo } from '@/lib/utils'
+import { getInitials, getTimeAgo } from '@/lib/utils'
 
 export interface WorldClubInfo {
   id: string
@@ -43,9 +43,6 @@ const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: s
 
 const MAX_VISIBLE_PERKS = 3
 
-function getInitials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()
-}
 
 /**
  * Card type:

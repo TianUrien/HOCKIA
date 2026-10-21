@@ -225,44 +225,24 @@ const feedItem = {
 } as unknown as OpportunityPostedFeedItem
 
 describe('club screens', () => {
-  it('the feed shows View role (not Apply) on the club’s own role', () => {
-    authState = { user: { id: 'club-1' }, profile: { id: 'club-1', role: 'club' } }
-    render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
-    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'View role' }))
-    // One role design app-wide (17 Oct 2026): the feed opens the v2 role page.
-    expect(navigateSpy).toHaveBeenCalledWith('/opportunities/opp-9')
-  })
-
-  it('a player gets Apply on a player role', () => {
-    render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
-    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'View role' })).toBeNull()
-  })
-
-  it('a coach gets Apply on a coach role, View role on a player role', () => {
-    authState = { user: { id: 'coach-1' }, profile: { id: 'coach-1', role: 'coach' } }
-    const { unmount } = render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'coach' }} /></MemoryRouter>)
-    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy()
-    unmount()
-    render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'player' }} /></MemoryRouter>)
-    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'View role' })).toBeTruthy()
-  })
-
-  it('other clubs, brands and umpires get View role, and a player gets View role on a coach role', () => {
-    for (const role of ['club', 'brand', 'umpire']) {
+  // Design audit 2026-10-21 (A5): role cards carry no buttons. The role block
+  // is one tap target for every viewer; Apply is gated on the role page.
+  it('the feed role card has no Apply or View role button, for any viewer', () => {
+    for (const role of ['club', 'player', 'coach', 'brand', 'umpire']) {
       authState = { user: { id: `${role}-9` }, profile: { id: `${role}-9`, role } }
       const { unmount } = render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
       expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
-      expect(screen.getByRole('button', { name: 'View role' })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'View role' })).toBeNull()
       unmount()
     }
-    authState = { user: { id: 'player-1' }, profile: { id: 'player-1', role: 'player' } }
-    render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'coach' }} /></MemoryRouter>)
-    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
   })
 
+  it('tapping the role block opens the v2 role page', () => {
+    authState = { user: { id: 'club-1' }, profile: { id: 'club-1', role: 'club' } }
+    render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Open role: Women’s 1st team midfielder' }))
+    expect(navigateSpy).toHaveBeenCalledWith('/opportunities/opp-9')
+  })
   it('the club phone header has a Hockia AI (sparkles) button to /discover; players do not', () => {
     authState = { user: { id: 'club-1' }, profile: { id: 'club-1', role: 'club' } }
     const { unmount } = render(<MemoryRouter><Header /></MemoryRouter>)

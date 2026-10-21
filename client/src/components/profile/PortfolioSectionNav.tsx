@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { cn } from '@/lib/utils'
 
 /**
@@ -102,9 +103,7 @@ export default function PortfolioSectionNav({
             aria-current={activeId === s.id ? 'true' : undefined}
             className={cn(
               'whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
-              activeId === s.id
-                ? 'bg-hockia-primary text-white'
-                : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-100'
+              chipTone(activeId === s.id)
             )}
           >
             {s.label}

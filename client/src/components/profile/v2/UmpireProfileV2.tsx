@@ -98,6 +98,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
+  // Brands have followers, not friends (audit A7).
+  const viewerIsBrand = useAuthStore((s) => s.profile?.role === 'brand')
   const owner = !readOnly
   const visitor = readOnly && !isOwnProfile
   const profileId = profile.id
@@ -219,7 +221,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
       ? { key: 'friend', label: 'Requested', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
       : { key: 'friend', label: friendship.isIncomingRequest ? 'Accept' : 'Add friend', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
   const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'profile-message' }
-  const buttons: ActionBarButton[] = visitor ? [friendButton, messageButton] : []
+  const buttons: ActionBarButton[] = !visitor ? [] : viewerIsBrand ? [{ ...messageButton, tone: 'primary' }] : [friendButton, messageButton]
 
   const moreMenu = (triggerClassName: string) => (visitor ? (
     <ProfileActionMenu targetId={profileId} targetName={name} actionName={name.split(/\s+/)[0]} triggerClassName={triggerClassName} iconClassName="h-[22px] w-[22px]" />
@@ -259,7 +261,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
       {owner && (
         <>
           <OwnerButtons onEdit={props.onEdit} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players, clubs and leagues see', onSelect: props.onViewPublic }]} />
-          {stepCopy && step && <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
+          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
           <PrivateStats stats={stats} emptyText="Your stats appear here once people start viewing you" />
         </>
       )}

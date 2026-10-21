@@ -43,7 +43,7 @@ export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTot
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
             <MessageCircle className="h-3 w-3 text-hockia-primary" />
-            Answer every applicant. Players remember the clubs that reply.
+            Answer every applicant.
           </p>
         </div>
         <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />

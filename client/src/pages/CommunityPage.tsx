@@ -481,7 +481,8 @@ export default function CommunityPage() {
               {clubView ? <ClubViewPlayersHeader sort={sort} onSort={setSort} /> : (
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-center justify-between gap-3">
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
-                  {isNarrowed ? 'Matching members' : activeTab === 'all' || !isPhone ? 'All members' : TITLE_BY_TAB[activeTab]}
+                  {/* The heading follows the selected tab on every screen size (audit A9). */}
+                  {isNarrowed ? 'Matching members' : activeTab === 'all' ? 'All members' : TITLE_BY_TAB[activeTab]}
                   {(() => {
                     const displayed = isNarrowed || scopeNarrows ? filteredCount : totalCount
                     if (displayed === null) return null
@@ -522,7 +523,7 @@ export default function CommunityPage() {
                           Showing <span className="font-semibold">{scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole)}</span>, ranked for your recruiting context.
                         </>
                       ) : (
-                        <>Showing everyone. Your scope still personalises ranking.</>
+                        <>Showing everyone. Your context still personalises ranking.</>
                       )}
                     </span>
                   </p>

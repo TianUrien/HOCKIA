@@ -1,6 +1,6 @@
 import { Building2, GraduationCap, MapPin, ShoppingBag, User, Users } from 'lucide-react'
 import type { AppliedSearch } from '@/hooks/useDiscover'
-import { categoryToDisplay } from '@/lib/hockeyCategories'
+import { categoryToDisplay, opportunityGenderToDisplay } from '@/lib/hockeyCategories'
 
 interface AppliedSearchStripProps {
   applied: AppliedSearch
@@ -28,11 +28,11 @@ export default function AppliedSearchStrip({ applied }: AppliedSearchStripProps)
   }
   // Phase 3e — prefer category_label (Adult women / Girls / etc.). Fall back
   // to legacy gender_label if a stale backend response is in flight, mapping
-  // 'Men' → "Adult men" and 'Women' → "Adult women" so chip text is consistent.
+  // 'Men' → "Men's" and 'Women' → "Women's" so chip text is consistent.
   const categoryChipLabel = applied.category_label
     ? categoryToDisplay(applied.category_label)
     : applied.gender_label
-      ? (applied.gender_label === 'Men' ? 'Adult men' : 'Adult women')
+      ? (opportunityGenderToDisplay(applied.gender_label) || null)
       : null
   if (categoryChipLabel) {
     chips.push({ key: 'category', label: categoryChipLabel })

@@ -144,7 +144,7 @@ export const DISPLAY_TIER_LABELS: Record<VerdictDisplayTier, string> = {
   excellent: 'Excellent',
   good: 'Good',
   possible: 'Possible',
-  out: 'Out of scope',
+  out: 'Outside your context',
 }
 
 /** The canonical display tier for a verdict — every card/sheet/profile reads

@@ -219,8 +219,9 @@ describe('Community lists exclude the viewer', () => {
 describe('category labels', () => {
   it('sentence case everywhere', async () => {
     const { categoryToDisplay, opportunityGenderToDisplay } = await import('@/lib/hockeyCategories')
-    expect(['adult_men', 'adult_women', 'boys', 'girls', 'mixed'].map(categoryToDisplay)).toEqual(['Adult men', 'Adult women', 'Boys', 'Girls', 'Mixed'])
-    expect(opportunityGenderToDisplay('Men')).toBe('Adult men')
+    expect(['adult_men', 'adult_women', 'boys', 'girls', 'mixed'].map(categoryToDisplay)).toEqual(["Men's", "Women's", 'Boys', 'Girls', 'Mixed'])
+    // Audit A6 (2026-10-21): the same words as lib/opportunityCopy genderPill.
+    expect(opportunityGenderToDisplay('Men')).toBe("Men's")
   })
 })
 

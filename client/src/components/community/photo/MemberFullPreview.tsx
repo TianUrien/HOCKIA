@@ -1,4 +1,7 @@
 import { nationalityCountries } from '@/lib/nationality'
+import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import RolePlaceholder from '@/components/RolePlaceholder'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { LogoTile } from './LogoTile'
@@ -130,6 +133,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const navigate = useNavigate()
   const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
+  // Brands have followers, not friends (audit A7): Message + Invite as ambassador.
+  const personGate = personActionGate(viewer?.role, member.role)
+  const ambassador = useAmbassadorInvite(personGate.inviteAmbassador ? member.id : null, addToast)
   const { countries } = useCountries()
   const [signIn, setSignIn] = useState<'view' | 'message' | 'connect' | null>(null)
   const [sending, setSending] = useState(false)
@@ -376,6 +382,21 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       ) : messageButton('primary')
     }
     if (isBrand) return messageButton('primary')
+    if (!personGate.addFriend) {
+      const tonal = surface === 'photo'
+        ? secondary
+        : `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-brand-soft ${btnSize} font-semibold text-brand-primary ${PRESS} disabled:opacity-60`
+      return (
+        <>
+          {messageButton('primary')}
+          {personGate.inviteAmbassador && (
+            <button type="button" onClick={() => void ambassador.invite()} disabled={ambassador.state !== 'idle'} className={tonal} data-testid="member-preview-invite-ambassador">
+              {ambassador.state === 'sent' && <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" />} {ambassador.label}
+            </button>
+          )}
+        </>
+      )
+    }
     if (recruiterActions) {
       return (
         <>
@@ -666,7 +687,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
                       {p.avatarUrl ? (
                         <img src={getImageUrl(p.avatarUrl, 'avatar-sm') ?? p.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-ink-2">{initialsOf(p.fullName)}</span>
+                        <RolePlaceholder role={isRoleAvatarRole(p.role) ? p.role : 'player'} name={p.fullName} label="" />
                       )}
                     </span>
                   ))}
@@ -1275,7 +1296,7 @@ function ImmersivePage(p: ImmersivePageProps) {
                   {[c.flag, c.name].filter(Boolean).join(' ')}
                 </span>
               ))}
-              {hasEuPassport(p.nationalities) && <EuBadge className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
+              {hasEuPassport(p.nationalities) && <EuBadge surface="photo" className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
             </div>
           )}
           {p.isPerson && p.place && <p className="line-clamp-2 text-[13px] leading-[18px] text-white/80">Based in {p.place}</p>}
@@ -1321,7 +1342,7 @@ function ImmersivePage(p: ImmersivePageProps) {
               {avatar ? (
                 <img src={avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
               ) : (
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[15px] font-semibold text-ink-2">{initialsOf(p.name)}</span>
+                <span className="block h-12 w-12 shrink-0 overflow-hidden rounded-full"><RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} name={p.name} label="" /></span>
               )}
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p className="line-clamp-2 text-[22px] font-bold leading-[27px] tracking-[-0.006em] text-ink-1">{p.title}</p>
@@ -1338,7 +1359,7 @@ function ImmersivePage(p: ImmersivePageProps) {
                     <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
                     <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
                     {hasEuPassport(p.nationalities) && (
-                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge /> EU passport</span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> EU passport</span>
                     )}
                   </div>
                 )}

@@ -66,11 +66,11 @@ import JourneyTab from '@/components/JourneyTab'
 describe('JourneyTab — inline + readOnly empty-state suppression', () => {
   it('renders nothing when there are no entries (inline + readOnly)', async () => {
     const { container } = render(
-      <JourneyTab profileId="profile-1" readOnly variant="inline" title="Career History" />
+      <JourneyTab profileId="profile-1" readOnly variant="inline" title="Career history" />
     )
 
     // After the supabase fetch resolves with an empty list, the
-    // inline+readOnly branch returns null. There should be no "Career History"
+    // inline+readOnly branch returns null. There should be no "Career history"
     // heading anywhere in the rendered output.
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: /^career history$/i })).toBeNull()

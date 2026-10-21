@@ -3,6 +3,7 @@ import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { RoleLike } from '@/lib/identity'
 import { isOrganisationRole } from '@/lib/identity'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
 interface EntityAvatarProps {
   src?: string | null
@@ -25,7 +26,7 @@ export function EntityAvatar({ src, name, role, size = 48, className }: EntityAv
     const radius = Math.round(size / 4)
     return (
       <span
-        className={cn('flex shrink-0 items-center justify-center overflow-hidden border border-line bg-white', className)}
+        className={cn('flex shrink-0 items-center justify-center overflow-hidden', src ? 'border border-line bg-white' : '', className)}
         style={{ width: size, height: size, borderRadius: radius }}
       >
         {src ? (
@@ -37,7 +38,9 @@ export function EntityAvatar({ src, name, role, size = 48, className }: EntityAv
             style={{ width: size - 8, height: size - 8 }}
           />
         ) : (
-          <span className="text-secondary font-semibold text-ink-2">{getInitials(label) || '?'}</span>
+          // No crest / logo: the organisation no-photo treatment (violet for
+          // clubs, brand ink for brands) with large initials (Batch C).
+          <RolePlaceholder role={role === 'brand' ? 'brand' : 'club'} name={label} label="" />
         )}
       </span>
     )

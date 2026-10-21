@@ -163,22 +163,6 @@ export default function ProfileCompletionCard() {
         <X className="w-4 h-4" />
       </button>
 
-      {/* Progress bar */}
-      <div className="flex items-center gap-3 mb-3 pr-6">
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-gray-500">Profile strength</span>
-            <span className="text-xs font-bold text-gray-700 tabular-nums">{profileStrength.percentage}%</span>
-          </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-hockia-primary to-hockia-secondary rounded-full transition-all duration-500"
-              style={{ width: `${profileStrength.percentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Current step */}
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-50">

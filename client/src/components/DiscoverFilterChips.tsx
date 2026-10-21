@@ -1,6 +1,6 @@
 import type { ParsedFilters } from '@/hooks/useDiscover'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
-import { categoryToDisplay } from '@/lib/hockeyCategories'
+import { categoryToDisplay, opportunityGenderToDisplay } from '@/lib/hockeyCategories'
 
 interface DiscoverFilterChipsProps {
   filters: ParsedFilters
@@ -34,7 +34,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   const categoryLabel = filters.target_category
     ? categoryToDisplay(filters.target_category)
     : filters.gender
-      ? (filters.gender === 'Men' ? 'Adult men' : filters.gender === 'Women' ? 'Adult women' : null)
+      ? (opportunityGenderToDisplay(filters.gender) || null)
       : null
   if (categoryLabel) {
     chips.push({ label: categoryLabel, color: 'bg-gray-100 text-gray-800' })

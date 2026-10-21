@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { COMPACT_HEADER_PX } from './profileChromeHooks'
+import { chipTone } from '@/components/ui/chipClasses'
+import { COMPACT_HEADER_PX, useHeroStatusBar } from './profileChromeHooks'
 import { Share } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
@@ -19,6 +20,8 @@ export function CompactHeader({ name, avatarUrl, role = 'player', visible, owner
   onShare: () => void
   right?: ReactNode
 }) {
+  // Light status-bar glyphs over the hero, dark once this header shows.
+  useHeroStatusBar(visible)
   return (
     <div
       className={cn(
@@ -114,7 +117,7 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
             aria-current={active === item.id ? 'true' : undefined}
             className="relative flex h-11 shrink-0 items-center"
           >
-            <span className={cn('flex h-[34px] items-center rounded-full px-3.5 text-secondary font-semibold transition-colors duration-150', active === item.id ? 'bg-ink-1 text-white' : 'bg-surface-muted text-ink-1')}>
+            <span className={cn('flex h-[34px] items-center rounded-full px-3.5 text-secondary font-semibold transition-colors duration-150', chipTone(active === item.id))}>
               {item.label}
             </span>
           </button>

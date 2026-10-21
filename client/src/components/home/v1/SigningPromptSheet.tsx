@@ -30,7 +30,7 @@ function dismiss(id: string) {
 /**
  * "Post this signing?" (Figma H14 88:1092). The player confirms a signing
  * (confirm_signing); the club then gets this sheet on Home, pre-filled with
- * the New signing card — Post New Signing (primary 52) / Not now. Shown once
+ * the New signing card — Post new signing (primary 52) / Not now. Shown once
  * per signing (one sheet per visit): within 21 days of signed_at, not yet
  * posted, not dismissed.
  * The tagged member is notified by the server (and must be 18+).
@@ -120,7 +120,7 @@ export function SigningPromptSheet() {
           disabled={posting}
           className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-[17px] font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2 disabled:opacity-60"
         >
-          {posting && <Loader2 className="h-4 w-4 animate-spin" />} Post New Signing
+          {posting && <Loader2 className="h-4 w-4 animate-spin" />} Post new signing
         </button>
         <button type="button" onClick={notNow} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-hockia-primary">
           Not now

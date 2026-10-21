@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
-import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
-import { useAuthStore } from '@/lib/auth'
+import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, profilePathForRole } from '../FeedCard'
+import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 
@@ -18,15 +18,10 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   const navigate = useNavigate()
   // The v2 role page, the same as Opportunities (17 Oct 2026); Back returns to Home at the same scroll.
   const openRole = () => navigate(`/opportunities/${item.opportunity_id}`)
-  // "Apply" only for someone who can apply: a player on a player role, a coach
-  // on a coach role, never the publisher. Everyone else (clubs, brands,
-  // umpires, the publisher) gets a quiet "View role" that opens the same
-  // overlay — the publisher sees its applicants there.
-  const viewerId = useAuthStore((s) => s.user?.id ?? null)
-  const viewerRole = useAuthStore((s) => s.profile?.role ?? null)
-  const roleType = item.opportunity_type ?? 'player'
-  const canApply = Boolean(viewerId) && viewerId !== item.club_id
-    && ((viewerRole === 'player' && roleType === 'player') || (viewerRole === 'coach' && roleType === 'coach'))
+  // Design audit 2026-10-21 (A5): a role card carries no buttons. The role
+  // block is one tap target that opens the role page (Apply lives there, gated
+  // per viewer), warmed on hover, focus, press and scroll-in.
+  const prefetch = useRolePrefetch(item.opportunity_id)
 
   // The PUBLISHER is the card's author. Vacancies can be coach-published —
   // then club_id/club_name/club_logo carry the COACH's profile.
@@ -50,6 +45,15 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       <FeedCardCaption icon={<Briefcase />}>New opportunity</FeedCardCaption>
 
       <FeedCardBody>
+        <button
+          type="button"
+          ref={prefetch.ref}
+          {...prefetch.handlers}
+          onClick={openRole}
+          aria-label={`Open role: ${item.title}`}
+          data-testid="opportunity-posted-open"
+          className="-mx-2 -my-1 block min-h-[44px] w-[calc(100%+1rem)] rounded-[12px] px-2 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
+        >
         <h3 className="text-[17px] font-semibold leading-6 text-gray-900">{item.title}</h3>
 
         {hasChips && (
@@ -72,6 +76,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             )}
           </div>
         )}
+        </button>
 
         {/* Coach-published on behalf of a world club — the club is named as
             the official home of the role. */}
@@ -100,14 +105,6 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           </div>
         )}
       </FeedCardBody>
-
-      <FeedCardFooter>
-        {canApply ? (
-          <FeedCardPrimaryAction onClick={openRole}>Apply</FeedCardPrimaryAction>
-        ) : (
-          <FeedCardAction onClick={openRole}>View role</FeedCardAction>
-        )}
-      </FeedCardFooter>
 
     </FeedCard>
   )

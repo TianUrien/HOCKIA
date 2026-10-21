@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Camera, Settings, Share } from 'lucide-react'
+import { useLowResCovers } from '@/hooks/useLowResCovers'
+import RolePlaceholder from '@/components/RolePlaceholder'
 import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
-import { GLASS, crestGradient, initialsOf } from '@/lib/communityCard'
+import { GLASS, crestGradient } from '@/lib/communityCard'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import VerifiedBadge from '@/components/VerifiedBadge'
 import { cn } from '@/lib/utils'
@@ -41,7 +43,11 @@ const SCRIM =
 const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS)
 
 export function ClubHero(props: ClubHeroProps) {
-  const { photos, crestUrl, crestColor, name, owner } = props
+  const { crestUrl, crestColor, name, owner } = props
+  // Low-resolution covers (< 600 px natural width) are dropped: the hero then
+  // shows the crest-gradient cover with pitch lines (Batch C).
+  const lowRes = useLowResCovers(props.photos, (u) => getImageUrl(u, 'lightbox') ?? u)
+  const photos = lowRes.size > 0 ? props.photos.filter((p) => !lowRes.has(p)) : props.photos
   const [index, setIndex] = useState(0)
   const count = photos.length
   useEffect(() => { if (index >= count) setIndex(0) }, [count, index])
@@ -90,11 +96,12 @@ export function ClubHero(props: ClubHeroProps) {
 
       <div className="absolute inset-x-4 bottom-6 flex flex-col items-start gap-1.5">
         <div className="relative">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[20px] bg-white p-2 shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]">
+          <div className={cn('flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[20px] shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]', crest ? 'bg-white p-2' : '')}>
             {crest ? (
               <img src={crest} alt="" className="h-14 w-14 object-contain" decoding="async" />
             ) : (
-              <span className="text-[24px] font-bold text-ink-2">{initialsOf(name)}</span>
+              // No crest: violet rounded square + large initials (Batch C).
+              <RolePlaceholder role="club" name={name} label="" />
             )}
           </div>
           {owner && (

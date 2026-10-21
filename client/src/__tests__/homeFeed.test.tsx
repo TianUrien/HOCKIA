@@ -79,9 +79,9 @@ describe('HomeFeed', () => {
     render(<HomeFeed />)
 
     expect(screen.getByText('Welcome to your feed')).toBeInTheDocument()
-    expect(screen.getByText('Browse Opportunities')).toBeInTheDocument()
+    expect(screen.getByText('Browse opportunities')).toBeInTheDocument()
     expect(screen.getByText('Join the Community')).toBeInTheDocument()
-    expect(screen.getByText('Explore Clubs')).toBeInTheDocument()
-    expect(screen.getByText('Find People')).toBeInTheDocument()
+    expect(screen.getByText('Explore clubs')).toBeInTheDocument()
+    expect(screen.getByText('Find people')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { MIN_COVER_WIDTH } from '@/lib/coverQuality'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { CLUB_BRAND_GRADIENT, CLUB_COVER_SCRIM, GLASS, HAIRLINE_ON_PHOTO, LIGHT_SHADOW, PRESS, clubCover, crestGradient, initialsOf } from '@/lib/communityCard'
@@ -30,7 +31,6 @@ interface ClubWideCardProps {
 }
 
 /** Spec: the cover is the best photo at least 600 px wide (Figma Community 26:1020). */
-const MIN_COVER_WIDTH = 600
 
 export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null, recruiting, onOpen, priority = false }: ClubWideCardProps) {
   const [coverFailed, setCoverFailed] = useState(false)

@@ -38,14 +38,14 @@ describe('evidenceChecklist', () => {
     expect(byKey.club.present).toBe(true) // current_club text counts
     expect(byKey.league.present).toBe(true) // band resolved
     expect(byKey.career.present).toBe(false)
-    expect(byKey.career.label).toBe('Career History') // recruiter-facing product language
+    expect(byKey.career.label).toBe('Career history') // recruiter-facing product language
     expect(byKey.open.present).toBe(true)
   })
 
-  it('marks Career History present when the member has career_history entries', () => {
+  it('marks Career history present when the member has career_history entries', () => {
     // Regression: carousel-sourced previews dropped career_entry_count (the
     // RPC omitted it), so a player with real career entries (e.g. 6) showed
-    // "Career History: MISSING". The checklist must honour any count > 0.
+    // "Career history: MISSING". The checklist must honour any count > 0.
     const rows = evidenceChecklist({
       role: 'player',
       accepted_reference_count: 1,
@@ -53,15 +53,15 @@ describe('evidenceChecklist', () => {
       open_to_play: true,
     })
     const career = rows.find((r) => r.key === 'career')
-    expect(career?.label).toBe('Career History')
+    expect(career?.label).toBe('Career history')
     expect(career?.present).toBe(true)
   })
 
-  it('keeps the Career History row for coaches with career history', () => {
+  it('keeps the Career history row for coaches with career history', () => {
     const rows = evidenceChecklist({ role: 'coach', career_entry_count: 3, open_to_coach: true })
     const career = rows.find((r) => r.key === 'career')
     expect(career?.present).toBe(true)
-    expect(career?.label).toBe('Career History')
+    expect(career?.label).toBe('Career history')
   })
 
   it('drops video rows for coaches and uses "Open to coach"', () => {

@@ -88,7 +88,7 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
           className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           {!hasScope ? <Target className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-          {!hasScope ? 'Set your scope' : fitCount > 0 ? 'See your matches' : `Search ${nounPlural}`}
+          {!hasScope ? 'Set your context' : fitCount > 0 ? 'See your matches' : `Search ${nounPlural}`}
           <ChevronRight className="h-4 w-4" />
         </button>
       </AuroraHero>

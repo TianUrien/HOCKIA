@@ -192,7 +192,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     media: 'Media',
     videos: 'Videos',
     gallery: 'Photos',
-    journey: 'Career History',
+    journey: 'Career history',
     references: 'References',
     friends: 'Connections',
     comments: 'Comments',
@@ -207,7 +207,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     media: 'Media',
     videos: 'Videos',
     gallery: 'Photos',
-    journey: 'Career History',
+    journey: 'Career history',
     references: 'References',
     friends: 'Connections',
     comments: 'Comments',
@@ -920,7 +920,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   profileId={profile.id}
                   readOnly
                   variant="inline"
-                  title="Career History"
+                  title="Career history"
                 />
               </div>
             </div>
@@ -1002,7 +1002,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   <JourneyTab
                     profileId={profile.id}
                     readOnly={readOnly}
-                    {...(readOnly ? { variant: 'inline' as const, title: 'Career History' } : {})}
+                    {...(readOnly ? { variant: 'inline' as const, title: 'Career history' } : {})}
                   />
                 </div>
               )}
