@@ -390,9 +390,12 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     }
     if (isBrand) return messageButton('primary')
     if (!personGate.addFriend) {
+      // "Invite as ambassador" is the longest label in the bar: it sizes to its
+      // text (never clipped) and takes the larger share of the row.
+      const fitLabel = (cls: string) => cls.replace('min-w-0 flex-1', 'min-w-fit flex-[1.4] gap-1.5 px-4')
       const tonal = surface === 'photo'
-        ? secondary
-        : `flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-brand-soft ${btnSize} font-semibold text-brand-primary ${PRESS} disabled:opacity-60`
+        ? fitLabel(secondary)
+        : fitLabel(`flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full bg-brand-soft ${btnSize} font-semibold text-brand-primary ${PRESS} disabled:opacity-60`)
       return (
         <>
           {messageButton('primary')}
