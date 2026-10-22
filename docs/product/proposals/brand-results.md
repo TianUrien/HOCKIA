@@ -1,0 +1,61 @@
+# Brand results and the brand plan (proposal, 2026-10-22)
+
+Status: proposal for founder review. Builds on `brand-reach.md` (offers by location, Home and Hockia AI cards) and the intention rules in `home-vision.md`.
+
+## Why
+Brands are a role that should add value to the community. A brand keeps adding value only if it can see what its offers, products and ambassadors do for members. Today it sees three 7-day numbers (profile views, search appearances, store taps). That proves visibility, not value.
+
+## Founder rulings (2026-10-22)
+- Brands see aggregates, plus the people who chose to contact them (a message, an ambassador application). Never who viewed or tapped.
+- Future model: a monthly Pro plan on top of a free plan. Free for everyone until value is proven.
+- A brand's contribution to the community is shown as facts on its public profile ("2 offers for members · 5 ambassadors"), never a score or a level.
+- The results panel lives in the app, on phone and desktop.
+
+## What the brand sees: "Results"
+A section of the brand dashboard, owner-only. Default period: last 30 days, with the previous 30 for comparison. Counts and plain trends only, no percentages on the first screen.
+
+1. **What members did with your offers** (the funnel, per offer and in total):
+   Shown to (unique members) → Opened → Contacted you → Store taps. Plus **"Not useful"** taps, shown neutrally: it tells the brand when an offer misses.
+2. **Who they are** (aggregates): by country (and region where set), by role (player, coach, club, umpire), by goal ("Play abroad", "Find a club", …). Where they saw it: Home, Hockia AI, Brands tab.
+3. **People who contacted you**: the members who messaged the brand or applied as ambassador from an offer, with the offer they came from. They chose to be seen.
+4. **Products**: views and store taps per product.
+5. **Ambassadors and followers**: invites sent, accepted, active ambassadors; new followers.
+6. **Next step** (one line, neutral copy): the most useful action, for example (illustrative numbers) "Your offer in Spain was shown to 3 members. Add England, where more members are based?" Only real counts in the product.
+
+Phone: one scroll, funnel first, each block expands. Desktop: two columns (funnel and offers left, audience and contacts right).
+
+## Privacy rules (non-negotiable)
+- Aggregates only, except people who contacted the brand.
+- A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (proposal: the threshold value is open for the founder).
+- Exclude test accounts, automated browsers, hidden profiles (`profile_is_hidden`), blocked pairs and the brand's own team, in every count and list.
+- Never: who viewed, who tapped, individual goals, nationality breakdowns (we target by location, never nationality).
+- Under-18s are not members, so they are never counted.
+
+## Community contribution on the brand profile
+Facts, each shown only when above zero: offers live for members, active ambassadors, clubs supported (needs a sponsorship field; not in the data yet), members helped (contacted the brand). No badge, no ranking.
+
+## The plan (future, not priced)
+| | Free | Pro (monthly) |
+|---|---|---|
+| Live offers | Few (number set by founder) | More |
+| Locations per offer | One country | Several countries, regions or cities |
+| Results history | 30 days | 12 months, export |
+| Breakdowns | Country, role | Plus goal and surface |
+| Ambassador tools | Invite | Campaigns to ambassadors |
+| Weekly results email | No | Yes |
+
+Principles: Pro buys reach and tools, never a better position than relevance allows, never member data. Admin review stays for every offer. Price: not set; decided after the free period proves value.
+
+**When we start charging** (targets set after 8 weeks of data, never invented): brands receive contacts from members every month; offers get opened more than dismissed; members don't hide brand cards more than other cards.
+
+## What has to be built (for the code agent)
+- `brand_offers` table: brand_id, title, body, image, link, target countries / regions / cities, target roles, target goals, status (draft, in review, live, paused, ended), starts_at, ends_at, reviewed_by. Admin review queue.
+- Events with `offer_id` and `surface` (home, hockia_ai, brands_tab): `brand_offer_impression`, `brand_offer_open`, `brand_offer_contact`, `brand_offer_store_tap`, `brand_offer_dismiss`.
+- One RPC `get_my_brand_results(p_days)` reading `analytics_events`, with the hidden and block fences and the 5-member threshold applied server-side.
+- Fix first: `get_my_brand_analytics` counts raw `events` without the hidden, test-account or self-view fences; `product_view` and `post_impression` are recorded without the analytics-consent check that `brand_product_click` has (needs a consent decision).
+- Public profile: contribution facts.
+
+## Evidence vs assumption
+- [Evidence] Brands today get views, search appearances and store taps (code, 2026-10-22).
+- [Hypothesis] Seeing contacts and "Not useful" makes brands improve offers instead of leaving.
+- [Hypothesis] Brands will pay monthly once contacts arrive every month. To test: interviews with active brands (`hockia-member-interviews`).
