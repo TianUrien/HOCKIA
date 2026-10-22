@@ -25,7 +25,8 @@ test.describe('@discover Hockia AI sheet (player)', () => {
     await page.goto('/discover?q=Find%20defenders')
     await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 })
     await expect(composer(page)).toHaveValue('Find defenders', { timeout: 10_000 })
-    await expect(page.getByTestId('ai-searching')).toHaveCount(0)
+    await expect(page.getByTestId('hockia-ai-thinking')).toHaveCount(0)
+    await expect(page.getByTestId('ai-user-bubble')).toHaveCount(0)
   })
 
   test('/discovery (old alias) opens the sheet too', async ({ page }) => {
@@ -53,7 +54,7 @@ test.describe('@discover Hockia AI sheet (player)', () => {
     await box.fill('Find goalkeepers')
     await box.press('Enter')
     await expect(
-      page.getByTestId('ai-searching').first().or(sheet(page).getByText(/results|no profiles|found|couldn/i).first()),
+      page.getByTestId('hockia-ai-thinking').or(page.getByTestId('ai-user-bubble')).first(),
     ).toBeVisible({ timeout: 30_000 })
   })
 
