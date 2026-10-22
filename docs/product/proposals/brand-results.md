@@ -24,6 +24,14 @@ A section of the brand dashboard, owner-only. Default period: last 30 days, with
 
 Phone: one scroll, funnel first, each block expands. Desktop: two columns (funnel and offers left, audience and contacts right).
 
+## No decoration (founder, 2026-10-22)
+Every block answers one question that leads to a brand action; if it doesn't, it isn't shown.
+- "Which offer works?": the offers table (shown, opened, contacted, "Not useful") with Edit and Duplicate.
+- "Where should you show it?": country, role, goal and surface bars.
+- "Who wants to talk to you?": the people who contacted the brand, with Message.
+- "Did your change work?": weekly bars per offer with a marker on each brand edit (photo, text, country). Shown only after 4 weeks live; before that, "Live for N days" and totals, because a few days of data say nothing.
+- No sparklines, no daily lines, no charts at volumes where ups and downs are noise.
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (proposal: the threshold value is open for the founder).
