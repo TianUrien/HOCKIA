@@ -1,10 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search, SquarePlus } from 'lucide-react'
+import { Home, Users, Briefcase, Bell, Inbox, Store, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
+
+/** Hockia AI's mascot head (founder, 2026-10-22: the mascot, not a sparkle,
+ *  is the Hockia AI entry in the top bar, for every role). Same calm head
+ *  asset as the Opportunities mascot button; decorative, the button carries
+ *  the label. */
+function HockiaAiMascotHead({ size }: { size: number }) {
+  return (
+    <img
+      src="/hockia-ai/button_calm_96.webp"
+      srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x, /hockia-ai/button_calm_288.webp 3x"
+      alt=""
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      className="rounded-full"
+      draggable={false}
+      data-testid="hockia-ai-mascot"
+    />
+  )
+}
 
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
  *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
@@ -151,19 +171,17 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               live on the Profile screen. */}
           {user && profile && (
             <div className="flex lg:hidden items-center">
-              {/* Clubs get a direct Hockia AI entry (sparkles) beside Search —
-                  the same /discover screen players reach from Search. */}
-              {profile.role === 'club' && (
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/discover')}
-                  className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-hockia-primary hover:bg-gray-100 transition-colors"
-                  aria-label="Hockia AI"
-                  data-testid="header-hockia-ai"
-                >
-                  <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
-                </button>
-              )}
+              {/* Hockia AI: the mascot beside Search, for every role (founder
+                  2026-10-22); opens the same /discover screen as Search. */}
+              <button
+                type="button"
+                onClick={() => handleNavigate('/discover')}
+                className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Hockia AI"
+                data-testid="header-hockia-ai"
+              >
+                <HockiaAiMascotHead size={32} />
+              </button>
               {onNewPost && (
                 <button
                   type="button"
@@ -262,7 +280,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   title="Hockia AI: ask anything about clubs, players, opportunities"
                   aria-current={isActive('/discover') ? 'page' : undefined}
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <HockiaAiMascotHead size={28} />
                 </button>
                 <button
                   onClick={() => toggleNotificationDrawer()}
