@@ -30,13 +30,22 @@ describe('platform chrome', () => {
     expect((await load('ios', 'android')).ANDROID_CHROME).toBe(false)
   })
 
-  it('BackGlyph draws the Material arrow on Android and the chevron elsewhere', async () => {
-    const android = await load(null, 'android')
-    const { container: a } = render(<android.BackGlyph className="h-6 w-6" />)
+  // The glyph is checked without resetting modules: re-importing BackGlyph
+  // after vi.resetModules sometimes still bound the pre-reset platformChrome
+  // under load (flaked in CI on PR 396 and the 2026-10-22 release), so the
+  // platform decision above and the drawing below are tested separately.
+  it('BackGlyph draws the Material arrow for Android chrome and the chevron for iOS', async () => {
+    const { BackGlyph } = await import('@/components/ui/BackGlyph')
+    const { container: a } = render(<BackGlyph chrome="android" className="h-6 w-6" />)
     expect(a.querySelector('svg')?.getAttribute('class')).toMatch(/lucide-arrow-left/)
-
-    const ios = await load(null, 'ios')
-    const { container: i } = render(<ios.BackGlyph className="h-6 w-6" />)
+    const { container: i } = render(<BackGlyph chrome="ios" className="h-6 w-6" />)
     expect(i.querySelector('svg')?.getAttribute('class')).toMatch(/lucide-chevron-left/)
+  })
+
+  it('BackGlyph follows the app chrome by default', async () => {
+    const { BackGlyph } = await import('@/components/ui/BackGlyph')
+    const { ANDROID_CHROME } = await import('@/lib/platformChrome')
+    const { container } = render(<BackGlyph className="h-6 w-6" />)
+    expect(container.querySelector('svg')?.getAttribute('class')).toMatch(ANDROID_CHROME ? /lucide-arrow-left/ : /lucide-chevron-left/)
   })
 })
