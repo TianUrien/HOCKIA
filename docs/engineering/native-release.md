@@ -258,6 +258,31 @@ Source: PRs #247–#249.
 - **Safe areas.** The body pads only the top inset. Screen-height layouts use `min-h-app-screen` / `h-app-screen`; see the note in `client/src/globals.css`.
 - **Facebook switch.** The button follows `app_settings` key `facebook_login_enabled` at runtime, so no store build is needed to turn it on.
 
+## Changes in iOS 1.3.22 (35) and Android 1.23 (25) — 2026-10-22
+
+Source: main after release PR 407 (web releases v2026.10.21d, v2026.10.22 and PR 403/407). Everything
+shipped on the web between 19 and 22 Oct reaches the apps here.
+
+- **Community**: vertical deck on phones (one member per screen, details panel behind "More");
+  desktop deck with arrows. Letter-only initials on the role gradient for members without a photo;
+  clubs without a crest get a violet square with initials.
+- **Design audit A and C**: notification ask once, as a sheet, after a moment of intent; no
+  completeness % or tier words; no activity signals in recruiter views; soft-violet selected chips;
+  no buttons on role cards; one deadline rule; sentence-case copy; light EU badge on light surfaces;
+  role-aware actions (brands: Message + Invite as ambassador; browse-only notes for coaches on player
+  roles, brands and umpires) and role-aware Hockia AI greetings; light status bar over photo heroes.
+- **Quick wins**: sign-in captcha retry with a "Try again" card (Apple / Google offered); skeletons
+  instead of spinners on the role page, profiles, Inbox Activity, the thread and club screens; role
+  page preloads from cards and shows "Couldn't load this role" with Try again when offline.
+- **Fit**: one "Strong fit / Possible fit" badge, never a percentage; recruiters only.
+- Captcha: Turnstile runs on every auth call but is still **not enforced** in production. Decide on
+  enforcement only after this build is checked on real phones (sign-in with Apple, Google and email).
+- Device lab gate (2026-10-22, report `tools/devicelab/report/2026-10-22T09-32-46` plus the
+  community re-run `2026-10-22T09-45-57`): all 8 core journeys pass on iPhone 17 Pro Max and Android
+  small phone. Not run: iPhone 17e and iPad (lab WebView attach issue, not the app), Android medium
+  phone and tablet (AVD start failure under Appium). The community journey was updated for the
+  vertical deck (opens "More" before "See full profile").
+
 ## Changes in iOS 1.3.21 (34) and Android 1.22 (24) — 2026-10-19
 
 Source: main 14b53642 (release #379). Everything shipped on the web between 16 and 19 Oct reaches the

@@ -254,6 +254,12 @@ export const scenarios = {
     if (tileTapped) {
       // Phone sheet carries a testid; the desktop-width preview says "See full profile".
       const FULL = () => document.querySelector('[data-testid="member-preview-full-profile"]') || [...document.querySelectorAll('a, button')].find((x) => /see full profile|view full profile/i.test(x.textContent?.trim() || ''))
+      // Phone vertical deck (21 Oct 2026): the full-profile link lives in the
+      // details panel, behind the "More" chevron.
+      const deadline = Date.now() + 8000
+      while (Date.now() < deadline && !(await lab.eval(() => document.querySelector('[data-testid="member-vdeck-more"], [data-testid="member-preview-full-profile"]')))) await sleep(300)
+      const opened = await lab.eval(() => { const m = [...document.querySelectorAll('[data-testid="member-vdeck-more"]')].find((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.bottom <= window.innerHeight }); if (!m) return false; m.click(); return true })
+      if (opened) { await sleep(900); await ctx.shot('deck-details') }
       const t0 = Date.now()
       while (Date.now() - t0 < 15000 && !(await lab.eval(FULL))) await sleep(300)
       await sleep(600)
