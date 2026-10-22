@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
 import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
  *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
@@ -65,6 +66,8 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
   // the bell = the Activity segment's dot. Opportunities carries none.
   const segmentDots = useInboxSegmentDots()
   const inboxDot = inboxTabDot(segmentDots)
+  const showHockiaAi = useHockiaAiSheet((s) => s.show)
+  const openHockiaAi = () => showHockiaAi('header')
   const authLoading = useAuthStore((s) => s.loading)
   const headerRef = useRef<HTMLElement>(null)
 
@@ -153,9 +156,8 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
           {user && profile && (
             <div className="flex lg:hidden items-center">
               {/* Hockia AI: the mascot beside Search, for every role (founder
-                  2026-10-22); opens the same /discover screen as Search (the one-sheet handoff moves it into
-                  the sheet). */}
-              <HockiaAiButton onClick={() => handleNavigate('/discover')} testId="header-hockia-ai" />
+                  2026-10-22); opens the one Hockia AI sheet over this screen. */}
+              <HockiaAiButton onClick={openHockiaAi} testId="header-hockia-ai" />
               {onNewPost && (
                 <button
                   type="button"
@@ -243,7 +245,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 >
                   <Store className="w-5 h-5" />
                 </button>
-                <HockiaAiButton onClick={() => handleNavigate('/discover')} testId="header-hockia-ai-desktop" />
+                <HockiaAiButton onClick={openHockiaAi} testId="header-hockia-ai-desktop" />
                 <button
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"

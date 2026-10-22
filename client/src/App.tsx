@@ -16,6 +16,8 @@ import { RouteMeta } from './components/RouteMeta'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
+import { GlobalHockiaAiSheet } from '@/components/hockiaAi/GlobalHockiaAiSheet'
+import { DiscoverRedirect } from '@/components/hockiaAi/DiscoverRedirect'
 import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -113,7 +115,6 @@ const MyApplicationsPage = lazyWithRetry(() => import('@/pages/MyApplicationsPag
 // D4.5 / D4.6: the player confirms a signing (own chunk).
 const ConfirmSigningPage = lazyWithRetry(() => import('@/pages/ConfirmSigningPage'))
 const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
-const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
 
 // World directory pages
 const WorldPage = lazyWithRetry(() => import('@/pages/WorldPage'))
@@ -412,6 +413,7 @@ function App() {
           <SessionTracker />
           <ScrollToTop />
           <KeyboardShortcutsManager />
+          <GlobalHockiaAiSheet />
           {import.meta.env.DEV && <SentryTestButton />}
           <ShortLinkGate>
           <TermsGate>
@@ -492,11 +494,11 @@ function App() {
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
                 <Route path="/pulse" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PulsePage /></ErrorBoundary>} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
-                <Route path="/discover" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DiscoverPage /></ErrorBoundary>} />
-                {/* Alias: /discovery → /discover. Some users (and external
-                    links) have used the longer name; keep them out of 404. */}
-                <Route path="/discovery" element={<Navigate to="/discover" replace />} />
-                <Route path="/discovery/:rest" element={<Navigate to="/discover" replace />} />
+                {/* Hockia AI is one sheet (2026-10-22): /discover and the
+                    /discovery alias open it over Home; ?q= goes into the composer. */}
+                <Route path="/discover" element={<DiscoverRedirect />} />
+                <Route path="/discovery" element={<DiscoverRedirect />} />
+                <Route path="/discovery/:rest" element={<DiscoverRedirect />} />
                 <Route path="/community" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 {/* Questions are a post kind in the Home feed now (2026-09-20). */}
                 <Route path="/community/questions" element={<Navigate to="/home" replace />} />

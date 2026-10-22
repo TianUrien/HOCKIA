@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react'
 import { BetaPill } from './BetaPill'
 import { ChevronRight } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
@@ -8,24 +7,20 @@ import { CHECK_PROFILE_AGAINST_ROLE } from '@/lib/hockiaAi'
 import { MascotAvatar } from './mascot'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
 
-const HockiaAiSheet = lazy(() => import('./HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
-
 /**
  * "Ask Hockia AI about this role" (handoff B3, Figma 178:465): on an open
  * role, for players and coaches who didn't post it. Opens the Hockia AI sheet
  * with the role attached (B4): Check my profile against this role · Prepare my application · Life in
- * the city. Mounts the sheet itself so the role pages stay unchanged.
+ * the city. The sheet itself is mounted once for the app (GlobalHockiaAiSheet).
  */
 export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacancy: Vacancy; clubName: string | null; clubLogo: string | null; className?: string }) {
   const role = useAuthStore((s) => s.profile?.role)
-  const open = useHockiaAiSheet((s) => s.open)
   const askAboutRole = useHockiaAiSheet((s) => s.askAboutRole)
   if (role !== 'player' && role !== 'coach') return null
   const position = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || null
   const label = [position ?? vacancy.title, clubName].filter(Boolean).join(' · ')
   return (
-    <>
       <button
         type="button"
         onClick={() => askAboutRole({ id: vacancy.id, title: vacancy.title, organization: clubName, logoUrl: clubLogo, city, label })}
@@ -39,7 +34,5 @@ export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacanc
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-brand-primary" strokeWidth={2} />
       </button>
-      {open && <Suspense fallback={null}><HockiaAiSheet /></Suspense>}
-    </>
   )
 }

@@ -48,8 +48,6 @@ import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/li
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
 const CoachMyRoles = lazy(() => import('@/components/opportunities/CoachMyRoles'))
-// Hockia AI sheet (handoff 2026-10-16): its own chunk, loaded on the first open.
-const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -158,7 +156,6 @@ export default function OpportunitiesPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   // Hockia AI (beta): the header mascot opens the sheet; a one-time tip says so.
-  const aiOpen = useHockiaAiSheet((st) => st.open)
   const showAi = useHockiaAiSheet((st) => st.show)
   const [aiTip, setAiTip] = useState(() => { try { return !localStorage.getItem('hockia-ai-tip-seen') } catch { return false } })
   const openAi = () => {
@@ -982,12 +979,6 @@ export default function OpportunitiesPage() {
           )}
         </main>
       </div>
-
-      {aiOpen && (
-        <Suspense fallback={null}>
-          <HockiaAiSheet />
-        </Suspense>
-      )}
 
       <OpportunityFiltersSheet
         open={filtersOpen}
