@@ -276,7 +276,6 @@ function getFeatureFromPath(path: string): string {
   if (path.startsWith('/marketplace')) return 'marketplace'
   if (path.startsWith('/community')) return 'community'
   if (path.startsWith('/search')) return 'search'
-  if (path.startsWith('/discover')) return 'discovery'
   // Public profile routes use plural prefixes (matches App.tsx routes).
   // Earlier this checked singular forms (/player/, /club/, /coach/, /brand/)
   // which never match — every public-profile page-view was tagged 'other'.
