@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
-const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -124,7 +123,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const data = useProfileScrollData(profileId)
   // "Fill my profile with Hockia AI" (ruling 2026-10-18): the owner opens the
   // builder from a thin Career section; after "Save all" the list reloads.
-  const aiOpen = useHockiaAiSheet((st) => st.open)
   const showAi = useHockiaAiSheet((st) => st.show)
   const refreshScroll = data.refresh
   useEffect(() => {
@@ -417,7 +415,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   return (
     <div className="bg-white pb-8" data-testid="profile-v2">
-      {owner && aiOpen && (<Suspense fallback={null}><HockiaAiSheet /></Suspense>)}
       <CompactHeader name={name} avatarUrl={profile.avatar_url} visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
       <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
