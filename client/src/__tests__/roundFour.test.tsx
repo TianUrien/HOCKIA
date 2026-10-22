@@ -251,8 +251,8 @@ describe('club screens', () => {
       authState = { user: { id: `${role}-1` }, profile: { id: `${role}-1`, role } }
       const { unmount } = render(<MemoryRouter><Header /></MemoryRouter>)
       const button = screen.getByTestId('header-hockia-ai')
-      expect(button.getAttribute('aria-label')).toBe('Hockia AI')
-      expect(button.querySelector('[data-testid="hockia-ai-mascot"]')).not.toBeNull()
+      expect(button.getAttribute('aria-label')).toBe('Ask Hockia AI')
+      expect(button.querySelector('img[src^="/hockia-ai/button_calm"]')).not.toBeNull()
       expect(button.querySelector('svg')).toBeNull() // no sparkle icon
       fireEvent.click(button)
       expect(navigateSpy).toHaveBeenCalledWith('/discover')

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
  * Hockia AI has something real and new for this user, never a fake nudge
  * (nothing sets it yet).
  */
-export function HockiaAiButton({ onClick, hasSuggestion = false, className }: { onClick: () => void; hasSuggestion?: boolean; className?: string }) {
+export function HockiaAiButton({ onClick, hasSuggestion = false, className, testId = 'hockia-ai-button' }: { onClick: () => void; hasSuggestion?: boolean; className?: string; testId?: string }) {
   const press = usePressSpring<HTMLButtonElement>()
   const state = hasSuggestion ? 'active' : 'calm'
   return (
@@ -18,7 +18,7 @@ export function HockiaAiButton({ onClick, hasSuggestion = false, className }: { 
       {...press.handlers}
       aria-label={hasSuggestion ? 'Hockia AI, something new for you' : 'Ask Hockia AI'}
       className={cn('relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full [transform-origin:center]', className)}
-      data-testid="hockia-ai-button"
+      data-testid={testId}
     >
       <span className="absolute inset-[3px] rounded-full" style={{ boxShadow: hasSuggestion ? '0 0 0 2px rgba(167,139,250,0.55), 0 0 12px rgba(167,139,250,0.6)' : '0 0 0 1.5px rgba(167,139,250,0.35)' }} aria-hidden="true" />
       <img
