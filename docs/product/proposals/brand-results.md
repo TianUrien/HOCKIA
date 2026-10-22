@@ -32,6 +32,16 @@ Every block answers one question that leads to a brand action; if it doesn't, it
 - "Did your change work?": weekly bars per offer with a marker on each brand edit (photo, text, country). Shown only after 4 weeks live; before that, "Live for N days" and totals, because a few days of data say nothing.
 - No sparklines, no daily lines, no charts at volumes where ups and downs are noise.
 
+## Added after the founder's review (2026-10-22)
+The panel must say what opportunity the brand has and what it still has to do, not only what happened.
+1. **Waiting for your reply** (top of Results, phone and desktop): "N people are waiting for your reply", oldest first, with Reply. The only amber element on the screen, because the brand must act. Counts members who contacted the brand and got no answer yet.
+2. **Who you could reach** (market size): members based in the countries the brand sells to, per country, marked "Your offers show here" or "Add to an offer". Real counts, groups of 5 or more only, nobody identified. Fixes the early-stage problem: a new brand sees "Shown to 3" and leaves; the market count shows what is possible. Later, filtered by goal once goals are stored.
+3. **Ambassador candidates**: players in the brand's countries who said yes to brand partnerships, with Invite. Needs a new player opt-in ("Open to brand partnerships", off by default, editable, shown only to brands); players without it are never listed.
+
+Later stage: a tagged store link so the brand measures sales in its own analytics; season timing hints per country. Benchmarks against other brands only when enough brands exist that an average identifies none.
+
+New data needed: player opt-in `open_to_brand_partnerships`; reply state for brand conversations; goals stored (`goal_set`) for goal filters.
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (proposal: the threshold value is open for the founder).
