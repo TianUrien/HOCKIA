@@ -4,6 +4,8 @@ import { ANDROID_CHROME } from '@/lib/platformChrome'
 interface BackGlyphProps {
   className?: string
   strokeWidth?: number
+  /** Which chrome to draw. Defaults to the app's own (ANDROID_CHROME). */
+  chrome?: 'android' | 'ios'
 }
 
 /**
@@ -12,8 +14,8 @@ interface BackGlyphProps {
  * to it ("Inbox", "Back to …") are an iOS convention; callers hide them when
  * `ANDROID_CHROME` is on.
  */
-export function BackGlyph({ className, strokeWidth = 2 }: BackGlyphProps) {
-  return ANDROID_CHROME
+export function BackGlyph({ className, strokeWidth = 2, chrome = ANDROID_CHROME ? 'android' : 'ios' }: BackGlyphProps) {
+  return chrome === 'android'
     ? <ArrowLeft className={className} strokeWidth={strokeWidth} aria-hidden="true" />
     : <ChevronLeft className={className} strokeWidth={strokeWidth} aria-hidden="true" />
 }
