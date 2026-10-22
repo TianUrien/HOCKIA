@@ -20,6 +20,7 @@ import { RoleActions } from './RoleActions'
 import { PostRoleStartSheet } from './PostRoleStartSheet'
 import { useYourReplies } from '@/hooks/useYourReplies'
 import { yourRepliesCopy } from '@/lib/yourReplies'
+import { ClubRoleCardSkeleton } from '@/components/ScreenSkeletons'
 
 
 /**
@@ -253,7 +254,10 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
               />
             </div>
           )}
-          <button type="button" onClick={postRole} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-primary px-5 text-[16px] font-semibold text-white transition-opacity hover:opacity-90" data-testid="desktop-post-role">
+          {/* One Primary per screen (audit B6): while a reply is owed the
+              Primary is the role card's "Review N applicants", so Post a role
+              steps down to Tonal. */}
+          <button type="button" onClick={postRole} className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-5 text-[16px] font-semibold transition-colors', rolesWithPending.length > 0 ? 'bg-brand-soft text-brand-primary hover:bg-brand-soft-hover' : 'bg-brand-primary text-white hover:bg-brand-primary-hover')} data-testid="desktop-post-role" data-emphasis={rolesWithPending.length > 0 ? 'tonal' : 'primary'}>
             <Plus className="h-5 w-5" strokeWidth={2.2} /> Post a role
           </button>
         </div>
@@ -304,6 +308,10 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
+        {/* First load: role-card skeletons in the same grid, so the cards land without a jump. */}
+        {data.loading && roles.length === 0 && (desktop
+          ? <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3" data-testid="club-roles-loading"><ClubRoleCardSkeleton /><ClubRoleCardSkeleton /></div>
+          : <div className="flex flex-col gap-3.5" data-testid="club-roles-loading"><ClubRoleCardSkeleton /><ClubRoleCardSkeleton /></div>)}
         {(() => {
           const cards = roles.map((r) => (r.status === 'draft'
             ? <DraftCard key={r.id} role={r} onContinue={() => editRole(r)} />

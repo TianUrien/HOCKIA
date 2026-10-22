@@ -32,9 +32,8 @@ import {
   Check,
   ShieldCheck,
 } from 'lucide-react'
-import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
-import { availabilityLabel } from '@/lib/availabilityLabel'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
@@ -52,7 +51,6 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackEvent, trackProtectedActionBlocked } from '@/lib/analytics'
-import { getMemberTier, calculateTier } from '@/lib/profileTier'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { resolveConversationRoute } from '@/lib/startConversation'
@@ -292,18 +290,10 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
 
   const heroSrc = isBrand ? (member.brand_logo_url ?? member.avatar_url) : member.avatar_url
   const heroImageUrl = heroSrc ? getImageUrl(heroSrc, 'avatar-lg') : null
-  // Positive, role-specific availability signal (or null) — single source.
-  const availLabel = availabilityLabel(member.role, member)
 
   // initials block was the previous purple fallback; replaced by
   // RolePlaceholder. Computation removed.
 
-  // Prefer the server's canonical profile_completeness_pct (same value the grid
-  // card shows) so the preview tier and the card never disagree; fall back to
-  // the client estimator only when the column is absent (2d unification).
-  const tier = member.profile_completeness_pct != null
-    ? calculateTier(member.profile_completeness_pct)
-    : getMemberTier(member)
   const positions = [member.position, member.secondary_position]
     .filter((value, index, self): value is string => {
       if (!value) return false
@@ -398,16 +388,10 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               // tapping a tile and opening this modal stays visually
               // consistent. Profile is still flagged photo-missing in DB.
               <div className="absolute inset-0">
-                <RolePlaceholder role={member.role} label="" />
+                <RolePlaceholder role={member.role} name={member.full_name} label="" />
               </div>
             )}
-            {availLabel && (
-              <span
-                className="absolute top-3 right-3 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                aria-label={availLabel}
-                title={availLabel}
-              />
-            )}
+            {/* No green dot on the avatar: it read as an online signal (audit A3). */}
           </div>
 
           {/* Content */}
@@ -422,9 +406,6 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <RoleBadge role={member.role} />
-                {member.role !== 'brand' && member.role !== 'umpire' && (
-                  <TierBadge tier={tier} size="sm" />
-                )}
                 {member.role === 'umpire' && member.umpire_level && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-surface-grouped px-2 py-0.5 text-xs font-medium text-ink-2">
                     <Shield className="w-3 h-3" />
@@ -706,7 +687,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <User className="w-4 h-4" />
-              View Profile
+              View profile
             </button>
           </div>
         </div>

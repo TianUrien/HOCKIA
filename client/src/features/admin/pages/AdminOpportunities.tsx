@@ -333,7 +333,7 @@ export function AdminOpportunities() {
               setStatusFilter(e.target.value as StatusFilter)
               setPage(0)
             }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All</option>
             <option value="draft">Draft</option>
@@ -353,7 +353,7 @@ export function AdminOpportunities() {
               setDaysFilter(val === 'all' ? null : Number(val) as DaysFilter)
               setPage(0)
             }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
@@ -369,7 +369,7 @@ export function AdminOpportunities() {
             aria-label="Filter by country"
             value={countryFilter}
             onChange={(e) => { setCountryFilter(e.target.value); setPage(0) }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All</option>
             {countryOptions.map((c) => (
@@ -385,7 +385,7 @@ export function AdminOpportunities() {
             aria-label="Filter by opportunity type"
             value={roleFilter}
             onChange={(e) => { setRoleFilter(e.target.value as RoleFilter); setPage(0) }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All</option>
             <option value="player">Player</option>
@@ -400,7 +400,7 @@ export function AdminOpportunities() {
             aria-label="Filter by gender"
             value={genderFilter}
             onChange={(e) => { setGenderFilter(e.target.value as GenderFilter); setPage(0) }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All</option>
             <option value="Women">Women</option>
@@ -415,7 +415,7 @@ export function AdminOpportunities() {
             aria-label="Filter by application presence"
             value={hasAppsFilter}
             onChange={(e) => { setHasAppsFilter(e.target.value as HasAppsFilter); setPage(0) }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="all">All</option>
             <option value="yes">Has applications</option>

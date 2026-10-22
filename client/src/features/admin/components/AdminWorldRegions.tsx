@@ -191,7 +191,7 @@ export function AdminWorldRegions() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Region name..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export function AdminWorldRegions() {
               id="region-country-filter"
               value={filters.country_id ?? ''}
               onChange={(e) => handleFilterChange('country_id', e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={loadingCountries}
             >
               <option value="">All countries</option>

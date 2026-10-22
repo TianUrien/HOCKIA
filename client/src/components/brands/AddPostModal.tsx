@@ -213,7 +213,7 @@ export function AddPostModal({
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
                 spellCheck
-                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 resize-none ${
                   errors.content ? 'border-red-300' : 'border-gray-300'
                 }`}
               />

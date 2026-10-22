@@ -158,7 +158,7 @@ export function EditWorldRegionModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter region name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               required
             />
             {!isCreating && region && (
@@ -184,7 +184,7 @@ export function EditWorldRegionModal({
               id="region-country"
               value={countryId ?? ''}
               onChange={(e) => setCountryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
               disabled={loadingCountries}
               required
             >
@@ -208,7 +208,7 @@ export function EditWorldRegionModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Short description of this region"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent resize-none"
             />
           </div>
 
@@ -223,7 +223,7 @@ export function EditWorldRegionModal({
               min={0}
               value={displayOrder}
               onChange={(e) => setDisplayOrder(parseInt(e.target.value, 10) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
             />
           </div>
 

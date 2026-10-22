@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -18,6 +19,19 @@ import { useClubCrestPalettes, useWorldClubCrestPalettes } from '@/hooks/useClub
 import OwnApplicationRoad from '../components/opportunities/OwnApplicationRoad'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { loadRoleDetail } from '@/lib/roleDetail'
+import { isNetworkFailureError } from '@/lib/sentryHelpers'
+import { RoleDetailSkeleton } from '@/components/ScreenSkeletons'
+
+/** The app's failed-load words (sign-in, Community): the connection, not the member. */
+
+/** PostgREST "no row" for `.single()`: the role is gone or not visible to this viewer. */
+function isRowNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  if (isNetworkFailureError(error)) return false
+  const code = (error as { code?: unknown }).code
+  return code === 'PGRST116'
+}
 
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -68,6 +82,8 @@ export default function OpportunityDetailPage() {
   const [wallTitle, setWallTitle] = useState('Sign in to apply')
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  /** The read failed (connection or server), not a missing role: offer Retry. */
+  const [loadFailed, setLoadFailed] = useState(false)
   const [isClosed, setIsClosed] = useState(false)
 
   // Title resolves to the opportunity name once loaded; stays neutral
@@ -100,35 +116,19 @@ export default function OpportunityDetailPage() {
         return
       }
 
-      // Fetch opportunity with club details including is_test_account
-      const { data: opportunityData, error: opportunityError } = await supabase
-        .from('opportunities')
-        .select(`
-          *,
-          club:profiles!opportunities_club_id_fkey(
-            id,
-            full_name,
-            avatar_url,
-            is_test_account,
-            role,
-            current_club,
-            coach_current_role,
-            womens_league_division,
-            mens_league_division
-          ),
-          world_club:world_clubs!opportunities_world_club_id_fkey(
-            id,
-            club_name,
-            avatar_url,
-            country:countries(name, flag_emoji),
-            men_league:world_leagues!world_clubs_men_league_id_fkey(name, tier),
-            women_league:world_leagues!world_clubs_women_league_id_fkey(name, tier)
-          )
-        `)
-        .eq('id', id)
-        .single()
+      // Fetch opportunity with club details including is_test_account. A role
+      // card may have warmed this read already (lib/prefetchRole); same query.
+      const { data: rawOpportunity, error: opportunityError } = await loadRoleDetail(id)
+      const opportunityData = rawOpportunity as Opportunity | null
 
-      if (opportunityError || !opportunityData) {
+      // A read that never reached HOCKIA (offline, dropped cellular) or a
+      // server failure is not "removed": show the retry state instead.
+      if (opportunityError && !isRowNotFound(opportunityError)) {
+        logger.error('Opportunity read failed:', opportunityError)
+        setLoadFailed(true)
+        return
+      }
+      if (!opportunityData) {
         logger.error('Opportunity not found:', opportunityError)
         setNotFound(true)
         return
@@ -213,11 +213,19 @@ export default function OpportunityDetailPage() {
       }
     } catch (error) {
       logger.error('Error fetching opportunity details:', error)
-      setNotFound(true)
+      if (isNetworkFailureError(error)) setLoadFailed(true)
+      else setNotFound(true)
     } finally {
       setIsLoading(false)
     }
   }, [id, userId, viewerRole, isCurrentUserTestAccount, isStaging])
+
+  const retryLoad = useCallback(() => {
+    setLoadFailed(false)
+    setNotFound(false)
+    setIsLoading(true)
+    void fetchVacancyDetails()
+  }, [fetchVacancyDetails])
 
   useEffect(() => {
     if (!id) {
@@ -321,12 +329,28 @@ export default function OpportunityDetailPage() {
 
   if (isLoading) {
     return (
+      <>
+        <Header mobileHidden />
+        <RoleDetailSkeleton />
+      </>
+    )
+  }
+
+  if (loadFailed) {
+    return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading opportunity...</p>
+        <div className="flex items-center justify-center px-4" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
+          <div className="max-w-sm text-center" role="alert" data-testid="role-load-failed">
+            <h1 className="text-[20px] font-semibold leading-6 text-ink-1">Couldn’t load this role</h1>
+            <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
+            <button
+              type="button"
+              onClick={retryLoad}
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90"
+            >
+              Try again
+            </button>
           </div>
         </div>
       </div>
@@ -339,13 +363,14 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Opportunity Not Found</h1>
-            <p className="text-gray-600 mb-6">This opportunity may have been removed.</p>
+            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">Role not found</h1>
+            <p className="mb-6 text-row text-ink-2">This role may have been removed.</p>
             <button
+              type="button"
               onClick={() => navigate('/opportunities')}
-              className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90"
             >
-              Browse Opportunities
+              Browse opportunities
             </button>
           </div>
         </div>

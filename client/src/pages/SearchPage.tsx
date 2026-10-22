@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { useSearchParams } from 'react-router-dom'
 import { Loader2, SearchX } from 'lucide-react'
 import { Header } from '@/components'
@@ -145,9 +146,7 @@ function DesktopSearchPage() {
                   type="button"
                   onClick={() => handleTabChange(tab.key)}
                   className={`px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-hockia-primary text-white'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    chipTone(activeTab === tab.key)
                   }`}
                 >
                   {tab.label}

@@ -91,7 +91,7 @@ const renderModal = (props: Record<string, unknown> = {}) =>
 
 /** Fill the always-required fields of a NEW player opportunity. */
 async function fillPlayerRequired() {
-  await user.type(screen.getByLabelText(/Opportunity Title/), 'Senior Women First XI')
+  await user.type(screen.getByLabelText(/Opportunity title/), 'Senior Women First XI')
   await user.selectOptions(screen.getByTitle('Position'), 'midfielder')
   await user.selectOptions(screen.getByTitle('Category'), 'Women')
   await user.click(screen.getByTestId('stub-set-location'))
@@ -158,7 +158,7 @@ describe('CreateOpportunityModal — must-have payload (Phase 3c)', () => {
     renderModal({ initialOpportunityType: 'coach' })
     expect(screen.queryByRole('switch')).toBeNull()
 
-    await user.type(screen.getByLabelText(/Opportunity Title/), 'Head Coach — Youth')
+    await user.type(screen.getByLabelText(/Opportunity title/), 'Head Coach — Youth')
     await user.selectOptions(screen.getByTitle('Category'), 'Girls')
     await user.click(screen.getByTestId('stub-set-location'))
     await user.click(screen.getByRole('button', { name: /Publish now/ }))
@@ -193,7 +193,7 @@ describe('CreateOpportunityModal — must-have payload (Phase 3c)', () => {
     // The position toggle reflects the persisted flag…
     expect(screen.getByRole('switch', { name: /Mark position as a must-have/ })).toHaveAttribute('aria-checked', 'true')
 
-    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
     expect(updatePayload).toMatchObject({ position_required: true })
   })
@@ -215,7 +215,7 @@ describe('CreateOpportunityModal — no youth player roles', () => {
 
     renderModal({ editingVacancy })
     expect((screen.getByTitle('Category') as HTMLSelectElement).value).toBe('')
-    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     expect(await screen.findByText('Category is required')).toBeInTheDocument()
     expect(updateMock).not.toHaveBeenCalled()
   })
@@ -238,18 +238,18 @@ describe('CreateOpportunityModal — coach role team', () => {
   it('keeps a coach role\'s team on edit (no longer erased)', async () => {
     renderModal({ editingVacancy: coachVacancy('Men') })
     expect((screen.getByTitle('Category') as HTMLSelectElement).value).toBe('Men')
-    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
     expect(updatePayload).toMatchObject({ opportunity_type: 'coach', gender: 'Men' })
   })
 
   it('asks a legacy coach role without a team for one', async () => {
     renderModal({ editingVacancy: coachVacancy(null) })
-    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     expect(await screen.findByText('Category is required')).toBeInTheDocument()
     expect(updateMock).not.toHaveBeenCalled()
     await user.selectOptions(screen.getByTitle('Category'), 'Boys')
-    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
     expect(updatePayload).toMatchObject({ gender: 'Boys' })
   })

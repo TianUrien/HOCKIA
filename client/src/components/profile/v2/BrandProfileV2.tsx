@@ -299,7 +299,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       {owner && (
         <div className="flex flex-col gap-3">
           <OwnerButtons onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What athletes and clubs see', onSelect: () => props.onViewPublic?.() }]} />
-          {stepCopy && step && <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary} />}
+          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary} />}
 
           {/* Ambassador card — brand-initiated invites */}
           <div className="px-4">

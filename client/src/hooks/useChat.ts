@@ -18,6 +18,7 @@ import { extractErrorMessage } from '@/lib/utils'
 import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
 import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from '@/lib/recruiterMinor'
 import { mergeFetchedMessages, olderMessagesCursorFilter } from '@/lib/chatThread'
+import { requestPushAsk } from '@/lib/pushAsk'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
@@ -836,6 +837,9 @@ export function useChat({
         trackDbEvent('conversation_start', 'conversation', newlyCreatedConversation.id, { context: startOrigin })
         trackConversationStart(startOrigin)
         onConversationCreated(newlyCreatedConversation)
+        // A first message is a moment of intent: the one-time notification
+        // ask may follow (lib/pushAsk.ts, audit A1).
+        requestPushAsk('first_message')
       }
       
       return true

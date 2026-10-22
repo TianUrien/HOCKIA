@@ -346,7 +346,7 @@ export default function CommunityPage() {
   }, [])
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white lg:bg-[#F4F4F6]">
+    <div className="min-h-screen overflow-x-hidden bg-white lg:bg-surface-muted">
       {/* No app header on mobile (UI redesign 2026-09-19) — the screen
           opens on its own title row, like Profile. Desktop keeps it. */}
       <Header mobileHidden />
@@ -362,7 +362,7 @@ export default function CommunityPage() {
       )}
 
       <PullToRefresh onRefresh={handleRefresh}>
-        <main className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:pt-24 pb-12">
+        <main className="max-w-7xl mx-auto px-4 md:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:max-w-[1248px] lg:pt-24 pb-12">
           {/* Title row: "Community" + the filters button (members only).
               The badge shows how many filters are narrowing the grid. */}
           <div className="mb-2 flex items-center justify-between lg:mb-3">
@@ -409,7 +409,7 @@ export default function CommunityPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search players, coaches, clubs"
-                  className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                  className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
                   autoComplete="off"
                   enterKeyHint="search"
                   autoCapitalize="none"
@@ -481,7 +481,8 @@ export default function CommunityPage() {
               {clubView ? <ClubViewPlayersHeader sort={sort} onSort={setSort} /> : (
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-center justify-between gap-3">
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
-                  {isNarrowed ? 'Matching members' : activeTab === 'all' || !isPhone ? 'All members' : TITLE_BY_TAB[activeTab]}
+                  {/* The heading follows the selected tab on every screen size (audit A9). */}
+                  {isNarrowed ? 'Matching members' : activeTab === 'all' ? 'All members' : TITLE_BY_TAB[activeTab]}
                   {(() => {
                     const displayed = isNarrowed || scopeNarrows ? filteredCount : totalCount
                     if (displayed === null) return null
@@ -494,7 +495,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus:ring-0"
+                    className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus-visible:ring-0"
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>
@@ -522,7 +523,7 @@ export default function CommunityPage() {
                           Showing <span className="font-semibold">{scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole)}</span>, ranked for your recruiting context.
                         </>
                       ) : (
-                        <>Showing everyone. Your scope still personalises ranking.</>
+                        <>Showing everyone. Your context still personalises ranking.</>
                       )}
                     </span>
                   </p>
@@ -547,7 +548,7 @@ export default function CommunityPage() {
                   onEuCountChange={setEuCount}
                   scopeReshaping={scopeReshaping}
                   clubView={clubView}
-                  recruiterDirectProfiles={isPhone && isRecruiterViewer}
+
                 />
               </div>
             </>

@@ -33,7 +33,7 @@ test.describe('@smoke coach', () => {
     await page.goto('/messages')
 
     await expect(
-      page.getByRole('heading', { name: 'Messages', exact: true })
+      page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 20000 })
   })
 

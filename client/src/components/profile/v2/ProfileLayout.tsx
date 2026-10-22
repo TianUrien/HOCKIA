@@ -26,6 +26,7 @@ export function ProfileLayout({ hero, actions = [], children }: { hero: ReactNod
                   'flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full text-[16px] font-semibold transition-transform duration-300 active:scale-[0.97] disabled:opacity-70',
                   b.tone === 'primary' && 'bg-hockia-primary text-white',
                   b.tone === 'secondary' && 'border border-line bg-white text-ink-1',
+                  b.tone === 'tonal' && 'bg-brand-soft text-brand-primary',
                   b.tone === 'done' && 'bg-positive-soft text-positive',
                 )}
               >

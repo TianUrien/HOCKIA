@@ -610,7 +610,7 @@ export default function SettingsPage() {
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
                         placeholder="New email address"
-                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                         required
                       />
                       <button
@@ -642,7 +642,7 @@ export default function SettingsPage() {
                         setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
                       }
                       placeholder="Current password"
-                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     />
                     <div className="grid grid-cols-2 gap-3">
                       <input
@@ -652,7 +652,7 @@ export default function SettingsPage() {
                           setPasswordForm({ ...passwordForm, newPassword: e.target.value })
                         }
                         placeholder="New password"
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       />
                       <input
                         type="password"
@@ -661,7 +661,7 @@ export default function SettingsPage() {
                           setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
                         }
                         placeholder="Confirm"
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       />
                     </div>
 
@@ -723,7 +723,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleNotificationToggle}
                       disabled={loadingToggles.has('opportunities')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                         notifyOpportunities ? 'bg-indigo-600' : 'bg-gray-300'
                       } ${loadingToggles.has('opportunities') ? 'opacity-50' : ''}`}
                     >
@@ -752,7 +752,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleApplicationNotificationToggle}
                       disabled={loadingToggles.has('applications')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                         notifyApplications ? 'bg-indigo-600' : 'bg-gray-300'
                       } ${loadingToggles.has('applications') ? 'opacity-50' : ''}`}
                     >
@@ -780,7 +780,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleFriendNotificationToggle}
                     disabled={loadingToggles.has('friends')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       notifyFriends ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('friends') ? 'opacity-50' : ''}`}
                   >
@@ -811,7 +811,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleReferenceNotificationToggle}
                       disabled={loadingToggles.has('references')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                         notifyReferences ? 'bg-indigo-600' : 'bg-gray-300'
                       } ${loadingToggles.has('references') ? 'opacity-50' : ''}`}
                     >
@@ -839,7 +839,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleMessageNotificationToggle}
                     disabled={loadingToggles.has('messages')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       notifyMessages ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('messages') ? 'opacity-50' : ''}`}
                   >
@@ -870,7 +870,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handlePushToggle}
                     disabled={!push.isSupported || push.permission === 'denied' || push.loading}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       push.isSubscribed ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${!push.isSupported || push.permission === 'denied' || push.loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
@@ -897,7 +897,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleProfileViewNotificationToggle}
                     disabled={loadingToggles.has('profile_views')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       notifyProfileViews ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('profile_views') ? 'opacity-50' : ''}`}
                   >
@@ -947,7 +947,7 @@ export default function SettingsPage() {
                     onClick={handleAnonymousBrowsingToggle}
                     disabled={loadingToggles.has('anonymous')}
                     aria-label={`Anonymous browsing: ${browseAnonymously ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       browseAnonymously ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
                   >
@@ -977,7 +977,7 @@ export default function SettingsPage() {
                     onClick={handleShowLastActiveToggle}
                     disabled={loadingToggles.has('last-active')}
                     aria-label={`Show last active: ${showLastActive ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                       showLastActive ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('last-active') ? 'opacity-50' : ''}`}
                   >

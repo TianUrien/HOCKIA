@@ -353,7 +353,7 @@ describe('buildCoachKeyFacts', () => {
     const facts = buildCoachKeyFacts(coach, { viewer: 'recruiter', today: TODAY })
     expect(facts.map((f) => f.id)).toEqual(['specialization', 'coaches_at', 'available', 'passport', 'categories', 'age'])
     expect(byId(facts, 'specialization').value).toBe('Head coach')
-    expect(byId(facts, 'categories').value).toBe('Adult women, Girls')
+    expect(byId(facts, 'categories').value).toBe("Women's, Girls")
     expect(byId(facts, 'coaches_at').label).toBe('Coaches at')
     expect(byId(facts, 'coaches_at').value).toBe('Belgrano AC')
     expect(byId(facts, 'coaches_at').detail).toBe('Head coach · current role')

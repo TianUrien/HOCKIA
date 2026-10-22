@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
 import { Loader2, Search, Shield, X, ImagePlus, CircleHelp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -996,7 +997,7 @@ export function PostComposerModal({
                       role="radio"
                       aria-checked={active}
                       onClick={select}
-                      className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1'}`}
+                      className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${chipTone(active)}`}
                     >
                       {value === 'question' && <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />}
                       {label}
@@ -1027,7 +1028,7 @@ export function PostComposerModal({
                           value={personSearch}
                           onChange={(e) => handlePersonSearch(e.target.value)}
                           placeholder="Search for a player or coach..."
-                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EA580C]/30 focus:border-[#EA580C]"
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/30 focus:border-[#EA580C]"
                           autoComplete="off"
                           enterKeyHint="search"
                           autoCapitalize="none"
@@ -1145,7 +1146,7 @@ export function PostComposerModal({
                           value={clubSearch}
                           onChange={(e) => handleClubSearch(e.target.value)}
                           placeholder="Search for a club..."
-                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                           autoComplete="off"
                           enterKeyHint="search"
                           autoCapitalize="none"
@@ -1278,7 +1279,7 @@ export function PostComposerModal({
                       value={customClubName}
                       onChange={(e) => setCustomClubName(e.target.value)}
                       placeholder="Club name"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                     />
 
                     {/* Logo upload */}
@@ -1356,7 +1357,7 @@ export function PostComposerModal({
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
                 spellCheck
-                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-3 border-0 focus:outline-none focus:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
+                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-3 border-0 focus:outline-none focus-visible:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
                 style={{ minHeight: mode === 'transfer' ? '60px' : '100px' }}
               />
               {/* Remaining count only inside the last 50 characters, lightest ink. */}
@@ -1400,9 +1401,9 @@ export function PostComposerModal({
               {isSubmitting
                 ? (mode === 'transfer' ? 'Announcing...' : 'Posting...')
                 : isEdit
-                  ? 'Save Changes'
+                  ? 'Save changes'
                   : mode === 'transfer'
-                    ? (isClubRole ? 'Announce Signing' : 'Announce Transfer')
+                    ? (isClubRole ? 'Announce signing' : 'Announce transfer')
                     // "Publish post" — distinct from the "Post" mode tab
                     // above so the dialog has no two same-named controls.
                     // (Avoids "Share post", which is already the share-

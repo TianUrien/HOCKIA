@@ -1,24 +1,22 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Bell, X } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useAuthStore } from '@/lib/auth'
 import { INLINE_PUSH_ASK, useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
-import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix, onActionBarScreen } from '@/lib/overlaySequence'
+import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
+import { clearPushAsk, markPushAskDone, pushAskDone, shouldShowPushAsk, usePendingPushAsk } from '@/lib/pushAsk'
+import { BottomSheet } from '@/components/ui/BottomSheet'
+import { Button } from '@/components/ui/Button'
 import {
   trackPushSubscribe,
   trackPushPromptShown,
   trackPushPromptDismiss,
 } from '@/lib/analytics'
 
-const DISMISS_KEY = 'push-prompt-dismissed'
-const DISMISS_WINDOW_MS = 3 * 24 * 60 * 60 * 1000 // 3 days
-
 /**
- * Routes where the push card must NEVER render (onboarding QA 2026-10-04):
- * it sat over the buttons of a logged-out /signup and /signup/email because
- * it was keyed to a per-device "onboarding completed" flag left behind by an
- * earlier account. It is a member-only ask.
+ * Routes where the push ask must NEVER render (onboarding QA 2026-10-04):
+ * it is a member-only ask.
  */
 const PUSH_PROMPT_HIDDEN_PREFIXES = [
   '/signup',
@@ -31,118 +29,108 @@ const PUSH_PROMPT_HIDDEN_PREFIXES = [
   '/reset-password',
 ] as const
 
-function dismissedRecently(): boolean {
-  try {
-    const dismissedAt = localStorage.getItem(DISMISS_KEY)
-    return Boolean(dismissedAt) && Date.now() - parseInt(dismissedAt as string, 10) < DISMISS_WINDOW_MS
-  } catch {
-    return false
-  }
-}
+export const PUSH_ASK_TITLE = 'Stay in the loop'
+export const PUSH_ASK_BODY = 'Get notified about messages, applications and roles, even when the app is closed.'
 
+/**
+ * The notification ask (design audit 2026-10-21, A1). A bottom sheet (r28)
+ * that opens once per member, only after a moment of intent (a successful
+ * Apply, posting a role, a first message: `lib/pushAsk.ts`). As a modal
+ * sheet it never sits on top of a sticky action bar. Turn on, Not now or
+ * closing it all count as seen: it never comes back for this member.
+ * The permission and subscription logic is unchanged (usePushSubscription).
+ */
 export default function PushPrompt() {
   const push = usePushSubscription()
   const location = useLocation()
-  // Signed in AND onboarding complete, from the live session — never from the
-  // per-device localStorage flag, which survives sign-out.
-  const signedIn = useAuthStore((s) => Boolean(s.user))
+  // Signed in AND onboarding complete, from the live session.
+  const userId = useAuthStore((s) => s.user?.id ?? null)
   const onboarded = useAuthStore((s) => s.profile?.onboarding_completed === true)
-  const [dismissed, setDismissed] = useState(dismissedRecently)
-  const hasTrackedShow = useRef(false)
+  const moment = usePendingPushAsk()
+  const [open, setOpen] = useState(false)
   // A screen asking in place (Role posted) wins; never show the same ask twice.
   const inlineAsk = useBottomPromptActive(INLINE_PUSH_ASK)
-  // One overlay at a time: Terms → cookie banner → install card → this card.
+  // One overlay at a time: Terms → cookie banner → install card → this ask.
   const termsOpen = useBottomPromptActive(TERMS_GATE_OVERLAY)
   const cookieOpen = useBottomPromptActive(COOKIE_BANNER_OVERLAY)
   const installOpen = useBottomPromptActive(INSTALL_OVERLAY)
 
-  const supported = push.isSupported && !push.isSubscribed && push.permission !== 'denied'
-  const onHiddenRoute = matchesRoutePrefix(location.pathname, PUSH_PROMPT_HIDDEN_PREFIXES) || onActionBarScreen(location.pathname)
-  const visible =
-    supported &&
-    signedIn &&
-    onboarded &&
-    !onHiddenRoute &&
-    !dismissed &&
-    !inlineAsk &&
-    !termsOpen &&
-    !cookieOpen &&
-    !installOpen
+  const done = pushAskDone(userId)
+  const visible = shouldShowPushAsk({
+    moment,
+    done,
+    supported: push.isSupported,
+    subscribed: push.isSubscribed,
+    permission: push.permission,
+    signedIn: Boolean(userId),
+    onboarded,
+    onHiddenRoute: matchesRoutePrefix(location.pathname, PUSH_PROMPT_HIDDEN_PREFIXES),
+    otherOverlay: inlineAsk || termsOpen || cookieOpen || installOpen,
+  })
 
-  useBottomPrompt('push', visible)
+  useBottomPrompt('push', visible || open)
 
-  // Track impression once
+  // A moment that can't be asked about (already done, already subscribed,
+  // denied) is dropped, so it never pops up later out of context.
   useEffect(() => {
-    if (visible && !hasTrackedShow.current) {
+    if (moment && (done || push.isSubscribed || push.permission === 'denied' || push.permission === 'granted')) clearPushAsk()
+  }, [moment, done, push.isSubscribed, push.permission])
+
+  // Shown once per member: mark it seen as soon as it opens.
+  // Deferred a tick so an overlay claiming its slot in the same commit
+  // (Terms gate, cookie banner) wins first; the cleanup cancels it then.
+  useEffect(() => {
+    if (!visible || open) return
+    const t = setTimeout(() => {
       trackPushPromptShown()
-      hasTrackedShow.current = true
-    }
-  }, [visible])
+      markPushAskDone(userId)
+      setOpen(true)
+    }, 0)
+    return () => clearTimeout(t)
+  }, [visible, open, userId])
+
+  const close = () => {
+    markPushAskDone(userId)
+    clearPushAsk()
+    setOpen(false)
+  }
 
   const handleEnable = async () => {
     try {
       await push.subscribe()
       trackPushSubscribe('prompt')
-      setDismissed(true)
     } catch {
-      // Permission denied or error — prompt hides naturally
+      // Permission denied or error: the hook logs it.
     }
+    close()
   }
 
   const handleDismiss = () => {
-    try { localStorage.setItem(DISMISS_KEY, Date.now().toString()) } catch { /* storage blocked */ }
     trackPushPromptDismiss()
-    setDismissed(true)
+    close()
   }
 
-  if (!visible) return null
-
   // Prerender snapshot (scripts/prerender-landing.mjs): overlays must
-  // never be baked into the static landing HTML. Placed AFTER all hooks
-  // (rules-of-hooks); the flag is constant for the page's lifetime.
+  // never be baked into the static landing HTML.
   if (typeof window !== 'undefined' && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) return null
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
-      <button
-        type="button"
-        onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-        aria-label="Dismiss"
-      >
-        <X className="w-4 h-4 text-gray-500" />
-      </button>
-
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
-          <Bell className="w-5 h-5 text-indigo-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm">Stay in the loop</h3>
-          <p className="text-xs text-gray-600 mt-0.5">
-            Get notified about messages, applications, and opportunities — even when the app is closed.
-          </p>
+    <BottomSheet open={open} onClose={handleDismiss} ariaLabel={PUSH_ASK_TITLE} initialFocus="panel">
+      <div className="flex flex-col items-center gap-3 px-6 pb-4 pt-3 text-center" data-testid="push-ask-sheet">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-primary" aria-hidden="true">
+          <Bell className="h-7 w-7" strokeWidth={2} />
+        </span>
+        <h2 className="text-title text-ink-1">{PUSH_ASK_TITLE}</h2>
+        <p className="text-row text-ink-2">{PUSH_ASK_BODY}</p>
+        <div className="mt-2 flex w-full flex-col gap-2">
+          <Button variant="primary" size="large" block onClick={() => void handleEnable()} loading={push.loading}>
+            Turn on notifications
+          </Button>
+          <Button variant="tertiary" size="large" block onClick={handleDismiss}>
+            Not now
+          </Button>
         </div>
       </div>
-
-      <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleEnable}
-          disabled={push.loading}
-          className="flex-1 py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <Bell className="w-4 h-4" />
-          Enable Notifications
-        </button>
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="px-3 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          Not now
-        </button>
-      </div>
-    </div>
+    </BottomSheet>
   )
 }

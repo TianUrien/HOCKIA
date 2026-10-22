@@ -26,12 +26,13 @@ beforeEach(() => { auth.role = 'player' })
 describe('Card / Member for a player viewer', () => {
   it('hides fit chips and match % even when a caller passes them', () => {
     const { rerender } = render(<RecruiterCandidateCard member={player} fitState="green" onPreview={() => {}} />)
-    expect(screen.queryByTestId('fit-chip')).toBeNull()
+    expect(screen.queryByTestId('fit-badge')).toBeNull()
     expect(screen.queryByText('Strong fit')).toBeNull()
     rerender(<RecruiterCandidateCard member={player} verdict={verdict} onPreview={() => {}} />)
     expect(screen.queryByText(/% ?$/)).toBeNull()
     expect(screen.queryByText(/match/)).toBeNull()
-    expect(screen.getByText('Open to play')).toBeInTheDocument()
+    // No availability chip over faces (audit B1).
+    expect(screen.queryByText('Open to play')).toBeNull()
   })
   it('a club viewer still sees the fit chip (club-only surface)', () => {
     auth.role = 'club'
@@ -41,9 +42,9 @@ describe('Card / Member for a player viewer', () => {
 })
 
 describe('status pill and club line', () => {
-  it('a club with open roles reads "Recruiting", never a count', () => {
+  it('a club with open roles never shows a count or a pill over the photo (audit B1)', () => {
     render(<RecruiterCandidateCard member={{ ...club, open_role_count: 3 }} onPreview={() => {}} />)
-    expect(screen.getByText('Recruiting')).toBeInTheDocument()
+    expect(screen.queryByText('Recruiting')).toBeNull()
     expect(screen.queryByText(/open role/)).toBeNull()
   })
   it('a club with no open role has no pill (a stale toggle is not recruiting)', () => {
@@ -59,7 +60,7 @@ describe('status pill and club line', () => {
 })
 
 describe('Community segments (phone)', () => {
-  it('the selected segment is soft purple on the phone (Chip ruling); desktop keeps ink', async () => {
+  it('the selected segment is soft purple on every breakpoint (Chip ruling, audit A4)', async () => {
     Element.prototype.scrollIntoView = () => {}
     const { MemoryRouter } = await import('react-router-dom')
     const { CommunitySegments } = await import('@/components/community/CommunitySegments')
@@ -67,6 +68,6 @@ describe('Community segments (phone)', () => {
     const sel = screen.getAllByRole('tab').find((t) => t.getAttribute('aria-selected') === 'true')!
     expect(sel.className).toContain('bg-brand-soft')
     expect(sel.className).toContain('text-brand-primary')
-    expect(sel.className).toContain('lg:bg-ink-1')
+    expect(sel.className).not.toContain('lg:bg-ink-1')
   })
 })

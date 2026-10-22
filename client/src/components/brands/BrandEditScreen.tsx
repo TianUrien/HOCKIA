@@ -28,7 +28,7 @@ type Field = 'name' | 'category' | 'country' | 'bio' | 'website' | 'instagram'
 
 const TITLE: Record<Field, string> = { name: 'Brand name', category: 'Category', country: 'Country', bio: 'Bio', website: 'Website', instagram: 'Instagram' }
 const BIO_MAX = 1000
-const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30'
 
 function Row({ label, value, onClick, locked, trailing }: { label: string; value: string | null; onClick?: () => void; locked?: boolean; trailing?: ReactNode }) {
   const body = (
@@ -234,7 +234,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
                 </select>
               )}
               {editing === 'country' && <CountrySelect appearance="field" label="Country" value={countryDraft} onChange={(id) => setCountryDraft(id)} />}
-              {editing === 'bio' && <textarea autoFocus value={draft} maxLength={BIO_MAX} rows={7} onChange={(e) => setDraft(e.target.value)} aria-label="Bio" placeholder="What you make and who it’s for." className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" />}
+              {editing === 'bio' && <textarea autoFocus value={draft} maxLength={BIO_MAX} rows={7} onChange={(e) => setDraft(e.target.value)} aria-label="Bio" placeholder="What you make and who it’s for." className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30" />}
               {editing === 'website' && <input autoFocus type="url" inputMode="url" autoCapitalize="none" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="yourbrand.com" aria-label="Website" className={input} />}
               {editing === 'instagram' && <input autoFocus autoCapitalize="none" autoCorrect="off" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="@yourbrand" aria-label="Instagram" className={input} />}
               {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}

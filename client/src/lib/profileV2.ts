@@ -3,6 +3,8 @@
  * 11 Oct 2026) — pure helpers shared by every role's profile.
  */
 
+import { closesLabel } from '@/lib/opportunityCopy'
+
 export interface CompletenessPart {
   key: string
   weight: number
@@ -89,16 +91,11 @@ export function sponsorLabel(text: string): string {
   return /\b(player|athlete)$/i.test(t) ? t : `${t} player`
 }
 
-/** Open-role status line (PR6): "Closes today" / "Closes in N days" (≤ 30), else "New" (≤ 7 days old). */
+/** Open-role status line: the shared deadline label (closesLabel, audit A5), else "New" (≤ 7 days old). */
 export function roleStatusLine(deadline: string | null | undefined, createdAt: string | null | undefined, now = new Date()): string | null {
   const day = 86_400_000
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  if (deadline) {
-    const d = new Date(`${deadline.slice(0, 10)}T00:00:00Z`).getTime()
-    const left = Math.round((d - today) / day)
-    if (left === 0) return 'Closes today'
-    if (left > 0 && left <= 30) return left === 1 ? 'Closes tomorrow' : `Closes in ${left} days`
-  }
+  const closes = deadline ? closesLabel(deadline.slice(0, 10), now) : null
+  if (closes) return closes
   if (createdAt && now.getTime() - new Date(createdAt).getTime() <= 7 * day) return 'New'
   return null
 }

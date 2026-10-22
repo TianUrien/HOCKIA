@@ -73,11 +73,12 @@ describe('ClubProfileV2 · Recruiting pill', () => {
     expect(screen.getByTestId('club-recruiting-pill').textContent).toContain('Recruiting now')
   })
 
-  it('shows on the public view too, with Apply on the role and Message first in the bar', () => {
+  it('shows on the public view too; the role row is one tap target with no button (audit A5); Message first in the bar', () => {
     openRoles = [role('r1')]
     renderScreen({}, { readOnly: true })
     expect(screen.getByTestId('club-recruiting-pill')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+    expect(screen.getByTestId('club-role-row').tagName).toBe('BUTTON')
     const bar = screen.getByTestId('profile-action-bar')
     expect(bar.textContent?.indexOf('Message')).toBeLessThan(bar.textContent?.indexOf('Add friend') ?? -1)
   })

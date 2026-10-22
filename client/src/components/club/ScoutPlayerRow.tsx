@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from 'react'
 import { Clock, FileText, PlaySquare } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { FitChip } from './FitChip'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { getImageUrl } from '@/lib/imageUrl'
 import { personRoleLine } from '@/lib/clubRecruiting'
 import { nationalityLine, rowFactsLine, type CountryLite, type ScoutRow } from '@/lib/findPlayers'
@@ -71,7 +71,7 @@ export function ScoutPlayerRow({ row, countries, meta, below, trailing, onOpen, 
           </span>
           {(row.fitState === 'green' || row.fitState === 'yellow' || nat) && (
             <span className="flex items-center gap-2 pt-[3px]">
-              <span className="shrink-0 whitespace-nowrap empty:hidden"><FitChip state={row.fitState} /></span>
+              <span className="shrink-0 whitespace-nowrap empty:hidden"><FitBadge state={row.fitState} /></span>
               {nat && <span className="min-w-0 truncate text-secondary text-ink-2">{nat}</span>}
             </span>
           )}

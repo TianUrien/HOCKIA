@@ -22,6 +22,7 @@ import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
+import { requestPushAsk } from '@/lib/pushAsk'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -34,7 +35,7 @@ interface CreateVacancyModalProps {
   editingVacancy?: Vacancy | null
   /** Initial opportunity_type when creating a new opportunity. Lets
    *  the coach dashboard launch the modal pre-set to 'coach' so users
-   *  don't land on a "Player Position" form. Ignored when editing. */
+   *  don't land on a "Player position" form. Ignored when editing. */
   initialOpportunityType?: 'player' | 'coach'
   /** Club speed CS3 · Post again: a closed role whose details seed a NEW
    *  role. Start date and deadline start empty; it saves as a new row. */
@@ -658,6 +659,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         trackVacancyCreate(vacancyData.position || vacancyData.opportunity_type || 'unknown')
         if (resolvedStatus === 'open') {
           addToast('Opportunity published. Candidates can apply now.', 'success')
+          // Posting a role is a moment of intent: the one-time notification ask (audit A1).
+          requestPushAsk('role_posted')
         } else {
           addToast('Draft saved. Publish when you\'re ready to go live.', 'info')
         }
@@ -698,7 +701,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             </div>
             <div>
               <h2 id={titleId} className="text-xl font-bold text-gray-900">
-                {editingVacancy ? 'Edit Opportunity' : templateVacancy ? 'Post again' : 'Create New Opportunity'}
+                {editingVacancy ? 'Edit opportunity' : templateVacancy ? 'Post again' : 'Create new opportunity'}
               </h2>
               <p id={subtitleId} className="text-sm text-gray-600">
                 {editingVacancy 
@@ -739,7 +742,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Basic information</h3>
             </div>
 
             <div className="space-y-4">
@@ -747,31 +750,31 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Opportunity Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTypeFieldId}>
-                    Opportunity Type <span className="text-red-500">*</span>
+                    Opportunity type <span className="text-red-500">*</span>
                   </label>
                   <select
                     id={opportunityTypeFieldId}
                     ref={opportunityTypeRef}
                     value={formData.opportunity_type}
                     onChange={(e) => handleInputChange('opportunity_type', e.target.value as 'player' | 'coach')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     title="Opportunity type"
                   >
-                    <option value="player">Player Position</option>
-                    <option value="coach">Coach Position</option>
+                    <option value="player">Player position</option>
+                    <option value="coach">Coach position</option>
                   </select>
                 </div>
 
                 {/* Priority Level */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={priorityFieldId}>
-                    Priority Level
+                    Priority level
                   </label>
                   <select
                     id={priorityFieldId}
                     value={formData.priority || ''}
                     onChange={(e) => handleInputChange('priority', e.target.value as 'low' | 'medium' | 'high')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     title="Priority level"
                   >
                     <option value="low">Low</option>
@@ -784,7 +787,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               {/* Opportunity Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTitleFieldId}>
-                  Opportunity Title <span className="text-red-500">*</span>
+                  Opportunity title <span className="text-red-500">*</span>
                 </label>
                 <input
                   id={opportunityTitleFieldId}
@@ -794,13 +797,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   maxLength={TITLE_MAX}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "e.g., Senior Women's First XI Opportunity"
-                      : "e.g., Head Coach - Youth Development"
+                      : "e.g., Head coach, youth development"
                   }
                   aria-invalid={errors.title ? true : undefined}
                   aria-describedby={titleErrorId}
@@ -828,7 +831,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   type="text"
                   value={formData.organization_name ?? ''}
                   onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="e.g., Melbourne Hockey Club, Youth Academy"
                   autoCapitalize="words"
                   inputMode="text"
@@ -851,7 +854,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onChange={(e) => handleInputChange('position', e.target.value || undefined)}
                     aria-required={formData.opportunity_type === 'player' ? 'true' : undefined}
                     aria-invalid={errors.position ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.position ? 'border-red-500' : 'border-gray-300'
                     }`}
                     title="Position"
@@ -866,7 +869,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       </>
                     ) : (
                       <>
-                        <option value="head_coach">Head Coach</option>
+                        <option value="head_coach">Head coach</option>
                         <option value="assistant_coach">Assistant Coach</option>
                         <option value="youth_coach">Youth Coach</option>
                       </>
@@ -894,7 +897,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.gender ? 'border-red-500' : 'border-gray-300'
                     }`}
                     title="Category"
@@ -904,8 +907,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         values stay as the legacy enum for back-compat. Girls /
                         Boys on coach roles only: player roles are adult-only (founder
                         ruling 2026-09-25; the DB rejects them). */}
-                    <option value="Men">Adult men</option>
-                    <option value="Women">Adult women</option>
+                    <option value="Men">Men's</option>
+                    <option value="Women">Women's</option>
                     <option value="Mixed">Mixed</option>
                     {formData.opportunity_type !== 'player' && (
                       <>
@@ -952,7 +955,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       value={formData.recruitment_problem || ''}
                       onChange={(e) => handleInputChange('recruitment_problem', e.target.value || undefined)}
                       aria-label="Recruitment problem"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                     >
                       <option value="">Optional</option>
                       {RECRUITMENT_PROBLEM_OPTIONS.map((o) => (
@@ -967,7 +970,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.level_sought || ''}
                         onChange={(e) => handleInputChange('level_sought', e.target.value || undefined)}
                         aria-label="Level sought"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {LEVEL_SOUGHT_OPTIONS.map((o) => (
@@ -987,7 +990,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.compensation || ''}
                         onChange={(e) => handleInputChange('compensation', e.target.value || undefined)}
                         aria-label="Compensation"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {COMPENSATION_OPTIONS.map((o) => (
@@ -1002,7 +1005,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level. Change it if you're recruiting above or below. Mark any criterion "Must have" to require it. Players who miss it read as "Out of scope".</p>
+                  <p className="text-[11px] text-gray-400">Level pre-fills from your club’s level. Change it if you’re recruiting above or below. Mark any criterion “Must have” to require it. Players who miss it read as “Outside your context”.</p>
                 </div>
               )}
 
@@ -1017,7 +1020,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
                   maxLength={DESCRIPTION_MAX}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent resize-none"
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "Describe the player opportunity, training environment, and development pathway..."
@@ -1074,14 +1077,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={startDateFieldId}>
-                    Start Date
+                    Start date
                   </label>
                   <input
                     id={startDateFieldId}
                     type="date"
                     value={formData.start_date || ''}
                     onChange={(e) => handleInputChange('start_date', e.target.value || null)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   />
                   {formData.opportunity_type === 'player' && (
                     <MustNiceToggle
@@ -1103,7 +1106,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="text"
                     value={formData.duration_text || ''}
                     onChange={(e) => handleInputChange('duration_text', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="e.g., 12 months"
                   />
                 </div>
@@ -1166,7 +1169,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="Add a requirement..."
                 />
                 <button
@@ -1175,7 +1178,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Requirement
+                  Add requirement
                 </button>
               </div>
             </div>
@@ -1183,7 +1186,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
           {/* Benefits Package */}
           <section className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits Package</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits package</h3>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
               {BENEFIT_OPTIONS.map((benefit) => {
@@ -1238,7 +1241,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">💡</span>
-              <h3 className="text-lg font-semibold text-gray-900">Additional Custom Benefits</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Additional custom benefits</h3>
             </div>
             
             <div className="space-y-3">
@@ -1271,7 +1274,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newCustomBenefit}
                   onChange={(e) => setNewCustomBenefit(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addCustomBenefit()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
@@ -1280,7 +1283,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Custom Benefit
+                  Add custom benefit
                 </button>
               </div>
             </div>
@@ -1290,14 +1293,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           <section className="border-t border-gray-200 pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">📅</span>
-              <h3 className="text-lg font-semibold text-gray-900">Application Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Application details</h3>
             </div>
 
             <div className="space-y-4">
               {/* Application Deadline */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={applicationDeadlineFieldId}>
-                  Application Deadline
+                  Application deadline
                 </label>
                 <input
                   id={applicationDeadlineFieldId}
@@ -1308,7 +1311,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('application_deadline', e.target.value || null)}
                   aria-invalid={errors.application_deadline ? true : undefined}
                   aria-describedby={errors.application_deadline ? `${applicationDeadlineFieldId}-error` : undefined}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
                     errors.application_deadline ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -1321,14 +1324,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Contact Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactEmailFieldId}>
-                    Contact Email
+                    Contact email
                   </label>
                   <input
                     id={contactEmailFieldId}
                     type="email"
                     value={formData.contact_email || ''}
                     onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="info@elitehockeyacademy.com"
                     inputMode="email"
                     autoCapitalize="none"
@@ -1339,14 +1342,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {/* Contact Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactPhoneFieldId}>
-                    Contact Phone
+                    Contact phone
                   </label>
                   <input
                     id={contactPhoneFieldId}
                     type="tel"
                     value={formData.contact_phone || ''}
                     onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
                     placeholder="+31 20 123 4567"
                     inputMode="tel"
                     autoComplete="tel"
@@ -1424,7 +1427,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               disabled={isLoading}
               className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
             >
-              {isLoading ? 'Saving…' : 'Update Opportunity'}
+              {isLoading ? 'Saving…' : 'Update opportunity'}
             </Button>
           ) : (
             <>

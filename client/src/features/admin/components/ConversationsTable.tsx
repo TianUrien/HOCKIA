@@ -105,7 +105,7 @@ export function ConversationsTable({ days }: ConversationsTableProps) {
   const rangeEnd = Math.min(total, (page + 1) * PAGE_SIZE)
 
   const selectClass =
-    'text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500'
+    'text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500'
 
   return (
     <div>

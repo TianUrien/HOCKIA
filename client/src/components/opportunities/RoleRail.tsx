@@ -7,6 +7,7 @@ import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/Role
 import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, roleHeadline } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { usePressSpring } from '@/hooks/usePressSpring'
+import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 
 export interface RailCardData {
   vacancy: Vacancy
@@ -76,6 +77,7 @@ export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { 
 
 export function RailCard({ data, countryName, onOpen, fluid = false }: { data: RailCardData; countryName: string | null; onOpen: () => void; /** Fill the grid column (desktop) instead of the 272 pt phone width. */ fluid?: boolean }) {
   const press = usePressSpring<HTMLButtonElement>()
+  const prefetch = useRolePrefetch(data.vacancy.id, press.ref)
   const { vacancy, clubName, clubLogo, palette } = data
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
@@ -87,6 +89,7 @@ export function RailCard({ data, countryName, onOpen, fluid = false }: { data: R
       type="button"
       onClick={onOpen}
       {...press.handlers}
+      {...prefetch.handlers}
       className={`${fluid ? 'group block w-full transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50' : 'shrink-0 snap-start'} text-left [transform-origin:center] [will-change:transform]`}
       aria-label={`${lead} at ${clubName}`}
       data-testid="rail-card"

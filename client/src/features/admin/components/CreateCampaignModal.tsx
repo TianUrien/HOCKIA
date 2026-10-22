@@ -345,7 +345,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isOutreach ? 'e.g. Italy Club Introduction' : 'e.g. February Player Newsletter'}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             />
           </div>
 
@@ -355,7 +355,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
             <select
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
               <option value="">Select a template...</option>
               {activeTemplates.map(t => (
@@ -372,7 +372,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 aria-label="Category"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               >
                 <option value="notification">Notification</option>
                 <option value="marketing">Marketing</option>
@@ -406,7 +406,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       value={variantATemplateId}
                       onChange={(e) => setVariantATemplateId(e.target.value)}
                       aria-label="Variant A template"
-                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                     >
                       <option value="">Same as campaign template</option>
                       {activeTemplates.map(t => (
@@ -421,7 +421,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       value={variantASubject}
                       onChange={(e) => setVariantASubject(e.target.value)}
                       placeholder="e.g. Your club is already on HOCKIA"
-                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                     />
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       value={variantBTemplateId}
                       onChange={(e) => setVariantBTemplateId(e.target.value)}
                       aria-label="Variant B template"
-                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                     >
                       <option value="">Same as campaign template</option>
                       {activeTemplates.map(t => (
@@ -450,7 +450,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       value={variantBSubject}
                       onChange={(e) => setVariantBSubject(e.target.value)}
                       placeholder="e.g. Join the hockey community on HOCKIA"
-                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                     />
                   </div>
                 </div>
@@ -479,7 +479,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                     value={filterClub}
                     onChange={(e) => setFilterClub(e.target.value)}
                     aria-label="Club filter"
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   >
                     <option value="">All clubs</option>
                     {uniqueClubs.map(club => (
@@ -492,7 +492,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                     value={filterCountry}
                     onChange={(e) => setFilterCountry(e.target.value)}
                     aria-label="Country filter"
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   >
                     <option value="">All countries</option>
                     {uniqueCountries.map(c => (
@@ -505,7 +505,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                     aria-label="Status filter"
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   >
                     <option value="">All statuses</option>
                     <option value="imported">Imported</option>
@@ -525,7 +525,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                   placeholder="Search by name, email, or club..."
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
-                  className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                 />
               </div>
 
@@ -699,7 +699,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                     value={filterCountry}
                     onChange={(e) => setFilterCountry(e.target.value)}
                     aria-label="Country"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   >
                     <option value="">All countries</option>
                     {countries.map(c => (

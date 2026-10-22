@@ -17,7 +17,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────
 
-// MemberTile imports `{ RoleBadge, TierBadge, ... }` from the @/components
+// MemberTile imports `{ RoleBadge, VerifiedBadge, ... }` from the @/components
 // barrel, which transitively loads modules that import @/lib/supabase.
 // In CI (no .env.local) the supabase module throws at load-time on missing
 // env vars, taking the whole test file with it. This stub lets the module
@@ -364,14 +364,11 @@ describe('MemberTile — layout robustness', () => {
     expect(img?.getAttribute('src')).toContain('logo.png')
   })
 
-  it('shows green dot when player is open_to_play', () => {
-    renderTile({ role: 'player', open_to_play: true })
-    expect(screen.getByLabelText('Open to play')).toBeInTheDocument()
-  })
-
-  it('shows green dot when coach is open_to_coach', () => {
-    renderTile({ role: 'coach', open_to_coach: true })
-    expect(screen.getByLabelText('Open to coach')).toBeInTheDocument()
+  // Audit A3 (2026-10-21): the green avatar dot read as an online signal and
+  // is gone; availability shows as the labelled pill instead.
+  it('shows no green avatar dot for an open_to_play player', () => {
+    const { container } = renderTile({ role: 'player', open_to_play: true })
+    expect(container.querySelector('.bg-emerald-500.ring-2')).toBeNull()
   })
 
   it('hides green dot when player is not open_to_play', () => {
@@ -437,5 +434,15 @@ describe('MemberTile — click behavior', () => {
     renderTile({ id: 'bid-1', role: 'brand', full_name: 'Pro X', brandSlug: null })
     await userEvent.click(screen.getByRole('button', { name: /Pro X/i }))
     expect(navigateMock).toHaveBeenCalledWith('/marketplace')
+  })
+})
+
+describe('MemberTile: no completeness tier words (founder decision 2026-10-21)', () => {
+  it('never renders Strong profile / Looking good / Getting there / Just started, whatever tier is passed', () => {
+    for (const tier of ['elite', 'rising', 'active', 'rookie'] as const) {
+      const view = renderTile({ tier })
+      expect(view.container.textContent).not.toMatch(/Strong profile|Looking good|Getting there|Just started|All set/)
+      view.unmount()
+    }
   })
 })

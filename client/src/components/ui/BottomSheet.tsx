@@ -66,7 +66,8 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className, ini
         )}
       >
         <div className="flex justify-center pb-1 pt-2" aria-hidden="true">
-          <span className="h-[5px] w-9 rounded-full bg-ink-4" />
+          {/* No grabber on desktop dialogs (design audit B5). */}
+          <span className="h-[5px] w-9 rounded-full bg-ink-4 lg:hidden" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>

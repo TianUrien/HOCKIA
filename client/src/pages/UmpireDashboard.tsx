@@ -40,7 +40,6 @@ import {
   PublicViewBanner,
   RoleBadge,
   ScrollableTabs,
-  TierBadge,
   // PulseSection added below for the v5-plan dashboard hierarchy.
   TrustBadge,
   VerifiedBadge,
@@ -69,8 +68,6 @@ import type { Profile } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
-import { calculateTier } from '@/lib/profileTier'
-import { useUmpireProfileStrength } from '@/hooks/useUmpireProfileStrength'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
@@ -219,11 +216,6 @@ export default function UmpireDashboard({
     }
   }
 
-  // Owner-view tier uses the precise credentials-weighted strength hook so the
-  // badge is exact (not estimated from community-grid fallbacks). Weights match
-  // `estimateMemberStrength(umpire)`, so community cards and dashboard agree.
-  const { percentage } = useUmpireProfileStrength({ profile })
-  const tier = profile ? calculateTier(percentage) : null
 
   // Freshness nudges (owner only — no value in showing "your bio is stale" to
   // visitors). Umpire surfaces 'bio-stale' today; more nudges land as
@@ -278,7 +270,7 @@ export default function UmpireDashboard({
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'profile', label: 'Profile' },
-    { id: 'officiating', label: 'Career History' },
+    { id: 'officiating', label: 'Career history' },
     { id: 'gallery', label: 'Gallery' },
     { id: 'references', label: 'References' },
     { id: 'friends', label: 'Friends' },
@@ -412,7 +404,6 @@ export default function UmpireDashboard({
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <RoleBadge role="umpire" />
-                {!readOnly && tier && <TierBadge tier={tier} />}
                 {/* Phase 4 References UX Plan #1.5 — TrustBadge in umpire
                     header. Tap navigates to friends tab + scrolls to refs
                     (owner) or anchors to public-references (visitor). */}

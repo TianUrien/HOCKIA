@@ -155,7 +155,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">New Message</h2>
+              <h2 className="text-xl font-bold text-gray-900">New message</h2>
               <p className="text-sm text-gray-500">Start a conversation</p>
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
           <input
             type="search"
             placeholder="Search by name or club..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoFocus
@@ -186,7 +186,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
         {/* Section Label */}
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-          {searchTerm.trim() ? 'Search Results' : 'Recent Conversations'}
+          {searchTerm.trim() ? 'Search results' : 'Recent conversations'}
         </p>
 
         {/* Results List */}

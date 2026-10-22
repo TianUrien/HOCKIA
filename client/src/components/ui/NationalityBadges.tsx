@@ -1,10 +1,12 @@
 import { cn } from '@/lib/utils'
+import { euBadgeTone, type EuBadgeSurface } from '@/lib/euBadge'
 import { hasEuPassport, nationalityFlags, type NationalityCountry } from '@/lib/nationality'
 
 /** The EU badge (Figma 189:14): EU blue at 85 %, radius 6, 11 semibold white. */
-export function EuBadge({ className }: { className?: string }) {
+
+export function EuBadge({ className, surface }: { className?: string; surface: EuBadgeSurface }) {
   return (
-    <span className={cn('inline-flex items-center rounded-[6px] px-1.5 py-[2px] text-micro font-semibold leading-[14px] text-white', className)} style={{ backgroundColor: 'rgba(0,51,153,0.85)' }} data-testid="eu-badge" aria-label="EU passport">
+    <span className={cn('inline-flex items-center rounded-[6px] px-1.5 py-[2px] text-micro font-semibold leading-[14px]', euBadgeTone(surface), className)} data-testid="eu-badge" data-surface={surface} aria-label="EU passport">
       EU
     </span>
   )
@@ -21,7 +23,7 @@ export function NationalityLine({ nationalities, tail, className, dark = true }:
     <span className={cn('flex min-w-0 items-center gap-1.5', className)} data-testid="nationality-line">
       {/* Flags never wrap (two columns on a phone leave ~170 pt): larger than the text, on one line. */}
       {flags && <span className="shrink-0 whitespace-nowrap text-[17px] leading-5" aria-label={nationalities.map((c) => c.name).join(', ')}>{flags}</span>}
-      {hasEuPassport(nationalities) && <EuBadge className="shrink-0" />}
+      {hasEuPassport(nationalities) && <EuBadge className="shrink-0" surface={dark ? 'photo' : 'light'} />}
       {tail && <span className={cn('min-w-0 flex-1 truncate text-[12px] leading-4', dark ? 'text-white/[0.8]' : 'text-ink-2')}>{tail}</span>}
     </span>
   )
@@ -41,7 +43,7 @@ export function NationalityPills({ nationalities, className }: { nationalities: 
           {c.name}
         </span>
       ))}
-      {hasEuPassport(nationalities) && <EuBadge />}
+      {hasEuPassport(nationalities) && <EuBadge surface="photo" />}
     </span>
   )
 }
@@ -62,7 +64,7 @@ export function NationalitiesTile({ nationalities, permits = [], missingLabel = 
         <span key={c.id} className="flex items-center gap-2" data-testid="nationality-row">
           {c.flag && <span className="text-[16px] leading-[21px]" aria-hidden="true">{c.flag}</span>}
           <span className="min-w-0 flex-1 text-[16px] font-semibold leading-[21px] text-ink-1">{c.name}</span>
-          {c.isEu && <span className="shrink-0 rounded-full px-2 py-[3px] text-caption font-semibold" style={{ backgroundColor: '#e5edff', color: '#003399' }} data-testid="eu-passport-tag">EU passport</span>}
+          {c.isEu && <span className={cn('shrink-0 rounded-full px-2 py-[3px] text-caption font-semibold', euBadgeTone('light'))} data-testid="eu-passport-tag">EU passport</span>}
         </span>
       ))}
       {permits.length > 0 && <span className="h-[0.5px] w-full bg-line" aria-hidden="true" />}

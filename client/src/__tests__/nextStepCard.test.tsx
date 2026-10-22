@@ -51,8 +51,8 @@ describe('NextStepCard', () => {
     expect(screen.queryByText('100%')).not.toBeInTheDocument()
     // No "Get started" CTA in the complete state.
     expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument()
-    // Step counter copy reflects completion.
-    expect(screen.getByText(/All 2 steps complete/)).toBeInTheDocument()
+    // No step counter or progress bar (audit A2, 2026-10-21).
+    expect(screen.queryByText(/steps complete/)).not.toBeInTheDocument()
   })
 
   it('renders nothing when buckets array is empty', () => {
@@ -88,8 +88,8 @@ describe('NextStepCard', () => {
     expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument()
     // The standalone % label was removed; only the progress bar remains.
     expect(screen.queryByText('40%')).not.toBeInTheDocument()
-    // 2 of 3 buckets incomplete in this fixture → "2 steps left"
-    expect(screen.getByText(/2 steps left/)).toBeInTheDocument()
+    // No "N steps left" counter (audit A2): only the next item.
+    expect(screen.queryByText(/steps left/)).not.toBeInTheDocument()
   })
 
   it('omits the unlock copy line when the next bucket has none', () => {
@@ -106,14 +106,15 @@ describe('NextStepCard', () => {
     expect(screen.queryByText(/clubs see how you play/i)).not.toBeInTheDocument()
   })
 
-  it('handles a single remaining step with correct "1 step left" copy', () => {
+  it('shows no step counter with a single remaining step (audit A2)', () => {
     const oneLeftBuckets: TestBucket[] = [
       { id: 'photo', label: 'Add a profile photo', completed: true },
       { id: 'video', label: 'Add your highlight video', completed: false },
     ]
     render(<NextStepCard percentage={50} buckets={oneLeftBuckets} />)
 
-    expect(screen.getByText(/1 step left/)).toBeInTheDocument()
+    expect(screen.queryByText(/step left/)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Add your highlight video' })).toBeInTheDocument()
   })
 
   it('fires onBucketAction with the top incomplete bucket when the CTA is clicked', () => {

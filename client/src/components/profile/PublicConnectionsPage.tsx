@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { useNavigate } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { Avatar } from '@/components'
@@ -129,7 +130,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name"
           aria-label="Search connections by name"
-          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
         />
       </div>
 
@@ -142,9 +143,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
             aria-pressed={roleFilter === f.value}
             className={cn(
               'rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors',
-              roleFilter === f.value
-                ? 'bg-hockia-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              chipTone(roleFilter === f.value)
             )}
           >
             {f.label}

@@ -85,8 +85,8 @@ export default function ConfirmDialog({
 
   const buttonColors =
     variant === 'danger'
-      ? 'bg-status-danger hover:bg-status-danger-strong focus:ring-status-danger'
-      : 'bg-hockia-primary hover:bg-[#6B20D4] focus:ring-hockia-primary'
+      ? 'bg-status-danger hover:bg-status-danger-strong focus-visible:ring-status-danger'
+      : 'bg-hockia-primary hover:bg-[#6B20D4] focus-visible:ring-hockia-primary'
   const iconColors =
     variant === 'danger'
       ? 'text-status-danger bg-status-danger-soft'
@@ -148,7 +148,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${buttonColors}`}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 ${buttonColors}`}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">

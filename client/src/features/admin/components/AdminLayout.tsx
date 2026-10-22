@@ -307,7 +307,7 @@ export function AdminLayout() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
                   onKeyDown={handleSearchKeyDown}
-                  className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-gray-400"
+                  className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent placeholder:text-gray-400"
                   autoComplete="off"
                   enterKeyHint="search"
                   autoCapitalize="none"

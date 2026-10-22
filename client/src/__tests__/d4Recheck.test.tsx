@@ -165,7 +165,7 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(sel.className).toContain('text-brand-primary')
     expect(sel.className).not.toContain('bg-ink-1')
     expect(sel).not.toHaveAttribute('aria-pressed')
-    expect(screen.getByRole('tab', { name: 'Closed · 1' }).className).toContain('bg-surface-grouped')
+    expect(screen.getByRole('tab', { name: 'Closed · 1' }).className).toContain('border-line')
   })
 })
 

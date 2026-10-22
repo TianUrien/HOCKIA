@@ -23,8 +23,9 @@ import { ClubWideCard } from './ClubWideCard'
 const MemberFullPreview = lazy(() => import('./MemberFullPreview'))
 
 /**
- * The phone Community grid (Figma Community P1–P3, P15). One chronological
- * list (founder ruling 2026-10-11): people two per row (3:4 cards), clubs
+ * The Community grid (Figma Community P1–P3, P15), phones and desktop (design
+ * audit 2026-10-21, B1). One chronological list (founder ruling 2026-10-11):
+ * people two per row on phones, four or five from 1024 px (3:4 cards); clubs
  * always full width. Dense packing keeps a lone person next to the next
  * person instead of leaving a hole before a club. Margins 16, gap 12.
  *
@@ -110,7 +111,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
 
   return (
     <>
-      <div className="grid grid-flow-row-dense grid-cols-2 gap-3" data-testid="community-photo-grid" data-count={ids.length}>
+      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5" data-testid="community-photo-grid" data-count={ids.length}>
         {members.map((m, i) => {
           if (m.role === 'club') {
             const cover = batch.photos.get(m.id)?.[0] ?? null
@@ -122,7 +123,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
               place: placeOf(m, true),
             })
             return (
-              <div key={m.id} className="col-span-2">
+              <div key={m.id} className="col-span-full" data-testid="community-club-wide">
                 <ClubWideCard
                   name={m.full_name?.trim() || 'Club'}
                   meta={meta}

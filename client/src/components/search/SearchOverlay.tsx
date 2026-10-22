@@ -8,6 +8,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { onOpenSearchOverlay } from '@/lib/searchOverlayBus'
@@ -377,7 +378,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players, clubs, posts..."
-                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
+                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
                 autoComplete="off"
                 autoFocus
                 enterKeyHint="search"
@@ -414,9 +415,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
                     className={`px-3.5 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
-                      activeTab === tab.key
-                        ? 'bg-hockia-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      chipTone(activeTab === tab.key)
                     }`}
                   >
                     {tab.label}

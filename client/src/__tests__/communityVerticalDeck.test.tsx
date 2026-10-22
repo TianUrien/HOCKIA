@@ -1,7 +1,7 @@
 /**
  * Community preview on phones: vertical deck (founder ruling 2026-10-21,
  * Figma 01 Community · "Vertical deck on phones" V0–V3). Pins:
- *   - phones get the vertical deck (no "‹ 3 of N ›" pager); wider screens keep the classic deck;
+ *   - phones get the vertical deck (no "‹ 3 of N ›" pager); wider screens get the desktop deck;
  *   - the immersive page: list label, identity over the photo, "Based in", the action bar;
  *   - "More" opens the details panel and records member_preview_more_open;
  *   - ArrowDown / ArrowUp move between members and record member_preview_swipe;
@@ -133,10 +133,10 @@ describe('Community preview: vertical deck on phones', () => {
     expect(mocks.trackDbEvent).toHaveBeenCalledWith('member_preview_depth', 'community', undefined, { members_seen: 2 })
   })
 
-  it('wider screens keep the classic deck with the pager', () => {
+  it('wider screens get the desktop deck with arrows and the pager (audit B2)', () => {
     mocks.isPhone = false
     renderDeck()
-    expect(screen.getByTestId('member-preview')).not.toHaveAttribute('data-deck', 'vertical')
+    expect(screen.getByTestId('member-preview')).toHaveAttribute('data-deck', 'desktop')
     expect(screen.getByTestId('member-deck-pager')).toHaveTextContent('1 of 3')
   })
 })

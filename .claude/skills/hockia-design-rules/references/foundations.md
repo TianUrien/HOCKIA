@@ -21,7 +21,7 @@ Figma variables are the source of truth (decided 2026-10-02); code reads them th
 | category/women (+soft) | #BE123C; dark #FB7185 (#FFE4E9; dark #4C0519) | category chips, dots, Team fact only |
 | category/men (+soft) | #0369A1; dark #38BDF8 (#E0F2FE; dark #082F49) | |
 | category/mixed (+soft) | #6C2BD9; dark #A78BFA (#F1EAFD; dark #2E1065) | |
-| EU badge | #003399 text on #E6EDFF (light surfaces); white on #003399 at 85 % (over photos) | radius 6; not yet a token: propose `eu/*` when reused |
+| EU badge | #003399 text on #E6EDFF (light surfaces); white on #003399 at 85 % (over photos) | radius 6; tokens `eu/ink`, `eu/soft`, `eu/solid` (2026-10-21); code: `<EuBadge surface="light" \| "photo">` |
 | Package tiles | shipped colours (Insurance red, Car purple, Visa cyan…) | decided 2026-10-02; code moves from raw hex to tokens |
 
 Dark mode: the Color collection has Light and Dark modes; category tokens are tuned for dark, most others still mirror Light: tune and check before shipping dark surfaces.

@@ -200,8 +200,8 @@ test.describe('Vacancy Details - Authenticated Player', () => {
 
       // Detail view should always show action buttons in the footer
       await expect(page.getByRole('button', { name: /close|apply/i }).first()).toBeVisible()
-      await expect(page.getByRole('button', { name: 'View Profile', exact: true }).or(
-        page.getByRole('link', { name: 'View Profile', exact: true })
+      await expect(page.getByRole('button', { name: 'View profile', exact: true }).or(
+        page.getByRole('link', { name: 'View profile', exact: true })
       ).or(
         page.getByRole('button', { name: 'View Club Profile', exact: true })
       )).toBeVisible({ timeout: 5000 })

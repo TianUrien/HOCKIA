@@ -14,6 +14,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search, Building2, MapPin, Trophy, Plus, CheckCircle, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { normalizeClubNameCasing } from '@/lib/clubNameCasing'
 import { Button } from '@/components'
 import ClubClaimConfirmModal from './ClubClaimConfirmModal'
 
@@ -358,7 +359,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
         // Create and claim new club
          
         const { data, error } = await supabase.rpc('create_and_claim_world_club', {
-          p_club_name: newClubName.trim(),
+          p_club_name: normalizeClubNameCasing(newClubName),
           p_country_id: selectedCountry.country_id,
           p_province_id: selectedRegion?.id ?? undefined,
           p_profile_id: profileId,
@@ -377,7 +378,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
         onComplete({
           mode: 'created',
           worldClubId: data?.club_id,
-          clubName: newClubName.trim(),
+          // Same casing the directory stores (server rule, lib/clubNameCasing mirror).
+          clubName: normalizeClubNameCasing(newClubName),
           countryId: selectedCountry.country_id,
           countryName: selectedCountry.country_name || '',
           regionId: selectedRegion?.id,
@@ -469,7 +471,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 placeholder="Search countries..."
                 aria-label="Search countries"
                 autoComplete="off"
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-hockia-primary"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-transparent focus-visible:ring-2 focus-visible:ring-hockia-primary"
               />
               {countries
                 .filter(country =>
@@ -617,7 +619,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               placeholder="Search clubs..."
               value={clubSearch}
               onChange={(e) => setClubSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
               autoComplete="off"
               enterKeyHint="search"
               autoCapitalize="none"
@@ -713,7 +715,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 placeholder="Enter your club name"
                 value={newClubName}
                 onChange={(e) => setNewClubName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                 required
               />
             </div>
@@ -746,7 +748,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   aria-labelledby="womens-league-label"
                   value={womenLeagueId ?? ''}
                   onChange={(e) => setWomenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                 >
                   <option value="">None / Not applicable</option>
                   {leagues.map(league => (
@@ -769,7 +771,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   aria-labelledby="mens-league-label"
                   value={menLeagueId ?? ''}
                   onChange={(e) => setMenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                 >
                   <option value="">None / Not applicable</option>
                   {leagues.map(league => (

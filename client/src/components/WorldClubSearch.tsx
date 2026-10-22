@@ -348,7 +348,7 @@ export default function WorldClubSearch({
           spellCheck={false}
           className={isField
             ? `${fieldInputBase} pr-11 [&::-webkit-search-cancel-button]:hidden ${isLinked ? 'pl-[50px]' : 'pl-10'} ${error ? fieldErrorRing : ''} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`
-            : `w-full rounded-lg border py-2.5 pl-10 pr-10 focus:border-transparent focus:ring-2 focus:ring-indigo-500 ${
+            : `w-full rounded-lg border py-2.5 pl-10 pr-10 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500 ${
             error ? 'border-red-400' : isLinked ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-300'
           } ${disabled ? 'cursor-not-allowed bg-gray-50' : ''}`}
         />
@@ -498,7 +498,7 @@ export default function WorldClubSearch({
                     const id = e.target.value ? Number(e.target.value) : null
                     if (id) handleAddCountryChange(id)
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   <option value="">Select country...</option>
                   {addCountries.map(c => (
@@ -519,7 +519,7 @@ export default function WorldClubSearch({
                     aria-label="Region"
                     value={addRegionId ?? ''}
                     onChange={e => setAddRegionId(e.target.value ? Number(e.target.value) : null)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
                     <option value="">No specific region</option>
                     {addRegions.map(r => (

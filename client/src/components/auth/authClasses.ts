@@ -10,7 +10,7 @@ export const webFieldLabel = 'block text-[14px] font-semibold leading-5 text-ink
 /** Text field: surface-muted, radius 14, 52 tall, no border at rest. The 16 px
  *  value keeps iOS Safari from zooming the page on focus. */
 export const webFieldInput =
-  'h-[52px] w-full rounded-[14px] bg-surface-muted px-4 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-focus-ring'
+  'h-[52px] w-full rounded-[14px] bg-surface-muted px-4 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring'
 
 /** The switch line's link ("Create an account" / "Log in"). */
 export const switchLink =

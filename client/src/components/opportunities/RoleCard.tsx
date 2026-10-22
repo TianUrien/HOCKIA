@@ -4,6 +4,7 @@ import { CrestTile } from '@/components/opportunities/RoleCover'
 import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, isPaid, roleBenefits, roleHeadline, whenLine } from '@/lib/opportunityCopy'
 import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
+import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import { getImageUrl } from '@/lib/imageUrl'
 
 export interface RoleCardProps {
@@ -37,6 +38,7 @@ const MAX_PACKAGE_CHIPS = 3
  */
 export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, onOpen, postedBy = null, now }: RoleCardProps) {
   const press = usePressSpring<HTMLButtonElement>()
+  const prefetch = useRolePrefetch(vacancy.id, press.ref)
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
   const youth = vacancy.gender === 'Girls' || vacancy.gender === 'Boys'
@@ -56,6 +58,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
         type="button"
         onClick={onOpen}
         {...press.handlers}
+        {...prefetch.handlers}
         className="block w-full text-left [transform-origin:center] [will-change:transform]"
         aria-label={applied ? `${headline.title} at ${clubName}, applied` : `${headline.title} at ${clubName}`}
         data-testid="role-card-open"

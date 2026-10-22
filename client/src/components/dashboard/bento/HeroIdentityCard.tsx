@@ -113,6 +113,8 @@ export default function HeroIdentityCard({
 }: HeroIdentityCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  // Brands have followers, not friends (audit A7): no Add friend for a brand viewer.
+  const viewerIsBrand = useAuthStore((s) => s.profile?.role === 'brand')
   const addToast = useToastStore((s) => s.addToast)
   const coverPhoto = useCoverPhoto(profile.id)
   const friendship = useFriendship(profile.id)
@@ -172,7 +174,7 @@ export default function HeroIdentityCard({
     else if (!friendship.isFriend && !friendship.isOutgoingRequest) void friendship.sendRequest()
   }
   const friendButton = (() => {
-    if (!isVisitorView) return null
+    if (!isVisitorView || viewerIsBrand) return null
     if (friendship.isFriend) return { label: 'Friends', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-positive-soft text-positive', disabled: true }
     if (friendship.isOutgoingRequest) return { label: 'Requested', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-surface-grouped text-ink-2', disabled: true }
     if (friendship.isIncomingRequest) return { label: 'Accept', icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
@@ -280,7 +282,7 @@ export default function HeroIdentityCard({
               fetchPriority="high"
               enablePreview
               previewTitle={profile.full_name ?? undefined}
-              role="player"
+              role={role}
             />
             {isOwnerView && onEdit && (
               <button

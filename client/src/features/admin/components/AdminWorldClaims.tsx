@@ -122,7 +122,7 @@ export function AdminWorldClaims() {
             id="claims-status"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value as WorldClubClaim['status'] | ''); setPage(0) }}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
             <option value="">All statuses</option>
             <option value="pending">Pending</option>
@@ -137,7 +137,7 @@ export function AdminWorldClaims() {
             type="checkbox"
             checked={unreviewedOnly}
             onChange={(e) => { setUnreviewedOnly(e.target.checked); setPage(0) }}
-            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            className="rounded border-gray-300 text-purple-600 focus-visible:ring-purple-500"
           />
           Unreviewed only
         </label>

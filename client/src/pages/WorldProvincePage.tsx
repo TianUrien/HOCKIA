@@ -421,7 +421,7 @@ export default function WorldProvincePage() {
               onClick={() => setGenderFilter('women')}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 genderFilter === 'women'
-                  ? 'bg-hockia-primary text-white shadow-sm'
+                  ? 'bg-brand-soft text-brand-primary'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -432,7 +432,7 @@ export default function WorldProvincePage() {
               onClick={() => setGenderFilter('men')}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 genderFilter === 'men'
-                  ? 'bg-hockia-primary text-white shadow-sm'
+                  ? 'bg-brand-soft text-brand-primary'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >

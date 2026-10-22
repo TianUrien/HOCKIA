@@ -12,7 +12,7 @@
  *   MATCH      label + % + bar + WHY this player fits the active scope
  *              (positives/caveats straight from computeClubFit)
  *   CONTEXT    current club · league-on-record · category · open-to-play
- *   STRENGTH   Strong/Good/Limited profile + the REASON + completeness %
+ *   MISSING    a plain "Missing: …" list (no completeness %)
  *   EVIDENCE   full present/missing breakdown (not just a level badge)
  *   ACTIONS    Save · Message · Add friend
  *   CTA        View full profile →
@@ -40,17 +40,12 @@ import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
-import { availabilityLabel } from '@/lib/availabilityLabel'
-import { computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
-import { useClubFit } from '@/hooks/useClubFit'
-import { useCoachFit } from '@/hooks/useCoachFit'
-import { useEvidence } from '@/hooks/useEvidence'
-import { useInterest } from '@/hooks/useInterest'
-import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import { missingLine, computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
 import RecruiterVerdictCard from './RecruiterVerdictCard'
+import { useCandidateVerdict } from '@/hooks/useCandidateVerdict'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { isOpenToAny } from '@/lib/hockeyCategories'
-import { useRecruitingContext, useHasActiveRecruitingScope, useActiveRecruitingTargetProblem } from '@/hooks/useRecruitingContext'
+import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -62,32 +57,11 @@ interface CandidatePreviewSheetProps {
   onClose: () => void
 }
 
-const ACTIVE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
-
 /** Short, human summary of the active scope for the "evaluated for" line. */
 function contextSummary(active: { label: string | null; target_category: string | null; region: string | null } | null): string {
   if (!active) return ''
   if (active.label?.trim()) return active.label.trim()
-  return [active.target_category, active.region].filter(Boolean).join(' · ') || 'your scope'
-}
-
-/** Turn the completeness % + evidence checklist into a one-line REASON, so the
- *  strength tier ("Strong profile") is explained, not just asserted. */
-function strengthExplanation(
-  completeness: number,
-  rows: { key: string; label: string; present: boolean }[],
-): { tier: string; tone: string; why: string } {
-  const missing = rows.filter((r) => !r.present).map((r) => r.label.toLowerCase())
-  if (completeness >= 80) {
-    return { tier: 'Strong profile', tone: 'text-emerald-700', why: 'Key hockey information is complete.' }
-  }
-  if (completeness >= 50) {
-    const present = rows.filter((r) => r.present).map((r) => r.label.toLowerCase())
-    const lead = present.slice(0, 3).join(', ')
-    return { tier: 'Good profile', tone: 'text-gray-800', why: lead ? `Core details on record: ${lead}.` : 'Core details on record.' }
-  }
-  const gap = missing.slice(0, 3).join(', ')
-  return { tier: 'Limited profile', tone: 'text-gray-600', why: gap ? `Still missing ${gap}.` : 'Key details still missing.' }
+  return [active.target_category, active.region].filter(Boolean).join(' · ') || 'your context'
 }
 
 export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheetProps) {
@@ -99,86 +73,10 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   const contentRef = useRef<HTMLDivElement>(null)
   const [isViewing, setIsViewing] = useState(false)
 
-  // Fit (reasons/positives/caveats) for the "why this matches" section — Club
-  // Fit for players, Coach Fit for coaches. Both hooks read the active context
-  // from the store, return the SAME shape, and self-gate to null candidates,
-  // so the reasons reflect the scope the card ranked by. Both are called
-  // unconditionally (hooks rule); only one gets a non-null candidate.
+  // Fit + the explanation-led verdict (shared with the desktop deck's
+  // "Why this fit", audit follow-up 2026-10-21): hooks/useCandidateVerdict.
+  const { verdict } = useCandidateVerdict(member)
   const isCoach = member?.role === 'coach'
-  const clubFit = useClubFit(
-    member && member.role === 'player'
-      ? {
-          id: member.id,
-          role: member.role,
-          playing_category: member.playing_category ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-          // Resolve the proven band so competition_proximity matches the grid
-          // + profile (which both pass it) — else the preview verdict could
-          // diverge on the level dimension.
-          competition_level_band: getClubLevelBand(member.current_world_club_id ?? null, categoryToBandTarget(member.playing_category ?? null)),
-          open_to_play: member.open_to_play ?? null,
-          open_to_coach: member.open_to_coach ?? null,
-          open_to_opportunities: member.open_to_opportunities ?? null,
-          last_active_at: member.last_active_at ?? null,
-          position: member.position ?? null,
-          secondary_position: member.secondary_position ?? null,
-          specialist_skills: member.specialist_skills ?? null,
-        }
-      : null,
-  )
-  const coachFit = useCoachFit(
-    member && member.role === 'coach'
-      ? {
-          id: member.id,
-          role: member.role,
-          coach_specialization: member.coach_specialization ?? null,
-          coaching_categories: member.coaching_categories ?? null,
-        }
-      : null,
-  )
-  const fit = isCoach ? coachFit : clubFit
-
-  // Proven + Interested lenses + the recruitment-problem weighting, fused into
-  // the SAME explanation-led verdict the full profile (ScoutingCard) and the
-  // grid card lead with — so all three surfaces read one tier for one candidate.
-  const evidence = useEvidence(
-    member
-      ? {
-          role: member.role,
-          highlight_video_url: member.highlight_video_url ?? null,
-          full_game_video_count: member.full_game_video_count ?? null,
-          accepted_reference_count: member.accepted_reference_count ?? null,
-          is_verified: member.is_verified ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-        }
-      : null,
-  )
-  const interest = useInterest(
-    member
-      ? {
-          role: member.role,
-          relocation_willingness: member.relocation_willingness ?? null,
-          relocation_countries_open: member.relocation_countries_open ?? null,
-          relocation_countries_excluded: member.relocation_countries_excluded ?? null,
-          available_from: member.available_from ?? null,
-          home_country_id: member.base_country_id ?? member.nationality_country_id ?? null,
-          current_world_club_id: member.current_world_club_id ?? null,
-          playing_category: member.playing_category ?? null,
-          level_target: member.level_target ?? null,
-          opportunity_preference: member.opportunity_preference ?? null,
-        }
-      : null,
-  )
-  const hasOpeningScope = useHasActiveRecruitingScope()
-  const scopeProblem = useActiveRecruitingTargetProblem()
-  const verdict = computeRecruiterVerdict({
-    fit,
-    evidence,
-    interest,
-    hasOpeningScope,
-    problem: scopeProblem,
-    candidateRole: member?.role ?? null,
-  })
 
   const clubLogo = useWorldClubLogo(member?.current_world_club_id ?? null)
 
@@ -270,7 +168,6 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   if (!member) return null
 
   const heroImageUrl = member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-lg') : null
-  const completeness = member.profile_completeness_pct ?? 0
   // Players + coaches both use `bio` (club_bio/brand_bio are org-only, and the
   // sheet only ever receives player/coach members). Already on the prop.
   const bioText = member.bio?.trim() || null
@@ -285,8 +182,6 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
     ? getSpecializationLabel(member.coach_specialization, member.coach_specialization_custom ?? null)
     : null
   const subtitle = isCoach ? coachSpecLabel : positions.length > 0 ? positions.join(' · ') : null
-  // Positive, role-specific availability label (or null) — single source.
-  const availLabel = availabilityLabel(member.role, member)
   // Coaching team categories (Men/Women/Mixed etc.) for the coach context row.
   const coachingCategoriesLabel = (() => {
     if (!isCoach) return null
@@ -297,8 +192,8 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   })()
 
   // Evidence — level + full present/missing breakdown (the reason behind the
-  // level, which the card only hints at). Recent-activity row is appended
-  // locally (it's an activity signal, not a stored artifact).
+  // level, which the card only hints at). No activity row: activity signals
+  // never appear in recruiter views (founder ruling 2026-10-12, audit A3).
   const evInput = {
     role: member.role,
     highlight_video_url: member.highlight_video_url ?? null,
@@ -319,10 +214,6 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
       categoryToBandTarget(member.playing_category ?? null),
     ),
   })
-  const recentlyActive =
-    Boolean(member.last_active_at) &&
-    Date.now() - new Date(member.last_active_at as string).getTime() <= ACTIVE_WINDOW_MS
-  const allEvRows = [...evRows, { key: 'recent', label: 'Recent activity', present: recentlyActive }]
   const hasLeague = evRows.find((r) => r.key === 'league')?.present ?? false
 
   const evLabel = ev.isApplicable ? evidenceLevelLabel(ev.level) : 'Missing evidence'
@@ -334,7 +225,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
         ? 'text-gray-700'
         : 'text-gray-500'
 
-  const strength = strengthExplanation(completeness, evRows)
+  const missing = missingLine(evRows)
   const scope = contextSummary(active)
 
   return (
@@ -391,12 +282,9 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                   {heroImageUrl ? (
                     <img src={heroImageUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                   ) : (
-                    <div className="absolute inset-0"><RolePlaceholder role={member.role} label="" /></div>
+                    <div className="absolute inset-0"><RolePlaceholder role={member.role} name={member.full_name} label="" /></div>
                   )}
                 </div>
-                {availLabel && (
-                  <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" title={availLabel} />
-                )}
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
                 <div className="flex items-center gap-1">
@@ -451,7 +339,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                     <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
                   </div>
                 )}
-                <RecruiterVerdictCard verdict={verdict} showMatchPercent />
+                <RecruiterVerdictCard verdict={verdict} />
               </div>
             )}
 
@@ -513,17 +401,10 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               </div>
             </div>
 
-            {/* ── PROFILE STRENGTH (explained, not just asserted) ── */}
-            <div className="rounded-xl border border-gray-200 p-3.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm font-semibold ${strength.tone}`}>{strength.tier}</span>
-                <span className="text-sm font-bold tabular-nums text-hockia-primary">{completeness}%</span>
-              </div>
-              <div className="relative mt-2 h-1.5 rounded-full bg-gray-200">
-                <div className="h-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary" style={{ width: `${completeness}%` }} />
-              </div>
-              <p className="mt-2 text-xs leading-snug text-gray-600">{strength.why}</p>
-            </div>
+            {/* ── MISSING ── a plain list, never a completeness score (audit A2). */}
+            {missing && (
+              <p className="text-xs leading-snug text-gray-600" data-testid="candidate-missing">{missing}</p>
+            )}
 
             {/* ── EVIDENCE BREAKDOWN (the reason behind the level) ── */}
             <div className="rounded-xl border border-gray-200 p-3.5">
@@ -532,7 +413,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                 <span className={`text-sm font-semibold ${evColor}`}>{evLabel}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                {allEvRows.map((r) => (
+                {evRows.map((r) => (
                   <div key={r.key} className="flex items-center gap-1.5 text-xs">
                     {r.present ? (
                       <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />

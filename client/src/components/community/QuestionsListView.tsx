@@ -116,7 +116,7 @@ export function QuestionsListView() {
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search questions by keyword or topic..."
-          className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500"
         />
         {searchInput && (
           <button
@@ -137,7 +137,7 @@ export function QuestionsListView() {
           <select
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory || null)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[180px]"
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[180px]"
             title="Filter by category"
           >
             <option value="">All Categories</option>
@@ -155,7 +155,7 @@ export function QuestionsListView() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as QuestionSortOption)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[140px]"
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[140px]"
             title="Sort questions"
           >
             {SORT_OPTIONS.map((opt) => (

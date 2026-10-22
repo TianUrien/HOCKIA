@@ -1,4 +1,5 @@
 import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
+import { roleViewerGate } from '@/lib/roleViewerGate'
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, ChevronRight, MessageCircle, Share } from 'lucide-react'
@@ -18,7 +19,7 @@ import { humanizeToken, positionLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
   APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView,
-  compensationText, genderPill, postedLine, roleBenefits, roleHeadline,
+  compensationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -91,6 +92,9 @@ export function OpportunityDetailDesktop({
   const notSelected = hasApplied && applicationStatus === 'rejected'
   const withdrawn = hasApplied && applicationStatus === 'withdrawn'
   const closedView = closedRoleView({ isClosed, hasApplied, isPublisher })
+  // Who can act here (audit A7): non-applicants get a plain note + Message, never apply copy.
+  const viewerGate = roleViewerGate({ viewerRole: profile?.role, roleType: vacancy.opportunity_type, isPublisher, signedIn: Boolean(profile) })
+  const showApplyCopy = viewerGate.applyCopy || hasApplied
   const closed = closedView !== 'open'
   const roleStat = closed ? null : roleStatus(vacancy)
   const { startsValue, duration, applyByValue, applyBySub } = roleDates(vacancy)
@@ -176,6 +180,15 @@ export function OpportunityDetailDesktop({
             </div>
           )}
 
+          {!isPublisher && !closed && !canApply && !hasApplied && viewerGate.messageOnly && (
+            <div className="mt-4 flex flex-col gap-3" data-testid="role-message-bar">
+              {viewerGate.note && <p className="rounded-[12px] bg-surface-subtle px-3.5 py-3 text-row text-ink-2" data-testid="role-viewer-note">{viewerGate.note}</p>}
+              <button type="button" onClick={onMessage} className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-full border border-line bg-white text-[16px] font-semibold text-ink-1 hover:bg-surface-muted">
+                <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
+              </button>
+            </div>
+          )}
+
           {closedView === 'open' && !isPublisher && (
             <div className="mt-4"><RoleAiEntry vacancy={vacancy} clubName={identity.hiringClub?.name ?? clubName} clubLogo={identity.displayLogo ?? clubLogo} /></div>
           )}
@@ -216,7 +229,7 @@ export function OpportunityDetailDesktop({
             )}
           </div>
           {onBehalfNote(identity) && <p className="pt-2 text-caption text-ink-3">{onBehalfNote(identity)}</p>}
-          <p className="pt-2 text-caption text-ink-3">{postedLine(vacancy, new Date(), closed)}</p>
+          <p className="pt-2 text-caption text-ink-3">{postedOnlyLine(vacancy, new Date(), closed)}</p>
 
           {!closed && hasApplied && ownApplicationSlot && <section className="pt-4">{ownApplicationSlot}</section>}
 
@@ -278,7 +291,7 @@ export function OpportunityDetailDesktop({
                 {benefits.map((b) => <BenefitItem key={b.key} icon={b.icon} tileClass={b.tileClass} title={b.label} detail={b.detail} type="benefit" className={benefitCard} />)}
                 {customBenefits.map((b) => <BenefitItem key={b} icon={Check} tileClass="bg-surface-muted text-ink-1" title={b} type="benefit" className={benefitCard} />)}
                 {compensationKey !== 'paid' && (
-                  <BenefitItem icon={NOTE_TILE.icon} tileClass={NOTE_TILE.tileClass} title={compensationText(vacancy)} detail={!vacancy.compensation && !closed ? askWhenApplying(identity) : null} type="note" className={benefitCard} />
+                  <BenefitItem icon={NOTE_TILE.icon} tileClass={NOTE_TILE.tileClass} title={compensationText(vacancy)} detail={!vacancy.compensation && !closed && showApplyCopy ? askWhenApplying(identity) : null} type="note" className={benefitCard} />
                 )}
               </ul>
             </section>
@@ -301,7 +314,6 @@ export function OpportunityDetailDesktop({
                   </span>
                 ))}
                 {askRow('Available', `${startsValue}${duration ? ` · ${duration}` : ''}`)}
-                {!closed && askRow('Apply by', vacancy.application_deadline ? `${applyByValue} · ${applyBySub}` : 'Open until filled')}
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
@@ -318,6 +330,7 @@ export function OpportunityDetailDesktop({
               </section>
             )}
 
+            {showApplyCopy && (
             <section className="pt-9">
               <h2 className={H2}>How applying works</h2>
               <ol className="mt-3.5 grid grid-cols-3 gap-3">
@@ -330,6 +343,7 @@ export function OpportunityDetailDesktop({
               </ol>
               <p className="mt-3 text-caption text-ink-3">Contact details stay private until the club replies.</p>
             </section>
+            )}
           </div>
         </section>
       </div>

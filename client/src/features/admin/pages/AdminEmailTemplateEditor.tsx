@@ -291,7 +291,7 @@ export function AdminEmailTemplateEditor() {
               value={templateName}
               onChange={(e) => { setTemplateName(e.target.value); setIsDirty(true) }}
               placeholder="Template display name"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             />
           </div>
 
@@ -302,7 +302,7 @@ export function AdminEmailTemplateEditor() {
               value={subject}
               onChange={(e) => handleSubjectChange(e.target.value)}
               placeholder="Email subject (supports {{variables}})"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             />
           </div>
 
@@ -319,7 +319,7 @@ export function AdminEmailTemplateEditor() {
               value={textTemplate}
               onChange={(e) => { setTextTemplate(e.target.value); setIsDirty(true) }}
               placeholder="Plain text version (supports {{variables}})"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-y min-h-[120px] font-mono"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 resize-y min-h-[120px] font-mono"
             />
           </div>
 
@@ -400,7 +400,7 @@ export function AdminEmailTemplateEditor() {
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                   placeholder="test@example.com"
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                 />
               </div>
 
@@ -414,7 +414,7 @@ export function AdminEmailTemplateEditor() {
                         value={testVars[v.name] || ''}
                         onChange={(e) => setTestVars(prev => ({ ...prev, [v.name]: e.target.value }))}
                         placeholder={sampleVars[v.name] || 'value'}
-                        className="flex-1 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="flex-1 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                       />
                     </div>
                   ))}

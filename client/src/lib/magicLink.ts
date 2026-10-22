@@ -18,7 +18,7 @@ import { getAuthRedirectUrl } from './siteUrl'
 import { checkLoginRateLimit, checkSignupRateLimit, formatRateLimitError } from './rateLimit'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
-import { getCaptchaToken } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
 
 export type MagicLinkRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -52,6 +52,8 @@ export interface SendMagicLinkResult {
   error?: string
   /** True when the user was blocked by rate limiting (UI should show cooldown). */
   rateLimited?: boolean
+  /** True when the bot check failed (Supabase refused the token): the UI offers "Try again". */
+  captchaFailed?: boolean
   /** True when intent='signin' but no account exists for this email. */
   userNotFound?: boolean
 }
@@ -111,6 +113,8 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
       // "Sign up instead?" CTA rather than a generic failure.
       // Ref: https://github.com/supabase/auth-js error codes
       const message = (error.message || '').toLowerCase()
+      const captcha = captchaErrorMessage(error.message)
+      if (captcha) return { ok: false, captchaFailed: true, error: captcha }
       const userNotFound =
         intent === 'signin' && (
           message.includes('signups not allowed') ||

@@ -140,7 +140,7 @@ export default function Avatar({
       ) : showRolePlaceholder && isRoleAvatarRole(role) ? (
         // The accessible name is provided by the parent (e.g. a card or
         // button labelled with the user's name), so mark the SVG decorative.
-        <RolePlaceholder role={role} label="" />
+        <RolePlaceholder role={role} initials={initials} name={alt} label="" />
       ) : initials ? (
         <span>{initials}</span>
       ) : (

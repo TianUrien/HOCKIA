@@ -4,7 +4,7 @@ import { ArrowUp } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { Chip } from '@/components/ui/Chip'
-import { FitChip } from './FitChip'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { InviteAction, InviteLimitNotice } from './InviteAction'
 import type { InviteSheetPlayer } from './InviteSheet'
 import { UserBubble } from '@/components/discover/UserBubble'
@@ -122,7 +122,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
                                   <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{s.full_name || 'Player'}</span>
                                   {facts && <span className="block truncate text-[14px] leading-[19px] text-ink-2">{facts}</span>}
                                   <span className="flex items-center gap-2 pt-[3px]">
-                                    <span className="shrink-0 empty:hidden"><FitChip state={s.fit_state} /></span>
+                                    <span className="shrink-0 empty:hidden"><FitBadge state={s.fit_state} /></span>
                                     {nat && <span className="min-w-0 truncate text-secondary text-ink-2">{nat}</span>}
                                   </span>
                                 </span>

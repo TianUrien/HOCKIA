@@ -112,6 +112,9 @@ export default {
         // Chips, filter dots and the detail "Team" fact only — never a background
         // (Opportunities v2 ruling, 2026-10-16).
         category: { ...t.category },
+        // eu-ink / eu-soft = the EU badge on light surfaces (#003399 on #E6EDFF);
+        // eu-solid = white-on-blue at 85 %, over photos only (design audit A10).
+        eu: t.eu,
         // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
         // (player, coach, club, brand). Umpire has no pair: it stays neutral.
         role: t.role,

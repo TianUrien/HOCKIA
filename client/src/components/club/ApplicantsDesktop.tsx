@@ -7,7 +7,7 @@ import { useOwnerCrest } from '@/hooks/useOwnerCrest'
 import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { Chip } from '@/components/ui/Chip'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { FitChip } from './FitChip'
+import { FitBadge } from '@/components/ui/FitBadge'
 import { UndoToast } from './UndoToast'
 import { BulkDeclineSheet } from './BulkDeclineSheet'
 import { ApplicantsAiSummary } from './ApplicantsAiSummary'
@@ -24,6 +24,7 @@ import { shortDayOf, applicantChipFor, closedApplicantTag, clubRoadTag } from '@
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
+import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 
 type ChipId = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
@@ -223,6 +224,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
               </div>
             )}
             {!data.loading && !data.error && list.length === 0 && <p className="text-row text-ink-3">{emptyCopy[chip]}</p>}
+            {data.loading && !data.error && list.length === 0 && <ApplicantRowsSkeleton />}
 
             <div className="flex flex-col gap-2" data-testid="applicants-list">
               {list.map((a) => {
@@ -262,7 +264,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                         {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                       </span>
                       <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), flags].filter(Boolean).join(' · ')}</span>
-                      {a.fit?.state && a.fit.state !== 'grey' ? <span className="mt-1 flex"><FitChip state={a.fit.state} /></span> : null}
+                      {a.fit?.state && a.fit.state !== 'grey' ? <span className="mt-1 flex"><FitBadge state={a.fit.state} /></span> : null}
                     </span>
                     {right && <span className={cn('shrink-0 text-secondary font-semibold', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}
                   </button>

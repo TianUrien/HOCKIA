@@ -24,6 +24,7 @@
  */
 
 import { recruitmentProblemLabel } from './opportunityIntent'
+import type { FitState } from './clubRecruiting'
 
 /**
  * Action-led recommendation tiers — the lead answers "what should the
@@ -144,13 +145,24 @@ export const DISPLAY_TIER_LABELS: Record<VerdictDisplayTier, string> = {
   excellent: 'Excellent',
   good: 'Good',
   possible: 'Possible',
-  out: 'Out of scope',
+  out: 'Outside your context',
 }
 
 /** The canonical display tier for a verdict — every card/sheet/profile reads
  *  this so the four-word vocabulary can never disagree across surfaces. */
 export function recruiterDisplayTier(verdict: Pick<RecruiterVerdict, 'tier'>): VerdictDisplayTier {
   return DISPLAY_TIER_BY_VERDICT[verdict.tier]
+}
+
+/**
+ * The verdict as the one Fit badge reads it (design audit 2026-10-21, B3):
+ * Excellent / Good → Strong fit, Possible → Possible fit, outside the
+ * context → no badge. Never a percentage.
+ */
+export function fitStateFromVerdict(verdict: Pick<RecruiterVerdict, 'tier'> | null | undefined): FitState | null {
+  if (!verdict) return null
+  const tier = recruiterDisplayTier(verdict)
+  return tier === 'excellent' || tier === 'good' ? 'green' : tier === 'possible' ? 'yellow' : null
 }
 
 // Fit is the spine; Interested carries real weight (a clear mismatch — an

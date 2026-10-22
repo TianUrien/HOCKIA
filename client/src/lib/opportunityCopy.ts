@@ -10,7 +10,7 @@ import {
   Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
 } from 'lucide-react'
 import { differenceInCalendarDays } from 'date-fns'
-import { dayFirst } from './dayFirst'
+import { dayFirst, parseDayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
@@ -151,6 +151,52 @@ export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline
     return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
   }
   return `${posted} · ${deadlineLine(v)}`
+}
+
+/** Deadlines inside this many days read as a countdown (copy rule). */
+export const DEADLINE_COUNTDOWN_DAYS = 14
+
+/** Calendar days until a deadline (0 = today), or null without a readable one. */
+export function deadlineDaysLeft(deadline: string | null | undefined, now = new Date()): number | null {
+  const d = parseDayFirst(deadline ?? null)
+  if (!d) return null
+  return differenceInCalendarDays(d, now)
+}
+
+/**
+ * THE deadline label (design audit 2026-10-21, A5; copy rule): "Closes today",
+ * "Closes tomorrow", "Closes in N days" only at 14 days or fewer, otherwise
+ * "Closes 13 Feb" (day first; the year only for a deadline close to a year away).
+ * Null with no deadline or one already passed.
+ */
+export function closesLabel(deadline: string | null | undefined, now = new Date()): string | null {
+  const days = deadlineDaysLeft(deadline, now)
+  if (days === null || days < 0) return null
+  if (days === 0) return 'Closes today'
+  if (days === 1) return 'Closes tomorrow'
+  if (days <= DEADLINE_COUNTDOWN_DAYS) return `Closes in ${days} days`
+  // The year only when the deadline is close to a year away ("Closes 13 Feb"
+  // for next February; "Closes 2 Nov 2027" for one that far out).
+  const day = dayFirst(deadline, { now, year: days > 330 ? 'always' : 'never' })
+  return day ? `Closes ${day}` : null
+}
+
+/** The countdown only (≤ 14 days), for a line that already shows the date. */
+export function closesSoonLabel(deadline: string | null | undefined, now = new Date()): string | null {
+  const days = deadlineDaysLeft(deadline, now)
+  if (days === null || days < 0 || days > DEADLINE_COUNTDOWN_DAYS) return null
+  return closesLabel(deadline, now)
+}
+
+/** "Posted 3 days ago" alone: the role page shows the deadline in its chip and Apply-by tile only. */
+export function postedOnlyLine(v: Pick<Vacancy, 'created_at'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
+  const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
+  const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
+  if (closed) {
+    const c = dayFirst(v.closed_at, { year: 'always' })
+    return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
+  }
+  return posted
 }
 
 export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {

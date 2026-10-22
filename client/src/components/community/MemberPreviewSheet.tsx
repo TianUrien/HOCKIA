@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Check, ChevronRight, MessageCircle, UserPlus, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -53,9 +54,13 @@ function profileRouteFor(member: Profile): string {
  */
 export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps) {
   const { user } = useAuthStore()
+  // Brands have followers, not friends (audit A7): Message + Invite as ambassador.
+  const viewerRole = useAuthStore((s) => s.profile?.role ?? null)
+  const gate = personActionGate(viewerRole, member.role)
   const navigate = useNavigate()
   const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
+  const ambassador = useAmbassadorInvite(gate.inviteAmbassador ? member.id : null, addToast)
   const { countries } = useCountries()
   const friendship = useFriendship(member.id)
   const inCommon = useFriendsInCommon(member.role === 'club' || member.role === 'brand' ? null : member.id)
@@ -137,7 +142,7 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
   }
 
   const friendButton = (() => {
-    if (friendship.isOwnProfile || isOrg) return null
+    if (friendship.isOwnProfile || isOrg || !gate.addFriend) return null
     if (friendship.isFriend) return { label: 'Friends', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-positive-soft text-positive', disabled: true }
     if (friendship.isOutgoingRequest) return { label: 'Requested', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-surface-grouped text-ink-2', disabled: true }
     if (friendship.isIncomingRequest) return { label: 'Accept', icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
@@ -199,8 +204,13 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
                   </button>
                 ))}
                 {!friendship.isOwnProfile && (
-                  <button type="button" onClick={() => void message()} disabled={sending} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-message">
+                  <button type="button" onClick={() => void message()} disabled={sending} className={buttonClassName({ variant: gate.messagePrimary ? 'primary' : 'secondary', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-message">
                     <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" /> Message
+                  </button>
+                )}
+                {gate.inviteAmbassador && (
+                  <button type="button" onClick={() => void ambassador.invite()} disabled={ambassador.state !== 'idle'} className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'min-w-0 flex-1' })} data-testid="member-preview-invite-ambassador">
+                    {ambassador.label}
                   </button>
                 )}
               </div>
@@ -239,9 +249,14 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
                 type="button"
                 onClick={() => void message()}
                 disabled={sending}
-                className="flex h-[50px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-body font-semibold text-ink-1 disabled:opacity-60"
+                className={`flex h-[50px] flex-1 items-center justify-center gap-1.5 rounded-full text-body font-semibold disabled:opacity-60 ${gate.messagePrimary ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1'}`}
               >
                 <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> Message
+              </button>
+            )}
+            {gate.inviteAmbassador && (
+              <button type="button" onClick={() => void ambassador.invite()} disabled={ambassador.state !== 'idle'} className="flex h-[50px] flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-soft text-body font-semibold text-brand-primary disabled:opacity-60" data-testid="member-preview-invite-ambassador">
+                {ambassador.label}
               </button>
             )}
           </div>

@@ -91,6 +91,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
+  // Brands have followers, not friends (audit A7).
+  const viewerIsBrand = useAuthStore((s) => s.profile?.role === 'brand')
   const owner = !readOnly
   const visitor = readOnly && !isOwnProfile
   const worldClubId = profile.current_world_club_id ?? null
@@ -181,7 +183,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
       ? { key: 'friend', label: 'Requested', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
       : { key: 'friend', label: friendship.isIncomingRequest ? 'Accept' : 'Add friend', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: canMessage ? 'secondary' : 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
   const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'primary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'club-message-button' }
-  const buttons: ActionBarButton[] = !visitor ? [] : canMessage ? [messageButton, friendButton] : [friendButton]
+  const buttons: ActionBarButton[] = !visitor ? [] : viewerIsBrand ? (canMessage ? [messageButton] : []) : canMessage ? [messageButton, friendButton] : [friendButton]
 
   const moreMenu = (triggerClassName: string) => (visitor ? (
     <ProfileActionMenu targetId={profile.id} targetName={name} triggerClassName={triggerClassName} iconClassName="h-[22px] w-[22px]" />
@@ -232,7 +234,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
             previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players and coaches see', onSelect: props.onViewPublic }]}
           />
           {stepCopy && step && (
-            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
+            <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
           )}
           <RecruitingCard
             pending={pending}
@@ -277,7 +279,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
         >
           <div className="flex flex-col gap-2.5 px-4">
             {openRoles.slice(0, owner ? 3 : 2).map((r) => (
-              <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => openRole(r.id)} />
+              <RoleRow key={r.id} role={r} onOpen={() => openRole(r.id)} />
             ))}
             {owner && openRoles.length > 3 && (
               <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">See all {openRoles.length} roles</button>

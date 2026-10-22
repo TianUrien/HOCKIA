@@ -107,7 +107,7 @@ export function ReportSheet({ open, onClose, targetId, subject, contentId }: Rep
             rows={3}
             maxLength={REPORT_NOTE_MAX}
             placeholder="Add details that help us review it"
-            className="w-full resize-none rounded-card bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px] text-ink-1 outline-none placeholder:text-ink-3 focus:ring-2 focus:ring-hockia-primary/40"
+            className="w-full resize-none rounded-card bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px] text-ink-1 outline-none placeholder:text-ink-3 focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
           />
         </label>
         <button

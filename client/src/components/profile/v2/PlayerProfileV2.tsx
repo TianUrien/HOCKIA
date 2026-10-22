@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
+import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
@@ -111,6 +113,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const viewer = useAuthStore((s) => s.profile)
+  // Brands have followers, not friends (audit A7): Message (Primary) + Invite as ambassador (Tonal, players only).
+  const personGate = personActionGate(viewer?.role, profile.role)
+  const ambassador = useAmbassadorInvite(personGate.inviteAmbassador && readOnly && !isOwnProfile ? profile.id : null, addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const owner = !readOnly
   const visitor = readOnly && !isOwnProfile
@@ -161,7 +166,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const showRecruiter = recruiter.enabled && !minor
   const fitLabel = showRecruiter && recruiter.fit ? fitChipLabel(recruiter.fit.state) : null
   const fitPill = fitLabel && recruiter.fit && recruiter.fit.state !== 'grey'
-    ? { label: [fitLabel, recruiter.fitRoleTitle].filter(Boolean).join(' · '), tone: recruiter.fit.state === 'green' ? 'green' as const : 'yellow' as const }
+    ? { state: recruiter.fit.state, suffix: recruiter.fitRoleTitle ? `· ${recruiter.fitRoleTitle}` : null }
     : null
 
   // Hero photos: the gallery (first = cover), else the avatar.
@@ -354,7 +359,14 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         { key: 'shortlist', label: recruiter.shortlisted ? 'Shortlisted' : 'Shortlist', icon: <Star className={cn('h-5 w-5', recruiter.shortlisted && 'fill-current')} strokeWidth={1.8} />, tone: recruiter.shortlisted ? 'done' : 'primary', onClick: recruiter.onShortlist, disabled: recruiter.busy, testId: 'profile-shortlist' },
         messageButton,
       ]
-    : viewer?.role === 'brand' ? [friendButton] : [friendButton, messageButton]
+    : !personGate.addFriend
+      ? [
+          { ...messageButton, tone: 'primary' as const },
+          ...(personGate.inviteAmbassador
+            ? [{ key: 'ambassador', label: ambassador.label, icon: ambassador.state === 'sent' ? <Check className="h-5 w-5" strokeWidth={2.4} /> : undefined, tone: 'tonal' as const, onClick: () => void ambassador.invite(), disabled: ambassador.state !== 'idle', testId: 'profile-invite-ambassador' }]
+            : []),
+        ]
+      : [friendButton, messageButton]
   // Recruiters: Add friend moves into ⋯ (Shortlist owns the primary button).
   const leadingMenuItems = showRecruiter && !friendship.isFriend && signedIn
     ? [{ key: 'friend', label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend', onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]
@@ -417,7 +429,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           place={place}
           nationalities={nationalities}
           instagram={instagram}
-          role="player"
+          // Coaches get the coach (teal) no-photo hero, never player blue (Batch C).
+          role={isCoach ? 'coach' : 'player'}
           owner={owner}
           fitPill={fitPill}
           badge={recruitsForTeam ? 'Recruiting players' : null}
@@ -439,7 +452,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             ]}
           />
           {stepCopy && step && (
-            <PrimaryCard pct={completeness.data?.pct ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
+            <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />
           )}
           {isCoach && (recruitsForTeam || coachRoles.length > 0) && props.onPostRole && (
             <div className="pt-3">
@@ -537,7 +550,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         >
           <div className="flex flex-col gap-2.5 px-4">
             {coachRoles.slice(0, owner ? 3 : 2).map((r) => (
-              <RoleRow key={r.id} role={r} cta={owner ? 'Manage' : 'Apply'} onOpen={() => navigate(`/opportunities/${r.id}`)} />
+              <RoleRow key={r.id} role={r} onOpen={() => navigate(`/opportunities/${r.id}`)} />
             ))}
             {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open roles right now.</p>}
             {owner && coachRoles.length > 3 && (
@@ -586,8 +599,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               <button type="button" onClick={() => showAi('profile', 'builder')} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI</span>
-                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first</span>
+                  <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI <BetaPill onSoft testId="profile-fill-with-ai-beta" /></span>
+                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first.</span>
                 </span>
               </button>
             </div>

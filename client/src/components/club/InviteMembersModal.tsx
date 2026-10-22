@@ -206,7 +206,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players and coaches by name"
                 autoFocus
-                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 outline-none focus:border-hockia-primary/40 focus:ring-2 focus:ring-hockia-primary/15"
+                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 outline-none focus:border-hockia-primary/40 focus-visible:ring-2 focus-visible:ring-hockia-primary/15"
               />
             </div>
 

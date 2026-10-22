@@ -8,6 +8,7 @@ import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { LogoTile } from '@/components/community/photo/LogoTile'
 import { cn } from '@/lib/utils'
 import { GlassChip, SquircleBox } from './primitives'
+import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 
 /**
  * A role on a photo (Figma 60:300 role card 220×150 r20, 60:381 opportunity
@@ -25,9 +26,12 @@ interface RoleCoverCardProps {
   chip?: string
   cta?: ReactNode
   onOpen: () => void
+  /** The role this card opens: warms the role page on press, hover, focus and scroll-in (lib/prefetchRole). */
+  roleId?: string | null
 }
 
-export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, size, chip, cta, onOpen }: RoleCoverCardProps) {
+export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, size, chip, cta, onOpen, roleId = null }: RoleCoverCardProps) {
+  const prefetch = useRolePrefetch(roleId)
   const photos = useMemberPhotos(clubId)
   const [small, setSmall] = useState<ReadonlySet<string>>(new Set())
   const cover = (photos.data ?? []).find((u) => !small.has(u)) ?? null
@@ -45,7 +49,7 @@ export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, siz
       className={cn('relative shrink-0 overflow-hidden bg-ink-1', HAIRLINE_ON_PHOTO, PRESS, feed ? 'h-[236px] w-full' : 'h-[150px] w-[220px]')}
       style={background ? { backgroundImage: background } : undefined}
     >
-      <button type="button" onClick={onOpen} aria-label={`${title}, ${clubName}`} className="absolute inset-0 text-left">
+      <button type="button" onClick={onOpen} ref={prefetch.ref} {...prefetch.handlers} aria-label={`${title}, ${clubName}`} className="absolute inset-0 text-left">
         {cover && (
           <BlurImage
             src={getImageUrl(cover, 'feed-full') ?? cover}

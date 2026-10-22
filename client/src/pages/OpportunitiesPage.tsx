@@ -686,7 +686,7 @@ export default function OpportunitiesPage() {
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
-                Post Opportunity
+                Post a role
               </Button>
             )}
           </div>

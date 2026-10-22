@@ -127,7 +127,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
                 <div className="border-t-[0.5px] border-line px-3.5 py-3">
                   <p className="text-micro font-semibold uppercase tracking-[0.04em] text-ink-3">{draft?.kind === 'draft' && draft.byAi && note === draft.note ? 'Note to the club · written by Hockia AI' : 'Note to the club'}</p>
                   {editing ? (
-                    <textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, 600))} rows={5} autoFocus aria-label="Note to the club" className="mt-1.5 w-full resize-none rounded-[12px] border border-line p-2.5 text-[15px] leading-[21px] text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" data-testid="apply-note-input" />
+                    <textarea value={note} onChange={(e) => setNote(e.target.value.slice(0, 600))} rows={5} autoFocus aria-label="Note to the club" className="mt-1.5 w-full resize-none rounded-[12px] border border-line p-2.5 text-[15px] leading-[21px] text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30" data-testid="apply-note-input" />
                   ) : (
                     <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-[21px] text-ink-1" data-testid="apply-note">{note || 'No note. Your profile is the application.'}</p>
                   )}

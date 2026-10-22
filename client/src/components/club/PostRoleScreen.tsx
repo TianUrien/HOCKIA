@@ -447,7 +447,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 placeholder={isPlayer ? 'Men’s 1st player' : 'Head coach, 1st team'}
                 aria-label="Title"
                 maxLength={TITLE_MAX}
-                className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
               />
             </Section>
             <Section
@@ -595,7 +595,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 aria-label="About the role"
                 // Grows with the text (an AI draft is several lines); 4–12 rows.
                 rows={Math.min(12, Math.max(4, draft.description.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 36)), 0)))}
-                className="w-full resize-none rounded-[12px] bg-surface-grouped px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+                className="w-full resize-none rounded-[12px] bg-surface-grouped px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
               />
               <button type="button" onClick={() => void draftWithAI()} disabled={drafting} className="mt-2 flex h-9 items-center gap-1.5 text-secondary font-semibold text-hockia-primary disabled:opacity-50">
                 <Sparkles className="h-4 w-4" strokeWidth={2} />

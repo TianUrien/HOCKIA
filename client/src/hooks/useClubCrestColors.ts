@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { getImageUrl } from '@/lib/imageUrl'
 import { extractCrestColors, type CrestColors } from '@/lib/crestColor'
 import { isCurrentPalette, type CrestPalette } from '@/lib/crestPalette'
+import { createTickBatcher } from '@/lib/tickBatcher'
 
 /**
  * Crest colour + palette per club (Community club cards, home role covers,
@@ -25,6 +26,13 @@ type Club = { id: string; avatar_url: string | null }
 type Stored = { url: string; color: string; palette: CrestPalette | null }
 
 const computed = new Map<string, CrestColors | null>()
+
+/** Stored rows for the clubs asked for in the same tick, in one `.in()` read. */
+const crestRowsBatcher = createTickBatcher<Stored>(async (ids) => {
+  const { data, error } = await supabase.from('club_crest_colors').select('profile_id, crest_url, color, palette').in('profile_id', ids)
+  if (error) throw error
+  return new Map((data ?? []).map((r) => [r.profile_id, { url: r.crest_url, color: r.color, palette: isCurrentPalette(r.palette) ? r.palette : null }]))
+}, { max: 100 })
 
 /** Save a club's own crest colour + palette (crest upload, or self-heal on view). */
 export async function saveOwnCrestColor(profileId: string, crestUrl: string, colors: CrestColors): Promise<void> {
@@ -56,13 +64,18 @@ function useCrestColorRows(clubs: Club[]): { withCrest: Club[]; stored: Map<stri
     enabled: ids.length > 0,
     staleTime: 10 * 60_000,
     placeholderData: (previous) => previous,
+    // Through the tick batcher: every card on screen asks for its own club,
+    // and they share one club_crest_colors read (N+1 on Home, 2026-10-21).
     queryFn: async () => {
-      const { data, error } = await supabase.from('club_crest_colors').select('profile_id, crest_url, color, palette').in('profile_id', ids)
-      if (error) {
+      try {
+        const rows = await Promise.all(ids.map((id) => crestRowsBatcher.load(id)))
+        const out = new Map<string, Stored>()
+        ids.forEach((id, i) => { const row = rows[i]; if (row) out.set(id, row) })
+        return out
+      } catch (error) {
         logger.debug('[useClubCrestColors] read failed', error)
         return new Map<string, Stored>()
       }
-      return new Map((data ?? []).map((r) => [r.profile_id, { url: r.crest_url, color: r.color, palette: isCurrentPalette(r.palette) ? r.palette : null }]))
     },
   })
 

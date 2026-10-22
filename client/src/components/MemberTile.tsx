@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Building2, Shield } from 'lucide-react'
-import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
-import { availabilityDescriptor } from '@/lib/availabilityLabel'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { trackProtectedActionBlocked } from '@/lib/analytics'
@@ -208,13 +207,6 @@ export default function MemberTile(props: MemberTileProps) {
   const isBrand = props.role === 'brand'
   const heroSrc = isBrand ? (props.brandLogoUrl ?? props.avatar_url) : props.avatar_url
   const heroImageUrl = heroSrc ? getImageUrl(heroSrc, 'avatar-md') : null
-  // Positive availability dot — role-specific via the shared helper (player→
-  // open_to_play, coach→open_to_coach, club/brand→open_to_opportunities).
-  const availDot = availabilityDescriptor(props.role, {
-    open_to_play: props.open_to_play,
-    open_to_coach: props.open_to_coach,
-    open_to_opportunities: props.open_to_opportunities,
-  })
 
   // Initials block was the previous fallback when no avatar — now replaced
   // by RolePlaceholder. Computation removed; the role + name are surfaced
@@ -282,7 +274,8 @@ export default function MemberTile(props: MemberTileProps) {
         </span>
       ) : null
     }
-    return props.tier ? <TierBadge tier={props.tier} size="sm" /> : null
+    // No completeness tier words on a person (founder decision 2026-10-21).
+    return null
   })()
 
   return (
@@ -294,10 +287,6 @@ export default function MemberTile(props: MemberTileProps) {
         className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
-          const pct = props.profileCompletenessPct
-          if (typeof pct === 'number' && pct > 0) {
-            return `${name}, ${pct}% profile complete. Tap to open profile.`
-          }
           return `${name}. Tap to open profile.`
         })()}
       >
@@ -319,17 +308,11 @@ export default function MemberTile(props: MemberTileProps) {
                 />
               ) : (
                 <div className="absolute inset-0">
-                  <RolePlaceholder role={props.role} label="" />
+                  <RolePlaceholder role={props.role} name={props.full_name} label="" />
                 </div>
               )}
             </div>
-            {availDot && (
-              <span
-                className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                aria-label={availDot.label}
-                title={availDot.label}
-              />
-            )}
+            {/* No green dot on the avatar: it read as an online signal (audit A3). */}
             {/* The bare completeness % badge that used to sit on the avatar
                 was removed — an unlabeled number next to the photo read
                 ambiguously (match? rating?). Completeness now lives only in

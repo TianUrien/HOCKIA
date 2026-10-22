@@ -79,7 +79,6 @@ vi.mock('@/components', () => ({
   LastActivePill: () => null,
   RoleBadge: () => null,
   SocialLinksDisplay: () => null,
-  TierBadge: () => null,
   VerifiedBadge: () => null,
 }))
 vi.mock('@/components/ProfileActionMenu', () => ({ default: () => null }))

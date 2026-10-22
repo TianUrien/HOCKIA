@@ -98,7 +98,7 @@ describe('Search v2 — results', () => {
     const list = await screen.findByTestId('search-v2-results')
     expect(list.textContent).not.toMatch(/\d/)
     expect(list.textContent).not.toMatch(/fit|level|score|repl(y|ies)|views?|followers?|match(es)?\b/i)
-    expect(list.querySelector('[data-testid="fit-chip"]')).toBeNull()
+    expect(list.querySelector('[data-testid="fit-badge"]')).toBeNull()
   })
 
   it('"See all N members" opens Community with the query', async () => {
