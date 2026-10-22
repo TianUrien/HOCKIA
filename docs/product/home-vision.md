@@ -38,6 +38,13 @@ Instagram's unit is the post; LinkedIn's is the job. HOCKIA's is the **move**: w
 
 Home then has two things only (in plain words: the tab is Home, the card asks "What's your goal?", the feed is "This week in hockey"; "move" is the internal unit and the verb on cards): **Your goal** (one card: ask up to three moves or Other with free text, skippable and measured; once set, the move with a market read in real counts, the actions ready and the agent line attached to an action) and **Moves this week** (one card shape, newest first, across HOCKIA, bounded to the week). "Make a move" replaces "New post": one verb, one line, optional photo; Open to play and Moving are structured and feed Opportunities, Find players and the intention engine. Brands attach to a move (a labelled line under a Signed-abroad or Needs move, by location, at most one per visit), never float. Figma: page 02, section "HM"; prototype shared with the founder.
 
+## Intention rules (2026-10-22, founder)
+What members say and what they do can differ; at HOCKIA's size we read strong actions (apply, message, save, open roles in a country), not watch time, with simple rules instead of a model.
+- **Declared goal first, behaviour corrects it.** When they disagree, ask in one tap ("You're looking at coaching roles. Add it to your goals?"). Never switch Home silently.
+- **Always show why.** Every personalised card, brand cards included, carries one line saying why it is there, and the member can correct it.
+- **Success is progress, not time.** Home's main metric is applications, replies and signings started from it; time in app is never a goal.
+- **Brands flow with the moment.** A brand card appears only when it helps what the member is doing now: after the content it relates to, labelled "From brands", at most one, with "Not useful". First tests: Home and below Hockia AI answers.
+
 ## How brands fit: deals, not ads
 A brand publishes offers and partnership proposals with a target (roles, location, never nationality, or "no location"). The member's agent brings a deal only when it fits a fact about them and where they are: "A deal I found for you: kit for your first season at X, from a shop in your city." At most one per Home visit, labelled, mutable, admin-reviewed while free; brands see aggregates only. Details: `proposals/brand-reach.md`.
 
