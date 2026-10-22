@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search, SquarePlus } from 'lucide-react'
+import { Home, Users, Briefcase, Bell, Inbox, Store, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
+import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
 
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
  *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
@@ -151,19 +152,10 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               live on the Profile screen. */}
           {user && profile && (
             <div className="flex lg:hidden items-center">
-              {/* Clubs get a direct Hockia AI entry (sparkles) beside Search —
-                  the same /discover screen players reach from Search. */}
-              {profile.role === 'club' && (
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/discover')}
-                  className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-hockia-primary hover:bg-gray-100 transition-colors"
-                  aria-label="Hockia AI"
-                  data-testid="header-hockia-ai"
-                >
-                  <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
-                </button>
-              )}
+              {/* Hockia AI: the mascot beside Search, for every role (founder
+                  2026-10-22); opens the same /discover screen as Search (the one-sheet handoff moves it into
+                  the sheet). */}
+              <HockiaAiButton onClick={() => handleNavigate('/discover')} testId="header-hockia-ai" />
               {onNewPost && (
                 <button
                   type="button"
@@ -251,19 +243,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 >
                   <Store className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={() => handleNavigate('/discover')}
-                  className={`relative p-2 rounded-lg transition-colors ${
-                    isActive('/discover')
-                      ? 'text-hockia-primary bg-hockia-primary/10'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                  aria-label="Hockia AI"
-                  title="Hockia AI: ask anything about clubs, players, opportunities"
-                  aria-current={isActive('/discover') ? 'page' : undefined}
-                >
-                  <Sparkles className="w-5 h-5" />
-                </button>
+                <HockiaAiButton onClick={() => handleNavigate('/discover')} testId="header-hockia-ai-desktop" />
                 <button
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
