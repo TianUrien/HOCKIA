@@ -153,6 +153,9 @@ describe('Desktop member deck', () => {
     const bar = within(screen.getByTestId('member-preview-actions'))
     expect(bar.getByTestId('member-preview-message').className).toContain('bg-hockia-primary')
     expect(bar.getByTestId('member-preview-invite-ambassador')).toHaveTextContent('Invite as ambassador')
+    // The longest label sizes to its text instead of sharing an equal, clipping width.
+    expect(bar.getByTestId('member-preview-invite-ambassador').className).toMatch(/min-w-fit/)
+    expect(bar.getByTestId('member-preview-invite-ambassador').className).not.toMatch(/min-w-0/)
     expect(bar.queryByTestId('member-preview-friend')).toBeNull()
   })
 
