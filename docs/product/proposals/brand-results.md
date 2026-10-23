@@ -57,6 +57,14 @@ Figma page "08 · Brands, offers (Phase 1)", section "BO":
 - A1 admin review queue (desktop): oldest first, preview, facts, a five-point checklist, a note, Request changes or Approve.
 - H1 Home card after the related move, with the reason line and "Not useful"; H2 "Not useful" folds the card with Undo and an optional reason (brands see totals; "Hide this brand"); H3 under a Hockia AI answer after a "From brands" divider, never changing the answer.
 
+## All phases designed (2026-10-23)
+Figma page "08 · Brands (all phases)", one section per phase:
+- P1 Offers: B1 list (all states, empty, 5-live limit sheet), B2 editor, B3 actions (live, paused), B4 pause/end confirmations, D1 desktop list + editor, A1-A3 admin queue / reject with reason / empty, N1 in-app updates, N2 push, E1-E2 emails. "Changes requested" became "Not approved" with the admin's reason and "Edit and send again".
+- P2 Members: H1 Home card (photo / no photo), H2 after "Not useful" (Undo + optional reason, "Hide this brand"), H3 compact card under Hockia AI answers, BT1-BT2 Brands tab (offers where you live, then all brands), OD1-OD2 offer detail (Go to store, Message, Apply as ambassador when the brand is open to partners and the viewer is a player), HD1 desktop Home.
+- P3 Results: R1 phone, R2 desktop, R-E1 no offers, R-E2 live under 4 weeks, R-E3 small numbers.
+- P4 Ambassadors: AC1-AC3 player opt-in ("Open to brand partnerships", off by default, only brands see it; "Open to other brands" for an active ambassador), AC4-AC6 brand candidates (invite, invited, empty), AC7-AC8 player invitation (adapts the existing ambassador invite; declining is private), AC9 desktop.
+- P5 Public profile: PF1 facts row (offers for members, ambassadors, members helped; each only above zero), PF2 small brand. The "Verified brand" line is gone (no verification for now).
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (founder, 2026-10-23).
