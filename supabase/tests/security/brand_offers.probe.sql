@@ -86,6 +86,11 @@ BEGIN
   SELECT count(*) INTO v_n FROM brand_offers WHERE id = v_offer;
   EXECUTE 'RESET ROLE';
   v_out := v_out || E'\n' || format('%s E1 member sees the live offer', CASE WHEN v_n = 1 THEN 'PASS' ELSE 'FAIL' END);
+  PERFORM set_config('request.jwt.claims', '', true);
+  EXECUTE 'SET LOCAL ROLE anon';
+  SELECT count(*) INTO v_n FROM brand_offers WHERE id = v_offer;
+  EXECUTE 'RESET ROLE';
+  v_out := v_out || E'\n' || format('%s E1b a logged-out visitor sees the live offer', CASE WHEN v_n = 1 THEN 'PASS' ELSE 'FAIL' END);
   v_out := v_out || E'\n' || format('%s E2 review_note / pending / reviewed_by not readable by members or visitors',
     CASE WHEN NOT has_column_privilege('authenticated', 'public.brand_offers', 'review_note', 'SELECT')
           AND NOT has_column_privilege('anon', 'public.brand_offers', 'pending', 'SELECT')
