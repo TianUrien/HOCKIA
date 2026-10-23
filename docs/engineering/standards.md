@@ -83,6 +83,13 @@ club screens remain reachable at `>=1024px`. New club features are built for
 the phone surface first (commit history "Club phone: ..." leaves 1-10). Do not
 let a phone-only screen into the eager bundle.
 
+## 5a. Photo sizes (2026-10-23, Claude Code; measured in production)
+
+The Community member deck shows photos full screen on phones (about 1179 × 2556 px), so:
+- **Display:** full-screen photos use the `immersive` render preset (`lib/imageUrl.ts`: width 1440, height 2500, contain). Never `feed-full` (800 wide), which was stretched 3–5×.
+- **Uploads:** profile photos are kept as a 1440 px square (`optimizeAvatarImage`; was 512). Gallery photos keep their shape up to 2048 px (was 1200). The native picker allows 2048 px (was 1024). Resizes use the high-quality smoothing filter, and the size caps (3 MB) are high enough that the quality loop doesn't kick in for normal photos.
+- **Existing photos:** profile photos uploaded before this were stored at 512 × 512; the originals were not kept, so they stay soft until the member re-uploads.
+
 ## 6. Migration conventions (`supabase/migrations`)
 
 Verified in the 2026-09/10 migrations; older migrations predate some of these.

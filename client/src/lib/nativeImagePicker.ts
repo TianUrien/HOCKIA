@@ -37,12 +37,13 @@ export async function pickImageNative(source?: 'camera' | 'photos' | 'prompt'): 
           : CameraSource.Prompt // Shows both options
 
     const photo = await Camera.getPhoto({
-      quality: 90,
+      quality: 92,
       allowEditing: true,
       resultType: CameraResultType.Base64,
       source: cameraSource,
-      width: 1024,
-      height: 1024,
+      // Profile photos and crests: big enough for the full-screen Community photo (was 1024).
+      width: 2048,
+      height: 2048,
       correctOrientation: true,
       presentationStyle: 'popover', // Required for iPad — fullScreen can crash
     })
