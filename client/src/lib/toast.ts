@@ -11,6 +11,8 @@ interface ToastStore {
   toasts: ToastMessage[]
   addToast: (message: string, type: ToastType) => void
   removeToast: (id: string) => void
+  /** Drop every toast on screen (a sheet opening over them). */
+  clearToasts: () => void
 }
 
 export const useToastStore = create<ToastStore>((set) => ({
@@ -26,4 +28,5 @@ export const useToastStore = create<ToastStore>((set) => ({
       toasts: state.toasts.filter((toast) => toast.id !== id),
     }))
   },
+  clearToasts: () => set({ toasts: [] }),
 }))

@@ -36,6 +36,14 @@ test.describe('brand offers QA', () => {
     await page.getByRole('button', { name: 'Players' }).click()
     await page.getByRole('button', { name: 'Coaches' }).click()
     await page.screenshot({ path: `${OUT}/phone-02-editor.png`, fullPage: true })
+    // Viewport-only: the sticky bars must not cover fields on a real phone.
+    await page.getByLabel('Title').focus()
+    await page.waitForTimeout(600)
+    await page.screenshot({ path: `${OUT}/phone-02a-editor-viewport-top.png` })
+    await page.getByLabel('Starts').focus()
+    await page.waitForTimeout(600)
+    await page.screenshot({ path: `${OUT}/phone-02b-editor-viewport-dates.png` })
+    await expect(page.getByLabel('Starts')).toBeInViewport()
 
     await page.getByTestId('offer-save-draft').click()
     await expect(page).toHaveURL(/\/dashboard\/offers$/)
@@ -46,6 +54,8 @@ test.describe('brand offers QA', () => {
 
     await row.getByTestId('offer-row-menu').click()
     await expect(page.getByTestId('offer-actions')).toBeVisible()
+    // The "Draft saved" toast is cleared when the sheet opens (it must never cover sheet buttons).
+    await expect(page.getByText('Draft saved')).toHaveCount(0)
     await page.screenshot({ path: `${OUT}/phone-04-actions.png` })
 
     await page.getByTestId('offer-action-delete').click()
@@ -84,8 +94,15 @@ test.describe('brand offers QA', () => {
         id: '00000000-0000-4000-8000-000000000001', brand_id: 'b1', brand_name: 'Northline Hockey (sample)', brand_logo_url: null, brand_profile_id: 'p1',
         status: 'in_review', pending: null, pending_status: null, review_note: null,
         title: 'Summer camp places', body: 'Reserved places at our July training camp in Cork for HOCKIA members.', image_url: null,
-        link_url: 'https://example.com/camp', country_ids: [], area: 'Cork', roles: ['player'], starts_at: null, ends_at: '2027-07-31T23:59:59Z',
+        link_url: 'https://example.com/camp', country_ids: [19], area: 'Cork', roles: ['player'], starts_at: null, ends_at: '2027-07-31T23:59:59Z',
         submitted_at: new Date(Date.now() - 2 * 3600_000).toISOString(), live_at: null, brand_live_count: 2, brand_offer_count: 1,
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000002', brand_id: 'b2', brand_name: 'Grip Lab (sample)', brand_logo_url: null, brand_profile_id: 'p2',
+        status: 'in_review', pending: null, pending_status: null, review_note: null,
+        title: 'Free grip fitting at your club', body: 'A free grip fitting for HOCKIA members at their own club.', image_url: null,
+        link_url: 'https://example.com/grip', country_ids: [5, 30], area: null, roles: ['player', 'coach'], starts_at: null, ends_at: null,
+        submitted_at: new Date(Date.now() - 5 * 3600_000).toISOString(), live_at: null, brand_live_count: 1, brand_offer_count: 3,
       },
     ]
     await page.route('**/rest/v1/rpc/is_platform_admin', (r) => r.fulfill({ json: true }))
@@ -100,6 +117,8 @@ test.describe('brand offers QA', () => {
     await page.screenshot({ path: `${OUT}/admin-01-queue.png` })
     await page.getByTestId('admin-offer-approve').click()
     await expect(page.getByText('Tick the remaining checks to approve.')).toBeVisible()
+    await expect(page.getByText('Ireland · Cork (by where members live)')).toBeVisible()
+    await expect(page.getByTestId('admin-offer-row').first()).toBeInViewport()
     await page.screenshot({ path: `${OUT}/admin-01b-approve-with-checks-left.png` })
     await page.getByTestId('admin-offer-reject').click()
     await page.getByRole('button', { name: 'A claim we can’t check' }).click()

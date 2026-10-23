@@ -76,7 +76,8 @@ export function AdminBrandOffers() {
 
   return (
     <div className="grid gap-8 xl:grid-cols-[minmax(320px,580px)_minmax(0,1fr)]" data-testid="admin-brand-offers">
-      <div>
+      {/* The queue stays in view while the detail scrolls, so the next offer is one click away. */}
+      <div className="xl:sticky xl:top-20 xl:max-h-[calc(100dvh-6rem)] xl:self-start xl:overflow-y-auto xl:pb-4">
         <h1 className="text-3xl font-bold text-gray-900">Offers to review</h1>
         <p className="mt-2 text-gray-500">Oldest first. Every offer is checked before members see it.</p>
         <div className="mt-5 inline-flex rounded-full bg-gray-100 p-1" role="tablist" aria-label="Offer queue">
@@ -174,6 +175,7 @@ function ReviewPanel({ offer, canReview, busy, onReview }: ReviewPanelProps) {
   const [showMissing, setShowMissing] = useState(false)
   const allChecked = checked.every(Boolean)
   const countries = names(f.country_ids)
+  const where = [countries.join(', '), f.area?.trim()].filter(Boolean).join(' · ')
   const who = f.roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r).join(', ')
 
   const meta = useMemo(() => {
@@ -208,18 +210,18 @@ function ReviewPanel({ offer, canReview, busy, onReview }: ReviewPanelProps) {
         </div>
         <div className="space-y-4">
           <dl className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[24px] bg-white p-5 text-[15px] shadow-sm">
-            <dt className="text-gray-500">Where</dt>
-            <dd className="text-gray-900">{countries.join(', ') || '—'}{f.area ? ` · ${f.area}` : ''} (by where members live)</dd>
-            <dt className="text-gray-500">Who</dt>
-            <dd className="text-gray-900">{who || '—'}</dd>
-            <dt className="text-gray-500">Link</dt>
-            <dd className="min-w-0">
-              {f.link_url ? (
-                <a href={f.link_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex max-w-full items-center gap-1 break-all text-hockia-primary hover:underline">
-                  {host} <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                </a>
-              ) : '—'}
-            </dd>
+            {where ? (<><dt className="text-gray-500">Where</dt><dd className="text-gray-900">{where} (by where members live)</dd></>) : null}
+            {who ? (<><dt className="text-gray-500">Who</dt><dd className="text-gray-900">{who}</dd></>) : null}
+            {f.link_url ? (
+              <>
+                <dt className="text-gray-500">Link</dt>
+                <dd className="min-w-0">
+                  <a href={f.link_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex max-w-full items-center gap-1 break-all text-hockia-primary hover:underline">
+                    {host} <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  </a>
+                </dd>
+              </>
+            ) : null}
             <dt className="text-gray-500">Dates</dt>
             <dd className="text-gray-900">{f.starts_at ? `From ${shortDate(f.starts_at)}` : 'When approved'}{f.ends_at ? `, until ${shortDate(f.ends_at)}` : ', no end date'}</dd>
             <dt className="text-gray-500">Brand</dt>

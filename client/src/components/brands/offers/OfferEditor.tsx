@@ -46,6 +46,8 @@ interface OfferEditorProps {
 export function OfferEditor({ offer, initial, brandName, userId, saving, onSave, onCancel, layout }: OfferEditorProps) {
   const [f, setF] = useState<OfferFields>(initial)
   const [tried, setTried] = useState(false)
+  const topBar = useRef<HTMLDivElement>(null)
+  const bottomBar = useRef<HTMLDivElement>(null)
   const set = <K extends keyof OfferFields>(key: K, value: OfferFields[K]) => setF((prev) => ({ ...prev, [key]: value }))
   const names = useCountryNames()
   const countryNames = names(f.country_ids)
@@ -203,8 +205,23 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
   }
 
   return (
-    <div className="min-h-screen bg-surface-subtle pb-40" data-testid="offer-editor">
-      <div className="sticky top-0 z-10 flex h-[calc(env(safe-area-inset-top)+44px)] items-end justify-between bg-surface-subtle/95 px-2 pb-0 pt-[env(safe-area-inset-top)] backdrop-blur">
+    // A focused field half under the sticky top bar or the fixed Send bar is
+    // scrolled clear. Measured by hand: browsers don't scroll a field that is
+    // partly on screen, and scrollIntoView has no effect inside this layout.
+    <div
+      className="min-h-screen bg-surface-subtle pb-48"
+      onFocusCapture={(e) => {
+        const el = e.target
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return
+        const r = el.getBoundingClientRect()
+        const top = (topBar.current?.getBoundingClientRect().bottom ?? 0) + 12
+        const bottom = (bottomBar.current?.getBoundingClientRect().top ?? window.innerHeight) - 12
+        if (r.bottom > bottom) window.scrollBy({ top: r.bottom - bottom, behavior: 'smooth' })
+        else if (r.top < top) window.scrollBy({ top: r.top - top, behavior: 'smooth' })
+      }}
+      data-testid="offer-editor"
+    >
+      <div ref={topBar} className="sticky top-0 z-10 flex h-[calc(env(safe-area-inset-top)+44px)] items-end justify-between bg-surface-subtle/95 px-2 pb-0 pt-[env(safe-area-inset-top)] backdrop-blur">
         <button type="button" onClick={onCancel} className="flex h-11 items-center px-3 text-body text-brand-primary">Cancel</button>
         <h1 className="text-body font-semibold text-ink-1">{title}</h1>
         {isChange ? (
@@ -222,7 +239,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           {preview}
         </div>
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
+      <div ref={bottomBar} className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
         {actions}
       </div>
     </div>
