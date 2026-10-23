@@ -61,3 +61,9 @@ Internal Working Backwards document. Proposal for the founder, 2026-10-20. **Fra
 - Surfaces: Community › Brands, Home (≤ 1 labelled card per visit, only when it fits), Hockia AI (below the answer, separated).
 - While free: few active offers per brand, admin-reviewed before going live.
 - Proof of value to charge later: members contacting the brand (contact requests), then store taps and ambassadors.
+
+## Founder rulings captured (2026-10-22)
+- Format reference: ChatGPT ads (2026). A sponsored card sits after the answer, separate and labelled; the answer itself never changes; advertisers see aggregates only; campaigns are reviewed before serving. HOCKIA copies the form, not the auction: no bidding or pay-per-click while free.
+- First tests: Home and below Hockia AI answers, together.
+- Every brand card says why the member sees it ("Because you're looking at roles in the Netherlands") and offers "Not useful".
+- A brand card appears only when it fits what the member is doing now; never inside an answer or a member's content.
