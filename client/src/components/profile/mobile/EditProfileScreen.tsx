@@ -23,7 +23,8 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
+import { profilePhotoFields, uploadProfilePhoto } from '@/lib/profilePhoto'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { deleteStorageObject } from '@/lib/storage'
 import { invalidateProfile } from '@/lib/profile'
@@ -243,18 +244,16 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
     if (!check.valid) { addToast(check.error ?? 'Invalid image', 'error'); return }
     setUploading(true)
     try {
-      const optimized = await optimizeAvatarImage(file)
-      const ext = optimized.name.split('.').pop() || 'jpg'
-      const path = `${user.id}/avatar_${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { upsert: true, cacheControl: '31536000' })
-      if (uploadError) throw uploadError
-      const publicUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const urls = await uploadProfilePhoto(user.id, file)
+      const publicUrl = urls.avatarUrl
       const previous = profile.avatar_url
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
+      const previousFull = profile.avatar_full_url
+      const { error: updateError } = await supabase.from('profiles').update(profilePhotoFields(urls)).eq('id', user.id)
       if (updateError) throw updateError
       // Only once the row points at the new file is the old one safe to drop
       // (deleting first broke avatars — incident 2026-07-30).
       if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'edit-profile:replace-avatar' })
+      if (previousFull && previousFull !== urls.avatarFullUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previousFull, context: 'edit-profile:replace-avatar-full' })
       invalidateProfile({ userId: user.id, reason: 'edit-profile-avatar' })
       await refreshProfile()
     } catch (err) {
@@ -266,7 +265,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
   }
   const pickPhoto = async () => {
     if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt'); if (result) await uploadPhoto(result.file) } catch (err) { logger.error('[EditProfileScreen] native picker failed', err); addToast('Could not access camera or photos. Please check app permissions.', 'error') }
+      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadPhoto(result.file) } catch (err) { logger.error('[EditProfileScreen] native picker failed', err); addToast('Could not access camera or photos. Please check app permissions.', 'error') }
       return
     }
     fileRef.current?.click()

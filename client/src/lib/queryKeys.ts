@@ -74,6 +74,9 @@ export const qk = {
    *  deck (get_member_photos). Per member so prefetching the next cards reuses
    *  the cache; under 'gallery' so gallery invalidations refresh it. */
   memberPhotos: (profileId: string) => ['gallery', 'member-photos', profileId] as const,
+  /** A member's full-shape profile photo (profiles.avatar_full_url, 2026-10-23) for
+   *  the full-screen deck; null = use the square avatar. */
+  avatarFull: (profileId: string) => ['profile', 'avatar-full', profileId] as const,
   /** Free-text community search page (PeopleListView.performServerSearch). */
   communitySearch: (viewerScope: string, roleKey: string, query: string) =>
     ['community', 'search', viewerScope, roleKey, query] as const,

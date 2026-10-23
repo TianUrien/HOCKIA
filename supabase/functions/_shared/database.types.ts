@@ -4543,6 +4543,7 @@ export type Database = {
           availability_duration: string | null
           available_for_appointments: boolean | null
           available_from: string | null
+          avatar_full_url: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -4654,6 +4655,7 @@ export type Database = {
           availability_duration?: string | null
           available_for_appointments?: boolean | null
           available_from?: string | null
+          avatar_full_url?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
@@ -4765,6 +4767,7 @@ export type Database = {
           availability_duration?: string | null
           available_for_appointments?: boolean | null
           available_from?: string | null
+          avatar_full_url?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
