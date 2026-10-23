@@ -7706,6 +7706,14 @@ export type Database = {
       brand_offer_problem: { Args: { p: Json }; Returns: string }
       duplicate_brand_offer: { Args: { p_offer_id: string }; Returns: string }
       end_expired_brand_offers: { Args: never; Returns: number }
+      get_my_brand_offer_totals: {
+        Args: { p_days?: number }
+        Returns: {
+          contacted: number
+          opened: number
+          shown: number
+        }[]
+      }
       get_my_brand_offers: {
         Args: never
         Returns: {
