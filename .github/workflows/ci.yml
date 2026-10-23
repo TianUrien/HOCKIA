@@ -102,12 +102,12 @@ jobs:
         working-directory: ./client
         run: npm run typecheck
 
-      # Dead code and dependency hygiene (Knip, added 2026-10-23). Report-only
-      # until the known findings are cleaned up: the list lands in the job
-      # summary. Then drop continue-on-error so new dead files fail the PR.
-      - name: Knip (unused files and dependencies, report only)
+      # Dead code and dependency hygiene (Knip, added 2026-10-23; blocking since
+      # the cleanup the same day): a new unused file, unused or undeclared
+      # dependency, or unresolved import fails the PR. The list lands in the
+      # job summary. Exceptions live in client/knip.json.
+      - name: Knip (unused files and dependencies)
         working-directory: ./client
-        continue-on-error: true
         run: |
           set -o pipefail
           npm run knip --silent -- --no-progress 2>&1 | grep -v '^\[dotenv' | tee knip-report.txt

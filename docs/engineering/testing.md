@@ -156,9 +156,13 @@ Keep the `[QA]` fixtures on staging; several specs and probes depend on them.
   listed per screen in `e2e/a11y-baseline.json`; a new kind fails the PR.
   When you fix one, remove it from the baseline so it can't come back.
 - **Knip** (`npm run knip`, config `client/knip.json`): unused files,
-  unused or undeclared dependencies, unresolved imports. CI runs it
-  report-only in "Lint & Type Check" (job summary) until the 2026-10-23
-  findings are cleaned up; then remove `continue-on-error`.
+  unused or undeclared dependencies, unresolved imports. Blocking in
+  "Lint & Type Check" since the 2026-10-23 cleanup (27 dead files and 5
+  unused libraries removed). Exceptions in `knip.json`: `src/lib/polyfills.ts`
+  (the tested copy of the inline polyfill in index.html, loaded by its test
+  with a query string), `google.maps` (types only) and `/src/lib/crestColor.ts`
+  (imported inside the browser by `scripts/backfill-crest-colors.mjs`).
+  Unused exports are not checked yet (249 on 2026-10-23).
 - **Dependabot** (`.github/dependabot.yml`): weekly grouped update PRs into
   staging for the client, monthly for the device lab and GitHub Actions.
   Security alerts and CodeQL are repository settings (Settings → Code
