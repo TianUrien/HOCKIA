@@ -22,6 +22,11 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
     expect(onOpen).toHaveBeenCalled()
   })
 
+  it('says what is waiting when nothing is live yet', () => {
+    render(<OffersCard offers={[{ status: 'draft' }, { status: 'in_review' }, { status: 'in_review' }]} totals={null} onCreate={vi.fn()} onOpen={vi.fn()} />)
+    expect(screen.getByText('0 of 5 live · 1 draft · 2 in review')).toBeInTheDocument()
+  })
+
   it('hides the 30-day tiles while every number is zero or unknown', () => {
     const { rerender } = render(<OffersCard offers={[{ status: 'live' }]} totals={{ shown: 0, opened: 0, contacted: 0 }} onCreate={vi.fn()} onOpen={vi.fn()} />)
     expect(screen.queryByTestId('brand-offers-tiles')).toBeNull()
