@@ -102,11 +102,13 @@ interface GalleryVideoRow {
 // Shared gallery photo optimization (profile AND club galleries). These are
 // photographs (match/training/facility shots), not logos, so JPEG output is
 // correct — transparent assets live in the `avatars` bucket, never here.
-// 1200px caps to the lightbox preset; q0.85 keeps photos crisp at display size.
+// Gallery photos fill the phone screen in Community (the member deck), so keep
+// up to 2048 px on the long side in their own shape (was 1200, 2026-10-23);
+// 3 MB leaves room so the size loop doesn't drag the quality down.
 const GALLERY_OPTIMIZE_OPTIONS: OptimizeOptions = {
-  maxWidth: 1200,
-  maxHeight: 1200,
-  maxSizeMB: 1,
+  maxWidth: 2048,
+  maxHeight: 2048,
+  maxSizeMB: 3,
   quality: 0.85,
 }
 

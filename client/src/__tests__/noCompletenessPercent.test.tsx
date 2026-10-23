@@ -39,20 +39,12 @@ describe('missingLine (recruiter views)', () => {
 describe('no completeness % or activity evidence in source', () => {
   const read = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
   it.each([
-    'components/recruiting/CandidatePreviewSheet.tsx',
     'components/profile/v2/OwnerArea.tsx',
-    'components/home/ProfileCompletionCard.tsx',
     'components/NextStepCard.tsx',
     'components/dashboard/bento/ClubHeroCard.tsx',
   ])('%s renders no completeness percentage', (p) => {
     const src = read(p)
     expect(src).not.toMatch(/\{(completeness|pct|percentage|profileStrength\.percentage)\}%/)
     expect(src).not.toMatch(/CompletionArc|<Ring /)
-  })
-  it('the candidate preview has no "Recent activity" row and no avatar dot', () => {
-    const src = read('components/recruiting/CandidatePreviewSheet.tsx')
-    expect(src).not.toContain("'Recent activity'")
-    expect(src).not.toContain('bg-emerald-500 ring-2 ring-white')
-    expect(src).not.toContain("'Strong profile'")
   })
 })

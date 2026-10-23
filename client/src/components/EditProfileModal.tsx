@@ -10,7 +10,8 @@ import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
+import { uploadProfilePhoto } from '@/lib/profilePhoto'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
@@ -75,6 +76,7 @@ type ProfileFormData = {
   club_history: string
   bio: string
   avatar_url: string
+  avatar_full_url: string | null
   social_links: SocialLinks
   open_to_play: boolean
   open_to_coach: boolean
@@ -265,6 +267,7 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   club_history: profile?.club_history || '',
   bio: profile?.bio || '',
   avatar_url: profile?.avatar_url || '',
+  avatar_full_url: profile?.avatar_full_url ?? null,
   social_links: (profile?.social_links as SocialLinks) || {},
   open_to_play: Boolean(profile?.open_to_play),
   open_to_coach: Boolean(profile?.open_to_coach),
@@ -604,30 +607,25 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         return
       }
 
-      logger.debug('Optimizing avatar image...')
-      const optimizedFile = await optimizeAvatarImage(file)
-
-      const fileExt = optimizedFile.name.split('.').pop() || 'jpg'
-      const filePath = `${profile.id}/avatar_${Date.now()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, optimizedFile, { upsert: true, cacheControl: '31536000' })
-
-      if (uploadError) {
+      let urls
+      try {
+        urls = await uploadProfilePhoto(profile.id, file)
+      } catch (uploadError) {
         captureOnboardingError(uploadError, {
           profileId: profile.id,
-          fileSizeBytes: optimizedFile.size,
+          fileSizeBytes: file.size,
         }, 'EditProfileModal.handleAvatarUpload.upload')
         throw uploadError
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      const publicUrl = urls.avatarUrl
 
       const previousUrl = formData.avatar_url || profile.avatar_url || null
-      setFormData(prev => ({ ...prev, avatar_url: publicUrl }))
+      const previousFull = formData.avatar_full_url
+      setFormData(prev => ({ ...prev, avatar_url: publicUrl, avatar_full_url: urls.avatarFullUrl }))
+      if (previousFull && previousFull !== urls.avatarFullUrl) {
+        pendingCleanup.queue({ bucket: 'avatars', publicUrl: previousFull, context: 'edit-profile:replace-avatar-full' })
+      }
+      if (urls.avatarFullUrl) pendingCleanup.unqueue(urls.avatarFullUrl)
       // Deleting the old object here would break the avatar for anyone who
       // closes this modal without saving — the profile row still points at
       // it until handleSubmit runs. Queue it; flush after the DB write.
@@ -650,7 +648,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     // On native platforms, use Capacitor Camera plugin (handles permissions + camera properly)
     if (isNativePlatform()) {
       try {
-        const result = await pickImageNative('prompt')
+        const result = await pickImageNative('prompt', { crop: false })
         if (result) {
           await uploadAvatarFile(result.file)
         }
@@ -707,6 +705,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       base_city: formData.base_city || null,
       base_country_id: formData.base_country_id || null,
       avatar_url: formData.avatar_url || null,
+      // Only when the photo changed here: never overwrite a full photo this form didn't load.
+      ...((formData.avatar_url || null) !== (profile?.avatar_url ?? null) ? { avatar_full_url: formData.avatar_url ? formData.avatar_full_url : null } : {}),
       contact_email: normalizedContactEmail,
       contact_email_public: formData.contact_email_public,
       social_links: Object.keys(cleanedSocialLinks).length > 0 ? cleanedSocialLinks : {},

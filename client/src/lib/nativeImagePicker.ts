@@ -27,7 +27,12 @@ export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
  * Returns a File object on success, or null if the user cancelled.
  * Throws on unexpected errors.
  */
-export async function pickImageNative(source?: 'camera' | 'photos' | 'prompt'): Promise<NativeImageResult | null> {
+/**
+ * `crop: false` skips the phone's square crop step, so the whole photo comes
+ * back: profile photos keep their shape for full-screen views and the round
+ * avatar is a centred crop (founder, 2026-10-23). Crests and logos keep the crop.
+ */
+export async function pickImageNative(source?: 'camera' | 'photos' | 'prompt', { crop = true }: { crop?: boolean } = {}): Promise<NativeImageResult | null> {
   if (!isNativePlatform()) return null
 
   try {
@@ -37,12 +42,13 @@ export async function pickImageNative(source?: 'camera' | 'photos' | 'prompt'): 
           : CameraSource.Prompt // Shows both options
 
     const photo = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: true,
+      quality: 92,
+      allowEditing: crop,
       resultType: CameraResultType.Base64,
       source: cameraSource,
-      width: 1024,
-      height: 1024,
+      // Profile photos and crests: big enough for the full-screen Community photo (was 1024).
+      width: 2048,
+      height: 2048,
       correctOrientation: true,
       presentationStyle: 'popover', // Required for iPad — fullScreen can crash
     })

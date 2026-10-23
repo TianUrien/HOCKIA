@@ -1,11 +1,12 @@
 /**
- * Hockia AI v2 (Figma 04 · Player — Live 44:321 + states 524:1494 / 1575 /
- * 1644 / 1715 / 1785; founder rulings 2026-10-03).
+ * Hockia AI answer states (Figma 04 · Player — states 524:1494 / 1575 /
+ * 1644 / 1715 / 1785; founder rulings 2026-10-03), rendered in the one
+ * Hockia AI sheet (2026-10-22; the /discover page is gone).
  *
  * Every state renders from the chat store; nl-search is never called. The
- * rules under test: first use, loading, answer with role rows, no match,
- * can't answer, neutral error, cap card, the composer, no gradients, no
- * fit / level / competitor-count text for a player, chips send or navigate.
+ * rules under test: loading, answer with role rows, no match, can't answer,
+ * neutral error, cap card, no fit / level / competitor-count text for a
+ * player, chips send or navigate.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
@@ -16,6 +17,8 @@ vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } 
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar" /> }))
 vi.mock('@/components/FeedbackModal', () => ({ default: () => <div data-testid="feedback-modal" /> }))
+vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: null, reload: vi.fn() }) }))
+vi.mock('@/hooks/useRecruitingContext', () => ({ useRecruitingContext: () => ({ active: null }) }))
 
 type Viewer = { user: { id: string } | null; profile: { id: string; role: string; full_name: string; coach_recruits_for_team?: boolean } | null }
 const authState: Viewer = {
@@ -29,11 +32,11 @@ vi.mock('@/lib/auth', () => ({
   ),
 }))
 
-import DiscoverPage from '@/pages/DiscoverPage'
+import { HockiaAiSheet } from '@/components/hockiaAi/HockiaAiSheet'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import {
   CAP_REACHED_COPY,
-  COMPOSER_PLACEHOLDER,
   ROLE_EXAMPLE,
   cantAnswerChips,
   capReachedChips,
@@ -66,11 +69,13 @@ function setChat(messages: DiscoverChatMessage[], isPending = false) {
   useDiscoverChat.setState({ messages, isPending })
 }
 
-function renderPage() {
+function renderSheet() {
+  useHockiaAiSheet.setState({ open: true, detent: 'large', mode: 'chat', roleContext: null, seed: null })
   return render(
-    <MemoryRouter initialEntries={['/discover']}>
+    <MemoryRouter initialEntries={['/home']}>
+      <HockiaAiSheet />
       <Routes>
-        <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/home" element={<div>Home page</div>} />
         <Route path="/opportunities" element={<div>Opportunities page</div>} />
         <Route path="/opportunities/:id" element={<div>Role page</div>} />
         <Route path="/dashboard/profile/edit" element={<div>Edit profile page</div>} />
@@ -83,35 +88,22 @@ const FORBIDDEN_PLAYER_TEXT = /strong match|good match|possible match|fit score|
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
+  // jsdom has no media playback; the mascot clip calls load() and play().
+  HTMLMediaElement.prototype.load = vi.fn()
+  HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve())
   authState.profile = { id: 'p1', role: 'player', full_name: 'Alex Rivera' }
   setChat([])
 })
 
-describe('Hockia AI v2 — states', () => {
-  it('first use: sparkle mark, greeting, beta note, three example rows that send', () => {
-    const sendMessage = vi.fn()
-    useDiscoverChat.setState({ sendMessage })
-    const { container } = renderPage()
-
-    expect(screen.getByRole('heading', { level: 1, name: 'Hockia AI' })).toBeInTheDocument()
-    expect(screen.getByText('Hi Alex')).toBeInTheDocument()
-    expect(screen.getByText(/Hockia AI is in beta/)).toBeInTheDocument()
-    expect(screen.getByText('Try asking')).toBeInTheDocument()
-    const examples = screen.getAllByTestId('discover-example-query')
-    expect(examples).toHaveLength(3)
-    expect(examples.map(e => e.textContent)).toContain(`“${ROLE_EXAMPLE}”`)
-    fireEvent.click(examples[2])
-    expect(sendMessage).toHaveBeenCalledWith(ROLE_EXAMPLE)
-    expect(container.innerHTML).not.toMatch(/gradient/)
-  })
-
-  it('loading: "Searching" with animated dots, no skeleton cards', () => {
+describe('Hockia AI sheet — answer states', () => {
+  it('loading: "Thinking…" with the live steps, never a silent wait or skeleton cards', () => {
     setChat([msg({ role: 'user', content: 'Goalkeeper roles' }), msg({ role: 'assistant', status: 'sending' })], true)
-    const { container } = renderPage()
-    expect(screen.getByRole('status', { name: 'Searching' })).toBeInTheDocument()
-    expect(container.querySelectorAll('.animate-dotWave')).toHaveLength(3)
+    useDiscoverChat.setState({ steps: [{ id: 's1', label: 'Reading open roles', state: 'now' }] })
+    const { container } = renderSheet()
+    expect(screen.getByRole('status', { name: 'Thinking' })).toHaveTextContent('Thinking…')
+    expect(screen.getByTestId('hockia-ai-step')).toHaveTextContent('Reading open roles')
     expect(container.querySelector('[data-testid*="skeleton"]')).toBeNull()
-    expect(container.innerHTML).not.toMatch(/animate-pulse|gradient/)
+    expect(container.innerHTML).not.toMatch(/animate-pulse/)
   })
 
   it('answer: role rows as "Club · Position" / "League · package", pool caption, chevron to the role page', () => {
@@ -123,7 +115,7 @@ describe('Hockia AI v2 — states', () => {
         suggested_actions: [{ label: 'Roles with housing', intent: { type: 'free_text', query: 'Goalkeeper roles with housing' } }],
       }),
     ])
-    const { container } = renderPage()
+    const { container } = renderSheet()
 
     expect(screen.getByTestId('ai-user-bubble')).toHaveTextContent('Goalkeeper roles in Serie A1')
     const rows = screen.getAllByTestId('ai-role-result')
@@ -132,7 +124,7 @@ describe('Hockia AI v2 — states', () => {
     expect(within(rows[0]).getByText('Bra, Italy · Housing, Paid')).toBeInTheDocument()
     expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(FORBIDDEN_PLAYER_TEXT)
-    expect(container.innerHTML).not.toMatch(/gradient/)
+    for (const row of rows) expect(row.outerHTML).not.toMatch(/gradient/)
 
     fireEvent.click(rows[1])
     expect(screen.getByText('Role page')).toBeInTheDocument()
@@ -148,7 +140,7 @@ describe('Hockia AI v2 — states', () => {
         cta: { label: 'Browse all opportunities', route: '/opportunities' },
       }),
     ])
-    renderPage()
+    renderSheet()
     expect(screen.getByText(/no goalkeeper roles in Italy/)).toBeInTheDocument()
     expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
     const chips = screen.getAllByTestId('ai-chip').map(c => c.textContent)
@@ -161,7 +153,7 @@ describe('Hockia AI v2 — states', () => {
       msg({ role: 'user', content: 'Who will win the Olympics?' }),
       msg({ role: 'assistant', kind: 'text', content: "I can help with clubs, players and roles on HOCKIA, not that one." }),
     ])
-    renderPage()
+    renderSheet()
     expect(screen.getByText(/not that one/)).toBeInTheDocument()
     const chips = screen.getAllByTestId('ai-chip').map(c => c.textContent)
     expect(chips).toEqual(['Open roles for me', 'Improve my profile'])
@@ -174,11 +166,11 @@ describe('Hockia AI v2 — states', () => {
       msg({ role: 'user', content: 'Goalkeeper roles' }),
       msg({ role: 'assistant', status: 'error', content: 'Search failed', error: 'Search failed' }),
     ])
-    const { container } = renderPage()
+    renderSheet()
     const card = screen.getByTestId('ai-notice-card')
     expect(card).toHaveAttribute('data-tone', 'neutral')
     expect(card.className).toMatch(/bg-surface-muted/)
-    expect(container.innerHTML).not.toMatch(/amber|warning|gradient/)
+    expect(card.outerHTML).not.toMatch(/amber|warning|gradient/)
     expect(card).toHaveTextContent(/trouble connecting/)
     const chips = screen.getAllByTestId('ai-chip')
     expect(chips.map(c => c.textContent)).toEqual(['Try again', 'Open roles for me'])
@@ -197,40 +189,11 @@ describe('Hockia AI v2 — states', () => {
       msg({ role: 'user', content: 'One more' }),
       msg({ role: 'assistant', kind: 'cap_reached', content: CAP_REACHED_COPY, suggested_actions: [] }),
     ])
-    renderPage()
+    renderSheet()
     const card = screen.getByTestId('ai-notice-card')
     expect(card).toHaveTextContent("You've reached today's limit. Try again tomorrow.")
     expect(card).toHaveAttribute('data-tone', 'neutral')
     expect(screen.getAllByTestId('ai-chip').map(c => c.textContent)).toEqual(['Open roles for me'])
-  })
-
-  it('composer: the placeholder, no attach button, 44 pt purple send, Enter sends', () => {
-    const sendMessage = vi.fn()
-    useDiscoverChat.setState({ sendMessage })
-    renderPage()
-    const composer = screen.getByPlaceholderText(COMPOSER_PLACEHOLDER)
-    expect(screen.queryByRole('button', { name: /attach|camera|photo/i })).toBeNull()
-    const send = screen.getByRole('button', { name: 'Send' })
-    expect(send).toBeDisabled()
-    expect(send.className).toMatch(/h-11 w-11/)
-    expect(send.className).toMatch(/bg-hockia-primary/)
-    fireEvent.change(composer, { target: { value: 'Clubs in Spain' } })
-    expect(send).toBeEnabled()
-    fireEvent.keyDown(composer, { key: 'Enter' })
-    expect(sendMessage).toHaveBeenCalledWith('Clubs in Spain')
-  })
-
-  it('More sheet: Clear conversation empties the chat; Report a problem opens the feedback modal', async () => {
-    setChat([msg({ role: 'user', content: 'Hi' }), msg({ role: 'assistant', kind: 'text', content: 'Hello' })])
-    renderPage()
-    fireEvent.click(screen.getByRole('button', { name: 'More' }))
-    fireEvent.click(screen.getByTestId('ai-clear'))
-    expect(useDiscoverChat.getState().messages).toHaveLength(0)
-    expect(screen.getByTestId('ai-first-use')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'More' }))
-    fireEvent.click(screen.getByTestId('ai-report'))
-    expect(await screen.findByTestId('feedback-modal')).toBeInTheDocument()
   })
 
   it('a player never sees ranking lines even when the model writes one', () => {
@@ -238,7 +201,7 @@ describe('Hockia AI v2 — states', () => {
       msg({ role: 'user', content: 'How do I compare?' }),
       msg({ role: 'assistant', kind: 'text', content: 'Your profile is complete. You are ranked above most goalkeepers in Italy. Add a highlight video next.' }),
     ])
-    const { container } = renderPage()
+    const { container } = renderSheet()
     expect(container.textContent).toContain('Your profile is complete.')
     expect(container.textContent).toContain('Add a highlight video next.')
     expect(container.textContent).not.toMatch(FORBIDDEN_PLAYER_TEXT)

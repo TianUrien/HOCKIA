@@ -619,7 +619,7 @@ export const SIGNING_CLUB_MISSING_MESSAGE = 'This signing can’t be confirmed y
 export function signingErrorMessage(err: unknown, fallback: string): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
-  return hit ? `${hit.replace('\'', '’')}.` : fallback
+  return hit ? `${hit.replaceAll('\'', '’')}.` : fallback
 }
 
 // ── Club lists: where road applicants sit, and the grey tag on the row ──

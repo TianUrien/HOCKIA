@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 
 // Both import chains reach @/lib/supabase, which throws at module load
 // without env (CI has no .env.local): homeInstrumentation via AiScoutBar,
@@ -14,6 +14,7 @@ vi.mock('@/lib/homeInstrumentation', () => ({
 
 import { aggregateRolesHealth, type RoleHealth } from '@/hooks/useRolesHealth'
 import { AiScoutBar } from '@/components/home/pulse/AiScoutBar'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 const role = (over: Partial<RoleHealth>): RoleHealth => ({
   opportunity_id: 'o1',
@@ -59,20 +60,25 @@ describe('AiScoutBar', () => {
       </MemoryRouter>,
     )
 
-  it('submits a typed query to /discover?q=…', () => {
+  // One Hockia AI sheet (2026-10-22): the bar opens the sheet, no navigation.
+  beforeEach(() => useHockiaAiSheet.setState({ open: false, seed: null }))
+
+  it('opens the Hockia AI sheet and sends a typed query', () => {
     renderBar()
     fireEvent.change(screen.getByLabelText('Ask the AI scout'), {
       target: { value: 'available defenders with EU passport' },
     })
     fireEvent.click(screen.getByLabelText('Search with AI scout'))
-    expect(screen.getByTestId('loc').textContent).toBe(
-      '/discover?q=available%20defenders%20with%20EU%20passport',
-    )
+    const s = useHockiaAiSheet.getState()
+    expect(s.open).toBe(true)
+    expect(s.entry).toBe('home')
+    expect(s.seed).toEqual({ text: 'available defenders with EU passport', send: true })
+    expect(screen.queryByTestId('loc')).toBeNull()
   })
 
-  it('goes to /discover with no query when tapped empty', () => {
+  it('opens the sheet ready to type when tapped empty', () => {
     renderBar()
     fireEvent.click(screen.getByLabelText('Search with AI scout'))
-    expect(screen.getByTestId('loc').textContent).toBe('/discover')
+    expect(useHockiaAiSheet.getState()).toMatchObject({ open: true, seed: null })
   })
 })

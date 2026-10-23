@@ -112,7 +112,7 @@ function PhotoStep({ facts, onDone }: { facts: ProfileFacts | null; onDone: () =
     setError(null)
     if (isNativePlatform()) {
       try {
-        const r = await pickImageNative('prompt')
+        const r = await pickImageNative('prompt', { crop: false })
         if (r) setPick({ kind: 'file', file: r.file, preview: URL.createObjectURL(r.file) })
       } catch (err) {
         logger.warn('[NextSteps] native picker', err)

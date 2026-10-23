@@ -1,0 +1,46 @@
+{
+ "_doc": "Known serious/critical axe rules per screen on 2026-10-23 (founder: guard against NEW kinds of accessibility bugs; fix these in a follow-up and remove them here). Keyed by Playwright project.",
+ "projects": {
+  "mobile-player": {
+   "/home": [
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "label-content-name-mismatch"
+   ],
+   "/community": [
+    "label-content-name-mismatch"
+   ],
+   "/opportunities": [
+    "label-content-name-mismatch"
+   ],
+   "/messages": [],
+   "/dashboard/profile": [
+    "aria-prohibited-attr",
+    "label-content-name-mismatch",
+    "link-name"
+   ],
+   "/search": []
+  },
+  "chromium-player": {
+   "/home": [
+    "aria-hidden-focus",
+    "aria-prohibited-attr",
+    "label-content-name-mismatch"
+   ],
+   "/community": [
+    "color-contrast",
+    "label-content-name-mismatch"
+   ],
+   "/opportunities": [
+    "label-content-name-mismatch"
+   ],
+   "/messages": [],
+   "/dashboard/profile": [
+    "aria-prohibited-attr",
+    "label-content-name-mismatch",
+    "link-name"
+   ],
+   "/search": []
+  }
+ }
+}

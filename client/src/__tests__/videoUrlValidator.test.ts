@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateAndNormalizeVideoUrl, validateFullMatchUrl, videoLinkSite } from '@/lib/videoUrlValidator'
+import { safeVideoHref, validateAndNormalizeVideoUrl, validateFullMatchUrl, videoEmbedUrl, videoLinkSite, videoPlatformLabel } from '@/lib/videoUrlValidator'
 
 describe('validateAndNormalizeVideoUrl', () => {
   describe('YouTube', () => {
@@ -94,5 +94,46 @@ describe('videoLinkSite', () => {
     expect(videoLinkSite('https://www.youtube.com/watch?v=a')).toBe('youtube.com')
     expect(videoLinkSite('nope')).toBeNull()
     expect(videoLinkSite(null)).toBeNull()
+  })
+})
+
+// CodeQL 2026-10-23: hosts are matched on the parsed address, never as text,
+// and a stored link only reaches an href or iframe when it is safe.
+
+describe('video links are parsed, not substring-matched', () => {
+  it('rejects lookalike hosts and other schemes', () => {
+    for (const bad of [
+      'https://evil.com/?youtube.com&v=abc',
+      'https://youtube.com.evil.com/watch?v=abc',
+      'https://notyoutube.com/watch?v=abc',
+      'javascript:alert(1)//youtube.com?v=abc',
+      'data:text/html,<script>youtube.com</script>',
+      'https://evil.com/vimeo.com/123',
+      'https://drive.google.com.evil.com/file/d/abc/view',
+      'https://www.youtube.com/watch?v=abc"onload="x',
+    ]) {
+      expect(validateAndNormalizeVideoUrl(bad), bad).toBeNull()
+      expect(videoEmbedUrl(bad), bad).toBeNull()
+    }
+  })
+  it('still accepts real links, subdomains and links typed without https://', () => {
+    expect(validateAndNormalizeVideoUrl('https://m.youtube.com/watch?v=abc123')).toBe('https://www.youtube.com/watch?v=abc123')
+    expect(validateAndNormalizeVideoUrl('youtu.be/abc123')).toBe('https://www.youtube.com/watch?v=abc123')
+    expect(validateAndNormalizeVideoUrl('https://www.youtube.com/shorts/abc123')).toBe('https://www.youtube.com/watch?v=abc123')
+    expect(validateAndNormalizeVideoUrl('https://player.vimeo.com/video/123456')).toBe('https://vimeo.com/123456')
+  })
+  it('embeds only the provider players', () => {
+    expect(videoEmbedUrl('https://youtu.be/abc123')).toBe('https://www.youtube-nocookie.com/embed/abc123?rel=0&playsinline=1')
+    expect(videoEmbedUrl('https://vimeo.com/123456')).toBe('https://player.vimeo.com/video/123456')
+    expect(videoEmbedUrl('https://drive.google.com/open?id=abc123')).toBe('https://drive.google.com/file/d/abc123/preview')
+    expect(videoEmbedUrl('https://www.hockeytv.com/watch/1')).toBeNull()
+    expect(videoPlatformLabel('https://vimeo.com/123456')).toBe('Vimeo')
+    expect(videoPlatformLabel('https://example.com/x')).toBeNull()
+  })
+  it('safeVideoHref opens https links only', () => {
+    expect(safeVideoHref('https://www.hockeytv.com/watch/1')).toBe('https://www.hockeytv.com/watch/1')
+    for (const bad of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,x', 'http://site.com/x', 'vbscript:x', 'https://u:p@site.com/x', 'not a url', '', null, undefined]) {
+      expect(safeVideoHref(bad as string | null | undefined), String(bad)).toBeNull()
+    }
   })
 })

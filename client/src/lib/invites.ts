@@ -166,7 +166,7 @@ export function inviteErrorMessage(err: unknown): string {
   if (limit) return inviteLimitReason(Number(limit[1]))
   if (msg.startsWith('This person can')) return 'This player can’t be invited to this role.'
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
-  if (hit) return `${hit.replace('\'', '’')}.`
+  if (hit) return `${hit.replaceAll('\'', '’')}.`
   return INVITE_GENERIC_ERROR
 }
 

@@ -19,6 +19,16 @@ describe('getImageUrl', () => {
     expect(u).toContain('width=160')
   })
 
+  it('immersive: bounds width and height for a full-screen phone photo (not 800 wide)', () => {
+    const u = getImageUrl(`${OBJ}/gallery/u/a.jpg`, 'immersive')!
+    expect(u).toContain('width=1440&height=2500&resize=contain')
+    expect(u).not.toContain('width=800')
+  })
+
+  it('other presets stay width-only', () => {
+    expect(getImageUrl(`${OBJ}/avatars/u/a.jpg`, 'avatar-md')).not.toContain('height=')
+  })
+
   it('uses webp for jpeg sources (size win)', () => {
     expect(getImageUrl(`${OBJ}/avatars/u/a.jpg`, 'avatar-md')).toContain('format=webp')
   })

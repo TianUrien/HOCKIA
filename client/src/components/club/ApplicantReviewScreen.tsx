@@ -1,4 +1,4 @@
-import { videoLinkSite } from '@/lib/videoUrlValidator'
+import { safeVideoHref, videoLinkSite } from '@/lib/videoUrlValidator'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, MoreHorizontal, Target, UserRound } from 'lucide-react'
@@ -561,7 +561,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {scroll.fullGameLinks.slice(0, 2).map((l) => (
-                    <a key={l.id} href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex aspect-video flex-col justify-end overflow-hidden rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 p-3 text-left">
+                    <a key={l.id} href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex aspect-video flex-col justify-end overflow-hidden rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 p-3 text-left">
                       <span className="absolute left-2.5 top-2.5 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">Full match</span>
                       <span className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                       <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span>
@@ -809,7 +809,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 </div>
                 <div className="flex gap-2.5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {scroll.fullGameLinks.map((l) => (
-                    <a key={l.id} href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[124px] w-[220px] shrink-0 flex-col justify-end overflow-hidden rounded-xl bg-gradient-to-br from-ink-1 to-ink-2 p-2.5 text-left">
+                    <a key={l.id} href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex h-[124px] w-[220px] shrink-0 flex-col justify-end overflow-hidden rounded-xl bg-gradient-to-br from-ink-1 to-ink-2 p-2.5 text-left">
                       <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">Full match</span>
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                       <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span>
