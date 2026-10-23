@@ -2092,7 +2092,7 @@ async function handleRequest(req: Request): Promise<Response> {
         : null
     function sanitizeRoleSummary(s: string | undefined | null): string | null {
       if (!s || typeof s !== 'string') return null
-      const cleaned = s.replace(/<[^>]*>/g, '').replace(/[\r\n]/g, ' ').trim()
+      const cleaned = s.replace(/<[^>]*>/g, '').replace(/[<>]/g, '').replace(/[\r\n]/g, ' ').trim()
       if (cleaned.length === 0 || cleaned.length > 80) return null
       return cleaned
     }

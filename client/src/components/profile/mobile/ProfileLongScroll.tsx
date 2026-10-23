@@ -1,4 +1,4 @@
-import { videoLinkSite } from '@/lib/videoUrlValidator'
+import { safeVideoHref, videoLinkSite } from '@/lib/videoUrlValidator'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus, Target } from 'lucide-react'
@@ -96,7 +96,7 @@ function LinkTile({ link }: { link: ScrollFullGameLink }) {
   const title = link.match_title?.trim() || (link.opponent_team ? `vs ${link.opponent_team}` : 'Full match')
   return (
     <a
-      href={link.video_url}
+      href={safeVideoHref(link.video_url) ?? undefined}
       target="_blank"
       rel="noopener noreferrer"
       className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5 text-left"
@@ -236,7 +236,8 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
   }
   // The legacy linked highlight honours "Recruiters only" like the desktop
   // MediaTab; a viewer who may not watch it gets a locked tile instead.
-  const linkedHighlight = profile.highlight_video_url || null
+  // Only an https link is ever opened (members write these; CodeQL 2026-10-23).
+  const linkedHighlight = safeVideoHref(profile.highlight_video_url)
   const canOpenLinkedHighlight = canViewLinkedHighlight({ owner, profile, viewer })
   const highlightCount = data.highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull

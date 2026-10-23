@@ -9,7 +9,7 @@ const ADB = path.join(ANDROID_SDK, 'platform-tools', 'adb')
 /** UDID of an available simulator by name + runtime ("iOS 27.0"). */
 export function simulatorUdid(name, runtime) {
   const json = JSON.parse(execFileSync('xcrun', ['simctl', 'list', 'devices', 'available', '-j']).toString())
-  const key = Object.keys(json.devices).find((k) => k.replace('com.apple.CoreSimulator.SimRuntime.', '').replace(/-/g, ' ').replace('iOS ', 'iOS ') === runtime.replace('.', ' ') || k.endsWith(runtime.replace('iOS ', 'iOS-').replace('.', '-')))
+  const key = Object.keys(json.devices).find((k) => k.replace('com.apple.CoreSimulator.SimRuntime.', '').replace(/-/g, ' ') === runtime.replace('.', ' ') || k.endsWith(runtime.replace('iOS ', 'iOS-').replace('.', '-')))
   const list = key ? json.devices[key] : Object.values(json.devices).flat()
   const dev = list.find((d) => d.name === name && d.isAvailable)
   if (!dev) throw new Error(`Simulator "${name}" on ${runtime} not found. Available: ${list.map((d) => d.name).join(', ')}`)

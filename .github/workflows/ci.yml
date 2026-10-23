@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main, staging]
 
+# The job token is read-only unless a job asks for more (CodeQL 2026-10-23;
+# the security job adds pull-requests: read).
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '20'
 

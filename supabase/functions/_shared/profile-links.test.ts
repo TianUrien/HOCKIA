@@ -25,3 +25,9 @@ Deno.test('pages are read as visible text only', () => {
   assertEquals(t.includes('Club de Campo'), true)
   assertEquals(t.includes('Plantel 2023 & 2024'), true)
 })
+
+// CodeQL 2026-10-23: &amp; is decoded last, so an escaped entity stays text.
+Deno.test('htmlToText decodes &amp; last (no double unescaping)', () => {
+  assertEquals(htmlToText('<p>a &amp;lt;b&amp;gt; c</p>'), 'a &lt;b&gt; c')
+  assertEquals(htmlToText('<p>Plantel 2023 &amp; 2024</p>'), 'Plantel 2023 & 2024')
+})
