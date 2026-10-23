@@ -28,5 +28,8 @@ export const useToastStore = create<ToastStore>((set) => ({
       toasts: state.toasts.filter((toast) => toast.id !== id),
     }))
   },
-  clearToasts: () => set({ toasts: [] }),
+  // No-op when nothing is showing: a sheet re-announces itself whenever its
+  // onClose changes, and a fresh [] would re-render every store subscriber
+  // and loop.
+  clearToasts: () => set((state) => (state.toasts.length ? { toasts: [] } : state)),
 }))

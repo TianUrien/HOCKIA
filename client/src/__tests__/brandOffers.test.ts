@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// No Supabase env in CI: the RPC wrappers are not exercised here.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import {
   OFFER_LIVE_LIMIT,
   audienceLine,
