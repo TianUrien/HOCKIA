@@ -49,6 +49,7 @@ import { OwnerButtons, PrimaryCard, PrivateStats, RecruitingCard } from './Owner
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
+import { safeVideoHref } from '@/lib/videoUrlValidator'
 
 /**
  * Profile v2 — player, phone (Figma t24oVt… PR1 public 97:4 · PR2 own 101:46 ·
@@ -230,7 +231,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     else if (locked && !canWatchLocked) setVideoBlock('locked')
     else setPlayer(v)
   }
-  const linkedHighlight = profile.highlight_video_url || null
+  // Only an https link is ever opened (members write these; CodeQL 2026-10-23).
+  const linkedHighlight = safeVideoHref(profile.highlight_video_url)
   const canOpenLinkedHighlight = canViewLinkedHighlight({ owner, profile, viewer })
   const highlightCount = data.highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
@@ -529,7 +531,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               {shownFullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {data.fullGameLinks.map((l) => (
                 <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}>
-                  <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
+                  <a href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               ))}
             </div>

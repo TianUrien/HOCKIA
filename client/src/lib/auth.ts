@@ -28,6 +28,7 @@ import { clearSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { clearRecruitingContext } from '@/hooks/useRecruitingContext'
 import { clearSignedThumbnailCache } from '@/hooks/useSignedVideoThumbnail'
 import { getCaptchaToken } from '@/lib/captcha'
+import { clearPersonalDraftsOnDevice } from '@/lib/profileDrafts'
 
 interface AuthState {
   user: User | null
@@ -411,6 +412,9 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
       // account on a shared device.
       window.localStorage.removeItem('hockia_recent_searches')
       window.localStorage.removeItem('playr_recent_searches')
+      // Unfinished profile / onboarding / role drafts can hold a date of
+      // birth or nationality: they must not stay on a shared device either.
+      clearPersonalDraftsOnDevice()
     } catch (storageError) {
       logger.error('[AUTH_STORE] Failed to remove cached session from storage', { storageError })
     }

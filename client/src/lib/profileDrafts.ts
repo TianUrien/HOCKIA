@@ -69,3 +69,21 @@ export function clearAllProfileDraftsForUser(userId: string) {
 
   keysToRemove.forEach((key) => window.localStorage.removeItem(key))
 }
+
+/**
+ * Drafts that can hold personal details (date of birth, nationality, the
+ * profile form, a role being posted). Cleared from this browser on sign-out,
+ * so on a shared device an abandoned draft never stays for the next person
+ * (CodeQL "clear-text storage", 2026-10-23).
+ */
+const PERSONAL_DRAFT_PREFIXES = [`${PROFILE_DRAFT_PREFIX}:`, 'hockia-onboarding-v2:', 'hockia-onboarding-draft:', 'vacancyDraft:']
+
+export function clearPersonalDraftsOnDevice() {
+  if (!hasWindow()) return
+  const keys: string[] = []
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index)
+    if (key && PERSONAL_DRAFT_PREFIXES.some((p) => key.startsWith(p))) keys.push(key)
+  }
+  keys.forEach((key) => window.localStorage.removeItem(key))
+}
