@@ -599,7 +599,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
               <img
                 key={current}
                 ref={(el) => { if (el?.complete && el.naturalWidth > 0) setShownSrc(current) }}
-                src={getImageUrl(current, 'feed-full') ?? current}
+                src={getImageUrl(current, 'immersive') ?? current}
                 alt=""
                 className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${shownSrc === current ? 'opacity-100' : 'opacity-0'}`}
                 decoding="async"
@@ -1132,7 +1132,7 @@ const preloaded = new Set<string>()
 /** Download and decode an image ahead of time (same URL the card uses). */
 function preloadImage(raw: string | null) {
   if (!raw || typeof Image === 'undefined') return
-  const src = getImageUrl(raw, 'feed-full') ?? raw
+  const src = getImageUrl(raw, 'immersive') ?? raw
   if (preloaded.has(src)) return
   preloaded.add(src)
   const img = new Image()
@@ -1242,7 +1242,7 @@ function ImmersivePage(p: ImmersivePageProps) {
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
-            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            src={getImageUrl(p.current, 'immersive') ?? p.current}
             alt=""
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
             decoding="async"
@@ -1449,7 +1449,7 @@ function DesktopPage(p: ImmersivePageProps) {
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
-            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            src={getImageUrl(p.current, 'immersive') ?? p.current}
             alt=""
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
             decoding="async"

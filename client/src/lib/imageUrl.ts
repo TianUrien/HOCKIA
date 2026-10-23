@@ -21,10 +21,13 @@ export type ImageSize =
   | 'card-thumb'  // Small thumbnails in cards, lists
   | 'gallery'     // Gallery grid tiles
   | 'lightbox'    // Full-screen lightbox view
+  | 'immersive'   // Full-bleed photo filling a phone screen (Community member deck)
   | 'original'    // No transform — raw uploaded file
 
 interface SizeConfig {
   width: number
+  /** Also bound the height (resize=contain keeps the aspect): for portrait full-screen photos. */
+  height?: number
   quality: number
 }
 
@@ -43,6 +46,10 @@ const SIZE_CONFIG: Record<ImageSize, SizeConfig> = {
   'card-thumb': { width: 200,  quality: 65 },
   'gallery':    { width: 400,  quality: 70 },
   'lightbox':   { width: 1200, quality: 85 },
+  // A phone screen is ~1179 × 2556 px and the photo covers it, so the height
+  // matters as much as the width (800 wide was stretched 3–5×, 2026-10-23).
+  // 2500 is Supabase's render limit; smaller sources are served as stored.
+  'immersive':  { width: 1440, height: 2500, quality: 85 },
   'original':   { width: 0,    quality: 0 },
 }
 
@@ -80,7 +87,8 @@ export function getImageUrl(
   // fails, StorageImage.fallbackSrc falls back to the original full-size file.
   const isPng = url.split('?')[0].toLowerCase().endsWith('.png')
   const formatParam = isPng ? '' : '&format=webp'
-  return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}${formatParam}`
+  const heightParam = config.height ? `&height=${config.height}` : ''
+  return `${renderUrl}?width=${config.width}${heightParam}&resize=contain&quality=${config.quality}${formatParam}`
 }
 
 /**
