@@ -49,6 +49,14 @@ New data needed: player opt-in `open_to_brand_partnerships`; reply state for bra
 - Build order: Offers + Home first (offer table, admin review, brand editor, offer card on Home and under Hockia AI answers), then Results, then ambassador candidates, then contribution facts.
 - Starting point in production: 8 brands, 3 products, 0 posts, 0 ambassadors, 251 players. Most breakdowns will read "Fewer than 5" at first, which is why "Who you could reach" (market size) matters early.
 
+## Phase 1 design (2026-10-23)
+Figma page "08 · Brands, offers (Phase 1)", section "BO":
+- B1 brand Offers list (up to 5 live; states Draft, In review, Changes requested in amber, Live, Paused, Ended).
+- B2 offer editor with live preview: photo, title (60), what members get (140, no "best/cheapest"), link, countries plus an optional region or city, roles, dates, "Send for review".
+- B3 actions on a live offer: Edit (back to review, the live version stays up), Pause, Duplicate, See results, End.
+- A1 admin review queue (desktop): oldest first, preview, facts, a five-point checklist, a note, Request changes or Approve.
+- H1 Home card after the related move, with the reason line and "Not useful"; H2 "Not useful" folds the card with Undo and an optional reason (brands see totals; "Hide this brand"); H3 under a Hockia AI answer after a "From brands" divider, never changing the answer.
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (founder, 2026-10-23).
