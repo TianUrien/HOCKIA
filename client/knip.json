@@ -17,6 +17,10 @@
     "supabase"
   ],
   "ignoreUnresolved": [
-    "google.maps"
+    "google.maps",
+    "/src/lib/crestColor.ts"
+  ],
+  "ignore": [
+    "src/lib/polyfills.ts"
   ]
 }
