@@ -1,25 +1,26 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
 
 /**
  * AI scout bar (Home V2 Phase 2, Q7: replaces the keyword pill for club +
- * brand). A real input: type a query → /discover?q=… (the seeded query
- * auto-sends there); tap-through empty → /discover ready to type.
+ * brand). A real input: type a query → the Hockia AI sheet opens and sends
+ * it; tap-through empty → the sheet, ready to type (one sheet, 2026-10-22).
  */
 const MODULE_ID = 'ai_scout_bar'
 const POSITION = 1
 
 export function AiScoutBar() {
-  const navigate = useNavigate()
+  const showAi = useHockiaAiSheet((s) => s.show)
   const [query, setQuery] = useState('')
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
 
   const submit = () => {
     trackModuleClick(MODULE_ID, POSITION)
     const q = query.trim()
-    navigate(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover')
+    showAi('home', 'chat', q ? { text: q, send: true } : null)
+    setQuery('')
   }
 
   return (

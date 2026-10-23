@@ -102,6 +102,10 @@ export async function optimizeImage(
       throw new Error('Failed to get canvas context')
     }
     
+    // Browsers default to fast, soft downscaling; ask for the high-quality filter.
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+
     // Draw resized image
     ctx.drawImage(
       img,
@@ -193,14 +197,17 @@ export async function generateThumbnail(
 
 export async function optimizeAvatarImage(file: File): Promise<File> {
   const isPng = file.type === 'image/png'
+  // The profile photo is also the full-screen photo in Community, so keep it
+  // large: 512 px was stretched 5× on a phone (2026-10-23). The square stays,
+  // for the round avatars; small sizes are served by the render presets.
   return optimizeImage(file, {
-    maxWidth: 1024,
-    maxHeight: 1024,
-    maxSizeMB: 1.5,
-    quality: 0.92,
+    maxWidth: 1440,
+    maxHeight: 1440,
+    maxSizeMB: 3,
+    quality: 0.9,
     mimeType: isPng ? 'image/png' : 'image/jpeg',
     forceSquare: true,
-    squareSize: 512,
+    squareSize: 1440,
   })
 }
 

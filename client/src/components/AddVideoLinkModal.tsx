@@ -8,6 +8,7 @@ import Input from './Input'
 import type { Profile } from '@/lib/supabase'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { invalidateProfile } from '@/lib/profile'
+import { validateAndNormalizeVideoUrl, videoEmbedUrl, videoPlatformLabel } from '@/lib/videoUrlValidator'
 
 interface AddVideoLinkModalProps {
   isOpen: boolean
@@ -50,46 +51,8 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
     }
   }, [isOpen, currentVideoUrl])
 
-  const validateAndNormalizeUrl = (url: string): string | null => {
-    try {
-      // YouTube patterns
-      if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        let videoId = ''
-        if (url.includes('youtu.be/')) {
-          videoId = url.split('youtu.be/')[1]?.split('?')[0] || ''
-        } else if (url.includes('youtube.com')) {
-          const urlParams = new URLSearchParams(url.split('?')[1] || '')
-          videoId = urlParams.get('v') || ''
-        }
-        if (!videoId) return null
-        return `https://www.youtube.com/watch?v=${videoId}`
-      }
-
-      // Vimeo patterns
-      if (url.includes('vimeo.com')) {
-        const videoId = url.split('vimeo.com/')[1]?.split('?')[0]
-        if (!videoId) return null
-        return `https://vimeo.com/${videoId}`
-      }
-
-      // Google Drive patterns
-      if (url.includes('drive.google.com')) {
-        let fileId = ''
-        if (url.includes('/file/d/')) {
-          fileId = url.split('/file/d/')[1]?.split('/')[0] || ''
-        } else {
-          const urlParams = new URLSearchParams(url.split('?')[1] || '')
-          fileId = urlParams.get('id') || ''
-        }
-        if (!fileId) return null
-        return `https://drive.google.com/file/d/${fileId}/view`
-      }
-
-      return null
-    } catch {
-      return null
-    }
-  }
+  // One checker for every video surface (parses the address; CodeQL 2026-10-23).
+  const validateAndNormalizeUrl = validateAndNormalizeVideoUrl
 
   const handleSave = async () => {
     if (!videoUrl.trim()) {
@@ -235,31 +198,10 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
 
 // Video Preview Component
 function VideoPreview({ url }: { url: string }) {
-  const getEmbedUrl = (url: string) => {
-    if (url.includes('youtube.com')) {
-      const videoId = new URLSearchParams(url.split('?')[1]).get('v')
-      return `https://www.youtube.com/embed/${videoId}`
-    }
-
-    if (url.includes('vimeo.com')) {
-      const videoId = url.split('vimeo.com/')[1]
-      return `https://player.vimeo.com/video/${videoId}`
-    }
-
-    if (url.includes('drive.google.com')) {
-      const fileId = url.split('/file/d/')[1]?.split('/')[0]
-      return `https://drive.google.com/file/d/${fileId}/preview`
-    }
-
-    return url
-  }
-
-  const embedUrl = getEmbedUrl(url)
-  const platform = url.includes('youtube')
-    ? 'YouTube'
-    : url.includes('vimeo')
-    ? 'Vimeo'
-    : 'Google Drive'
+  // Only a real YouTube / Vimeo / Drive player is embedded, never the raw text.
+  const embedUrl = videoEmbedUrl(url)
+  const platform = videoPlatformLabel(url)
+  if (!embedUrl) return null
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden bg-black aspect-video">

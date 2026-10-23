@@ -13,7 +13,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
+import { uploadProfilePhoto } from '@/lib/profilePhoto'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
@@ -132,6 +133,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
     return base
   })
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url ?? '')
+  // The same photo in its own shape, for full-screen views (saved with avatar_url).
+  const [avatarFullUrl, setAvatarFullUrl] = useState<string | null>(profile?.avatar_full_url ?? null)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -172,14 +175,13 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
     setUploading(true)
     setError(null)
     try {
-      const optimized = await optimizeAvatarImage(file)
-      const ext = optimized.name.split('.').pop() || 'jpg'
-      const path = `${user.id}/avatar_${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { upsert: true, cacheControl: '31536000' })
-      if (uploadError) throw uploadError
-      const publicUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const { avatarUrl: publicUrl, avatarFullUrl: fullUrl } = await uploadProfilePhoto(user.id, file)
       const previous = avatarUrl || profile?.avatar_url || null
+      const previousFull = avatarFullUrl
       setAvatarUrl(publicUrl)
+      setAvatarFullUrl(fullUrl)
+      if (previousFull && previousFull !== fullUrl) pendingCleanup.queue({ bucket: 'avatars', publicUrl: previousFull, context: 'player-setup:replace-avatar-full' })
+      if (fullUrl) pendingCleanup.unqueue(fullUrl)
       // Replaced files go only after the row points at the new one (incident 2026-07-30).
       if (previous && previous !== publicUrl) pendingCleanup.queue({ bucket: 'avatars', publicUrl: previous, context: 'player-setup:replace-avatar' })
       pendingCleanup.unqueue(publicUrl)
@@ -194,7 +196,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   const pickPhoto = async () => {
     if (isNativePlatform()) {
       try {
-        const result = await pickImageNative('prompt')
+        const result = await pickImageNative('prompt', { crop: false })
         if (result) await uploadPhoto(result.file)
       } catch (err) {
         logger.error('[PlayerSetup] native picker failed', err)
@@ -251,6 +253,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         position: draft.position,
         secondary_position: draft.secondaryPosition || null,
         avatar_url: avatarUrl || null,
+        // Only when the photo changed here: never overwrite a full photo this screen didn't load.
+        ...(avatarUrl !== (profile?.avatar_url ?? '') ? { avatar_full_url: avatarUrl ? avatarFullUrl : null } : {}),
       }).eq('id', user.id)
       if (updateError) throw updateError
       await pendingCleanup.flush()

@@ -1,4 +1,4 @@
-import { videoLinkSite } from '@/lib/videoUrlValidator'
+import { safeVideoHref, videoLinkSite } from '@/lib/videoUrlValidator'
 import { useState } from 'react'
 import { ExternalLink, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -86,7 +86,8 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
   const fullMatches = videos.filter((v) => v.kind === 'full_match')
   const reels = videos.filter((v) => v.kind === 'reel')
   // The legacy linked highlight honours "Recruiters only" (desktop MediaTab rule).
-  const linkedHighlight = profile.highlight_video_url || null
+  // Only an https link is ever opened (members write these; CodeQL 2026-10-23).
+  const linkedHighlight = safeVideoHref(profile.highlight_video_url)
   const canOpenLinkedHighlight = canViewLinkedHighlight({ owner: own, profile, viewer })
   const highlightCount = highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullCount = fullMatches.length + links.length + lockedFull
@@ -133,7 +134,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
               <Group title="Full matches" count={fullCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
-                  {links.map((l) => <LinkTile key={l.id} title={linkTitle(l)} href={l.video_url} date={l.match_date} locked={l.visibility === 'recruiters'} />)}
+                  {links.flatMap((l) => { const href = safeVideoHref(l.video_url); return href ? [<LinkTile key={l.id} title={linkTitle(l)} href={href} date={l.match_date} locked={l.visibility === 'recruiters'} />] : [] })}
                   {Array.from({ length: lockedFull }, (_, i) => <LockedVideoTile key={`locked-f-${i}`} onOpen={showLocked} className="aspect-[16/9] w-full" />)}
                 </div>
               </Group>

@@ -34,6 +34,7 @@ vi.mock('@/lib/analytics', () => ({ trackSearch: vi.fn() }))
 
 import { SearchV2Screen } from '@/components/search/SearchV2Screen'
 import { memberMetaLine, memberProfilePath, seeAllMembersLabel } from '@/lib/searchV2'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 const RECENT_KEY = 'hockia_recent_searches'
 
@@ -119,13 +120,13 @@ describe('Search v2 — results', () => {
 })
 
 describe('Search v2 — Ask Hockia AI', () => {
-  it('shows the row as soon as there is a query and opens Hockia AI with it prefilled', async () => {
+  it('shows the row as soon as there is a query and asks it in the Hockia AI sheet', async () => {
     renderSearch('/search?q=Lazio')
     const ai = await screen.findByTestId('search-v2-ask-ai')
     expect(ai).toHaveTextContent('Ask Hockia AI about “Lazio”')
     expect(ai).toHaveTextContent('Players, coaches, clubs, brands and umpires')
     fireEvent.click(ai)
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/discover?q=Lazio'))
+    await waitFor(() => expect(useHockiaAiSheet.getState()).toMatchObject({ open: true, entry: 'search', seed: { text: 'Lazio', send: true } }))
   })
 
   it('stays available when nothing matches, under the no-results copy', async () => {

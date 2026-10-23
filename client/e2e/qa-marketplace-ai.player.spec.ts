@@ -88,10 +88,10 @@ test.describe('@qa marketplace + AI floating button', () => {
     // contributes a Marketplace button.
     await expect(page.getByRole('button', { name: 'Marketplace', exact: true })).toBeVisible()
 
-    // Legacy header Discover (Sparkles) button is gone on mobile. Desktop
-    // keeps it under aria-label="Hockia AI"; both names absent on mobile.
+    // No legacy "Discover" button. Since 2026-10-22 (founder) the header
+    // carries the Hockia AI mascot for every role, on mobile too.
     await expect(page.getByRole('button', { name: 'Discover', exact: true })).toHaveCount(0)
-    await expect(page.locator('header').getByRole('button', { name: 'Hockia AI', exact: true })).toHaveCount(0)
+    await expect(page.locator('header').getByTestId('header-hockia-ai')).toBeVisible()
   })
 
   test('Marketplace renders correctly', async ({ page }) => {

@@ -35,6 +35,7 @@ vi.mock('@/hooks/useFriendship', () => ({
 vi.mock('@/hooks/useFriendsInCommonBatch', () => ({ useFriendsInCommonSummary: () => ({ people: [], count: 0 }), prefetchFriendsInCommon: vi.fn(() => Promise.resolve()) }))
 vi.mock('@/hooks/useFriendsAtClub', () => ({ useFriendsAtClub: () => ({ people: [], linked: false, loading: false }) }))
 vi.mock('@/hooks/useMemberPhotos', () => ({ useMemberPhotos: () => ({ data: [] }), prefetchMemberPhotos: vi.fn(() => Promise.resolve()) }))
+vi.mock('@/hooks/useAvatarFull', () => ({ useAvatarFull: () => ({ data: null }), prefetchAvatarFull: vi.fn(() => Promise.resolve()), cachedAvatarFull: () => undefined }))
 vi.mock('@/hooks/useMemberAges', () => ({ useMemberAges: () => new Map() }))
 vi.mock('@/hooks/useClubCrestColors', () => ({ useClubCrestColors: () => new Map() }))
 vi.mock('@/hooks/useClubViewOfPlayer', () => ({ useClubViewOfPlayer: () => ({ enabled: false, roles: [], shortlistedRoleIds: [], fit: null, fitRole: null, application: null, shortlisted: false, busy: false }) }))

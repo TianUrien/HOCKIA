@@ -95,6 +95,7 @@ import { buildPlayerKeyFacts } from '@/lib/keyFacts'
 import { playerMediaCounts } from '@/lib/playerVideoChecklist'
 import { feedbackMessageKind } from '@/lib/applicationStatus'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf-8')
 
@@ -243,15 +244,23 @@ describe('club screens', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open role: Women’s 1st team midfielder' }))
     expect(navigateSpy).toHaveBeenCalledWith('/opportunities/opp-9')
   })
-  it('the club phone header has a Hockia AI (sparkles) button to /discover; players do not', () => {
-    authState = { user: { id: 'club-1' }, profile: { id: 'club-1', role: 'club' } }
-    const { unmount } = render(<MemoryRouter><Header /></MemoryRouter>)
-    fireEvent.click(screen.getByTestId('header-hockia-ai'))
-    expect(navigateSpy).toHaveBeenCalledWith('/discover')
-    unmount()
-    authState = { user: { id: 'player-1' }, profile: { id: 'player-1', role: 'player' } }
-    render(<MemoryRouter><Header /></MemoryRouter>)
-    expect(screen.queryByTestId('header-hockia-ai')).toBeNull()
+  // Founder 2026-10-22: the Hockia AI mascot (not a sparkle) is in the phone
+  // top bar for every role, and opens the one Hockia AI sheet.
+  it('every role gets the Hockia AI mascot in the phone header, opening the sheet', () => {
+    for (const role of ['club', 'player', 'coach', 'brand', 'umpire']) {
+      navigateSpy.mockClear()
+      useHockiaAiSheet.setState({ open: false })
+      authState = { user: { id: `${role}-1` }, profile: { id: `${role}-1`, role } }
+      const { unmount } = render(<MemoryRouter><Header /></MemoryRouter>)
+      const button = screen.getByTestId('header-hockia-ai')
+      expect(button.getAttribute('aria-label')).toBe('Ask Hockia AI')
+      expect(button.querySelector('img[src^="/hockia-ai/button_calm"]')).not.toBeNull()
+      expect(button.querySelector('svg')).toBeNull() // no sparkle icon
+      fireEvent.click(button)
+      expect(navigateSpy).not.toHaveBeenCalled()
+      expect(useHockiaAiSheet.getState()).toMatchObject({ open: true, entry: 'header' })
+      unmount()
+    }
   })
 
   it('the members count comes from the same server search as the list', () => {

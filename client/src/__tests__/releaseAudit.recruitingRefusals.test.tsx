@@ -89,7 +89,7 @@ describe('A · every rule the server can refuse with has its own words on the cl
         const shown = signingErrorMessage({ message: raise.message, details: raise.detail ?? undefined }, FALLBACK)
         expect(shown, `${name}: "${raise.message}"`).not.toBe(FALLBACK)
         // Same sentence, typographic apostrophe, one full stop.
-        expect(shown, name).toBe(`${raise.message.replace("'", '’')}.`)
+        expect(shown, name).toBe(`${raise.message.replaceAll("'", '’')}.`)
         checked += 1
       }
     }

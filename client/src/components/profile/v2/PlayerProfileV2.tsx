@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
-const HockiaAiSheet = lazy(() => import('@/components/hockiaAi/HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -50,6 +49,7 @@ import { OwnerButtons, PrimaryCard, PrivateStats, RecruitingCard } from './Owner
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
+import { safeVideoHref } from '@/lib/videoUrlValidator'
 
 /**
  * Profile v2 — player, phone (Figma t24oVt… PR1 public 97:4 · PR2 own 101:46 ·
@@ -124,7 +124,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const data = useProfileScrollData(profileId)
   // "Fill my profile with Hockia AI" (ruling 2026-10-18): the owner opens the
   // builder from a thin Career section; after "Save all" the list reloads.
-  const aiOpen = useHockiaAiSheet((st) => st.open)
   const showAi = useHockiaAiSheet((st) => st.show)
   const refreshScroll = data.refresh
   useEffect(() => {
@@ -232,7 +231,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     else if (locked && !canWatchLocked) setVideoBlock('locked')
     else setPlayer(v)
   }
-  const linkedHighlight = profile.highlight_video_url || null
+  // Only an https link is ever opened (members write these; CodeQL 2026-10-23).
+  const linkedHighlight = safeVideoHref(profile.highlight_video_url)
   const canOpenLinkedHighlight = canViewLinkedHighlight({ owner, profile, viewer })
   const highlightCount = data.highlights.length + (linkedHighlight ? 1 : 0) + lockedHighlights
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
@@ -417,7 +417,6 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   return (
     <div className="bg-white pb-8" data-testid="profile-v2">
-      {owner && aiOpen && (<Suspense fallback={null}><HockiaAiSheet /></Suspense>)}
       <CompactHeader name={name} avatarUrl={profile.avatar_url} visible={compact} owner={owner} onBack={back} onShare={() => void share()} right={moreMenu('flex h-11 w-11 items-center justify-center text-ink-1')} />
 
       <ProfileLayout actions={buttons} hero={<div ref={heroRef}>
@@ -532,7 +531,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               {shownFullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {data.fullGameLinks.map((l) => (
                 <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}>
-                  <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
+                  <a href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               ))}
             </div>

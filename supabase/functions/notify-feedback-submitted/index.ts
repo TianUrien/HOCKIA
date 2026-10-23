@@ -229,7 +229,7 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     console.error('[notify-feedback] uncaught', err)
     return new Response(
-      JSON.stringify({ error: 'internal', detail: String(err instanceof Error ? err.message : err) }),
+      JSON.stringify({ error: 'internal' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }

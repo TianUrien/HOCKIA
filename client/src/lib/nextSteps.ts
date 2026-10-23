@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { invalidateProfile } from '@/lib/profile'
 import { useAuthStore } from '@/lib/auth'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
+import { profilePhotoFields, uploadProfilePhoto } from '@/lib/profilePhoto'
 import type { SocialPlatform } from '@/lib/socialLinks'
 
 /**
@@ -84,16 +85,11 @@ async function afterSave(userId: string, reason: string) {
 export async function setAvatarFromFile(userId: string, file: File): Promise<string> {
   const check = validateImage(file, { maxFileSizeMB: 10 })
   if (!check.valid) throw new Error(check.error || 'Use a JPG or PNG photo')
-  const optimized = await optimizeAvatarImage(file)
-  const ext = optimized.name.split('.').pop() || 'jpg'
-  const path = `${userId}/avatar_${Date.now()}.${ext}`
-  const { error: upErr } = await supabase.storage.from('avatars').upload(path, optimized, { upsert: true, cacheControl: '31536000' })
-  if (upErr) throw upErr
-  const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
-  const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId)
+  const urls = await uploadProfilePhoto(userId, file)
+  const { error } = await supabase.from('profiles').update(profilePhotoFields(urls)).eq('id', userId)
   if (error) throw error
   await afterSave(userId, 'hockia-ai-photo')
-  return url
+  return urls.avatarUrl
 }
 
 /** Use one of the member's gallery photos as the profile photo (copied into avatars). */

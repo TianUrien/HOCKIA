@@ -48,7 +48,7 @@ function eyebrowFor(q: string): 'LEARN' | 'FIND' {
  * suggestions and no "+" in the composer. Beta everywhere.
  */
 export function HockiaAiSheet() {
-  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep } = useHockiaAiSheet()
+  const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep, seed, takeSeed } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
@@ -103,6 +103,17 @@ export function HockiaAiSheet() {
     setInput('')
     setDetent('large')
   }, [isPending, sendMessage, setDetent, roleContext])
+
+  // Opened with text (Search, the Home bar, an old /discover?q= link): send
+  // what the member already asked, or leave a link's text in the composer.
+  // takeSeed clears it, so a Strict-Mode re-run or a reopen never resends.
+  useEffect(() => {
+    if (!open || !seed || isPending) return
+    const s = takeSeed()
+    if (!s) return
+    if (s.send) send(s.text)
+    else { setInput(s.text.slice(0, COMPOSER_MAX_LENGTH)); inputRef.current?.focus() }
+  }, [open, seed, isPending, takeSeed, send])
 
   // Grabber: drag down to step down (large → medium → closed), up to grow.
   const onPointerDown = (e: React.PointerEvent) => {

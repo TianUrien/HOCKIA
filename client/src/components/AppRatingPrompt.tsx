@@ -26,7 +26,7 @@ const COMMENT_MAX = 500
 // Calm browse/feed surfaces only. Everything else (messages, dashboard editing,
 // opportunity apply, onboarding) is intentionally excluded.
 function isCalmSurface(pathname: string): boolean {
-  return pathname === '/home' || pathname === '/discover' || pathname.startsWith('/community')
+  return pathname === '/home' || pathname.startsWith('/community')
 }
 
 export default function AppRatingPrompt() {

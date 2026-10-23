@@ -60,10 +60,6 @@ export function memberProfilePath(role: RoleLike, id: string): string {
   return `${base}?ref=search`
 }
 
-export function discoverPathFor(query: string): string {
-  return `/discover?q=${encodeURIComponent(query.trim())}`
-}
-
 export function communityPathFor(query: string): string {
   return `/community?q=${encodeURIComponent(query.trim())}`
 }

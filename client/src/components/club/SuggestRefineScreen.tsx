@@ -78,7 +78,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
   }
 
   return (
-    // Full screen above the tab bar, like Hockia AI (DiscoverPage): Figma D5.2 has no tab bar.
+    // Full screen above the tab bar, Figma D5.2 has no tab bar.
     <div className="fixed inset-x-0 top-0 z-30 flex h-[100dvh] flex-col bg-white lg:hidden" data-testid="suggest-refine-screen">
       <div className="shrink-0 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
       <DetailNavBar parent={REFINE_BACK} title={REFINE_TITLE} showParent fallbackPath={`/dashboard/opportunities/${roleId}/suggested`} />
