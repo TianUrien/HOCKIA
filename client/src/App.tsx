@@ -131,6 +131,7 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 // rich BrandDashboard component used by DashboardRouter at /dashboard/profile.
 // Import removed; legacy route now redirects.
 const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
+const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
 
 // Lazy load admin components (code splitting)
 const AdminGuard = lazyWithRetry(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
@@ -169,6 +170,7 @@ const AdminCommunity = lazyWithRetry(() => import('@/features/admin/pages/AdminC
 const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 const AdminMessagingHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminMessagingHealth').then(m => ({ default: m.AdminMessagingHealth })))
 const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/AdminAttribution').then(m => ({ default: m.AdminAttribution })))
+const AdminBrandOffers = lazyWithRetry(() => import('@/features/admin/pages/AdminBrandOffers'))
 const AdminCountries = lazyWithRetry(() => import('@/features/admin/pages/AdminCountries').then(m => ({ default: m.AdminCountries })))
 
 // Public investor dashboard (no auth required)
@@ -474,6 +476,10 @@ function App() {
                     BrandDashboard via DashboardRouter). Redirect any stale
                     bookmarks rather than 404. */}
                 <Route path="/dashboard/brand" element={<Navigate to="/dashboard/profile" replace />} />
+                {/* Brand offers, Phase 1 (Figma 08 · Brands P1). */}
+                <Route path="/dashboard/offers" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />
 
                 {/* Public Investor Dashboard (shareable link) */}
                 <Route path="/investors/:token" element={<PublicInvestorDashboard />} />
@@ -607,6 +613,7 @@ function App() {
                       button on Overview but the page is still useful. */}
                   <Route path="search-quality" element={<Navigate to="/admin/discovery" replace />} />
                   <Route path="networking" element={<Navigate to="/admin/messaging-health" replace />} />
+                  <Route path="offers" element={<AdminBrandOffers />} />
                   <Route path="engagement" element={<AdminEngagement />} />
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="ai-opinions" element={<AdminAIOpinions />} />
