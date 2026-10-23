@@ -42,9 +42,16 @@ Later stage: a tagged store link so the brand measures sales in its own analytic
 
 New data needed: player opt-in `open_to_brand_partnerships`; reply state for brand conversations; goals stored (`goal_set`) for goal filters.
 
+## Founder decisions (2026-10-23)
+- Breakdown threshold: 5 members; below it a row reads "Fewer than 5".
+- Consent: offer and product events are first-party events like the rest (no consent gate); brands only ever see aggregates.
+- Free period: up to 5 live offers per brand; an offer may target several countries.
+- Build order: Offers + Home first (offer table, admin review, brand editor, offer card on Home and under Hockia AI answers), then Results, then ambassador candidates, then contribution facts.
+- Starting point in production: 8 brands, 3 products, 0 posts, 0 ambassadors, 251 players. Most breakdowns will read "Fewer than 5" at first, which is why "Who you could reach" (market size) matters early.
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
-- A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (proposal: the threshold value is open for the founder).
+- A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (founder, 2026-10-23).
 - Exclude test accounts, automated browsers, hidden profiles (`profile_is_hidden`), blocked pairs and the brand's own team, in every count and list.
 - Never: who viewed, who tapped, individual goals, nationality breakdowns (we target by location, never nationality).
 - Under-18s are not members, so they are never counted.
@@ -55,7 +62,7 @@ Facts, each shown only when above zero: offers live for members, active ambassad
 ## The plan (future, not priced)
 | | Free | Pro (monthly) |
 |---|---|---|
-| Live offers | Few (number set by founder) | More |
+| Live offers | Up to 5, several countries each | More |
 | Locations per offer | One country | Several countries, regions or cities |
 | Results history | 30 days | 12 months, export |
 | Breakdowns | Country, role | Plus goal and surface |
@@ -70,7 +77,7 @@ Principles: Pro buys reach and tools, never a better position than relevance all
 - `brand_offers` table: brand_id, title, body, image, link, target countries / regions / cities, target roles, target goals, status (draft, in review, live, paused, ended), starts_at, ends_at, reviewed_by. Admin review queue.
 - Events with `offer_id` and `surface` (home, hockia_ai, brands_tab): `brand_offer_impression`, `brand_offer_open`, `brand_offer_contact`, `brand_offer_store_tap`, `brand_offer_dismiss`.
 - One RPC `get_my_brand_results(p_days)` reading `analytics_events`, with the hidden and block fences and the 5-member threshold applied server-side.
-- Fix first: `get_my_brand_analytics` counts raw `events` without the hidden, test-account or self-view fences; `product_view` and `post_impression` are recorded without the analytics-consent check that `brand_product_click` has (needs a consent decision).
+- Fix first: `get_my_brand_analytics` counts raw `events` without the hidden, test-account or self-view fences; `product_view` and `post_impression` are recorded without the analytics-consent check that `brand_product_click` has (decided 2026-10-23: no consent gate, aggregates only).
 - Public profile: contribution facts.
 
 ## Evidence vs assumption
