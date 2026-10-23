@@ -1,232 +1,70 @@
 import { test, expect } from './fixtures'
 
 /**
- * Hockia AI (AI-Powered Search) E2E Tests
+ * Hockia AI is one sheet (founder ruling 2026-10-22,
+ * docs/design-handoff/hockia-ai-one-sheet.md). /discover is no longer a
+ * page: old links land on Home with the sheet open, and the header mascot
+ * opens the same sheet. Uses the authenticated player session.
  *
- * Tests the natural-language search feature that queries player/coach/club
- * profiles via an edge function. Uses the authenticated player session.
- *
- * Test account: E2E Player
- *
- * NOTE: Discovery calls an AI-powered backend, so results are non-deterministic.
- * Tests focus on UI behavior (loading, results rendering, error handling)
- * rather than asserting specific result content.
+ * Answers come from an AI backend and are non-deterministic, so these tests
+ * cover the sheet's behaviour, not answer content.
  */
 
-test.describe('@discover player flows', () => {
-  test.describe('Page Load & Empty State', () => {
-    test('discover page loads with header and search input', async ({ page }) => {
-      await page.goto('/discover')
+const sheet = (page: import('@playwright/test').Page) => page.getByTestId('hockia-ai-sheet')
+const composer = (page: import('@playwright/test').Page) => sheet(page).locator('textarea')
 
-      // Header should show the Hockia AI title
-      await expect(page.getByRole('heading', { name: 'Hockia AI', level: 1 })).toBeVisible({ timeout: 10000 })
-      await expect(page.getByPlaceholder('Ask about clubs, players or roles')).toBeVisible()
-
-      // Search textarea should be visible
-      await expect(page.locator('textarea')).toBeVisible()
-    })
-
-    test('empty state shows example query buttons', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.getByRole('heading', { name: 'Hockia AI', level: 1 })).toBeVisible({ timeout: 10000 })
-
-      // Should show clickable example queries
-      const exampleButtons = page.getByTestId('discover-example-query')
-      await expect(exampleButtons.first()).toBeVisible({ timeout: 10000 })
-    })
-
-    test('example query button populates search and triggers query', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.getByRole('heading', { name: 'Hockia AI', level: 1 })).toBeVisible({ timeout: 10000 })
-
-      // Click the first example query button
-      const exampleButtons = page.getByTestId('discover-example-query')
-      await expect(exampleButtons.first()).toBeVisible({ timeout: 10000 })
-      await exampleButtons.first().click()
-
-      // Should show a user message bubble (the query was submitted)
-      // Wait for the typing indicator (3 dots) or a response
-      await expect(
-        page.getByTestId('ai-searching').first()
-          .or(page.getByText(/results|no profiles|found/i).first())
-      ).toBeVisible({ timeout: 30000 })
-    })
+test.describe('@discover Hockia AI sheet (player)', () => {
+  test('/discover opens the sheet over Home', async ({ page }) => {
+    await page.goto('/discover')
+    await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 })
+    await expect(sheet(page)).toBeVisible({ timeout: 10_000 })
+    await expect(composer(page)).toBeVisible()
   })
 
-  test.describe('Search Flow', () => {
-    test('can type and submit a search query via Enter key', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 })
-
-      // Type a search query
-      const textarea = page.locator('textarea')
-      await textarea.fill('Find goalkeepers')
-      await textarea.press('Enter')
-
-      // Should show loading indicator or results
-      await expect(
-        page.getByTestId('ai-searching').first()
-          .or(page.getByText(/results|no profiles|found/i).first())
-      ).toBeVisible({ timeout: 30000 })
-    })
-
-    test('can submit a search query via send button', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 })
-
-      // Type a query
-      await page.locator('textarea').fill('Show defenders')
-
-      // Click the send button (circular button with Send icon)
-      const sendButton = page.locator('button').filter({ has: page.locator('svg') }).last()
-      await sendButton.click()
-
-      // Should show loading or results
-      await expect(
-        page.getByTestId('ai-searching').first()
-          .or(page.getByText(/results|no profiles|found/i).first())
-      ).toBeVisible({ timeout: 30000 })
-    })
-
-    test('shows results after a successful search', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 })
-
-      // Use a broad query likely to return results
-      const textarea = page.locator('textarea')
-      await textarea.fill('Show all players')
-      await textarea.press('Enter')
-
-      // Wait for typing indicator to appear then disappear (response received)
-      await expect(async () => {
-        // Either we see result cards or a text response from the assistant
-        const resultCards = page.locator('a[href*="/players/"], a[href*="/clubs/"]')
-        const textResponse = page.locator('div').filter({ hasText: /found|result|profile|player/i })
-        const cardCount = await resultCards.count()
-        const hasText = await textResponse.count()
-        expect(cardCount + hasText).toBeGreaterThan(0)
-      }).toPass({ timeout: 30000 })
-    })
-
-    test('result cards show player info and are clickable', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 })
-
-      const textarea = page.locator('textarea')
-      await textarea.fill('Find players')
-      await textarea.press('Enter')
-
-      // Wait for a response. The AI is non-deterministic (see file header):
-      // it returns either profile cards or a text answer.
-      const resultCards = page.locator('a[href*="/players/"], a[href*="/clubs/"]')
-      await expect(async () => {
-        const cards = await resultCards.count()
-        const text = await page.getByText(/found|result|profile|player|couldn/i).count()
-        expect(cards + text).toBeGreaterThan(0)
-      }).toPass({ timeout: 30000 })
-
-      // When the AI returned profile cards, the first one is a clickable
-      // link with a non-empty label. A text-only answer is also valid.
-      if ((await resultCards.count()) > 0) {
-        const firstCard = resultCards.first()
-        await expect(firstCard).toBeVisible()
-        const cardText = await firstCard.textContent()
-        expect(cardText!.length).toBeGreaterThan(0)
-      }
-    })
+  test('/discover?q= puts the question in the composer without sending it', async ({ page }) => {
+    await page.goto('/discover?q=Find%20defenders')
+    await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 })
+    await expect(composer(page)).toHaveValue('Find defenders', { timeout: 10_000 })
+    await expect(page.getByTestId('hockia-ai-thinking')).toHaveCount(0)
+    await expect(page.getByTestId('ai-user-bubble')).toHaveCount(0)
   })
 
-  test.describe('Chat Interaction', () => {
-    test('New button clears chat history', async ({ page }) => {
-      await page.goto('/discover')
-      await expect(page.locator('textarea')).toBeVisible({ timeout: 10000 })
-
-      // Submit a query first
-      const textarea = page.locator('textarea')
-      await textarea.fill('Find goalkeepers')
-      await textarea.press('Enter')
-
-      // Wait for response
-      await expect(async () => {
-        const messages = page.locator('div').filter({ hasText: 'Find goalkeepers' })
-        expect(await messages.count()).toBeGreaterThan(0)
-      }).toPass({ timeout: 30000 })
-
-      // Click New button to clear chat
-      const newButton = page.getByRole('button', { name: /new/i })
-      await expect(newButton).toBeVisible()
-      await newButton.click()
-
-      // Chat should be cleared — example query buttons should reappear
-      await expect(
-        page.getByTestId('discover-example-query').first()
-      ).toBeVisible({ timeout: 10000 })
-    })
-
-    test('textarea is disabled during pending request', async ({ page }) => {
-      await page.goto('/discover')
-      const textarea = page.locator('textarea')
-      await expect(textarea).toBeVisible({ timeout: 10000 })
-
-      await textarea.fill('Find midfielders')
-      await textarea.press('Enter')
-
-      // Textarea should be disabled while request is pending
-      await expect(textarea).toBeDisabled({ timeout: 5000 })
-    })
-
-    test('Shift+Enter does not submit (allows multiline)', async ({ page }) => {
-      await page.goto('/discover')
-      const textarea = page.locator('textarea')
-      await expect(textarea).toBeVisible({ timeout: 10000 })
-
-      await textarea.fill('Line one')
-      await textarea.press('Shift+Enter')
-      await textarea.type('Line two')
-
-      // Should still be in the textarea, not submitted
-      const value = await textarea.inputValue()
-      expect(value).toContain('Line one')
-      expect(value).toContain('Line two')
-    })
+  test('/discovery (old alias) opens the sheet too', async ({ page }) => {
+    await page.goto('/discovery')
+    await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 })
+    await expect(sheet(page)).toBeVisible({ timeout: 10_000 })
   })
 
-  test.describe('Error Handling', () => {
-    test('shows error state with retry button on failure', async ({ page }) => {
-      // Intercept the nl-search request and force a failure
-      await page.route('**/functions/v1/nl-search', route =>
-        route.fulfill({ status: 500, body: 'Internal Server Error' })
-      )
-
-      await page.goto('/discover')
-      const textarea = page.locator('textarea')
-      await expect(textarea).toBeVisible({ timeout: 10000 })
-
-      await textarea.fill('Test error handling')
-      await textarea.press('Enter')
-
-      // Should show error message with retry button
-      await expect(page.getByRole('button', { name: /try again/i })).toBeVisible({ timeout: 15000 })
-    })
+  test('the header mascot opens the sheet on the current screen', async ({ page }) => {
+    // Home has the shared header on every width (phone Opportunities has its own).
+    await page.goto('/home')
+    await page.locator('header').getByTestId(/^header-hockia-ai/).filter({ visible: true }).first().click()
+    await expect(sheet(page)).toBeVisible({ timeout: 10_000 })
+    await expect(page).toHaveURL(/\/home$/)
   })
 
-  test.describe('Filter Chips', () => {
-    test('shows filter chips after a filtered search', async ({ page }) => {
-      await page.goto('/discover')
-      const textarea = page.locator('textarea')
-      await expect(textarea).toBeVisible({ timeout: 10000 })
+  test('Enter sends; Shift+Enter keeps a new line', async ({ page }) => {
+    await page.goto('/discover')
+    const box = composer(page)
+    await expect(box).toBeVisible({ timeout: 10_000 })
+    await box.fill('Line one')
+    await box.press('Shift+Enter')
+    await box.pressSequentially('Line two')
+    await expect(box).toHaveValue(/Line one\nLine two/)
+    await box.fill('Find goalkeepers')
+    await box.press('Enter')
+    await expect(
+      page.getByTestId('hockia-ai-thinking').or(page.getByTestId('ai-user-bubble')).first(),
+    ).toBeVisible({ timeout: 30_000 })
+  })
 
-      // Use a query that should produce filter chips
-      await textarea.fill('Find U25 defenders')
-      await textarea.press('Enter')
-
-      // Wait for response
-      await expect(async () => {
-        // Filter chips or results should appear
-        const chips = page.locator('span').filter({ hasText: /defender|u25|player/i })
-        const results = page.locator('a[href*="/players/"]')
-        expect(await chips.count() + await results.count()).toBeGreaterThan(0)
-      }).toPass({ timeout: 30000 })
-    })
+  test('a failed answer offers Try again', async ({ page }) => {
+    await page.route('**/functions/v1/nl-search', (route) => route.fulfill({ status: 500, body: 'Internal Server Error' }))
+    await page.goto('/discover')
+    const box = composer(page)
+    await expect(box).toBeVisible({ timeout: 10_000 })
+    await box.fill('Test error handling')
+    await box.press('Enter')
+    await expect(sheet(page).getByRole('button', { name: /try again/i })).toBeVisible({ timeout: 15_000 })
   })
 })

@@ -31,6 +31,7 @@ import { useCountries, isEuCountryCode, type Country } from '@/hooks/useCountrie
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
+import { cachedAvatarFull, prefetchAvatarFull, useAvatarFull } from '@/hooks/useAvatarFull'
 import { getImageUrl } from '@/lib/imageUrl'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { queryClient } from '@/lib/queryClient'
@@ -176,10 +177,14 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   // Photos: the avatar first, then up to five gallery photos (clubs: their
   // media; the crest is not a photo). Brands keep their logo treatment.
   const gallery = useMemberPhotos(isBrand ? null : member.id)
+  // People: the profile photo in its own shape when there is one (2026-10-23);
+  // the square avatar until it's read, and for anyone without one.
+  const full = useAvatarFull(isPerson && member.avatar_url ? member.id : null)
+  const profilePhoto = isPerson ? (full.data ?? member.avatar_url ?? null) : null
   const photos = useMemo(() => {
-    const list = [...(isPerson && member.avatar_url ? [member.avatar_url] : []), ...(gallery.data ?? [])]
+    const list = [...(profilePhoto ? [profilePhoto] : []), ...(gallery.data ?? [])]
     return [...new Set(list)]
-  }, [isPerson, member.avatar_url, gallery.data])
+  }, [profilePhoto, gallery.data])
   const [photoIndex, setPhotoIndex] = useState(0)
   // The photo on screen once decoded (a preloaded one shows at once, a late one fades in).
   const [shownSrc, setShownSrc] = useState<string | null>(null)
@@ -599,7 +604,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
               <img
                 key={current}
                 ref={(el) => { if (el?.complete && el.naturalWidth > 0) setShownSrc(current) }}
-                src={getImageUrl(current, 'feed-full') ?? current}
+                src={getImageUrl(current, 'immersive') ?? current}
                 alt=""
                 className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${shownSrc === current ? 'opacity-100' : 'opacity-0'}`}
                 decoding="async"
@@ -824,7 +829,7 @@ function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPre
     // and decoded, so a card is complete before it ever slides into view.
     const near = [-3, -2, -1, 1, 2, 3].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
     void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
-    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+    void Promise.all([prefetchMemberPhotos(near.map((m) => m.id)), prefetchAvatarFull(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))]).then(() => {
       for (const m of near) preloadImage(firstPhotoOf(m))
     })
   }, [deck, index, members])
@@ -1124,7 +1129,7 @@ function DeckCard({ children, animateIn, offset, focused, active, side }: { chil
 /** The photo a member's card opens on: the avatar for people, the first media photo for clubs. */
 function firstPhotoOf(m: Profile): string | null {
   if (m.role === 'brand') return null
-  if (m.role !== 'club' && m.avatar_url) return m.avatar_url
+  if (m.role !== 'club' && m.avatar_url) return cachedAvatarFull(m.id) ?? m.avatar_url
   return queryClient.getQueryData<string[]>(qk.memberPhotos(m.id))?.[0] ?? null
 }
 
@@ -1132,7 +1137,7 @@ const preloaded = new Set<string>()
 /** Download and decode an image ahead of time (same URL the card uses). */
 function preloadImage(raw: string | null) {
   if (!raw || typeof Image === 'undefined') return
-  const src = getImageUrl(raw, 'feed-full') ?? raw
+  const src = getImageUrl(raw, 'immersive') ?? raw
   if (preloaded.has(src)) return
   preloaded.add(src)
   const img = new Image()
@@ -1242,7 +1247,7 @@ function ImmersivePage(p: ImmersivePageProps) {
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
-            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            src={getImageUrl(p.current, 'immersive') ?? p.current}
             alt=""
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
             decoding="async"
@@ -1449,7 +1454,7 @@ function DesktopPage(p: ImmersivePageProps) {
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
-            src={getImageUrl(p.current, 'feed-full') ?? p.current}
+            src={getImageUrl(p.current, 'immersive') ?? p.current}
             alt=""
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${p.shownSrc === p.current ? 'opacity-100' : 'opacity-0'}`}
             decoding="async"
@@ -1619,7 +1624,7 @@ function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPrevie
     if (!paged) return
     const near = [-1, 1, 2].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
     void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
-    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+    void Promise.all([prefetchMemberPhotos(near.map((m) => m.id)), prefetchAvatarFull(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))]).then(() => {
       for (const m of near) preloadImage(firstPhotoOf(m))
     })
   }, [paged, index, members])
@@ -1765,7 +1770,7 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
   useEffect(() => {
     const near = [-1, 1, 2, 3].map((d) => members[index + d]).filter((m): m is Profile => Boolean(m))
     void prefetchFriendsInCommon(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))
-    void prefetchMemberPhotos(near.map((m) => m.id)).then(() => {
+    void Promise.all([prefetchMemberPhotos(near.map((m) => m.id)), prefetchAvatarFull(near.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id))]).then(() => {
       for (const m of near) preloadImage(firstPhotoOf(m))
     })
   }, [index, members])

@@ -2092,7 +2092,11 @@ async function handleRequest(req: Request): Promise<Response> {
         : null
     function sanitizeRoleSummary(s: string | undefined | null): string | null {
       if (!s || typeof s !== 'string') return null
-      const cleaned = s.replace(/<[^>]*>/g, '').replace(/[\r\n]/g, ' ').trim()
+      // Strip tags until nothing changes ("<scr<x>ipt" can't reassemble), then
+      // drop any stray angle bracket (CodeQL js/incomplete-multi-character-sanitization).
+      let stripped = s
+      for (let prev = ''; prev !== stripped;) { prev = stripped; stripped = stripped.replace(/<[^>]*>/g, '') }
+      const cleaned = stripped.replace(/[<>]/g, '').replace(/[\r\n]/g, ' ').trim()
       if (cleaned.length === 0 || cleaned.length > 80) return null
       return cleaned
     }

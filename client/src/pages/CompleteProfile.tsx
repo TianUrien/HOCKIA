@@ -9,7 +9,8 @@ import ClubClaimStep, { type ClubClaimResult } from '@/components/ClubClaimStep'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
+import { uploadProfilePhoto } from '@/lib/profilePhoto'
 import { getImageUrl } from '@/lib/imageUrl'
 import { invalidateProfile } from '@/lib/profile'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
@@ -86,6 +87,8 @@ export default function CompleteProfile() {
   // The browser lost the session between sign-in and choosing a role (prod 2026-10-17).
   const [sessionExpired, setSessionExpired] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url || '')
+  // The same photo in its own shape, for full-screen views (people only; saved with avatar_url).
+  const [avatarFullUrl, setAvatarFullUrl] = useState<string | null>(profile?.avatar_full_url ?? null)
   // Replaced avatars are deleted only after the profile row is saved — see
   // the hook's header for the prod incident this prevents.
   const pendingCleanup = usePendingStorageCleanup()
@@ -498,6 +501,7 @@ export default function CompleteProfile() {
 
     if (profile.avatar_url) {
       setAvatarUrl(profile.avatar_url)
+      setAvatarFullUrl(profile.avatar_full_url ?? null)
     }
     // user_metadata.dob is set once at signup and never changes mid-session;
     // keying on `profile` alone preserves the existing merge semantics.
@@ -625,31 +629,28 @@ export default function CompleteProfile() {
         return
       }
 
-      logger.debug('Optimizing avatar image...')
-      const optimizedFile = await optimizeAvatarImage(file)
-
-      const fileExt = optimizedFile.name.split('.').pop() || 'jpg'
-      const filePath = `${user.id}/avatar_${Date.now()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, optimizedFile, { upsert: true, cacheControl: '31536000' })
-
-      if (uploadError) {
+      let urls
+      try {
+        // Clubs and brands upload a crest or logo: the square only.
+        urls = await uploadProfilePhoto(user.id, file, { full: userRole !== 'club' && userRole !== 'brand' })
+      } catch (uploadError) {
         captureOnboardingError(uploadError, {
           role: userRole,
           hasUser: Boolean(user?.id),
-          fileSizeBytes: optimizedFile.size,
+          fileSizeBytes: file.size,
         }, 'CompleteProfile.handleAvatarUpload.upload')
         throw uploadError
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      const publicUrl = urls.avatarUrl
 
       const previousUrl = avatarUrl || profile?.avatar_url || null
+      const previousFull = avatarFullUrl
       setAvatarUrl(publicUrl)
+      setAvatarFullUrl(urls.avatarFullUrl)
+      if (previousFull && previousFull !== urls.avatarFullUrl) {
+        pendingCleanup.queue({ bucket: 'avatars', publicUrl: previousFull, context: 'complete-profile:replace-avatar-full' })
+      }
+      if (urls.avatarFullUrl) pendingCleanup.unqueue(urls.avatarFullUrl)
       // Deferred: onboarding is abandonable at any step, and the profile row
       // still references the old object until the final submit lands.
       if (previousUrl && previousUrl !== publicUrl) {
@@ -675,7 +676,7 @@ export default function CompleteProfile() {
   const handleAvatarClick = async () => {
     if (isNativePlatform()) {
       try {
-        const result = await pickImageNative('prompt')
+        const result = await pickImageNative('prompt', { crop: userRole === 'club' || userRole === 'brand' })
         if (result) {
           await uploadAvatarFile(result.file)
         }
@@ -881,6 +882,8 @@ export default function CompleteProfile() {
         nationality_country_id: formData.nationalityCountryId,
         onboarding_completed: true, // Mark onboarding as complete
         avatar_url: avatarUrl || null, // Include avatar if uploaded
+        // Only when the photo changed here: never overwrite a full photo this screen didn't load.
+        ...(avatarUrl !== (profile?.avatar_url ?? '') ? { avatar_full_url: avatarUrl ? avatarFullUrl : null } : {}),
       }
 
       if (userRole === 'player') {

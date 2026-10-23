@@ -38,7 +38,7 @@ test.describe('@smoke public profile share — route guard', () => {
       // can be a "Profile Not Found" card (expected here) or the real
       // profile (when a seeded slug is used). Both prove the route
       // mounted instead of redirecting.
-      await expect(page).toHaveURL(new RegExp(path.replace(/\//g, '\\/')))
+      await expect(page).toHaveURL(new RegExp(path.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')))
     })
   }
 })

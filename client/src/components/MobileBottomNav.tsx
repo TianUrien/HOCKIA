@@ -64,9 +64,9 @@ export default function MobileBottomNav() {
   }, [])
 
   // Focused flows and immersive views have no tab bar: auth, onboarding,
-  // the Hockia AI screen (reached from Search, back-only) and an open chat.
+  // and an open chat.
   useEffect(() => {
-    const hiddenRoutes = ['/', '/signup', '/login', '/complete-profile', '/discover']
+    const hiddenRoutes = ['/', '/signup', '/login', '/complete-profile']
     const searchParams = new URLSearchParams(location.search)
     const isConversationPath = location.pathname.startsWith('/messages/')
     const hasMessagesOverlayParam = searchParams.has('conversation') || searchParams.has('new')

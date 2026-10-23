@@ -29,6 +29,7 @@
     "cap:build": "npm run build && node scripts/assert-prod-bundle.mjs && cp dist/app.html dist/index.html && npx cap sync ios && npx cap sync android",
     "sentry:dsyms": "sentry-cli debug-files upload",
     "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts",
+    "knip": "knip --include files,dependencies,unlisted,binaries,unresolved",
     "audit:check": "node scripts/audit-check.mjs",
     "tokens:build": "node scripts/build-tokens.mjs",
     "postbuild": "node scripts/prerender-landing.mjs"
@@ -46,14 +47,12 @@
     "@capacitor/status-bar": "^8.0.2",
     "@capawesome/capacitor-badge": "^8.0.2",
     "@googlemaps/js-api-loader": "^2.0.2",
-    "@hookform/resolvers": "^5.2.2",
     "@sentry/capacitor": "4.4.0",
     "@sentry/react": "10.69.0",
     "@supabase/supabase-js": "^2.81.1",
     "@tanstack/react-query": "^5.90.10",
     "@tanstack/react-virtual": "^3.13.12",
     "@types/papaparse": "^5.5.2",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.545.0",
@@ -61,16 +60,14 @@
     "posthog-js": "^1.407.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-hook-form": "^7.64.0",
     "react-router-dom": "^7.18.4",
     "recharts": "^3.7.0",
-    "tslib": "^2.8.1",
     "tus-js-client": "^4.3.1",
     "web-vitals": "^5.1.0",
-    "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/cli": "^8.5.2",
     "@eslint/js": "^9.36.0",
     "@playwright/test": "^1.57.0",
@@ -91,6 +88,8 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "jsdom": "^27.2.0",
+    "knip": "^6.42.1",
+    "playwright": "1.57.0",
     "playwright-core": "^1.62.0",
     "postcss": "^8.5.6",
     "sharp": "^0.35.3",
@@ -104,6 +103,7 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.1.14",
-    "immer": "11.1.4"
+    "immer": "11.1.4",
+    "dompurify": "3.4.17"
   }
 }

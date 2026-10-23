@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { ChevronRight, Clock, Search, Sparkles, X } from 'lucide-react'
 import Flag from '@/components/Flag'
 import RoleBadge from '@/components/RoleBadge'
@@ -19,7 +20,6 @@ import {
   SEARCH_SCOPE_LINE,
   askAiLabel,
   communityPathFor,
-  discoverPathFor,
   memberMetaLine,
   memberProfilePath,
   noMembersLabel,
@@ -38,6 +38,7 @@ import {
 export function SearchV2Screen() {
   useDocumentTitle('Search')
   const navigate = useNavigate()
+  const showAi = useHockiaAiSheet((s) => s.show)
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [debounced, setDebounced] = useState(query)
@@ -89,8 +90,9 @@ export function SearchV2Screen() {
 
   const askAi = useCallback(() => {
     remember()
-    navigate(discoverPathFor(query), { state: { from: '/search' } })
-  }, [navigate, query, remember])
+    // One Hockia AI sheet (2026-10-22): it opens over Search and asks the query.
+    showAi('search', 'chat', { text: query, send: true })
+  }, [showAi, query, remember])
 
   const seeAll = useCallback(() => {
     remember()

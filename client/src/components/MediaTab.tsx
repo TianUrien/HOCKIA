@@ -15,6 +15,7 @@ import Skeleton from './Skeleton'
 import GalleryManager from './GalleryManager'
 import FullGameVideosSection from './FullGameVideosSection'
 import NativeVideosSection from './media/NativeVideosSection'
+import { safeVideoHref, validateAndNormalizeVideoUrl, videoEmbedUrl, videoPlatformLabel } from '@/lib/videoUrlValidator'
 
 interface MediaTabHeaderRenderProps {
   canManageVideo: boolean
@@ -329,63 +330,19 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 
 // Video Embed Component
 function VideoEmbed({ url }: { url: string }) {
-  const isGoogleDrive = url.includes('drive.google.com')
-  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be')
-  const isVimeo = url.includes('vimeo.com')
+  // Only real YouTube / Vimeo / Drive links are embedded or linked: the link is
+  // the member's own text, so anything else (e.g. a `javascript:` value written
+  // outside the app) renders nothing (CodeQL 2026-10-23).
+  const canonical = validateAndNormalizeVideoUrl(url)
+  const platform = videoPlatformLabel(url)
+  const isYouTube = platform === 'YouTube'
+  const isVimeo = platform === 'Vimeo'
+  const isGoogleDrive = platform === 'Google Drive'
+  const embedUrl = videoEmbedUrl(url)
+  const directUrl = canonical ?? safeVideoHref(url)
 
-  const getEmbedUrl = (url: string) => {
-    // YouTube — use the privacy-enhanced `youtube-nocookie.com` domain.
-    // The standard `youtube.com/embed` player tries to read its tracking
-    // cookies on init; when blocked by ITP / Capacitor WKWebView / Brave /
-    // Firefox-strict it throws "Error 153 — Video player configuration
-    // error" instead of playing. youtube-nocookie sidesteps that with no
-    // functional loss (autoplay/fullscreen/PiP all still work).
-    // ?rel=0 keeps related-video suggestions to the same channel.
-    // ?playsinline=1 keeps mobile playback inline instead of taking over
-    // the iOS fullscreen player on tap.
-    if (isYouTube) {
-      const videoId = url.includes('youtu.be')
-        ? url.split('youtu.be/')[1]?.split('?')[0]
-        : new URLSearchParams(url.split('?')[1]).get('v')
-      return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&playsinline=1`
-    }
-
-    // Vimeo
-    if (isVimeo) {
-      const videoId = url.split('vimeo.com/')[1]?.split('?')[0]
-      return `https://player.vimeo.com/video/${videoId}`
-    }
-
-    // Google Drive
-    if (url.includes('drive.google.com')) {
-      const fileId = url.includes('/file/d/')
-        ? url.split('/file/d/')[1]?.split('/')[0]
-        : new URLSearchParams(url.split('?')[1]).get('id')
-      return `https://drive.google.com/file/d/${fileId}/preview`
-    }
-
-    return url
-  }
-
-  const getDirectUrl = (url: string) => {
-    // For Google Drive, return the direct view link
-    if (url.includes('drive.google.com')) {
-      const fileId = url.includes('/file/d/')
-        ? url.split('/file/d/')[1]?.split('/')[0]
-        : new URLSearchParams(url.split('?')[1]).get('id')
-      return `https://drive.google.com/file/d/${fileId}/view`
-    }
-    return url
-  }
-
-  const embedUrl = getEmbedUrl(url)
-
-  // YouTube video id — reused for both the embed and the poster thumbnail.
-  const youTubeId = isYouTube
-    ? (url.includes('youtu.be')
-        ? url.split('youtu.be/')[1]?.split('?')[0]
-        : new URLSearchParams(url.split('?')[1]).get('v')) ?? null
-    : null
+  // YouTube video id — reused for the poster thumbnail.
+  const youTubeId = isYouTube && canonical ? new URL(canonical).searchParams.get('v') : null
 
   const externalLabel = isYouTube ? 'Watch on YouTube' : isVimeo ? 'Watch on Vimeo' : isGoogleDrive ? 'Open in Drive' : 'Watch externally'
 
@@ -409,6 +366,9 @@ function VideoEmbed({ url }: { url: string }) {
   // hqdefault is the most reliably-present YouTube thumbnail size.
   const ytThumb = youTubeId ? `https://img.youtube.com/vi/${youTubeId}/hqdefault.jpg` : null
   const showYtThumb = isYouTube && ytThumb && !thumbFailed
+
+  // Not a supported video link: nothing to embed or open.
+  if (!embedUrl) return null
 
   return (
     <div>
@@ -463,10 +423,10 @@ function VideoEmbed({ url }: { url: string }) {
           it's the right place to land if the provider refuses the embed
           (e.g. a non-embeddable YouTube video). Non-façade providers
           (Vimeo) keep it always-on since their iframe mounts immediately. */}
-      {(!usesFacade || activated) && (
+      {(!usesFacade || activated) && directUrl && (
         <div className="mt-2 text-right">
           <a
-            href={isGoogleDrive ? getDirectUrl(url) : url}
+            href={directUrl ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-gray-500 hover:text-gray-700 hover:underline"

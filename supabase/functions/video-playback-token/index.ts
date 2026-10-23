@@ -90,7 +90,7 @@ Deno.serve(withSentry('video-playback-token', async (req) => {
       const j = JSON.parse(atob(jwk)) as Record<string, unknown>
       jwkKid = typeof j.kid === 'string' ? j.kid : null
       jwkInfo = { kty: j.kty, alg: j.alg ?? null, hasD: typeof j.d === 'string', nBits: typeof j.n === 'string' ? Math.round((j.n as string).length * 6) : null }
-    } catch (e) { jwkInfo = { parseError: String(e) } }
+    } catch (e) { console.error('[video-playback-token] probe: JWK parse failed', e); jwkInfo = { parseError: true } }
     const idMatch = jwkKid === null ? 'jwk has no kid' : jwkKid === keyId ? 'match' : `MISMATCH jwk=${jwkKid.slice(0, 8)}`
     const r = (await resolveVideos([body.videoId])).get(body.videoId)
     if (!r || 'error' in r || r.visibility !== 'public') return json({ probe: 'local-signing', error: 'public ready video required' }, 400)
@@ -101,7 +101,8 @@ Deno.serve(withSentry('video-playback-token', async (req) => {
       const manifest = await fetch(`https://${host}/${token}/manifest/video.m3u8`)
       return json({ probe: 'local-signing', configured: true, kid: keyId.slice(0, 8), idMatch, jwkInfo, keyIdLen: keyId.length, poster: poster.status, manifest: manifest.status, flag: Deno.env.get('CF_STREAM_LOCAL_SIGNING') ?? null })
     } catch (err) {
-      return json({ probe: 'local-signing', configured: true, error: String(err) }, 500)
+      console.error('[video-playback-token] probe failed', err)
+      return json({ probe: 'local-signing', configured: true, error: 'probe_failed' }, 500)
     }
   }
 
