@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { AiContextFacts } from '@/lib/hockiaAiContext'
 
 export type HockiaAiDetent = 'medium' | 'large'
 
@@ -31,6 +32,12 @@ interface HockiaAiSheetState {
   roleContext: RoleContext | null
   step: HockiaAiStep | null
   seed: HockiaAiSeed | null
+  /** The member removed the context chip: questions are general until the sheet reopens. */
+  contextOff: boolean
+  dropContext: () => void
+  /** Counts the current screen already shows (the coach's open coaching roles), so the chip matches it. */
+  pageFacts: AiContextFacts
+  setPageFacts: (facts: AiContextFacts) => void
   /** The sheet takes the seed once it has used it. */
   takeSeed: () => HockiaAiSeed | null
   /** Do a next step: photo, bio and links here; clubs, position and passports in Fill my profile. */
@@ -57,10 +64,14 @@ export const useHockiaAiSheet = create<HockiaAiSheetState>((set, get) => ({
   roleContext: null,
   step: null,
   seed: null,
+  contextOff: false,
+  dropContext: () => set({ contextOff: true }),
+  pageFacts: {},
+  setPageFacts: (pageFacts) => set({ pageFacts }),
   takeSeed: () => { const seed = get().seed; if (seed) set({ seed: null }); return seed },
   startStep: (step) => set({ open: true, detent: 'large', step, mode: ['photo', 'bio', 'links', 'video'].includes(step) ? 'steps' : 'builder' }),
   // The builder needs room for the review card: it always opens large.
-  show: (entry = 'opportunities', mode = 'chat', seed = null) => set({ open: true, detent: mode === 'chat' && !seed?.send ? 'medium' : 'large', entry, mode, roleContext: null, seed: seed?.text.trim() ? seed : null }),
+  show: (entry = 'opportunities', mode = 'chat', seed = null) => set({ open: true, detent: mode === 'chat' && !seed?.send ? 'medium' : 'large', entry, mode, roleContext: null, contextOff: false, seed: seed?.text.trim() ? seed : null }),
   setMode: (mode) => set((s) => ({ mode, detent: mode === 'chat' ? s.detent : 'large' })),
   prepareApplication: (target) => set({ open: true, mode: 'apply', applyTarget: target, detent: 'large' }),
   askAboutRole: (ctx) => set({ open: true, mode: 'chat', entry: 'role', roleContext: ctx, detent: 'medium' }),

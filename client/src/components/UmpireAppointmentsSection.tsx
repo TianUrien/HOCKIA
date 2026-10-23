@@ -13,8 +13,8 @@
  * and make the whole tab look broken).
  */
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
 import {
   Award,
@@ -134,6 +134,19 @@ export default function UmpireAppointmentsSection({
     setEditingAppointment(null)
     setEditorOpen(true)
   }
+
+  // Hockia AI's "Add my latest appointment" lands here with ?add=appointment:
+  // open the editor once on the owner's own record, then drop the param.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const addRequested = searchParams.get('add') === 'appointment'
+  useEffect(() => {
+    if (!addRequested || readOnly || !isOwnProfile) return
+    setEditingAppointment(null)
+    setEditorOpen(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [addRequested, readOnly, isOwnProfile, searchParams, setSearchParams])
 
   const openEdit = (appointment: UmpireAppointment) => {
     setEditingAppointment(appointment)
