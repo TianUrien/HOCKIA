@@ -1,0 +1,48 @@
+# Dependabot (added 2026-10-23): weekly library updates as grouped PRs into
+# staging (staging-first; the founder merges staging → main). Minor and patch
+# updates come as one PR per ecosystem; major versions come one by one so a
+# breaking change is reviewed on its own. Security alerts are a separate
+# GitHub setting (Settings → Code security → Dependabot alerts).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /client
+    target-branch: staging
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: "deps"
+    groups:
+      client-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /tools/devicelab
+    target-branch: staging
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels: [dependencies]
+    commit-message:
+      prefix: "deps(devicelab)"
+    groups:
+      devicelab-all:
+        update-types: [minor, patch, major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: staging
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    labels: [dependencies]
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions-all:
+        update-types: [minor, patch, major]

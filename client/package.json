@@ -29,6 +29,7 @@
     "cap:build": "npm run build && node scripts/assert-prod-bundle.mjs && cp dist/app.html dist/index.html && npx cap sync ios && npx cap sync android",
     "sentry:dsyms": "sentry-cli debug-files upload",
     "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts",
+    "knip": "knip --include files,dependencies,unlisted,binaries,unresolved",
     "audit:check": "node scripts/audit-check.mjs",
     "tokens:build": "node scripts/build-tokens.mjs",
     "postbuild": "node scripts/prerender-landing.mjs"
@@ -71,6 +72,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/cli": "^8.5.2",
     "@eslint/js": "^9.36.0",
     "@playwright/test": "^1.57.0",
@@ -91,6 +93,7 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "jsdom": "^27.2.0",
+    "knip": "^6.42.1",
     "playwright-core": "^1.62.0",
     "postcss": "^8.5.6",
     "sharp": "^0.35.3",

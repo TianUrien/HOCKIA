@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "api/*.ts",
+    "scripts/*.{mjs,js,ts}",
+    "e2e/**/*.setup.ts",
+    "public/push-sw.js"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "api/**/*.ts",
+    "scripts/**/*.{mjs,js,ts}",
+    "e2e/**/*.ts"
+  ],
+  "ignoreBinaries": [
+    "sentry-cli",
+    "supabase"
+  ],
+  "ignoreUnresolved": [
+    "google.maps"
+  ]
+}

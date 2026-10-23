@@ -140,11 +140,29 @@ Keep the `[QA]` fixtures on staging; several specs and probes depend on them.
   rollback-file and grant checks exist since 2026-10-02:
   `scripts/check-migrations.mjs`).
 - No load or performance tests (see capacity.md for the proposed plan).
-- No accessibility lint or axe run in CI (a manual WCAG pass was done in
-  2026-07).
+- Accessibility: since 2026-10-23 an axe guard runs in the smoke suite (see
+  §8); it blocks only NEW kinds of serious problems, and automated checks
+  never replace a screen-reader and keyboard pass.
 - No contract test between `client/src/lib/database.types.ts` and
   `supabase/functions/_shared/database.types.ts`.
 - Coverage floor of 27 % leaves most component code unmeasured.
+
+## 8. Bug-detection tools (added 2026-10-23, Claude Code)
+
+- **Accessibility guard** (`e2e/a11y.player.spec.ts`, tag `@smoke`):
+  `@axe-core/playwright` scans /home, /community, /opportunities, /messages,
+  /dashboard/profile and /search on chromium-player and mobile-player for
+  serious/critical WCAG 2.1 A/AA problems. Problems known on 2026-10-23 are
+  listed per screen in `e2e/a11y-baseline.json`; a new kind fails the PR.
+  When you fix one, remove it from the baseline so it can't come back.
+- **Knip** (`npm run knip`, config `client/knip.json`): unused files,
+  unused or undeclared dependencies, unresolved imports. CI runs it
+  report-only in "Lint & Type Check" (job summary) until the 2026-10-23
+  findings are cleaned up; then remove `continue-on-error`.
+- **Dependabot** (`.github/dependabot.yml`): weekly grouped update PRs into
+  staging for the client, monthly for the device lab and GitHub Actions.
+  Security alerts and CodeQL are repository settings (Settings → Code
+  security), switched on by the founder.
 
 ## Device lab (native app)
 
