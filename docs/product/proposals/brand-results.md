@@ -65,6 +65,9 @@ Figma page "08 · Brands (all phases)", one section per phase:
 - P4 Ambassadors: AC1-AC3 player opt-in ("Open to brand partnerships", off by default, only brands see it; "Open to other brands" for an active ambassador), AC4-AC6 brand candidates (invite, invited, empty), AC7-AC8 player invitation (adapts the existing ambassador invite; declining is private), AC9 desktop.
 - P5 Public profile: PF1 facts row (offers for members, ambassadors, members helped; each only above zero), PF2 small brand. The "Verified brand" line is gone (no verification for now).
 
+## Until goals are stored (founder, 2026-10-23)
+Members have no saved goal yet ("Your profile · <position>" stands in). So the reason line on offer cards uses location and role ("You see this because you live in England and play"), the Home frames have no "Your goal" card, and Results breakdowns are Country / Role / Where only. Goal-based reasons and the Goal breakdown come back when `goal_set` ships. Figma frames were updated to match.
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (founder, 2026-10-23).
