@@ -18,6 +18,8 @@ import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
 import { PostRoleStartSheet } from './PostRoleStartSheet'
+import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { useYourReplies } from '@/hooks/useYourReplies'
 import { yourRepliesCopy } from '@/lib/yourReplies'
 import { ClubRoleCardSkeleton } from '@/components/ScreenSkeletons'
@@ -342,6 +344,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
 }
 
 export default function ClubOpportunitiesScreen() {
+  const showAi = useHockiaAiSheet((st) => st.show)
   const profile = useAuthStore((s) => s.profile)
   const data = useClubRoles(profile?.id)
   // Club speed CS1: "+" asks how to start — Hockia AI or from scratch.
@@ -352,9 +355,13 @@ export default function ClubOpportunitiesScreen() {
       <LargeTitleBar
         title="Opportunities"
         trailing={(
-          <button type="button" onClick={postRole} aria-label="Post a role" className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
-            <Plus className="h-6 w-6" strokeWidth={2.2} />
-          </button>
+          // Hockia AI's mascot beside Post a role (one-sheet handoff S1, 2026-10-22).
+          <span className="mr-2 flex items-center gap-2">
+            <HockiaAiButton onClick={() => showAi('opportunities')} />
+            <button type="button" onClick={postRole} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
+              <Plus className="h-6 w-6" strokeWidth={2.2} />
+            </button>
+          </span>
         )}
       />
       <RecruiterRoles data={data} onPostRole={postRole} />

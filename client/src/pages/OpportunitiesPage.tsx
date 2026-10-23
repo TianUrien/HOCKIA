@@ -476,6 +476,14 @@ export default function OpportunitiesPage() {
   const mobileList = useMemo(() => applyRoleFilters(phoneBase, roleFilters, viewerIsEuEligible), [phoneBase, roleFilters, viewerIsEuEligible])
   // No coaching role open at all (before any phone filter): the D6.2 empty state.
   const coachEmpty = candidateCoach && !isLoading && !fetchError && filters.applied !== 'mine' && phoneBase.length === 0
+  // Hockia AI's chip says "Coaching roles · N open" with the same N this list shows.
+  const setAiPageFacts = useHockiaAiSheet((st) => st.setPageFacts)
+  const coachOpenKnown = candidateCoach && !isLoading && !fetchError && filters.applied !== 'mine'
+  useEffect(() => {
+    if (!coachOpenKnown) return
+    setAiPageFacts({ coachingRolesOpen: phoneBase.length })
+    return () => setAiPageFacts({})
+  }, [coachOpenKnown, phoneBase.length, setAiPageFacts])
 
   const leagueFor = useCallback((v: Vacancy) => {
     const wc = v.world_club_id ? worldClubsMap[v.world_club_id] : null
@@ -557,9 +565,13 @@ export default function OpportunitiesPage() {
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
-                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
-                  <Plus className="h-6 w-6" strokeWidth={2} />
-                </IconButton>
+                // Recruiting coach · My roles: the mascot beside Post a role, as for clubs (handoff S1).
+                <span className="flex items-center gap-1">
+                  <HockiaAiButton onClick={openAi} />
+                  <IconButton label="Post a role" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
+                    <Plus className="h-6 w-6" strokeWidth={2} />
+                  </IconButton>
+                </span>
               ) : user ? (
                 /* Hockia AI header button (Figma B1 178:26); Filters moved to the first quick chip. */
                 <span className="relative mr-1">

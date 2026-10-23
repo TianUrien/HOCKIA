@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils'
 
 interface LargeTitleBarProps {
   title: string
-  /** One trailing 44px action (filters, edit, add) — never more. */
+  /** One trailing 44px action (filters, edit, add). The one exception: recruiters
+   *  get the Hockia AI mascot beside Post a role (one-sheet handoff, 2026-10-22). */
   trailing?: ReactNode
   className?: string
 }
