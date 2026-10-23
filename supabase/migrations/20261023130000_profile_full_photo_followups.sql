@@ -1,13 +1,38 @@
--- The nightly orphan sweep learns profiles.avatar_full_url (20261023120000).
+-- Follow-ups for profiles.avatar_full_url (20261023120000).
 --
+-- 1. profiles_self (the owner's own-row view) gets the column, as every new
+--    profiles column does (pattern from 20260928250000): members read their
+--    own profile through it.
+-- 2. The nightly orphan sweep counts it as in use:
 -- enqueue_orphaned_storage_objects() treats an avatars-bucket file as in use
 -- only when profiles.avatar_url points at it, so every full-shape profile
 -- photo (avatars/<uid>/avatar_full_*.jpg) would be queued for deletion 30
 -- days after upload. avatar_refs now also counts avatar_full_url. Nothing
 -- else in the function changes (body copied from 20261016200000).
 --
--- Rollback: supabase/rollbacks/20261023130000_orphan_sweep_avatar_full.down.sql
+-- Rollback: supabase/rollbacks/20261023130000_profile_full_photo_followups.down.sql
 
+-- ------------------------------------------------------------ 1. profiles_self
+DO $view$
+DECLARE
+  v_cols text;
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_attribute
+              WHERE attrelid = 'public.profiles_self'::regclass
+                AND attname = 'avatar_full_url' AND NOT attisdropped) THEN
+    RETURN;
+  END IF;
+  SELECT string_agg(quote_ident(attname), ', ' ORDER BY attnum) INTO v_cols
+    FROM pg_attribute
+   WHERE attrelid = 'public.profiles_self'::regclass AND attnum > 0 AND NOT attisdropped;
+  EXECUTE format(
+    'CREATE OR REPLACE VIEW public.profiles_self WITH (security_barrier = true, security_invoker = true) AS '
+    'SELECT %s, avatar_full_url FROM public.profiles WHERE id = (SELECT auth.uid())',
+    v_cols);
+END
+$view$;
+
+-- ------------------------------------------------------------ 2. orphan sweep
 CREATE OR REPLACE FUNCTION public.enqueue_orphaned_storage_objects(p_limit integer DEFAULT 500, p_min_age interval DEFAULT '30 days'::interval)
  RETURNS integer
  LANGUAGE plpgsql
