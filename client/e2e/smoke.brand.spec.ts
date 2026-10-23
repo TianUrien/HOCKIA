@@ -33,12 +33,9 @@ test.describe('@smoke brand', () => {
     // 2026-05-01 cleanup, it redirects to /dashboard/profile (canonical
     // brand dashboard via DashboardRouter). For brands without a brand row
     // yet, the chain redirects further to /brands/onboarding.
-    await page.waitForTimeout(3000)
-
-    const url = page.url()
-    expect(
-      url.includes('/dashboard/profile') || url.includes('/brands/onboarding')
-    ).toBe(true)
+    // Wait for the redirect itself: a fixed 3 s wait failed under a loaded
+    // full-suite run (2026-10-22/23) while passing alone.
+    await page.waitForURL(/\/dashboard\/profile|\/brands\/onboarding/, { timeout: 15_000 })
   })
 
   test('brand can view public marketplace', async ({ page }) => {
