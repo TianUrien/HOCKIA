@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, Tag, UserPlus } from 'lucide-react'
+import { useMyBrandOffers } from '@/hooks/useBrandOffers'
+import { liveLimitLine, offerGroup } from '@/lib/brandOffers'
 import { supabase } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
@@ -212,6 +214,11 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const tapsByProduct = useMemo(() => new Map((taps.data?.products ?? []).map((t) => [t.product_id, t.taps])), [taps.data])
   const vis = useWeeklyVisibility(owner, false)
   const searches = useSearchAppearances({ profileId: owner ? brand.profile_id : null })
+  const myOffers = useMyBrandOffers(Boolean(owner))
+  const needsYou = myOffers.offers.filter((o) => offerGroup(o) === 'needs_you').length
+  const offersSubtitle = myOffers.offers.length === 0
+    ? 'Bring something useful to members where they live'
+    : [liveLimitLine(myOffers.offers).split(' · ')[0], needsYou ? `${needsYou} ${needsYou === 1 ? 'needs' : 'need'} you` : null].filter(Boolean).join(' · ')
   const pending = props.pendingInvites ?? []
   // One primary per screen: invites waiting own it; else the next step does.
   const invitesPrimary = pending.length > 0 || !stepCopy
@@ -346,6 +353,18 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             </div>
             <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
               <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Offers (brand Phase 1, Figma 08 · Brands P1) */}
+          <div className="px-4">
+            <button type="button" onClick={() => navigate('/dashboard/offers')} className="flex w-full items-center gap-3 rounded-[20px] border border-line bg-white px-4 py-3.5 text-left" data-testid="brand-offers-link">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary"><Tag className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">Offers</span>
+                <span className="block truncate text-secondary text-ink-2">{offersSubtitle}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-ink-4" aria-hidden="true" />
             </button>
           </div>
 

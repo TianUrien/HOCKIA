@@ -1,0 +1,59 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  duplicateOffer,
+  fetchAdminOffers,
+  fetchMyOffers,
+  reviewOffer,
+  saveOffer,
+  setOfferState,
+  type AdminOfferTab,
+  type OfferAction,
+  type OfferFields,
+} from '@/lib/brandOffers'
+
+const MY_OFFERS = ['brand-offers', 'mine'] as const
+const ADMIN_OFFERS = ['brand-offers', 'admin'] as const
+
+/** The signed-in brand's offers with their distinct-member counts (Phase 1). */
+export function useMyBrandOffers(enabled = true) {
+  const qc = useQueryClient()
+  const query = useQuery({ queryKey: MY_OFFERS, queryFn: fetchMyOffers, enabled, staleTime: 30_000 })
+  const invalidate = () => qc.invalidateQueries({ queryKey: MY_OFFERS })
+
+  const save = useMutation({
+    mutationFn: (v: { id: string | null; fields: OfferFields; submit: boolean }) => saveOffer(v.id, v.fields, v.submit),
+    onSettled: invalidate,
+  })
+  const setState = useMutation({
+    mutationFn: (v: { id: string; action: OfferAction }) => setOfferState(v.id, v.action),
+    onSettled: invalidate,
+  })
+  const duplicate = useMutation({ mutationFn: (id: string) => duplicateOffer(id), onSettled: invalidate })
+
+  return { ...query, offers: query.data ?? [], save, setState, duplicate }
+}
+
+/** Admin review queue: one tab at a time, plus the three tab counts. */
+export function useAdminBrandOffers(tab: AdminOfferTab) {
+  const qc = useQueryClient()
+  const list = useQuery({ queryKey: [...ADMIN_OFFERS, tab], queryFn: () => fetchAdminOffers(tab), staleTime: 15_000 })
+  const review = useMutation({
+    mutationFn: (v: { id: string; decision: 'approve' | 'reject'; note: string | null }) => reviewOffer(v.id, v.decision, v.note),
+    onSettled: () => qc.invalidateQueries({ queryKey: ADMIN_OFFERS }),
+  })
+  return { ...list, offers: list.data ?? [], review }
+}
+
+/** Counts for the admin tabs and the sidebar badge. */
+export function useAdminBrandOfferCounts() {
+  const tabs: AdminOfferTab[] = ['to_review', 'not_approved', 'live']
+  const q = useQuery({
+    queryKey: [...ADMIN_OFFERS, 'counts'],
+    queryFn: async () => {
+      const lists = await Promise.all(tabs.map((t) => fetchAdminOffers(t)))
+      return { to_review: lists[0].length, not_approved: lists[1].length, live: lists[2].length } as Record<AdminOfferTab, number>
+    },
+    staleTime: 30_000,
+  })
+  return q.data ?? { to_review: 0, not_approved: 0, live: 0 }
+}

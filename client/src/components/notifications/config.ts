@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  AlertCircle,
   Award,
   BadgeCheck,
   Bell,
@@ -431,6 +432,32 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
     getRoute: () => '/dashboard/profile?tab=ambassadors',
+  },
+  // Brand offers (Phase 1): the admin's review of an offer or a change to one.
+  // MIRRORED in supabase/functions/send-push/push-payload.ts.
+  brand_offer_approved: {
+    icon: CheckCircle2,
+    badgeText: 'Offer live',
+    accentClassName: 'bg-status-positive-soft text-status-positive',
+    getTitle: (notification) => (notification.metadata?.change === true ? 'Your changes are live' : 'Your offer is live'),
+    getDescription: (notification) => {
+      const title = getMetadataString(notification, 'offer_title')
+      return title ? `"${title}" is now shown to members.` : 'It is now shown to members.'
+    },
+    getRoute: () => '/dashboard/offers',
+  },
+  brand_offer_not_approved: {
+    icon: AlertCircle,
+    badgeText: 'Offer needs a change',
+    accentClassName: 'bg-status-warning-soft text-status-warning',
+    getTitle: () => 'Your offer needs a change',
+    getDescription: (notification) => {
+      const title = getMetadataString(notification, 'offer_title')
+      const reason = (getMetadataString(notification, 'reason') ?? '').trim().replace(/[.!]+$/, '')
+      const head = title ? `"${title}" wasn’t approved.` : 'Your offer wasn’t approved.'
+      return reason ? `${head} Reason: ${reason}.` : head
+    },
+    getRoute: () => '/dashboard/offers',
   },
   club_invitation_received: {
     icon: Users,
