@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import {
   duplicateOffer,
   fetchAdminOffers,
@@ -56,4 +58,27 @@ export function useAdminBrandOfferCounts() {
     staleTime: 30_000,
   })
   return q.data ?? { to_review: 0, not_approved: 0, live: 0 }
+}
+
+export interface OfferTotals { shown: number; opened: number; contacted: number }
+
+/** Last-30-days totals across the brand's offers (distinct members; B0b tiles).
+ *  null when unknown: the card then shows no tiles rather than a guess. */
+export function useMyBrandOfferTotals(enabled: boolean): OfferTotals | null {
+  const q = useQuery({
+    queryKey: ['brand-offers', 'totals', 30],
+    enabled,
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async (): Promise<OfferTotals | null> => {
+      const { data, error } = await supabase.rpc('get_my_brand_offer_totals', { p_days: 30 })
+      if (error) {
+        logger.warn('[useMyBrandOfferTotals] unavailable', error)
+        return null
+      }
+      const row = (Array.isArray(data) ? data[0] : data) as OfferTotals | undefined
+      return row ? { shown: row.shown ?? 0, opened: row.opened ?? 0, contacted: row.contacted ?? 0 } : null
+    },
+  })
+  return q.data ?? null
 }

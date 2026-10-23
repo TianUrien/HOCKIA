@@ -77,15 +77,32 @@ test.describe('brand offers QA', () => {
     await page.screenshot({ path: `${OUT}/desktop-01-editor.png` })
   })
 
-  test('brand dashboard links to Offers', async ({ page }) => {
+  test('brand dashboard: Offers card first (B0 / B0b)', async ({ page }) => {
     await page.setViewportSize(PHONE)
     await page.goto('/dashboard/profile')
-    const link = page.getByTestId('brand-offers-link')
-    await expect(link).toBeVisible({ timeout: 20_000 })
-    await link.scrollIntoViewIfNeeded()
-    await page.screenshot({ path: `${OUT}/phone-00-dashboard-link.png` })
-    await link.click()
+    const card = page.getByTestId('brand-offers-card')
+    await expect(card).toBeVisible({ timeout: 20_000 })
+    await card.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `${OUT}/phone-00-dashboard-b0.png` })
+    // New brand: the Primary opens the editor.
+    await page.getByTestId('brand-offers-create').click()
+    await expect(page).toHaveURL(/\/dashboard\/offers\/new$/)
+    await page.getByLabel('Title').fill('QA dashboard draft')
+    await page.getByTestId('offer-save-draft').click()
     await expect(page).toHaveURL(/\/dashboard\/offers$/)
+    // With an offer: "N of 5 live" opens the list.
+    await page.goto('/dashboard/profile')
+    await expect(page.getByTestId('brand-offers-link')).toBeVisible({ timeout: 20_000 })
+    await page.getByTestId('brand-offers-card').scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `${OUT}/phone-00b-dashboard-b0b.png` })
+    await page.getByTestId('brand-offers-link').click()
+    await expect(page).toHaveURL(/\/dashboard\/offers$/)
+    // Clean up the draft.
+    const row = page.getByTestId('offer-row').filter({ hasText: 'QA dashboard draft' })
+    await row.getByTestId('offer-row-menu').click()
+    await page.getByTestId('offer-action-delete').click()
+    await page.getByTestId('offer-confirm-yes').click()
+    await expect(row).toHaveCount(0)
   })
 
   test('admin queue and reject dialog (mocked sample data)', async ({ page }) => {
