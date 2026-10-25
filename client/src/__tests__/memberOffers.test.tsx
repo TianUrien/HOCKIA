@@ -18,6 +18,7 @@ import {
   storeLabel,
   type MemberOffer,
 } from '@/lib/memberOffers'
+import { offerReasonLine } from '@/lib/brandOffers'
 import { MemberOfferCard } from '@/components/offers/MemberOfferCard'
 
 const OFFER: MemberOffer = {
@@ -51,8 +52,12 @@ describe('Hockia AI: which questions may carry an offer (founder default topics)
 
 describe('offer detail wording (OD1)', () => {
   it('For, Store and the reason line', () => {
-    expect(offerForLine(['player', 'coach'], ['England', 'the Netherlands'])).toBe('Players and coaches who live in England or the Netherlands')
-    expect(offerForLine(['player', 'coach', 'club', 'umpire'], ['England'])).toBe('Players, coaches, clubs and umpires who live in England')
+    expect(offerForLine(['player', 'coach'], ['England', 'Netherlands'])).toBe('Players and coaches who live in England or the Netherlands')
+    expect(offerForLine(['player', 'coach', 'club', 'umpire'], ['United Kingdom'])).toBe('Members who live in the United Kingdom')
+    expect(offerForLine(['player', 'coach', 'club'], ['England'])).toBe('Players, coaches and clubs who live in England')
+    expect(detailReasonLine('United Kingdom')).toBe('You see this because you live in the United Kingdom. HOCKIA checked this offer before it went live.')
+    expect(offerReasonLine('Netherlands', 'coach')).toBe('You see this because you live in the Netherlands and coach.')
+    expect(hockiaAiReasonLine('moving abroad', 'United States')).toBe('Shown because you asked about moving to the United States. It did not change the answer.')
     expect(storeLabel('https://www.northlinehockey.com/hockia/')).toBe('northlinehockey.com/hockia')
     expect(detailReasonLine('England')).toBe('You see this because you live in England. HOCKIA checked this offer before it went live.')
     expect(detailReasonLine(null)).toBe('HOCKIA checked this offer before it went live.')

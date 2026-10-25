@@ -115,6 +115,14 @@ export default function OfferDetailPage() {
     }
   }
 
+  // No photo: the brand's logo on the gradient, so the hero never reads as a
+  // missing image (design review 2026-10-25).
+  const noPhotoLogo = offer.image_url ? null : (
+    <span className="absolute inset-0 flex items-center justify-center" data-testid="offer-detail-hero-logo">
+      <BrandLogo name={offer.brand_name} url={offer.brand_logo_url} className="h-[72px] w-[72px] rounded-[16px] shadow-[0_4px_16px_rgba(15,15,20,0.18)]" initialsClassName="text-[24px]" />
+    </span>
+  )
+
   const menu = (
     <MoreMenu
       label="Offer actions"
@@ -185,8 +193,9 @@ export default function OfferDetailPage() {
         <Header />
         <main className="mx-auto max-w-[920px] px-6 pb-16 pt-under-header-lg">
           <div className="overflow-hidden rounded-[28px] bg-surface-subtle shadow-[0_8px_30px_rgba(15,15,20,0.08)]">
-            <div className="relative h-[280px]">
+            <div className={cn('relative', offer.image_url ? 'h-[280px]' : 'h-[180px]')}>
               <OfferHero url={offer.image_url} className="absolute inset-0 h-full w-full" />
+              {noPhotoLogo}
               <button type="button" onClick={close} aria-label="Close" className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
               <div className="absolute right-4 top-4">{menu}</div>
             </div>
@@ -206,8 +215,9 @@ export default function OfferDetailPage() {
 
   return (
     <div className="min-h-screen bg-surface-subtle pb-[calc(env(safe-area-inset-bottom)+96px)]" data-testid="offer-detail">
-      <div className="relative h-[250px]">
+      <div className={cn('relative', offer.image_url ? 'h-[250px]' : 'h-[160px]')}>
         <OfferHero url={offer.image_url} className="absolute inset-0 h-full w-full" />
+        {noPhotoLogo}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
           <button type="button" onClick={close} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
           {menu}

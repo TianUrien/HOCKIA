@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { OFFER_ROLES, type OfferRole } from '@/lib/brandOffers'
+import { OFFER_ROLES, countryInSentence, type OfferRole } from '@/lib/brandOffers'
 
 /**
  * Brand offers, Phase 2: what members see (Figma "08 · Brands", P2; founder
@@ -120,8 +120,11 @@ export function reportOfferContactIfPending(recipientId: string | null | undefin
 export function offerForLine(roles: OfferRole[], countryNames: string[]): string {
   const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
   const lower = who.map((w, i) => (i === 0 ? w : w.toLowerCase()))
-  const whoText = lower.length === 0 ? 'Members' : lower.length === 1 ? lower[0] : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
-  const where = countryNames.length > 1 ? `${countryNames.slice(0, -1).join(', ')} or ${countryNames[countryNames.length - 1]}` : countryNames[0] ?? ''
+  // Every role targeted reads as "Members" (design review 2026-10-25); a subset keeps the list.
+  const everyone = OFFER_ROLES.every((x) => roles.includes(x.value))
+  const whoText = everyone || lower.length === 0 ? 'Members' : lower.length === 1 ? lower[0] : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
+  const named = countryNames.map(countryInSentence)
+  const where = named.length > 1 ? `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}` : named[0] ?? ''
   return where ? `${whoText} who live in ${where}` : whoText
 }
 
@@ -138,7 +141,7 @@ export function storeLabel(link: string): string {
 /** OD1 reason line. */
 export function detailReasonLine(countryName: string | null): string {
   return countryName
-    ? `You see this because you live in ${countryName}. HOCKIA checked this offer before it went live.`
+    ? `You see this because you live in ${countryInSentence(countryName)}. HOCKIA checked this offer before it went live.`
     : 'HOCKIA checked this offer before it went live.'
 }
 
@@ -162,6 +165,6 @@ export function hockiaAiOfferTopic(question: string | null | undefined): string 
 
 /** H3 reason line: "Shown because you asked about moving to England. It did not change the answer." */
 export function hockiaAiReasonLine(topic: string, countryName: string | null): string {
-  const about = topic === 'moving abroad' && countryName ? `moving to ${countryName}` : topic
+  const about = topic === 'moving abroad' && countryName ? `moving to ${countryInSentence(countryName)}` : topic
   return `Shown because you asked about ${about}. It did not change the answer.`
 }
