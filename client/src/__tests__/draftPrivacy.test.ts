@@ -5,7 +5,7 @@
  * too. A draft saved before the change no longer restores them either.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { SENSITIVE_DRAFT_FIELDS, withoutRoleGender, withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
+import { SENSITIVE_DRAFT_FIELDS, withoutRoleCategory, withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
 import { parseCoachDraft, parseWizardDraft, serializeCoachDraft, serializeWizardDraft, type CoachSetupDraft } from '@/lib/onboardingV2'
 import { loadProfileDraft, saveProfileDraft } from '@/lib/profileDrafts'
 
@@ -38,7 +38,7 @@ describe('withoutSensitiveDraftFields', () => {
   })
 
   it('drops the role category from an opportunity draft', () => {
-    expect(withoutRoleGender({ title: 'First XI', position: 'forward', gender: 'Women' })).toEqual({ title: 'First XI', position: 'forward' })
+    expect(withoutRoleCategory({ title: 'First XI', position: 'forward', gender: 'Women' })).toEqual({ title: 'First XI', position: 'forward' })
   })
 })
 

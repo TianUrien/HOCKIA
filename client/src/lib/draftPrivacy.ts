@@ -49,7 +49,7 @@ export function withoutSensitiveDraftFields<T extends object>(data: T): Omit<T, 
 }
 
 /** Copy of a role (opportunity) draft without its gender category. */
-export function withoutRoleGender<T extends { gender?: unknown }>(data: T): Omit<T, 'gender'> {
+export function withoutRoleCategory<T extends { gender?: unknown }>(data: T): Omit<T, 'gender'> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- named only to leave it out
   const { gender: _gender, ...rest } = data
   return rest

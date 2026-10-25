@@ -23,7 +23,7 @@ import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLo
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 import { requestPushAsk } from '@/lib/pushAsk'
-import { withoutRoleGender } from '@/lib/draftPrivacy'
+import { withoutRoleCategory } from '@/lib/draftPrivacy'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 
 interface CreateVacancyModalProps {
@@ -327,7 +327,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
           const base = buildInitialFormData(null, initialOpportunityType)
-          const restored = { ...base, ...withoutRoleGender(parsed.formData || {}) }
+          const restored = { ...base, ...withoutRoleCategory(parsed.formData || {}) }
           setFormData(restored)
           setRoleCategory(undefined)
           setNewRequirement(parsed.newRequirement ?? '')
