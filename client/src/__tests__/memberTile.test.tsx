@@ -430,10 +430,10 @@ describe('MemberTile — click behavior', () => {
     expect(navigateMock).toHaveBeenCalledWith('/brands/pro-x?ref=community')
   })
 
-  it('navigates auth brand without slug to /marketplace', async () => {
+  it('navigates auth brand without slug to Community › Brands', async () => {
     renderTile({ id: 'bid-1', role: 'brand', full_name: 'Pro X', brandSlug: null })
     await userEvent.click(screen.getByRole('button', { name: /Pro X/i }))
-    expect(navigateMock).toHaveBeenCalledWith('/marketplace')
+    expect(navigateMock).toHaveBeenCalledWith('/community/brands')
   })
 })
 

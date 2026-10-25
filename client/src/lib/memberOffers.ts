@@ -35,7 +35,7 @@ export interface MemberOfferDetail extends MemberOffer {
   eligible: boolean
 }
 
-export type OfferSurface = 'home' | 'home_rail' | 'hockia_ai' | 'brands_tab' | 'offer_detail'
+export type OfferSurface = 'home' | 'home_rail' | 'hockia_ai' | 'brands_tab' | 'offer_detail' | 'marketplace' | 'need_page' | 'moment_sheet'
 export type DismissReason = 'not_for_me' | 'already_have' | 'wrong_country' | 'too_many' | 'hide_brand'
 
 export const DISMISS_REASONS: { value: DismissReason; label: string }[] = [

@@ -31,13 +31,10 @@ test.describe('@smoke public', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
   })
 
-  test('marketplace loads (public)', async ({ page }) => {
+  test('legacy /brands lands on Community › Brands (public)', async ({ page }) => {
+    // Marketplace by need and place (founder 2026-10-25): the hub is Community › Brands.
     await page.goto('/brands')
-
-    // Legacy /brands redirects to /marketplace — Marketplace heading is visible
-    await expect(
-      page.getByRole('heading', { level: 1, name: /marketplace/i })
-    ).toBeVisible({ timeout: 20000 })
+    await page.waitForURL('**/community/brands', { timeout: 20000 })
   })
 
   test('community page loads (public)', async ({ page }) => {

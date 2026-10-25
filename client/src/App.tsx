@@ -17,6 +17,7 @@ import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
 import { GlobalHockiaAiSheet } from '@/components/hockiaAi/GlobalHockiaAiSheet'
+import { GetReadySheet } from '@/components/marketplace/GetReadySheet'
 import { DiscoverRedirect } from '@/components/hockiaAi/DiscoverRedirect'
 import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
@@ -130,7 +131,7 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 // BrandDashboardPage was the legacy /dashboard/brand page; replaced by the
 // rich BrandDashboard component used by DashboardRouter at /dashboard/profile.
 // Import removed; legacy route now redirects.
-const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
+const NeedPage = lazyWithRetry(() => import('@/pages/NeedPage'))
 const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
 const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
 
@@ -416,6 +417,7 @@ function App() {
           <ScrollToTop />
           <KeyboardShortcutsManager />
           <GlobalHockiaAiSheet />
+          <GetReadySheet />
           {import.meta.env.DEV && <SentryTestButton />}
           <ShortLinkGate>
           <TermsGate>
@@ -457,14 +459,15 @@ function App() {
                 <Route path="/post/:postId" element={<PostPage />} />
 
                 {/* Marketplace (canonical brand discovery surface — products + brand directory) */}
-                <Route path="/marketplace" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MarketplacePage /></ErrorBoundary>} />
+                {/* Marketplace by need and place (founder 2026-10-25): the hub is Community › Brands. */}
+                <Route path="/marketplace" element={<Navigate to="/community/brands" replace />} />
 
                 {/* Legacy brand routes — redirect to canonical marketplace.
                     Note: /community/brands is NOT redirected here — it's
                     a real role filter inside the Community page now
                     (May 2026 QA pass). Marketplace still exists for the
                     products surface and featured brand discovery. */}
-                <Route path="/brands" element={<Navigate to="/marketplace" replace />} />
+                <Route path="/brands" element={<Navigate to="/community/brands" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 {/* id-fallback for brands — mirrors /players/id/:id etc.
                     Resolves brand profile_id → slug, then redirects to
@@ -510,6 +513,7 @@ function App() {
                 <Route path="/community" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 {/* Questions are a post kind in the Home feed now (2026-09-20). */}
                 <Route path="/community/questions" element={<Navigate to="/home" replace />} />
+                <Route path="/community/brands/need/:need" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NeedPage /></ErrorBoundary>} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
                 <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />

@@ -62,7 +62,7 @@ const MEANT_TO_BE_PUBLIC = [
   '/members', '/players', '/coaches', '/clubs', '/umpires',
 ]
 /** Personal pages that happen to live under a public prefix. */
-const PERSONAL_UNDER_PUBLIC = ['/opportunities/applications']
+const PERSONAL_UNDER_PUBLIC = ['/opportunities/applications', '/community/brands/need']
 const meantPublic = (pattern: string) =>
   !PERSONAL_UNDER_PUBLIC.some((p) => pattern === p || pattern.startsWith(`${p}/`)) &&
   MEANT_TO_BE_PUBLIC.some((p) => (p === '/' ? pattern === '/' : pattern === p || pattern.startsWith(`${p}/`)))

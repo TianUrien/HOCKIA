@@ -22,6 +22,8 @@ import {
 } from '@/lib/brandOffers'
 import { OfferPreviewCard, OfferThumb, OfferPill } from './OfferParts'
 import { useCountryNames } from '@/hooks/useCountryNames'
+import { NeedPicker } from '@/components/marketplace/NeedPicker'
+import type { Need } from '@/lib/marketplace'
 
 const BUCKET = 'brand-products'
 const MAX_COUNTRIES = 30
@@ -34,6 +36,9 @@ interface OfferEditorProps {
   userId: string
   saving: 'draft' | 'submit' | null
   onSave: (fields: OfferFields, submit: boolean) => void
+  /** The Marketplace need (Figma P6); saved after the offer by the page. */
+  need: Need | null
+  onNeedChange: (need: Need) => void
   onCancel: () => void
   layout: 'phone' | 'desktop'
 }
@@ -43,7 +48,7 @@ interface OfferEditorProps {
  * live at once (founder 2026-10-25: no approval step); edits to a live or
  * paused offer apply at once. Anything not live can also be saved as a draft.
  */
-export function OfferEditor({ offer, initial, brandName, userId, saving, onSave, onCancel, layout }: OfferEditorProps) {
+export function OfferEditor({ offer, initial, brandName, userId, saving, onSave, onCancel, layout, need, onNeedChange }: OfferEditorProps) {
   const [f, setF] = useState<OfferFields>(initial)
   const [tried, setTried] = useState(false)
   const topBar = useRef<HTMLDivElement>(null)
@@ -101,6 +106,8 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-caption text-ink-3">{(f.title ?? '').length}/{OFFER_TITLE_MAX}</span>
         </div>
       </div>
+
+      <NeedPicker value={need} onChange={onNeedChange} idPrefix="offer-need" />
 
       <div>
         <div className={fieldLabelRow}><label htmlFor="offer-body">What members get</label></div>

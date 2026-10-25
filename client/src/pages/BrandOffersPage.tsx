@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import Header from '@/components/Header'
@@ -15,6 +15,9 @@ import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { OfferRow } from '@/components/brands/offers/OfferParts'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { OfferEditor } from '@/components/brands/offers/OfferEditor'
+import { useQuery } from '@tanstack/react-query'
+import { logger } from '@/lib/logger'
+import { fetchMyItemNeeds, setOfferNeed, type Need } from '@/lib/marketplace'
 import {
   EMPTY_OFFER,
   OFFER_GROUP_LABELS,
@@ -54,8 +57,17 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const [confirm, setConfirm] = useState<Confirm>(null)
   const [limitDraft, setLimitDraft] = useState<{ id: string | null; fields: OfferFields } | null>(null)
   const [saving, setSaving] = useState<'draft' | 'submit' | null>(null)
+  // Marketplace need per offer (Figma P6): read back for the editor, saved after the offer.
+  const { data: needs = new Map<string, Need>(), refetch: refetchNeeds } = useQuery({
+    queryKey: ['my-brand-item-needs'],
+    queryFn: fetchMyItemNeeds,
+    staleTime: 60_000,
+  })
+  const [needDraft, setNeedDraft] = useState<Need | null>(null)
   // Desktop keeps the editor beside the list; null = nothing open.
   const [deskOpen, setDeskOpen] = useState<string | 'new' | null>(null)
+  // A different offer (or a new one) starts from its own saved need.
+  useEffect(() => { setNeedDraft(null) }, [offerId, mode, deskOpen])
 
   const editing = mode === 'edit' ? offers.find((o) => o.id === offerId) ?? null : null
   const deskOffer = deskOpen && deskOpen !== 'new' ? offers.find((o) => o.id === deskOpen) ?? null : null
@@ -87,7 +99,10 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     }
     setSaving(submit ? 'submit' : 'draft')
     try {
-      await save.mutateAsync({ id, fields, submit })
+      const savedId = await save.mutateAsync({ id, fields, submit })
+      if (needDraft && needDraft !== (id ? needs.get(id) : null)) {
+        try { await setOfferNeed(savedId, needDraft); void refetchNeeds() } catch (err) { logger.error('[BrandOffers] need not saved', err) }
+      }
       addToast(submit ? 'Your offer is live.' : 'Draft saved', 'success')
       closeEditor()
     } catch (err) {
@@ -158,6 +173,8 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
           userId={user.id}
           saving={saving}
           onSave={(fields, submit) => void doSave(editing?.id ?? null, editing, fields, submit)}
+          need={needDraft ?? (editing ? needs.get(editing.id) ?? null : null)}
+          onNeedChange={setNeedDraft}
           onCancel={closeEditor}
           layout="phone"
         />
@@ -261,6 +278,8 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
                   userId={user.id}
                   saving={saving}
                   onSave={(fields, submit) => void doSave(deskOffer?.id ?? null, deskOffer, fields, submit)}
+                  need={needDraft ?? (deskOffer ? needs.get(deskOffer.id) ?? null : null)}
+                  onNeedChange={setNeedDraft}
                   onCancel={closeEditor}
                   layout="desktop"
                 />

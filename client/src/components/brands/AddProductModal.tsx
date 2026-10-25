@@ -12,6 +12,9 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { BrandProduct, ProductImage, CreateProductInput, UpdateProductInput } from '@/hooks/useBrandProducts'
+import { useQuery } from '@tanstack/react-query'
+import { NeedPicker } from '@/components/marketplace/NeedPicker'
+import { fetchMyItemNeeds, type Need } from '@/lib/marketplace'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -63,6 +66,12 @@ export function AddProductModal({
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
+
+  // The saved need (or the brand category's default) for the product being edited.
+  const { data: needs } = useQuery({ queryKey: ['my-brand-item-needs'], queryFn: fetchMyItemNeeds, enabled: isOpen, staleTime: 60_000 })
+  const [needPick, setNeed] = useState<Need | null>(null)
+  const need = needPick ?? (editingProduct ? needs?.get(editingProduct.id) ?? null : null)
+  useEffect(() => { setNeed(null) }, [editingProduct?.id, isOpen])
 
   const [formData, setFormData] = useState<FormData>(() => {
     if (editingProduct) {
@@ -170,6 +179,7 @@ export function AddProductModal({
         description: formData.description.trim() || undefined,
         images: formData.images,
         external_url: formData.external_url.trim() || undefined,
+        need: need ?? undefined,
       }
 
       const result = await onSubmit(submitData, isEdit)
@@ -194,7 +204,7 @@ export function AddProductModal({
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, validate, onSubmit, isEdit, onClose, draftKey])
+  }, [formData, validate, onSubmit, isEdit, onClose, draftKey, need])
 
   if (!isOpen) return null
 
@@ -269,6 +279,9 @@ export function AddProductModal({
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
             </div>
+
+            {/* Marketplace need (Figma 08 · Brands P6) */}
+            <NeedPicker value={need} onChange={setNeed} idPrefix="product-need" />
 
             {/* Description */}
             <div>

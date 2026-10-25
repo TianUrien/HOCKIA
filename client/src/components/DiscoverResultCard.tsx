@@ -95,7 +95,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
       }
       return
     }
-    if (result.role === 'brand') navigate('/marketplace')
+    if (result.role === 'brand') navigate('/community/brands')
     else if (result.role === 'club') navigate(`/clubs/id/${result.id}?ref=discover`)
     else if (result.role === 'umpire') navigate(`/umpires/id/${result.id}?ref=discover`)
     else if (result.role === 'coach') navigate(`/coaches/id/${result.id}?ref=discover`)
