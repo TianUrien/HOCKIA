@@ -9,6 +9,7 @@ import monogramRing from '@/assets/community/monogram-ring.svg'
 import { FitBadge } from '@/components/ui/FitBadge'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import type { NationalityCountry } from '@/lib/nationality'
+import { useBrandOfferCount } from '@/components/offers/OffersWhereYouLive'
 
 /**
  * Card / Member photo (Figma 6:100), Community grid on the phone. 3:4, radius
@@ -44,6 +45,8 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
   const [failed, setFailed] = useState<string | null>(null)
   const name = member.full_name?.trim() || 'HOCKIA member'
   const isBrand = member.role === 'brand'
+  // Offers this member can see from the brand (Figma 08 · Brands P2 BT1); 0 outside the Brands tab.
+  const offerCount = useBrandOfferCount(member.id)
   const brandLogo = isBrand ? member.brand_logo_url ?? member.avatar_url : null
   const src = !isBrand && photoUrl && failed !== photoUrl ? photoUrl : null
   const roleLine = cardRoleLine(member)
@@ -90,6 +93,11 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
 
       {/* 0.5 pt inside hairline (finish pass) — above the photo, below the text. */}
       <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[20px] ${HAIRLINE_ON_PHOTO}`} />
+      {isBrand && offerCount > 0 && (
+        <span className="absolute right-2.5 top-2.5 rounded-full bg-brand-soft px-2.5 py-1 text-caption font-semibold text-brand-primary" data-testid="brand-offer-count">
+          {offerCount} {offerCount === 1 ? 'offer' : 'offers'}
+        </span>
+      )}
       <span className="relative flex w-full min-w-0 flex-col gap-0.5">
         {fitLabel && fit && (
           <span className="mb-1">

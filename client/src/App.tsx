@@ -132,6 +132,7 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 // Import removed; legacy route now redirects.
 const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
 const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
+const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
 
 // Lazy load admin components (code splitting)
 const AdminGuard = lazyWithRetry(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
@@ -477,6 +478,8 @@ function App() {
                     bookmarks rather than 404. */}
                 <Route path="/dashboard/brand" element={<Navigate to="/dashboard/profile" replace />} />
                 {/* Brand offers, Phase 1 (Figma 08 · Brands P1). */}
+                {/* Brand offers for members, Phase 2 (Figma 08 · Brands P2 OD1 / OD2). */}
+                <Route path="/offers/:offerId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OfferDetailPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />

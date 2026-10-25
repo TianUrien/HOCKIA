@@ -27,7 +27,7 @@ export const REPORT_REASONS = [
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value']
 
-export type ReportSubject = 'profile' | 'post' | 'comment' | 'chat' | 'role' | 'feed_item' | 'feed_item_comment' | 'video'
+export type ReportSubject = 'profile' | 'post' | 'comment' | 'chat' | 'role' | 'feed_item' | 'feed_item_comment' | 'video' | 'offer'
 
 export const REPORT_NOTE_MAX = 800
 
@@ -44,6 +44,8 @@ const SUBJECT_TAG: Record<ReportSubject, string | null> = {
   post: null,
   comment: null,
   chat: 'Chat',
+  // A brand offer: reported against the brand's profile, tagged with the offer id.
+  offer: 'Offer',
   role: null,
   feed_item: null,
   feed_item_comment: null,

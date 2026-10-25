@@ -85,6 +85,7 @@ export default function MobileBottomNav() {
       // Applicant review carries its own decision bar (Figma 04 Club 326:319).
       /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname) ||
       // Brand offer editor: Cancel / Save draft with its own Send bar (Figma 08 Brands B2).
+      /^\/offers\/[^/]+$/.test(location.pathname) ||
       location.pathname === '/dashboard/offers/new' || /^\/dashboard\/offers\/[^/]+\/edit$/.test(location.pathname) ||
       // Edit club profile: back / Done, no tab bar (Figma 04 Club D1.27).
       location.pathname === '/dashboard/club/edit' ||

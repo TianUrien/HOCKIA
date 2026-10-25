@@ -69,6 +69,9 @@ const PROTECTED_ROUTE_PREFIXES = [
   // signed-out or expired-session visitor got an empty Inbox / Pulse / "This
   // signing isn't available." instead of sign-in, and was not brought back.
   '/inbox', '/pulse', '/applications',
+  // Brand offers for members (Phase 2): the detail is members-only, like the
+  // RPC behind it (get_brand_offer_detail is not granted to anon).
+  '/offers',
 ]
 
 // Personal pages that live UNDER a public prefix. "My applications" sits at
