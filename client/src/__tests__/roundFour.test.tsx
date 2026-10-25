@@ -292,9 +292,9 @@ describe('player bits', () => {
     expect(screen.getByTestId('player-hero-empty-sub').textContent).toMatch(/Mark yourself open to play/)
   })
 
-  it('My applications: the divider sits under the text column so chevrons line up', () => {
+  it('My applications: one card per application (rebrand page 20), no list dividers', () => {
     const src = read('../pages/MyApplicationsPage.tsx')
-    expect(src).toContain('border-b border-line py-3 pr-3 group-last:border-b-0')
+    expect(src).toContain('rounded-[20px] border border-line bg-white p-4')
     expect(src).not.toContain('divide-y')
   })
 

@@ -19,6 +19,9 @@ import { applySubline, noteHeading, roleIdentity, type RoleIdentity } from '@/li
 import { CrestTile } from '@/components/opportunities/RoleCover'
 import { hapticSuccess } from '@/lib/haptics'
 import { Check } from 'lucide-react'
+import { CloseIcon, VideoIcon } from '@/components/icons/HockiaIcons'
+import { getRoleBadgeClasses } from '@/lib/roleColors'
+import { positionLabel } from '@/lib/identity'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
 import { requestPushAsk } from '@/lib/pushAsk'
@@ -202,9 +205,12 @@ export default function ApplyToVacancyModal({
   return (
     <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`}>
       <div className="flex flex-col px-5 pb-2 pt-1">
+        {/* Rebrand page 20 · Apply: "Apply" + close, the role, what the club will see. */}
         <div className="flex items-center gap-3 pb-4">
-          <h2 className="min-w-0 flex-1 text-title text-ink-1">Apply to {identity.hiringClub?.name ?? identity.displayName}</h2>
-          <button type="button" onClick={handleClose} className="shrink-0 text-[16px] leading-[22px] text-brand-primary" aria-label="Cancel">Cancel</button>
+          <h2 className="min-w-0 flex-1 text-title text-ink-1" aria-label={`Apply to ${identity.hiringClub?.name ?? identity.displayName}`}>Apply</h2>
+          <button type="button" onClick={handleClose} className="-mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-1 active:bg-surface-muted-pressed" aria-label="Close" data-testid="apply-close">
+            <CloseIcon className="h-6 w-6" />
+          </button>
         </div>
 
         {/* The role (Figma 153:386): crest 40 · role · "Club · posted by Coach". */}
@@ -218,7 +224,23 @@ export default function ApplyToVacancyModal({
           </div>
         </div>
 
-        <p className="pt-5 text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">Sent with your application · tap to edit</p>
+        <p className="pt-5 text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">The club will see · tap a detail to edit</p>
+        {/* Profile card (rebrand page 20): the profile is the application. */}
+        <div className="mt-2 flex items-center gap-3 rounded-[16px] bg-surface-subtle p-3" data-testid="apply-profile-card">
+          <EntityAvatar src={profile?.avatar_url ?? null} name={profile?.full_name ?? ''} role={profile?.role ?? 'player'} size={48} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{profile?.full_name || 'Your profile'}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {profile?.role && <span className={`rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-[0.04em] ${getRoleBadgeClasses(profile.role)}`}>{profile.role}</span>}
+              {profile?.position && <span className="rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary">{positionLabel(profile.position)}</span>}
+            </div>
+          </div>
+          {profile?.highlight_video_url && (
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-white text-ink-2" title="Your highlight video is included" aria-label="Highlight video included" data-testid="apply-profile-video">
+              <VideoIcon className="h-6 w-6" />
+            </span>
+          )}
+        </div>
         <div className="mt-2 divide-y-[0.5px] divide-line overflow-hidden rounded-[16px] border border-line">
           <Row label="Available from" value={availableText} field="availability" />
           <Row label="Passport" value={passportText} field="passports" />
@@ -240,10 +262,10 @@ export default function ApplyToVacancyModal({
               placeholder={`Add a note to ${noteTarget} (optional)`}
               aria-label={`${noteHeading(identity)} (optional)`}
               rows={3}
-              maxLength={600}
+              maxLength={500}
               className="mt-2 min-h-[96px] w-full resize-none rounded-[16px] bg-surface-subtle px-3.5 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary"
             />
-            <p className="pt-1 text-right text-caption text-ink-3" aria-live="polite">{message.length} / 600</p>
+            <p className="flex justify-between pt-1 text-caption text-ink-3"><span>Optional · max 500 characters</span><span aria-live="polite">{message.length} / 500</span></p>
           </>
         )}
 

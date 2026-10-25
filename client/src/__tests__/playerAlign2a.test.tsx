@@ -315,22 +315,22 @@ describe('My applications rows (List item / Application)', () => {
     for (const cls of Object.values(APPLICATION_TONE_TEXT)) expect(cls).not.toMatch(AMBER)
   })
 
-  it('Active · N | Closed · N, rows with title, "Club · Country", status words and a day-first applied date', () => {
+  it('Active · N | Archived · N, cards with title, "Club · Country", a status chip and a day-first applied date', () => {
     applications = [
       app({ id: 'a1', status: 'maybe' }),
       app({ id: 'a2', status: 'shortlisted', club: { id: 'club-2', name: 'North East H.C.', avatarUrl: null, role: 'club' }, country: 'Australia' }),
       app({ id: 'a3', status: 'rejected', active: false }),
     ]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications'))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active · 2', 'Closed · 1'])
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active · 2', 'Archived · 1'])
     const rows = screen.getAllByTestId('application-row')
     expect(rows).toHaveLength(2)
     expect(within(rows[0]).getByTestId('application-role-title')).toHaveTextContent('Forward')
     expect(within(rows[0]).getByText('Hockey Team Bologna · Italy')).toBeInTheDocument()
     const replied = within(rows[0]).getByTestId('application-status')
     expect(replied).toHaveTextContent('Replied')
-    expect(replied.className).toContain('text-ink-2')
-    expect(replied.className).not.toMatch(/positive|bg-/)
+    expect(replied.className).toContain('bg-surface-grouped text-ink-2')
+    expect(replied.className).not.toMatch(/positive/)
     expect(within(rows[0]).getByTestId('application-applied')).toHaveTextContent('Applied 4 Mar')
     expect(within(rows[0]).getByTestId('application-row-chevron')).toBeInTheDocument()
     const shortlisted = within(rows[1]).getByTestId('application-status')
@@ -377,16 +377,18 @@ describe('Apply sheet', () => {
       </MemoryRouter>,
     )
 
-  it('eligible (O3): title + Cancel, the opportunity card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
+  it('eligible (O3, rebrand page 20): "Apply" + Close, the opportunity card, the profile card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
     sheet()
     expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    expect(screen.getByTestId('apply-profile-card')).toBeInTheDocument()
     expect(screen.getByTestId('apply-role-summary')).toHaveTextContent('Hockey Team Bologna')
     const rows = screen.getAllByTestId('apply-detail-row')
     expect(rows.map((r) => r.firstElementChild?.textContent)).toEqual(['Available from', 'Passport', 'Contact'])
     for (const r of rows) expect(r.querySelector('svg')).not.toBeNull()
     expect(screen.getByPlaceholderText('Add a note to the club (optional)')).toBeInTheDocument()
-    expect(screen.getByText('0 / 600')).toBeInTheDocument()
+    expect(screen.getByText('0 / 500')).toBeInTheDocument()
+    expect(screen.getByText('Optional · max 500 characters')).toBeInTheDocument()
     const send = screen.getByTestId('send-application')
     expect(send).toHaveTextContent('Send application')
     expect(send).not.toBeDisabled()
@@ -423,14 +425,18 @@ describe('Application sent', () => {
       </MemoryRouter>,
     )
 
-  it('O3b: green check, "Application sent", the opportunity card, Primary Done and a "View in Applied" link', () => {
+  it('O3b (rebrand page 20): green check, "Application sent", What happens next, Primary "View my applications", Secondary back', () => {
     sent()
     expect(screen.getByRole('heading', { name: 'Application sent' })).toBeInTheDocument()
     expect(screen.getByText('Hockey Team Bologna has your profile, career and highlights. Their answer arrives in your Inbox.')).toBeInTheDocument()
-    const done = screen.getByTestId('application-sent-done')
-    expect(done.className).toContain('bg-hockia-primary')
-    const follow = screen.getByRole('button', { name: 'View in Applied' })
-    expect(follow.className).not.toContain('bg-hockia-primary')
+    expect(screen.getByTestId('what-happens-next')).toHaveTextContent('You get an answer')
+    expect(screen.getByTestId('what-happens-next').textContent).not.toMatch(/within|days/i)
+    const view = screen.getByTestId('application-sent-view')
+    expect(view).toHaveTextContent('View my applications')
+    expect(view.className).toContain('bg-hockia-primary')
+    const back = screen.getByTestId('application-sent-done')
+    expect(back).toHaveTextContent(/^Back to/)
+    expect(back.className).not.toContain('bg-hockia-primary')
     expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 
