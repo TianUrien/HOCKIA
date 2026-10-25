@@ -67,7 +67,7 @@ describe('Community segments (phone)', () => {
     render(<MemoryRouter initialEntries={['/community']}><CommunitySegments activeTab="all" /></MemoryRouter>)
     const sel = screen.getAllByRole('tab').find((t) => t.getAttribute('aria-selected') === 'true')!
     expect(sel.className).toContain('bg-brand-soft')
-    expect(sel.className).toContain('text-brand-primary')
+    expect(sel.className).toContain('text-brand-text')
     expect(sel.className).not.toContain('lg:bg-ink-1')
   })
 })

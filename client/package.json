@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/fetch-fonts.mjs",
     "build": "vite build",
     "build:check": "tsc -b && vite build",
     "lint": "eslint .",

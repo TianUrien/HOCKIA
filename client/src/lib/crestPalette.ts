@@ -32,8 +32,8 @@ export type CrestPalette = {
 export const CREST_PALETTE_VERSION = 2
 
 export const HOCKIA_FALLBACK: CrestPalette = {
-  v: CREST_PALETTE_VERSION, source: 'auto', primary: '#6c2bd9', secondary: '#a78bfa',
-  stops: ['#6c2bd9', '#4c1d95', '#1e0b45'], glow: '#a78bfa',
+  v: CREST_PALETTE_VERSION, source: 'auto', primary: '#7c3aed', secondary: '#a78bfa',
+  stops: ['#7c3aed', '#4c1d95', '#1e0b45'], glow: '#a78bfa',
 }
 
 /** Black & white crests: neutral, never the category colour. */

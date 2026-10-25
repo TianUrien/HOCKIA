@@ -100,5 +100,8 @@
 	<string>HOCKIA uses your photo library when you choose photos or videos for your profile, posts or gallery.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>HOCKIA saves photos and videos to your library only when you choose to download them.</string>
+	<!-- Light only in v1 (rebrand, founder 2026-10-25). -->
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>

@@ -8,5 +8,5 @@
  * those three places + this file + the flip touchpoints listed in the Phase-0
  * notes (index.html meta, email templates) — never hand-edit components.
  */
-export const HOCKIA_PRIMARY = '#6c2bd9' // Figma Foundations brand/primary
-export const HOCKIA_SECONDARY = '#7c3aed'
+export const HOCKIA_PRIMARY = '#7c3aed' // brand/primary (rebrand 2026-10-25, was #6c2bd9)
+export const HOCKIA_SECONDARY = '#6c2bd9' // brand/text, violet-700
