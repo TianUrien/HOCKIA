@@ -35,6 +35,7 @@ import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
 import { BackGlyph } from '@/components/ui/BackGlyph'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -382,7 +383,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 aria-checked={partners.value}
                 aria-label="Open to partners"
                 onClick={partners.toggle}
-                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', partners.value ? 'bg-[#15803d]' : 'bg-gray-300')}
+                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', switchTrackClass(partners.value))}
                 data-testid="brand-partners-switch"
               >
                 <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />

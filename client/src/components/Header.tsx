@@ -11,7 +11,7 @@ import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
  *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
 function NavDot({ className }: { className: string }) {
-  return <span aria-label="Unread" data-testid="header-unread-dot" className={`absolute h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white ${className}`} />
+  return <span aria-label="Unread" data-testid="header-unread-dot" className={`absolute h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white ${className}`} />
 }
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
