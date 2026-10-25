@@ -11,12 +11,12 @@ import { toEvidence, type SuggestionEvidence, type SuggestionRoleContext } from 
 
 export const SUGGESTS_TITLE = 'Hockia suggests'
 export const SUGGESTS_FOOTNOTE = 'Only players who are open to play and over 18. Players never see where they rank.'
-export const SUGGESTS_EMPTY = 'No players fit this role yet. Hockia checks again tonight.'
+export const SUGGESTS_EMPTY = 'No players fit this opportunity yet. Hockia checks again tonight.'
 export const SUGGESTS_COMPOSER_PLACEHOLDER = 'Ask Hockia: EU passport, start in January…'
 export const SUGGESTS_LOAD_ERROR = 'Couldn’t load suggestions. Pull to try again.'
 export const REFINE_TITLE = 'Hockia AI'
 export const REFINE_BACK = 'Suggested'
-export const REFINE_COMPOSER_PLACEHOLDER = 'Ask about players for this role'
+export const REFINE_COMPOSER_PLACEHOLDER = 'Ask about players for this opportunity'
 export const REFINE_NO_MATCH = 'None of the suggestions match that on their profiles.'
 
 const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five']
@@ -39,7 +39,7 @@ export function suggestsEntryDetail(count: number | null | undefined): string | 
 /** D5.2 caption under the matches. */
 export function refineCaption(pool: number): string {
   const n = Math.max(0, Math.floor(pool))
-  return `From Hockia’s ${n} suggestion${n === 1 ? '' : 's'} for this role · only facts from their profiles`
+  return `From Hockia’s ${n} suggestion${n === 1 ? '' : 's'} for this opportunity · only facts from their profiles`
 }
 
 export interface RoleSuggestion {

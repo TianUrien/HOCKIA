@@ -32,14 +32,14 @@ describe('OpportunityFiltersSheet', () => {
     const onClose = vi.fn()
     render(
       <OpportunityFiltersSheet open onClose={onClose} value={{ ...EMPTY_ROLE_FILTERS, type: 'player' }} onApply={onApply}
-        countFor={(d: RoleFilters) => (d.position ? 2 : 6)} passportHint="Argentine · 4 of 14 open roles" {...over} />,
+        countFor={(d: RoleFilters) => (d.position ? 2 : 6)} passportHint="Argentine · 4 of 14 open opportunities" {...over} />,
     )
     return { onApply, onClose }
   }
 
   it('options are Chips: selected soft purple, never black', () => {
     renderSheet()
-    const selected = screen.getByRole('button', { name: 'Player roles' })
+    const selected = screen.getByRole('button', { name: 'Player opportunities' })
     expect(selected.getAttribute('aria-pressed')).toBe('true')
     expect(selected.className).toContain('bg-brand-soft')
     expect(selected.className).not.toContain('bg-ink-1')
@@ -51,26 +51,26 @@ describe('OpportunityFiltersSheet', () => {
 
   it('the button shows the live count of the draft and applies it', () => {
     const { onApply, onClose } = renderSheet()
-    expect(screen.getByTestId('opportunity-filter-show').textContent).toBe('Show 6 roles')
+    expect(screen.getByTestId('opportunity-filter-show').textContent).toBe('Show 6 opportunities')
     fireEvent.click(screen.getByRole('button', { name: 'Defender' }))
     const show = screen.getByTestId('opportunity-filter-show')
-    expect(show.textContent).toBe('Show 2 roles')
+    expect(show.textContent).toBe('Show 2 opportunities')
     expect(show.className).toContain('bg-hockia-primary')
     fireEvent.click(show)
     expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ position: 'defender', type: 'player' }))
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('says "Show 1 role" for one', () => {
+  it('says "Show 1 opportunity" for one', () => {
     renderSheet({ countFor: () => 1 })
-    expect(screen.getByTestId('opportunity-filter-show').textContent).toBe('Show 1 role')
+    expect(screen.getByTestId('opportunity-filter-show').textContent).toBe('Show 1 opportunity')
   })
 
   it('the passport toggle is a switch row with its sub-line; hidden without a hint', () => {
     const { onApply } = renderSheet()
-    const sw = screen.getByRole('switch', { name: 'Only roles my passports qualify for' })
+    const sw = screen.getByRole('switch', { name: 'Only opportunities my passports qualify for' })
     expect(sw.getAttribute('aria-checked')).toBe('false')
-    expect(screen.getByText('Argentine · 4 of 14 open roles')).toBeTruthy()
+    expect(screen.getByText('Argentine · 4 of 14 open opportunities')).toBeTruthy()
     fireEvent.click(sw)
     expect(sw.getAttribute('aria-checked')).toBe('true')
     fireEvent.click(screen.getByTestId('opportunity-filter-show'))
@@ -87,7 +87,7 @@ describe('OpportunityFiltersSheet', () => {
     const reset = screen.getByRole('button', { name: 'Reset' })
     expect(reset.className).toContain('text-hockia-primary')
     fireEvent.click(reset)
-    expect(screen.getByRole('button', { name: 'Player roles' }).getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('button', { name: 'Player opportunities' }).getAttribute('aria-pressed')).toBe('false')
   })
 })
 

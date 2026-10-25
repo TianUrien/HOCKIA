@@ -105,7 +105,7 @@ describe('ClubSetupFlow (D1.24)', () => {
   it('step 1 is About your club: no back button, Continue waits for the 18+ box', () => {
     render(<ClubSetupFlow onFinished={vi.fn()} />)
     expect(screen.getByRole('heading', { name: 'About your club' })).toBeTruthy()
-    expect(screen.getByText('Step 1 of 2 · what players see next to every role.')).toBeTruthy()
+    expect(screen.getByText('Step 1 of 2 · what players see next to every opportunity.')).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'Add your crest' })).toHaveLength(2)
     expect(screen.queryByRole('button', { name: /^Back/ })).toBeNull()
     expect(screen.queryByText(/contact email/i)).toBeNull()

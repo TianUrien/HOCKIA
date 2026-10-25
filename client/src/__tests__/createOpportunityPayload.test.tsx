@@ -232,7 +232,7 @@ describe('CreateOpportunityModal — coach role team', () => {
     renderModal({ initialOpportunityType: 'coach' })
     const values = Array.from((screen.getByTitle('Category') as HTMLSelectElement).options).map((o) => o.value)
     expect(values).toEqual(['', 'Men', 'Women', 'Mixed', 'Boys', 'Girls'])
-    expect(screen.getByText('Boys and Girls are for coach and staff roles only.')).toBeInTheDocument()
+    expect(screen.getByText('Boys and Girls are for coach and staff opportunities only.')).toBeInTheDocument()
   })
 
   it('keeps a coach role\'s team on edit (no longer erased)', async () => {

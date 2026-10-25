@@ -63,7 +63,7 @@ export function SharePostSheet({
   // Phone: the shared item reads as List item / Role result (Figma 115:727 — 48 leading, two lines).
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const url = `${getShareOrigin()}/post/${postId}`
-  const shareText = content ? content.slice(0, 120) : `${authorName ?? 'A member'} on HOCKIA`
+  const shareText = content ? content.slice(0, 120) : `${authorName ?? 'A member'} on Hockia`
 
   // The people you already talk to (same list as Inbox › Messages).
   useEffect(() => {
@@ -142,7 +142,7 @@ export function SharePostSheet({
   const handleSystemShare = useCallback(async () => {
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'HOCKIA', text: shareText, url })
+        await navigator.share({ title: 'Hockia', text: shareText, url })
       } else {
         await handleCopyLink()
       }
@@ -178,7 +178,7 @@ export function SharePostSheet({
         <div className={isPhone ? 'flex min-h-[64px] items-center gap-3 rounded-card bg-surface-grouped px-3 py-2' : 'flex items-center gap-3 rounded-card bg-surface-grouped px-3 py-2.5'} data-testid="share-item-row">
           <EntityAvatar src={authorAvatar} name={authorName} role={authorRole} size={isPhone ? 48 : 40} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-row font-semibold text-ink-1">{authorName ?? 'HOCKIA member'}</p>
+            <p className="truncate text-row font-semibold text-ink-1">{authorName ?? 'Hockia member'}</p>
             <p className="truncate text-secondary text-ink-2">{content ? content : identityLine(authorRole)}</p>
           </div>
         </div>

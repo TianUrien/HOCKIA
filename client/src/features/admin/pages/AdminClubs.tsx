@@ -58,7 +58,7 @@ export function AdminClubs() {
   }, [daysFilter, page])
 
   useEffect(() => {
-    document.title = 'Club Analytics | HOCKIA Admin'
+    document.title = 'Club Analytics | Hockia Admin'
     fetchData()
   }, [fetchData])
 

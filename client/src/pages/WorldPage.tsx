@@ -84,7 +84,7 @@ export default function WorldPage() {
   }, [])
 
   useEffect(() => {
-    document.title = 'World | HOCKIA'
+    document.title = 'World | Hockia'
     fetchCountries()
   }, [fetchCountries])
 

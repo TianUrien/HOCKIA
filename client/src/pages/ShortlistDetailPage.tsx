@@ -2,7 +2,7 @@
  * ShortlistDetailPage — P1.5 (Spec G.8).
  *
  * Rows: avatar, HockeyContextLine, ClubFitChip, status pill (4-way
- * Unsorted / Good fit / Maybe / Not a fit), inline note (auto-save),
+ * Unsorted / Top pick / Maybe / Not a fit), inline note (auto-save),
  * Open profile + Remove actions. Empty state explains how to add
  * players to the list.
  *
@@ -29,7 +29,7 @@ import {
 
 const STATUS_OPTIONS: { value: ShortlistItemStatus; label: string; pill: string }[] = [
   { value: 'unsorted', label: 'Unsorted', pill: 'bg-gray-100 text-gray-700' },
-  { value: 'good_fit', label: 'Good fit', pill: 'bg-emerald-100 text-emerald-800' },
+  { value: 'good_fit', label: 'Top pick', pill: 'bg-emerald-100 text-emerald-800' },
   { value: 'maybe',    label: 'Maybe',    pill: 'bg-surface-grouped text-ink-2' },
   { value: 'not_a_fit',label: 'Not a fit',pill: 'bg-red-100 text-red-800' },
 ]

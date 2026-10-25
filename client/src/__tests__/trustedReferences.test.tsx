@@ -132,7 +132,7 @@ const defaultFriends = [
     avatarUrl: null,
     role: 'coach',
     baseLocation: 'London',
-    currentClub: 'HOCKIA FC',
+    currentClub: 'Hockia FC',
     acceptedAt: null,
   },
   {

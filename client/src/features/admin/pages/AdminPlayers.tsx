@@ -99,7 +99,7 @@ export function AdminPlayers() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Player Analytics | HOCKIA Admin'
+    document.title = 'Player Analytics | Hockia Admin'
     fetchData()
   }, [fetchData])
 

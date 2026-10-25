@@ -296,7 +296,7 @@ export default function NotificationsDrawer() {
     const config = getNotificationConfig(notification)
     const Icon = config.icon
     const actor = notification.actor
-    const fullName = actor.fullName || actor.username || 'HOCKIA member'
+    const fullName = actor.fullName || actor.username || 'Hockia member'
     const initials = fullName.slice(0, 2).toUpperCase()
     const displayTime = formatRelativeTime(notification.createdAt)
     const description = config.getDescription?.(notification)

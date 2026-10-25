@@ -198,7 +198,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
       seen.add(friend.id)
       options.push({
         id: friend.id,
-        fullName: friend.full_name || friend.username || 'HOCKIA Member',
+        fullName: friend.full_name || friend.username || 'Hockia Member',
         username: friend.username,
         avatarUrl: friend.avatar_url,
         role: friend.role,
@@ -322,7 +322,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
             role={connection.friend?.role}
           />
           <div>
-            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
+            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'Hockia Member'}</p>
             <RoleBadge role={connection.friend?.role ?? 'member'} className="mt-1" />
             {connection.friend?.base_location && (
               <p className="text-xs text-gray-500">{connection.friend.base_location}</p>
@@ -360,7 +360,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
                   }
                 }}
                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
-                title={`Ask ${connection.friend?.full_name ?? 'them'} to vouch for you on HOCKIA`}
+                title={`Ask ${connection.friend?.full_name ?? 'them'} to vouch for you on Hockia`}
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Ask to vouch
@@ -410,7 +410,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
             role={connection.friend?.role}
           />
           <div>
-            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
+            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'Hockia Member'}</p>
             <RoleBadge role={connection.friend?.role ?? 'member'} className="mt-1" />
             <p className="text-xs text-gray-500">Requested {humanizeDate(connection.created_at)}</p>
           </div>
@@ -507,7 +507,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Connections</h2>
-            <p className="text-sm text-gray-600">People in your HOCKIA network build credibility.</p>
+            <p className="text-sm text-gray-600">People in your Hockia network build credibility.</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
@@ -572,7 +572,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
       <section className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Connections</h3>
-          <p className="text-sm text-gray-500">Visible to all HOCKIA members for transparency.</p>
+          <p className="text-sm text-gray-500">Visible to all Hockia members for transparency.</p>
         </div>
 
         {acceptedConnections.length === 0

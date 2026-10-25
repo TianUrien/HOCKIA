@@ -522,7 +522,7 @@ export default function VacancyDetailView({
                 // of words (applicationStatusPill); the timeline below carries
                 // the dates and the club's message.
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="own-application">
-                  <p className="text-sm font-semibold text-ink-2">This role is closed</p>
+                  <p className="text-sm font-semibold text-ink-2">This opportunity is closed</p>
                   {(() => {
                     const pill = applicationStatusPill(applicationStatus ?? 'pending', null, false)
                     return (
@@ -547,11 +547,11 @@ export default function VacancyDetailView({
                 <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="role-closed-notice">
                   <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-semibold text-gray-800">This role is closed</p>
+                    <p className="font-semibold text-gray-800">This opportunity is closed</p>
                     <p className="text-gray-600 mt-0.5">
                       It&rsquo;s no longer taking applications.{' '}
                       <button type="button" onClick={() => { onClose(); navigate('/opportunities') }} className="font-semibold text-hockia-primary hover:underline">
-                        See open roles
+                        See open opportunities
                       </button>
                     </p>
                   </div>

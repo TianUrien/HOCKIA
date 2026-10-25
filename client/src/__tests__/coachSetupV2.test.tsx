@@ -235,14 +235,14 @@ describe('step 2 · Your coaching (586:849 / 587:911)', () => {
     expect(screen.getByText('Step 2 of 2 · clubs filter coaches by these.')).toBeInTheDocument()
     expect(screen.getByText('Pick every category you coach.')).toBeInTheDocument()
     expect(screen.getByText('Current club Optional')).toBeInTheDocument()
-    expect(screen.getByText('Yes adds My roles and Find players to your app. You can change this in Settings.')).toBeInTheDocument()
+    expect(screen.getByText('Yes adds My opportunities and Find players to your app. You can change this in Settings.')).toBeInTheDocument()
     for (const chip of ["Women's", "Men's", 'Girls', 'Boys', 'Mixed', 'Any category']) {
       expect(screen.getByRole('button', { name: chip })).toHaveAttribute('aria-pressed', 'false')
     }
     const recruit = screen.getByRole('radiogroup', { name: 'Do you recruit players for a team?' })
     const radios = within(recruit).getAllByRole('radio')
     expect(radios.map((r) => r.textContent)).toEqual([
-      'Yes, I recruit for my teamPost roles and review applicants for your club.',
+      'Yes, I recruit for my teamPost opportunities and review applicants for your club.',
       'Not right nowUse Hockia for your own coaching career.',
     ])
     radios.forEach((r) => expect(r).toHaveAttribute('aria-checked', 'false'))
@@ -262,7 +262,7 @@ describe('step 2 · Your coaching (586:849 / 587:911)', () => {
     expect(mocks.events.some((e) => e.startsWith('db:onboarding_step:wizard_step_validation_failed:2'))).toBe(true)
   })
 
-  it('sentence-case specializations; Other reveals the role title and requires it', async () => {
+  it('sentence-case specializations; Other reveals the opportunity title and requires it', async () => {
     const user = userEvent.setup()
     mocks.profile.current = stepTwoCoach()
     renderFlow()

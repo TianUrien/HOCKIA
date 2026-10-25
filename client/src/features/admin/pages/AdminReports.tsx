@@ -145,7 +145,7 @@ export function AdminReports() {
   }, [statusFilter, categoryFilter, page])
 
   useEffect(() => {
-    document.title = 'Content Reports | HOCKIA Admin'
+    document.title = 'Content Reports | Hockia Admin'
     fetchReports()
   }, [fetchReports])
 

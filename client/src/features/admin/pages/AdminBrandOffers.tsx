@@ -35,8 +35,8 @@ const REASONS: { label: string; text: string }[] = [
   { label: 'A claim we can’t check', text: 'Please remove claims we can’t check, like "best" or "cheapest". Say exactly what members get, then publish again.' },
   { label: 'Link doesn’t open', text: 'The link doesn’t open or doesn’t match the offer. Please fix it and publish again.' },
   { label: 'Targets nationality', text: 'Offers can reach members only by where they live, never by nationality. Please change the audience and publish again.' },
-  { label: 'Not allowed category', text: 'This category isn’t allowed on HOCKIA (for example betting, alcohol or tobacco).' },
-  { label: 'Aimed at under-18s', text: 'Offers on HOCKIA are for adults only. Please change the offer so it isn’t aimed at under-18s.' },
+  { label: 'Not allowed category', text: 'This category isn’t allowed on Hockia (for example betting, alcohol or tobacco).' },
+  { label: 'Aimed at under-18s', text: 'Offers on Hockia are for adults only. Please change the offer so it isn’t aimed at under-18s.' },
   { label: 'Photo with text', text: 'Please use a real photo of the product or service, without text on the image, then publish again.' },
 ]
 

@@ -449,7 +449,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 {(() => {
                   const trustTrailing = requesterRole?.toLowerCase() === 'umpire'
                     ? 'helps assigners and clubs trust your background.'
-                    : 'helps clubs scouting on HOCKIA trust your background.'
+                    : 'helps clubs scouting on Hockia trust your background.'
                   return selectedFriend
                     ? `Once ${selectedFriend.fullName.split(' ')[0]} accepts, this reference appears on your profile and ${trustTrailing}`
                     : `Once accepted, this reference appears on your profile and ${trustTrailing}`

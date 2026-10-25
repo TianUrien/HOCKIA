@@ -82,38 +82,38 @@ interface RoleCopy {
 const COPY: Record<ShareableRole, RoleCopy> = {
   player: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA profile: hockey background, videos, and references: ${url}`,
-    emailSubject: 'My HOCKIA player profile',
+      `Here’s my Hockia profile: hockey background, videos, and references: ${url}`,
+    emailSubject: 'My Hockia player profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA profile. It has my hockey background, videos, and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my Hockia profile. It has my hockey background, videos, and references:\n\n${url}\n\nThanks!`,
   },
   coach: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA coaching profile: experience, background, and references: ${url}`,
-    emailSubject: 'My HOCKIA coaching profile',
+      `Here’s my Hockia coaching profile: experience, background, and references: ${url}`,
+    emailSubject: 'My Hockia coaching profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA coaching profile. It has my coaching experience, background, and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my Hockia coaching profile. It has my coaching experience, background, and references:\n\n${url}\n\nThanks!`,
   },
   umpire: {
     shortMessage: (url) =>
-      `Here’s my HOCKIA umpire profile: officiating background and references: ${url}`,
-    emailSubject: 'My HOCKIA umpire profile',
+      `Here’s my Hockia umpire profile: officiating background and references: ${url}`,
+    emailSubject: 'My Hockia umpire profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s my HOCKIA umpire profile. It has my officiating background and references:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s my Hockia umpire profile. It has my officiating background and references:\n\n${url}\n\nThanks!`,
   },
   club: {
     shortMessage: (url) =>
-      `Here’s our HOCKIA club profile: ${url}`,
-    emailSubject: 'Our HOCKIA club profile',
+      `Here’s our Hockia club profile: ${url}`,
+    emailSubject: 'Our Hockia club profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s our HOCKIA club profile:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s our Hockia club profile:\n\n${url}\n\nThanks!`,
   },
   brand: {
     shortMessage: (url) =>
-      `Here’s our HOCKIA brand profile: ${url}`,
-    emailSubject: 'Our HOCKIA brand profile',
+      `Here’s our Hockia brand profile: ${url}`,
+    emailSubject: 'Our Hockia brand profile',
     emailBody: (url) =>
-      `Hi,\n\nHere’s our HOCKIA brand profile:\n\n${url}\n\nThanks!`,
+      `Hi,\n\nHere’s our Hockia brand profile:\n\n${url}\n\nThanks!`,
   },
 }
 

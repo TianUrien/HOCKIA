@@ -9,7 +9,7 @@ import { Settings, Info } from 'lucide-react'
 
 export function AdminSettings() {
   useEffect(() => {
-    document.title = 'Settings | HOCKIA Admin'
+    document.title = 'Settings | Hockia Admin'
   }, [])
 
   return (

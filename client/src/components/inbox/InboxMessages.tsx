@@ -163,7 +163,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         <ul>
           {filtered.map((row) => {
             const unread = Number(row.unread_count ?? 0) > 0
-            const name = row.other_participant_name ?? row.other_participant_username ?? 'HOCKIA member'
+            const name = row.other_participant_name ?? row.other_participant_username ?? 'Hockia member'
             const mine = row.last_message_sender_id === userId
             // Recruiting lines the server posts as the club are reworded for
             // the club and never carry the "You:" prefix (lib/signing).

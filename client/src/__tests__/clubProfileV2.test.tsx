@@ -62,18 +62,18 @@ function renderScreen(profile: Partial<ClubProfileShape> = {}, props: { readOnly
 describe('ClubProfileV2 · Recruiting pill', () => {
   beforeEach(() => { openRoles = []; members = [] })
 
-  it('is hidden with no open role, even if open_to_opportunities is true', () => {
+  it('is hidden with no open opportunity, even if open_to_opportunities is true', () => {
     renderScreen({ open_to_opportunities: true })
     expect(screen.queryByTestId('club-recruiting-pill')).toBeNull()
   })
 
-  it('shows with one open role, even if open_to_opportunities is false', () => {
+  it('shows with one open opportunity, even if open_to_opportunities is false', () => {
     openRoles = [role('r1')]
     renderScreen({ open_to_opportunities: false })
     expect(screen.getByTestId('club-recruiting-pill').textContent).toContain('Recruiting now')
   })
 
-  it('shows on the public view too; the role row is one tap target with no button (audit A5); Message first in the bar', () => {
+  it('shows on the public view too; the opportunity row is one tap target with no button (audit A5); Message first in the bar', () => {
     openRoles = [role('r1')]
     renderScreen({}, { readOnly: true })
     expect(screen.getByTestId('club-recruiting-pill')).toBeTruthy()
@@ -110,13 +110,13 @@ describe('ClubProfileV2 · squad rail', () => {
 })
 
 describe('ClubProfileV2 · one primary per screen', () => {
-  it('with nothing to review: no Review applicants, View roles instead', async () => {
+  it('with nothing to review: no Review applicants, View opportunities instead', async () => {
     const mod = await import('@/hooks/useRolesHealth')
     vi.spyOn(mod, 'useRolesHealth').mockReturnValue({ roles: [], totals: { openRoles: 1, pending: 0, newApplicants: 0 }, loading: false, failed: false })
     openRoles = [role('r1')]; members = []
     renderScreen()
     expect(screen.getByText('No new applicants')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Review applicants' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'View roles' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'View opportunities' })).toBeTruthy()
   })
 })

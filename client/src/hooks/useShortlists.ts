@@ -453,7 +453,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     // "did anything happen?" gap.
     const STATUS_LABEL: Record<ShortlistItemStatus, string> = {
       unsorted: 'Marked Unsorted',
-      good_fit: 'Marked Good fit',
+      good_fit: 'Marked Top pick',
       maybe: 'Marked Maybe',
       not_a_fit: 'Marked Not a fit',
     }

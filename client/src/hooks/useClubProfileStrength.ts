@@ -196,7 +196,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         id: 'friends',
         label: 'Make your first connection',
         hint: 'Connect with players or coaches',
-        unlockCopy: 'Builds your club network on HOCKIA.',
+        unlockCopy: 'Builds your club network on Hockia.',
         weight: 5,
         completed: (profile?.accepted_friend_count ?? 0) > 0,
         actionId: 'edit-profile',

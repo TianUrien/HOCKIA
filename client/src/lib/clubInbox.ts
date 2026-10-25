@@ -19,7 +19,7 @@ export function clubWeekStats({ toReview, views, openRoles }: { toReview: number
   return [
     { value: toReview, label: 'to review', to: '/opportunities', accent: true },
     { value: views, label: views === 1 ? 'profile view' : 'profile views', to: '/pulse' },
-    { value: openRoles, label: openRoles === 1 ? 'open role' : 'open roles', to: '/opportunities' },
+    { value: openRoles, label: openRoles === 1 ? 'open opportunity' : 'open opportunities', to: '/opportunities' },
   ]
 }
 
@@ -41,8 +41,8 @@ export function inboxWaitingNotice(rows: { waiting: boolean; applied: boolean }[
   const sub = applied === 0
     ? null
     : applied === n
-      ? (n === 1 ? 'They applied to your roles.' : 'All of them applied to your roles.')
-      : `${applied} of them applied to your roles.`
+      ? (n === 1 ? 'They applied to your opportunities.' : 'All of them applied to your opportunities.')
+      : `${applied} of them applied to your opportunities.`
   return { title, sub }
 }
 
@@ -79,7 +79,7 @@ export function applicationCardTitle(app: Pick<ClubApplication, 'roleTitle' | 'r
   const pos = positionLabel(app.rolePosition)
   const title = app.roleTitle?.trim() || null
   const parts = pos && title && title.toLowerCase() === pos.toLowerCase() ? [pos] : [pos, title].filter(Boolean)
-  return parts.length ? `Applied to ${parts.join(' · ')}` : 'Applied to one of your roles'
+  return parts.length ? `Applied to ${parts.join(' · ')}` : 'Applied to one of your opportunities'
 }
 
 const STATUS_NOTE: Record<string, string> = {
@@ -92,7 +92,7 @@ const STATUS_NOTE: Record<string, string> = {
   signed_pending_confirmation: 'signing to confirm',
   signed: 'signed',
   offer_declined: 'offer declined',
-  filled: 'role filled',
+  filled: 'opportunity filled',
 }
 
 /** "Sep 17 · 8 days left to reply" / "Sep 3 · closed without a reply on Sep 18".

@@ -716,7 +716,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {editingVacancy 
                   ? 'Update your opportunity details' 
                   : templateVacancy
-                    ? 'A new role with the same details. Dates and applicants start fresh.'
+                    ? 'A new opportunity with the same details. Dates and applicants start fresh.'
                   : formData.opportunity_type === 'player'
                     ? 'Create a new player position opportunity'
                     : 'Create a new coaching position opportunity'
@@ -1033,7 +1033,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "Describe the player opportunity, training environment, and development pathway..."
-                      : "Describe the coaching role, responsibilities, and team environment..."
+                      : "Describe the coaching opportunity, responsibilities, and team environment..."
                   }
                 />
                 <div className="mt-1 text-right text-xs text-gray-400">

@@ -20,15 +20,15 @@ import { UndoToast } from '@/components/club/UndoToast'
 const read = (p: string) => readFileSync(resolve(__dirname, p), 'utf8')
 
 describe('Club speed · fixed decline notes (ruling 2026-10-17: no AI draft)', () => {
-  it('builds the note from the reason and the role title, with each player’s own first name', () => {
+  it('builds the note from the reason and the opportunity title, with each player’s own first name', () => {
     const body = declineNoteBody('different_level', 'Goalkeeper, women’s 1st team')
-    expect(body).toBe('thank you for applying to Goalkeeper, women’s 1st team. We’re looking for a different level for this role, so we won’t move forward this time. We’d be glad to see you apply to our next roles.')
+    expect(body).toBe('thank you for applying to Goalkeeper, women’s 1st team. We’re looking for a different level for this opportunity, so we won’t move forward this time. We’d be glad to see you apply to our next roles.')
     expect(personalDeclineNote('Ana', body)).toBe(`Hi Ana, ${body}`)
     expect(personalDeclineNote('Mia', body).startsWith('Hi Mia, thank you')).toBe(true)
   })
-  it('greets without a name when the profile has none, and closes say the role closed', () => {
+  it('greets without a name when the profile has none, and closes say the opportunity closed', () => {
     expect(declineGreeting(null)).toBe('Hello,')
-    expect(declineNoteBody('role_closed', 'Left back')).toContain('We’ve closed this role, so we won’t move forward')
+    expect(declineNoteBody('role_closed', 'Left back')).toContain('We’ve closed this opportunity, so we won’t move forward')
     expect(declineNoteBody('unknown_code', 'Left back')).toContain('We’ve decided to go another way')
   })
   it('keeps every personal note within the server cap', () => {
@@ -66,9 +66,9 @@ describe('Club speed CS6 · tell everyone still waiting', () => {
     expect(sent.find((b) => b.application_id === 'bad')?.message).toBe('Hello, body')
   })
   it('toasts what happened', () => {
-    expect(closeRoleToldToast(3, 0)).toBe('Role closed. 3 players told.')
-    expect(closeRoleToldToast(1, 1)).toBe('Role closed. 1 player told; couldn’t tell 1.')
-    expect(closeRoleToldToast(0, 2)).toBe('Role closed. Couldn’t tell 2 players.')
+    expect(closeRoleToldToast(3, 0)).toBe('Opportunity closed. 3 players told.')
+    expect(closeRoleToldToast(1, 1)).toBe('Opportunity closed. 1 player told; couldn’t tell 1.')
+    expect(closeRoleToldToast(0, 2)).toBe('Opportunity closed. Couldn’t tell 2 players.')
   })
 })
 

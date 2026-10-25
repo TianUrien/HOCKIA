@@ -116,7 +116,7 @@ describe('OpportunityDetailView — level sought is publisher-only', () => {
     expect(screen.queryByText(/elite/i)).not.toBeInTheDocument()
   })
 
-  it('the club that posted the role still sees its level tag', () => {
+  it('the club that posted the opportunity still sees its level tag', () => {
     authState.user = { id: 'club-1' }
     authState.profile = { id: 'club-1', role: 'club' }
     renderDetail()

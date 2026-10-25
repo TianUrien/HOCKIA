@@ -87,7 +87,7 @@ export default function ConversationList({
           const participantName =
             conversation.otherParticipant?.full_name ||
             conversation.otherParticipant?.username ||
-            'HOCKIA member'
+            'Hockia member'
           const role = conversation.otherParticipant?.role
           const meta = clubMeta?.get(conversation.id)
           const contextLine = meta ? clubInboxRoleLine(role, meta.detail, meta.applied) : role ? identityLine(role) : null

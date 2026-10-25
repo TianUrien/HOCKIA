@@ -47,21 +47,21 @@ export default function JuniorsWaitlistPage() {
   return (
     <div className="min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-6">
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">HOCKIA Juniors</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Hockia Juniors</h1>
         {phase === 'done' ? (
           <>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mt-6">
               <CheckCircle2 className="w-6 h-6 text-green-600" />
             </div>
             <p className="text-sm text-gray-600 mt-4 leading-relaxed">
-              You&apos;re on the list. The moment HOCKIA Juniors opens, you&apos;ll
+              You&apos;re on the list. The moment Hockia Juniors opens, you&apos;ll
               be the first to know.
             </p>
           </>
         ) : (
           <>
             <p className="text-sm text-gray-600 mt-4 leading-relaxed">
-              We&apos;re building a version of HOCKIA with protections designed
+              We&apos;re building a version of Hockia with protections designed
               for young players. Leave your email and be first in when it opens.
             </p>
             <input
@@ -86,7 +86,7 @@ export default function JuniorsWaitlistPage() {
             </button>
           </>
         )}
-        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">HOCKIA</div>
+        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">Hockia</div>
       </div>
     </div>
   )

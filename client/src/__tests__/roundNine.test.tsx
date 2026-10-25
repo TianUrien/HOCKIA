@@ -106,7 +106,7 @@ describe('1 · the inbox preview of a recruiting line reads for its viewer, with
     expect(recruitingPreview(offer, { isMine: true, otherFirstName: 'Facundo' })).toEqual({ text: 'You sent an offer for [QA] R7 Future, open until 9 Oct.', system: true })
     expect(recruitingPreview(offer.replace('sent you an offer', 'updated its offer'), { isMine: true })).toEqual({ text: 'You updated your offer for [QA] R7 Future, open until 9 Oct.', system: true })
     expect(recruitingPreview(offer, { isMine: false })).toEqual({ text: offer, system: true })
-    const invite = 'E2E Test FC invited you to apply for [QA] R7 Future.\n\nCome and see us.\n\nOpen the role on Hockia to apply or say you’re not interested.'
+    const invite = 'E2E Test FC invited you to apply for [QA] R7 Future.\n\nCome and see us.\n\nOpen the opportunity on Hockia to apply or say you’re not interested.'
     expect(recruitingPreview(invite, { isMine: true, otherFirstName: 'Facundo' })).toEqual({ text: 'You invited Facundo to apply for [QA] R7 Future.', system: true })
     expect(recruitingPreview(invite, { isMine: false })).toEqual({ text: invite, system: true })
     // Neutral server lines are untouched but still lose the prefix.
@@ -205,7 +205,7 @@ describe('2 · dayFirst is the one date helper outside the signing road', () => 
     expect(startLabel('2026-10-10', now)).toBe('10 Oct')
   })
 
-  it('"Posted" on the role card after a week reads day first (getTimeAgo compact)', () => {
+  it('"Posted" on the opportunity card after a week reads day first (getTimeAgo compact)', () => {
     vi.useFakeTimers()
     vi.setSystemTime(now)
     try {
@@ -277,7 +277,7 @@ describe('4 · Withdraw application responds to the first tap, also across a par
     expect(road).not.toMatch(/withdraw-application"[^>]*disabled/)
   })
 
-  it('the role page refetches on the viewer’s id and role, not on auth-store object identity, and keeps the application on a failed read', () => {
+  it('the opportunity page refetches on the viewer’s id and role, not on auth-store object identity, and keeps the application on a failed read', () => {
     const page = src('pages/OpportunityDetailPage.tsx')
     expect(page).toContain('}, [id, userId, viewerRole, isCurrentUserTestAccount, isStaging])')
     expect(page).not.toContain('}, [id, user, profile, isCurrentUserTestAccount, isStaging])')
@@ -297,7 +297,7 @@ describe('5 · notification copy: a role posted without a typed title names the 
     const generated = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s midfielder', position: 'midfielder' })
     expect(getNotificationConfig(generated).getDescription?.(generated)).toBe("You're being considered for Midfielder.")
     const filled = notification({ status: 'filled', club_name: 'E2E Test FC', vacancy_title: "Women's head coach", position: 'head_coach' })
-    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe('Head Coach has been filled. Thanks for applying. New roles are open.')
+    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe('Head Coach has been filled. Thanks for applying. New opportunities are open.')
     const typed = notification({ status: 'shortlisted', club_name: 'E2E Test FC', vacancy_title: 'Men’s 1st XI midfielder', position: 'midfielder' })
     expect(getNotificationConfig(typed).getDescription?.(typed)).toBe("You're being considered for Men’s 1st XI midfielder.")
     expect(isGeneratedHeadline('Mixed forward', 'Forward')).toBe(true)
@@ -308,6 +308,6 @@ describe('5 · notification copy: a role posted without a typed title names the 
     const edge = readFileSync(resolve(__dirname, '../../../supabase/functions/send-push/push-payload.ts'), 'utf8')
     expect(edge).toContain('export function isGeneratedHeadline(')
     expect(edge).toContain('const role = typedTitle || position')
-    expect(edge).toContain("${typedTitle ?? humanPos ?? 'The role'} has been filled")
+    expect(edge).toContain("${typedTitle ?? humanPos ?? 'The opportunity'} has been filled")
   })
 })

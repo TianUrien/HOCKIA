@@ -96,7 +96,7 @@ export interface PlayerProfileV2Props {
 
 const ANCHORS_PUBLIC = [
   { id: 'overview', label: 'Overview' },
-  { id: 'roles', label: 'Open roles' },
+  { id: 'roles', label: 'Open opportunities' },
   { id: 'videos', label: 'Videos' },
   { id: 'references', label: 'References' },
   { id: 'career', label: 'Career' },
@@ -543,15 +543,15 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       {isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) && (
         <Section
           id="roles"
-          title={coachRoles.length > 0 ? `Open roles · ${coachRoles.length}` : 'Open roles'}
-          action={owner && props.onPostRole ? '+ Post a role' : coachRoles.length > 2 ? 'See all' : null}
+          title={coachRoles.length > 0 ? `Open opportunities · ${coachRoles.length}` : 'Open opportunities'}
+          action={owner && props.onPostRole ? '+ Post an opportunity' : coachRoles.length > 2 ? 'See all' : null}
           onAction={owner && props.onPostRole ? props.onPostRole : () => navigate('/opportunities')}
         >
           <div className="flex flex-col gap-2.5 px-4">
             {coachRoles.slice(0, owner ? 3 : 2).map((r) => (
               <RoleRow key={r.id} role={r} onOpen={() => navigate(`/opportunities/${r.id}`)} />
             ))}
-            {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open roles right now.</p>}
+            {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open opportunities right now.</p>}
             {owner && coachRoles.length > 3 && (
               <button type="button" onClick={props.onOpenRoles ?? (() => navigate('/opportunities'))} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary" data-testid="coach-roles-see-all">See all {coachRoles.length} roles</button>
             )}

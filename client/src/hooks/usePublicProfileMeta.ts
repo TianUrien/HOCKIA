@@ -14,8 +14,8 @@ interface PublicProfileMetaInput {
   canonicalUrl?: string
 }
 
-const DEFAULT_TITLE = 'HOCKIA | Field Hockey Community'
-const DEFAULT_DESC = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
+const DEFAULT_TITLE = 'Hockia | Field Hockey Community'
+const DEFAULT_DESC = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
 
 /**
  * Mutates document.title + og/twitter meta tags for a public profile page.
@@ -33,10 +33,10 @@ export function usePublicProfileMeta(input: PublicProfileMetaInput): void {
   useEffect(() => {
     if (!displayName) return
 
-    const title = `${displayName} · ${capitalize(roleLabel)} | HOCKIA`
+    const title = `${displayName} · ${capitalize(roleLabel)} | Hockia`
     const desc = description
       ? truncate(description, 155)
-      : `${displayName}'s public ${roleLabel} profile on HOCKIA: career, references, and more.`
+      : `${displayName}'s public ${roleLabel} profile on Hockia: career, references, and more.`
 
     document.title = title
 

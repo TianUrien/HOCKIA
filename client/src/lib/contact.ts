@@ -12,7 +12,7 @@ export const SUPPORT_EMAIL = 'team@inhockia.com'
  * (`subject=HOCKIA enquiry`) produces a malformed mailto that some browsers /
  * the iOS WKWebView silently ignore, which is why the earlier links "did nothing".
  */
-export const CONTACT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('HOCKIA enquiry')}`
+export const CONTACT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Hockia enquiry')}`
 
 /**
  * Open the OS mail composer to HOCKIA support. Reliable across web, the installed

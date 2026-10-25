@@ -66,19 +66,19 @@ export function classifyMetric(explainer: MetricExplainer, value: number): Bench
 export const METRIC_INFO = {
   dau: {
     title: 'Daily Active Users (DAU)',
-    measures: 'How many distinct people used HOCKIA on the last complete day (yesterday).',
+    measures: 'How many distinct people used Hockia on the last complete day (yesterday).',
     formula: 'Users with any activity recorded yesterday (opening the app, browsing, messaging). Today is left out while it is still running. Test accounts excluded.',
     why: 'Shows the size of the daily habit. For a weekly-rhythm sport product, a low DAU with healthy WAU is normal: hockey life runs week to week, not hour to hour.',
   },
   wau: {
     title: 'Weekly Active Users (WAU)',
-    measures: 'How many distinct people used HOCKIA in the last 7 days.',
+    measures: 'How many distinct people used Hockia in the last 7 days.',
     formula: 'Users with any activity in the last 7 days. Test accounts excluded.',
-    why: 'The core engagement number for HOCKIA: matches, training and opportunities move weekly, so WAU captures the real habit loop.',
+    why: 'The core engagement number for Hockia: matches, training and opportunities move weekly, so WAU captures the real habit loop.',
   },
   mau: {
     title: 'Monthly Active Users (MAU)',
-    measures: 'How many distinct people used HOCKIA in the last 30 days.',
+    measures: 'How many distinct people used Hockia in the last 30 days.',
     formula: 'Users with any activity in the last 30 days. Test accounts excluded.',
     why: 'Measures total reach: everyone the product touches in a month. Growth work grows MAU; product work turns MAU into WAU.',
   },
@@ -125,7 +125,7 @@ export const METRIC_INFO = {
     title: 'Day-30 Retention',
     measures: 'Of the members old enough to be measured, how many were still active a month in.',
     formula: 'Retained ÷ eligible, same service as D7 with the window at days 30–36 (UTC).',
-    why: 'Where a niche network lives or dies: a month is long enough that only real, repeated value keeps someone coming back. For HOCKIA this is the number that predicts whether a season-long habit forms.',
+    why: 'Where a niche network lives or dies: a month is long enough that only real, repeated value keeps someone coming back. For Hockia this is the number that predicts whether a season-long habit forms.',
     unit: '%',
     benchmarks: [
       { min: 0, tier: 'poor', label: '<8%' },
@@ -136,7 +136,7 @@ export const METRIC_INFO = {
   },
   newUsers: {
     title: 'New Users',
-    measures: 'How many people created a HOCKIA account in the selected period.',
+    measures: 'How many people created a Hockia account in the selected period.',
     formula: 'Profiles created in the window. Test accounts excluded.',
     why: 'Pure growth, separated from engagement: this is the top of the funnel, before anyone has formed a habit.',
   },
@@ -208,7 +208,7 @@ export const METRIC_INFO = {
     title: 'Players Contacted by Clubs',
     measures: 'How many players a club or coach reached out to first, in the period.',
     formula: 'Conversations started in the window where a club/coach sent the first message to a player.',
-    why: 'This is HOCKIA doing its job: recruiters finding players worth talking to. It’s demand-side proof that profiles have real value.',
+    why: 'This is Hockia doing its job: recruiters finding players worth talking to. It’s demand-side proof that profiles have real value.',
   },
   applications: {
     title: 'Applications Submitted',
@@ -224,20 +224,20 @@ export const METRIC_INFO = {
   },
   invites: {
     title: 'Club Invitations',
-    measures: 'Invite links clubs created to bring their members onto HOCKIA, and how many people joined through them.',
+    measures: 'Invite links clubs created to bring their members onto Hockia, and how many people joined through them.',
     formula: 'Invite links created in the window; joins = total members who used them.',
-    why: 'Clubs importing their real-world roster is the strongest retention loop HOCKIA has: whole teams arrive together.',
+    why: 'Clubs importing their real-world roster is the strongest retention loop Hockia has: whole teams arrive together.',
   },
   signings: {
-    title: 'Signings via HOCKIA',
-    measures: 'Players and coaches signed through HOCKIA: the club marked them signed and they confirmed it.',
+    title: 'Signings via Hockia',
+    measures: 'Players and coaches signed through Hockia: the club marked them signed and they confirmed it.',
     formula: 'Applications with status “signed” (set only when the player confirms), confirmed in the window; both sides non-test.',
-    why: 'The north star: a signing both sides confirmed on HOCKIA. Everything upstream (profiles, roles, applications, invites, offers) exists to move this number.',
+    why: 'The north star: a signing both sides confirmed on Hockia. Everything upstream (profiles, opportunities, applications, invites, offers) exists to move this number.',
   },
   filled: {
     title: 'Opportunities Filled',
-    measures: 'Positions that were filled: the end of the funnel HOCKIA exists to power.',
-    formula: 'Opportunities closed with reason “filled” or explicitly marked filled via HOCKIA.',
+    measures: 'Positions that were filled: the end of the funnel Hockia exists to power.',
+    formula: 'Opportunities closed with reason “filled” or explicitly marked filled via Hockia.',
     why: 'The ultimate north star: a real player in a real position. Everything else on this dashboard is upstream of this number.',
   },
 } as const satisfies Record<string, MetricExplainer>

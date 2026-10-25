@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-const SUFFIX = ' • HOCKIA'
-const DEFAULT_TITLE = 'HOCKIA – Where field hockey sticks together.'
+const SUFFIX = ' • Hockia'
+const DEFAULT_TITLE = 'Hockia – Where field hockey sticks together.'
 
 /**
  * Sets document.title for the current page and restores the default

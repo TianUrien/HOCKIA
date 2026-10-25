@@ -57,7 +57,7 @@ export function AdminFeatureUsage() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Feature Usage | HOCKIA Admin'
+    document.title = 'Feature Usage | Hockia Admin'
     fetchData()
   }, [fetchData])
 

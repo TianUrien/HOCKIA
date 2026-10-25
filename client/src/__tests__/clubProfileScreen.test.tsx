@@ -19,19 +19,19 @@ describe('clubLeagueLine', () => {
 })
 
 describe('openRoleLine', () => {
-  it('reads "Open role · from 1 Sep · 7 months"', () => {
-    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open role · from 1 Sep · 7 months')
+  it('reads "Open opportunity · from 1 Sep · 7 months"', () => {
+    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open opportunity · from 1 Sep · 7 months')
   })
   it('drops the parts it does not have', () => {
-    expect(openRoleLine({ startDate: null, durationText: null })).toBe('Open role')
-    expect(openRoleLine({ startDate: null, durationText: 'Permanent ' })).toBe('Open role · Permanent')
+    expect(openRoleLine({ startDate: null, durationText: null })).toBe('Open opportunity')
+    expect(openRoleLine({ startDate: null, durationText: 'Permanent ' })).toBe('Open opportunity · Permanent')
   })
 })
 
 describe('leagueBandNote', () => {
   it('names the unbanded leagues, once each', () => {
     expect(leagueBandNote([{ name: 'Leinster Division 1A', band: null }, { name: 'Leinster Division 1A', band: null }])).toBe(
-      "Hockia doesn't have a level for Leinster Division 1A yet. Until it does, fit can't compare levels for your roles.",
+      "Hockia doesn't have a level for Leinster Division 1A yet. Until it does, fit can't compare levels for your opportunities.",
     )
     expect(leagueBandNote([{ name: 'A', band: null }, { name: 'B', band: null }])).toContain('for A and B yet')
   })

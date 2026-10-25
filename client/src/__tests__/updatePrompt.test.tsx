@@ -1,6 +1,6 @@
 /**
  * Onboarding QA 2026-10-04: a service-worker update must NEVER reload the page
- * on its own. A waiting version shows "A new version of HOCKIA is ready" with
+ * on its own. A waiting version shows "A new version of Hockia is ready" with
  * Reload (applies it) and Dismiss; only the Reload tap reloads.
  */
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -14,7 +14,7 @@ import { isSafeSilentUpdate, registerServiceWorker, type WorkboxLike } from '@/l
 describe('UpdatePrompt', () => {
   it('shows the neutral message with Reload and Dismiss', () => {
     render(<UpdatePrompt onReload={vi.fn()} />)
-    expect(screen.getByRole('status')).toHaveTextContent('A new version of HOCKIA is ready')
+    expect(screen.getByRole('status')).toHaveTextContent('A new version of Hockia is ready')
     expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
   })

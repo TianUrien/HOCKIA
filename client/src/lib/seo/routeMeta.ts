@@ -12,8 +12,8 @@
  */
 
 export const SITE_URL = 'https://inhockia.com'
-export const DEFAULT_TITLE = 'HOCKIA – Where field hockey sticks together.'
-export const DEFAULT_DESCRIPTION = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
+export const DEFAULT_TITLE = 'Hockia – Where field hockey sticks together.'
+export const DEFAULT_DESCRIPTION = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
 
 export interface RouteMetaEntry {
   /** Exact path, or a RegExp tested against the pathname. */
@@ -38,18 +38,18 @@ const NOINDEX: RegExp[] = [
 
 export const ROUTE_META: RouteMetaEntry[] = [
   { match: '/', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION },
-  { match: '/opportunities', title: 'Field Hockey Opportunities – Player & Coach Roles Worldwide | HOCKIA', description: 'Open field hockey roles for players and coaches: clubs across Europe, the Americas, Asia and Oceania recruiting on HOCKIA. Apply directly.' },
-  { match: '/community', title: 'Field Hockey Community – Players, Coaches & Clubs | HOCKIA', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on HOCKIA.' },
-  { match: /^\/community\/[^/]+$/, title: 'Field Hockey Community | HOCKIA', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on HOCKIA.' },
-  { match: '/world', title: 'Field Hockey Clubs by Country – World Directory | HOCKIA', description: 'Browse field hockey clubs and leagues by country, region and division in the HOCKIA world directory.' },
-  { match: '/marketplace', title: 'Field Hockey Brands & Gear | HOCKIA', description: 'Field hockey brands, sticks, equipment and offers for the HOCKIA community.' },
-  { match: '/developers', title: 'HOCKIA for Developers – Public API & Data', description: 'Build on HOCKIA: public opportunities feed, sitemap and structured data for field hockey.' },
-  { match: '/terms', title: 'Terms & Conditions | HOCKIA', description: 'The terms that apply when you use HOCKIA.' },
-  { match: '/privacy-policy', title: 'Privacy Policy | HOCKIA', description: 'How HOCKIA collects, uses and protects your data.' },
-  { match: '/signup', title: 'Join HOCKIA – Create your field hockey profile', description: 'Create a free HOCKIA profile as a player, coach, club, umpire or brand and get found by the field hockey world.' },
-  { match: '/signup/email', title: 'Create your HOCKIA account with email', description: 'Sign up to HOCKIA with your email address.', index: false },
-  { match: '/signin', title: 'Sign in | HOCKIA', description: 'Sign in to your HOCKIA account.', index: false },
-  { match: '/juniors-waitlist', title: 'HOCKIA Juniors – Waitlist', description: 'Join the waitlist for HOCKIA Juniors.' },
+  { match: '/opportunities', title: 'Field Hockey Opportunities – Players & Coaches Worldwide | Hockia', description: 'Open field hockey opportunities for players and coaches: clubs across Europe, the Americas, Asia and Oceania recruiting on Hockia. Apply directly.' },
+  { match: '/community', title: 'Field Hockey Community – Players, Coaches & Clubs | Hockia', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on Hockia.' },
+  { match: /^\/community\/[^/]+$/, title: 'Field Hockey Community | Hockia', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on Hockia.' },
+  { match: '/world', title: 'Field Hockey Clubs by Country – World Directory | Hockia', description: 'Browse field hockey clubs and leagues by country, region and division in the Hockia world directory.' },
+  { match: '/marketplace', title: 'Field Hockey Brands & Gear | Hockia', description: 'Field hockey brands, sticks, equipment and offers for the Hockia community.' },
+  { match: '/developers', title: 'Hockia for Developers – Public API & Data', description: 'Build on Hockia: public opportunities feed, sitemap and structured data for field hockey.' },
+  { match: '/terms', title: 'Terms & Conditions | Hockia', description: 'The terms that apply when you use Hockia.' },
+  { match: '/privacy-policy', title: 'Privacy Policy | Hockia', description: 'How Hockia collects, uses and protects your data.' },
+  { match: '/signup', title: 'Join Hockia – Create your field hockey profile', description: 'Create a free Hockia profile as a player, coach, club, umpire or brand and get found by the field hockey world.' },
+  { match: '/signup/email', title: 'Create your Hockia account with email', description: 'Sign up to Hockia with your email address.', index: false },
+  { match: '/signin', title: 'Sign in | Hockia', description: 'Sign in to your Hockia account.', index: false },
+  { match: '/juniors-waitlist', title: 'Hockia Juniors – Waitlist', description: 'Join the waitlist for Hockia Juniors.' },
 ]
 
 export interface ResolvedRouteMeta {

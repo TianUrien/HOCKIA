@@ -55,7 +55,7 @@ function useLoaded(): Loaded {
 
 export function openRolesLabel(count: number | null | undefined): string | null {
   if (!count || count <= 0) return null
-  return count === 1 ? '1 open role' : `${count} open roles`
+  return count === 1 ? '1 open opportunity' : `${count} open opportunities`
 }
 
 export function useOpenRoleCounts(): Map<string, number> {

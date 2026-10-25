@@ -193,10 +193,10 @@ describe('computeInterest — compensation alignment (#4b)', () => {
   it('wants paid + paid role → strong, "paid role" reason', () => {
     const r = computeInterest(base({ opportunity_preference: 'paid' }), compScope('paid'))
     expect(r.level).toBe('strong')
-    expect(r.reasons.join(' ')).toMatch(/paid role/i)
+    expect(r.reasons.join(' ')).toMatch(/paid opportunity/i)
   })
 
-  it('wants paid + unpaid/development role → low (soft), names the clash', () => {
+  it('wants paid + unpaid/development opportunity → low (soft), names the clash', () => {
     const r = computeInterest(base({ opportunity_preference: 'paid' }), compScope('unpaid_development'))
     expect(r.isApplicable).toBe(true) // never filtered
     expect(r.level).toBe('low')

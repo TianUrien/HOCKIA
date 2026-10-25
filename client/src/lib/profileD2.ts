@@ -39,7 +39,7 @@ const monthDay = (iso: string | null) => shortDayOf(iso)
 const STATUS_LINE: Record<string, string> = {
   shortlisted: 'Shortlisted',
   maybe: 'Marked maybe',
-  rejected: 'Declined',
+  rejected: 'Not a fit',
   no_response: 'Closed without a reply',
 }
 

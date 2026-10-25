@@ -28,7 +28,7 @@ describe('WelcomeValueCard — user-scoped dismissal', () => {
   it('renders the welcome copy for a signed-in user with no dismissal', () => {
     authState.user = { id: 'user-a' }
     render(<WelcomeValueCard />)
-    expect(screen.getByText(/Welcome to HOCKIA/i)).toBeTruthy()
+    expect(screen.getByText(/Welcome to Hockia/i)).toBeTruthy()
   })
 
   it('persists dismissal to a user-scoped localStorage key', () => {
@@ -54,6 +54,6 @@ describe('WelcomeValueCard — user-scoped dismissal', () => {
     render(<WelcomeValueCard />)
     // User B should still see the welcome — the global-key bug would
     // hide it for them too.
-    expect(screen.getByText(/Welcome to HOCKIA/i)).toBeTruthy()
+    expect(screen.getByText(/Welcome to Hockia/i)).toBeTruthy()
   })
 })

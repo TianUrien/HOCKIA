@@ -88,9 +88,9 @@ describe('ApplicantCard — tier pill dropdown', () => {
     expect(screen.getByText('Unsorted')).toBeInTheDocument()
   })
 
-  it('shows "Good fit" pill when status is shortlisted', () => {
+  it('shows "Top pick" pill when status is shortlisted', () => {
     renderCard({ status: 'shortlisted' }, vi.fn())
-    expect(screen.getByText('Good fit')).toBeInTheDocument()
+    expect(screen.getByText('Top pick')).toBeInTheDocument()
   })
 
   it('shows "Maybe" pill when status is maybe', () => {
@@ -115,18 +115,18 @@ describe('ApplicantCard — tier pill dropdown', () => {
     await user.click(screen.getByText('Unsorted'))
 
     // All tier labels visible in the dropdown
-    expect(screen.getByRole('button', { name: /good fit/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /top pick/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /maybe/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /not a fit/i })).toBeInTheDocument()
   })
 
-  it('calls onStatusChange with "shortlisted" when "Good fit" is selected', async () => {
+  it('calls onStatusChange with "shortlisted" when "Top pick" is selected', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
     renderCard({ status: 'pending' }, onChange)
 
     await user.click(screen.getByText('Unsorted'))
-    await user.click(screen.getByRole('button', { name: /good fit/i }))
+    await user.click(screen.getByRole('button', { name: /top pick/i }))
 
     expect(onChange).toHaveBeenCalledWith('app-1', 'shortlisted')
   })
@@ -166,7 +166,7 @@ describe('ApplicantCard — tier pill dropdown', () => {
     const onChange = vi.fn()
     renderCard({ status: 'shortlisted' }, onChange)
 
-    await user.click(screen.getByText('Good fit'))
+    await user.click(screen.getByText('Top pick'))
 
     const clearBtn = screen.getByRole('button', { name: /clear/i })
     expect(clearBtn).toBeInTheDocument()
@@ -262,7 +262,7 @@ describe('ApplicantCard — reference trust signal', () => {
 describe('ApplicantsList source — tier grouping', () => {
   it('defines all 4 tier groups in correct order', () => {
     const unsortedIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Unsorted'")
-    const shortlistedIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Good fit'")
+    const shortlistedIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Top pick'")
     const maybeIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Maybe'")
     const notAFitIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Not a fit'")
 

@@ -57,7 +57,7 @@ export interface ClubProfileV2Props {
 }
 
 const ANCHORS = [
-  { id: 'roles', label: 'Open roles' },
+  { id: 'roles', label: 'Open opportunities' },
   { id: 'squad', label: 'Squad' },
   { id: 'posts', label: 'Posts' },
   { id: 'about', label: 'About' },
@@ -273,8 +273,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
       {(owner || recruiting) && (
         <Section
           id="roles"
-          title={recruiting ? `Open roles · ${openRoles.length}` : 'Open roles'}
-          action={owner ? '+ Post a role' : openRoles.length > 2 ? 'See all' : null}
+          title={recruiting ? `Open opportunities · ${openRoles.length}` : 'Open opportunities'}
+          action={owner ? '+ Post an opportunity' : openRoles.length > 2 ? 'See all' : null}
           onAction={owner ? props.onPostRole : () => navigate('/opportunities')}
         >
           <div className="flex flex-col gap-2.5 px-4">
@@ -282,9 +282,9 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
               <RoleRow key={r.id} role={r} onOpen={() => openRole(r.id)} />
             ))}
             {owner && openRoles.length > 3 && (
-              <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">See all {openRoles.length} roles</button>
+              <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">See all {openRoles.length} opportunities</button>
             )}
-            {owner && !recruiting && !data.loading && <p className="text-body text-ink-3">No open roles right now.</p>}
+            {owner && !recruiting && !data.loading && <p className="text-body text-ink-3">No open opportunities right now.</p>}
           </div>
         </Section>
       )}

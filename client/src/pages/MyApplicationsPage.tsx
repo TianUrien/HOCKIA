@@ -47,7 +47,7 @@ export default function MyApplicationsPage() {
     // Title first, then position · team (the role title was missing, so two
     // roles for the same position read identically).
     const role = r.title ? roleHeadline({ position: r.position, title: r.title, opportunity_type: r.opportunityType ?? 'player', gender: r.gender }) : null
-    const headline = role?.title ?? 'Role no longer available'
+    const headline = role?.title ?? 'Opportunity no longer available'
     const sub = [r.club?.name, r.country].filter(Boolean).join(' · ')
     const applied = dayFirst(r.appliedAt)
     return (
@@ -106,11 +106,11 @@ export default function MyApplicationsPage() {
           <div className="px-5 py-12 text-center">
             <p className="text-row font-semibold text-ink-1">{segment === 'active' ? 'No active applications' : 'Nothing closed yet'}</p>
             <p className="mt-1 text-secondary text-ink-2">
-              {segment === 'active' ? 'Roles you apply to show up here with the club’s answer.' : 'Roles you weren’t selected for, and closed roles, keep their outcome here.'}
+              {segment === 'active' ? 'Opportunities you apply to show up here with the club’s answer.' : 'Opportunities you weren’t selected for, and closed opportunities, keep their outcome here.'}
             </p>
             {segment === 'active' && (
               <button type="button" onClick={() => navigate('/opportunities')} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'mt-4' })}>
-                Browse open roles
+                Browse open opportunities
               </button>
             )}
           </div>

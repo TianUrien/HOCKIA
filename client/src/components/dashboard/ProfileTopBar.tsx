@@ -30,7 +30,7 @@ export default function ProfileTopBar({ title = 'Profile' }: { title?: string })
     if (!url) return
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: profile?.full_name ?? 'HOCKIA profile', url })
+        await navigator.share({ title: profile?.full_name ?? 'Hockia profile', url })
         return
       }
       await navigator.clipboard.writeText(url)

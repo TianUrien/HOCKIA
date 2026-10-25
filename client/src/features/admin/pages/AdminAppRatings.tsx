@@ -76,7 +76,7 @@ export function AdminAppRatings() {
     }
   }, [offset, starsFilter, platformFilter, roleFilter])
 
-  useEffect(() => { document.title = 'App Ratings | HOCKIA Admin' }, [])
+  useEffect(() => { document.title = 'App Ratings | Hockia Admin' }, [])
   useEffect(() => { fetchMetrics() }, [fetchMetrics])
   useEffect(() => { fetchList() }, [fetchList])
 

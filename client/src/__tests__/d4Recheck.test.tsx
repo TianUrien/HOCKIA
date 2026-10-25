@@ -118,7 +118,7 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(applicantChipFor('no_response')).toBe('no_response')
     expect(applicantChipFor('signed')).toBe('shortlisted')
     expect(closedApplicantTag('withdrawn')).toBe('Withdrawn')
-    expect(closedApplicantTag('filled')).toBe('Role filled')
+    expect(closedApplicantTag('filled')).toBe('Opportunity filled')
     expect(closedApplicantTag('no_response')).toBeNull()
   })
 

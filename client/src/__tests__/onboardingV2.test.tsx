@@ -396,7 +396,7 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByText('Passport')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add second/i })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Open to play' })).toBeChecked()
-    expect(screen.getByText('Clubs can see you and message you about roles.')).toBeInTheDocument()
+    expect(screen.getByText('Clubs can see you and message you about opportunities.')).toBeInTheDocument()
     // List item / Switch (472:186), as Confirm signing uses: muted grouped
     // card holding the SettingsRow with the green switch.
     const row = screen.getByTestId('open-to-play-row')

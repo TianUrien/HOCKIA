@@ -309,7 +309,7 @@ export function InvestorDashboardContent({
               rel="noopener noreferrer"
               className="text-purple-500 hover:text-purple-600 font-medium"
             >
-              HOCKIA
+              Hockia
             </a>
           </p>
         </div>

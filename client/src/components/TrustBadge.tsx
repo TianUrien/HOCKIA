@@ -73,7 +73,7 @@ export default function TrustBadge({
     : 'Get references'
 
   const tooltip = hasReferences
-    ? `${count} ${count === 1 ? 'person has' : 'people have'} vouched for you on HOCKIA. Tap to see endorsements.`
+    ? `${count} ${count === 1 ? 'person has' : 'people have'} vouched for you on Hockia. Tap to see endorsements.`
     : 'References are vouches from coaches, teammates or clubs you\'re connected with. Tap to ask a connection.'
 
   // Always render as a button when clickable; falls back to span when no

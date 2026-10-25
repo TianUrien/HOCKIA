@@ -87,7 +87,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
     if (!targetId) return
 
     if (!user) {
-      addToast('Sign in to message HOCKIA members.', 'info')
+      addToast('Sign in to message Hockia members.', 'info')
       navigate('/')
       return
     }
@@ -152,8 +152,8 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       <p className="text-sm font-medium text-gray-700">No vouches yet</p>
       <p className="mt-1 text-xs text-gray-500">
         {primaryName
-          ? `${primaryName} hasn't received any trusted references yet. These are vouches from coaches, teammates, or clubs that verify a member's hockey on HOCKIA.`
-          : 'Trusted references are vouches from coaches, teammates, or clubs that verify a member\'s hockey on HOCKIA.'}
+          ? `${primaryName} hasn't received any trusted references yet. These are vouches from coaches, teammates, or clubs that verify a member's hockey on Hockia.`
+          : 'Trusted references are vouches from coaches, teammates, or clubs that verify a member\'s hockey on Hockia.'}
       </p>
     </div>
   )

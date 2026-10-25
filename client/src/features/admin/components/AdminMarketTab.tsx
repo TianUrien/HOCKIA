@@ -91,7 +91,7 @@ function FunnelBars({ title, stages }: {
 const TREND_SERIES = [
   { key: 'posted', label: 'Vacancies posted', color: '#9333ea' },
   { key: 'applications', label: 'Applications', color: '#0d9488' },
-  { key: 'filled', label: 'Filled via HOCKIA', color: '#f59e0b' },
+  { key: 'filled', label: 'Filled via Hockia', color: '#f59e0b' },
 ] as const
 
 function TrendsChart({ trends }: { trends: MarketIntelligence['trends'] }) {
@@ -277,7 +277,7 @@ export function AdminMarketTab() {
           icon={MessageSquare}
           color={responseRate !== null && responseRate < 50 ? 'red' : 'green'}
         />
-        <StatCard label="Filled via HOCKIA" value={h.filled_via_hockia} icon={CheckCircle2} color="green" />
+        <StatCard label="Filled via Hockia" value={h.filled_via_hockia} icon={CheckCircle2} color="green" />
         <StatCard
           label="First app (median)"
           value={h.median_hours_to_first_app !== null ? `${Math.round(h.median_hours_to_first_app)}h` : '—'}
@@ -355,7 +355,7 @@ export function AdminMarketTab() {
             { label: 'Viewed ≥1×', value: data.vacancy_funnel.viewed },
             { label: 'Got ≥1 application', value: data.vacancy_funnel.applied },
             { label: 'Club responded', value: data.vacancy_funnel.responded },
-            { label: 'Filled via HOCKIA', value: data.vacancy_funnel.filled },
+            { label: 'Filled via Hockia', value: data.vacancy_funnel.filled },
           ]}
         />
         <FunnelBars

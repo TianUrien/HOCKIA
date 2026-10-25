@@ -599,14 +599,14 @@ const EU_PASSPORT_CODES_OWN = [
 
 // DB enum → user-facing label shown on the Applicants screen.
 //
-// IMPORTANT: `shortlisted` here means "the owner clicked Good fit" on the
+// IMPORTANT: `shortlisted` here means "the owner clicked Top pick" on the
 // Applicants screen — it is NOT the ATS-conventional "moved to next round"
 // semantic. Future engineers reading the enum: treat shortlisted = Good
 // fit owner-action throughout this feature. Owners must never see the
 // raw enum string anywhere in the UI.
 const TRIAGE_LABEL: Record<string, string> = {
   pending: 'Unsorted',
-  shortlisted: 'Good fit',
+  shortlisted: 'Top pick',
   maybe: 'Maybe',
   rejected: 'Not a fit',
 }
@@ -724,7 +724,7 @@ function buildRecommendationBullets(
 
   // 1. Triage acknowledgment first when not Unsorted — the owner needs to
   //    see we know what they've already labelled.
-  if (a.triage_status === 'shortlisted') push('You marked this candidate Good fit')
+  if (a.triage_status === 'shortlisted') push('You marked this candidate Top pick')
   else if (a.triage_status === 'maybe') push('Worth a second look: you marked this Maybe')
 
   // 2. Position match against the opening. Player opps only — coach opps
@@ -833,7 +833,7 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
   const total = b.pending + b.shortlisted + b.maybe + b.rejected
   const pool = b.pending + b.shortlisted + b.maybe
   const parts: string[] = []
-  if (b.shortlisted > 0) parts.push(`${b.shortlisted} Good fit`)
+  if (b.shortlisted > 0) parts.push(`${b.shortlisted} Top pick`)
   if (b.maybe > 0) parts.push(`${b.maybe} Maybe`)
   if (b.pending > 0) parts.push(`${b.pending} Unsorted`)
   if (b.rejected > 0) parts.push(`${b.rejected} Not a fit`)

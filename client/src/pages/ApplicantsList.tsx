@@ -30,9 +30,9 @@ const TIER_GROUPS: TierGroup[] = [
   { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-gray-400', statuses: ['pending'] },
   // offer_declined is only ever a history row (respond_to_offer puts the
   // application straight back to shortlisted); listed so no status is orphaned.
-  { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted', 'offer_declined'] },
+  { key: 'shortlisted', label: 'Top pick', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted', 'offer_declined'] },
   { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
-  // Past Good fit on the offer / signing road (Club v2 actions, phone only).
+  // Past Top pick on the offer / signing road (Club v2 actions, phone only).
   // Desktop stays v1 (founder ruling): shown for the record with the phone
   // road's grey tag (clubRoadTag), no status menu; tapping opens the profile.
   {
@@ -52,7 +52,7 @@ const TIER_GROUPS: TierGroup[] = [
   { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-gray-400', statuses: ['no_response'] },
   // The role was filled (by someone else or this applicant): kept visible so
   // the header count matches the cards, but closed — no status changes.
-  { key: 'filled', label: 'Role filled', icon: CheckCircle2, iconClass: 'text-gray-400', statuses: ['filled'], readOnly: true },
+  { key: 'filled', label: 'Opportunity filled', icon: CheckCircle2, iconClass: 'text-gray-400', statuses: ['filled'], readOnly: true },
   // D4 re-check (2026-10-02): the publisher can read applications the player
   // withdrew. Shown for the record, never re-decided.
   { key: 'withdrawn', label: 'Withdrawn', icon: Undo2, iconClass: 'text-gray-400', statuses: ['withdrawn'], readOnly: true },
@@ -82,7 +82,7 @@ export default function ApplicantsList() {
   // to this opportunity, which silently changed Fit chips + the
   // Community carousel everywhere — "spooky action at a distance" the
   // recruiter never asked for. The applicants list itself renders no
-  // Club Fit chip (its Good fit / Maybe / Not a fit labels are manual
+  // Club Fit chip (its Top pick / Maybe / Not a fit labels are manual
   // shortlist tiers from application.status, not context-derived), so
   // the auto-scope had no on-page effect anyway. Recruiters who DO want
   // to scope Community to an opportunity can still do it explicitly via
@@ -217,7 +217,7 @@ export default function ApplicantsList() {
                     count: 1,
                     topEndorsement: ref.endorsement_text ? {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
+                      endorserName: endorser?.full_name ?? 'Hockia Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     } : null,
@@ -227,7 +227,7 @@ export default function ApplicantsList() {
                   if (!existing.topEndorsement && ref.endorsement_text) {
                     existing.topEndorsement = {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
+                      endorserName: endorser?.full_name ?? 'Hockia Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     }

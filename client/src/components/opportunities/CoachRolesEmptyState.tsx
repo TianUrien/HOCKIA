@@ -61,14 +61,14 @@ export function CoachRolesEmptyState({
         <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-surface-muted text-ink-2" aria-hidden="true">
           <Briefcase className="h-6 w-6" strokeWidth={1.6} />
         </span>
-        <h2 className="text-[16px] font-semibold leading-[21px] text-ink-1">No coaching roles open right now</h2>
+        <h2 className="text-[16px] font-semibold leading-[21px] text-ink-1">No coaching opportunities open right now</h2>
         {posted && <p className="text-secondary text-ink-2" data-testid="coach-roles-posted-line">{posted}</p>}
       </div>
 
       <div className="mt-3">
         <SwitchCardRow
-          title="Coaching role alerts"
-          description="Push and email when a role fits you"
+          title="Coaching opportunity alerts"
+          description="Push and email when an opportunity fits you"
           checked={alertsOn}
           disabled={alertsBusy}
           onChange={onToggleAlerts}

@@ -71,7 +71,7 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
   const isPhone = useMediaQuery('(max-width: 1023px)')
 
   const isOrg = isOrganisationRole(member.role)
-  const name = member.full_name?.trim() || 'HOCKIA member'
+  const name = member.full_name?.trim() || 'Hockia member'
   const rawPhoto = member.role === 'brand' ? (member.brand_logo_url ?? member.avatar_url) : member.avatar_url
   const photoUrl = rawPhoto ? getImageUrl(rawPhoto, 'avatar-lg') ?? rawPhoto : null
 

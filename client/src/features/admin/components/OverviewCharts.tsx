@@ -119,30 +119,30 @@ export function OverviewCharts({ stats, signupTrends, topCountries, days, loadin
           loading={activity.isLoading}
         />
         <StackedBarsCard
-          title={`Applications and roles per week (${days}d)`}
-          hint="Applications sent by members, and roles posted by clubs and coaches. The lighter bar is the current, partial week."
+          title={`Applications and opportunities per week (${days}d)`}
+          hint="Applications sent by members, and opportunities posted by clubs and coaches. The lighter bar is the current, partial week."
           rows={weeklyActivity}
           series={[
             { key: 'applications', label: 'Applications', color: SERIES_COLORS[0] },
-            { key: 'opportunities', label: 'Roles posted', color: SERIES_COLORS[2] },
+            { key: 'opportunities', label: 'Opportunities posted', color: SERIES_COLORS[2] },
           ]}
           stacked={false}
           loading={activity.isLoading}
         />
         <DonutChartCard
-          title="Roles by status (all-time)"
-          hint="Every role ever posted, whatever the period filter says."
+          title="Opportunities by status (all-time)"
+          hint="Every opportunity ever posted, whatever the period filter says."
           slices={[
             { label: 'Open', value: stats?.open_vacancies ?? 0, color: SERIES_COLORS[3] },
             { label: 'Closed', value: stats?.closed_vacancies ?? 0, color: SERIES_COLORS[6] },
             { label: 'Draft', value: stats?.draft_vacancies ?? 0, color: SERIES_COLORS[2] },
           ]}
-          centerLabel="roles"
+          centerLabel="opportunities"
           loading={loading}
         />
       </div>
 
-      <SectionHeading title="Reach" hint="where members use HOCKIA, and from where" />
+      <SectionHeading title="Reach" hint="where members use Hockia, and from where" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <DonutChartCard
           title="Devices"

@@ -27,7 +27,7 @@ interface ChatHeaderProps {
   conversationId?: string
 }
 
-const fallbackName = 'HOCKIA Member'
+const fallbackName = 'Hockia Member'
 
 type Detail = { line: string; active: boolean }
 const detailCache = new Map<string, Detail>()

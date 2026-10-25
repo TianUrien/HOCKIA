@@ -160,7 +160,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const isBrand = member.role === 'brand'
   const isOrg = isClub || isBrand
   const isPerson = !isOrg
-  const name = member.full_name?.trim() || 'HOCKIA member'
+  const name = member.full_name?.trim() || 'Hockia member'
   const firstName = name.split(/\s+/)[0]
 
   const friendship = useFriendship(member.id)
@@ -388,7 +388,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     if (isClub) {
       return (member.open_role_count ?? 0) > 0 ? (
         <>
-          <button type="button" onClick={openRoles} className={primary} data-testid="member-preview-open-roles">See open roles</button>
+          <button type="button" onClick={openRoles} className={primary} data-testid="member-preview-open-roles">See open opportunities</button>
           {messageButton('secondary')}
         </>
       ) : messageButton('primary')

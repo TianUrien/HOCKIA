@@ -144,7 +144,7 @@ describe('CompleteProfile when the profile row failed to load', () => {
 })
 
 describe('CompleteProfile with no profile row at all', () => {
-  it("'missing' with a stale pending_role still asks for the role instead of mounting the set-up flow", () => {
+  it("'missing' with a stale pending_role still asks for the opportunity instead of mounting the set-up flow", () => {
     mocks.state.profileStatus = 'missing'
     localStorage.setItem('pending_role', 'player')
     mount()

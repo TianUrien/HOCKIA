@@ -55,7 +55,7 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-semibold leading-5 text-ink-1">Close {roleLabel}</span>
-            <span className="block text-secondary leading-[18px] text-ink-2">{closeRole ? closeRoleNote(waiting) : 'The role stays open, for signing more players.'}</span>
+            <span className="block text-secondary leading-[18px] text-ink-2">{closeRole ? closeRoleNote(waiting) : 'The opportunity stays open, for signing more players.'}</span>
           </span>
         </button>
 

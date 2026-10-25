@@ -13,7 +13,7 @@ const base = (over: Partial<PostRoleDraft> = {}): PostRoleDraft => ({
   position: 'midfielder', gender: 'Men', ...over,
 })
 
-describe('Post a role · copy', () => {
+describe('Post an opportunity · copy', () => {
   it('level hint says applicants never see the level', () => {
     expect(levelHint('player')).toBe('Used to rank applicants. Players don’t see it.')
     expect(levelHint('coach')).toBe('Used to rank applicants. Coaches don’t see it.')
@@ -50,7 +50,7 @@ describe('Close / reopen a role', () => {
     expect(closeRolePatch('filled')).toEqual({ status: 'closed', closed_reason: 'filled' })
     expect(closeRolePatch('withdrawn')).toEqual({ status: 'closed', closed_reason: 'withdrawn' })
     expect(closeRolePatch('filled')).not.toHaveProperty('filled_via_hockia')
-    expect(closeRoleToast('withdrawn')).toBe('Role closed.')
+    expect(closeRoleToast('withdrawn')).toBe('Opportunity closed.')
   })
   it('reopen clears the close fields and extends a passed deadline 30 days', () => {
     const now = new Date('2026-09-26T10:00:00Z')
@@ -130,7 +130,7 @@ describe('Round 1 follow-up', () => {
   it('only open review statuses get the decision bar', () => {
     for (const s of ['pending', 'shortlisted', 'maybe', 'rejected']) expect(isDecidableApplicationStatus(s)).toBe(true)
     for (const s of ['filled', 'withdrawn', 'no_response', 'offered', 'signed', null]) expect(isDecidableApplicationStatus(s)).toBe(false)
-    expect(closedApplicationNote('filled', 'Ana')).toBe('This role was filled. You can still message Ana.')
+    expect(closedApplicationNote('filled', 'Ana')).toBe('This opportunity was filled. You can still message Ana.')
     expect(closedApplicationNote('no_response', 'Ana')).toMatch(/^This application closed without a reply/)
   })
 })

@@ -269,9 +269,9 @@ export function OpportunityDetailDesktop({
           {closedView === 'visitor' && (
             <section className="pt-4" data-testid="role-closed-notice">
               <div className="rounded-card bg-surface-grouped p-4">
-                <p className="text-row font-semibold text-ink-1">This role is closed</p>
+                <p className="text-row font-semibold text-ink-1">This opportunity is closed</p>
                 <p className="mt-1 text-secondary text-ink-2">It’s no longer taking applications.</p>
-                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">See open roles</button>
+                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">See open opportunities</button>
               </div>
             </section>
           )}
@@ -290,9 +290,9 @@ export function OpportunityDetailDesktop({
             {/* Four facts in one row (Figma 194:946): Team in the category colour, never elsewhere. */}
             <section className="grid grid-cols-4 gap-3 pt-6" data-testid="role-key-facts">
               {pill && (
-                <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching role' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
+                <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
               )}
-              {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching role' : vacancy.position_required ? 'Required' : null} />}
+              {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : vacancy.position_required ? 'Required' : null} />}
               <Fact label="Starts" value={startsValue} sub={duration} />
               <Fact label="Apply by" value={applyByValue} sub={applyBySub} />
             </section>
@@ -330,7 +330,7 @@ export function OpportunityDetailDesktop({
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this role’s position, team and passport
+                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this opportunity’s position, team and passport
                 </p>
               )}
             </section>

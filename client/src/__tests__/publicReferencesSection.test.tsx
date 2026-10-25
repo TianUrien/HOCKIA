@@ -136,7 +136,7 @@ describe('PublicReferencesSection', () => {
     await user.click(screen.getByRole('button', { name: /message/i }))
 
     await waitFor(() => {
-        expect(toastMocks.addToast).toHaveBeenCalledWith('Sign in to message HOCKIA members.', 'info')
+        expect(toastMocks.addToast).toHaveBeenCalledWith('Sign in to message Hockia members.', 'info')
         expect(navigateMock).toHaveBeenCalledWith('/')
     })
     expect(supabaseState.lastTable).toBe('')

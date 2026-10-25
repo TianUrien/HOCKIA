@@ -73,7 +73,7 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
   const handleNativeShare = async () => {
     try {
       await navigator.share({
-        title: 'HOCKIA profile',
+        title: 'Hockia profile',
         text: shareMessage(profile.role, url),
         url,
       })
@@ -118,10 +118,10 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
 
       <Modal isOpen={open} onClose={() => setOpen(false)} className="max-w-sm">
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Share your HOCKIA profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Share your Hockia profile</h2>
           <p className="mt-1 text-sm text-gray-500">
             Send your public profile link via any of the options below. The recipient
-            won’t need a HOCKIA account to view it.
+            won’t need a Hockia account to view it.
           </p>
 
           <div className="mt-5 space-y-2">

@@ -193,7 +193,7 @@ describe('RequestFeedbackModal', () => {
       await waitFor(() =>
         expect(share).toHaveBeenCalledWith(
           expect.objectContaining({
-            title: 'Comment on my HOCKIA profile',
+            title: 'Comment on my Hockia profile',
             url: PROFILE_URL,
             text: expect.stringContaining(PROFILE_URL),
           })

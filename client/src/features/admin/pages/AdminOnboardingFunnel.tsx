@@ -71,7 +71,7 @@ export function AdminOnboardingFunnel() {
   }, [daysFilter, roleFilter])
 
   useEffect(() => {
-    document.title = 'Onboarding Funnel | HOCKIA Admin'
+    document.title = 'Onboarding Funnel | Hockia Admin'
     fetchData()
   }, [fetchData])
 

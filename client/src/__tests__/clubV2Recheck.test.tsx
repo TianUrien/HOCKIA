@@ -133,7 +133,7 @@ describe('closed roles', () => {
   const r8 = row({ id: 'ctx-r8', opportunity_id: 'r8', is_active: true, opportunity_status: 'closed', updated_at: '2026-09-30T00:00:00Z' })
   const older = row({ id: 'ctx-open', opportunity_id: 'o1', updated_at: '2026-09-10T00:00:00Z' })
 
-  it('a stored context on a closed role is no context: most recent open role of that kind, else none', () => {
+  it('a stored context on a closed role is no context: most recent open opportunity of that kind, else none', () => {
     expect(isStaleRoleContext(r8)).toBe(true)
     expect(isStaleRoleContext(row({ opportunity_status: undefined }))).toBe(false)
     expect(isStaleRoleContext(row({ type: 'custom', opportunity_status: null }))).toBe(false)
@@ -142,15 +142,15 @@ describe('closed roles', () => {
     expect(effectiveContextRow([r8, older], null)?.id).toBe('ctx-open')
   })
 
-  it('the sheet never lists (or ticks) a closed role under Your open roles', () => {
+  it('the sheet never lists (or ticks) a closed role under Your open opportunities', () => {
     const active = effectiveContextRow([r8, older], 'player')
     const listed = playerContexts([r8, older], new Set(['o1']), active?.id ?? null)
-    render(<RankedForSheet open contexts={listed} activeId={active?.id ?? null} roles={new Map([['o1', { title: 'Open role', toReview: 0 }], ['r8', { title: '[QA] Midfielder R8', toReview: 0 }]])} onPick={() => {}} onClose={() => {}} />)
+    render(<RankedForSheet open contexts={listed} activeId={active?.id ?? null} roles={new Map([['o1', { title: 'Open opportunity', toReview: 0 }], ['r8', { title: '[QA] Midfielder R8', toReview: 0 }]])} onPick={() => {}} onClose={() => {}} />)
     expect(screen.queryByText(/\[QA\] Midfielder R8/)).toBeNull()
-    expect(screen.getByRole('radio', { name: /Open role/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByRole('radio', { name: /Open opportunity/ }).getAttribute('aria-checked')).toBe('true')
   })
 
-  it('closing the active role through the store falls back to the newest open role of that kind', async () => {
+  it('closing the active role through the store falls back to the newest open opportunity of that kind', async () => {
     useRecruitingContextStore.setState({ ownerId: 'club', eligibleRole: 'club', rows: [{ ...r8, opportunity_status: 'open' }, older], loading: false, fetchedForOwner: 'club' })
     db.tables.recruiting_context = [{ ...r8, is_active: false, opportunity: { status: 'closed' } }, { ...older, is_active: true, opportunity: { status: 'open' } }]
     const { supabase } = await import('@/lib/supabase')
@@ -162,7 +162,7 @@ describe('closed roles', () => {
     expect(useRecruitingContextStore.getState().rows.find((r) => r.is_active)?.id).toBe('ctx-open')
   })
 
-  it('no other open role of that kind → no context', async () => {
+  it('no other open opportunity of that kind → no context', async () => {
     useRecruitingContextStore.setState({ ownerId: 'club', eligibleRole: 'club', rows: [{ ...r8, opportunity_status: 'open' }], loading: false, fetchedForOwner: 'club' })
     db.tables.recruiting_context = [{ ...r8, is_active: false, opportunity: { status: 'closed' } }]
     await act(async () => { await useRecruitingContextStore.getState().roleStatusChanged('r8', 'closed') })
@@ -172,10 +172,10 @@ describe('closed roles', () => {
     expect(useRecruitingContextStore.getState().rows.find((r) => r.is_active)).toBeUndefined()
   })
 
-  it('the chat card: a pending application on a closed role reads "Role closed", never a countdown', () => {
+  it('the chat card: a pending application on a closed role reads "Opportunity closed", never a countdown', () => {
     const base = { id: 'a', opportunityId: 'o', status: 'pending', appliedAt: '2026-09-27T14:50:42Z', updatedAt: null, roleTitle: 'Midfielder R5', rolePosition: 'midfielder' }
     const now = new Date('2026-09-30T12:00:00Z')
-    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: '27 Sep · Role closed', urgent: false })
+    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: '27 Sep · Opportunity closed', urgent: false })
     expect(applicationCardDetail({ ...base, roleStatus: 'open' }, 14, now).text).toMatch(/days? left to reply/)
     // The chat picks a pending application on an open role first.
     const picked = pickApplication([{ ...base, id: 'closed', roleStatus: 'closed', appliedAt: '2026-09-01T00:00:00Z' }, { ...base, id: 'open', roleStatus: 'open' }])

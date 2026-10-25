@@ -34,32 +34,32 @@ import { OpportunityDetailMobile } from '@/components/opportunities/OpportunityD
 
 describe('close-as-filled toast', () => {
   it('states the outcome and that applicants were told — no congratulations', () => {
-    expect(closeRoleToast('filled', 2)).toBe('Role closed as filled. Applicants have been told.')
+    expect(closeRoleToast('filled', 2)).toBe('Opportunity closed as filled. Applicants have been told.')
     expect(closeRoleToast('filled')).not.toMatch(/congrat/i)
-    expect(closeRoleToast('withdrawn')).toBe('Role closed.')
+    expect(closeRoleToast('withdrawn')).toBe('Opportunity closed.')
   })
 })
 
-describe('"Role filled" application label', () => {
-  it('comes from the one helper and reads "Role filled"', () => {
-    expect(applicationStatusLabel('filled')).toBe('Role filled')
-    expect(APPLICATION_STATUS_LABELS.filled).toBe('Role filled')
+describe('"Opportunity filled" application label', () => {
+  it('comes from the one helper and reads "Opportunity filled"', () => {
+    expect(applicationStatusLabel('filled')).toBe('Opportunity filled')
+    expect(APPLICATION_STATUS_LABELS.filled).toBe('Opportunity filled')
   })
-  it('is grey on My applications / Pulse / the role page (never "Role closed")', () => {
+  it('is grey on My applications / Pulse / the opportunity page (never "Opportunity closed")', () => {
     const pill = applicationStatusPill('filled', '2026-09-01T00:00:00Z', false)
-    expect(pill).toEqual({ label: 'Role filled', tone: 'grey' })
-    expect(applicationStatusPill('filled', null, true).label).toBe('Role filled')
+    expect(pill).toEqual({ label: 'Opportunity filled', tone: 'grey' })
+    expect(applicationStatusPill('filled', null, true).label).toBe('Opportunity filled')
   })
   it('timeline / desktop badge is grey and matches the pill', () => {
     const badge = playerApplicationStatusBadge('filled')
-    expect(badge?.label).toBe('Role filled')
+    expect(badge?.label).toBe('Opportunity filled')
     expect(badge?.className).toBe(playerApplicationStatusBadge('rejected')?.className)
   })
   it('has a deterministic, kind timeline message', () => {
     expect(applicationStatusFallbackMessage('filled', null)).toMatch(/filled/)
   })
   it('leaves pending-on-a-closed-role as it was; D4 signing statuses have their own labels', () => {
-    expect(applicationStatusPill('pending', null, false).label).toBe('Role closed')
+    expect(applicationStatusPill('pending', null, false).label).toBe('Opportunity closed')
     expect(applicationStatusLabel('offered')).toBe('Offer')
   })
 })
@@ -107,7 +107,7 @@ describe('closed role view', () => {
 const vacancy = {
   id: 'opp-1',
   club_id: 'club-1',
-  title: '[QA] Post a role test',
+  title: '[QA] Post an opportunity test',
   opportunity_type: 'player',
   position: 'midfielder',
   gender: 'Women',
@@ -163,17 +163,17 @@ describe('phone closed role page', () => {
     expect(screen.queryByTestId('role-closed-notice')).toBeNull()
   })
 
-  it('filled applicant reads "Role filled" in grey', () => {
+  it('filled applicant reads "Opportunity filled" in grey', () => {
     renderPhone({ hasApplied: true, applicationStatus: 'filled' })
     const status = screen.getByTestId('own-application-status')
-    expect(status.textContent).toBe('Role filled')
+    expect(status.textContent).toBe('Opportunity filled')
     expect(status.className).toContain('bg-surface-grouped')
   })
 
-  it('non-applicant: "This role is closed" with a link to open roles, no application block', () => {
+  it('non-applicant: "This opportunity is closed" with a link to open opportunities, no application block', () => {
     renderPhone({ hasApplied: false, applicationStatus: null })
-    expect(screen.getByTestId('role-closed-notice').textContent).toContain('This role is closed')
-    expect(screen.getByRole('button', { name: 'See open roles' })).toBeTruthy()
+    expect(screen.getByTestId('role-closed-notice').textContent).toContain('This opportunity is closed')
+    expect(screen.getByRole('button', { name: 'See open opportunities' })).toBeTruthy()
     expect(screen.queryByTestId('own-application')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
   })

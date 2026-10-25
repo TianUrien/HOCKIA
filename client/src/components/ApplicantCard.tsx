@@ -18,7 +18,7 @@ type ShortlistTier = 'shortlisted' | 'maybe' | 'rejected'
 const TIER_OPTIONS: { tier: ShortlistTier; label: string; icon: typeof Star; pillClass: string; menuActiveClass: string }[] = [
   {
     tier: 'shortlisted',
-    label: 'Good fit',
+    label: 'Top pick',
     icon: Star,
     pillClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     menuActiveClass: 'bg-emerald-50',

@@ -29,7 +29,7 @@ export function buildRetentionCsv(
   ].filter(Boolean)
 
   const meta = [
-    `# HOCKIA retention export`,
+    `# Hockia retention export`,
     `# generated_at,${table.generated_at}`,
     `# method,${RETENTION_METHOD_LABEL[table.method]}`,
     `# activity,${RETENTION_ACTIVITY_LABEL[table.activity]}`,

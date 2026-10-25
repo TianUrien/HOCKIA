@@ -83,7 +83,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         <Button block variant="tonal" onClick={() => onSave(f, false)} loading={saving === 'draft'} disabled={busy}>Save draft</Button>
       ) : null}
       <p className="text-secondary text-ink-2">
-        {isChange ? 'Members see the changes right away.' : 'Members see it right away. HOCKIA takes down offers that break the rules.'}
+        {isChange ? 'Members see the changes right away.' : 'Members see it right away. Hockia takes down offers that break the rules.'}
       </p>
     </div>
   )

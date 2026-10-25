@@ -26,13 +26,13 @@ describe('VerifiedBadge', () => {
     const badge = screen.getByRole('img', { name: /verified profile/i })
     // Title should contain the year (locale-agnostic month formatting is hard to assert exactly).
     expect(badge.getAttribute('title')).toMatch(/2026/)
-    expect(badge.getAttribute('title')).toMatch(/Verified by HOCKIA/i)
+    expect(badge.getAttribute('title')).toMatch(/Verified by Hockia/i)
   })
 
   it('falls back to a plain tooltip when verifiedAt is missing', () => {
     render(<VerifiedBadge verified={true} />)
     const badge = screen.getByRole('img', { name: /verified profile/i })
-    expect(badge.getAttribute('title')).toBe('Verified by HOCKIA')
+    expect(badge.getAttribute('title')).toBe('Verified by Hockia')
   })
 
   it('uses smaller icon sizing in the sm variant', () => {
@@ -45,7 +45,7 @@ describe('VerifiedBadge', () => {
   it('tolerates a malformed verifiedAt without throwing', () => {
     render(<VerifiedBadge verified={true} verifiedAt="not-a-date" />)
     const badge = screen.getByRole('img', { name: /verified profile/i })
-    // Falls through to the plain tooltip rather than "Verified by HOCKIA · ".
-    expect(badge.getAttribute('title')).toBe('Verified by HOCKIA')
+    // Falls through to the plain tooltip rather than "Verified by Hockia · ".
+    expect(badge.getAttribute('title')).toBe('Verified by Hockia')
   })
 })

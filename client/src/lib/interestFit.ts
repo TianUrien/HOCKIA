@@ -313,18 +313,18 @@ export function computeInterest(
         candPref === 'either' ? 'Open to paid or development.' : 'This opening is open on compensation.'
     } else if (candPref === 'paid' && oppComp === 'paid') {
       compScore = 1
-      compReason = 'Wants paid, and this is a paid role.'
+      compReason = 'Wants paid, and this is a paid opportunity.'
     } else if (candPref === 'development' && oppComp === 'unpaid_development') {
       compScore = 1
-      compReason = 'Looking for a development role, which matches.'
+      compReason = 'Looking for a development opportunity, which matches.'
     } else if (candPref === 'paid' && oppComp === 'unpaid_development') {
       compScore = 0.1
-      compReason = 'Wants paid; this is a development role.'
-      if (options.compensationRequired) hardFailReasons.push('Wants paid; this is a development role.')
+      compReason = 'Wants paid; this is a development opportunity.'
+      if (options.compensationRequired) hardFailReasons.push('Wants paid; this is a development opportunity.')
     } else {
       // candidate development, opportunity paid — no conflict, a small plus.
       compScore = 0.9
-      compReason = 'Open to a development role; this one is paid.'
+      compReason = 'Open to a development opportunity; this one is paid.'
     }
     add(compReason, compScore >= 0.66 ? 'positive' : compScore <= 0.4 ? 'caveat' : 'neutral')
     measured.push({ score: compScore, weight: WEIGHTS.compensation })

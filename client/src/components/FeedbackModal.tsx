@@ -125,7 +125,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               Send feedback
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Help us make HOCKIA better. We read every message.
+              Help us make Hockia better. We read every message.
             </p>
           </div>
           <button

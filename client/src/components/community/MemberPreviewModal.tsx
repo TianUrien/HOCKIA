@@ -699,8 +699,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
         title={signInAction === 'message' ? 'Sign in to message' : 'Sign in to view profile'}
         message={
           signInAction === 'message'
-            ? 'Sign in or create a free HOCKIA account to connect with this member.'
-            : 'Sign in or create a free HOCKIA account to view member profiles.'
+            ? 'Sign in or create a free Hockia account to connect with this member.'
+            : 'Sign in or create a free Hockia account to view member profiles.'
         }
       />
     </>

@@ -79,11 +79,11 @@ describe('computeRecruiterVerdict', () => {
     const dragged = computeRecruiterVerdict({
       fit: fit('green', { positives: ['Right level.'] }),
       evidence: null,
-      interest: interest('low', { caveats: ['Wants paid; this is a development role.'] }),
+      interest: interest('low', { caveats: ['Wants paid; this is a development opportunity.'] }),
     })
     expect(dragged.tier).toBe('longshot') // green(2) + low(−0.8) = 1.2
-    expect(dragged.caveats).toContain('Wants paid; this is a development role.')
-    expect(dragged.highlights).not.toContain('Wants paid; this is a development role.')
+    expect(dragged.caveats).toContain('Wants paid; this is a development opportunity.')
+    expect(dragged.highlights).not.toContain('Wants paid; this is a development opportunity.')
   })
 
   it('grey fit (category mismatch) can never be Pursue/Worth considering — capped at Longshot', () => {
@@ -377,13 +377,13 @@ describe('computeRecruiterVerdict — must-have hard cap (Phase 3)', () => {
         isApplicable: true,
         level: 'low',
         positives: [],
-        caveats: ['Wants paid; this is a development role.'],
+        caveats: ['Wants paid; this is a development opportunity.'],
         hardFail: true,
-        hardFailReasons: ['Wants paid; this is a development role.'],
+        hardFailReasons: ['Wants paid; this is a development opportunity.'],
       },
     })
     expect(r.tier).toBe('pass')
-    expect(r.caveats[0]).toBe('Wants paid; this is a development role.')
+    expect(r.caveats[0]).toBe('Wants paid; this is a development opportunity.')
   })
 
   it('surfaces multiple must-have reasons (both lenses), capped at two caveats', () => {
@@ -451,13 +451,13 @@ describe('computeRecruiterVerdict — must-have hard cap (Phase 3)', () => {
         isApplicable: true,
         level: 'low',
         positives: [],
-        caveats: ['Wants paid; this is a development role.'],
+        caveats: ['Wants paid; this is a development opportunity.'],
         hardFail: true,
-        hardFailReasons: ['Wants paid; this is a development role.'],
+        hardFailReasons: ['Wants paid; this is a development opportunity.'],
       },
     })
     expect(r.tier).toBe('pass')
-    const occurrences = r.caveats.filter((c) => c === 'Wants paid; this is a development role.').length
+    const occurrences = r.caveats.filter((c) => c === 'Wants paid; this is a development opportunity.').length
     expect(occurrences).toBe(1)
   })
 })

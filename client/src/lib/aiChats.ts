@@ -61,7 +61,7 @@ export function chatSummary(messages: DiscoverChatMessage[]): string | null {
     }
     case 'opportunity_results': {
       const n = last.open_roles_total ?? last.opportunities?.length ?? 0
-      return `${n} ${n === 1 ? 'role' : 'roles'} found`
+      return `${n} ${n === 1 ? 'opportunity' : 'opportunities'} found`
     }
     case 'no_results':
       return 'Nothing found'

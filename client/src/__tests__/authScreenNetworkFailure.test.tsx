@@ -77,7 +77,7 @@ describe('AuthScreen — sign-in on a failed connection', () => {
     const error = Object.assign(new Error('Failed to fetch'), { name: 'AuthRetryableFetchError', status: 0 })
     mocks.signInWithPassword.mockResolvedValue({ data: { user: null, session: null }, error })
     await submit()
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t reach HOCKIA. Check your connection and try again.'))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t reach Hockia. Check your connection and try again.'))
     expect(mocks.trackLoginFailed).toHaveBeenCalledWith('password', 'network')
     expect(screen.queryByText('Incorrect email or password.')).not.toBeInTheDocument()
   })
@@ -109,7 +109,7 @@ describe('AuthScreen — sign-in on a failed connection', () => {
   it('names the connection when the call throws a network TypeError (Safari "Load failed")', async () => {
     mocks.signInWithPassword.mockRejectedValue(new TypeError('Load failed'))
     await submit()
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t reach HOCKIA. Check your connection and try again.'))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t reach Hockia. Check your connection and try again.'))
     expect(mocks.trackLoginFailed).toHaveBeenCalledWith('password', 'network')
   })
 })

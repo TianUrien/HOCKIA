@@ -28,7 +28,7 @@ export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied
       : <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</span>
   }
   if (pill === 'passed') {
-    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" aria-label="Passed on this role" data-testid="invite-pill-passed">Passed</span>
+    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" aria-label="Passed on this opportunity" data-testid="invite-pill-passed">Passed</span>
   }
   if (pill === 'invited') {
     return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-invited">Invited</span>

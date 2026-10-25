@@ -105,7 +105,7 @@ export function AdminDiscovery() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Discovery Analytics | HOCKIA Admin'
+    document.title = 'Discovery Analytics | Hockia Admin'
     fetchData()
   }, [fetchData])
 
