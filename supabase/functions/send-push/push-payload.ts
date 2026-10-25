@@ -217,9 +217,10 @@ export function buildPushPayload(
     }
     case 'brand_offer_not_approved': {
       const offerTitle = getString(metadata, 'offer_title')
+      const takedown = metadata?.takedown === true
       return {
-        title: 'Your offer needs a change',
-        body: offerTitle ? `${offerTitle}: see the reason and send it again.` : 'See the reason and send it again.',
+        title: takedown ? 'Your offer was taken down' : 'Your offer needs a change',
+        body: offerTitle ? `${offerTitle}: see the reason, then edit and publish again.` : 'See the reason, then edit and publish again.',
         url: '/dashboard/offers',
         tag: 'brand-offer-review',
       }

@@ -5,7 +5,7 @@ import {
   duplicateOffer,
   fetchAdminOffers,
   fetchMyOffers,
-  reviewOffer,
+  takeDownOffer,
   saveOffer,
   setOfferState,
   type AdminOfferTab,
@@ -35,29 +35,29 @@ export function useMyBrandOffers(enabled = true) {
   return { ...query, offers: query.data ?? [], save, setState, duplicate }
 }
 
-/** Admin review queue: one tab at a time, plus the three tab counts. */
+/** Admin moderation: live offers or the ones taken down, one tab at a time. */
 export function useAdminBrandOffers(tab: AdminOfferTab) {
   const qc = useQueryClient()
   const list = useQuery({ queryKey: [...ADMIN_OFFERS, tab], queryFn: () => fetchAdminOffers(tab), staleTime: 15_000 })
-  const review = useMutation({
-    mutationFn: (v: { id: string; decision: 'approve' | 'reject'; note: string | null }) => reviewOffer(v.id, v.decision, v.note),
+  const takeDown = useMutation({
+    mutationFn: (v: { id: string; reason: string }) => takeDownOffer(v.id, v.reason),
     onSettled: () => qc.invalidateQueries({ queryKey: ADMIN_OFFERS }),
   })
-  return { ...list, offers: list.data ?? [], review }
+  return { ...list, offers: list.data ?? [], takeDown }
 }
 
-/** Counts for the admin tabs and the sidebar badge. */
+/** Counts for the admin tabs. */
 export function useAdminBrandOfferCounts() {
-  const tabs: AdminOfferTab[] = ['to_review', 'not_approved', 'live']
+  const tabs: AdminOfferTab[] = ['live', 'not_approved']
   const q = useQuery({
     queryKey: [...ADMIN_OFFERS, 'counts'],
     queryFn: async () => {
       const lists = await Promise.all(tabs.map((t) => fetchAdminOffers(t)))
-      return { to_review: lists[0].length, not_approved: lists[1].length, live: lists[2].length } as Record<AdminOfferTab, number>
+      return { live: lists[0].length, not_approved: lists[1].length } as Record<AdminOfferTab, number>
     },
     staleTime: 30_000,
   })
-  return q.data ?? { to_review: 0, not_approved: 0, live: 0 }
+  return q.data ?? { live: 0, not_approved: 0 }
 }
 
 export interface OfferTotals { shown: number; opened: number; contacted: number }

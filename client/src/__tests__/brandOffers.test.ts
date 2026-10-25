@@ -49,7 +49,7 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
   })
 
   it('uses amber only where the brand must act and green only for live', () => {
-    expect(offerPill(offer({ status: 'not_approved' }))).toEqual({ label: 'Not approved', tone: 'amber' })
+    expect(offerPill(offer({ status: 'not_approved' }))).toEqual({ label: 'Taken down', tone: 'amber' })
     expect(offerPill(offer({ status: 'live' })).tone).toBe('positive')
     expect(offerPill(offer({ status: 'in_review' })).tone).toBe('neutral')
     expect(offerPill(offer({ status: 'paused' })).tone).toBe('muted')
@@ -57,12 +57,10 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
 
   it('writes the status line for each state', () => {
     expect(offerStatusLine(offer(), NOW)).toBe('158 shown · 31 opened · 5 contacted')
-    expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Sent today. You can still edit it.')
-    expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not sent yet')
+    expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
+    expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")
-    expect(offerStatusLine(offer({ status: 'not_approved', review_note: 'remove "best price in Spain".' }), NOW)).toBe('Reason: remove "best price in Spain". Edit and send again.')
-    expect(offerStatusLine(offer({ pending_status: 'in_review' }), NOW)).toBe('158 shown · 31 opened · 5 contacted · Changes in review')
-    expect(offerStatusLine(offer({ pending_status: 'not_approved', review_note: 'no claims.' }), NOW)).toBe('Changes not approved: no claims. Edit and send again.')
+    expect(offerStatusLine(offer({ status: 'not_approved', review_note: 'remove "best price in Spain".' }), NOW)).toBe('Taken down: remove "best price in Spain". Edit and publish again.')
     expect(shortDate('2027-07-31T23:59:59Z')).toBe('31 Jul')
     expect(offerStatusLine(offer({ status: 'ended', ended_at: '2026-09-30T10:00:00Z', shown: 212, contacted: 9 }), NOW)).toBe('Ended 30 Sep · 212 shown · 9 contacted')
   })
@@ -136,7 +134,11 @@ describe('brand offers: review notices (Figma N1 / N2)', () => {
     const n = note('brand_offer_not_approved', { offer_title: 'Summer camp places', reason: 'Remove "the best camp in Ireland".' })
     const cfg = getNotificationConfig(n)
     expect(cfg.getTitle(n)).toBe('Your offer needs a change')
-    expect(cfg.getDescription?.(n)).toBe('"Summer camp places" wasn’t approved. Reason: Remove "the best camp in Ireland".')
-    expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places' }, 'HOCKIA').body).toBe('Summer camp places: see the reason and send it again.')
+    expect(cfg.getDescription?.(n)).toBe('"Summer camp places" wasn’t approved. Reason: Remove "the best camp in Ireland". Edit and publish again.')
+    const t = note('brand_offer_not_approved', { offer_title: 'Summer camp places', reason: 'Remove "the best camp in Ireland".', takedown: true })
+    expect(getNotificationConfig(t).getTitle(t)).toBe('Your offer was taken down')
+    expect(getNotificationConfig(t).getDescription?.(t)).toBe('"Summer camp places" was taken down. Reason: Remove "the best camp in Ireland". Edit and publish again.')
+    expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places', takedown: true }, 'HOCKIA').title).toBe('Your offer was taken down')
+    expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places' }, 'HOCKIA').body).toBe('Summer camp places: see the reason, then edit and publish again.')
   })
 })

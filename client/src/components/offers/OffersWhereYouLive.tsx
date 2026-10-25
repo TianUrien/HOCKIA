@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useOffersForMe, useVisitId } from '@/hooks/useMemberOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import type { MemberOffer } from '@/lib/memberOffers'
+import { countryInSentence } from '@/lib/brandOffers'
 import { OfferRailTile } from './MemberOfferCard'
 
 /** Live offers per brand profile for this member (the "N offers" pill on brand cards). */
@@ -35,7 +36,7 @@ export function BrandOffersSection({ children }: { children: ReactNode }) {
       {offers.length > 0 ? (
         <section className="mb-6" aria-labelledby="offers-where-you-live" data-testid="brand-offers-rail">
           <h2 id="offers-where-you-live" className="text-title text-ink-1">Offers where you live</h2>
-          <p className="mt-0.5 text-row text-ink-2">{[country, 'checked by HOCKIA before they go live'].filter(Boolean).join(' · ')}</p>
+          <p className="mt-0.5 text-row text-ink-2">{country ? `From brands, for members in ${countryInSentence(country)}` : 'From brands, for members where you live'}</p>
           <div className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
             {offers.map((o) => <OfferRailTile key={o.id} offer={o} visitId={visitId} />)}
           </div>
