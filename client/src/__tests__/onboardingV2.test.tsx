@@ -456,6 +456,28 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByText('Locked after registration.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Year')).not.toBeInTheDocument()
   })
+
+  // CodeQL clear-text storage (2026-10-25): the autosaved draft never holds
+  // the date of birth or passports.
+  it('the autosaved draft keeps the name and leaves out DOB and passports', async () => {
+    mocks.profile.current = { ...playerProfile('1994-03-07'), nationality_country_id: 30, nationality2_country_id: 44 }
+    render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
+    await waitFor(() => expect(localStorage.getItem('hockia-onboarding-v2:player:u-1')).not.toBeNull())
+    const raw = localStorage.getItem('hockia-onboarding-v2:player:u-1') ?? ''
+    expect(JSON.parse(raw).draft).toMatchObject({ fullName: 'Sam Rivers', position: 'midfielder' })
+    expect(raw).not.toMatch(/1994-03-07|dateOfBirth|passport1|passport2|showSecondPassport/)
+  })
+
+  it('a draft saved before the change restores the name but asks for the DOB again', () => {
+    mocks.profile.current = { ...playerProfile(years(25)), full_name: '', date_of_birth: null, position: null, playing_category: null }
+    localStorage.setItem('hockia-onboarding-v2:player:u-1', JSON.stringify({
+      draft: { fullName: 'Jo Park', dateOfBirth: '1994-03-07', passport1: 30 }, savedAt: new Date().toISOString(),
+    }))
+    render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
+    expect(screen.getByLabelText('Full name')).toHaveValue('Jo Park')
+    expect(screen.getByLabelText('Year')).toHaveValue('')
+    expect(screen.getByLabelText('Day')).toHaveValue('')
+  })
 })
 
 describe('funnel events keep their order through the whole flow', () => {

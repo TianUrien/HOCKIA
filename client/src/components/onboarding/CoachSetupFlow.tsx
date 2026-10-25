@@ -120,10 +120,8 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
         if (raw) localStorage.removeItem(legacyKey)
       }
       const saved = parseCoachDraft(raw)
-      if (saved) {
-        // The saved date of birth always wins over a typed one (immutable).
-        return { ...base, ...saved, dateOfBirth: profile?.date_of_birth ?? saved.dateOfBirth ?? base.dateOfBirth }
-      }
+      // Date of birth and nationalities are not in drafts: they come from the profile or are asked again.
+      if (saved) return { ...base, ...saved }
     } catch {
       /* storage blocked — server prefill is the fallback */
     }

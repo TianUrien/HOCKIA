@@ -254,3 +254,25 @@ describe('CreateOpportunityModal — coach role team', () => {
     expect(updatePayload).toMatchObject({ gender: 'Boys' })
   })
 })
+
+// CodeQL clear-text storage (2026-10-25): the autosaved draft leaves out the
+// category (gender); a restored draft asks for it again.
+describe('CreateOpportunityModal — draft storage', () => {
+  it('autosaves the role without its category', async () => {
+    renderModal()
+    await fillPlayerRequired()
+    await waitFor(() => expect(window.localStorage.getItem('vacancyDraft:new:club-1')).toContain('Senior Women First XI'), { timeout: 2000 })
+    const stored = JSON.parse(window.localStorage.getItem('vacancyDraft:new:club-1') ?? '{}')
+    expect(stored.formData).toMatchObject({ title: 'Senior Women First XI', position: 'midfielder' })
+    expect(stored.formData).not.toHaveProperty('gender')
+  })
+
+  it('a draft saved before the change restores the title but asks for the category again', async () => {
+    window.localStorage.setItem('vacancyDraft:new:club-1', JSON.stringify({
+      formData: { opportunity_type: 'player', title: 'Senior Women First XI', gender: 'Women' }, newRequirement: '', newCustomBenefit: '',
+    }))
+    renderModal()
+    await waitFor(() => expect(screen.getByLabelText(/Opportunity title/)).toHaveValue('Senior Women First XI'))
+    expect(screen.getByTitle('Category')).toHaveValue('')
+  })
+})

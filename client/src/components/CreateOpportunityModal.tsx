@@ -23,6 +23,7 @@ import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLo
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 import { requestPushAsk } from '@/lib/pushAsk'
+import { withoutRoleCategory } from '@/lib/draftPrivacy'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 
 interface CreateVacancyModalProps {
@@ -66,12 +67,6 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   opportunity_type: vacancy?.opportunity_type || initialOpportunityType || 'player',
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
-  // A legacy youth PLAYER role opens with no category (under-18s are never
-  // recruitable), so saving asks for an adult one. Coach roles keep theirs
-  // (Boys/Girls included); a legacy coach role with none is asked for one.
-  gender: ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
-    ? playerRoleGender(vacancy?.gender)
-    : vacancy?.gender) || undefined,
   description: vacancy?.description || '',
   location_city: vacancy?.location_city || '',
   location_country: vacancy?.location_country || '',
@@ -104,6 +99,19 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   availability_required: (vacancy as Record<string, unknown>)?.availability_required === true,
   specialists_required: (vacancy as Record<string, unknown>)?.specialists_required === true,
 })
+
+/**
+ * The role's category (gender), kept in its own state rather than formData so
+ * the autosaved draft never holds it (see draftPrivacy; CodeQL
+ * js/clear-text-storage-of-sensitive-data #32). A restored draft asks again.
+ * A legacy youth PLAYER role opens with no category (under-18s are never
+ * recruitable), so saving asks for an adult one. Coach roles keep theirs
+ * (Boys/Girls included); a legacy coach role with none is asked for one.
+ */
+const buildInitialRoleCategory = (vacancy?: Vacancy | null, initialOpportunityType?: 'player' | 'coach'): string | undefined =>
+  ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
+    ? playerRoleGender(vacancy?.gender)
+    : vacancy?.gender) || undefined
 
 const getVacancyDraftKey = (profileId: string) => `vacancyDraft:new:${profileId}`
 
@@ -202,6 +210,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const { addToast } = useToastStore()
 
   const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(seedVacancy, initialOpportunityType))
+  const [roleCategory, setRoleCategory] = useState<string | undefined>(buildInitialRoleCategory(seedVacancy, initialOpportunityType))
 
   // Live posting-strength assessment (Market Phase 3) — recomputes as the
   // club fills the form; nudge only, never blocks publishing.
@@ -318,8 +327,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
           const base = buildInitialFormData(null, initialOpportunityType)
-          const restored = { ...base, ...(parsed.formData || {}) }
+          const restored = { ...base, ...withoutRoleCategory(parsed.formData || {}) }
           setFormData(restored)
+          setRoleCategory(undefined)
           setNewRequirement(parsed.newRequirement ?? '')
           setNewCustomBenefit(parsed.newCustomBenefit ?? '')
           // Restore location autocomplete state from draft
@@ -343,6 +353,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       initial.organization_name = profile.current_club
     }
     setFormData(initial)
+    setRoleCategory(buildInitialRoleCategory(seedVacancy, initialOpportunityType))
   }, [addToast, editingVacancy, templateVacancy, seedVacancy, initialOpportunityType, isOpen, profile, user])
 
   useBodyScrollLock(isOpen)
@@ -428,7 +439,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
     setIsDirty(true)
-    setFormData(prev => {
+    if (field === 'gender') setRoleCategory(value)
+    // Back to a player role: a youth team isn't valid there (DB CHECK
+    // opportunities_player_role_not_youth), so it clears; adult teams stay.
+    if (field === 'opportunity_type' && value === 'player') setRoleCategory((prev) => playerRoleGender(prev) || undefined)
+    if (field !== 'gender') setFormData(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'opportunity_type' && value === 'coach') {
         next.position = undefined  // reset — coach has different position options
@@ -446,11 +461,6 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
       // Increment #3 — drop GK-only tags (Sweeper Keeper) when the position
       // moves away from goalkeeper, so a gated tag can't leak via stale state.
-      // Back to a player role: a youth team isn't valid there (DB CHECK
-      // opportunities_player_role_not_youth), so it clears; adult teams stay.
-      if (field === 'opportunity_type' && value === 'player') {
-        next.gender = playerRoleGender(prev.gender) || undefined
-      }
       if (field === 'position') {
         next.specialist_skills_wanted = pruneSpecialistSkillsForPosition(prev.specialist_skills_wanted, value)
       }
@@ -521,9 +531,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     // role (founder ruling 2026-09-26), adult-only for player roles.
     if (formData.opportunity_type === 'player') {
       if (!formData.position) newErrors.position = 'Position is required'
-      if (!formData.gender) newErrors.gender = 'Category is required'
-      else if (isYouthGender(formData.gender)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
-    } else if (!formData.gender) {
+      if (!roleCategory) newErrors.gender = 'Category is required'
+      else if (isYouthGender(roleCategory)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
+    } else if (!roleCategory) {
       newErrors.gender = 'Category is required'
     }
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
@@ -591,7 +601,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         opportunity_type: formData.opportunity_type || 'player',
         title: formData.title!,
         position: formData.position || null,
-        gender: formData.gender || null,
+        gender: roleCategory || null,
         description: formData.description || null,
         location_city: formData.location_city!,
         location_country: formData.location_country!,
@@ -890,7 +900,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     Category <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={formData.gender || ''}
+                    value={roleCategory || ''}
                     onChange={(e) =>
                       handleInputChange('gender', e.target.value || undefined)
                     }

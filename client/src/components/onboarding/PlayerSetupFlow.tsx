@@ -24,6 +24,7 @@ import { leagueSideFor } from '@/lib/profileD2'
 import { CATEGORY_LABELS, PLAYING_CATEGORIES, playingCategoryToLegacyGender, type PlayingCategory } from '@/lib/hockeyCategories'
 import { positionLabel } from '@/lib/identity'
 import { SetupSignOut } from './SetupSignOut'
+import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
 import {
   OPEN_TO_PLAY_HELPER,
   OPEN_TO_PLAY_NEEDS_DOB,
@@ -122,8 +123,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           const parsed = JSON.parse(raw) as { draft?: Partial<Draft>; savedAt?: string }
           const ageDays = parsed.savedAt ? (Date.now() - Date.parse(parsed.savedAt)) / 86_400_000 : 0
           if (Number.isFinite(ageDays) && ageDays <= 7 && parsed.draft) {
-            // The saved date of birth always wins over a typed one (immutable).
-            return { ...base, ...parsed.draft, dateOfBirth: profile?.date_of_birth ?? parsed.draft.dateOfBirth ?? base.dateOfBirth }
+            // Date of birth and passports are not in drafts: they come from the profile or are asked again.
+            return { ...base, ...withoutSensitiveDraftFields(parsed.draft) }
           }
         }
       } catch {
@@ -145,7 +146,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   useEffect(() => {
     if (!draftKey) return
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ draft, savedAt: new Date().toISOString() }))
+      localStorage.setItem(draftKey, JSON.stringify({ draft: withoutSensitiveDraftFields(draft), savedAt: new Date().toISOString() }))
     } catch {
       /* quota / blocked — no-op */
     }
