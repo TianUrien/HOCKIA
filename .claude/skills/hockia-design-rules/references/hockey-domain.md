@@ -13,7 +13,7 @@ Player, Coach, Club, Umpire, Brand. Role badges use the role colours. Coaches ma
 Men's, Women's, Mixed (adult); Girls, Boys (youth; coach roles only: player roles are adult only). Display labels follow `lib/opportunityCopy.ts`; stored values are the legacy enum (`Men`, `Women`, `Girls`, `Boys`, `Mixed`).
 
 ## Vocabulary
-- "Role" / "opportunity" for a club or coach posting; "Apply", "Applied", "Shortlisted", "Maybe", "Not selected" (player view), "Declined" (recruiter view), "Closed".
+- "Opportunity" for a club or coach posting ("role" only for the user type, 2026-10-25); "Apply", "Applied", "Shortlisted", "Maybe", "Not this time" (player view; "Not selected" until 2026-10-25), "Not a fit" (club action, 2026-10-25; was "Declined"), "Closed".
 - "New signing" for a club announcing a player or coach joining.
 - "References" (gold) for endorsements; "Open to play", "Open to coach", "Open to tournaments", "Open to partners" for availability flags.
 - Seasons written "2026/27".

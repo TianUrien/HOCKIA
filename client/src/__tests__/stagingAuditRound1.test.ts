@@ -64,7 +64,7 @@ describe('Application status words — one set everywhere', () => {
   it('My applications labels are the canonical labels', () => {
     expect(applicationStatusLabel('maybe')).toBe('Replied')
     expect(applicationStatusLabel('pending')).toBe('In review')
-    expect(applicationStatusLabel('rejected')).toBe('Not selected')
+    expect(applicationStatusLabel('rejected')).toBe('Not this time')
     expect(applicationStatusLabel('nope')).toBeNull()
   })
   it('the timeline badge and My applications pill agree for every responded status', () => {

@@ -43,7 +43,7 @@ describe('amber rule — player waiting states are grey', () => {
     expect(pill.querySelector('svg')?.getAttribute('class') ?? '').not.toMatch(/clock/)
   })
 
-  it('"Replied" badge is the same grey as "Not selected"', () => {
+  it('"Replied" badge is the same grey as "Not this time"', () => {
     const maybe = playerApplicationStatusBadge('maybe')
     expect(maybe?.label).toBe('Replied')
     expect(maybe?.className).not.toMatch(AMBER)

@@ -10,7 +10,7 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   pending: 'In review',
   shortlisted: 'Shortlisted',
   maybe: 'Replied',
-  rejected: 'Not selected',
+  rejected: 'Not this time',
   withdrawn: 'Withdrawn',
   no_response: 'No reply',
   // The club closed the role as filled (founder 2026-09-26: "Role filled",
@@ -218,8 +218,8 @@ export function applicationStatusFallbackMessage(
         : 'The club replied. No final decision yet.'
     case 'rejected':
       return reasonCopy
-        ? `You weren't selected this time. ${reasonCopy} Keep going. The right fit is out there.`
-        : "You weren't selected this time. It often comes down to fit, not ability. Keep applying."
+        ? `Not this time. ${reasonCopy} Keep going. The right fit is out there.`
+        : 'Not this time. It often comes down to fit, not ability. Keep applying.'
     case 'no_response':
       // No AI pass for expiries (application-feedback only covers real club
       // responses) — this deterministic line IS the player-facing message.
