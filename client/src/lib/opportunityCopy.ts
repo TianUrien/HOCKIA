@@ -73,6 +73,12 @@ export const CATEGORY_DOT_CLASSES: Record<CategoryFamily, string> = {
   women: 'bg-category-women', men: 'bg-category-men', mixed: 'bg-category-mixed',
 }
 
+/** The dot on a glass or dark tag over a photo (rebrand 2026-10-25,
+ *  team-*-on-photo): lighter hues that stay visible on the scrim. */
+export const CATEGORY_DOT_ON_PHOTO_CLASSES: Record<CategoryFamily, string> = {
+  women: 'bg-category-women-dark', men: 'bg-category-men-dark', mixed: 'bg-category-mixed-dark',
+}
+
 export function categoryTagClass(gender: string | null | undefined): string | null {
   const fam = categoryFamily(gender)
   return fam ? CATEGORY_TAG_CLASSES[fam] : null
