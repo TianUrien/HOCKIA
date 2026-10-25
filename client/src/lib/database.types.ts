@@ -7770,6 +7770,38 @@ export type Database = {
         Args: { p_offer_id: string }
         Returns: undefined
       }
+      get_home_gear_rail: {
+        Args: { p_limit?: number }
+        Returns: {
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_profile_id: string
+          brand_slug: string
+          id: string
+          image_url: string
+          kind: string
+          link_url: string
+          member_country_id: number
+          title: string
+        }[]
+      }
+      get_my_goal: {
+        Args: never
+        Returns: {
+          later_count: number
+          options: string[]
+          other_text: string
+          set_at: string
+          should_ask: boolean
+        }[]
+      }
+      get_my_goal_actions: { Args: never; Returns: Json }
+      goal_later: { Args: never; Returns: number }
+      set_my_goal: {
+        Args: { p_options: string[]; p_other_text?: string }
+        Returns: undefined
+      }
       get_my_brand_offer_totals: {
         Args: { p_days?: number }
         Returns: {
