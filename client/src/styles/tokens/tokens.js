@@ -92,9 +92,9 @@ export const colors = {
     "women": "#ab4832",
     "men": "#137685",
     "mixed": "#3a3550",
-    "women-dark": "#fb7185",
-    "men-dark": "#38bdf8",
-    "mixed-dark": "#a78bfa",
+    "women-dark": "#ff9a80",
+    "men-dark": "#67e8f9",
+    "mixed-dark": "#c4b5fd",
     "women-soft": "#ffe4dc",
     "men-soft": "#cffafe",
     "mixed-soft": "#e9e3ff"
