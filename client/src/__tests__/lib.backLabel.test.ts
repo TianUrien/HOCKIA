@@ -3,7 +3,7 @@ import { backLabelFrom } from '@/lib/backLabel'
 import { applicationStatusPill } from '@/lib/opportunityCopy'
 
 // Leaf 4 review, 2026-09-24: back labels name where the player came from,
-// and players only ever see "Not selected".
+// and players only ever see "Not this time".
 describe('backLabelFrom', () => {
   it('names the screen the player came from', () => {
     expect(backLabelFrom({ from: '/opportunities/applications' }, 'Opportunities')).toBe('My applications')
@@ -21,7 +21,7 @@ describe('backLabelFrom', () => {
 })
 
 describe('player-facing status', () => {
-  it('says "Not selected", never "Declined"', () => {
-    expect(applicationStatusPill('rejected', null, true).label).toBe('Not selected')
+  it('says "Not this time", never "Declined"', () => {
+    expect(applicationStatusPill('rejected', null, true).label).toBe('Not this time')
   })
 })

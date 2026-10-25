@@ -91,7 +91,7 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'maybe':
       return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
     case 'rejected':
-      return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
+      return { title: `${club} updated your application`, body: `Not this time for ${position}.` }
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".

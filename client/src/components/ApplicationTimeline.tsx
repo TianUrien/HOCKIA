@@ -65,7 +65,7 @@ function statusDotClass(status: string): string {
     case 'rejected':
     case 'no_response':
     case 'filled':
-      // "Not selected" is grey, not an error colour (founder ruling 2026-09-25).
+      // "Not this time" is grey, not an error colour (founder ruling 2026-09-25).
       return 'bg-gray-400'
     default:
       return 'bg-gray-300'
@@ -231,7 +231,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   // Fixed NARRATIVE order: Applied → club viewed → CURRENT status. We deliberately
   // show ONLY the current status (the most recent responded change), never the full
   // history: a club that revised its decision must not show the player a stack of
-  // contradictory outcomes (e.g. "Shortlisted" AND "Not selected"), and an
+  // contradictory outcomes (e.g. "Shortlisted" AND "Not this time"), and an
   // improving/declining trail reads as unkind. The "viewed" milestone is pinned
   // after "Applied" rather than sorted by timestamp so it never lands below the
   // outcome (clubs sometimes re-open a profile after deciding).
