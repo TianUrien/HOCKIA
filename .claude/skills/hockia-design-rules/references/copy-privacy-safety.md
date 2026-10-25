@@ -6,7 +6,7 @@
 - Gender-neutral: the person's name or "they"; never his/her/him (repo standard).
 - Plain and specific; buttons say what happens ("Send application"), confirmations say what happened ("Application sent").
 - Status words come from shared helpers, never inline strings: `lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/careerCopy.ts`, `lib/videoCopy.ts`, `lib/signing.ts`, `lib/clubInviteCopy.ts`, `lib/clubSquadCopy.ts`, `lib/invites.ts`. One set of words per application status.
-- Players see "Not selected", never "Declined".
+- Players see "Not this time", never "Declined" (2026-10-25, replaces "Not selected").
 - Errors: what went wrong + what to do, no apologies, never blame the user.
 - Deadline tag: ≤ 14 days → "Closes in N days"; later → "Closes 30 Nov"; no deadline → "New" if posted ≤ 7 days, otherwise nothing.
 - Coach posting for a club: copy follows the poster ("What we offer", "In <First name>'s words", "A note to <First name>", messages go to the coach).
