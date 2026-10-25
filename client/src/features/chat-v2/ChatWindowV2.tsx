@@ -379,7 +379,7 @@ export default function ChatWindowV2({
         <div
           ref={scrollContainerRef}
           data-testid="chat-message-list"
-          className={`chat-scroll-container absolute inset-0 overflow-y-auto overscroll-contain ${isMobile ? 'bg-white' : 'bg-gray-50'} ${scrollPaddingClasses}`}
+          className={`chat-scroll-container absolute inset-0 overflow-y-auto overscroll-contain bg-surface-subtle ${scrollPaddingClasses}`}
         >
           {messages.length === 0 ? (
             emptyState ?? <EmptyState />

@@ -96,7 +96,7 @@ describe('SharedPostCard', () => {
     render(<SharedPostCard {...defaultProps} isMine={false} />)
 
     const button = screen.getByRole('button')
-    expect(button.className).toContain('border-gray-200')
-    expect(button.className).toContain('bg-gray-50')
+    expect(button.className).toContain('border-line')
+    expect(button.className).toContain('bg-surface-subtle')
   })
 })

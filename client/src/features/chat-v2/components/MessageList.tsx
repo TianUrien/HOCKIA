@@ -118,7 +118,7 @@ export function MessageList({
   return (
     <div className="space-y-4">
       {isLoadingMore && (
-        <div className="flex justify-center pb-4 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <div className="flex justify-center pb-4 text-xs font-medium uppercase tracking-wide text-ink-3">
           Loading earlier messages...
         </div>
       )}

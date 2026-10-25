@@ -27,9 +27,9 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
 
   const counterColorClass = useMemo(() => {
     switch (characterCountState) {
-      case 'error': return 'text-red-500 font-semibold'
+      case 'error': return 'text-status-danger font-semibold'
       case 'warning': return 'text-amber-500'
-      default: return 'text-gray-400'
+      default: return 'text-ink-4'
     }
   }, [characterCountState])
 

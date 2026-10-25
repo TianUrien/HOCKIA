@@ -8,7 +8,8 @@ import type { RoleLike } from '@/lib/identity'
  * phone Inbox and the desktop master-detail inbox (design audit 2026-10-21,
  * B4): avatar 52 (people round, clubs and brands rounded square), name + one
  * time format (lib/inboxTime), the role or applicant context line, the last
- * message, and one unread treatment: a dot, never a number. Amber only when a
+ * message, and one unread treatment: a dot (never a number) and the time in
+ * violet (rebrand page 19). Amber only when a
  * club owes a first reply; brand violet while unread.
  */
 export interface ConversationRowProps {
@@ -48,7 +49,7 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
       <span className={cn('min-w-0 flex-1 border-b py-3 pr-4 group-last:border-b-0', selected ? 'border-transparent' : 'border-line')}>
         <span className="flex items-baseline justify-between gap-2">
           <span className={cn('truncate text-[16px] leading-[21px] text-ink-1', unread ? 'font-semibold' : 'font-medium')}>{name}</span>
-          <span className="shrink-0 text-secondary text-ink-3" data-testid="conversation-date">{formatInboxTime(at)}</span>
+          <span className={cn('shrink-0 text-secondary', unread && !waiting ? 'font-semibold text-brand-text' : 'text-ink-3')} data-testid="conversation-date">{formatInboxTime(at)}</span>
         </span>
         {contextLine && <span className="block truncate text-secondary text-ink-2">{contextLine}</span>}
         <span className="mt-0.5 flex items-center gap-2">

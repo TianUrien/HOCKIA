@@ -335,7 +335,7 @@ export default function ClubEditScreen() {
                 </>
               )}
 
-              {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
+              {error && <p role="alert" className="text-secondary text-status-danger">{error}</p>}
               <SheetActions onCancel={() => setEditing(null)} onSave={() => void save()} saving={saving} />
             </div>
           </div>
