@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  AlertCircle,
   Award,
   BadgeCheck,
   Bell,
@@ -431,6 +432,37 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
     getRoute: () => '/dashboard/profile?tab=ambassadors',
+  },
+  // Brand offers (Phase 1): the admin's review of an offer or a change to one.
+  // MIRRORED in supabase/functions/send-push/push-payload.ts.
+  brand_offer_approved: {
+    icon: CheckCircle2,
+    badgeText: 'Offer live',
+    accentClassName: 'bg-status-positive-soft text-status-positive',
+    getTitle: (notification) => (notification.metadata?.change === true ? 'Your changes are live' : 'Your offer is live'),
+    getDescription: (notification) => {
+      const title = getMetadataString(notification, 'offer_title')
+      return title ? `"${title}" is now shown to members.` : 'It is now shown to members.'
+    },
+    getRoute: () => '/dashboard/offers',
+  },
+  brand_offer_not_approved: {
+    icon: AlertCircle,
+    badgeText: 'Offer taken down',
+    accentClassName: 'bg-status-warning-soft text-status-warning',
+    // Since 2026-10-25 offers publish at once; this notice is an admin take-down
+    // (metadata.takedown). Older rows were review rejections.
+    getTitle: (notification) => (notification.metadata?.takedown === true ? 'Your offer was taken down' : 'Your offer needs a change'),
+    getDescription: (notification) => {
+      const title = getMetadataString(notification, 'offer_title')
+      const reason = (getMetadataString(notification, 'reason') ?? '').trim().replace(/[.!]+$/, '')
+      const takedown = notification.metadata?.takedown === true
+      const head = takedown
+        ? (title ? `"${title}" was taken down.` : 'Your offer was taken down.')
+        : (title ? `"${title}" wasn’t approved.` : 'Your offer wasn’t approved.')
+      return reason ? `${head} Reason: ${reason}. Edit and publish again.` : head
+    },
+    getRoute: () => '/dashboard/offers',
   },
   club_invitation_received: {
     icon: Users,

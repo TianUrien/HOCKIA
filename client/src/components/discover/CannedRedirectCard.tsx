@@ -26,7 +26,7 @@ export default function CannedRedirectCard({ message, cta: explicitCta }: Canned
   } else if (message.includes('/opportunities')) {
     cta = { label: 'Browse opportunities', path: '/opportunities' }
   } else if (message.includes('/marketplace')) {
-    cta = { label: 'Open Marketplace', path: '/marketplace' }
+    cta = { label: 'Open Brands', path: '/community/brands' }
   }
 
   return (

@@ -1,8 +1,17 @@
+import { useEffect } from 'react'
 import { useToastStore } from '../lib/toast'
 import Toast from './Toast'
 
 export default function ToastContainer() {
-  const { toasts, removeToast } = useToastStore()
+  const { toasts, removeToast, clearToasts } = useToastStore()
+
+  // A sheet opening clears toasts already on screen, so an old "Saved" never
+  // covers the sheet's buttons (a destructive one included). Toasts raised
+  // after it opens (a failed action inside the sheet) still show.
+  useEffect(() => {
+    document.addEventListener('hockia:overlay-opened', clearToasts)
+    return () => document.removeEventListener('hockia:overlay-opened', clearToasts)
+  }, [clearToasts])
 
   return (
     // Phones: bottom, 16 pt above the tab bar, never over content (Figma

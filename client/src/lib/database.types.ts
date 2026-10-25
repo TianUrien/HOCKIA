@@ -1027,6 +1027,110 @@ export type Database = {
           },
         ]
       }
+      brand_offers: {
+        Row: {
+          area: string | null
+          body: string | null
+          brand_id: string
+          country_ids: number[]
+          created_at: string
+          ended_at: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          link_url: string | null
+          live_at: string | null
+          pending: Json | null
+          pending_status: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          roles: string[]
+          starts_at: string | null
+          status: string
+          submitted_at: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          body?: string | null
+          brand_id: string
+          country_ids?: number[]
+          created_at?: string
+          ended_at?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          live_at?: string | null
+          pending?: Json | null
+          pending_status?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          roles?: string[]
+          starts_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          body?: string | null
+          brand_id?: string
+          country_ids?: number[]
+          created_at?: string
+          ended_at?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          live_at?: string | null
+          pending?: Json | null
+          pending_status?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          roles?: string[]
+          starts_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_offers_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_offers_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_offers_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_offers_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_posts: {
         Row: {
           brand_id: string
@@ -7567,6 +7671,226 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_brand_offers: {
+        Args: { p_tab?: string }
+        Returns: {
+          area: string
+          body: string
+          brand_id: string
+          brand_live_count: number
+          brand_logo_url: string
+          brand_name: string
+          brand_offer_count: number
+          brand_profile_id: string
+          country_ids: number[]
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          live_at: string
+          pending: Json
+          pending_status: string
+          review_note: string
+          roles: string[]
+          starts_at: string
+          status: string
+          submitted_at: string
+          title: string
+        }[]
+      }
+      admin_take_down_brand_offer: {
+        Args: { p_offer_id: string; p_reason: string }
+        Returns: string
+      }
+      admin_review_brand_offer: {
+        Args: { p_decision: string; p_note?: string; p_offer_id: string }
+        Returns: string
+      }
+      brand_is_visible: { Args: { p_brand_id: string }; Returns: boolean }
+      brand_offer_problem: { Args: { p: Json }; Returns: string }
+      duplicate_brand_offer: { Args: { p_offer_id: string }; Returns: string }
+      end_expired_brand_offers: { Args: never; Returns: number }
+      dismiss_brand_offer: {
+        Args: { p_offer_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      get_brand_offer_detail: {
+        Args: { p_offer_id: string }
+        Returns: {
+          area: string
+          body: string
+          brand_category: string
+          brand_country_id: number
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_open_to_partners: boolean
+          brand_profile_id: string
+          brand_slug: string
+          country_ids: number[]
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          member_country_id: number
+          roles: string[]
+          title: string
+          eligible: boolean
+        }[]
+      }
+      get_brand_offers_for_me: {
+        Args: { p_limit?: number }
+        Returns: {
+          area: string
+          body: string
+          brand_category: string
+          brand_country_id: number
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_open_to_partners: boolean
+          brand_profile_id: string
+          brand_slug: string
+          country_ids: number[]
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          member_country_id: number
+          roles: string[]
+          title: string
+          last_shown_at: string
+        }[]
+      }
+      hide_brand_offers: {
+        Args: { p_brand_id: string }
+        Returns: undefined
+      }
+      undo_dismiss_brand_offer: {
+        Args: { p_offer_id: string }
+        Returns: undefined
+      }
+      get_home_gear_rail: {
+        Args: { p_limit?: number }
+        Returns: {
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_profile_id: string
+          brand_slug: string
+          id: string
+          image_url: string
+          kind: string
+          link_url: string
+          member_country_id: number
+          title: string
+        }[]
+      }
+      get_my_goal: {
+        Args: never
+        Returns: {
+          later_count: number
+          options: string[]
+          other_text: string
+          set_at: string
+          should_ask: boolean
+        }[]
+      }
+      get_my_goal_actions: { Args: never; Returns: Json }
+      goal_later: { Args: never; Returns: number }
+      set_my_goal: {
+        Args: { p_options: string[]; p_other_text?: string }
+        Returns: undefined
+      }
+      get_my_brand_item_needs: { Args: never; Returns: { id: string; kind: string; need: string }[] }
+      get_marketplace: {
+        Args: { p_country_id?: number }
+        Returns: {
+          base_country_id: number
+          body: string
+          brand_category: string
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_profile_id: string
+          brand_slug: string
+          country_id: number
+          created_at: string
+          id: string
+          image_url: string
+          kind: string
+          link_url: string
+          need: string
+          title: string
+        }[]
+      }
+      set_brand_offer_need: { Args: { p_offer_id: string; p_need: string }; Returns: undefined }
+      set_brand_product_need: { Args: { p_product_id: string; p_need: string }; Returns: undefined }
+      suggest_brand: {
+        Args: { p_brand_name: string; p_country_id?: number; p_link?: string; p_note?: string }
+        Returns: undefined
+      }
+      admin_list_brand_suggestions: {
+        Args: { p_limit?: number }
+        Returns: { brand_name: string; country_id: number; created_at: string; id: string; link: string; note: string; suggested_by: string }[]
+      }
+      get_my_brand_offer_totals: {
+        Args: { p_days?: number }
+        Returns: {
+          contacted: number
+          opened: number
+          shown: number
+        }[]
+      }
+      get_my_brand_offers: {
+        Args: never
+        Returns: {
+          area: string
+          body: string
+          contacted: number
+          country_ids: number[]
+          created_at: string
+          ended_at: string
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          live_at: string
+          not_useful: number
+          opened: number
+          pending: Json
+          pending_status: string
+          review_note: string
+          roles: string[]
+          shown: number
+          starts_at: string
+          status: string
+          submitted_at: string
+          title: string
+          updated_at: string
+        }[]
+      }
+      my_brand_id_or_raise: { Args: never; Returns: string }
+      save_brand_offer: {
+        Args: {
+          p_area: string
+          p_body: string
+          p_country_ids: number[]
+          p_ends_at: string
+          p_image_url: string
+          p_link_url: string
+          p_offer_id: string
+          p_roles: string[]
+          p_starts_at: string
+          p_submit?: boolean
+          p_title: string
+        }
+        Returns: string
+      }
+      set_brand_offer_state: {
+        Args: { p_action: string; p_offer_id: string }
+        Returns: string
+      }
       _apply_join_current_club: {
         Args: { p_club_profile_id: string; p_member_id: string }
         Returns: undefined
@@ -10599,6 +10923,8 @@ export type Database = {
         | "applicant_last_call"
         | "signing_tagged"
         | "content_removed"
+        | "brand_offer_approved"
+        | "brand_offer_not_approved"
         | "feed_item_comment_received"
         | "congrats_received"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
@@ -10826,6 +11152,8 @@ export const Constants = {
         "applicant_last_call",
         "signing_tagged",
         "content_removed",
+        "brand_offer_approved",
+        "brand_offer_not_approved",
         "feed_item_comment_received",
         "congrats_received",
       ],

@@ -8,6 +8,8 @@ import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeV1Feed } from '@/components/home/v1/HomeV1Feed'
 import { NextStepCard } from '@/components/home/v1/NextStepCard'
 import { PeopleRow } from '@/components/home/v1/PeopleRow'
+import { GoalCard } from '@/components/home/goal/GoalCard'
+import { GearRail } from '@/components/offers/GearRail'
 import { SigningPromptSheet } from '@/components/home/v1/SigningPromptSheet'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -74,7 +76,10 @@ export default function HomePage() {
             prependItemRef={prependItemRef}
             header={
               <>
+                {/* Goal first, then the roles card, then gear and deals (Figma YG G1 / HR1, founder 2026-10-25). */}
+                <GoalCard />
                 <NextStepCard onCompose={openComposer} />
+                <GearRail />
                 <PeopleRow kind={clubSide ? 'available' : 'new'} />
               </>
             }

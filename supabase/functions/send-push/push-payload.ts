@@ -205,6 +205,27 @@ export function buildPushPayload(
         tag: 'ambassador-accepted',
       }
 
+    // ── Brand offers (Phase 1; mirrors config.ts) ──
+    case 'brand_offer_approved': {
+      const offerTitle = getString(metadata, 'offer_title')
+      return {
+        title: metadata?.change === true ? 'Your changes are live' : 'Your offer is live',
+        body: offerTitle ? `${offerTitle} is now shown to members.` : 'Your offer is now shown to members.',
+        url: '/dashboard/offers',
+        tag: 'brand-offer-review',
+      }
+    }
+    case 'brand_offer_not_approved': {
+      const offerTitle = getString(metadata, 'offer_title')
+      const takedown = metadata?.takedown === true
+      return {
+        title: takedown ? 'Your offer was taken down' : 'Your offer needs a change',
+        body: offerTitle ? `${offerTitle}: see the reason, then edit and publish again.` : 'See the reason, then edit and publish again.',
+        url: '/dashboard/offers',
+        tag: 'brand-offer-review',
+      }
+    }
+
     // ── Club membership (mirrors config.ts) ──
     case 'club_invitation_received':
       return {

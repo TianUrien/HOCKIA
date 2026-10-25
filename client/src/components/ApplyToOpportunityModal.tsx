@@ -22,6 +22,7 @@ import { Check } from 'lucide-react'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
 import { requestPushAsk } from '@/lib/pushAsk'
+import { maybeShowGetReady } from '@/components/marketplace/getReadyStore'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -159,7 +160,14 @@ export default function ApplyToVacancyModal({
 
   // Closing the Application sent screen is a moment of intent: the one-time
   // notification ask may follow (lib/pushAsk.ts, audit A1).
-  const closeSent = () => { setSent(false); setSending('idle'); setMessage(''); onClose(); requestPushAsk('apply') }
+  // Applying to a club in another country may open "Get ready for <Country>"
+  // instead (Figma 08 · Brands P6 MK4); then the push ask waits for another moment.
+  const closeSent = () => {
+    setSent(false); setSending('idle'); setMessage(''); onClose()
+    if (!user) { requestPushAsk('apply'); return }
+    void maybeShowGetReady({ userId: user.id, baseCountryId: profile?.base_country_id ?? null, roleCountry: vacancy.location_country ?? null, clubName: displayClub })
+      .then((shown) => { if (!shown) requestPushAsk('apply') })
+  }
 
   if (sent) {
     return (

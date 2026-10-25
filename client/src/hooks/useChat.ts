@@ -13,6 +13,7 @@ import { loadMessageDraft, saveMessageDraft, clearMessageDraft } from '@/lib/mes
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { checkMessageRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { reportOfferContactIfPending } from '@/lib/memberOffers'
 import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
 import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
@@ -819,6 +820,8 @@ export function useChat({
       )
 
       trackDbEvent('message_send', 'conversation', conversationIdForMetrics)
+      // A first message to a brand from one of its offers counts as "contacted".
+      reportOfferContactIfPending(otherParticipantId)
       trackMessageSend()
 
       if (onMessageSent && (deliveredMessage || optimisticMessage)) {

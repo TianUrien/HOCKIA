@@ -41,6 +41,7 @@ import {
   Flag,
   ShieldAlert,
   ChevronRight,
+  Tag,
 } from 'lucide-react'
 import { searchProfiles } from '../api/adminApi'
 import type { AdminProfileListItem } from '../types'
@@ -123,6 +124,7 @@ const NAV_SECTIONS: NavSection[] = [
       { path: '/admin/community', icon: HelpCircle, label: 'Community' },
       { path: '/admin/feed', icon: Heart, label: 'Feed & Content' },
       { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
+      { path: '/admin/offers', icon: Tag, label: 'Brand offers' },
       { path: '/admin/spam-signals', icon: ShieldAlert, label: 'Spam signals' },
       { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
       { path: '/admin/email', icon: Mail, label: 'Email' },

@@ -17,6 +17,7 @@ import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
 import { GlobalHockiaAiSheet } from '@/components/hockiaAi/GlobalHockiaAiSheet'
+import { GetReadySheet } from '@/components/marketplace/GetReadySheet'
 import { DiscoverRedirect } from '@/components/hockiaAi/DiscoverRedirect'
 import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
@@ -130,7 +131,9 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 // BrandDashboardPage was the legacy /dashboard/brand page; replaced by the
 // rich BrandDashboard component used by DashboardRouter at /dashboard/profile.
 // Import removed; legacy route now redirects.
-const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
+const NeedPage = lazyWithRetry(() => import('@/pages/NeedPage'))
+const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
+const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
 
 // Lazy load admin components (code splitting)
 const AdminGuard = lazyWithRetry(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
@@ -169,6 +172,7 @@ const AdminCommunity = lazyWithRetry(() => import('@/features/admin/pages/AdminC
 const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 const AdminMessagingHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminMessagingHealth').then(m => ({ default: m.AdminMessagingHealth })))
 const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/AdminAttribution').then(m => ({ default: m.AdminAttribution })))
+const AdminBrandOffers = lazyWithRetry(() => import('@/features/admin/pages/AdminBrandOffers'))
 const AdminCountries = lazyWithRetry(() => import('@/features/admin/pages/AdminCountries').then(m => ({ default: m.AdminCountries })))
 
 // Public investor dashboard (no auth required)
@@ -413,6 +417,7 @@ function App() {
           <ScrollToTop />
           <KeyboardShortcutsManager />
           <GlobalHockiaAiSheet />
+          <GetReadySheet />
           {import.meta.env.DEV && <SentryTestButton />}
           <ShortLinkGate>
           <TermsGate>
@@ -454,14 +459,15 @@ function App() {
                 <Route path="/post/:postId" element={<PostPage />} />
 
                 {/* Marketplace (canonical brand discovery surface — products + brand directory) */}
-                <Route path="/marketplace" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MarketplacePage /></ErrorBoundary>} />
+                {/* Marketplace by need and place (founder 2026-10-25): the hub is Community › Brands. */}
+                <Route path="/marketplace" element={<Navigate to="/community/brands" replace />} />
 
                 {/* Legacy brand routes — redirect to canonical marketplace.
                     Note: /community/brands is NOT redirected here — it's
                     a real role filter inside the Community page now
                     (May 2026 QA pass). Marketplace still exists for the
                     products surface and featured brand discovery. */}
-                <Route path="/brands" element={<Navigate to="/marketplace" replace />} />
+                <Route path="/brands" element={<Navigate to="/community/brands" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 {/* id-fallback for brands — mirrors /players/id/:id etc.
                     Resolves brand profile_id → slug, then redirects to
@@ -474,6 +480,12 @@ function App() {
                     BrandDashboard via DashboardRouter). Redirect any stale
                     bookmarks rather than 404. */}
                 <Route path="/dashboard/brand" element={<Navigate to="/dashboard/profile" replace />} />
+                {/* Brand offers, Phase 1 (Figma 08 · Brands P1). */}
+                {/* Brand offers for members, Phase 2 (Figma 08 · Brands P2 OD1 / OD2). */}
+                <Route path="/offers/:offerId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OfferDetailPage /></ErrorBoundary>} />
+                <Route path="/dashboard/offers" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />
 
                 {/* Public Investor Dashboard (shareable link) */}
                 <Route path="/investors/:token" element={<PublicInvestorDashboard />} />
@@ -501,6 +513,7 @@ function App() {
                 <Route path="/community" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 {/* Questions are a post kind in the Home feed now (2026-09-20). */}
                 <Route path="/community/questions" element={<Navigate to="/home" replace />} />
+                <Route path="/community/brands/need/:need" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NeedPage /></ErrorBoundary>} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
                 <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />
@@ -607,6 +620,7 @@ function App() {
                       button on Overview but the page is still useful. */}
                   <Route path="search-quality" element={<Navigate to="/admin/discovery" replace />} />
                   <Route path="networking" element={<Navigate to="/admin/messaging-health" replace />} />
+                  <Route path="offers" element={<AdminBrandOffers />} />
                   <Route path="engagement" element={<AdminEngagement />} />
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="ai-opinions" element={<AdminAIOpinions />} />

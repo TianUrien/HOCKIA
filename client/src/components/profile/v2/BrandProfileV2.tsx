@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
+import { useMyBrandOffers, useMyBrandOfferTotals } from '@/hooks/useBrandOffers'
+import { OffersCard } from './BrandOffersCard'
 import { supabase } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
@@ -212,9 +214,22 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const tapsByProduct = useMemo(() => new Map((taps.data?.products ?? []).map((t) => [t.product_id, t.taps])), [taps.data])
   const vis = useWeeklyVisibility(owner, false)
   const searches = useSearchAppearances({ profileId: owner ? brand.profile_id : null })
+  const myOffers = useMyBrandOffers(Boolean(owner))
+  const offerTotals = useMyBrandOfferTotals(Boolean(owner) && myOffers.offers.length > 0)
+  const hasOffers = myOffers.offers.length > 0
   const pending = props.pendingInvites ?? []
-  // One primary per screen: invites waiting own it; else the next step does.
-  const invitesPrimary = pending.length > 0 || !stepCopy
+  // B0/B0b (founder 2026-10-23): empty blocks and all-zero numbers stay hidden.
+  const showInvites = pending.length > 0 || props.ambassadorTotal > 0
+  const reach = [
+    { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
+    { value: searches.summary?.total ?? 0, label: 'in searches' },
+    { value: taps.data?.total ?? 0, label: (taps.data?.total ?? 0) === 1 ? 'tap to your store' : 'taps to your store' },
+  ]
+  const showReach = reach.some((r) => r.value > 0)
+  // One primary per screen: "Create your first offer" owns it while the brand
+  // has no offer; then invites waiting; else the next step.
+  const offersPrimary = Boolean(owner) && !myOffers.isLoading && !hasOffers
+  const invitesPrimary = !offersPrimary && (pending.length > 0 || !stepCopy)
 
   // Each tap shows at once; saves run one after another (QA F4).
   const partners = useQueuedToggle(Boolean(brand.open_to_partners), async (next) => { await props.onTogglePartners?.(next) })
@@ -299,10 +314,19 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       {owner && (
         <div className="flex flex-col gap-3">
           <OwnerButtons onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What athletes and clubs see', onSelect: () => props.onViewPublic?.() }]} />
-          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary} />}
+          {/* Offers card first (Figma 08 · Brands B0 / B0b). */}
+          {!myOffers.isLoading && (
+            <OffersCard
+              offers={myOffers.offers}
+              totals={offerTotals}
+              onCreate={() => navigate('/dashboard/offers/new')}
+              onOpen={() => navigate('/dashboard/offers')}
+            />
+          )}
+          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
 
-          {/* Ambassador card — brand-initiated invites */}
-          <div className="px-4">
+          {/* Ambassador card — brand-initiated invites; only with something in it (B0). */}
+          {showInvites && <div className="px-4">
             <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', invitesPrimary ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid="brand-invites-card">
               <div className="flex items-center gap-3">
                 {pending.length > 0 ? (
@@ -328,16 +352,12 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">View invites</button>}
               </div>
             </div>
-          </div>
+          </div>}
 
-          {/* Private stats */}
-          <div className="px-4" data-testid="brand-private-stats">
+          {/* Private stats: hidden while every number is zero (no zero headline). */}
+          {showReach && <div className="px-4" data-testid="brand-private-stats">
             <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
-              {[
-                { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
-                { value: searches.summary?.total ?? 0, label: 'in searches' },
-                { value: taps.data?.total ?? 0, label: (taps.data?.total ?? 0) === 1 ? 'tap to your store' : 'taps to your store' },
-              ].map((s) => (
+              {reach.map((s) => (
                 <div key={s.label} className="flex flex-1 flex-col items-center py-3">
                   <span className="text-title tabular-nums text-ink-1">{s.value}</span>
                   <span className="text-caption text-ink-2">{s.label}</span>
@@ -347,7 +367,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
               <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
             </button>
-          </div>
+          </div>}
 
           {/* Open to partners */}
           <div className="px-4">
