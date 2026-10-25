@@ -38,3 +38,7 @@ dist-ssr
 /e2e/.auth/
 /e2e/.data/
 app.html
+
+# Satoshi (ITF FFL 2.0) may not be distributed through a public repository.
+# Self-hosting is allowed; the files are provided at build time instead.
+public/fonts/Satoshi-*.woff2

@@ -9,6 +9,9 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // Light only in v1 (rebrand, founder 2026-10-25): `dark:` variants need a
+  // .dark class that nothing sets, so they never apply.
+  darkMode: 'class',
   theme: {
     screens: {
       'xs': '420px',
@@ -118,6 +121,10 @@ export default {
         // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
         // (player, coach, club, brand). Umpire has no pair: it stays neutral.
         role: t.role,
+        // Rebrand 2026-10-25: ai-* (Hockia AI: cyan plus the spark or mascot, never
+        // colour alone) and reference-* (gold, references only).
+        ai: t.ai,
+        reference: t.reference,
         status: t.status,
         accent: t.accent,
         social: t.social,

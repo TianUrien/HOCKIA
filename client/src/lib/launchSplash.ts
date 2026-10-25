@@ -47,11 +47,11 @@ export function warmLaunchArtwork(): void {
 }
 
 /**
- * The artwork's BOTTOM edge colour (sampled from the 1170×2532 export: every
- * pixel of the last row is #7b39ec; the top edge is #301462, the middle is the
- * #5929a8 base). Used as the page canvas while the launch artwork is up.
+ * The launch canvas (rebrand 2026-10-25: the 1170×2532 splash is the flat
+ * #fbfafd canvas with the ink lockup; the violet editorial artwork before it
+ * ended in #7b39ec). Used as the page canvas while the launch artwork is up.
  */
-export const LAUNCH_CANVAS_COLOR = '#7b39ec'
+export const LAUNCH_CANVAS_COLOR = '#fbfafd'
 
 /**
  * Launch canvas (white home-indicator strip fix, iOS 1.3.17).

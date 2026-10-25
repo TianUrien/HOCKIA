@@ -142,7 +142,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               {/* One wordmark colour on every app page: brand violet (design
                   audit B5). The tagline pill is marketing only, not app chrome. */}
               <img
-                src="/brand/wordmark/hockia-wordmark-violet.svg"
+                src="/brand/wordmark/hockia-wordmark-black.svg"
                 alt=""
                 className="h-8"
               />

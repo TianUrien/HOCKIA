@@ -33,7 +33,7 @@ describe('shared chip tones (audit A4)', () => {
   it('selected = brand soft fill + brand primary text; unselected = outline on white', () => {
     expect(chipTone(true)).toBe(CHIP_SELECTED)
     expect(CHIP_SELECTED).toContain('bg-brand-soft')
-    expect(CHIP_SELECTED).toContain('text-brand-primary')
+    expect(CHIP_SELECTED).toContain('text-brand-text')
     expect(chipTone(false)).toBe(CHIP_UNSELECTED)
     expect(CHIP_UNSELECTED).toContain('border-line')
     expect(CHIP_UNSELECTED).toContain('bg-white')

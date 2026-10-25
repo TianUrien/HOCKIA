@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { RoleCard } from '@/components/opportunities/RoleCard'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
-import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
+import { BENEFIT_TILES, genderPill, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
   COACH_POSITIONS, COACH_TEAM_HINT, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
@@ -26,7 +26,7 @@ import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/Role
 import { useOwnerCrest } from '@/hooks/useOwnerCrest'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
-import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { categoryFamily } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
@@ -392,7 +392,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 <span className="text-secondary text-ink-3">Live preview</span>
               </div>
               <RoleCover coverUrl={draft.coverUrl} crestUrl={cover.crestUrl} palette={cover.palette} scrim="card" className="mt-2 h-[196px] rounded-[20px]">
-                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
+                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
                 {/* Add photo / Change (Figma 158:426 / 158:506): a glass pill on the preview. */}
                 <button
                   type="button"
