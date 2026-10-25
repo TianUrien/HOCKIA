@@ -158,9 +158,17 @@ export default function OpportunitiesPage() {
   // Hockia AI (beta): the header mascot opens the sheet; a one-time tip says so.
   const showAi = useHockiaAiSheet((st) => st.show)
   const [aiTip, setAiTip] = useState(() => { try { return !localStorage.getItem('hockia-ai-tip-seen') } catch { return false } })
+  const dismissAiTip = useCallback(() => setAiTip(false), [])
+  // Shown once: marked seen as soon as it appears, and it leaves on its own after 6 s.
+  const aiTipVisible = aiTip && !!user && !showMyRoles
+  useEffect(() => {
+    if (!aiTipVisible) return
+    try { localStorage.setItem('hockia-ai-tip-seen', '1') } catch { /* private mode */ }
+    const t = window.setTimeout(dismissAiTip, 6000)
+    return () => window.clearTimeout(t)
+  }, [aiTipVisible, dismissAiTip])
   const openAi = () => {
     setAiTip(false)
-    try { localStorage.setItem('hockia-ai-tip-seen', '1') } catch { /* private mode */ }
     showAi('opportunities')
   }
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -564,11 +572,6 @@ export default function OpportunitiesPage() {
                 /* Hockia AI header button (Figma B1 178:26); Filters moved to the first quick chip. */
                 <span className="relative mr-1">
                   <HockiaAiButton onClick={openAi} />
-                  {aiTip && (
-                    <button type="button" onClick={() => setAiTip(false)} className="absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-[12px] bg-ink-1 px-3 py-2 text-[13px] font-semibold text-white shadow-lg" data-testid="hockia-ai-tip">
-                      New: ask Hockia AI anything
-                    </button>
-                  )}
                 </span>
               ) : (
                 <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
@@ -579,6 +582,17 @@ export default function OpportunitiesPage() {
                 </IconButton>
               )}
             />
+            {/* One-time tip (rebrand PR 4): in the flow under the mascot, right-aligned,
+                so it never covers the tabs, chips or tab bar. Shown once, gone on tap or after 6 s. */}
+            {aiTipVisible && (
+              <div className="flex justify-end px-4 pb-2">
+                <button type="button" onClick={dismissAiTip} className="relative max-w-[260px] truncate rounded-[12px] bg-ink-1 px-3 py-2 text-[13px] font-semibold leading-[18px] text-white shadow-float" data-testid="hockia-ai-tip">
+                  <span aria-hidden="true" className="absolute -top-1 right-5 h-2.5 w-2.5 rotate-45 rounded-[2px] bg-ink-1" />
+                  <span className="relative min-[390px]:hidden">Ask Hockia AI anything</span>
+                  <span className="relative hidden min-[390px]:inline">New: ask Hockia AI anything</span>
+                </button>
+              </div>
+            )}
             {user && profile?.role === 'coach' && (
               /* Coach v2 (Figma D6.2 / D6.4): Roles · Applied · My roles — the
                  last one only for a coach who recruits for their team. */

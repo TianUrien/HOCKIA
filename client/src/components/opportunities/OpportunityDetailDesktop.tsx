@@ -22,6 +22,7 @@ import {
   NOTE_TILE,
   PAID_TILE,
   SPECIALIST_TILE,
+  specialistIcon,
   applicationStatusPill,
   appliedOnLine,
   categoryFamily,
@@ -168,25 +169,21 @@ export function OpportunityDetailDesktop({
 
           {!isPublisher && !closed && (canApply || hasApplied) && (
             <div className="mt-4" data-testid="role-action-bar">
-              {hasApplied && status && !notSelected && (
-                <div className={`mb-2.5 flex items-center ${withdrawn ? 'justify-end' : 'justify-between'}`}>
-                  {!withdrawn && <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>}
+              {hasApplied && status && (
+                <div className="mb-2.5 flex items-center justify-between">
+                  <span className={`rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid={notSelected ? 'not-selected-state' : withdrawn ? 'withdrawn-state' : undefined}>{status.label}</span>
                   <button type="button" onClick={goApplications} className="text-secondary font-semibold text-hockia-primary hover:underline">View my applications</button>
                 </div>
               )}
               <div className="flex items-center gap-3">
-                {notSelected ? (
-                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">Not this time</span>
-                ) : withdrawn ? (
-                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">Withdrawn</span>
-                ) : hasApplied ? (
+                {notSelected || withdrawn ? null : hasApplied ? (
                   <span className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="applied-state">
                     <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
                   </span>
                 ) : (
                   <button type="button" onClick={onApply} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="role-apply">Apply</button>
                 )}
-                <button type="button" onClick={onMessage} className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-subtle" data-testid="role-message">
+                <button type="button" onClick={onMessage} className={`inline-flex h-[52px] ${notSelected || withdrawn ? 'flex-1' : 'shrink-0'} items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-subtle`} data-testid="role-message">
                   <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
                 </button>
               </div>
@@ -320,7 +317,7 @@ export function OpportunityDetailDesktop({
                   <span className="flex flex-wrap justify-end gap-1.5">
                     {specialists.map((s) => (
                       <span key={s} className="flex items-center gap-1 text-[14px] leading-[19px] text-ink-1">
-                        <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}><SPECIALIST_TILE.icon className="h-3 w-3" strokeWidth={1.8} /></span>
+                        <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}>{(() => { const SkillIcon = specialistIcon(s); return <SkillIcon className="h-3 w-3" strokeWidth={1.8} /> })()}</span>
                         {humanizeToken(s)}
                       </span>
                     ))}

@@ -3,7 +3,7 @@ import { roleViewerGate } from '@/lib/roleViewerGate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Check, ChevronRight, MessageCircle, Share, X, type LucideIcon } from 'lucide-react'
+import { Check, ChevronRight, MessageCircle, Share, X } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import type { CrestPalette } from '@/lib/crestPalette'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -25,6 +25,8 @@ import {
   NOTE_TILE,
   PAID_TILE,
   SPECIALIST_TILE,
+  specialistIcon,
+  type TileIcon,
   applicationStatusPill,
   appliedOnLine,
   categoryFamily,
@@ -366,7 +368,7 @@ export function OpportunityDetailMobile({
             <span className="flex flex-wrap justify-end gap-1.5">
               {specialists.map((s) => (
                 <span key={s} className="flex items-center gap-1 text-[14px] leading-[19px] text-ink-1">
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}><SPECIALIST_TILE.icon className="h-3 w-3" strokeWidth={1.8} /></span>
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}>{(() => { const SkillIcon = specialistIcon(s); return <SkillIcon className="h-3 w-3" strokeWidth={1.8} /> })()}</span>
                   {humanizeToken(s)}
                 </span>
               ))}
@@ -416,27 +418,27 @@ export function OpportunityDetailMobile({
 
       {!isPublisher && !closed && (canApply || hasApplied) && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t-[0.5px] border-line bg-white/92 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px] lg:hidden" data-testid="role-action-bar">
-          {hasApplied && status && !notSelected && (
-            <div className={`mb-2 flex items-center ${withdrawn ? 'justify-end' : 'justify-between'}`}>
-              {!withdrawn && <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>}
+          {/* Status chip (rebrand page 20): In review violet, Shortlisted green,
+              Not this time / Withdrawn neutral grey, never a red or a grey bar. */}
+          {hasApplied && status && (
+            <div className="mb-2 flex items-center justify-between">
+              <span className={`rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid={notSelected ? 'not-selected-state' : withdrawn ? 'withdrawn-state' : undefined}>{status.label}</span>
               <button type="button" onClick={() => navigate('/opportunities/applications', { state: { from: location.pathname } })} className="text-secondary font-semibold text-hockia-primary">
                 View my applications
               </button>
             </div>
           )}
+          {notSelected || withdrawn ? (
+            // The application ended: the chip above says so; the club can still be messaged.
+            <button type="button" onClick={onMessage} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full border border-line bg-white text-body font-semibold text-ink-1 active:bg-surface-muted-pressed" data-testid="role-message">
+              <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
+            </button>
+          ) : (
           <div className="flex items-center gap-2.5">
             <button type="button" onClick={onMessage} aria-label={identity.postedBy ? messageLabel(identity) : 'Message club'} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 active:bg-surface-muted-pressed" data-testid="role-message">
               <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.6} />
             </button>
-            {notSelected ? (
-              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">
-                Not this time
-              </span>
-            ) : withdrawn ? (
-              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">
-                Withdrawn
-              </span>
-            ) : hasApplied ? (
+            {hasApplied ? (
               <span className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="applied-state">
                 <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
               </span>
@@ -446,6 +448,7 @@ export function OpportunityDetailMobile({
               </button>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -486,7 +489,7 @@ export function Fact({ label, value, sub, className, tinted = false }: { label: 
  * List item / Benefit (Figma 148:418): a 40 px tile in the Package colours,
  * title 16 semibold, detail 13 ink-2. Note type = subtle grey tile, info.
  */
-export function BenefitItem({ icon: Icon, tileClass, title, detail, type, className }: { icon: LucideIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note'; className?: string }) {
+export function BenefitItem({ icon: Icon, tileClass, title, detail, type, className }: { icon: TileIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note'; className?: string }) {
   return (
     <li className={className ?? 'flex items-center gap-3 py-2'} data-type={type}>
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${tileClass}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>

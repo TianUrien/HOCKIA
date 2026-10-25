@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { Home, Users, Briefcase, Inbox, UserPlus } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
+import { CommunityIcon, HomeIcon, InboxIcon, OpportunitiesIcon } from '@/components/icons/HockiaIcons'
 import Avatar from './Avatar'
 import { useNavigation } from '@/hooks/useNavigation'
 import { hapticSelection } from '@/lib/haptics'
@@ -15,7 +16,7 @@ interface NavItem {
   id: string
   label: string
   path: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }> // Hockia icon set (rebrand PR 4)
   /** Unread indicator: no counts, a violet dot (rebrand 2026-10-25: no red counters). */
   dot?: boolean
 }
@@ -186,8 +187,8 @@ export default function MobileBottomNav() {
     if (!onExploreArea) return null
 
     const guestItems: NavItem[] = [
-      { id: 'community', label: 'Community', path: '/community', icon: Users },
-      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
+      { id: 'community', label: 'Community', path: '/community', icon: CommunityIcon },
+      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: OpportunitiesIcon },
     ]
 
     return (
@@ -223,12 +224,12 @@ export default function MobileBottomNav() {
   }
 
   const navItems: NavItem[] = [
-    { id: 'home', label: 'Home', path: '/home', icon: Home },
-    { id: 'community', label: 'Community', path: '/community', icon: Users },
-    { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
+    { id: 'home', label: 'Home', path: '/home', icon: HomeIcon },
+    { id: 'community', label: 'Community', path: '/community', icon: CommunityIcon },
+    { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: OpportunitiesIcon },
     // On whenever any Inbox segment (Messages / Requests / Activity) has a
     // dot — the same rule as the segment dots (lib/inboxSegmentDots).
-    { id: 'inbox', label: 'Inbox', path: '/inbox', icon: Inbox, dot: inboxDot },
+    { id: 'inbox', label: 'Inbox', path: '/inbox', icon: InboxIcon, dot: inboxDot },
   ]
 
   // A role's applicants and reviews live under /dashboard/opportunities but
