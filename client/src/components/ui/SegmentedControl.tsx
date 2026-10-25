@@ -5,7 +5,7 @@ export interface SegmentOption<T extends string> {
   label: string
   /** Rendered as "Label · N" when > 0 (Figma: "Requests · 4"). */
   count?: number
-  /** Small red "new" dot after the label — no number (Inbox segments). */
+  /** Small violet "new" dot after the label, no number (Inbox segments; rebrand: no red counters). */
   dot?: boolean
 }
 
@@ -61,7 +61,7 @@ export function SegmentedControl<T extends string>({
           >
             {label}
             {option.dot && (
-              <span aria-hidden="true" data-testid={`segment-dot-${option.value}`} className="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-hockia-danger" />
+              <span aria-hidden="true" data-testid={`segment-dot-${option.value}`} className="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-primary" />
             )}
           </button>
         )

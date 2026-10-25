@@ -16,15 +16,15 @@ interface NavItem {
   label: string
   path: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  /** Unread indicator (Figma tab bar carries no counts — a red status/danger dot). */
+  /** Unread indicator: no counts, a violet dot (rebrand 2026-10-25: no red counters). */
   dot?: boolean
 }
 
 // iOS tab (rebrand 2026-10-25, Figma Nav / Tab bar 72:388): 24px icon,
 // 12px medium label, violet = selected, tertiary ink otherwise.
-// Items hug their label (8 px sides, ≥ 48 wide) and spread with space-between,
-// so "Opportunities" fits from 375 up.
-const TAB_IOS = 'flex min-h-[50px] min-w-12 flex-none flex-col items-center gap-1 px-2 pb-1.5 pt-2.5 transition-colors'
+// Items hug their label (8 px sides, 6 below 390; ≥ 48 wide) and spread with
+// space-between and at least a 4 px gap, so "Opportunities" fits from 375 up.
+const TAB_IOS = 'flex min-h-[50px] min-w-12 flex-none flex-col items-center gap-1 px-1.5 pb-1.5 pt-2.5 transition-colors min-[390px]:px-2'
 // Android destination (Figma P14 24:1186): 64 tall, 24px icon inside a 64×32
 // pill that fills brand-soft when selected, 11px semibold label.
 const TAB_ANDROID = 'flex h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors'
@@ -156,7 +156,7 @@ export default function MobileBottomNav() {
               className={cn('h-6 w-6', ANDROID_CHROME && active && 'text-brand-primary')}
               strokeWidth={ANDROID_CHROME && active ? 2.2 : 1.75}
             />
-            {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
+            {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white" />}
           </>,
           active,
         )}
@@ -171,7 +171,7 @@ export default function MobileBottomNav() {
     ANDROID_CHROME ? 'border-line' : 'border-surface-muted',
     ANDROID_CHROME ? 'bg-surface-subtle' : 'bg-white',
   )
-  const rowClassName = ANDROID_CHROME ? 'flex h-20 items-center px-2' : 'flex items-stretch justify-between px-3'
+  const rowClassName = ANDROID_CHROME ? 'flex h-20 items-center px-2' : 'flex items-stretch justify-between gap-1 px-3'
 
   // ── Guest exploration bar ────────────────────────────────────────────────
   // Guests keep a bar on the public explore surface (Community, Opportunities
