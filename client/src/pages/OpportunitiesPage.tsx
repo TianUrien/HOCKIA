@@ -591,9 +591,9 @@ export default function OpportunitiesPage() {
                     else setCoachView(v)
                   }}
                   options={[
-                    { value: 'roles', label: 'Roles' },
+                    { value: 'roles', label: 'Opportunities' },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', count: myOpenRoleCount }] : []),
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
@@ -608,7 +608,7 @@ export default function OpportunitiesPage() {
                   value="open"
                   onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
                   options={[
-                    { value: 'open', label: 'Open opportunities', count: mobileList.length },
+                    { value: 'open', label: 'Open opportunities', shortLabel: 'Open', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
                   ]}
                 />
@@ -669,9 +669,9 @@ export default function OpportunitiesPage() {
                     else setCoachView(v === 'mine' ? 'mine' : 'roles')
                   }}
                   options={[
-                    { value: 'open', label: profile.role === 'coach' ? 'Roles' : 'Open opportunities', count: mobileList.length },
+                    { value: 'open', label: profile.role === 'coach' ? 'Opportunities' : 'Open opportunities', shortLabel: profile.role === 'coach' ? undefined : 'Open', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', count: myOpenRoleCount }] : []),
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>

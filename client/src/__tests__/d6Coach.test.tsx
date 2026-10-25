@@ -156,7 +156,7 @@ describe('Opportunities · Roles by viewer', () => {
     expect(card.textContent).not.toMatch(/fit|match|applicant|save/i)
     expect(within(card).getAllByRole('button')).toHaveLength(1)
     // Roles · Applied — and no My roles for a coach who does not recruit.
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Roles', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Opportunities', 'Applied'])
   })
 
   it('a player keeps the whole list and the Open opportunities | Applied control', async () => {
@@ -164,7 +164,7 @@ describe('Opportunities · Roles by viewer', () => {
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Open opportunities · 2', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities · 2', 'Applied'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
@@ -173,7 +173,7 @@ describe('Opportunities · Roles by viewer', () => {
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Roles', 'Applied', 'My opportunities'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Opportunities', 'Applied', 'My opportunities'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
