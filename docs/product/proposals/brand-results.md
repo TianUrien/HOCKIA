@@ -68,6 +68,9 @@ Figma page "08 · Brands (all phases)", one section per phase:
 ## Until goals are stored (founder, 2026-10-23)
 Members have no saved goal yet ("Your profile · <position>" stands in). So the reason line on offer cards uses location and role ("You see this because you live in England and play"), the Home frames have no "Your goal" card, and Results breakdowns are Country / Role / Where only. Goal-based reasons and the Goal breakdown come back when `goal_set` ships. Figma frames were updated to match.
 
+## Publish now, no approval (founder, 2026-10-25)
+Brand offers no longer wait for admin approval. "Publish" makes an offer live at once, and edits to a live offer apply at once. The safety net: members can Report an offer, and an admin can Take down with a reason the brand sees word for word; the brand can then edit and publish again. States: draft, live, paused, taken down, ended. There is no "your offer is live" notice; the brand gets one when an offer is taken down (in-app and push; email later). Member copy no longer says offers are checked before going live. Figma page 08 was updated to match (B1, B1-all, B1-empty, B0, B2, B3, D1, A1-A3, N1, N2, E1 removed, E2, OD, BT).
+
 ## Privacy rules (non-negotiable)
 - Aggregates only, except people who contacted the brand.
 - A breakdown row appears only when it holds **5 or more members**; otherwise it reads "Fewer than 5" (founder, 2026-10-23).
