@@ -41,7 +41,7 @@ export type NotificationRenderConfig = {
 }
 
 const getActorName = (notification: NotificationRecord) =>
-  notification.actor?.fullName || notification.actor?.username || 'A HOCKIA member'
+  notification.actor?.fullName || notification.actor?.username || 'A Hockia member'
 
 const getMetadataString = (notification: NotificationRecord, key: string): string | null => {
   const value = notification.metadata?.[key]
@@ -95,8 +95,8 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
-      const role = typedTitle ?? humanPos ?? 'The role'
-      return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying. New roles are open.` }
+      const role = typedTitle ?? humanPos ?? 'The opportunity'
+      return { title: `${club} filled the opportunity`, body: `${role} has been filled. Thanks for applying. New opportunities are open.` }
     }
     default:
       return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
@@ -371,7 +371,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
         : `${count} applications are no longer active`
     },
     getDescription: () =>
-      "Applications close automatically after a while without an update on HOCKIA. It’s never a reflection on you. Fresh opportunities are open now.",
+      "Applications close automatically after a while without an update on Hockia. It’s never a reflection on you. Fresh opportunities are open now.",
     getRoute: () => '/opportunities',
   },
   // B2 · publisher reminders. The server writes the copy (first names only,
@@ -409,7 +409,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     badgeText: 'Account verified',
     accentClassName: 'bg-emerald-50 text-emerald-600',
     getTitle: () => 'Your account has been verified',
-    getDescription: () => 'You now have full access to the HOCKIA platform.',
+    getDescription: () => 'You now have full access to the Hockia platform.',
     getRoute: () => '/settings',
   },
   ambassador_request_received: {
@@ -515,7 +515,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     icon: Megaphone,
     badgeText: 'Announcement',
     accentClassName: 'bg-gray-100 text-gray-700',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'HOCKIA update',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'Hockia update',
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     // The safety notice about a removed account is read in place when its
     // conversation is no longer listed (it would open an empty inbox).

@@ -20,7 +20,7 @@ describe('roleIdentity', () => {
     expect(offersHeading(id)).toBe('What KBH Brumbies offers')
     expect(asksHeading(id)).toBe('What they’re looking for')
     expect(reviewsLine(id)).toBe('Ana reviews it and replies here')
-    expect(onBehalfNote(id)).toBe('Ana posted this role on behalf of KBH Brumbies. Messages go to the coach.')
+    expect(onBehalfNote(id)).toBe('Ana posted this opportunity on behalf of KBH Brumbies. Messages go to the coach.')
     expect(applySubline(id)).toBe('KBH Brumbies · posted by Ana García')
     expect(sentLine(id)).toMatch(/^Ana will review your profile/)
     expect(wordsHeading(id)).toBe('In Ana’s words')

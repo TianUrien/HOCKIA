@@ -16,11 +16,11 @@
 import type { OpportunityResultItem, SuggestedAction } from '@/hooks/useDiscover'
 
 export const HOCKIA_AI_TITLE = 'Hockia AI'
-export const COMPOSER_PLACEHOLDER = 'Ask about clubs, players or roles'
+export const COMPOSER_PLACEHOLDER = 'Ask about clubs, players or opportunities'
 export const COMPOSER_MAX_LENGTH = 500
 /** Existing beta copy, reused verbatim. */
 export const BETA_NOTE =
-  'Hockia AI is in beta. It can help you explore HOCKIA, but answers may sometimes be incomplete or inaccurate.'
+  'Hockia AI is in beta. It can help you explore Hockia, but answers may sometimes be incomplete or inaccurate.'
 export const TRY_ASKING_EYEBROW = 'Try asking'
 export const CAP_REACHED_COPY = "You've reached today's limit. Try again tomorrow."
 export const CONNECTION_ERROR_COPY = "I had trouble connecting just now. Let's try a different angle."
@@ -32,7 +32,7 @@ export const OPEN_ROLES_ROUTE = '/opportunities'
 export const IMPROVE_PROFILE_ROUTE = '/dashboard/profile/edit'
 
 export const OPEN_ROLES_CHIP: SuggestedAction = {
-  label: 'Open roles for me',
+  label: 'Opportunities for me',
   intent: { type: 'navigate', route: OPEN_ROLES_ROUTE },
 }
 export const IMPROVE_PROFILE_CHIP: SuggestedAction = {
@@ -69,7 +69,7 @@ const DEFAULT_EXAMPLES = [
 ]
 
 /** Founder example 2026-10-03: a precise role question a player can copy. */
-export const ROLE_EXAMPLE = 'Goalkeeper roles in Serie A1 with no passport requirement'
+export const ROLE_EXAMPLE = 'Goalkeeper opportunities in Serie A1 with no passport requirement'
 
 /**
  * Role-aware choices (design audit 2026-10-21, A7): each role gets prompts
@@ -95,7 +95,7 @@ const ROLE_EXAMPLES: Record<string, string[]> = {
 /** Recruiters (club or recruiting coach): "Find available players for <role>", "Draft a role", "Summarise my applicants". */
 export function recruiterExamples(activeRoleTitle?: string | null): string[] {
   const role = activeRoleTitle?.trim()
-  return [role ? `Find available players for ${role}` : 'Find available players for my open role', 'Draft a role', 'Summarise my applicants']
+  return [role ? `Find available players for ${role}` : 'Find available players for my open opportunity', 'Draft an opportunity', 'Summarise my applicants']
 }
 
 /** Candidate coaches never get recruiter prompts they can't act on. */
@@ -117,22 +117,22 @@ export function exampleQueriesFor(profile: AiViewer, activeRoleTitle?: string | 
 
 /** The medium-detent greeting line, per role (audit A7). */
 export function aiIntroFor(profile: AiViewer): string {
-  if (isRecruiterProfile(profile)) return 'Ask me to find available players, draft a role or summarise your applicants.'
+  if (isRecruiterProfile(profile)) return 'Ask me to find available players, draft an opportunity or summarise your applicants.'
   switch (profile?.role) {
     case 'brand': return 'Ask me to find players who could be your ambassadors, or anything about hockey.'
     case 'umpire': return 'Ask me about your officiating record, other umpires, or anything about hockey.'
-    case 'coach': return 'Ask me to find coaching roles, or anything about hockey.'
-    default: return 'I see you’re browsing roles. Ask me to find the ones that fit you, or anything about hockey.'
+    case 'coach': return 'Ask me to find coaching opportunities, or anything about hockey.'
+    default: return 'I see you’re browsing opportunities. Ask me to find the ones that fit you, or anything about hockey.'
   }
 }
 
 /** Replaces "Do I fit?": facts about the profile against the role, not a verdict (audit A7). */
-export const CHECK_PROFILE_AGAINST_ROLE = 'Check my profile against this role'
+export const CHECK_PROFILE_AGAINST_ROLE = 'Check my profile against this opportunity'
 
 /** "From 24 open roles · updated today"; null when the pool size is unknown. */
 export function fromOpenRolesCaption(total: number | null | undefined): string | null {
   if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) return null
-  return `From ${total} open role${total === 1 ? '' : 's'} · updated today`
+  return `From ${total} open ${total === 1 ? 'opportunity' : 'opportunities'} · updated today`
 }
 
 /**

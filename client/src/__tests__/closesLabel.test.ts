@@ -60,7 +60,7 @@ describe('every surface uses the shared label', () => {
 })
 
 describe('postedOnlyLine', () => {
-  it('never repeats the deadline (the role page shows it in the chip and the Apply-by tile)', () => {
+  it('never repeats the deadline (the opportunity page shows it in the chip and the Apply-by tile)', () => {
     const line = postedOnlyLine({ created_at: new Date(2026, 9, 16).toISOString() }, now)
     expect(line).toBe('Posted 5 days ago')
     expect(line).not.toMatch(/Apply by|Closes/)

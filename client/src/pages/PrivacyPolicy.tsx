@@ -35,10 +35,10 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                Welcome to HOCKIA ("we", "us", "our"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our platform, available at inhockia.com, as a Progressive Web App (PWA), and through our native mobile applications for iOS and Android (collectively, "the Platform").
+                Welcome to Hockia ("we", "us", "our"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our platform, available at inhockia.com, as a Progressive Web App (PWA), and through our native mobile applications for iOS and Android (collectively, "the Platform").
               </p>
               <p>
-                By creating an account or using any part of the Platform, you agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please do not use HOCKIA.
+                By creating an account or using any part of the Platform, you agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please do not use Hockia.
               </p>
             </div>
           </section>
@@ -165,14 +165,14 @@ export default function PrivacyPolicy() {
                 <li><strong>Supabase:</strong> Database hosting, user authentication, and file storage. Your data is stored in encrypted databases hosted in the European Union.</li>
                 <li><strong>Google Analytics (GA4):</strong> Anonymous usage analytics to understand how the Platform is used. We track page views, feature usage, and aggregate trends. Your user ID is associated with analytics data to provide personalized insights.</li>
                 <li><strong>Sentry:</strong> Error monitoring and crash reporting. When errors occur, diagnostic data (including device type, browser, and error details) is sent to Sentry to help us identify and fix issues.</li>
-                <li><strong>Resend:</strong> Transactional and notification email delivery. Your email address and name are shared with Resend solely for the purpose of delivering emails from HOCKIA.</li>
+                <li><strong>Resend:</strong> Transactional and notification email delivery. Your email address and name are shared with Resend solely for the purpose of delivering emails from Hockia.</li>
                 <li><strong>Web Push Services:</strong> Push notification delivery through browser APIs. Your push subscription token is stored to deliver notifications.</li>
               </ul>
               <p className="font-medium mt-4">
                 We do not sell, rent, or trade your personal data to any third party. We do not share your data with advertisers.
               </p>
               <p>
-                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of HOCKIA, its users, or the public.
+                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of Hockia, its users, or the public.
               </p>
             </div>
           </section>
@@ -202,7 +202,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Cookies, Local Storage, and Tracking</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                HOCKIA uses browser local storage (not traditional cookies) to maintain your session, store preferences, and improve your experience. The following data is stored locally on your device:
+                Hockia uses browser local storage (not traditional cookies) to maintain your session, store preferences, and improve your experience. The following data is stored locally on your device:
               </p>
               <ul className="list-none space-y-2 ml-4">
                 <li>- Authentication session tokens (to keep you signed in).</li>
@@ -269,10 +269,10 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Children's Privacy</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                HOCKIA is not directed at children under 16 years of age. We do not knowingly collect personal data from children under 16 without verifiable parental consent. If we learn that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that information promptly.
+                Hockia is not directed at children under 16 years of age. We do not knowingly collect personal data from children under 16 without verifiable parental consent. If we learn that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that information promptly.
               </p>
               <p>
-                If you are a parent or guardian and believe your child has provided personal data to HOCKIA without your consent, please contact us at team@inhockia.com.
+                If you are a parent or guardian and believe your child has provided personal data to Hockia without your consent, please contact us at team@inhockia.com.
               </p>
             </div>
           </section>
@@ -284,7 +284,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. International Data Transfers</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                HOCKIA serves users worldwide. Your data may be transferred to and processed in countries other than your own, including countries within the European Union where our primary database is hosted. We ensure that any international data transfers comply with applicable data protection laws and that appropriate safeguards are in place.
+                Hockia serves users worldwide. Your data may be transferred to and processed in countries other than your own, including countries within the European Union where our primary database is hosted. We ensure that any international data transfers comply with applicable data protection laws and that appropriate safeguards are in place.
               </p>
             </div>
           </section>
@@ -299,7 +299,7 @@ export default function PrivacyPolicy() {
                 We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or Platform features. When we make material changes, we will notify you through the Platform or via email before the changes take effect.
               </p>
               <p>
-                We encourage you to review this Privacy Policy periodically. Your continued use of HOCKIA after the effective date of an updated policy constitutes your acceptance of the changes.
+                We encourage you to review this Privacy Policy periodically. Your continued use of Hockia after the effective date of an updated policy constitutes your acceptance of the changes.
               </p>
             </div>
           </section>

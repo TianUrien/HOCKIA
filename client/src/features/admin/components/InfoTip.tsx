@@ -111,7 +111,7 @@ export function InfoTip({ metric, value, interpretation, align = 'center' }: Inf
               </div>
               {band && value !== undefined && (
                 <p className="mt-1.5 text-xs font-medium text-gray-700">
-                  HOCKIA: {value}
+                  Hockia: {value}
                   {info.unit ?? ''} → <span className={TIER_COLORS[band.tier]}>{TIER_LABELS[band.tier]}</span>
                 </p>
               )}

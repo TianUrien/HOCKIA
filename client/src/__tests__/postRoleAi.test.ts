@@ -42,6 +42,6 @@ describe('Club speed CS2 · Start with Hockia AI', () => {
 
   it('says why it could not draft, and that the words were kept', () => {
     expect(aiDraftFailedCopy('limit')).toContain('today’s Hockia AI drafts')
-    expect(aiDraftFailedCopy(null)).toContain('Your words are in “About the role”')
+    expect(aiDraftFailedCopy(null)).toContain('Your words are in “About the opportunity”')
   })
 })

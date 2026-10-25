@@ -43,7 +43,7 @@ const SCRIM = CARD_SCRIM
 
 export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, nationalities = [], fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
   const [failed, setFailed] = useState<string | null>(null)
-  const name = member.full_name?.trim() || 'HOCKIA member'
+  const name = member.full_name?.trim() || 'Hockia member'
   const isBrand = member.role === 'brand'
   // Offers this member can see from the brand (Figma 08 · Brands P2 BT1); 0 outside the Brands tab.
   const offerCount = useBrandOfferCount(member.id)

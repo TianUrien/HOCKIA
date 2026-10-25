@@ -164,7 +164,7 @@ describe('Delete a role with a signing — desktop Opportunities tab', () => {
     fx.signingRows = [] // the client didn't know (e.g. signed after the list loaded)
     fx.deleteError = {
       code: 'P0001',
-      message: "This role has a confirmed signing, so it can't be deleted. Close it instead.",
+      message: "This opportunity has a confirmed signing, so it can't be deleted. Close it instead.",
     }
     render(<MemoryRouter><OpportunitiesTab profileId="club-1" /></MemoryRouter>)
     await waitFor(() => expect(fx.signingQuery).toHaveLength(2))
@@ -183,8 +183,8 @@ describe('Delete a role with a signing — desktop Opportunities tab', () => {
 
 describe('isRoleHasSigningError', () => {
   it('matches the trigger message with either apostrophe, nothing else', () => {
-    expect(isRoleHasSigningError({ message: "This role has a confirmed signing, so it can't be deleted. Close it instead." })).toBe(true)
-    expect(isRoleHasSigningError({ message: 'This role has a confirmed signing, so it can’t be deleted. Close it instead.' })).toBe(true)
+    expect(isRoleHasSigningError({ message: "This opportunity has a confirmed signing, so it can't be deleted. Close it instead." })).toBe(true)
+    expect(isRoleHasSigningError({ message: 'This opportunity has a confirmed signing, so it can’t be deleted. Close it instead.' })).toBe(true)
     expect(isRoleHasSigningError({ message: 'permission denied for table opportunities' })).toBe(false)
     expect(isRoleHasSigningError(null)).toBe(false)
   })

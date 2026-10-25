@@ -95,7 +95,7 @@ const MAX_RAIL_CARDS = 8
 export function buildRails(list: Vacancy[], ctx: RelevanceContext, featuredId: string | null, now = new Date()): RoleRail[] {
   const pool = featuredId ? list.filter((v) => v.id !== featuredId) : list
   const rails: RoleRail[] = [
-    { key: 'for-you', title: 'Roles for you', subtitle: 'Match your position, team and passport', roles: pool.filter((v) => isRelevantForViewer(v, ctx)).sort(newestFirst) },
+    { key: 'for-you', title: 'Opportunities for you', subtitle: 'Match your position, team and passport', roles: pool.filter((v) => isRelevantForViewer(v, ctx)).sort(newestFirst) },
     { key: 'paid-housing', title: 'Paid, with housing', subtitle: 'Contracts that include a place to live', roles: pool.filter((v) => isPaid(v) && (v.benefits ?? []).some((b) => b.toLowerCase() === 'housing')).sort(newestFirst) },
     { key: 'closing-soon', title: 'Closing soon', subtitle: `Apply in the next ${CLOSING_SOON_DAYS} days`, roles: pool.filter((v) => { const d = daysUntil(v.application_deadline, now); return d !== null && d >= 0 && d <= CLOSING_SOON_DAYS }).sort(soonestFirst) },
   ]

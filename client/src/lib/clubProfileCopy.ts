@@ -31,7 +31,7 @@ export function clubLeadLeague(men: string | null | undefined, women: string | n
 /** "Open role · from Sep 1 · 7 months" — the public card's second line. */
 export function openRoleLine(role: Pick<ClubOpenRole, 'startDate' | 'durationText'>): string {
   const from = monthDay(role.startDate)
-  return ['Open role', from ? `from ${from}` : null, formatDurationText(role.durationText)].filter(Boolean).join(' · ')
+  return ['Open opportunity', from ? `from ${from}` : null, formatDurationText(role.durationText)].filter(Boolean).join(' · ')
 }
 
 
@@ -40,6 +40,6 @@ export function leagueBandNote(leagues: { name: string; band: number | null }[])
   const names = [...new Set(leagues.filter((l) => l.band === null).map((l) => l.name))]
   if (names.length === 0) return null
   const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-  return `Hockia doesn't have a level for ${list} yet. Until it does, fit can't compare levels for your roles.`
+  return `Hockia doesn't have a level for ${list} yet. Until it does, fit can't compare levels for your opportunities.`
 }
 

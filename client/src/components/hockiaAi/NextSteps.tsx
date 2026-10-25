@@ -72,12 +72,12 @@ export function NextSteps({ step, facts, steps, onStep, onAsk, onClose }: Props)
               <>
                 <AiLine state="active">Your profile has the basics clubs look for.</AiLine>
                 <ChoiceCard
-                  question="Want me to look for roles now?"
+                  question="Want me to look for opportunities now?"
                   choices={[
-                    { value: 'roles', label: 'Find roles that fit me', description: 'Open roles for your position and category', recommended: true },
+                    { value: 'roles', label: 'Find opportunities that fit me', description: 'Open opportunities for your position and category', recommended: true },
                     { value: 'later', label: 'Not now', description: 'Close Hockia AI' },
                   ]}
-                  onPick={(c) => (c.value === 'roles' ? onAsk('Open roles for me') : onClose())}
+                  onPick={(c) => (c.value === 'roles' ? onAsk('Opportunities for me') : onClose())}
                   onOther={onAsk}
                   testId="ai-after-steps"
                 />

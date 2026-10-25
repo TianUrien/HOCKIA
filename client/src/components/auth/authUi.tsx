@@ -110,14 +110,14 @@ export function AuthPage({ children, switchLine, onBack, backLabel = 'Back', cla
         ) : (
           <span className="w-11" />
         )}
-        <Link to="/" aria-label="HOCKIA home" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
+        <Link to="/" aria-label="Hockia home" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
           <AuthLogo />
         </Link>
       </div>
 
       {/* Desktop header (72) */}
       <header className="mx-auto hidden h-[72px] w-full max-w-[1280px] shrink-0 items-center justify-between px-10 md:flex">
-        <Link to="/" aria-label="HOCKIA home" className="flex items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
+        <Link to="/" aria-label="Hockia home" className="flex items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
           <AuthLogo />
         </Link>
         <Link to="/" className={webButtonClassName({ variant: 'link', size: 'medium' })}>

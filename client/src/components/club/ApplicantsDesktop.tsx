@@ -142,7 +142,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
     { id: 'pending', label: p.toReview ? `To review · ${p.toReview}` : 'To review' },
     { id: 'shortlisted', label: 'Shortlisted' },
     { id: 'maybe', label: 'Maybe' },
-    { id: 'rejected', label: 'Declined' },
+    { id: 'rejected', label: 'Not a fit' },
     { id: 'no_response', label: p.closed ? `Closed · ${p.closed}` : 'Closed' },
   ]
   const caption = chip === 'pending'
@@ -296,7 +296,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                     <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-muted disabled:opacity-40" data-testid="bulk-maybe">Maybe</button>
                   )}
                   <button type="button" disabled={picked.length === 0} onClick={() => setBulkDeclining(true)} className="flex h-12 items-center rounded-full bg-hockia-primary px-6 text-[16px] font-semibold text-white hover:opacity-90 disabled:opacity-40" data-testid="bulk-decline">
-                    {picked.length ? `Decline ${picked.length}` : 'Decline'}
+                    {picked.length ? `Not a fit · ${picked.length}` : 'Not a fit'}
                   </button>
                 </div>
               </div>

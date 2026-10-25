@@ -98,7 +98,7 @@ describe('fit: Position row', () => {
 
   it('wrong position names both sides; never ticked', () => {
     const row = fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: 'midfielder' })
-    expect(row).toEqual({ key: 'position', label: 'Position', ok: false, detail: 'Midfielder · the role is for a Goalkeeper' })
+    expect(row).toEqual({ key: 'position', label: 'Position', ok: false, detail: 'Midfielder · the opportunity is for a Goalkeeper' })
   })
   it('primary match is ticked', () => {
     expect(fitPositionRow({ position_match: 1, role_position: 'goalkeeper', candidate_position: 'goalkeeper' })?.detail).toBe('Plays Goalkeeper · matches')
@@ -108,13 +108,13 @@ describe('fit: Position row', () => {
     const second = fitPositionRow({ position_match: 0.5, role_position: 'goalkeeper', candidate_position: 'defender', candidate_secondary_position: 'goalkeeper' })
     expect(second?.detail).toBe('Defender · plays Goalkeeper as a second position')
     expect(second?.ok).toBe(false)
-    expect(fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: null })?.detail).toBe('No position on the profile yet. The role is for a Goalkeeper')
+    expect(fitPositionRow({ position_match: 0, role_position: 'goalkeeper', candidate_position: null })?.detail).toBe('No position on the profile yet. The opportunity is for a Goalkeeper')
   })
   it('coach roles use the coach vocabulary', () => {
-    expect(fitPositionRow({ position_match: 0, role_position: 'head_coach', candidate_position: 'assistant_coach' })?.detail).toBe('Assistant coach · the role is for a Head coach')
-    expect(fitPositionRow({ position_match: 0, role_position: 'other_coach', candidate_position: 'head_coach' })?.detail).toBe('Head coach · the role is for a Other')
+    expect(fitPositionRow({ position_match: 0, role_position: 'head_coach', candidate_position: 'assistant_coach' })?.detail).toBe('Assistant coach · the opportunity is for a Head coach')
+    expect(fitPositionRow({ position_match: 0, role_position: 'other_coach', candidate_position: 'head_coach' })?.detail).toBe('Head coach · the opportunity is for a Other')
   })
-  it('comes first when the role has a position; absent otherwise (old cache rows too)', () => {
+  it('comes first when the opportunity has a position; absent otherwise (old cache rows too)', () => {
     const withPos = fitRows({ gender_match: 1, position_match: 0, role_position: 'goalkeeper', candidate_position: 'forward' }, ctx)
     expect(withPos.map((r) => r.key)).toEqual(['position', 'category', 'open', 'level'])
     expect(fitRows({ gender_match: 1 }, ctx).map((r) => r.key)).toEqual(['category', 'open', 'level'])
@@ -146,21 +146,21 @@ function renderRoleActions(role: Record<string, unknown>) {
   )
 }
 
-describe('role menu: Find players / coaches for this role', () => {
-  it('open player role → activates the role, then Find players for it', async () => {
+describe('role menu: Find players / coaches for this opportunity', () => {
+  it('open player role → activates the opportunity, then Find players for it', async () => {
     renderRoleActions({ opportunity_type: 'player', gender: 'Men', location_city: 'Dublin' })
     fireEvent.click(screen.getByTestId('role-actions-button'))
     const find = screen.getByTestId('role-actions-find')
-    expect(find.textContent).toContain('Find players for this role')
+    expect(find.textContent).toContain('Find players for this opportunity')
     fireEvent.click(find)
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/dashboard/find-players?role=r1'))
     expect(activateForOpportunity).toHaveBeenCalledWith({ opportunityId: 'r1', target: 'Men', region: 'Dublin', label: 'Goalkeeper' })
   })
-  it('open coach role → Find coaches for this role → Community coaches', async () => {
+  it('open coach role → Find coaches for this opportunity → Community coaches', async () => {
     renderRoleActions({ opportunity_type: 'coach', gender: 'Women' })
     fireEvent.click(screen.getByTestId('role-actions-button'))
     const find = screen.getByTestId('role-actions-find')
-    expect(find.textContent).toContain('Find coaches for this role')
+    expect(find.textContent).toContain('Find coaches for this opportunity')
     fireEvent.click(find)
     await waitFor(() => expect(navigateSpy).toHaveBeenCalledWith('/community/coaches'))
     expect(activateForOpportunity).toHaveBeenCalledWith(expect.objectContaining({ opportunityId: 'r1', target: null }))
@@ -169,7 +169,7 @@ describe('role menu: Find players / coaches for this role', () => {
     renderRoleActions({ status: 'closed', opportunity_type: 'player' })
     fireEvent.click(screen.getByTestId('role-actions-button'))
     expect(screen.queryByTestId('role-actions-find')).toBeNull()
-    expect(screen.getByText('Reopen this role')).toBeTruthy()
+    expect(screen.getByText('Reopen this opportunity')).toBeTruthy()
   })
   it('Role posted reuses the same activation', () => {
     expect(read('../components/club/RolePostedScreen.tsx')).toContain("useFindForRole")
@@ -225,7 +225,7 @@ const openVacancy = {
   specialist_skills_wanted: [], requirements: [], description: null, compensation: null, eu_passport_required: false,
 } as unknown as Vacancy
 
-describe('desktop preview on an open role the viewer applied to', () => {
+describe('desktop preview on an open opportunity the viewer applied to', () => {
   it('shows the real status (No reply), not "Application Submitted", and Message the club', () => {
     authState = { user: { id: 'p1' }, profile: { id: 'p1', role: 'player' } }
     const onMessage = vi.fn()
@@ -248,7 +248,7 @@ describe('desktop preview on an open role the viewer applied to', () => {
     )
     expect(screen.queryByText('Application Deadline')).toBeNull()
   })
-  it('the Opportunities list opens the role PAGE on every width (desktop D2, 16 Oct 2026): no preview dialog, the page loads the viewer\'s own status', () => {
+  it('the Opportunities list opens the opportunity PAGE on every width (desktop D2, 16 Oct 2026): no preview dialog, the page loads the viewer\'s own status', () => {
     const src = read('../pages/OpportunitiesPage.tsx')
     expect(src).not.toContain('OpportunityPreviewModal')
     expect(src).toContain("onOpen={() => navigate(`/opportunities/${vacancy.id}`, navState('opportunities'))}")
@@ -268,13 +268,13 @@ describe('Hockia AI greeting', () => {
 // ── C5 / C8. Toasts and shared wording ──────────────────────────────────────
 describe('close / reopen copy', () => {
   it('"Applicants have been told." only when some were waiting', () => {
-    expect(closeRoleToast('filled', 0)).toBe('Role closed as filled.')
-    expect(closeRoleToast('filled')).toBe('Role closed as filled.')
-    expect(closeRoleToast('filled', 3)).toBe('Role closed as filled. Applicants have been told.')
-    expect(closeRoleToast('withdrawn', 3)).toBe('Role closed.')
+    expect(closeRoleToast('filled', 0)).toBe('Opportunity closed as filled.')
+    expect(closeRoleToast('filled')).toBe('Opportunity closed as filled.')
+    expect(closeRoleToast('filled', 3)).toBe('Opportunity closed as filled. Applicants have been told.')
+    expect(closeRoleToast('withdrawn', 3)).toBe('Opportunity closed.')
   })
   it('desktop uses the phone wording', () => {
-    expect(REOPEN_ROLE_TOAST).toBe('Role reopened.')
+    expect(REOPEN_ROLE_TOAST).toBe('Opportunity reopened.')
     expect(CLOSE_NOT_FILLED_LABEL).toBe('Not filled / no longer needed')
     const desktop = read('../components/OpportunitiesTab.tsx')
     expect(desktop).not.toContain('Opportunity reopened.')

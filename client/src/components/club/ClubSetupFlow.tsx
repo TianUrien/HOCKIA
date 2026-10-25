@@ -187,7 +187,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
       <div className="flex-1 overflow-y-auto px-6 pb-32 pt-6">
         <h1 className="text-title-xl text-ink-1">About your club</h1>
-        <p className="mt-1.5 text-[15px] leading-[21px] text-ink-2">Step 1 of 2 · what players see next to every role.</p>
+        <p className="mt-1.5 text-[15px] leading-[21px] text-ink-2">Step 1 of 2 · what players see next to every opportunity.</p>
 
         <div className="mt-5 flex items-center gap-3.5">
           <button type="button" onClick={() => void pickCrest()} disabled={uploading} aria-label={crest ? 'Change crest' : 'Add your crest'} className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-2">

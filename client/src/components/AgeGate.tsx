@@ -43,10 +43,10 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
       <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
           <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold text-gray-900">HOCKIA is 18+ for now</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Hockia is 18+ for now</h1>
           <p className="text-sm text-gray-600 mt-4 leading-relaxed">
             Your profile is <strong>saved, not deleted</strong>. We&apos;re building
-            HOCKIA Juniors, a version with protections designed for young players,
+            Hockia Juniors, a version with protections designed for young players,
             and you&apos;ll be the first to know when it opens. Everything you built
             here will be waiting for you.
           </p>
@@ -113,7 +113,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
           <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-6 mb-4" />
           <h2 className="text-xl font-bold text-gray-900">Confirm your date of birth</h2>
           <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-            HOCKIA is an 18+ platform. Confirm your date of birth to keep your
+            Hockia is an 18+ platform. Confirm your date of birth to keep your
             full profile active. It stays private and is never shown to other
             members (only your age is).
           </p>
@@ -145,7 +145,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
           <div className="pointer-events-auto max-w-md mx-auto bg-white border border-gray-200 shadow-lg rounded-2xl p-4">
             <p className="text-sm text-gray-700 leading-relaxed">
               Quick confirmation: I&apos;m 18 or older and authorized to represent
-              this organization on HOCKIA.
+              this organization on Hockia.
             </p>
             <div className="flex gap-2 mt-3">
               <button

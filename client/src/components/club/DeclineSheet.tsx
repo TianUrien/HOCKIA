@@ -68,10 +68,10 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
   const canSend = Boolean(reason) && note.trim().length > 0 && note.length <= MAX && !drafting
 
   return (
-    <BottomSheet open={open} onClose={onCancel} ariaLabel={`Decline ${firstName}`}>
+    <BottomSheet open={open} onClose={onCancel} ariaLabel={`${firstName} is not a fit`}>
       <div className="flex flex-col gap-3.5 px-5 pb-6 pt-1" data-testid="decline-sheet">
         <div className="pt-1">
-          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">Decline {firstName}?</h2>
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">Not a fit: {firstName}</h2>
           <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? `Pick a reason. Hockia writes ${firstName} a kind note from it. Change anything before it goes.` : 'Pick a reason. Hockia turns it into a kind note. Change anything before it goes.'}</p>
         </div>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
@@ -115,7 +115,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
           onClick={() => reason && onSend(reason, note.trim())}
           className="flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-body font-semibold text-white active:bg-status-danger-strong disabled:opacity-40"
         >
-          Decline and send
+          Send the note
         </button>
         <button type="button" onClick={onCancel} className="flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
       </div>

@@ -39,7 +39,7 @@ describe('Club wide card (Figma 12:41)', () => {
     expect(clubCover(null, null)).toBe('none')
   })
 
-  it('meta lists open roles without counts, else league · place', () => {
+  it('meta lists open opportunities without counts, else league · place', () => {
     expect(clubMetaLine({ recruiting: true, positions: ['defender', 'forward', 'defender'], league: 'D1', place: null })).toBe('Recruiting · Defender, Forward')
     expect(clubMetaLine({ recruiting: true, positions: ['coach'], league: null, place: null })).toBe('Recruiting · Coach')
     expect(clubMetaLine({ recruiting: false, positions: [], league: 'Serie A Elite', place: '🇮🇹 Rome, Italy' })).toBe('Serie A Elite · 🇮🇹 Rome, Italy')

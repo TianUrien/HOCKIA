@@ -64,7 +64,7 @@ export const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forwar
 export type PlayerPosition = (typeof PLAYER_POSITIONS)[number]
 
 export const PHOTO_HELPER = 'A real match photo gets more profile views.'
-export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about roles.'
+export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about opportunities.'
 /** Under 18: the switch is not offered and the copy promises nothing
  *  about being suggested — suggestions are 18+ AND open, server-side. */
 // Ruling 2026-10-16: the 18+ gate stays; juniors get the waitlist only (an
@@ -161,11 +161,11 @@ export const COACH_PHOTO_HELPER = 'A clear coaching photo gets more views.'
 export const COACH_STEP2_SUBTITLE = 'Step 2 of 2 · clubs filter coaches by these.'
 export const COACH_CATEGORIES_HINT = 'Pick every category you coach.'
 export const COACH_RECRUIT_QUESTION = 'Do you recruit players for a team?'
-export const COACH_RECRUIT_HINT = 'Yes adds My roles and Find players to your app. You can change this in Settings.'
+export const COACH_RECRUIT_HINT = 'Yes adds My opportunities and Find players to your app. You can change this in Settings.'
 export const OPEN_TO_COACH_HELPER = 'Clubs can see you’re available and message you.'
 
 export const COACH_RECRUIT_OPTIONS: ReadonlyArray<{ value: boolean; title: string; detail: string }> = [
-  { value: true, title: 'Yes, I recruit for my team', detail: 'Post roles and review applicants for your club.' },
+  { value: true, title: 'Yes, I recruit for my team', detail: 'Post opportunities and review applicants for your club.' },
   { value: false, title: 'Not right now', detail: 'Use Hockia for your own coaching career.' },
 ]
 

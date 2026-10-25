@@ -308,7 +308,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
             {leagues.length === 0 && (
               <div className="mx-5 mt-3 flex items-start gap-2.5 rounded-card bg-surface-grouped px-3.5 py-3 text-secondary leading-[18px] text-ink-2" data-testid="link-club-no-leagues">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
-                <span>Hockia has no leagues for {countryName} yet. Your roles work in the meantime; fit just can’t compare levels until we add yours.</span>
+                <span>Hockia has no leagues for {countryName} yet. Your opportunities work in the meantime; fit just can’t compare levels until we add yours.</span>
               </div>
             )}
             <div className="px-5 pt-4">

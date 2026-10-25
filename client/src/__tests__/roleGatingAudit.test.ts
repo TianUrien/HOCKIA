@@ -54,7 +54,7 @@ describe('roleViewerGate', () => {
   })
   it('a coach on a player role gets the reason and keeps Message', () => {
     expect(g('coach', 'player')).toEqual({ kind: 'wrong_type', note: COACH_ON_PLAYER_ROLE_NOTE, applyCopy: false, messageOnly: true })
-    expect(COACH_ON_PLAYER_ROLE_NOTE).toBe('This role is for players. Coaching roles are in Opportunities.')
+    expect(COACH_ON_PLAYER_ROLE_NOTE).toBe('This opportunity is for players. Coaching opportunities are in Opportunities.')
   })
   it('brands and umpires browse only, with no apply copy', () => {
     expect(g('brand', 'player')).toEqual({ kind: 'browse_only', note: BRAND_BROWSE_NOTE, applyCopy: false, messageOnly: true })
@@ -70,8 +70,8 @@ describe('roleViewerGate', () => {
 })
 
 describe('Hockia AI is role-aware', () => {
-  it('recruiters: find players for the role, draft a role, summarise applicants', () => {
-    expect(exampleQueriesFor({ role: 'club' }, 'Midfielder')).toEqual(['Find available players for Midfielder', 'Draft a role', 'Summarise my applicants'])
+  it('recruiters: find players for the opportunity, draft an opportunity, summarise applicants', () => {
+    expect(exampleQueriesFor({ role: 'club' }, 'Midfielder')).toEqual(['Find available players for Midfielder', 'Draft an opportunity', 'Summarise my applicants'])
     expect(exampleQueriesFor({ role: 'coach', coach_recruits_for_team: true }, null)).toEqual(recruiterExamples(null))
   })
   it('brands find ambassadors and never hear about a Marketplace', () => {
@@ -89,7 +89,7 @@ describe('Hockia AI is role-aware', () => {
     expect(exampleQueriesFor({ role: 'coach', coach_recruits_for_team: false }).join(' ')).not.toMatch(/Draft a role|applicants/)
   })
   it('"Do I fit?" is replaced everywhere', () => {
-    expect(CHECK_PROFILE_AGAINST_ROLE).toBe('Check my profile against this role')
+    expect(CHECK_PROFILE_AGAINST_ROLE).toBe('Check my profile against this opportunity')
     expect(src('components/hockiaAi/RoleAiEntry.tsx')).not.toContain('Do I fit')
     expect(src('components/hockiaAi/HockiaAiSheet.tsx')).not.toContain('Do I fit')
   })

@@ -200,7 +200,7 @@ export default function AuthScreen() {
 
   const switchLine = (
     <>
-      New to HOCKIA?{' '}
+      New to Hockia?{' '}
       <Link to={`/signup${search}`} className={switchLink}>Create an account</Link>
     </>
   )

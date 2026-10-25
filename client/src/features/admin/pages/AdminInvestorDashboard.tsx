@@ -31,7 +31,7 @@ export function AdminInvestorDashboard() {
   // Field Hockey" default, breaking the "X | HOCKIA Admin" pattern
   // used by every other admin page (QA audit 2026-05-25).
   useEffect(() => {
-    document.title = 'Investors | HOCKIA Admin'
+    document.title = 'Investors | Hockia Admin'
   }, [])
 
   const fetchData = useCallback(async () => {

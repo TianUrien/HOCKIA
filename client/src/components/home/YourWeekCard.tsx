@@ -77,7 +77,7 @@ export function YourWeekCard() {
         .map((st) => (coachClubWeek && st.to === '/opportunities' ? { ...st, to: '/opportunities?view=mine' } : st))
     : isTalent
     ? talentStats(isPhone, {
-        roles: { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
+        roles: { value: matched, label: matched === 1 ? 'opportunity for you' : 'opportunities for you' },
         views: { value: views, label: views === 1 ? 'profile view' : 'profile views' },
         replies: { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
       })

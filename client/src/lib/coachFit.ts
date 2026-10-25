@@ -194,7 +194,7 @@ export function computeCoachFit(
     specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
     const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
     if (specialization_match === 1) {
-      pushReason(`Specializes as ${soughtLabel}, which matches the role you're recruiting.`, 'positive')
+      pushReason(`Specializes as ${soughtLabel}, which matches the opportunity you're recruiting.`, 'positive')
     } else if (candidate.coach_specialization) {
       pushReason(
         `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)}, not ${soughtLabel}.`,

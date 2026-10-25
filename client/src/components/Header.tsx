@@ -137,7 +137,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               type="button"
               onClick={() => handleNavigate(user ? '/home' : '/')}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
-              aria-label="HOCKIA, go home"
+              aria-label="Hockia, go home"
             >
               {/* One wordmark colour on every app page: brand violet (design
                   audit B5). The tagline pill is marketing only, not app chrome. */}
@@ -286,7 +286,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   onClick={() => handleNavigate('/signup')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Join HOCKIA
+                  Join Hockia
                 </button>
               </>
             )}

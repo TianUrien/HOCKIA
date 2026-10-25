@@ -36,7 +36,7 @@ function renderRoles(open: ReturnType<typeof role>[]) {
 }
 
 describe('club Opportunities on desktop: one Primary', () => {
-  it('a reply owed: "Review 2 applicants" is the Primary, Post a role is Tonal', () => {
+  it('a reply owed: "Review 2 applicants" is the Primary, Post an opportunity is Tonal', () => {
     renderRoles([role('r1', 2)])
     const post = screen.getByTestId('desktop-post-role')
     expect(post).toHaveAttribute('data-emphasis', 'tonal')
@@ -47,7 +47,7 @@ describe('club Opportunities on desktop: one Primary', () => {
     expect(review.className).toContain('bg-brand-primary')
   })
 
-  it('nothing owed: Post a role is the Primary', () => {
+  it('nothing owed: Post an opportunity is the Primary', () => {
     renderRoles([role('r1', 0)])
     expect(screen.getByTestId('desktop-post-role')).toHaveAttribute('data-emphasis', 'primary')
     expect(screen.getByTestId('role-review-button').className).not.toContain('bg-brand-primary')

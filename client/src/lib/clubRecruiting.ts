@@ -85,7 +85,7 @@ export function pipelineOf(statuses: AppStatus[]): Pipeline {
 export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdrawn'>, expiryDays = DEFAULT_EXPIRY_DAYS): string | null {
   const parts: string[] = []
   if (p.noReply > 0) parts.push(`${p.noReply} closed without a reply after ${expiryDays} days`)
-  if (p.filled > 0) parts.push(`${p.filled} closed when the role was filled`)
+  if (p.filled > 0) parts.push(`${p.filled} closed when the opportunity was filled`)
   if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
   return parts.length ? parts.join(' · ') : null
 }
@@ -97,7 +97,7 @@ export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdr
  */
 export function toReviewClosedNote(p: Pick<Pipeline, 'noReply' | 'withdrawn'>): string | null {
   const parts: string[] = []
-  if (p.noReply > 0) parts.push(`${p.noReply} ${p.noReply === 1 ? 'has' : 'have'} closed without a reply on this role so far`)
+  if (p.noReply > 0) parts.push(`${p.noReply} ${p.noReply === 1 ? 'has' : 'have'} closed without a reply on this opportunity so far`)
   if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
   return parts.length ? parts.join(' · ') : null
 }
@@ -188,7 +188,7 @@ export function fitPositionRow(c: FitComponents): FitRow | null {
   }
   return {
     key: 'position', label: 'Position', ok: false,
-    detail: primary ? `${primary} · the role is for a ${role}` : `No position on the profile yet. The role is for a ${role}`,
+    detail: primary ? `${primary} · the opportunity is for a ${role}` : `No position on the profile yet. The opportunity is for a ${role}`,
   }
 }
 
@@ -233,13 +233,13 @@ export function fitRows(c: FitComponents, ctx: {
   clubLeagueKnown: boolean
 }): FitRow[] {
   const team = roleTeamWord(ctx.roleGender)
-  const roleWord = team ? `a ${team} role` : 'this role'
+  const roleWord = team ? `a ${team} opportunity` : 'this opportunity'
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
     detail: (c.gender_match ?? 0) >= 1
       ? `${ctx.playerCategoryLabel ?? 'Category'} · matches ${roleWord}`
       // Round 6: a category mismatch is a no-chip miss — say what the role is for.
-      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} · ${team ? `the role is for ${team}` : 'doesn’t match this role'}` : 'No playing category on the profile yet',
+      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} · ${team ? `the opportunity is for ${team}` : 'doesn’t match this opportunity'}` : 'No playing category on the profile yet',
   }
   const open: FitRow = {
     key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,

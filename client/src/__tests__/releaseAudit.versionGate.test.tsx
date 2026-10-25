@@ -263,7 +263,7 @@ describe('NativeUpdatePrompt', () => {
     render(<NativeUpdatePrompt />)
     expect(await screen.findByText('Update required', {}, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument()
-    screen.getByRole('button', { name: /Update HOCKIA/ }).click()
+    screen.getByRole('button', { name: /Update Hockia/ }).click()
     expect(h.browserOpen).toHaveBeenCalledWith({ url: IOS_STORE })
   })
 

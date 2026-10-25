@@ -36,27 +36,27 @@ function messageTemplateFor(
   const intro = ownerName ? `Hey! ${ownerName.split(' ')[0]} here. ` : 'Hey! '
   if (role === 'umpire') {
     return (
-      `${intro}I'm building out my HOCKIA officiating profile and would love a short note from you ` +
+      `${intro}I'm building out my Hockia officiating profile and would love a short note from you ` +
       `about working with me on the pitch. Even a couple of sentences helps tournaments and clubs get a fuller picture. ` +
       `It takes 30 seconds:\n\n${profileUrl}`
     )
   }
   if (role === 'club') {
     return (
-      `${intro}We're building out our HOCKIA club page and would love a short comment from you ` +
+      `${intro}We're building out our Hockia club page and would love a short comment from you ` +
       `about your experience with us. Even a couple of sentences helps prospects get a fuller picture of our culture and setup. ` +
       `It takes 30 seconds:\n\n${profileUrl}`
     )
   }
   if (role === 'brand') {
     return (
-      `${intro}We're building out our HOCKIA brand page and would love a short comment from you ` +
+      `${intro}We're building out our Hockia brand page and would love a short comment from you ` +
       `about working with us. Even a couple of sentences helps the community get a fuller picture of who we are. ` +
       `It takes 30 seconds:\n\n${profileUrl}`
     )
   }
   return (
-    `${intro}I'm building out my HOCKIA profile and would love a short comment from you ` +
+    `${intro}I'm building out my Hockia profile and would love a short comment from you ` +
     `about playing with me. Even a couple of sentences helps clubs and coaches get a fuller picture. ` +
     `It takes 30 seconds:\n\n${profileUrl}`
   )
@@ -118,7 +118,7 @@ export default function RequestFeedbackModal({
     }
     try {
       await navigator.share({
-        title: 'Comment on my HOCKIA profile',
+        title: 'Comment on my Hockia profile',
         text: message,
         url: profileUrl,
       })

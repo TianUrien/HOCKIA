@@ -40,8 +40,8 @@ function WorldClubPill({ claimed }: { claimed: boolean }) {
         claimed ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
       }`}
       title={claimed
-        ? 'Active on HOCKIA. You can message them inside the platform'
-        : 'In the global directory. Not yet active on HOCKIA'}
+        ? 'Active on Hockia. You can message them inside the platform'
+        : 'In the global directory. Not yet active on Hockia'}
     >
       <Globe2 className="w-2.5 h-2.5" aria-hidden="true" />
       {claimed ? 'Claimed' : 'Directory'}

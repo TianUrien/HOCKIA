@@ -79,7 +79,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
             label: 'Open to Coach',
             active: Boolean(profile.open_to_coach),
             activeGradient: 'from-violet-500 to-purple-600',
-            tooltip: 'Looking for a head, assistant, or youth coaching role.',
+            tooltip: 'Looking for a head, assistant, or youth coaching opportunity.',
           },
       {
         id: 'open_to_opportunities',

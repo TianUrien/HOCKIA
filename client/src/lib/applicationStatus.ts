@@ -15,7 +15,7 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   no_response: 'No reply',
   // The club closed the role as filled (founder 2026-09-26: "Role filled",
   // grey — it's an outcome, not a verdict on the player).
-  filled: 'Role filled',
+  filled: 'Opportunity filled',
   // D4 · From yes to signed. offer_declined is a history row only (the
   // server puts the application straight back to shortlisted), so it reads
   // as Shortlisted if it is ever seen.
@@ -28,7 +28,7 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
 
 /** A pending application whose role is no longer open (My applications pill,
  *  club chat card). */
-export const ROLE_CLOSED_LABEL = 'Role closed'
+export const ROLE_CLOSED_LABEL = 'Opportunity closed'
 
 export function applicationStatusLabel(status: string | null | undefined): string | null {
   if (!status) return null
@@ -224,11 +224,11 @@ export function applicationStatusFallbackMessage(
       // No AI pass for expiries (application-feedback only covers real club
       // responses) — this deterministic line IS the player-facing message.
       // Neutral about the club: they may have answered off-platform.
-      return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting. Your energy is better spent on what's open now."
+      return "This application is no longer active on Hockia. Applications close automatically after a while without an update here, so you're never left waiting. Your energy is better spent on what's open now."
     case 'filled':
       // Deterministic like no_response (application-feedback doesn't cover
       // it). Same words as the 'filled' notification.
-      return 'This role has been filled. Thanks for applying. New roles are open.'
+      return 'This opportunity has been filled. Thanks for applying. New opportunities are open.'
     default:
       return null
   }
@@ -261,7 +261,7 @@ export function isDecidableApplicationStatus(status: string | null | undefined):
 export function closedApplicationNote(status: string | null | undefined, firstName: string): string {
   switch (status) {
     case 'no_response': return `This application closed without a reply. You can still message ${firstName}.`
-    case 'filled': return `This role was filled. You can still message ${firstName}.`
+    case 'filled': return `This opportunity was filled. You can still message ${firstName}.`
     case 'withdrawn': return `${firstName} withdrew this application. You can still message ${firstName}.`
     default: return `This application is past review. You can still message ${firstName}.`
   }

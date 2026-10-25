@@ -40,7 +40,7 @@ export function AdminDataIssues() {
   } = useDataIssues()
 
   useEffect(() => {
-    document.title = 'Data Integrity | HOCKIA Admin'
+    document.title = 'Data Integrity | Hockia Admin'
     fetchAll()
   }, [fetchAll])
 

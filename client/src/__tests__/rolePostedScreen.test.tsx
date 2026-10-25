@@ -78,14 +78,14 @@ describe('RolePostedScreen', () => {
     renderAt({ type: 'player', position: 'midfielder' })
     expect(await screen.findByRole('heading', { name: 'Midfielder is live' })).toBeInTheDocument()
     await waitFor(() => expect(screen.getByTestId('role-posted-reply-window')).toHaveTextContent('within 21 days'))
-    expect(screen.getByRole('button', { name: 'Find players for this role' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Find players for this opportunity' })).toBeInTheDocument()
   })
 
   it('coach roles find coaches, scoped to THIS role before leaving', async () => {
     const user = userEvent.setup()
     renderAt({ type: 'coach', position: 'head_coach' }, 'r1', { title: 'Coach Test 5', gender: 'Boys' })
     expect(await screen.findByRole('heading', { name: 'Head coach is live' })).toBeInTheDocument()
-    const find = screen.getByRole('button', { name: 'Find coaches for this role' })
+    const find = screen.getByRole('button', { name: 'Find coaches for this opportunity' })
     await waitFor(() => expect(find).toBeEnabled())
     await user.click(find)
     expect(await screen.findByTestId('where')).toHaveTextContent('/community/coaches')
@@ -95,10 +95,10 @@ describe('RolePostedScreen', () => {
     expect(calls[1]).toBe('at:/community/coaches')
   })
 
-  it('player roles open Find players for this role, scoped before leaving', async () => {
+  it('player roles open Find players for this opportunity, scoped before leaving', async () => {
     const user = userEvent.setup()
     renderAt({ type: 'player', position: 'midfielder' }, 'r1', { gender: 'Girls', location_city: null })
-    const find = await screen.findByRole('button', { name: 'Find players for this role' })
+    const find = await screen.findByRole('button', { name: 'Find players for this opportunity' })
     await waitFor(() => expect(find).toBeEnabled())
     await user.click(find)
     expect(await screen.findByTestId('where')).toHaveTextContent('/dashboard/find-players')

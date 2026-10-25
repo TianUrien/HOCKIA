@@ -45,7 +45,7 @@ export function AdminFeedAnalytics() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Feed & Content | HOCKIA Admin'
+    document.title = 'Feed & Content | Hockia Admin'
     fetchData()
   }, [fetchData])
 

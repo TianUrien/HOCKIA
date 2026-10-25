@@ -45,7 +45,7 @@ export function inviteLimitReason(limit: number): string {
 
 /** The sheet footer (D3.2): what the player sees and what happens if they apply. Gender-neutral. */
 export function inviteSheetFooter(firstName: string): string {
-  return `${firstName} sees the role and your note in Inbox. If they apply, they go straight to To review, marked Invited.`
+  return `${firstName} sees the opportunity and your note in Inbox. If they apply, they go straight to To review, marked Invited.`
 }
 
 export function firstNameOf(fullName: string | null | undefined, fallback = 'this player'): string {
@@ -125,7 +125,7 @@ export function draftInviteNote(opts: { firstName: string; clubName: string | nu
   const { role } = opts
   const club = opts.clubName?.trim() || 'our club'
   const pos = role.opportunity_type !== 'coach' && role.position ? positionLabel(role.position)?.toLowerCase() ?? null : null
-  const what = pos ? `${/^[aeiou]/i.test(pos) ? 'an' : 'a'} ${pos}` : `for ${role.title.trim() || 'a role'}`
+  const what = pos ? `${/^[aeiou]/i.test(pos) ? 'an' : 'a'} ${pos}` : `for ${role.title.trim() || 'an opportunity'}`
   const team = teamWord(role.gender)
   const where = team ? `${club}’s ${team} team` : club
   const recruiting = pos ? `we’re recruiting ${what} for ${where}` : `${where} is recruiting ${what}`
@@ -138,7 +138,7 @@ export function draftInviteNote(opts: { firstName: string; clubName: string | nu
   ].filter(Boolean) as string[]
   const lines = [
     `Hi ${opts.firstName}, ${recruiting}, and your profile stood out.`,
-    offer.length ? `The role includes ${listWords(offer)}.` : null,
+    offer.length ? `The opportunity includes ${listWords(offer)}.` : null,
     'Would you like to apply?',
   ].filter(Boolean)
   return lines.join(' ').slice(0, INVITE_NOTE_MAX)
@@ -164,9 +164,10 @@ export function inviteErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   const limit = /Daily invite limit reached \((\d+) per day\)/.exec(msg)
   if (limit) return inviteLimitReason(Number(limit[1]))
-  if (msg.startsWith('This person can')) return 'This player can’t be invited to this role.'
+  if (msg.startsWith('This person can')) return 'This player can’t be invited to this opportunity.'
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
-  if (hit) return `${hit.replaceAll('\'', '’')}.`
+  // The server still says "role"; members read "opportunity" (rebrand 2026-10-25).
+  if (hit) return `${hit.replaceAll('\'', '’').replace(/\broles\b/g, 'opportunities').replace(/\brole\b/g, 'opportunity')}.`
   return INVITE_GENERIC_ERROR
 }
 
@@ -215,10 +216,10 @@ export function inviteCardState(opts: {
     return { muted: false, actionable: false, line: opts.viewer === 'player' ? 'Applied' : `${who} applied`, tone: 'grey' }
   }
   if (status === 'declined') {
-    return { muted: true, actionable: false, line: opts.viewer === 'player' ? 'You passed on this role' : `${who} passed on this role`, tone: 'grey' }
+    return { muted: true, actionable: false, line: opts.viewer === 'player' ? 'You passed on this opportunity' : `${who} passed on this opportunity`, tone: 'grey' }
   }
   if (status === 'expired') {
-    const line = !opts.roleOpen ? 'This role is closed' : 'This invitation has expired'
+    const line = !opts.roleOpen ? 'This opportunity is closed' : 'This invitation has expired'
     return { muted: true, actionable: false, line, tone: 'grey' }
   }
   return opts.viewer === 'player'

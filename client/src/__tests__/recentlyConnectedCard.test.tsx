@@ -26,7 +26,7 @@ const baseFriend: ReferenceFriendOption = {
   avatarUrl: null,
   role: 'coach',
   baseLocation: 'London',
-  currentClub: 'HOCKIA FC',
+  currentClub: 'Hockia FC',
   acceptedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
 }
 
@@ -93,11 +93,11 @@ describe('RecentlyConnectedCard', () => {
   })
 
   it('renders nothing when the friend\'s display name is the orphan-profile placeholder', () => {
-    // useReferenceFriendOptions / FriendsTab fall back to "HOCKIA Member"
+    // useReferenceFriendOptions / FriendsTab fall back to "Hockia Member"
     // when full_name AND username are both null. Surfacing such a friend
-    // would render "Ask HOCKIA for a reference?" which reads wrong and
+    // would render "Ask Hockia for a reference?" which reads wrong and
     // exposes orphan / abandoned profiles to the nudge.
-    const orphan: ReferenceFriendOption = { ...baseFriend, fullName: 'HOCKIA Member' }
+    const orphan: ReferenceFriendOption = { ...baseFriend, fullName: 'Hockia Member' }
     const { container } = render(
       <RecentlyConnectedCard
         friendOptions={[orphan]}

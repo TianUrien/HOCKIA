@@ -9,7 +9,7 @@ import { clubLeadLeague } from '@/lib/clubProfileCopy'
 /** Edit club profile (D1.27). On desktop / non-club the route redirects to the old editor. */
 export const CLUB_EDIT_PATH = '/dashboard/club/edit'
 
-export const CLUB_GROUP_FOOTER = 'Your league and crest show on your roles and profile. Recruiting lives in Opportunities.'
+export const CLUB_GROUP_FOOTER = 'Your league and crest show on your opportunities and profile. Recruiting lives in Opportunities.'
 
 /** "Linked · Leinster Division 1A" / "Not linked yet · link your club" (same as the own profile). */
 export function clubLeagueSubtitle(p: { current_world_club_id?: string | null; mens_league_division?: string | null; womens_league_division?: string | null }): string {

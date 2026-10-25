@@ -17,7 +17,7 @@ const BAR = 'bg-white/25'
  *  desktop: OpportunityDetailDesktop's two columns). */
 export function RoleDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-white lg:bg-gray-50" data-testid="role-detail-skeleton" aria-busy="true" aria-label="Loading role">
+    <div className="min-h-screen bg-white lg:bg-gray-50" data-testid="role-detail-skeleton" aria-busy="true" aria-label="Loading opportunity">
       <div className="lg:mx-auto lg:grid lg:max-w-[1200px] lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-10 lg:px-6 lg:pt-24">
         <div className="relative h-[440px] w-full animate-pulse bg-ink-3/40 motion-reduce:animate-none lg:rounded-[24px]">
           <div className="absolute inset-x-4 bottom-5 flex flex-col gap-2.5">

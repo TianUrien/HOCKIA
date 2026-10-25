@@ -421,7 +421,7 @@ function LimitSheet({ open, onClose, onChoose, onDraft }: { open: boolean; onClo
       <div className="px-5 pb-2" data-testid="offers-limit">
         <h2 className="text-title text-ink-1">You have {OFFER_LIVE_LIMIT} live offers</h2>
         <p className="mt-2 text-body text-ink-2">
-          While HOCKIA is free, each brand can have up to {OFFER_LIVE_LIMIT} live offers. Pause or end one to make room. Drafts don&rsquo;t count.
+          While Hockia is free, each brand can have up to {OFFER_LIVE_LIMIT} live offers. Pause or end one to make room. Drafts don&rsquo;t count.
         </p>
         <Button block className="mt-5 rounded-full" onClick={onChoose}>Choose an offer to pause</Button>
         <Button block variant="tonal" className="mt-3 rounded-full" onClick={onDraft}>Save as a draft instead</Button>

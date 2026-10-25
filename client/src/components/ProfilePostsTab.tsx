@@ -99,7 +99,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
                 No posts yet
               </h3>
               <p className="text-gray-500 mb-4">
-                Share your first update with the HOCKIA community.
+                Share your first update with the Hockia community.
               </p>
               <button
                 type="button"

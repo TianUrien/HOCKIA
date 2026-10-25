@@ -17,10 +17,10 @@ export interface RoleViewerGate {
   messageOnly: boolean
 }
 
-export const COACH_ON_PLAYER_ROLE_NOTE = 'This role is for players. Coaching roles are in Opportunities.'
-export const PLAYER_ON_COACH_ROLE_NOTE = 'This role is for coaches. Player roles are in Opportunities.'
-export const UMPIRE_BROWSE_NOTE = 'You can browse roles here. Umpire appointments and assessments will live here when we open them.'
-export const BRAND_BROWSE_NOTE = 'You can browse roles here. Applying is for players and coaches.'
+export const COACH_ON_PLAYER_ROLE_NOTE = 'This opportunity is for players. Coaching opportunities are in Opportunities.'
+export const PLAYER_ON_COACH_ROLE_NOTE = 'This opportunity is for coaches. Player opportunities are in Opportunities.'
+export const UMPIRE_BROWSE_NOTE = 'You can browse opportunities here. Umpire appointments and assessments will live here when we open them.'
+export const BRAND_BROWSE_NOTE = 'You can browse opportunities here. Applying is for players and coaches.'
 
 export function roleViewerGate(o: {
   viewerRole: string | null | undefined

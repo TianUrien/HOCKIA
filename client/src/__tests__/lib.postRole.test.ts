@@ -12,7 +12,7 @@ const base = (over: Partial<PostRoleDraft> = {}): PostRoleDraft => ({
   position: 'midfielder', gender: 'Men', ...over,
 })
 
-describe('Post a role · mapping', () => {
+describe('Post an opportunity · mapping', () => {
   it('prefills Where from the club profile', () => {
     expect(locationFromClub({ baseLocation: 'Kilkenny, Ireland', countryName: 'Ireland' })).toEqual({ city: 'Kilkenny', country: 'Ireland' })
     expect(locationFromClub({ baseLocation: 'Kilkenny', countryName: 'Ireland' })).toEqual({ city: 'Kilkenny', country: 'Ireland' })
@@ -66,12 +66,12 @@ describe('Post a role · mapping', () => {
   })
 })
 
-describe('Post a role · copy and checks', () => {
+describe('Post an opportunity · copy and checks', () => {
   it('asks for position and team on step 1, and a place on step 2', () => {
     expect(stepProblem(base({ position: null }), 1)).toBe('Choose a position.')
     expect(stepProblem(base({ gender: null }), 1)).toBe('Choose the team.')
     expect(stepProblem(base(), 1)).toBeNull()
-    expect(stepProblem(base({ city: '' }), 2)).toBe('Add where the role is.')
+    expect(stepProblem(base({ city: '' }), 2)).toBe('Add where the opportunity is.')
     expect(stepProblem(base({ type: 'coach', position: 'head_coach', gender: null }), 1)).toBe('Choose the team.')
     expect(stepProblem(base({ type: 'coach', position: 'head_coach', gender: 'Girls' }), 1)).toBeNull()
   })
@@ -93,7 +93,7 @@ describe('Post a role · copy and checks', () => {
     expect(recruitingTarget(null)).toBeNull()
   })
 
-  it('labels the start date like the role card', () => {
+  it('labels the start date like the opportunity card', () => {
     // Round 9: day first (lib/dayFirst).
     expect(startLabel('2026-09-01', new Date('2026-06-01'))).toBe('1 Sep')
     expect(startLabel('2027-01-15', new Date('2026-06-01'))).toBe('15 Jan 2027')
@@ -103,7 +103,7 @@ describe('Post a role · copy and checks', () => {
 
 // Founder ruling 2026-09-25 (C) / Figma D1.6: no youth PLAYER roles; the DB
 // rejects them (CHECK opportunities_player_role_not_youth).
-describe('Post a role · no youth player roles', () => {
+describe('Post an opportunity · no youth player roles', () => {
   it('offers only adult teams', () => {
     expect(TEAMS.map((t) => t.value)).toEqual(['Men', 'Women', 'Mixed'])
   })
@@ -123,14 +123,14 @@ describe('Post a role · no youth player roles', () => {
 })
 
 // Founder ruling 2026-09-26: coach roles pick a team like player roles, Boys/Girls included.
-describe('Post a role · coach role team', () => {
+describe('Post an opportunity · coach role team', () => {
   const coach = (over: Partial<PostRoleDraft> = {}) => base({ type: 'coach', position: 'head_coach', ...over })
 
   it('offers Boys and Girls on coach roles only', () => {
     expect(COACH_TEAMS.map((t) => t.value)).toEqual(['Men', 'Women', 'Mixed', 'Boys', 'Girls'])
     expect(teamsFor('coach')).toBe(COACH_TEAMS)
     expect(teamsFor('player')).toBe(TEAMS)
-    expect(COACH_TEAM_HINT).toBe('Boys and Girls are for coach and staff roles only.')
+    expect(COACH_TEAM_HINT).toBe('Boys and Girls are for coach and staff opportunities only.')
   })
 
   it('writes and reads back a coach role team, Boys/Girls included', () => {
@@ -163,16 +163,16 @@ describe('Post a role · coach role team', () => {
 describe('Role posted (D1.26)', () => {
   it('titles the screen by position and points Find at the right pool', () => {
     expect(rolePostedCopy({ type: 'player', position: 'midfielder' })).toMatchObject({
-      title: 'Midfielder is live', findLabel: 'Find players for this role', pushTitle: 'Know when players apply',
+      title: 'Midfielder is live', findLabel: 'Find players for this opportunity', pushTitle: 'Know when players apply',
     })
     expect(rolePostedCopy({ type: 'coach', position: 'head_coach' })).toMatchObject({
-      title: 'Head coach is live', findLabel: 'Find coaches for this role',
+      title: 'Head coach is live', findLabel: 'Find coaches for this opportunity',
     })
     expect(rolePostedCopy({ type: 'player', position: 'midfielder' }).body).toMatch(/^Players who fit can find it in Opportunities now\./)
     expect(rolePostedCopy({ type: 'coach', position: 'head_coach' }).body).toMatch(/^Coaches who fit/)
   })
 
-  it('Find goes to Find players for this role, or Community coaches', () => {
+  it('Find goes to Find players for this opportunity, or Community coaches', () => {
     expect(roleFindPath('player', 'r1')).toBe('/dashboard/find-players?role=r1')
     expect(roleFindPath('coach', 'r1')).toBe('/community/coaches')
   })
@@ -184,7 +184,7 @@ describe('Role posted (D1.26)', () => {
 })
 
 // Founder review 2026-09-26: step 3 speaks for coaches on a coach role.
-describe('Post a role · step 3 for coach roles', () => {
+describe('Post an opportunity · step 3 for coach roles', () => {
   it('headings name coaches on coach roles, players on player roles', () => {
     expect(checkStepCopy('coach')).toEqual({ sub: 'Step 3 of 3 · How coaches will see it', checklistTitle: 'What coaches ask first' })
     expect(checkStepCopy('player')).toEqual({ sub: 'Step 3 of 3 · How players will see it', checklistTitle: 'What players ask first' })
@@ -193,7 +193,7 @@ describe('Post a role · step 3 for coach roles', () => {
   it('ticks what coaches ask first from fields the form collects', () => {
     const d = base({ type: 'coach', position: 'head_coach', gender: 'Girls', startDate: '2026-09-01', duration: 'Full season', pay: 'paid', benefits: ['housing', 'visa'], level: null })
     const items = coachChecklist(d)
-    expect(items.map((i) => i.label)).toEqual(['Start date and contract length', 'Pay', 'Housing and visa support', 'Team and level', 'A few lines about the role and the squad'])
+    expect(items.map((i) => i.label)).toEqual(['Start date and contract length', 'Pay', 'Housing and visa support', 'Team and level', 'A few lines about the opportunity and the squad'])
     expect(items.map((i) => i.ok)).toEqual([true, true, true, false, false])
     expect(coachChecklist({ ...d, level: 'elite' })[3].ok).toBe(true)
     expect(roleChecklist(d)).toEqual(items)

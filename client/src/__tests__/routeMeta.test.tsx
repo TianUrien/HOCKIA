@@ -11,7 +11,7 @@ describe('routeMeta', () => {
   })
 
   it('static pages get a title; dynamic pages keep theirs; private routes are noindex', () => {
-    expect(resolveRouteMeta('/terms')).toMatchObject({ title: 'Terms & Conditions | HOCKIA', index: true })
+    expect(resolveRouteMeta('/terms')).toMatchObject({ title: 'Terms & Conditions | Hockia', index: true })
     expect(resolveRouteMeta('/opportunities').title).toMatch(/Field Hockey Opportunities/)
     expect(resolveRouteMeta('/opportunities/123e4567-e89b-12d3-a456-426614174000')).toMatchObject({ title: null, index: true })
     expect(resolveRouteMeta('/members/juan')).toMatchObject({ title: null, index: true })
@@ -24,7 +24,7 @@ describe('routeMeta', () => {
   it('applyRouteMeta writes canonical, og:url, description and robots into the head', () => {
     document.head.innerHTML = '<title>x</title><meta name="description" content="old" />'
     applyRouteMeta('/privacy-policy')
-    expect(document.title).toBe('Privacy Policy | HOCKIA')
+    expect(document.title).toBe('Privacy Policy | Hockia')
     expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://inhockia.com/privacy-policy')
     expect(document.head.querySelector('meta[property="og:url"]')?.getAttribute('content')).toBe('https://inhockia.com/privacy-policy')
     expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toMatch(/protects your data/)
@@ -43,7 +43,7 @@ const row: PublicOpportunityRow = {
   published_at: '2026-10-01T10:00:00Z', created_at: '2026-09-30T10:00:00Z', club_name: 'HC Rotterdam', club_logo_url: 'https://x/logo.png', club_location: 'Rotterdam',
   organization_name: null, world_club_name: null, world_club_avatar_url: null,
 }
-const shell = '<!doctype html><html><head><title>HOCKIA – default</title>\n<meta name="description" content="default" />\n<meta property="og:title" content="d" />\n<link rel="canonical" href="https://inhockia.com/" />\n</head><body></body></html>'
+const shell = '<!doctype html><html><head><title>Hockia – default</title>\n<meta name="description" content="default" />\n<meta property="og:title" content="d" />\n<link rel="canonical" href="https://inhockia.com/" />\n</head><body></body></html>'
 
 describe('opportunityHead', () => {
   it('builds a JobPosting with the required and recommended fields', () => {
@@ -58,8 +58,8 @@ describe('opportunityHead', () => {
 
   it('injects title, description, canonical and JSON-LD without letting the description break out of the script', () => {
     const html = renderOpportunityHtml(shell, row, 'https://inhockia.com')
-    expect(html).toContain('<title>Goalkeeper for 2027 season at HC Rotterdam | HOCKIA</title>')
-    expect(renderOpportunityHtml(shell, { ...row, title: ' Senior  player ' }, 'https://inhockia.com')).toContain('<title>Senior player at HC Rotterdam | HOCKIA</title>') // club-typed whitespace never reaches the title
+    expect(html).toContain('<title>Goalkeeper for 2027 season at HC Rotterdam | Hockia</title>')
+    expect(renderOpportunityHtml(shell, { ...row, title: ' Senior  player ' }, 'https://inhockia.com')).toContain('<title>Senior player at HC Rotterdam | Hockia</title>') // club-typed whitespace never reaches the title
     expect(html).toContain('<link rel="canonical" href="https://inhockia.com/opportunities/123e4567-e89b-12d3-a456-426614174000" />')
     expect(html).not.toContain('href="https://inhockia.com/"')
     expect(html).toContain('<meta property="og:url" content="https://inhockia.com/opportunities/123e4567-e89b-12d3-a456-426614174000" />')
@@ -95,7 +95,7 @@ describe('fromPublicApi', () => {
 describe('renderStaticHtml', () => {
   it('gives /opportunities its own title, description and self canonical', () => {
     const html = renderStaticHtml(shell, '/opportunities', 'https://inhockia.com')
-    expect(html).toContain('<title>Field Hockey Opportunities – Player &amp; Coach Roles Worldwide | HOCKIA</title>')
+    expect(html).toContain('<title>Field Hockey Opportunities – Players &amp; Coaches Worldwide | Hockia</title>')
     expect(html).toContain('<link rel="canonical" href="https://inhockia.com/opportunities" />')
     expect(html).toContain('<meta property="og:url" content="https://inhockia.com/opportunities" />')
     expect(html).not.toContain('href="https://inhockia.com/"')

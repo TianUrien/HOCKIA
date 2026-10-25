@@ -106,7 +106,7 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     const user = userEvent.setup()
     render(<AuthScreen />)
     expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
-    expect(screen.getByText(/New to HOCKIA\?/)).toBeInTheDocument()
+    expect(screen.getByText(/New to Hockia\?/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /email me a link instead/i }))
     expect(screen.getByRole('button', { name: /email me a sign-in link/i })).toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()

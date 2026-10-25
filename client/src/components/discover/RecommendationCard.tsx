@@ -18,7 +18,7 @@ const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
 // applicant on the Applicants screen. `pending` = Unsorted = no badge
 // (that's the AI's primary surface; nothing to acknowledge).
 const TRIAGE_PRESET: Record<string, { bg: string; text: string }> = {
-  shortlisted: { bg: 'bg-emerald-50', text: 'text-emerald-700' }, // Good fit
+  shortlisted: { bg: 'bg-emerald-50', text: 'text-emerald-700' }, // Top pick
   maybe: { bg: 'bg-surface-grouped', text: 'text-ink-2' },
 }
 

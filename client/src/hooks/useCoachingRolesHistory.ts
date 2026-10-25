@@ -74,7 +74,7 @@ export function useCoachingRolesHistory(opts: { enabled: boolean; includeTestAcc
         ? []
         : visible((closed.data ?? []) as unknown as Row[]).slice(0, 2).map((r) => ({
             id: r.id,
-            title: r.title?.trim() || 'Coaching role',
+            title: r.title?.trim() || 'Coaching opportunity',
             // The club the role is for: the linked world club, else what a
             // recruiting coach typed, else the publisher.
             clubName: r.world_club?.club_name ?? r.organization_name ?? (r.club?.role === 'coach' ? r.club?.current_club : null) ?? r.club?.full_name ?? null,

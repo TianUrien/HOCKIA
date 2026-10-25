@@ -82,9 +82,9 @@ export function PostRoleStartSheet({ open, onClose }: { open: boolean; onClose: 
   }
 
   return (
-    <BottomSheet open={open} onClose={() => { if (!drafting) onClose() }} ariaLabel="Post a role">
+    <BottomSheet open={open} onClose={() => { if (!drafting) onClose() }} ariaLabel="Post an opportunity">
       <div className="flex flex-col gap-3.5 px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-1" data-testid="post-role-start">
-        <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">Post a role</h2>
+        <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">Post an opportunity</h2>
         <div className="flex flex-col gap-3 rounded-[20px] bg-brand-soft p-4" data-testid="post-role-ai">
           <div className="flex items-center gap-2.5">
             <MascotAvatar state={drafting ? 'thinking' : 'calm'} size={36} />
@@ -99,7 +99,7 @@ export function PostRoleStartSheet({ open, onClose }: { open: boolean; onClose: 
             rows={3}
             disabled={drafting}
             placeholder="Left back for our men’s 1st team, paid, with housing, from January"
-            aria-label="Describe the role in your own words"
+            aria-label="Describe the opportunity in your own words"
             className="w-full resize-none rounded-[14px] bg-white px-3.5 py-3 text-body text-ink-1 outline-none placeholder:text-ink-3 focus-visible:ring-2 focus-visible:ring-focus-ring disabled:opacity-70"
             data-testid="post-role-ai-text"
           />
@@ -110,9 +110,9 @@ export function PostRoleStartSheet({ open, onClose }: { open: boolean; onClose: 
             className="flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-50"
             data-testid="post-role-ai-draft"
           >
-            {drafting ? 'Drafting your role…' : 'Draft my role'}
+            {drafting ? 'Drafting your opportunity…' : 'Draft my opportunity'}
           </button>
-          <p className="text-secondary text-ink-2">Hockia AI fills in the role, the offer and the description. Nothing is posted until you check it.</p>
+          <p className="text-secondary text-ink-2">Hockia AI fills in the opportunity, the offer and the description. Nothing is posted until you check it.</p>
         </div>
         {closed.length > 0 && (
           <>

@@ -425,7 +425,7 @@ export default function QuestionDetailPage() {
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to answer"
-        message="Sign in or create a free HOCKIA account to share your knowledge with the field hockey community."
+        message="Sign in or create a free Hockia account to share your knowledge with the field hockey community."
       />
     </div>
   )

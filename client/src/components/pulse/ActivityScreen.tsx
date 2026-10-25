@@ -169,7 +169,7 @@ export function ActivityScreen() {
         {nothing && (
           <div className="px-6 py-16 text-center">
             <p className="text-body font-semibold text-ink-1">Nothing new this week</p>
-            <p className="mt-1 text-secondary text-ink-2">Roles, views and references will show up here.</p>
+            <p className="mt-1 text-secondary text-ink-2">Opportunities, views and references will show up here.</p>
           </div>
         )}
       </div>

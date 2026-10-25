@@ -179,7 +179,7 @@ export function OpportunityDetailMobile({
       await navigator.clipboard.writeText(url)
       addToast('Link copied', 'success')
     } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this role', 'error')
+      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this opportunity', 'error')
     }
   }
 
@@ -306,10 +306,10 @@ export function OpportunityDetailMobile({
       {closedView === 'visitor' && (
         <section className="px-4 pt-3" data-testid="role-closed-notice">
           <div className="rounded-card bg-surface-grouped p-3.5">
-            <p className="text-row font-semibold text-ink-1">This role is closed</p>
+            <p className="text-row font-semibold text-ink-1">This opportunity is closed</p>
             <p className="mt-1 text-secondary text-ink-2">It’s no longer taking applications.</p>
             <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary">
-              See open roles
+              See open opportunities
             </button>
           </div>
         </section>
@@ -329,9 +329,9 @@ export function OpportunityDetailMobile({
       {/* Key facts (Figma 148:397): Team in the category colour, never elsewhere. */}
       <section className="grid grid-cols-2 gap-2.5 px-4 pt-5" data-testid="role-key-facts">
         {pill && (
-          <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching role' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
+          <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
         )}
-        {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching role' : vacancy.position_required ? 'Required' : null} />}
+        {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : vacancy.position_required ? 'Required' : null} />}
         <Fact label="Starts" value={startsValue} sub={duration} />
         <Fact label="Apply by" value={applyByValue} sub={applyBySub} />
       </section>
@@ -376,7 +376,7 @@ export function OpportunityDetailMobile({
         </div>
         {!closed && !isPublisher && relevant && (
           <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
-            <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this role’s position, team and passport
+            <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this opportunity’s position, team and passport
           </p>
         )}
       </section>

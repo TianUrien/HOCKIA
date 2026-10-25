@@ -379,21 +379,21 @@ export default function OpportunitiesPage() {
 
   // SEO meta tags
   useEffect(() => {
-    document.title = 'Field Hockey Opportunities • HOCKIA'
-    const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on HOCKIA.'
+    document.title = 'Field Hockey Opportunities • Hockia'
+    const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on Hockia.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
     const ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities • HOCKIA')
+    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities • Hockia')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
     const ogUrl = document.querySelector('meta[property="og:url"]')
     if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com/opportunities')
     return () => {
-      document.title = 'HOCKIA | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
+      document.title = 'Hockia | Field Hockey Community'
+      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
-      if (ogTitle) ogTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
+      if (ogTitle) ogTitle.setAttribute('content', 'Hockia | Field Hockey Community')
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)
       if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com')
     }
@@ -516,7 +516,7 @@ export default function OpportunitiesPage() {
   const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
   const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
-  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} · ${eligibleCount} of ${vacancies.length} open roles` : null
+  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} · ${eligibleCount} of ${vacancies.length} open opportunities` : null
 
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
@@ -543,7 +543,7 @@ export default function OpportunitiesPage() {
             <RecruiterRoles
               data={myRoles}
               layout="desktop"
-              subtitle={profile?.full_name ? `${profile.full_name} · your roles` : 'Your roles'}
+              subtitle={profile?.full_name ? `${profile.full_name} · your opportunities` : 'Your opportunities'}
               onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
               onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
               onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
@@ -557,7 +557,7 @@ export default function OpportunitiesPage() {
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
-                <IconButton label="Post a role" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
+                <IconButton label="Post an opportunity" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
               ) : user ? (
@@ -593,7 +593,7 @@ export default function OpportunitiesPage() {
                   options={[
                     { value: 'roles', label: 'Roles' },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My roles', count: myOpenRoleCount }] : []),
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
@@ -608,7 +608,7 @@ export default function OpportunitiesPage() {
                   value="open"
                   onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
                   options={[
-                    { value: 'open', label: 'Open roles', count: mobileList.length },
+                    { value: 'open', label: 'Open opportunities', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
                   ]}
                 />
@@ -643,7 +643,7 @@ export default function OpportunitiesPage() {
             )}
           </div>
           )}
-          {/* Desktop header (Figma D1 192:770): Display title + "N open roles",
+          {/* Desktop header (Figma D1 192:770): Display title + "N open opportunities",
               Open roles | Applied on the right. Clubs and recruiting coaches
               keep "Post Opportunity" until the D3 club roles screen lands. */}
           {!isPhone && (
@@ -652,10 +652,10 @@ export default function OpportunitiesPage() {
               <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">Opportunities</h1>
               <p className="mt-1 text-[16px] leading-[22px] text-ink-2">
                 {isUmpire
-                  ? 'See what clubs are looking for across the HOCKIA network.'
+                  ? 'See what clubs are looking for across the Hockia network.'
                   : isLoading || fetchError
-                    ? 'Open roles from clubs and coaches'
-                    : `${mobileList.length} open role${mobileList.length === 1 ? '' : 's'} from clubs and coaches`}
+                    ? 'Open opportunities from clubs and coaches'
+                    : `${mobileList.length} open opportunity${mobileList.length === 1 ? '' : 's'} from clubs and coaches`}
               </p>
             </div>
             {user && (profile?.role === 'player' || profile?.role === 'coach') && (
@@ -669,9 +669,9 @@ export default function OpportunitiesPage() {
                     else setCoachView(v === 'mine' ? 'mine' : 'roles')
                   }}
                   options={[
-                    { value: 'open', label: profile.role === 'coach' ? 'Roles' : 'Open roles', count: mobileList.length },
+                    { value: 'open', label: profile.role === 'coach' ? 'Roles' : 'Open opportunities', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My roles', count: myOpenRoleCount }] : []),
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
@@ -683,7 +683,7 @@ export default function OpportunitiesPage() {
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
-                Post a role
+                Post an opportunity
               </Button>
             )}
           </div>
@@ -884,14 +884,14 @@ export default function OpportunitiesPage() {
               ))}
               {structured && mobileList.length > 0 && (
                 <div ref={allRolesRef} className="flex items-end px-5 pb-3 pt-7 [scroll-margin-top:12px]">
-                  <h2 className="flex-1 text-title text-ink-1">All open roles</h2>
+                  <h2 className="flex-1 text-title text-ink-1">All open opportunities</h2>
                   <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
                 </div>
               )}
               <div className="flex flex-col gap-3 px-5">
                 {mobileList.length === 0 && (
                   <div className="py-10 text-center">
-                    <p className="text-row font-semibold text-ink-1">No roles match these filters</p>
+                    <p className="text-row font-semibold text-ink-1">No opportunities match these filters</p>
                     <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary">Reset filters</button>
                   </div>
                 )}
@@ -938,13 +938,13 @@ export default function OpportunitiesPage() {
                 <div ref={allRolesRef} className="[scroll-margin-top:96px]">
                   {structured && mobileList.length > 0 && (
                     <div className="flex items-end pb-3.5">
-                      <h2 className="flex-1 text-title text-ink-1">All open roles</h2>
+                      <h2 className="flex-1 text-title text-ink-1">All open opportunities</h2>
                       <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
                     </div>
                   )}
                   {mobileList.length === 0 ? (
                     <div className="rounded-[24px] bg-white py-12 text-center">
-                      <p className="text-row font-semibold text-ink-1">No roles match these filters</p>
+                      <p className="text-row font-semibold text-ink-1">No opportunities match these filters</p>
                       <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary hover:underline">Reset filters</button>
                     </div>
                   ) : (

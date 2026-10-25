@@ -98,7 +98,7 @@ describe('PublicConnectionsPage', () => {
     )
   })
 
-  it('passes the role filter to the rpc', async () => {
+  it('passes the opportunity filter to the rpc', async () => {
     h.rpcMock.mockResolvedValue({ data: [row(1, { total_count: 1 })], error: null })
     renderPage()
     await screen.findByText('Connection 1')

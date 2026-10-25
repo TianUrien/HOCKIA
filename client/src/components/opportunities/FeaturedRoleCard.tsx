@@ -36,7 +36,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
   const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
   const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
   const chips = [...(isPaid(vacancy) ? ['€ Paid'] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
-  const eyebrow = ['FEATURED ROLE', status && status.label !== 'New' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
+  const eyebrow = ['FEATURED OPPORTUNITY', status && status.label !== 'New' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
 
   if (layout === 'wide') {
     const stripColor = withAlpha((palette ?? HOCKIA_FALLBACK).stops[2], 0.62)
@@ -49,7 +49,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
         {...press.handlers}
         {...prefetch.handlers}
         className="group block w-full text-left transition-transform duration-200 [transform-origin:center] [will-change:transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
-        aria-label={`Featured role: ${headline.title} at ${clubName}`}
+        aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
         data-testid="featured-role"
       >
         <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="none" className="h-[400px] rounded-[28px] shadow-[0_12px_30px_rgba(0,0,0,0.12)] transition-shadow duration-200 group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
@@ -83,7 +83,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
       {...press.handlers}
       {...prefetch.handlers}
       className="block w-full text-left [transform-origin:center] [will-change:transform]"
-      aria-label={`Featured role: ${headline.title} at ${clubName}`}
+      aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
       data-testid="featured-role"
     >
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="hero" className="h-[440px] rounded-[28px] shadow-[0_16px_40px_rgba(15,15,20,0.14),0_2px_4px_rgba(15,15,20,0.06)]">

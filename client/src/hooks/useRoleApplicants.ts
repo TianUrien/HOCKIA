@@ -126,7 +126,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
       ])
       if (cancelled) return
       if (roleErr || appErr) logger.debug('[useRoleApplicants] read failed', roleErr ?? appErr)
-      if (!role) { setState((s) => ({ ...s, loading: false, error: 'This role isn’t yours or no longer exists.' })); return }
+      if (!role) { setState((s) => ({ ...s, loading: false, error: 'This opportunity isn’t yours or no longer exists.' })); return }
       // Withdrawn applications are readable since the D4 re-check (2026-10-02):
       // they sit under Closed, read-only, with no fit computed for them.
       const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.applicant)

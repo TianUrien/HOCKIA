@@ -57,7 +57,7 @@ export function AdminBrands() {
   }, [daysFilter, page])
 
   useEffect(() => {
-    document.title = 'Brand Analytics | HOCKIA Admin'
+    document.title = 'Brand Analytics | Hockia Admin'
     fetchData()
   }, [fetchData])
 

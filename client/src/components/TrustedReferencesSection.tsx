@@ -285,7 +285,7 @@ export default function TrustedReferencesSection({
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white/90 p-5 text-center">
             {/* Phase 4 References UX Plan #2.1 — visitor-side empty state.
                 Reframe from "they haven't added any" to a brief educational
-                line about what trust on HOCKIA means, so the visitor walks
+                line about what trust on Hockia means, so the visitor walks
                 away with a mental model of the feature even on profiles
                 that don't yet have it. Role-aware so the copy matches the
                 profile being viewed (was hardcoded "player"). */}
@@ -295,8 +295,8 @@ export default function TrustedReferencesSection({
                 profileRole === 'coach' ? 'a coach' :
                 profileRole === 'umpire' ? 'an umpire' :
                 profileRole === 'player' ? 'a player' :
-                'HOCKIA members'
-              } on HOCKIA.
+                'Hockia members'
+              } on Hockia.
             </p>
           </div>
         ) : (
@@ -405,7 +405,7 @@ export default function TrustedReferencesSection({
                   role={pending.profile?.role}
                 />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'HOCKIA Member'}</p>
+                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'Hockia Member'}</p>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                     <RoleBadge role={pending.profile?.role ?? undefined} />
                     <span>{formatRelationshipType(pending.relationshipType)}</span>
@@ -475,7 +475,7 @@ export default function TrustedReferencesSection({
                         References are how clubs verify your hockey background
                       </p>
                       <p className="text-sm text-gray-600">
-                        Coaches, teammates, and clubs can vouch for you on HOCKIA — but you need to be connected with them first.
+                        Coaches, teammates, and clubs can vouch for you on Hockia — but you need to be connected with them first.
                       </p>
                       <button
                         type="button"
@@ -483,7 +483,7 @@ export default function TrustedReferencesSection({
                         className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2 text-sm font-semibold text-white hover:bg-hockia-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" />
-                        Find people on HOCKIA
+                        Find people on Hockia
                       </button>
                     </div>
                   )
@@ -500,7 +500,7 @@ export default function TrustedReferencesSection({
                         You've asked everyone in your network
                       </p>
                       <p className="text-sm text-gray-600">
-                        Pending requests will appear here once accepted. Add more friends on HOCKIA to expand your trust circle.
+                        Pending requests will appear here once accepted. Add more friends on Hockia to expand your trust circle.
                       </p>
                       <button
                         type="button"
@@ -521,7 +521,7 @@ export default function TrustedReferencesSection({
                   : 'References are how clubs verify your hockey background'
                 const subCopyTrailing = profileRole === 'umpire'
                   ? 'Assigners and clubs see your references on your profile.'
-                  : 'Clubs scouting on HOCKIA see your references on your profile.'
+                  : 'Clubs scouting on Hockia see your references on your profile.'
                 return (
                   <div className="space-y-3">
                     <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
@@ -642,7 +642,7 @@ export default function TrustedReferencesSection({
                         role={request.requesterProfile?.role}
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>
+                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'Hockia Member'}</p>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                           <RoleBadge role={request.requesterProfile?.role ?? undefined} />
                           <span>{formatRelationshipType(request.relationshipType)}</span>
@@ -703,7 +703,7 @@ export default function TrustedReferencesSection({
                         role={reference.requesterProfile?.role}
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>
+                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'Hockia Member'}</p>
                         <p className="text-xs text-gray-500">{formatRelationshipType(reference.relationshipType)}</p>
                       </div>
                     </div>

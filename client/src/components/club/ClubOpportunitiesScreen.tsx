@@ -108,7 +108,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
         <button type="button" onClick={onReview} className="flex gap-2 pt-3 text-left" aria-label="Open applicants">
           {stat(p.toReview, 'To review', open)}
           {stat(p.shortlisted, 'Shortlisted')}
-          {stat(p.declined, 'Declined')}
+          {stat(p.declined, 'Not a fit')}
         </button>
         {closedBreakdown(p, expiryDays) && (
           <p className="flex items-center gap-1.5 pt-1 text-caption text-ink-3" data-testid="role-closed-breakdown">
@@ -139,10 +139,10 @@ function FirstRunOpportunities({ cover, onPostRole, onFindPlayers }: { cover: Ow
         <span aria-hidden="true" className="absolute bottom-8 left-4 h-4 w-[170px] rounded-full bg-white/60" />
         <span aria-hidden="true" className="absolute bottom-[14px] left-4 h-3 w-[110px] rounded-full bg-white/45" />
       </RoleCover>
-      <h2 className="mt-6 text-title text-ink-1">Post your first role</h2>
-      <p className="mt-2 text-[16px] leading-[22px] text-ink-2">Describe the role once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
+      <h2 className="mt-6 text-title text-ink-1">Post your first opportunity</h2>
+      <p className="mt-2 text-[16px] leading-[22px] text-ink-2">Describe the opportunity once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
       <button type="button" onClick={onPostRole} className="mt-5 flex h-[52px] w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-semibold text-white">
-        Post a role
+        Post an opportunity
       </button>
       <p className="mt-4 text-center text-secondary text-ink-2">Not ready to post? Find players and shortlist them first.</p>
       <button type="button" onClick={onFindPlayers} className="mt-2 h-11 text-[16px] font-semibold text-brand-primary">Find players now</button>
@@ -246,7 +246,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
           {showSegment && (
             <div className="shrink-0">
               <SegmentedControl<Segment>
-                ariaLabel="Role status"
+                ariaLabel="Opportunity status"
                 value={segment}
                 onChange={setSegment}
                 className="[&_button]:whitespace-nowrap [&_button]:px-4"
@@ -258,13 +258,13 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
               Primary is the role card's "Review N applicants", so Post a role
               steps down to Tonal. */}
           <button type="button" onClick={postRole} className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-5 text-[16px] font-semibold transition-colors', rolesWithPending.length > 0 ? 'bg-brand-soft text-brand-primary hover:bg-brand-soft-hover' : 'bg-brand-primary text-white hover:bg-brand-primary-hover')} data-testid="desktop-post-role" data-emphasis={rolesWithPending.length > 0 ? 'tonal' : 'primary'}>
-            <Plus className="h-5 w-5" strokeWidth={2.2} /> Post a role
+            <Plus className="h-5 w-5" strokeWidth={2.2} /> Post an opportunity
           </button>
         </div>
       ) : showSegment && (
         <div className="px-4 pb-3.5 pt-1">
           <SegmentedControl<Segment>
-            ariaLabel="Role status"
+            ariaLabel="Opportunity status"
             value={segment}
             onChange={setSegment}
             options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
@@ -306,7 +306,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
             <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
               Post a role <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
             </button>
-          ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
+          ) : <p className="py-2 text-row text-ink-3">No closed opportunities yet.</p>
         )}
         {/* First load: role-card skeletons in the same grid, so the cards land without a jump. */}
         {data.loading && roles.length === 0 && (desktop
@@ -325,7 +325,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
         {segment === 'open' && (
           <div className={cn('overflow-hidden rounded-[16px] bg-surface-subtle', desktop ? 'mt-2' : 'mt-1.5')} data-testid="club-scouting-group">
             <button type="button" onClick={() => navigate(findPlayersPath)} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
-              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Find players for this role</span>
+              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Find players for this opportunity</span>
               <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
             </button>
             <div className="mx-3.5 h-[0.5px] bg-line" />
@@ -352,7 +352,7 @@ export default function ClubOpportunitiesScreen() {
       <LargeTitleBar
         title="Opportunities"
         trailing={(
-          <button type="button" onClick={postRole} aria-label="Post a role" className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
+          <button type="button" onClick={postRole} aria-label="Post an opportunity" className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
             <Plus className="h-6 w-6" strokeWidth={2.2} />
           </button>
         )}

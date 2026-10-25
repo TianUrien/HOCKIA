@@ -67,7 +67,7 @@ export function useMyApplications(enabled: boolean) {
           opportunity_id: r.opportunity_id as string,
           status: r.status as string,
           applied_at: r.applied_at as string,
-          opportunity_title: opp?.title ?? 'Role no longer available',
+          opportunity_title: opp?.title ?? 'Opportunity no longer available',
           club_name: opp?.profiles?.full_name ?? null,
           viewed_by_club: false,
           role_open: opp?.status === 'open',

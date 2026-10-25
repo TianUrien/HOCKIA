@@ -39,7 +39,7 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
   }
 
   const canSend = Boolean(reason) && body.trim().length > 0 && body.length <= DECLINE_BODY_MAX && count > 0
-  const label = count === 1 ? 'Decline 1 applicant' : `Decline ${count} applicants`
+  const label = count === 1 ? 'Not a fit: 1 applicant' : `Not a fit: ${count} applicants`
 
   return (
     <BottomSheet open={open} onClose={onCancel} ariaLabel={label}>
@@ -92,7 +92,7 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
           className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
           data-testid="bulk-decline-send"
         >
-          {count === 1 ? 'Decline and send' : `Decline ${count} and send`}
+          {count === 1 ? 'Send the note' : `Send to ${count}`}
         </button>
         <button type="button" onClick={onCancel} className="-mt-2 flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
       </div>

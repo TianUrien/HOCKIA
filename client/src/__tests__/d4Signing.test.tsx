@@ -141,8 +141,8 @@ describe('D4 server errors', () => {
 })
 
 describe('D4 north star in admin', () => {
-  it('has an explainer for Signings via HOCKIA', () => {
-    expect(METRIC_INFO.signings.title).toBe('Signings via HOCKIA')
+  it('has an explainer for Signings via Hockia', () => {
+    expect(METRIC_INFO.signings.title).toBe('Signings via Hockia')
     expect(METRIC_INFO.signings.formula).toMatch(/signed/)
   })
 })

@@ -19,10 +19,10 @@ export default function PublicProfileFooterCTA() {
     >
       <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm md:p-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">
-          Powered by HOCKIA
+          Powered by Hockia
         </p>
         <h2 className="mt-2 text-lg font-bold text-gray-900 md:text-xl">
-          Create your HOCKIA profile
+          Create your Hockia profile
         </h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-gray-600">
           Build your field hockey profile and share it with clubs, coaches, and

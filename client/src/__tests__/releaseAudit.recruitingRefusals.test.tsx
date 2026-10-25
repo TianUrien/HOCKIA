@@ -88,8 +88,9 @@ describe('A · every rule the server can refuse with has its own words on the cl
       for (const raise of raisesOf(newestFunction(name)).filter((r) => isRule(r.errcode) && !UNREACHABLE.includes(r.message))) {
         const shown = signingErrorMessage({ message: raise.message, details: raise.detail ?? undefined }, FALLBACK)
         expect(shown, `${name}: "${raise.message}"`).not.toBe(FALLBACK)
-        // Same sentence, typographic apostrophe, one full stop.
-        expect(shown, name).toBe(`${raise.message.replaceAll("'", '’')}.`)
+        // Same sentence, typographic apostrophe, one full stop; the server's
+        // "role" reads "opportunity" (rebrand 2026-10-25).
+        expect(shown, name).toBe(`${raise.message.replaceAll("'", '’').replace(/\brole\b/g, 'opportunity')}.`)
         checked += 1
       }
     }
@@ -223,13 +224,13 @@ describe('B · application status × every surface', () => {
     }
   })
 
-  it('My applications pill, pending: In review → "No reply · Nd" from day 14 → Role closed when the role closes', () => {
+  it('My applications pill, pending: In review → "No reply · Nd" from day 14 → Opportunity closed when the opportunity closes', () => {
     expect(applicationStatusPill('pending', '2026-09-30T10:00:00Z', true, NOW).label).toBe('In review')
     expect(applicationStatusPill('pending', '2026-09-22T10:00:00Z', true, NOW).label).toBe('In review') // 13 days
     const long = applicationStatusPill('pending', '2026-09-21T10:00:00Z', true, NOW) // 14 days
     expect(long.label).toBe('No reply · 14d')
     expect(long.tone).toBe('grey')
-    expect(applicationStatusPill('pending', '2026-09-01T10:00:00Z', false, NOW).label).toBe('Role closed')
+    expect(applicationStatusPill('pending', '2026-09-01T10:00:00Z', false, NOW).label).toBe('Opportunity closed')
     // A status this build does not know yet behaves like pending, not like a crash.
     expect(applicationStatusPill('a_status_added_next_month', null, true, NOW).label).toBe('In review')
   })
@@ -348,7 +349,7 @@ describe('B · invite status × viewer × role state (the CHECK list of opportun
   const FUTURE = '2026-10-19T12:00:00.000Z'
   const PAST = '2026-10-05T11:59:59.000Z'
 
-  it('the three actions show only on a sent, unexpired invite to an open role, and only to the player', () => {
+  it('the three actions show only on a sent, unexpired invite to an open opportunity, and only to the player', () => {
     for (const status of INVITE_STATUSES) {
       for (const viewer of ['player', 'club'] as const) {
         for (const roleOpen of [true, false]) {
@@ -365,19 +366,19 @@ describe('B · invite status × viewer × role state (the CHECK list of opportun
     }
   })
 
-  it('a sent invite reads expired at the very second it lapses, and closed when the role closed first', () => {
+  it('a sent invite reads expired at the very second it lapses, and closed when the opportunity closed first', () => {
     const at = (expiresAt: string, roleOpen: boolean) =>
       inviteCardState({ viewer: 'player', status: 'sent', expiresAt, roleOpen, now: new Date('2026-10-05T12:00:00.000Z') })
     expect(at('2026-10-05T12:00:00.000Z', true)).toMatchObject({ actionable: false, line: 'This invitation has expired' })
     expect(at('2026-10-05T12:00:00.001Z', true).actionable).toBe(true)
-    expect(at(FUTURE, false)).toMatchObject({ actionable: false, line: 'This role is closed' })
+    expect(at(FUTURE, false)).toMatchObject({ actionable: false, line: 'This opportunity is closed' })
   })
 
-  it('an answered invite keeps its answer even after the role closes', () => {
+  it('an answered invite keeps its answer even after the opportunity closes', () => {
     const applied = inviteCardState({ viewer: 'club', status: 'applied', expiresAt: PAST, roleOpen: false, playerFirstName: 'Sam' })
     expect(applied.line).toBe('Sam applied')
     const declined = inviteCardState({ viewer: 'player', status: 'declined', expiresAt: PAST, roleOpen: false })
-    expect(declined.line).toBe('You passed on this role')
+    expect(declined.line).toBe('You passed on this opportunity')
   })
 })
 
@@ -452,7 +453,7 @@ describe('C · useSigningActions', () => {
 
   it('a rule refusal shows the server’s sentence, counts nothing, reports nothing, and unlocks the button', async () => {
     const cases: [string, (a: ReturnType<typeof useSigningActions>) => Promise<unknown>, string, string][] = [
-      ['make_offer', (a) => a.makeOffer('app1', draft), 'This role is not open', 'This role is not open.'],
+      ['make_offer', (a) => a.makeOffer('app1', draft), 'This role is not open', 'This opportunity is not open.'],
       ['make_offer', (a) => a.makeOffer('app1', draft), "This player can't receive an offer", 'This player can’t receive an offer.'],
       ['respond_offer', (a) => a.respondOffer('o1', true, null), 'This offer has expired', 'This offer has expired.'],
       ['respond_offer', (a) => a.respondOffer('o1', true, null), 'This offer is no longer open', 'This offer is no longer open.'],

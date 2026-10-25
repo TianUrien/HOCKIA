@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 text-sm text-gray-600 dark:text-gray-400">
           {/* Copyright */}
           <div className="text-center sm:text-left">
-            © {currentYear} HOCKIA
+            © {currentYear} Hockia
           </div>
 
           {/* Links */}
