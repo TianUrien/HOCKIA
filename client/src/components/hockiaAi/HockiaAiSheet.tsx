@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { BetaPill } from './BetaPill'
 import { ArrowUp, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -24,6 +25,8 @@ import { useNextSteps } from './useNextSteps'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
+import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
+import { hockiaAiOfferTopic } from '@/lib/memberOffers'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -54,6 +57,24 @@ export function HockiaAiSheet() {
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const navigate = useNavigate()
   const [input, setInput] = useState('')
+  // Brand offer under a finished answer (Figma 08 · Brands P2 H3): only an
+  // answer that just finished in this chat (never one reloaded from history),
+  // only on the founder's topics, at most one per chat.
+  const [aiOffer, setAiOffer] = useState<{ answerId: string; topic: string } | null>(null)
+  const prevReveal = useRef<string | null>(null)
+  const firstMessageId = messages[0]?.id ?? null
+  useEffect(() => { setAiOffer(null) }, [firstMessageId])
+  useEffect(() => {
+    const finished = prevReveal.current
+    prevReveal.current = revealId
+    if (!finished || revealId || isPending || aiOffer) return
+    const i = messages.findIndex((m) => m.id === finished)
+    const answer = messages[i]
+    if (!answer || answer.role !== 'assistant' || answer.status !== 'complete') return
+    const question = messages[i - 1]?.role === 'user' ? messages[i - 1].content : answer.search_query ?? null
+    const topic = hockiaAiOfferTopic(question)
+    if (topic) setAiOffer({ answerId: answer.id, topic })
+  }, [revealId, isPending, messages, aiOffer])
   const [moreOpen, setMoreOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [drag, setDrag] = useState(0)
@@ -286,7 +307,7 @@ export function HockiaAiSheet() {
           {large && hasMessages && (
             <div className="pb-4 pt-1" data-testid="hockia-ai-conversation">
               <RoleApplyActionContext.Provider value={canBuild ? (r) => prepareApplication({ id: r.id, title: r.title, organization: r.organization, logoUrl: r.logo_url }) : null}>
-                <RevealingChat messages={messages} revealId={revealId} onRevealed={finishReveal} />
+                <RevealingChat messages={messages} revealId={revealId} onRevealed={finishReveal} afterAnswer={(m) => (aiOffer && m.id === aiOffer.answerId ? <HockiaAiOffer answerId={aiOffer.answerId} topic={aiOffer.topic} role={profile?.role ?? null} /> : null)} />
               </RoleApplyActionContext.Provider>
               {isPending && <ThinkingSteps steps={steps} />}
             </div>
@@ -378,7 +399,7 @@ function ThinkingSteps({ steps }: { steps: AiStep[] }) {
  * The conversation with the newest answer revealed word by word; its cards,
  * chips and results appear once the words are in (handoff: answers stream).
  */
-function RevealingChat({ messages: all, revealId, onRevealed }: { messages: DiscoverChatMessage[]; revealId: string | null; onRevealed: () => void }) {
+function RevealingChat({ messages: all, revealId, onRevealed, afterAnswer }: { messages: DiscoverChatMessage[]; revealId: string | null; onRevealed: () => void; afterAnswer?: (msg: DiscoverChatMessage) => ReactNode }) {
   // The in-flight placeholder is replaced by the live steps below the chat.
   const messages = useMemo(() => all.filter((m) => m.status !== 'sending'), [all])
   const target = revealId ? messages.find((m) => m.id === revealId) ?? null : null
@@ -396,5 +417,5 @@ function RevealingChat({ messages: all, revealId, onRevealed }: { messages: Disc
       suggested_actions: undefined, clarifying_options: undefined, cta: undefined, secondary_note: undefined,
     }))
   }, [messages, target, partial])
-  return <DiscoverChat messages={shown} assistantAvatar={<MascotAvatar state="calm" size={36} ring />} />
+  return <DiscoverChat messages={shown} assistantAvatar={<MascotAvatar state="calm" size={36} ring />} afterAnswer={afterAnswer} />
 }

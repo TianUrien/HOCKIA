@@ -7706,6 +7706,66 @@ export type Database = {
       brand_offer_problem: { Args: { p: Json }; Returns: string }
       duplicate_brand_offer: { Args: { p_offer_id: string }; Returns: string }
       end_expired_brand_offers: { Args: never; Returns: number }
+      dismiss_brand_offer: {
+        Args: { p_offer_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      get_brand_offer_detail: {
+        Args: { p_offer_id: string }
+        Returns: {
+          area: string
+          body: string
+          brand_category: string
+          brand_country_id: number
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_open_to_partners: boolean
+          brand_profile_id: string
+          brand_slug: string
+          country_ids: number[]
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          member_country_id: number
+          roles: string[]
+          title: string
+          eligible: boolean
+        }[]
+      }
+      get_brand_offers_for_me: {
+        Args: { p_limit?: number }
+        Returns: {
+          area: string
+          body: string
+          brand_category: string
+          brand_country_id: number
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_open_to_partners: boolean
+          brand_profile_id: string
+          brand_slug: string
+          country_ids: number[]
+          ends_at: string
+          id: string
+          image_url: string
+          link_url: string
+          member_country_id: number
+          roles: string[]
+          title: string
+          last_shown_at: string
+        }[]
+      }
+      hide_brand_offers: {
+        Args: { p_brand_id: string }
+        Returns: undefined
+      }
+      undo_dismiss_brand_offer: {
+        Args: { p_offer_id: string }
+        Returns: undefined
+      }
       get_my_brand_offer_totals: {
         Args: { p_days?: number }
         Returns: {

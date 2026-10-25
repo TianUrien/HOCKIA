@@ -25,6 +25,8 @@ import { DigestCard } from './cards/DigestCard'
 import { RolesRail } from './RolesRail'
 import { EndOfFeed } from './EndOfFeed'
 import { CommentsSheet } from './CommentsSheet'
+import { useOffersForMe, useVisitId } from '@/hooks/useMemberOffers'
+import { MemberOfferCard } from '@/components/offers/MemberOfferCard'
 
 const MemberFullPreview = lazy(() => import('@/components/community/photo/MemberFullPreview'))
 
@@ -58,6 +60,8 @@ export function HomeV1Feed({ prependItemRef, header }: {
   /** Next step + people row — kept on screen when the feed fails (H12b). */
   header: ReactNode
 }) {
+  // One Home visit = one mount: the offer and its impression are fixed for it.
+  const offerVisitId = useVisitId()
   const feed = useHomeFeed({ v2: true })
   const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, patchItem, newCount, showNewItems } = feed
   const addToast = useToastStore((s) => s.addToast)
@@ -174,6 +178,11 @@ export function HomeV1Feed({ prependItemRef, header }: {
                 <FeedItem item={item} onLikeUpdate={updateItemLike} onDelete={removeItem} />
               </FeedCardSentinel>
             </ItemBoundary>
+            {idx === 0 && (
+              <ItemBoundary>
+                <OfferSlot visitId={offerVisitId} />
+              </ItemBoundary>
+            )}
             {idx === RAIL_AFTER - 1 && (
               <ItemBoundary>
                 <RailSlot />
@@ -215,6 +224,26 @@ export function HomeV1Feed({ prependItemRef, header }: {
         )}
       </FeedAuthorContext.Provider>
     </HomeV1Context.Provider>
+  )
+}
+
+/**
+ * At most one brand offer per Home visit, after the first content item
+ * (Figma 08 · Brands P2 H1; founder 2026-10-25). The offer is chosen once per
+ * visit (pull-to-refresh keeps it) and renders nothing when none is eligible.
+ */
+function OfferSlot({ visitId }: { visitId: string }) {
+  const role = useAuthStore((s) => s.profile?.role ?? null)
+  const { data } = useOffersForMe(1, { visitId })
+  const offer = data?.[0]
+  if (!offer) return null
+  return (
+    <>
+      <FeedBand />
+      <div className="px-4 py-4">
+        <MemberOfferCard offer={offer} surface="home" visitId={visitId} role={role} />
+      </div>
+    </>
   )
 }
 

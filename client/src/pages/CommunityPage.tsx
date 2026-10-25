@@ -43,6 +43,7 @@ import { scopeBannerLine, scopeFilters } from '@/lib/recruitingScopeFilters'
 import { RankedForControl } from '@/components/recruiting/RankedForControl'
 import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { BrandOffersSection } from '@/components/offers/OffersWhereYouLive'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -539,6 +540,20 @@ export default function CommunityPage() {
 
               {/* All Members grid */}
               <div key={`${activeTab}-${refreshKey}`} className="animate-fade-in">
+                {memberRoleFilter === 'brand' ? (
+                  <BrandOffersSection>
+                    <PeopleListView
+                      roleFilter={memberRoleFilter}
+                      state={filtersState}
+                      onTotalCountChange={setTotalCount}
+                      onFilteredCountChange={setFilteredCount}
+                      onVideoCountChange={setVideoCount}
+                      onEuCountChange={setEuCount}
+                      scopeReshaping={scopeReshaping}
+                      clubView={clubView}
+                    />
+                  </BrandOffersSection>
+                ) : (
                 <PeopleListView
                   roleFilter={memberRoleFilter}
                   state={filtersState}
@@ -550,6 +565,7 @@ export default function CommunityPage() {
                   clubView={clubView}
 
                 />
+                )}
               </div>
             </>
           ) : (

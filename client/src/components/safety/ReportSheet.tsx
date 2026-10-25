@@ -32,6 +32,7 @@ const TITLES: Record<ReportSubject, string> = {
   feed_item: 'Report this post',
   feed_item_comment: 'Report this comment',
   video: 'Report this video',
+  offer: 'Report this offer',
 }
 
 /**

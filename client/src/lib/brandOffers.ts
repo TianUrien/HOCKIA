@@ -212,10 +212,24 @@ const ROLE_VERB: Record<OfferRole, string> = { player: 'play', coach: 'coach', c
  * "You see this because you live in England and play." Location and role
  * only, never nationality; no goal until goals are stored (founder 2026-10-23).
  */
+// Country names that take "the" inside a sentence ("you live in the United
+// Kingdom"); labels and chips keep the bare name (design review 2026-10-25).
+const TAKES_THE = new Set([
+  'united kingdom', 'netherlands', 'united states', 'united states of america', 'united arab emirates',
+  'czech republic', 'dominican republic', 'central african republic', 'philippines', 'bahamas', 'gambia',
+  'maldives', 'comoros', 'seychelles', 'solomon islands', 'marshall islands', 'cayman islands',
+  'democratic republic of the congo', 'republic of the congo', 'vatican city',
+])
+/** A country name as it reads in a sentence: "the United Kingdom", "England". */
+export function countryInSentence(name: string): string {
+  return TAKES_THE.has(name.trim().toLowerCase()) ? `the ${name.trim()}` : name.trim()
+}
+
 export function offerReasonLine(countryName: string | null, role: string | null | undefined): string {
   const verb = role && role in ROLE_VERB ? ROLE_VERB[role as OfferRole] : null
-  if (countryName && verb) return `You see this because you live in ${countryName} and ${verb}.`
-  if (countryName) return `You see this because you live in ${countryName}.`
+  const where = countryName ? countryInSentence(countryName) : null
+  if (where && verb) return `You see this because you live in ${where} and ${verb}.`
+  if (where) return `You see this because you live in ${where}.`
   return 'You see this because of where you live.'
 }
 
