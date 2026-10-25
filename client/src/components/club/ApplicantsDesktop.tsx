@@ -161,7 +161,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-subtle">
       <Header mobileHidden />
       <main className="mx-auto w-full max-w-[1232px] px-4 pb-20 pt-[88px]" data-testid="applicants-desktop">
         <button type="button" onClick={() => navigate(home.path)} className="inline-flex h-9 items-center gap-0.5 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline" data-testid="applicants-back">

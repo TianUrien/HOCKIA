@@ -113,7 +113,7 @@ export default function NewContextSheet({ open, kind, onClose, onSaved }: Props)
       </div>
 
       <div className="sticky bottom-0 border-t border-line bg-white px-5 pb-1 pt-3">
-        {problem && <p role="alert" className="pb-2 text-[14px] font-medium text-red-600">{problem}</p>}
+        {problem && <p role="alert" className="pb-2 text-[14px] font-medium text-status-danger">{problem}</p>}
         <button type="button" onClick={() => void save()} disabled={saving} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60" data-testid="new-context-save">
           {saving ? 'Saving…' : 'Save and rank'}
         </button>

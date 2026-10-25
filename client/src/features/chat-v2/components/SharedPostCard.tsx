@@ -46,7 +46,7 @@ export function SharedPostCard({
         'w-full rounded-xl p-3 text-left transition-colors',
         isMine
           ? 'bg-white/10 hover:bg-white/15'
-          : 'border border-gray-200 bg-gray-50 hover:bg-gray-100',
+          : 'border border-line bg-surface-subtle hover:bg-surface-muted',
       )}
     >
       {/* Author row */}
@@ -60,7 +60,7 @@ export function SharedPostCard({
         <span
           className={cn(
             'text-xs font-semibold truncate',
-            isMine ? 'text-white' : 'text-gray-900',
+            isMine ? 'text-white' : 'text-ink-1',
           )}
         >
           {authorName || 'Unknown'}
@@ -72,7 +72,7 @@ export function SharedPostCard({
       <p
         className={cn(
           'text-[13px] leading-snug line-clamp-3',
-          isMine ? 'text-white/90' : 'text-gray-700',
+          isMine ? 'text-white/90' : 'text-ink-2',
         )}
       >
         {contentPreview}

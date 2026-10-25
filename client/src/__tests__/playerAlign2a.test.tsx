@@ -287,10 +287,10 @@ describe('Chat bubbles', () => {
     expect(el.className).toContain('rounded-card')
     expect(el.className).not.toMatch(/gradient/)
   })
-  it('incoming: grey', () => {
+  it('incoming: a white card (rebrand page 22)', () => {
     bubble(false)
     const el = screen.getByTestId('message-bubble')
-    expect(el.className).toContain('bg-surface-grouped')
+    expect(el.className).toContain('bg-white')
     expect(el.className).not.toMatch(/gradient|bg-hockia-primary/)
   })
 })

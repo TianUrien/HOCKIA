@@ -132,27 +132,27 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md w-full" showClose={false}>
       <div className="p-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-bold text-gray-900">Invite members</h2>
+          <h2 className="text-lg font-bold text-ink-1">Invite members</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-lg text-ink-4 hover:bg-surface-muted hover:text-ink-2 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Build your club’s roster. Players and coaches can accept to join.</p>
+        <p className="text-sm text-ink-3 mb-4">Build your club’s roster. Players and coaches can accept to join.</p>
 
         {/* Segmented control */}
-        <div className="flex p-1 mb-5 rounded-xl bg-gray-100">
+        <div className="flex p-1 mb-5 rounded-xl bg-surface-muted">
           {([['link', 'Invite link', Link2], ['person', 'Invite a person', UserPlus]] as const).map(([key, label, Icon]) => (
             <button
               key={key}
               type="button"
               onClick={() => setTab(key)}
               className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                tab === key ? 'bg-white text-ink-1 shadow-sm' : 'text-ink-3 hover:text-ink-2'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -163,17 +163,17 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
 
         {tab === 'link' ? (
           <div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-ink-2 mb-3">
               Share this link with your team. Anyone who opens it can accept and join your club.
             </p>
             <div className="flex items-stretch gap-2">
-              <div className="flex-1 min-w-0 flex items-center rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <div className="flex-1 min-w-0 flex items-center rounded-xl border border-line bg-surface-subtle px-3 py-2.5">
                 {linkLoading && !inviteUrl ? (
-                  <span className="inline-flex items-center gap-2 text-sm text-gray-400">
+                  <span className="inline-flex items-center gap-2 text-sm text-ink-4">
                     <Loader2 className="w-4 h-4 animate-spin" /> Generating link…
                   </span>
                 ) : (
-                  <span className="truncate text-sm text-gray-700" title={inviteUrl}>{inviteUrl}</span>
+                  <span className="truncate text-sm text-ink-2" title={inviteUrl}>{inviteUrl}</span>
                 )}
               </div>
               <button
@@ -190,7 +190,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
               type="button"
               onClick={handleRegenerate}
               disabled={linkLoading}
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink-2 disabled:opacity-50"
             >
               <RefreshCcw className={`w-3.5 h-3.5 ${linkLoading ? 'animate-spin' : ''}`} />
               Generate a new link
@@ -199,28 +199,28 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
         ) : (
           <div>
             <div className="relative mb-3">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-4" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players and coaches by name"
                 autoFocus
-                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 outline-none focus:border-hockia-primary/40 focus-visible:ring-2 focus-visible:ring-hockia-primary/15"
+                className="w-full rounded-xl border border-line bg-white pl-9 pr-3 py-2.5 text-sm text-ink-1 outline-none focus:border-hockia-primary/40 focus-visible:ring-2 focus-visible:ring-hockia-primary/15"
               />
             </div>
 
             <div className="min-h-[160px] max-h-[320px] overflow-y-auto -mx-1 px-1">
               {searching ? (
-                <div className="flex items-center justify-center py-10 text-sm text-gray-400">
+                <div className="flex items-center justify-center py-10 text-sm text-ink-4">
                   <Loader2 className="w-4 h-4 animate-spin mr-2" /> Searching…
                 </div>
               ) : query.trim().length < 2 ? (
-                <p className="text-center text-sm text-gray-400 py-10">Type a name to find players and coaches.</p>
+                <p className="text-center text-sm text-ink-4 py-10">Type a name to find players and coaches.</p>
               ) : results.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-10">No players or coaches match “{query.trim()}”.</p>
+                <p className="text-center text-sm text-ink-4 py-10">No players or coaches match “{query.trim()}”.</p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-line">
                   {results.map((m) => {
                     const isInvited = invited.has(m.id)
                     const meta = [positionLabel(m.position), m.current_club || m.base_location].filter(Boolean).join(' · ')
@@ -229,10 +229,10 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                         <Avatar src={m.avatar_url} alt={m.full_name ?? ''} initials={m.full_name ? m.full_name.split(' ').map((n) => n[0]).join('') : '?'} size="md" role={m.role} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900 text-sm truncate">{m.full_name}</span>
+                            <span className="font-semibold text-ink-1 text-sm truncate">{m.full_name}</span>
                             <RoleBadge role={m.role} />
                           </div>
-                          {meta && <p className="text-xs text-gray-500 truncate mt-0.5">{meta}</p>}
+                          {meta && <p className="text-xs text-ink-3 truncate mt-0.5">{meta}</p>}
                         </div>
                         <button
                           type="button"
@@ -240,7 +240,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                           disabled={isInvited || invitingId === m.id}
                           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                             isInvited
-                              ? 'bg-green-50 text-green-600 cursor-default'
+                              ? 'bg-positive-soft text-positive cursor-default'
                               : 'bg-hockia-primary text-white hover:bg-[#6B20D4] disabled:opacity-60'
                           }`}
                         >

@@ -240,7 +240,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
           <span className="text-[15px] leading-5 text-ink-2">I’m 18 or over and I’m allowed to recruit for this club.</span>
         </button>
 
-        {error && <p role="alert" className="mt-4 text-secondary text-red-600">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-secondary text-status-danger">{error}</p>}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 bg-white px-6 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">

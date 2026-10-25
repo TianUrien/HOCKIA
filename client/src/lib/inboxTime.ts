@@ -32,3 +32,12 @@ export function formatActivityAge(iso: string | null | undefined, now: Date = ne
   if (days < 7) return `${days}d`
   return dayFirst(date, { now }) ?? ''
 }
+
+/** Activity day groups (rebrand page 19). "This week" = the last 7 days before today. */
+export function activityGroup(createdAt: string, now = new Date()): 'Today' | 'This week' | 'Earlier' {
+  const at = new Date(createdAt)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (at >= startOfToday) return 'Today'
+  if (at >= new Date(startOfToday.getTime() - 6 * 86_400_000)) return 'This week'
+  return 'Earlier'
+}

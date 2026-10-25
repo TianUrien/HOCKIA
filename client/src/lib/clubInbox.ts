@@ -85,7 +85,7 @@ export function applicationCardTitle(app: Pick<ClubApplication, 'roleTitle' | 'r
 const STATUS_NOTE: Record<string, string> = {
   shortlisted: 'shortlisted',
   maybe: 'marked maybe',
-  rejected: 'declined',
+  rejected: 'not a fit', // the club's own word (founder 2026-10-25), never "declined"
   withdrawn: 'withdrawn by the player',
   offered: 'offer sent',
   accepted: 'offer accepted',

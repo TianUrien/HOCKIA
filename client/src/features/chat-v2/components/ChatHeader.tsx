@@ -123,12 +123,12 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
         {profilePath ? (
           <Link
             to={profilePath}
-            className="max-w-[200px] truncate text-base font-semibold text-gray-900 transition hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 sm:max-w-[280px]"
+            className="max-w-[200px] truncate text-base font-semibold text-ink-1 transition hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary sm:max-w-[280px]"
           >
             {participantName}
           </Link>
         ) : (
-          <h2 className="max-w-[200px] truncate text-base font-semibold text-gray-900 sm:max-w-[280px]">{participantName}</h2>
+          <h2 className="max-w-[200px] truncate text-base font-semibold text-ink-1 sm:max-w-[280px]">{participantName}</h2>
         )}
         <RoleBadge role={participant?.role ?? 'member'} className="text-xs flex-shrink-0" />
       </div>
@@ -136,18 +136,18 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
   )
 
   return (
-    <header className={cn('relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white py-3 text-left', 'px-4 md:px-5')}>
+    <header className={cn('relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-line bg-white py-3 text-left', 'px-4 md:px-5')}>
       {isMobile && (
-        <button type="button" onClick={onBack} className="-ml-1 rounded-full p-2 transition-colors hover:bg-gray-100" aria-label="Back to conversations">
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
+        <button type="button" onClick={onBack} className="-ml-1 rounded-full p-2 transition-colors hover:bg-surface-muted" aria-label="Back to conversations">
+          <ArrowLeft className="h-5 w-5 text-ink-2" />
         </button>
       )}
       {profilePath ? (
         <Link to={profilePath} className="flex-shrink-0 rounded-full" aria-label={`View ${participantName} profile`}>
-          <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-gray-100" enablePreview={false} role={participant?.role} />
+          <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-line" enablePreview={false} role={participant?.role} />
         </Link>
       ) : (
-        <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-gray-100" enablePreview={false} role={participant?.role} />
+        <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-line" enablePreview={false} role={participant?.role} />
       )}
       {headerContents}
       {menu}

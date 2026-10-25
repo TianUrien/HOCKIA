@@ -224,9 +224,9 @@ export function MessageBubble({
       )}
       {isUnreadMarker && (
         <div className="flex items-center gap-3 py-3">
-          <div className="flex-1 h-px bg-purple-200" />
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-purple-500">New</span>
-          <div className="flex-1 h-px bg-purple-200" />
+          <div className="flex-1 h-px bg-hockia-soft" />
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-primary">New</span>
+          <div className="flex-1 h-px bg-hockia-soft" />
         </div>
       )}
 
@@ -282,7 +282,7 @@ export function MessageBubble({
               }}
               onKeyDown={handleEditorKeyDown}
               rows={1}
-              className="w-full resize-none rounded-2xl border border-purple-300 bg-white px-3.5 py-2 text-[15px] leading-relaxed text-gray-900 shadow-sm outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-200"
+              className="w-full resize-none rounded-2xl border border-line bg-white px-3.5 py-2 text-[15px] leading-relaxed text-ink-1 shadow-sm outline-none focus:border-brand-primary focus-visible:ring-2 focus-visible:ring-hockia-soft"
               aria-label="Edit message"
             />
             <div className="mt-1.5 flex items-center justify-end gap-2">
@@ -290,7 +290,7 @@ export function MessageBubble({
                 type="button"
                 onClick={cancelEdit}
                 disabled={saving}
-                className="rounded-full px-3 py-1 text-[13px] font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                className="rounded-full px-3 py-1 text-[13px] font-medium text-ink-2 transition hover:bg-surface-muted hover:text-ink-2 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -299,7 +299,7 @@ export function MessageBubble({
                 onClick={saveEdit}
                 disabled={!canSubmitEdit}
                 data-testid="message-edit-save"
-                className="inline-flex items-center gap-1.5 rounded-full bg-purple-600 px-3.5 py-1 text-[13px] font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-3.5 py-1 text-[13px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
                 Save
@@ -317,7 +317,7 @@ export function MessageBubble({
               data-testid="message-options-trigger"
               onClick={() => (showMenu ? setShowMenu(false) : openMenu())}
               className={cn(
-                'flex-shrink-0 rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-300',
+                'flex-shrink-0 rounded-full p-1 text-ink-4 transition hover:bg-surface-muted hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary',
                 // Always reachable on touch; hover-revealed on desktop to keep the thread clean.
                 'opacity-60 md:opacity-0 md:group-hover/msg:opacity-100 focus-visible:opacity-100',
                 showMenu && 'opacity-100'
@@ -331,7 +331,7 @@ export function MessageBubble({
             <>
               <div className="fixed inset-0 z-[60]" onClick={() => setShowMenu(false)} />
               <div
-                className="fixed z-[61] w-36 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+                className="fixed z-[61] w-36 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
                 style={{ top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right }}
               >
                 {canEdit && (
@@ -339,7 +339,7 @@ export function MessageBubble({
                     type="button"
                     onClick={startEdit}
                     data-testid="message-edit-action"
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-subtle"
                   >
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                     Edit
@@ -352,7 +352,7 @@ export function MessageBubble({
                     setShowDeleteConfirm(true)
                   }}
                   data-testid="message-delete-action"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-danger hover:bg-accent-red-soft"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                   Delete
@@ -370,7 +370,8 @@ export function MessageBubble({
               // incoming grey left, outgoing SOLID brand right — no gradient.
               // Desktop keeps its 18.
               'max-w-[78%] rounded-card px-3.5 py-2.5 text-[15px] leading-5 sm:max-w-[65%] lg:rounded-[18px]',
-              isMine ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1',
+              // Rebrand page 22: you = violet, everyone else = a white card.
+            isMine ? 'bg-hockia-primary text-white' : 'bg-white text-ink-1 shadow-card',
               isMine
                 ? isGroupedWithPrevious ? 'rounded-tr-[6px] lg:rounded-tr-[6px]' : ''
                 : isGroupedWithPrevious ? 'rounded-tl-[6px] lg:rounded-tl-[6px]' : ''
@@ -394,9 +395,9 @@ export function MessageBubble({
               isMine ? 'justify-end' : ''
             )}>
               {message.edited_at && (
-                <span className={isMine ? 'text-white/60' : 'text-gray-400'}>edited</span>
+                <span className={isMine ? 'text-white/60' : 'text-ink-4'}>edited</span>
               )}
-              <span className={isMine ? 'text-white/70' : 'text-gray-400'}>{timestampLabel}</span>
+              <span className={isMine ? 'text-white/70' : 'text-ink-4'}>{timestampLabel}</span>
               {isMine && (
                 status === 'failed' ? (
                   <span className="inline-flex items-center gap-1">
