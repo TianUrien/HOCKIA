@@ -156,7 +156,7 @@ describe('phone closed role page', () => {
     renderPhone({ hasApplied: true, applicationStatus: 'rejected' })
     expect(screen.getByTestId('role-closed-label').textContent).toBe('Closed')
     expect(screen.getByTestId('role-body-closed').className).toContain('grayscale')
-    expect(screen.getByTestId('own-application-status').textContent).toBe('Not selected')
+    expect(screen.getByTestId('own-application-status').textContent).toBe('Not this time')
     await waitFor(() => expect(screen.getByTestId('club-note').textContent).toContain('We went another way.'))
     expect(screen.getByText('Applied 3 Sep 2026')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()

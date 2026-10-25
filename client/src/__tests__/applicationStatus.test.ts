@@ -21,9 +21,9 @@ describe('playerApplicationStatusBadge', () => {
   it('maps responded statuses to human, non-enum labels', () => {
     expect(playerApplicationStatusBadge('shortlisted')?.label).toBe('Shortlisted')
     expect(playerApplicationStatusBadge('maybe')?.label).toBe('Replied')
-    expect(playerApplicationStatusBadge('rejected')?.label).toBe('Not selected')
+    expect(playerApplicationStatusBadge('rejected')?.label).toBe('Not this time')
   })
-  it('renders "Not selected" in grey, never rose/red (founder ruling 2026-09-25)', () => {
+  it('renders "Not this time" in grey, never rose/red (founder ruling 2026-09-25)', () => {
     const badge = playerApplicationStatusBadge('rejected')
     expect(badge?.className).toBe('bg-gray-100 text-gray-600')
     expect(badge?.className).not.toMatch(/rose|red/)

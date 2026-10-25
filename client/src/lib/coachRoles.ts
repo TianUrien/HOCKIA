@@ -65,7 +65,7 @@ export function closedRoleDate(closedAt: string | null, now = new Date()): strin
 
 /**
  * The coach's own status on a closed role they applied to, in the
- * player-side words (No reply / Not selected / Role closed …). Always drawn
+ * player-side words (No reply / Not this time / Role closed …). Always drawn
  * grey: the role is closed, so there is nothing left for the coach to act on.
  */
 export function closedRoleOwnStatus(status: string | null | undefined): string | null {

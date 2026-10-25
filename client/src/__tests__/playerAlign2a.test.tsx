@@ -308,7 +308,7 @@ describe('My applications rows (List item / Application)', () => {
     for (const s of ['shortlisted', 'offered', 'accepted', 'signed']) expect(tone(s)).toBe('positive')
     for (const s of ['maybe', 'rejected', 'no_response', 'filled', 'withdrawn']) expect(tone(s)).toBe('grey')
     expect(applicationStatusPill('maybe', null, true).label).toBe('Replied')
-    expect(applicationStatusPill('rejected', null, true).label).toBe('Not selected')
+    expect(applicationStatusPill('rejected', null, true).label).toBe('Not this time')
     expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Role closed', tone: 'grey' })
     const old = new Date(Date.now() - 16 * 86_400_000).toISOString()
     expect(applicationStatusPill('pending', old, true)).toMatchObject({ label: 'No reply · 16d', tone: 'grey' })
@@ -339,11 +339,11 @@ describe('My applications rows (List item / Application)', () => {
     expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 
-  it('Closed: "Not selected" (never "Declined") and "Role closed", both grey', () => {
+  it('Closed: "Not this time" (never "Declined") and "Role closed", both grey', () => {
     applications = [app({ id: 'a3', status: 'rejected', active: false }), app({ id: 'a4', status: 'pending', roleOpen: false, active: false })]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications?segment=closed'))
     const statuses = screen.getAllByTestId('application-status')
-    expect(statuses.map((s) => s.textContent)).toEqual(['Not selected', 'Role closed'])
+    expect(statuses.map((s) => s.textContent)).toEqual(['Not this time', 'Role closed'])
     for (const s of statuses) expect(s.className).toContain('text-ink-2')
     expect(document.body.textContent).not.toMatch(/Declined/)
   })
