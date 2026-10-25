@@ -22,7 +22,7 @@ type Segment = 'active' | 'closed'
  * Country", the status in words + "Applied <day-first date>", chevron. The
  * status is coloured text, not a pill, and its tone comes from
  * lib/opportunityCopy applicationStatusPill (Shortlisted / offer / signed
- * positive; Replied, No reply · Nd, Not selected and Role closed grey — amber
+ * positive; Replied, No reply · Nd, Not this time and Role closed grey — amber
  * only when the viewer must act, and a waiting player cannot). The one piece
  * of advice is the one the data supports: clubs answer messages, so message
  * them.
@@ -65,7 +65,7 @@ export default function MyApplicationsPage() {
             {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
             {r.hasClubNote ? (
               <span className="mt-1 block truncate text-secondary text-ink-2" data-testid="club-note-line">
-                Not selected · <span className="font-semibold text-hockia-primary">Read the club’s note</span>
+                Not this time · <span className="font-semibold text-hockia-primary">Read the club’s note</span>
               </span>
             ) : (
               <span className="mt-1 flex items-baseline gap-2 text-secondary">

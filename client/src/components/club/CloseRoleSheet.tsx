@@ -112,7 +112,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
           {waiting.length > 0 && (
             <SwitchCardRow
               title={`Tell the ${waiting.length === 1 ? 'player' : `${waiting.length} players`} still waiting`}
-              description={tell ? 'They see “Not selected” with this note' : outcome === 'filled' ? 'They’ll still see the role was filled' : 'They’ll hear when their application closes'}
+              description={tell ? 'They see “Not this time” with this note' : outcome === 'filled' ? 'They’ll still see the role was filled' : 'They’ll hear when their application closes'}
               checked={tell}
               onChange={() => setTell((v) => !v)}
               testId="close-role-tell"

@@ -85,7 +85,7 @@ const HERO_HEIGHT = 440
  * Message / Apply bar.
  *
  * States kept from v1: after applying a tinted Applied ✓ with a status
- * line; Not selected / Withdrawn as one grey state; a CLOSED role stays
+ * line; Not this time / Withdrawn as one grey state; a CLOSED role stays
  * readable, greyed, under a "Closed" label with no Apply — an applicant sees
  * their own application block, anyone else "This role is closed".
  */
@@ -116,7 +116,7 @@ export function OpportunityDetailMobile({
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
   const status = hasApplied ? applicationStatusPill(applicationStatus ?? 'pending', null, vacancy.status === 'open') : null
-  // Players only ever see "Not selected": one grey state in the footer, no chip.
+  // Players only ever see "Not this time": one grey state in the footer, no chip.
   const notSelected = hasApplied && applicationStatus === 'rejected'
   // Withdrawn (D4): one grey state in the footer too — never next to an "Applied" button.
   const withdrawn = hasApplied && applicationStatus === 'withdrawn'
@@ -319,7 +319,7 @@ export function OpportunityDetailMobile({
       {clubNote && !closed && (
         <section className="px-4 pt-3.5" data-testid="club-note">
           <div className="rounded-card bg-surface-grouped p-3.5">
-            <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+            <p className="text-secondary font-semibold text-ink-2">Not this time · The club’s note</p>
             <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
             <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
           </div>
@@ -430,7 +430,7 @@ export function OpportunityDetailMobile({
             </button>
             {notSelected ? (
               <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">
-                Not selected
+                Not this time
               </span>
             ) : withdrawn ? (
               <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">

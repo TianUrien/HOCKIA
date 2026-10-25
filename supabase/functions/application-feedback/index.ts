@@ -113,8 +113,8 @@ function fallbackMessage(ctx: StatusContext): string {
         : `${ctx.clubName} is still considering your application for ${ctx.position}. No decision yet, so hang tight.`
     case 'rejected':
       return reason
-        ? `You weren't selected for ${ctx.position} this time. ${reason} Keep going. The right fit is out there.`
-        : `You weren't selected for ${ctx.position} this time. It usually comes down to fit, not ability. Keep applying.`
+        ? `Not this time for ${ctx.position}. ${reason} Keep going. The right fit is out there.`
+        : `Not this time for ${ctx.position}. It usually comes down to fit, not ability. Keep applying.`
     default:
       return `Your application for ${ctx.position} is in and awaiting review.`
   }
@@ -125,9 +125,9 @@ function systemPrompt(): string {
 
 RULES (strict):
 - Be warm, honest and respectful. Address the player directly as "you".
-- NEVER blame the player or imply they aren't good enough. A "not selected" outcome is about fit and timing, not their worth.
+- NEVER blame the player or imply they aren't good enough. A "Not this time" outcome is about fit and timing, not their worth.
 - Do not invent facts. Use ONLY the status, the club's stated reason, the position and the club name provided.
-- No false hope and no filler. If they weren't selected, say so kindly and, where a reason is given, reflect it and offer ONE constructive next step.
+- No false hope and no filler. If it's not this time, say so kindly ("Not this time"; never "rejected", "declined" or "not selected") and, where a reason is given, reflect it and offer ONE constructive next step.
 - Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - Output JSON exactly: {"message": "..."} and nothing else.`
 }
@@ -138,7 +138,7 @@ function clubSystemPrompt(): string {
 
 RULES (strict):
 - Thank them for applying for the named role with the named club.
-- Say kindly that they weren't selected this time. Reflect the club's stated reason honestly; never blame the player or imply they aren't good enough.
+- Say kindly that it's not this time, in those words (never "rejected", "declined" or "not selected"). Reflect the club's stated reason honestly; never blame the player or imply they aren't good enough.
 - Where the reason allows, offer ONE constructive next step. No false hope, no filler, no invented facts.
 - Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.
 - Output JSON exactly: {"message": "..."} and nothing else.`
@@ -160,8 +160,8 @@ function clubFallbackMessage(ctx: StatusContext): string {
     ? ' Keep your full matches up to date for similar roles.'
     : ctx.reason === 'profile_incomplete' ? ' A fuller profile helps clubs picture you faster.' : ''
   return reason
-    ? `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. You weren't selected this time because ${reason}.${next}`
-    : `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. You weren't selected this time, but we appreciate your interest.`
+    ? `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. Not this time, because ${reason}.${next}`
+    : `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. Not this time, but we appreciate your interest.`
 }
 
 function userPrompt(ctx: StatusContext): string {

@@ -84,7 +84,7 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
             </div>
           </>
         )}
-        <p className="text-secondary text-ink-2">Each player gets their own email with their own first name. The note also appears on their application, which shows “Not selected”.</p>
+        <p className="text-secondary text-ink-2">Each player gets their own email with their own first name. The note also appears on their application, which shows “Not this time”.</p>
         <button
           type="button"
           disabled={!canSend}

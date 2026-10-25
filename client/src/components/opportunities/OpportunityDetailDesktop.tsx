@@ -73,7 +73,7 @@ const CARD = 'rounded-[16px] border-[0.5px] border-line bg-white'
  * column: identity (hiring club | posted by), four facts in one row, what the
  * club offers 3-up, what they're looking for as a table, the publisher's
  * words at Body L, how applying works 3-up. Same states as the phone page:
- * Applied ✓ with the status line, Not selected / Withdrawn, a closed role
+ * Applied ✓ with the status line, Not this time / Withdrawn, a closed role
  * greyed under "Closed" with the viewer's own application block.
  */
 export function OpportunityDetailDesktop({
@@ -176,7 +176,7 @@ export function OpportunityDetailDesktop({
               )}
               <div className="flex items-center gap-3">
                 {notSelected ? (
-                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">Not selected</span>
+                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">Not this time</span>
                 ) : withdrawn ? (
                   <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">Withdrawn</span>
                 ) : hasApplied ? (
@@ -280,7 +280,7 @@ export function OpportunityDetailDesktop({
             {clubNote && !closed && (
               <section className="pt-4" data-testid="club-note">
                 <div className="rounded-card bg-surface-grouped p-4">
-                  <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+                  <p className="text-secondary font-semibold text-ink-2">Not this time · The club’s note</p>
                   <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
                   <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
                 </div>
