@@ -5,7 +5,7 @@ import { initialsOf, roleGradientStops } from '@/lib/communityCard'
 
 /**
  * THE no-photo treatment (design audit 2026-10-21, Batch C): the role
- * gradient (players blue, coaches teal, umpires grey, brands brand ink,
+ * gradient (rebrand: players turf, coaches cyan, umpires ink, brands rust,
  * clubs HOCKIA violet) with white initials, letters only ("[QA] iOS Layout"
  * → "IL"). Replaces the pastel tile + grey silhouette. The shape (circle for
  * people, rounded square for organisations) comes from the parent.

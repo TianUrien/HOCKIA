@@ -63,7 +63,7 @@ describe('one picker for every surface', () => {
 
 describe('coverBackground / isCurrentPalette', () => {
   it('renders the two-layer gradient and falls back to Hockia violet', () => {
-    expect(coverBackground(null)).toMatch(/radial-gradient.*#a78bfa61.*linear-gradient\(135deg, #6c2bd9/)
+    expect(coverBackground(null)).toMatch(/radial-gradient.*#a78bfa61.*linear-gradient\(135deg, #7c3aed/)
   })
   it('accepts only the current version with the right shape', () => {
     expect(isCurrentPalette(GRAPHITE)).toBe(true)

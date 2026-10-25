@@ -18,8 +18,21 @@ import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
-  APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView,
-  compensationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
+  APPLICATION_TONE_CLASS,
+  NOTE_TILE,
+  PAID_TILE,
+  SPECIALIST_TILE,
+  applicationStatusPill,
+  appliedOnLine,
+  categoryFamily,
+  categoryTagClass,
+  closedRoleView,
+  compensationText,
+  genderPill,
+  postedOnlyLine,
+  roleBenefits,
+  roleHeadline,
+  CATEGORY_DOT_ON_PHOTO_CLASSES,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -146,7 +159,7 @@ export function OpportunityDetailDesktop({
               <h1 className="break-words text-[28px] font-bold leading-[34px] tracking-[-0.015em] text-white" data-testid="role-title">{headline.title}</h1>
               <div className="flex flex-wrap gap-1.5" data-testid="role-detail-meta">
                 {positionText && <GlassChip testId="role-detail-position">{positionText}</GlassChip>}
-                {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
+                {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
                 {roleStat && <GlassChip testId="role-detail-status">{roleStat.label}</GlassChip>}
                 {closed && <GlassChip testId="role-closed-label">Closed</GlassChip>}
               </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ChevronRight, Info, Plus } from 'lucide-react'
-import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { categoryFamily, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
 import { useOwnerCrest, type OwnerCrest } from '@/hooks/useOwnerCrest'
 import { usePressSpring } from '@/hooks/usePressSpring'
@@ -94,7 +94,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] lg:transition-[transform,box-shadow] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_12px_24px_rgba(15,15,20,0.1)]" data-testid="club-role-card" data-status={role.status}>
       <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
-        {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
+        {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip></span>}
         <span className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white backdrop-blur-[8px]" style={{ backgroundColor: 'rgba(0,0,0,0.32)' }}>
           <RoleActions role={role} onChanged={onChanged} onEdit={onEdit} onPostAgain={onPostAgain} className="flex h-8 w-8 items-center justify-center rounded-full text-white" />
         </span>

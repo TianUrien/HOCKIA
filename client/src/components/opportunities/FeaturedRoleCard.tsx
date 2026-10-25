@@ -1,7 +1,7 @@
 import type { Vacancy } from '@/lib/supabase'
 import type { CrestPalette } from '@/lib/crestPalette'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
-import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, isPaid, roleBenefits, roleHeadline, whenLine } from '@/lib/opportunityCopy'
+import { categoryFamily, genderPill, isPaid, roleBenefits, roleHeadline, whenLine, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { HOCKIA_FALLBACK } from '@/lib/crestPalette'
 import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
@@ -58,7 +58,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
             <span className="text-caption font-semibold tracking-[0.04em] text-white/85">{eyebrow}</span>
             <h2 className="line-clamp-2 text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-white">{headline.title}</h2>
             <div className="flex flex-wrap gap-2">
-              {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip>}
+              {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip>}
               {wideChips.map((c) => <GlassChip key={c}>{c}</GlassChip>)}
               <GlassChip>{whenLine(vacancy)}</GlassChip>
             </div>
@@ -99,7 +99,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
           </div>
           {(pill || chips.length > 0) && (
             <div className="flex flex-wrap gap-1.5">
-              {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip>}
+              {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip>}
               {chips.map((c) => <GlassChip key={c}>{c}</GlassChip>)}
             </div>
           )}

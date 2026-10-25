@@ -34,9 +34,9 @@ describe('app shell (desktop header)', () => {
     expect(header).not.toContain('bg-[#c2410c]')
   })
 
-  it('uses one wordmark colour on every page: brand violet', () => {
-    expect(header).toContain('/brand/wordmark/hockia-wordmark-violet.svg')
-    expect(header).not.toContain('hockia-wordmark-black.svg')
+  it('uses one wordmark colour on every page: ink (rebrand 2026-10-25, Figma Nav / Top bar)', () => {
+    expect(header).toContain('/brand/wordmark/hockia-wordmark-black.svg')
+    expect(header).not.toContain('hockia-wordmark-violet.svg')
   })
 })
 

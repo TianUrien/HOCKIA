@@ -4,7 +4,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { Vacancy } from '@/lib/supabase'
 import type { CrestPalette } from '@/lib/crestPalette'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
-import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, roleHeadline } from '@/lib/opportunityCopy'
+import { categoryFamily, genderPill, roleHeadline, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
@@ -95,7 +95,7 @@ export function RailCard({ data, countryName, onOpen, fluid = false }: { data: R
       data-testid="rail-card"
     >
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="card" className={`h-[200px] rounded-[22px] shadow-[0_8px_20px_rgba(15,15,20,0.1)] ${fluid ? 'w-full transition-shadow duration-200 group-hover:shadow-[0_14px_28px_rgba(15,15,20,0.16)]' : 'w-[272px]'}`}>
-        {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip></span>}
+        {pill && family && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip></span>}
         <div className="absolute bottom-3.5 left-3.5 right-3.5 flex items-center gap-2.5">
           <CrestTile src={clubLogo} name={clubName} size={36} radius={10} />
           <span className="min-w-0">
