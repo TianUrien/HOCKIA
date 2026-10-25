@@ -23,6 +23,7 @@ import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLo
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 import { requestPushAsk } from '@/lib/pushAsk'
+import { withoutRoleGender } from '@/lib/draftPrivacy'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 
 interface CreateVacancyModalProps {
@@ -110,8 +111,9 @@ const getVacancyDraftKey = (profileId: string) => `vacancyDraft:new:${profileId}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OpportunityFormData = Record<string, any>
 
+// The category (gender) is left out of drafts and asked again (see draftPrivacy).
 type VacancyDraftStorage = {
-  formData: OpportunityFormData
+  formData: Omit<OpportunityFormData, 'gender'>
   newRequirement: string
   newCustomBenefit: string
 }
@@ -318,7 +320,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
           const base = buildInitialFormData(null, initialOpportunityType)
-          const restored = { ...base, ...(parsed.formData || {}) }
+          const restored = { ...base, ...withoutRoleGender(parsed.formData || {}) }
           setFormData(restored)
           setNewRequirement(parsed.newRequirement ?? '')
           setNewCustomBenefit(parsed.newCustomBenefit ?? '')
@@ -391,7 +393,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     vacancyDraftSaveTimeoutRef.current = window.setTimeout(() => {
       try {
         const payload: VacancyDraftStorage = {
-          formData,
+          formData: withoutRoleGender(formData),
           newRequirement,
           newCustomBenefit,
         }

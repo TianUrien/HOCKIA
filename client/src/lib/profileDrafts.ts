@@ -1,9 +1,10 @@
 import { logger } from '@/lib/logger'
+import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
 
 const PROFILE_DRAFT_PREFIX = 'profileDraft'
 
 type StoredProfileDraft<T> = {
-  data: T
+  data: Partial<T>
   updatedAt: string
   role: string
   userId: string
@@ -13,7 +14,8 @@ const hasWindow = () => typeof window !== 'undefined'
 
 const buildKey = (userId: string, role: string) => `${PROFILE_DRAFT_PREFIX}:${role}:${userId}`
 
-export function loadProfileDraft<T>(userId: string, role: string): T | null {
+/** Restorable draft fields; personal details come from the profile instead (see draftPrivacy). */
+export function loadProfileDraft<T extends object>(userId: string, role: string): Partial<T> | null {
   if (!hasWindow()) return null
   const key = buildKey(userId, role)
   const raw = window.localStorage.getItem(key)
@@ -21,10 +23,9 @@ export function loadProfileDraft<T>(userId: string, role: string): T | null {
 
   try {
     const parsed = JSON.parse(raw) as Partial<StoredProfileDraft<T>> | T
-    if (parsed && typeof parsed === 'object' && 'data' in parsed) {
-      return (parsed.data ?? null) as T | null
-    }
-    return parsed as T
+    const data = parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed
+    if (!data || typeof data !== 'object') return null
+    return withoutSensitiveDraftFields(data as T) as Partial<T>
   } catch (error) {
     logger.warn?.('Failed to parse profile draft. Clearing stored value.', error)
     window.localStorage.removeItem(key)
@@ -32,12 +33,12 @@ export function loadProfileDraft<T>(userId: string, role: string): T | null {
   }
 }
 
-export function saveProfileDraft<T>(userId: string, role: string, data: T) {
+export function saveProfileDraft<T extends object>(userId: string, role: string, data: T) {
   if (!hasWindow()) return
   const key = buildKey(userId, role)
   try {
     const payload: StoredProfileDraft<T> = {
-      data,
+      data: withoutSensitiveDraftFields(data) as Partial<T>,
       updatedAt: new Date().toISOString(),
       role,
       userId,
