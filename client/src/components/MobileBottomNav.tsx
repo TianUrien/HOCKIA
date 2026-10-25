@@ -20,19 +20,23 @@ interface NavItem {
   dot?: boolean
 }
 
-// iOS tab (Figma 02 Components): 26px icon, 10px label, purple = selected.
-const TAB_IOS = 'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors'
+// iOS tab (rebrand 2026-10-25, Figma Nav / Tab bar 72:388): 24px icon,
+// 12px medium label, violet = selected, tertiary ink otherwise.
+// Items hug their label (8 px sides, ≥ 48 wide) and spread with space-between,
+// so "Opportunities" fits from 375 up.
+const TAB_IOS = 'flex min-h-[50px] min-w-12 flex-none flex-col items-center gap-1 px-2 pb-1.5 pt-2.5 transition-colors'
 // Android destination (Figma P14 24:1186): 64 tall, 24px icon inside a 64×32
 // pill that fills brand-soft when selected, 11px semibold label.
 const TAB_ANDROID = 'flex h-16 flex-1 flex-col items-center justify-center gap-1 transition-colors'
 const TAB_FOCUS = 'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hockia-primary focus-visible:rounded-xl'
 
 /**
- * Tab bar v3 (Figma 02 Components / 03 Player): Home · Community ·
+ * Tab bar v3, rebrand styling 2026-10-25 (Figma Nav / Tab bar 72:388 and
+ * Android / Navigation bar 128:238): Home · Community ·
  * Opportunities · Inbox · Profile. No Clubs tab — clubs are members,
  * reached through Search and the Community role filter — and no floating
  * Hockia AI button — the assistant lives inside Search (founder rulings
- * 2026-09-20). 26px icons, 10px medium labels, purple = the selected tab.
+ * 2026-09-20). 24px icons, 12px medium labels, violet = the selected tab.
  *
  * In the Android app the same five destinations wear the Material 3
  * navigation bar from Figma P14 (24:1184): an 80 pt bar on surface-subtle,
@@ -114,17 +118,17 @@ export default function MobileBottomNav() {
         <span className="relative flex h-6 w-6 items-center justify-center">{node}</span>
       </span>
     ) : (
-      <span className="relative flex h-[26px] w-[26px] items-center justify-center">{node}</span>
+      <span className="relative flex h-6 w-6 items-center justify-center">{node}</span>
     )
 
   const tabClassName = (selected: boolean) =>
     cn(
       ANDROID_CHROME ? TAB_ANDROID : TAB_IOS,
       TAB_FOCUS,
-      selected ? (ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary') : 'text-ink-2',
+      selected ? (ANDROID_CHROME ? 'text-ink-1' : 'text-brand-text') : (ANDROID_CHROME ? 'text-ink-2' : 'text-ink-3'),
     )
 
-  const labelClassName = cn('hidden min-[360px]:inline', ANDROID_CHROME ? 'text-micro font-semibold' : 'text-tab')
+  const labelClassName = cn('hidden min-[360px]:inline', ANDROID_CHROME ? 'text-micro font-semibold' : 'text-[12px] font-medium leading-[16px]')
 
   const renderTab = (item: NavItem, active: boolean) => {
     const Icon = item.icon
@@ -149,8 +153,8 @@ export default function MobileBottomNav() {
         {iconSlot(
           <>
             <Icon
-              className={cn(ANDROID_CHROME ? 'h-6 w-6' : 'h-[26px] w-[26px]', ANDROID_CHROME && active && 'text-hockia-primary')}
-              strokeWidth={active ? 2.2 : 1.85}
+              className={cn('h-6 w-6', ANDROID_CHROME && active && 'text-brand-primary')}
+              strokeWidth={ANDROID_CHROME && active ? 2.2 : 1.75}
             />
             {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
           </>,
@@ -163,10 +167,11 @@ export default function MobileBottomNav() {
   }
 
   const barClassName = cn(
-    'lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]',
+    'lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t pb-[env(safe-area-inset-bottom)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]',
+    ANDROID_CHROME ? 'border-line' : 'border-surface-muted',
     ANDROID_CHROME ? 'bg-surface-subtle' : 'bg-white',
   )
-  const rowClassName = ANDROID_CHROME ? 'flex h-20 items-center px-2' : 'flex items-stretch px-1.5'
+  const rowClassName = ANDROID_CHROME ? 'flex h-20 items-center px-2' : 'flex items-stretch justify-between px-3'
 
   // ── Guest exploration bar ────────────────────────────────────────────────
   // Guests keep a bar on the public explore surface (Community, Opportunities

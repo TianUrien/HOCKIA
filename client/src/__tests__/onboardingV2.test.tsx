@@ -211,13 +211,13 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
 
     // Field header (472:180) + Text field (472:243): 13 semibold ink-2 label;
-    // 50 tall, surface-muted, radius 12, 16 px value, ink-3 placeholder.
+    // 50 tall, white with a 1 px border, radius 16 (rebrand), 16 px value, ink-3 placeholder.
     const email = screen.getByLabelText('Email')
-    expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]', 'placeholder:text-ink-3')
-    expect(screen.getByText('Email')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
-    expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-surface-muted', 'rounded-[12px]')
+    expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[16px]', 'border-line', 'bg-white', 'text-[16px]', 'placeholder:text-ink-3')
+    expect(screen.getByText('Email')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
+    expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-white', 'rounded-[16px]')
     // One Primary Large (48) per screen; Back = Ghost icon button 44.
-    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-[52px]', 'w-full', 'bg-hockia-primary')
     expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
 
     await user.type(email, 'new@example.com')
@@ -356,12 +356,12 @@ describe('Set up (114:537 / 114:608)', () => {
 
     // Text field (472:243) on every field: input, Select (trailing chevron)
     // and the compact day / month / year selects share the muted 50 px look.
-    expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]')
-    expect(screen.getByText('Full name')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
-    expect(screen.getByLabelText('Category')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none', 'pr-11')
-    expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none')
+    expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[16px]', 'border-line', 'bg-white', 'text-[16px]')
+    expect(screen.getByText('Full name')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
+    expect(screen.getByLabelText('Category')).toHaveClass('h-[50px]', 'bg-white', 'appearance-none', 'pr-11')
+    expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-white', 'appearance-none')
     const dobGroup = screen.getByRole('group', { name: /date of birth/i })
-    expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
+    expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
 
     // The Day/Month/Year picker is unchanged: years descend from a recent one
     // (was pinned on the public sign-up path before the account-first flow).

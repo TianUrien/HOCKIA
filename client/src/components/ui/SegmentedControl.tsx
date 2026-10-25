@@ -18,10 +18,12 @@ interface SegmentedControlProps<T extends string> {
 }
 
 /**
- * iOS-style segmented control (Figma 03 Player: Inbox, My applications,
- * Opportunities "Applied"). Grey track, white selected pill with a soft
- * shadow. Use for 2–4 mutually exclusive views of the same screen; anything
- * else is a filters button (design rule from 00 Architecture).
+ * Segmented control (rebrand 2026-10-25, Figma Segmented control 72:432):
+ * a 48 pill track (bg/subtle, 4 padding) with 40-high items; the active item
+ * is a white pill with Elevation/1, ink-1; the others ink-2. Labels are
+ * UI/Label (14 medium). Use for 2–4 mutually exclusive views of the same
+ * screen; anything else is a filters button (design rule from 00
+ * Architecture).
  */
 export function SegmentedControl<T extends string>({
   options,
@@ -34,7 +36,7 @@ export function SegmentedControl<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn('flex gap-0.5 rounded-[9px] bg-surface-grouped p-0.5', className)}
+      className={cn('flex gap-1 rounded-full bg-surface-muted p-1', className)}
     >
       {options.map((option) => {
         const active = option.value === value
@@ -51,10 +53,10 @@ export function SegmentedControl<T extends string>({
             aria-label={option.dot ? `${label}, new` : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex h-[30px] flex-1 items-center justify-center rounded-tile text-secondary transition-colors',
+              'flex h-10 flex-1 items-center justify-center rounded-full px-3.5 text-[14px] font-medium leading-[18px] transition-colors',
               active
-                ? 'bg-white font-semibold text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
-                : 'font-medium text-ink-2 active:text-ink-1',
+                ? 'bg-white text-ink-1 shadow-[0_1px_2px_rgba(30,10,60,0.04),0_8px_24px_rgba(30,10,60,0.08)]'
+                : 'text-ink-2 active:text-ink-1',
             )}
           >
             {label}

@@ -49,15 +49,15 @@ export function DetailNavBar({
     })
 
   return (
-    <div className={cn('relative flex h-11 items-center justify-between px-2', !alwaysVisible && 'lg:hidden', className)}>
+    <div className={cn('relative flex h-[52px] items-center justify-between px-2', !alwaysVisible && 'lg:hidden', className)}>
       <button
         type="button"
         onClick={back}
         aria-label={`Back to ${parent}`}
-        className={cn('flex h-11 shrink-0 items-center pr-2 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}
+        className={cn('flex h-11 shrink-0 items-center pr-2 text-[15px]', ANDROID_CHROME ? 'text-ink-1' : 'text-brand-text')}
       >
         <span className="flex h-11 w-11 items-center justify-center">
-          <BackGlyph className="h-6 w-6" strokeWidth={2} />
+          <BackGlyph className="h-6 w-6 text-ink-1" strokeWidth={1.75} />
         </span>
         {/* The parent's name beside the arrow is an iOS convention; Material shows the arrow alone. */}
         {ANDROID_CHROME || (title && !showParent) ? null : <span className={cn('truncate', wideParent ? 'max-w-[120px]' : title ? 'max-w-[96px]' : 'max-w-[200px]')}>{parent}</span>}
@@ -66,9 +66,9 @@ export function DetailNavBar({
         // Long parent label (Figma 327:318 "‹ Applicants  Leandro Bica  •••"):
         // the title is centred in the space between the label and the
         // trailing action, and truncates there, so it never touches the label.
-        <h1 className="min-w-0 flex-1 truncate px-2 text-center text-body font-semibold text-ink-1">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate px-2 text-center font-display text-[17px] font-bold leading-[21px] tracking-[-0.02em] text-ink-1">{title}</h1>
       ) : title ? (
-        <h1 className={cn('pointer-events-none absolute text-center text-body font-semibold text-ink-1 truncate', showParent ? 'inset-x-[120px]' : 'inset-x-16')}>
+        <h1 className={cn('pointer-events-none absolute text-center font-display text-[17px] font-bold leading-[21px] tracking-[-0.02em] text-ink-1 truncate', showParent ? 'inset-x-[120px]' : 'inset-x-16')}>
           {title}
         </h1>
       ) : null}
