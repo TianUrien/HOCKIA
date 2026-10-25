@@ -18,7 +18,7 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 - **Onboarding:** name, date of birth, category, position (required); photo, second position, current club, league, base, up to 2 passports, Open to play (optional/skippable).
 - **Profile:** Overview (Plays at, Available, Nationalities/passports/permits), Open roles, Videos (highlights; full matches recruiter-only by default), References (gold), Career, Posts, About; sponsor/ambassador line; owner-only stats.
 - **Can:** browse and apply (Available from / Passport / Contact + note), receive invites and offers, request up to 5 references from friends, be a brand ambassador (players only), follow brands; Hockia AI: find clubs/coaches, improve profile, fill profile.
-- **Never:** sees fit scores, other applicants' counts, levels or reply-time estimates; sees "Not selected", never "Declined"; can't post roles; no Save/bookmarks.
+- **Never:** sees fit scores, other applicants' counts, levels or reply-time estimates; sees "Not this time", never "Declined"; can't post roles; no Save/bookmarks.
 - **Home Next step order:** photo → availability check-in → clubs replied → roles that match → profile views → complete profile.
 - **Emails:** shortlisted / not selected (never "maybe"), one batched no-reply expiry, matching new roles, digests, weekly availability check-in, reference reminders.
 
