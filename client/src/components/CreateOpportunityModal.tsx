@@ -111,7 +111,43 @@ const getVacancyDraftKey = (profileId: string) => `vacancyDraft:new:${profileId}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OpportunityFormData = Record<string, any>
 
-// The category (gender) is left out of drafts and asked again (see draftPrivacy).
+/**
+ * The fields an opportunity draft keeps, read one by one: the category
+ * (gender) is left out and asked again (see draftPrivacy; CodeQL flags a
+ * copy of the whole form). A field added to buildInitialFormData is not
+ * kept in drafts until it is listed here.
+ */
+const vacancyDraftFields = (f: OpportunityFormData): Omit<OpportunityFormData, 'gender'> => ({
+  opportunity_type: f.opportunity_type,
+  title: f.title,
+  position: f.position,
+  description: f.description,
+  location_city: f.location_city,
+  location_country: f.location_country,
+  start_date: f.start_date,
+  duration_text: f.duration_text,
+  requirements: f.requirements,
+  specialist_skills_wanted: f.specialist_skills_wanted,
+  level_sought: f.level_sought,
+  compensation: f.compensation,
+  recruitment_problem: f.recruitment_problem,
+  benefits: f.benefits,
+  custom_benefits: f.custom_benefits,
+  priority: f.priority,
+  status: f.status,
+  application_deadline: f.application_deadline,
+  contact_email: f.contact_email,
+  contact_phone: f.contact_phone,
+  organization_name: f.organization_name,
+  eu_passport_required: f.eu_passport_required,
+  position_required: f.position_required,
+  level_required: f.level_required,
+  compensation_required: f.compensation_required,
+  location_required: f.location_required,
+  availability_required: f.availability_required,
+  specialists_required: f.specialists_required,
+})
+
 type VacancyDraftStorage = {
   formData: Omit<OpportunityFormData, 'gender'>
   newRequirement: string
@@ -393,7 +429,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     vacancyDraftSaveTimeoutRef.current = window.setTimeout(() => {
       try {
         const payload: VacancyDraftStorage = {
-          formData: withoutRoleGender(formData),
+          formData: vacancyDraftFields(formData),
           newRequirement,
           newCustomBenefit,
         }
