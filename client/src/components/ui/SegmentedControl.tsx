@@ -3,6 +3,10 @@ import { cn } from '@/lib/utils'
 export interface SegmentOption<T extends string> {
   value: T
   label: string
+  /** Shown instead of `label` below 430 px, so the segment stays on one line
+   *  on narrow phones ("Open · 24" for "Open opportunities · 24"). Screen
+   *  readers always get the full label. */
+  shortLabel?: string
   /** Rendered as "Label · N" when > 0 (Figma: "Requests · 4"). */
   count?: number
   /** Small violet "new" dot after the label, no number (Inbox segments; rebrand: no red counters). */
@@ -40,26 +44,32 @@ export function SegmentedControl<T extends string>({
     >
       {options.map((option) => {
         const active = option.value === value
-        const label =
-          typeof option.count === 'number' && option.count > 0
-            ? `${option.label} · ${option.count}`
-            : option.label
+        const withCount = (text: string) =>
+          typeof option.count === 'number' && option.count > 0 ? `${text} · ${option.count}` : text
+        const label = withCount(option.label)
         return (
           <button
             key={option.value}
             type="button"
             role="tab"
             aria-selected={active}
-            aria-label={option.dot ? `${label}, new` : undefined}
+            aria-label={option.dot ? `${label}, new` : option.shortLabel ? label : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex h-10 flex-1 items-center justify-center rounded-full px-3.5 text-[14px] font-medium leading-[18px] transition-colors',
+              'flex h-10 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-medium leading-[18px] transition-colors',
               active
                 ? 'bg-white text-ink-1 shadow-[0_1px_2px_rgba(30,10,60,0.04),0_8px_24px_rgba(30,10,60,0.08)]'
                 : 'text-ink-2 active:text-ink-1',
             )}
           >
-            {label}
+            {option.shortLabel ? (
+              <>
+                <span className="truncate min-[430px]:hidden">{withCount(option.shortLabel)}</span>
+                <span className="hidden truncate min-[430px]:inline">{label}</span>
+              </>
+            ) : (
+              <span className="truncate">{label}</span>
+            )}
             {option.dot && (
               <span aria-hidden="true" data-testid={`segment-dot-${option.value}`} className="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-primary" />
             )}
