@@ -7698,6 +7698,10 @@ export type Database = {
           title: string
         }[]
       }
+      admin_take_down_brand_offer: {
+        Args: { p_offer_id: string; p_reason: string }
+        Returns: string
+      }
       admin_review_brand_offer: {
         Args: { p_decision: string; p_note?: string; p_offer_id: string }
         Returns: string

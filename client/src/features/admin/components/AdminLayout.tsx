@@ -44,7 +44,6 @@ import {
   Tag,
 } from 'lucide-react'
 import { searchProfiles } from '../api/adminApi'
-import { useAdminBrandOfferCounts } from '@/hooks/useBrandOffers'
 import type { AdminProfileListItem } from '../types'
 
 interface NavItem {
@@ -125,7 +124,7 @@ const NAV_SECTIONS: NavSection[] = [
       { path: '/admin/community', icon: HelpCircle, label: 'Community' },
       { path: '/admin/feed', icon: Heart, label: 'Feed & Content' },
       { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
-      { path: '/admin/offers', icon: Tag, label: 'Offers to review' },
+      { path: '/admin/offers', icon: Tag, label: 'Brand offers' },
       { path: '/admin/spam-signals', icon: ShieldAlert, label: 'Spam signals' },
       { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
       { path: '/admin/email', icon: Mail, label: 'Email' },
@@ -172,7 +171,6 @@ export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const offersToReview = useAdminBrandOfferCounts().to_review
 
   // Collapsible section state. Persisted to localStorage so the founder's chosen
   // collapse layout sticks across reloads. The section containing the
@@ -440,7 +438,6 @@ export function AdminLayout() {
                         >
                           <item.icon className="w-5 h-5" />
                           {item.label}
-                          {item.path === '/admin/offers' && offersToReview > 0 ? <span className="ml-auto rounded-full bg-hockia-primary px-2 text-xs font-semibold leading-5 text-white">{offersToReview}</span> : null}
                         </NavLink>
                       )
                     })}
@@ -491,7 +488,6 @@ export function AdminLayout() {
                           >
                             <item.icon className="w-5 h-5" />
                             {item.label}
-                            {item.path === '/admin/offers' && offersToReview > 0 ? <span className="ml-auto rounded-full bg-hockia-primary px-2 text-xs font-semibold leading-5 text-white">{offersToReview}</span> : null}
                           </NavLink>
                         )
                       })}

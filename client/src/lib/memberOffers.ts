@@ -138,11 +138,9 @@ export function storeLabel(link: string): string {
   }
 }
 
-/** OD1 reason line. */
-export function detailReasonLine(countryName: string | null): string {
-  return countryName
-    ? `You see this because you live in ${countryInSentence(countryName)}. HOCKIA checked this offer before it went live.`
-    : 'HOCKIA checked this offer before it went live.'
+/** OD1 reason line (no approval step since 2026-10-25, so no "checked" claim). */
+export function detailReasonLine(countryName: string | null): string | null {
+  return countryName ? `You see this because you live in ${countryInSentence(countryName)}.` : null
 }
 
 // ── Hockia AI: which answers may carry an offer (founder default 2026-10-25) ─

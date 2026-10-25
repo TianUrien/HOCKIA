@@ -36,7 +36,7 @@ export function OffersCard({ offers, totals, onCreate, onOpen }: OffersCardProps
             {tile}
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-semibold leading-[22px] text-ink-1">Offers</span>
-              <span className="mt-0.5 block text-row text-ink-2">Bring something useful to members where they live. Free, checked by an admin.</span>
+              <span className="mt-0.5 block text-row text-ink-2">Bring something useful to members where they live. Free, and live as soon as you publish.</span>
             </span>
           </div>
           <Button block className="mt-4 rounded-full" onClick={onCreate} data-testid="brand-offers-create">Create your first offer</Button>
@@ -47,12 +47,10 @@ export function OffersCard({ offers, totals, onCreate, onOpen }: OffersCardProps
 
   // "0 of 5 live" alone reads as if nothing happened: say what is waiting.
   const live = liveCount(offers)
-  const drafts = offers.filter((o) => o.status === 'draft').length
-  const inReview = offers.filter((o) => o.status === 'in_review').length
+  const drafts = offers.filter((o) => o.status === 'draft' || o.status === 'in_review').length
   const subtitle = [
     `${live} of ${OFFER_LIVE_LIMIT} live`,
     live === 0 && drafts > 0 ? `${drafts} ${drafts === 1 ? 'draft' : 'drafts'}` : null,
-    live === 0 && inReview > 0 ? `${inReview} in review` : null,
   ].filter(Boolean).join(' · ')
 
   const tiles = totals && (totals.shown > 0 || totals.opened > 0 || totals.contacted > 0)

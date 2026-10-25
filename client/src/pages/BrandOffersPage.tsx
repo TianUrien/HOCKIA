@@ -88,7 +88,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     setSaving(submit ? 'submit' : 'draft')
     try {
       await save.mutateAsync({ id, fields, submit })
-      addToast(submit ? 'Sent for review. We’ll tell you when it’s checked.' : 'Draft saved', 'success')
+      addToast(submit ? 'Your offer is live.' : 'Draft saved', 'success')
       closeEditor()
     } catch (err) {
       addToast(offerErrorMessage(err), 'error')
@@ -175,7 +175,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     <div className="space-y-6">
       {offers.length > 0 ? (
         <p className="rounded-[20px] bg-brand-soft px-4 py-3 text-row text-brand-primary lg:hidden">
-          An admin reviews every offer before it goes live. Offers reach members by where they live, never by nationality.
+          Offers go live as soon as you publish. They reach members by where they live, never by nationality.
         </p>
       ) : null}
       {GROUP_ORDER.map((g) => {
@@ -201,7 +201,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
         <span className="mx-auto block h-[72px] w-[72px] rounded-[20px] bg-gradient-to-br from-brand-primary to-brand-primary-pressed" aria-hidden="true" />
         <h2 className="mt-4 text-title text-ink-1">Bring something useful to members</h2>
         <p className="mt-2 text-row text-ink-2">
-          An offer is a product or service for hockey members where they live: a discount, a fitting, a camp place. It&rsquo;s free, and an admin checks it before it goes live.
+          An offer is a product or service for hockey members where they live: a discount, a fitting, a camp place. It&rsquo;s free and goes live as soon as you publish.
         </p>
         <Button block className="mt-5 rounded-full" onClick={openNew} data-testid="offers-create-first">Create your first offer</Button>
       </div>
@@ -269,7 +269,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
               ) : (
                 <div className="rounded-[24px] bg-white p-8 text-row text-ink-2 shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
                   <p className="text-body font-semibold text-ink-1">Choose an offer to edit, or create a new one.</p>
-                  <p className="mt-2">An admin reviews every offer before it goes live. Offers reach members by where they live, never by nationality.</p>
+                  <p className="mt-2">Offers go live as soon as you publish. They reach members by where they live, never by nationality.</p>
                 </div>
               )}
             </div>
@@ -321,12 +321,12 @@ interface ActionsSheetProps {
 function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume, onConfirm }: ActionsSheetProps) {
   if (!offer) return null
   const title = offerShownFields(offer).title || 'Untitled offer'
-  const statusWord = { draft: 'Draft', in_review: 'In review', not_approved: 'Not approved', live: 'Live', paused: 'Paused', ended: 'Ended' }[offer.status]
+  const statusWord = { draft: 'Draft', in_review: 'Draft', not_approved: 'Taken down', live: 'Live', paused: 'Paused', ended: 'Ended' }[offer.status]
   type Item = { key: string; label: string; hint: string; run: () => void; danger?: boolean }
   const edit: Item = {
     key: 'edit',
     label: 'Edit',
-    hint: offer.status === 'live' || offer.status === 'paused' ? 'Changes go to review before members see them.' : offer.status === 'in_review' ? 'You can still change it while it waits.' : 'Change the photo, text or audience.',
+    hint: offer.status === 'live' || offer.status === 'paused' ? 'Members see your changes right away.' : offer.status === 'not_approved' ? 'Fix what was flagged, then publish again.' : 'Change the photo, text or audience.',
     run: () => onEdit(offer),
   }
   const dup: Item = { key: 'dup', label: 'Duplicate', hint: 'A new draft with the same photo, text and audience.', run: () => onDuplicate(offer) }
@@ -335,7 +335,7 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
     offer.status === 'live'
       ? [edit, { key: 'pause', label: 'Pause', hint: 'Members stop seeing it. Your results are kept.', run: () => onConfirm(offer, 'pause') }, dup, end]
       : offer.status === 'paused'
-        ? [{ key: 'resume', label: 'Resume', hint: 'Members see it again right away. No new review unless you edit it.', run: () => onResume(offer) }, edit, dup, end]
+        ? [{ key: 'resume', label: 'Resume', hint: 'Members see it again right away.', run: () => onResume(offer) }, edit, dup, end]
         : offer.status === 'ended'
           ? [dup]
           : offer.status === 'draft'

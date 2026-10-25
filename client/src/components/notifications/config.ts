@@ -448,14 +448,19 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   },
   brand_offer_not_approved: {
     icon: AlertCircle,
-    badgeText: 'Offer needs a change',
+    badgeText: 'Offer taken down',
     accentClassName: 'bg-status-warning-soft text-status-warning',
-    getTitle: () => 'Your offer needs a change',
+    // Since 2026-10-25 offers publish at once; this notice is an admin take-down
+    // (metadata.takedown). Older rows were review rejections.
+    getTitle: (notification) => (notification.metadata?.takedown === true ? 'Your offer was taken down' : 'Your offer needs a change'),
     getDescription: (notification) => {
       const title = getMetadataString(notification, 'offer_title')
       const reason = (getMetadataString(notification, 'reason') ?? '').trim().replace(/[.!]+$/, '')
-      const head = title ? `"${title}" wasn’t approved.` : 'Your offer wasn’t approved.'
-      return reason ? `${head} Reason: ${reason}.` : head
+      const takedown = notification.metadata?.takedown === true
+      const head = takedown
+        ? (title ? `"${title}" was taken down.` : 'Your offer was taken down.')
+        : (title ? `"${title}" wasn’t approved.` : 'Your offer wasn’t approved.')
+      return reason ? `${head} Reason: ${reason}. Edit and publish again.` : head
     },
     getRoute: () => '/dashboard/offers',
   },

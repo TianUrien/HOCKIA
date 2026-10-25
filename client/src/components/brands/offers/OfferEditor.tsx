@@ -39,9 +39,9 @@ interface OfferEditorProps {
 }
 
 /**
- * Create / edit an offer (Figma B2 phone, D1 desktop panel). Live and paused
- * offers can only send a change for review ("The live version stays up until
- * the changes are approved"); everything else can also be saved as a draft.
+ * Create / edit an offer (Figma B2 phone, D1 desktop panel). Publish makes it
+ * live at once (founder 2026-10-25: no approval step); edits to a live or
+ * paused offer apply at once. Anything not live can also be saved as a draft.
  */
 export function OfferEditor({ offer, initial, brandName, userId, saving, onSave, onCancel, layout }: OfferEditorProps) {
   const [f, setF] = useState<OfferFields>(initial)
@@ -72,13 +72,13 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
     <div className="space-y-2">
       {tried && missing ? <p className="text-secondary text-status-danger" role="alert">{missing}</p> : null}
       <Button block onClick={submit} loading={saving === 'submit'} disabled={busy} data-testid="offer-send">
-        {isChange ? 'Send changes for review' : 'Send for review'}
+        {isChange ? 'Publish changes' : 'Publish'}
       </Button>
       {layout === 'desktop' && !isChange ? (
         <Button block variant="tonal" onClick={() => onSave(f, false)} loading={saving === 'draft'} disabled={busy}>Save draft</Button>
       ) : null}
       <p className="text-secondary text-ink-2">
-        {isChange ? 'The live version stays up until the changes are approved.' : 'An admin checks it before it goes live. You can edit it until then.'}
+        {isChange ? 'Members see the changes right away.' : 'Members see it right away. HOCKIA takes down offers that break the rules.'}
       </p>
     </div>
   )
@@ -118,7 +118,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         </div>
         <p className={cn('mt-1.5 text-caption', claim ? 'text-status-warning' : 'text-ink-3')}>
           {claim
-            ? `"${claim}" is a claim an admin can't check. Say exactly what a member gets instead.`
+            ? `"${claim}" is a claim members can't check. Say exactly what a member gets instead.`
             : 'Say exactly what a member gets. No claims you can’t back up, like "best" or "cheapest".'}
         </p>
       </div>
@@ -172,7 +172,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         <div>
           <div className={fieldLabelRow}><label htmlFor="offer-start">Starts</label><span className={fieldOptionalTag}>Optional</span></div>
           <input id="offer-start" type="date" value={toDateInput(f.starts_at)} onChange={(e) => set('starts_at', fromDateInput(e.target.value, false))} className={fieldInput} />
-          <p className="mt-1.5 text-caption text-ink-3">{f.starts_at ? '' : 'When approved'}</p>
+          <p className="mt-1.5 text-caption text-ink-3">{f.starts_at ? '' : 'When you publish'}</p>
         </div>
         <div>
           <div className={fieldLabelRow}><label htmlFor="offer-end">Ends</label><span className={fieldOptionalTag}>Optional</span></div>

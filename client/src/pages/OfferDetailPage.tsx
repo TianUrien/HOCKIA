@@ -78,6 +78,7 @@ export default function OfferDetailPage() {
   const countries = names(offer.country_ids)
   const memberCountry = names(offer.member_country_id != null ? [offer.member_country_id] : [])[0] ?? null
   const brandCountry = names(offer.brand_country_id != null ? [offer.brand_country_id] : [])[0] ?? null
+  const reasonLine = detailReasonLine(offer.eligible ? memberCountry : null)
   const showAmbassador = offer.brand_open_to_partners && profile?.role === 'player'
 
   const goToStore = async () => {
@@ -166,10 +167,12 @@ export default function OfferDetailPage() {
         {link ? (<><dt className="text-ink-2">Store</dt><dd className="min-w-0 break-all text-ink-1">{storeLabel(link)}</dd></>) : null}
       </dl>
 
-      <p className="mt-4 flex gap-2 px-1 text-row text-ink-2">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
-        {detailReasonLine(offer.eligible ? memberCountry : null)}
-      </p>
+      {reasonLine ? (
+        <p className="mt-4 flex gap-2 px-1 text-row text-ink-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
+          {reasonLine}
+        </p>
+      ) : null}
 
       {showAmbassador ? (
         <div className="mt-5 rounded-[24px] bg-brand-soft p-4" data-testid="offer-detail-ambassador">

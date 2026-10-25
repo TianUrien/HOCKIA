@@ -9,7 +9,7 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
   it('B0: no offers → one Primary that opens the editor', () => {
     const onCreate = vi.fn()
     render(<OffersCard offers={[]} totals={null} onCreate={onCreate} onOpen={vi.fn()} />)
-    expect(screen.getByText('Bring something useful to members where they live. Free, checked by an admin.')).toBeInTheDocument()
+    expect(screen.getByText('Bring something useful to members where they live. Free, and live as soon as you publish.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Create your first offer' }))
     expect(onCreate).toHaveBeenCalled()
   })
@@ -24,7 +24,7 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
 
   it('says what is waiting when nothing is live yet', () => {
     render(<OffersCard offers={[{ status: 'draft' }, { status: 'in_review' }, { status: 'in_review' }]} totals={null} onCreate={vi.fn()} onOpen={vi.fn()} />)
-    expect(screen.getByText('0 of 5 live · 1 draft · 2 in review')).toBeInTheDocument()
+    expect(screen.getByText('0 of 5 live · 3 drafts')).toBeInTheDocument()
   })
 
   it('hides the 30-day tiles while every number is zero or unknown', () => {

@@ -5,10 +5,11 @@ import { supabase } from '@/lib/supabase'
  * phases)", section P1; migration 20261023160000).
  *
  * An offer reaches members by WHERE THEY LIVE and their role, never by
- * nationality. Every offer is checked by an admin before it goes live. Up to
+ * nationality. An offer goes live as soon as the brand publishes it (founder
+ * 2026-10-25: no approval step); an admin can take it down after, with a
+ * reason the brand sees. Up to
  * 5 live offers per brand while free (drafts and paused offers don't count).
- * An edit of a live / paused offer is a pending change with its own review;
- * the live version stays up until it is approved.
+ * An edit of a live / paused offer applies at once.
  */
 
 export type OfferStatus = 'draft' | 'in_review' | 'not_approved' | 'live' | 'paused' | 'ended'
@@ -70,15 +71,15 @@ export interface AdminBrandOffer extends OfferFields {
   brand_offer_count: number
 }
 
-export type AdminOfferTab = 'to_review' | 'not_approved' | 'live'
+/** Admin tabs: live offers, and the ones taken down. */
+export type AdminOfferTab = 'live' | 'not_approved'
 
 // ── Grouping and status words (B1-all) ─────────────────────────────────────
 
 export type OfferGroup = 'needs_you' | 'live' | 'waiting' | 'paused_ended'
 
 /** Which section of the brand's list an offer sits in (Figma B1-all). "Needs
- *  you" holds only what an admin sent back; drafts wait under "Waiting" with
- *  offers in review. */
+ *  you" holds offers an admin took down; drafts sit under "Drafts". */
 export function offerGroup(o: Pick<BrandOffer, 'status' | 'pending_status'>): OfferGroup {
   if (o.status === 'not_approved' || o.pending_status === 'not_approved') return 'needs_you'
   if (o.status === 'in_review' || o.status === 'draft') return 'waiting'
@@ -89,7 +90,7 @@ export function offerGroup(o: Pick<BrandOffer, 'status' | 'pending_status'>): Of
 export const OFFER_GROUP_LABELS: Record<OfferGroup, string> = {
   needs_you: 'Needs you',
   live: 'Live',
-  waiting: 'Waiting',
+  waiting: 'Drafts',
   paused_ended: 'Paused and ended',
 }
 
@@ -97,11 +98,10 @@ export type OfferPillTone = 'positive' | 'neutral' | 'amber' | 'muted'
 
 /** The state pill: green only for Live, amber only where the brand must act. */
 export function offerPill(o: Pick<BrandOffer, 'status' | 'pending_status'>): { label: string; tone: OfferPillTone } {
-  if (o.status === 'not_approved') return { label: 'Not approved', tone: 'amber' }
-  if (o.status === 'live' && o.pending_status === 'not_approved') return { label: 'Changes not approved', tone: 'amber' }
+  if (o.status === 'not_approved') return { label: 'Taken down', tone: 'amber' }
   switch (o.status) {
     case 'live': return { label: 'Live', tone: 'positive' }
-    case 'in_review': return { label: 'In review', tone: 'neutral' }
+    case 'in_review': return { label: 'Draft', tone: 'neutral' }
     case 'draft': return { label: 'Draft', tone: 'neutral' }
     case 'paused': return { label: 'Paused', tone: 'muted' }
     default: return { label: 'Ended', tone: 'muted' }
@@ -138,14 +138,12 @@ export const shortDate = (iso: string) => { const d = new Date(iso); return `${d
 /** The line beside the pill on a list row (Figma B1-all). */
 export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
   const note = (o.review_note ?? '').trim().replace(/[.!]+$/, '')
-  // A change to a live / paused offer: one row, the live version plus a line on the change (Figma session note 2026-10-23).
-  if (o.pending_status === 'not_approved') return note ? `Changes not approved: ${note}. Edit and send again.` : 'Changes not approved. Edit and send again.'
-  if (o.pending_status === 'in_review') return `${o.status === 'live' ? `${offerCountsLine(o)} · ` : ''}Changes in review`
-  if (o.status === 'not_approved') return note ? `Reason: ${note}. Edit and send again.` : 'Edit and send again.'
+  // Taken down by an admin: the reason word for word, and the way back.
+  if (o.status === 'not_approved') return note ? `Taken down: ${note}. Edit and publish again.` : 'Taken down. Edit and publish again.'
   switch (o.status) {
     case 'live': return offerCountsLine(o)
-    case 'in_review': return `Sent ${daysAgoWord(o.submitted_at, now)}. You can still edit it.`
-    case 'draft': return 'Not sent yet'
+    case 'in_review':
+    case 'draft': return 'Not published yet'
     case 'paused': return `Paused ${daysAgoWord(o.updated_at, now)}. Members don't see it.`
     default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.contacted} contacted`
   }
@@ -184,14 +182,14 @@ export function normalizeOfferLink(raw: string | null | undefined): string | nul
   }
 }
 
-/** Words the brand can't claim without proof (B2 helper; the admin checks the rest). */
+/** Words the brand can't claim without proof (B2 helper; members can report the rest). */
 const UNPROVABLE = /\b(best|cheapest|lowest price|number one|no\.? ?1|guaranteed)\b/i
 export function unprovableClaim(text: string | null | undefined): string | null {
   const m = (text ?? '').match(UNPROVABLE)
   return m ? m[0] : null
 }
 
-/** What still blocks "Send for review", in the editor's order, or null. */
+/** What still blocks "Publish", in the editor's order, or null. */
 export function offerMissing(f: OfferFields): string | null {
   if (!f.title?.trim()) return 'Add a title'
   if (f.title.trim().length > OFFER_TITLE_MAX) return `Keep the title under ${OFFER_TITLE_MAX} characters`
@@ -284,12 +282,9 @@ export async function fetchAdminOffers(tab: AdminOfferTab): Promise<AdminBrandOf
   return (data ?? []) as unknown as AdminBrandOffer[]
 }
 
-export async function reviewOffer(offerId: string, decision: 'approve' | 'reject', note: string | null): Promise<string> {
-  const { data, error } = await supabase.rpc('admin_review_brand_offer', {
-    p_offer_id: offerId,
-    p_decision: decision,
-    p_note: (note ?? '').trim() || (null as unknown as string),
-  })
+/** Admin: take a live or paused offer down; the brand sees the reason word for word. */
+export async function takeDownOffer(offerId: string, reason: string): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_take_down_brand_offer', { p_offer_id: offerId, p_reason: reason.trim() })
   if (error) throw error
   return data as string
 }
@@ -302,5 +297,6 @@ export function offerErrorMessage(err: unknown): string {
   if (msg.startsWith('offer_expired')) return 'This offer has passed its end date. Change the dates first.'
   if (msg.startsWith('too_many_offers')) return 'You have a lot of offers. End some you no longer need.'
   if (msg.startsWith('reason_required')) return 'Write the reason the brand will see.'
+  if (msg.startsWith('not_live')) return 'This offer is no longer live.'
   return 'Something went wrong. Please try again.'
 }
