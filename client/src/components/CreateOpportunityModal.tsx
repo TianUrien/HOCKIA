@@ -23,6 +23,7 @@ import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLo
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 import { requestPushAsk } from '@/lib/pushAsk'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -161,13 +162,11 @@ function MustNiceToggle({
         aria-describedby={error ? errorId : undefined}
         onClick={() => onChange(!checked)}
         className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-1.5 text-xs font-medium transition-colors ${
-          checked ? 'text-emerald-700' : 'text-gray-500'
+          checked ? 'text-ink-1' : 'text-gray-500'
         }`}
       >
         <span
-          className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-            checked ? 'bg-emerald-600' : 'bg-gray-300'
-          }`}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${switchTrackClass(checked)}`}
         >
           <span
             className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${

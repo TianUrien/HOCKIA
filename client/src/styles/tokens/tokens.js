@@ -132,10 +132,12 @@ export const space = {
 }
 
 export const radius = {
-  "sm": 8,
-  "md": 12,
-  "lg": 16,
-  "xl": 20,
-  "2xl": 28,
+  "xs": 8,
+  "sm": 12,
+  "md": 16,
+  "lg": 24,
+  "xl": 30,
+  "2xl": 44,
+  "sheet": 28,
   "full": 999
 }

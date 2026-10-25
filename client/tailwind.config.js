@@ -142,7 +142,8 @@ export default {
       },
       // Figma type scale (SF Pro sizes; family comes from --font-sans). Weights 400/500/600/700.
       fontSize: {
-        'large-title': ['34px', { lineHeight: '41px', letterSpacing: '-0.015em', fontWeight: '700' }],
+        // Rebrand 2026-10-25: Heading/H1 (Satoshi Bold 40, -3.5 %), the section roots.
+        'large-title': ['40px', { lineHeight: '44px', letterSpacing: '-0.035em', fontWeight: '700' }],
         title: ['22px', { lineHeight: '27px', fontWeight: '700' }],
         // Page titles inside pushed phone screens (Figma Title XL) and big tile
         // figures (Your week, Pulse week tiles).
@@ -185,12 +186,21 @@ export default {
       // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·
       // sheet = radius/2xl 28 (founder ruling 2026-10-11: every bottom sheet,
       // app-wide; was radius/xl 20).
+      // Rebrand 2026-10-25 elevation (Figma effect styles Elevation/1–3, Glow/Brand).
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        float: 'var(--shadow-float)',
+        overlay: 'var(--shadow-overlay)',
+        'glow-brand': 'var(--shadow-glow-brand)',
+      },
+      // Rebrand 2026-10-25 radius scale (xs 8 · sm 12 · md 16 · lg 24 · xl 30 ·
+      // 2xl 44). Cards 24, tiles 12, sheets 28 (rule since 2026-10-11).
       borderRadius: {
         tile: `${r.sm}px`,
         card: `${r.lg}px`,
-        sheet: `${r['2xl']}px`,
-        // radius/2xl 28: the landing closing panel and the web auth card.
-        panel: `${r['2xl']}px`,
+        sheet: `${r.sheet}px`,
+        // The landing closing panel and the web auth card share the sheet radius.
+        panel: `${r.sheet}px`,
       },
       keyframes: {
         shimmer: {
