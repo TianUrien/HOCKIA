@@ -1,9 +1,11 @@
 import { cn } from '@/lib/utils'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 /**
  * List item / Switch (Figma 472:186) on its own muted card — the one toggle
  * at the end of a filter sheet. Title 15 semibold, one sub-line, the iOS
- * switch (51 × 31, positive when on). The whole card is the switch, so the
+ * switch (51 × 31; violet when on, iOS system green in the iPhone app). The
+ * whole card is the switch, so the
  * hit area is far above 44 pt.
  */
 interface SwitchCardRowProps {
@@ -31,7 +33,7 @@ export function SwitchCardRow({ title, description, checked, onChange, disabled,
         <span className="block text-row font-semibold text-ink-1">{title}</span>
         {description && <span className="block text-secondary text-ink-2">{description}</span>}
       </span>
-      <span className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors', checked ? 'bg-positive' : 'bg-line')} aria-hidden="true">
+      <span className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors', switchTrackClass(checked))} aria-hidden="true">
         <span className={cn('absolute top-0.5 h-[27px] w-[27px] rounded-full bg-white shadow transition-all', checked ? 'left-[22px]' : 'left-0.5')} />
       </span>
     </button>

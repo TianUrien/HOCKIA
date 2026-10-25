@@ -401,7 +401,7 @@ describe('Set up (114:537 / 114:608)', () => {
     // card holding the SettingsRow with the green switch.
     const row = screen.getByTestId('open-to-play-row')
     expect(row).toHaveClass('rounded-card', 'bg-surface-muted')
-    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-positive')
+    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-brand-primary') // violet on the web (rebrand 2026-10-25)
     expect(within(row).getByText('Open to play')).toHaveClass('text-body')
 
     await user.click(screen.getByRole('button', { name: 'Skip' }))

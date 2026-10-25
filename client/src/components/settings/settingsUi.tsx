@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CONTACT_EMAIL_SWITCH_HELP, CONTACT_EMAIL_SWITCH_LABEL } from '@/lib/clubSettingsCopy'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 /**
  * iOS grouped-list pieces for the phone Settings screens (Figma Settings v2 ·
@@ -34,7 +35,7 @@ export function SettingsSwitch({ checked, onChange, disabled, label }: { checked
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors disabled:opacity-40', checked ? 'bg-positive' : 'bg-line')}
+      className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors disabled:opacity-40', switchTrackClass(checked))}
     >
       <span className={cn('absolute top-0.5 h-[27px] w-[27px] rounded-full bg-white shadow transition-all', checked ? 'left-[22px]' : 'left-0.5')} />
     </button>
