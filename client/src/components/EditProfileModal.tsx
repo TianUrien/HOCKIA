@@ -329,7 +329,7 @@ function LockedDobField({ dob }: { dob: string }) {
         {new Date(dob + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
       <p className="mt-1 text-xs text-gray-500">
-        Locked after registration. Contact HOCKIA support if it needs correcting.
+        Locked after registration. Contact Hockia support if it needs correcting.
       </p>
     </div>
   )
@@ -836,7 +836,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         }
         if (outcome === 'already_set') {
           // Unreachable through the UI (the field locks once set) — defensive.
-          throw new Error('Your date of birth is locked. Contact HOCKIA support to change it.')
+          throw new Error('Your date of birth is locked. Contact Hockia support to change it.')
         }
         // 'frozen' needs no special handling here: the profile refresh below
         // re-reads the row and the AgeGate goodbye screen takes over.
@@ -1065,7 +1065,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 onChange={(e) => setFormData({ ...formData, contact_email_public: e.target.checked })}
               />
               <span>
-                Share my contact email with other HOCKIA members
+                Share my contact email with other Hockia members
                 <span className="block text-xs text-gray-500 mt-1">
                   {role === 'club'
                     ? 'Tick this so players and coaches can contact the club after viewing the profile.'
@@ -1392,7 +1392,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <span>
                       <span className="font-medium">Open to Coach</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Looking for a head, assistant, or youth coaching role. A badge appears on your profile in the Community.
+                        Looking for a head, assistant, or youth coaching opportunity. A badge appears on your profile in the Community.
                       </span>
                     </span>
                   </label>

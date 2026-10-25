@@ -89,7 +89,7 @@ export function AdminEngagement() {
   }, [daysFilter, sortField, sortDir, page])
 
   useEffect(() => {
-    document.title = 'User Engagement | HOCKIA Admin'
+    document.title = 'User Engagement | Hockia Admin'
     fetchData()
   }, [fetchData])
 
@@ -339,7 +339,7 @@ export function AdminEngagement() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <StackedBarsCard
           title={`Time in the app per week (${daysFilter}d)`}
-          hint="Minutes all members spent in HOCKIA, summed per Monday-start week."
+          hint="Minutes all members spent in Hockia, summed per Monday-start week."
           rows={weeklyMinutes}
           series={[{ key: 'total_minutes', label: 'Minutes', color: SERIES_COLORS[1] }]}
           loading={isLoading}

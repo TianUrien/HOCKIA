@@ -32,13 +32,13 @@ describe('Hockia AI · applicants summary (C3)', () => {
   })
 })
 
-describe('Hockia AI · Ask about this role (B3/B4)', () => {
-  it('shows on open roles for players and coaches who did not post them', () => {
+describe('Hockia AI · Ask about this opportunity (B3/B4)', () => {
+  it('shows on open opportunities for players and coaches who did not post them', () => {
     expect(read('../components/hockiaAi/RoleAiEntry.tsx')).toContain("if (role !== 'player' && role !== 'coach') return null")
     expect(read('../components/opportunities/OpportunityDetailMobile.tsx')).toContain('{!closed && !isPublisher && (')
     expect(read('../components/opportunities/OpportunityDetailDesktop.tsx')).toContain("{closedView === 'open' && !isPublisher && (")
   })
-  it('sends questions to the role mode while a role is attached', () => {
+  it('sends questions to the opportunity mode while a role is attached', () => {
     expect(read('../components/hockiaAi/HockiaAiSheet.tsx')).toContain("roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined")
   })
 })

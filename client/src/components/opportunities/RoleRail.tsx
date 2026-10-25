@@ -64,8 +64,8 @@ export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { 
           {onSeeAll && (
             <button type="button" onClick={onSeeAll} className="mr-1 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline">See all</button>
           )}
-          <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} aria-label="Previous roles" className={pagerButton}><ChevronLeft className="h-4 w-4" strokeWidth={2.2} /></button>
-          <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label="More roles" className={pagerButton}><ChevronRight className="h-4 w-4" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} aria-label="Previous opportunities" className={pagerButton}><ChevronLeft className="h-4 w-4" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label="More opportunities" className={pagerButton}><ChevronRight className="h-4 w-4" strokeWidth={2.2} /></button>
         </div>
       </div>
       <div className="mt-3.5 grid gap-4" style={{ gridTemplateColumns: `repeat(${perPage}, minmax(0, 1fr))` }}>

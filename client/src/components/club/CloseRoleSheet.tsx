@@ -77,7 +77,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
       onClosed(chosen)
     } catch (err) {
       logger.error('[CloseRoleSheet] close failed', err)
-      addToast('Could not close the role. Try again.', 'error')
+      addToast('Could not close the opportunity. Try again.', 'error')
     } finally {
       setBusy(false)
     }
@@ -85,7 +85,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
 
 
   return (
-      <BottomSheet open={open} onClose={onCancel} ariaLabel="Close this role">
+      <BottomSheet open={open} onClose={onCancel} ariaLabel="Close this opportunity">
         <div className="flex flex-col gap-3.5 px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2" data-testid="close-role-sheet">
           <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">Close {shownTitle}?</h2>
           <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Did you fill it?">
@@ -112,7 +112,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
           {waiting.length > 0 && (
             <SwitchCardRow
               title={`Tell the ${waiting.length === 1 ? 'player' : `${waiting.length} players`} still waiting`}
-              description={tell ? 'They see “Not this time” with this note' : outcome === 'filled' ? 'They’ll still see the role was filled' : 'They’ll hear when their application closes'}
+              description={tell ? 'They see “Not this time” with this note' : outcome === 'filled' ? 'They’ll still see the opportunity was filled' : 'They’ll hear when their application closes'}
               checked={tell}
               onChange={() => setTell((v) => !v)}
               testId="close-role-tell"
@@ -143,7 +143,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
             className="flex h-[52px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
             data-testid="close-role-confirm"
           >
-            {busy ? 'Closing…' : telling ? `Close role and tell ${players(waiting.length)}` : 'Close role'}
+            {busy ? 'Closing…' : telling ? `Close opportunity and tell ${players(waiting.length)}` : 'Close opportunity'}
           </button>
           <button type="button" onClick={onCancel} className="-mt-1.5 flex h-11 items-center justify-center text-body text-ink-2">Cancel</button>
         </div>

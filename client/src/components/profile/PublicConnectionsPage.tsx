@@ -190,7 +190,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-gray-900">
-                        {row.full_name ?? 'HOCKIA member'}
+                        {row.full_name ?? 'Hockia member'}
                       </p>
                       {subtitle && (
                         <p className="truncate text-xs text-gray-500">{subtitle}</p>

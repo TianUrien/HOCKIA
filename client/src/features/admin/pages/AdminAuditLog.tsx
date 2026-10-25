@@ -115,7 +115,7 @@ export function AdminAuditLog() {
   }, [actionFilter, targetTypeFilter, page])
 
   useEffect(() => {
-    document.title = 'Audit Log | HOCKIA Admin'
+    document.title = 'Audit Log | Hockia Admin'
     fetchLogs()
   }, [fetchLogs])
 

@@ -40,12 +40,12 @@ describe('OpportunityResultsResponse', () => {
     )
     expect(screen.getByText('Amsterdam HC · Midfielder')).toBeInTheDocument()
     expect(screen.getByText('Amsterdam, Netherlands · Housing, Flights')).toBeInTheDocument()
-    expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open opportunities · updated today')).toBeInTheDocument()
     const text = container.textContent ?? ''
     expect(text).not.toMatch(/match|applicant|_/i)
   })
 
-  it('empty state keeps the answer, the pool line and a way to every open role', () => {
+  it('empty state keeps the answer, the pool line and a way to every open opportunity', () => {
     render(
       <MemoryRouter>
         <OpportunityResultsResponse
@@ -58,7 +58,7 @@ describe('OpportunityResultsResponse', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText(/no midfielder roles in Europe/)).toBeInTheDocument()
-    expect(screen.getByText('From 0 open roles · updated today')).toBeInTheDocument()
+    expect(screen.getByText('From 0 open opportunities · updated today')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Browse all opportunities/ })).toBeInTheDocument()
   })
 

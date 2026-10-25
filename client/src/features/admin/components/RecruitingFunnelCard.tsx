@@ -64,7 +64,7 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
   return (
     <ChartCard
       title={`Recruiting loop (last ${days}d)`}
-      hint="From a role being posted to a signing confirmed by both sides, all within the period. Bold is the thing counted; grey is the people behind it. Roles viewed can exceed roles posted: older roles keep being viewed."
+      hint="From an opportunity being posted to a signing confirmed by both sides, all within the period. Bold is the thing counted; grey is the people behind it. Opportunities viewed can exceed opportunities posted: older opportunities keep being viewed."
       loading={q.isLoading}
       empty={!q.isLoading && steps.every((s) => s.count === 0)}
       emptyMessage="No recruiting activity in this period"
@@ -99,8 +99,8 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
           {med && (
             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-xs sm:grid-cols-5" data-testid="funnel-medians">
               <div>
-                <dt className="text-gray-500">Role posted → first application</dt>
-                <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.role_to_first_application_hours)} <span className="font-normal text-gray-400">median · {med.roles_with_application} roles</span></dd>
+                <dt className="text-gray-500">Opportunity posted → first application</dt>
+                <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.role_to_first_application_hours)} <span className="font-normal text-gray-400">median · {med.roles_with_application} opportunities</span></dd>
               </div>
               <div>
                 <dt className="text-gray-500">Invite answered in</dt>

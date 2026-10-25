@@ -82,7 +82,7 @@ export function AdminAttribution() {
   }, [daysFilter, windowHours])
 
   useEffect(() => {
-    document.title = 'Attribution | HOCKIA Admin'
+    document.title = 'Attribution | Hockia Admin'
     fetchData()
   }, [fetchData])
 

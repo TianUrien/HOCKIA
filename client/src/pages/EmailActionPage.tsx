@@ -7,7 +7,7 @@
  * Flow against the application-action edge fn (JSON API):
  *   GET peek (read-only) → decides what to render. Mail scanners that
  *   prefetch this page therefore change nothing.
- *   - ready + Good fit / Maybe / Renew → auto-execute via POST (one click)
+ *   - ready + Top pick / Maybe / Renew → auto-execute via POST (one click)
  *   - ready + Not a fit               → explicit confirm tap first (spec)
  *   - used / expired / already_handled / invalid → info states
  * Pages render here (app domain) because the Supabase gateway forces
@@ -100,7 +100,7 @@ export default function EmailActionPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm max-w-md w-full p-8 text-center">
         <Card phase={phase} onConfirmReject={() => execute((phase as { info: ActionInfo }).info)} />
-        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">HOCKIA</div>
+        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">Hockia</div>
       </div>
     </div>
   )
@@ -151,7 +151,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           to={appLink(info)}
           className="mt-3 block w-full text-sm font-medium text-gray-600 bg-gray-100 rounded-xl px-5 py-3 hover:bg-gray-200 transition"
         >
-          Review in HOCKIA instead
+          Review in Hockia instead
         </Link>
       </>
     )
@@ -159,7 +159,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
 
   const { info } = phase
   const name = info.applicant_name ?? 'The applicant'
-  const cta = (label = 'Review applicants in HOCKIA') => (
+  const cta = (label = 'Review applicants in Hockia') => (
     <Link
       to={appLink(info)}
       className="mt-5 inline-block bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold text-sm rounded-xl px-6 py-3 hover:opacity-95 transition"
@@ -181,7 +181,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
             {info.opportunity_title ?? 'Your opportunity'} is open again
             {until ? ` and accepting applications until ${until}` : ''}.
           </p>
-          {cta('Open in HOCKIA')}
+          {cta('Open in Hockia')}
         </>
       )
     }
@@ -196,7 +196,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
             {info.opportunity_title ?? 'This opportunity'} was closed from the app, so this link
             didn&apos;t change anything. You can reopen it anytime from your dashboard.
           </p>
-          {cta('Open in HOCKIA')}
+          {cta('Open in Hockia')}
         </>
       )
     case 'applied':
@@ -252,7 +252,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
             {name}&apos;s application isn&apos;t pending anymore. It was already responded to. Nothing
             was changed.
           </p>
-          {cta('Open in HOCKIA')}
+          {cta('Open in Hockia')}
         </>
       )
     case 'used':
@@ -267,7 +267,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
               ? 'This opportunity was already renewed with this link. Nothing was changed.'
               : 'Your response was recorded the first time. Nothing was changed.'}
           </p>
-          {cta('Open in HOCKIA')}
+          {cta('Open in Hockia')}
         </>
       )
     case 'expired':
@@ -280,7 +280,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <p className="text-sm text-gray-600 mt-2">
             Action links work for 14 days. You can still respond from your dashboard.
           </p>
-          {cta('Open in HOCKIA')}
+          {cta('Open in Hockia')}
         </>
       )
     case 'rate_limited':
@@ -303,7 +303,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <p className="text-sm text-gray-600 mt-2">
             Your response was not recorded. Please try the link again, or respond from your dashboard.
           </p>
-          {cta('Open HOCKIA')}
+          {cta('Open Hockia')}
         </>
       )
     default:
@@ -316,7 +316,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <p className="text-sm text-gray-600 mt-2">
             It may have been truncated by your email client. You can respond from your dashboard instead.
           </p>
-          {cta('Open HOCKIA')}
+          {cta('Open Hockia')}
         </>
       )
   }

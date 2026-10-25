@@ -94,7 +94,7 @@ export function AdminOpportunities() {
   }, [statusFilter, daysFilter, countryFilter, roleFilter, genderFilter, hasAppsFilter, page])
 
   useEffect(() => {
-    document.title = 'Opportunities | HOCKIA Admin'
+    document.title = 'Opportunities | Hockia Admin'
     fetchData()
   }, [fetchData])
 
@@ -318,7 +318,7 @@ export function AdminOpportunities() {
           of vacancies — when nothing's been loaded yet (initial mount,
           impossible-filter combo) the country dropdown only shows "All".
           A future enhancement could fetch the full country set once on
-          mount; not worth the extra RPC call for HOCKIA's current
+          mount; not worth the extra RPC call for Hockia's current
           ~20 opp scale. */}
       <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 flex-wrap">
         <Filter className="w-4 h-4 text-gray-400" />

@@ -52,7 +52,7 @@ export default function HockiaSocials({
   return (
     <div
       className={`flex items-center ${gap} ${className}`}
-      aria-label="Follow HOCKIA on social media"
+      aria-label="Follow Hockia on social media"
     >
       {HOCKIA_SOCIALS.map(({ label, href, Icon }) => (
         <a
@@ -60,7 +60,7 @@ export default function HockiaSocials({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`HOCKIA on ${label} (opens in a new tab)`}
+          aria-label={`Hockia on ${label} (opens in a new tab)`}
           title={label}
           className={`${linkTone} transition-colors hover:scale-110`}
         >

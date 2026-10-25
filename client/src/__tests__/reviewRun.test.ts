@@ -19,7 +19,7 @@ describe('Club speed CS7 · review run counter', () => {
 })
 
 describe('push card stays off screens with their own action bar', () => {
-  it('hides on the applicant review and Post a role, not on the lists', async () => {
+  it('hides on the applicant review and Post an opportunity, not on the lists', async () => {
     const { onActionBarScreen } = await import('@/lib/overlaySequence')
     expect(onActionBarScreen('/dashboard/opportunities/r1/applicants/a1')).toBe(true)
     expect(onActionBarScreen('/dashboard/opportunities/new')).toBe(true)

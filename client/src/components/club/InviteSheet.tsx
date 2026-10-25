@@ -118,22 +118,22 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
           </div>
         </div>
 
-        <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Role</p>
+        <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Opportunity</p>
         {choosing && passedActiveRole && (
           <p className="pb-2 text-secondary leading-[18px] text-ink-2" role="status" data-testid="invite-passed-active">
-            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)}. Choose another role.
+            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)}. Choose another opportunity.
           </p>
         )}
         {loading ? (
-          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">Loading roles…</p>
+          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">Loading opportunities…</p>
         ) : roles.length === 0 ? (
-          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post a role first. An invite is always to one of your open roles.</p>
+          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post an opportunity first. An invite is always to one of your open opportunities.</p>
         ) : (
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Role">
             {(picking || choosing ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {
               const on = r.id === roleId
               const wasPassed = passed.includes(r.id)
-              const offer = wasPassed ? 'Passed on this role' : roleOfferLine(r)
+              const offer = wasPassed ? 'Passed on this opportunity' : roleOfferLine(r)
               return (
                 <button
                   key={r.id}
@@ -160,7 +160,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
             })}
             {!picking && !choosing && invitable.length > 1 && (
               <button type="button" onClick={() => setPicking(true)} className="-my-2 flex min-h-11 items-center self-start text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
-                Change role
+                Change opportunity
               </button>
             )}
           </div>
@@ -172,7 +172,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
             <div className="flex flex-col gap-1.5 rounded-card bg-surface-grouped p-3.5 focus-within:ring-2 focus-within:ring-focus-ring">
               {showsDraft ? (
                 <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-2" data-testid="invite-note-draft">
-                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the role · tap to edit
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the opportunity · tap to edit
                 </span>
               ) : (
                 <span className="text-caption font-semibold text-ink-2">Your note</span>

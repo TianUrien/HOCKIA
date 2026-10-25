@@ -9,7 +9,7 @@ import type { RecruitingFunnel } from '@/features/admin/types'
 const funnel: RecruitingFunnel = {
   period_days: 30,
   steps: [
-    { key: 'posted', label: 'Roles posted', count: 3, people: 2, unit: 'roles', people_unit: 'clubs' },
+    { key: 'posted', label: 'Opportunities posted', count: 3, people: 2, unit: 'roles', people_unit: 'clubs' },
     { key: 'viewed', label: 'Roles viewed', count: 3, people: 113, unit: 'roles', people_unit: 'viewers' },
     { key: 'applied', label: 'Applications', count: 42, people: 27, unit: 'applications', people_unit: 'applicants' },
     { key: 'shortlisted', label: 'Shortlisted', count: 2, people: 2, unit: 'applications', people_unit: 'players' },
@@ -38,7 +38,7 @@ describe('RecruitingFunnelCard', () => {
     const list = await screen.findByTestId('recruiting-funnel')
     const items = Array.from(list.querySelectorAll('li')).map((li) => li.textContent)
     expect(items).toHaveLength(7)
-    expect(items[0]).toMatch(/Roles posted3 roles2 clubs/)
+    expect(items[0]).toMatch(/Opportunities posted3 roles2 clubs/)
     expect(items[1]).not.toMatch(/of roles posted/) // older roles keep being viewed: no share (2026-10-18)
     expect(items[2]).toMatch(/27 applicants · 24% of viewers applied/) // 27 of 113
     expect(items[3]).toMatch(/5% of applications/) // 2 of 42
@@ -48,7 +48,7 @@ describe('RecruitingFunnelCard', () => {
   it('shows the medians and the unanswered applications', async () => {
     wrap(<RecruitingFunnelCard days={30} />)
     const dl = await screen.findByTestId('funnel-medians')
-    expect(dl.textContent).toMatch(/31 h median · 3 roles/)
+    expect(dl.textContent).toMatch(/31 h median · 3 opportunities/)
     expect(dl.textContent).toMatch(/Invite answered in—/)
     expect(dl.textContent).toMatch(/Applications still unanswered38/)
     expect(await screen.findByText(/14\.5 d/)).toBeInTheDocument() // club's first reply, median

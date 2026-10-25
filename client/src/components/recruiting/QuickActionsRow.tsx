@@ -167,7 +167,7 @@ function AddFriendAction({ playerId, playerName, compact }: { playerId: string; 
       onClick={() =>
         isAuthenticated
           ? void sendRequest()
-          : addToast('Sign in with your HOCKIA profile to connect.', 'error')
+          : addToast('Sign in with your Hockia profile to connect.', 'error')
       }
     />
   )

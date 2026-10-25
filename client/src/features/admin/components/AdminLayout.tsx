@@ -85,7 +85,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Users & Roles',
     key: 'users',
     items: [
-      { path: '/admin/users', icon: UserCheck, label: 'Role Analytics' },
+      { path: '/admin/users', icon: UserCheck, label: 'Opportunity Analytics' },
       { path: '/admin/countries', icon: Globe2, label: 'Countries' },
       { path: '/admin/directory', icon: Users, label: 'User Directory' },
     ],
@@ -294,7 +294,7 @@ export function AdminLayout() {
               </a>
               <div className="hidden sm:block h-6 w-px bg-gray-200" />
               <h1 className="text-lg font-semibold text-gray-900">
-                <span className="text-purple-600">HOCKIA</span> <span className="hidden sm:inline">Admin</span>
+                <span className="text-purple-600">Hockia</span> <span className="hidden sm:inline">Admin</span>
               </h1>
             </div>
 

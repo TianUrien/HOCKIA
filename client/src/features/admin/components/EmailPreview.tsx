@@ -80,8 +80,8 @@ export function EmailPreview({ subject, blocks, variables, mode = 'html', isOutr
     const settingsUrl = variables.settings_url || 'https://inhockia.com/settings'
 
     const footerHtml = isOutreach
-      ? `<p style="color:#9ca3af;font-size:12px;margin:0;">You received this email because we believe your organization may benefit from HOCKIA.<br><a href="https://inhockia.com" style="color:#8026FA;text-decoration:none;">Learn more about HOCKIA</a></p>`
-      : `<p style="color:#9ca3af;font-size:12px;margin:0;">You're receiving this because you're on HOCKIA.<br><a href="${settingsUrl}" style="color:#8026FA;text-decoration:none;">Manage notification preferences</a></p>`
+      ? `<p style="color:#9ca3af;font-size:12px;margin:0;">You received this email because we believe your organization may benefit from Hockia.<br><a href="https://inhockia.com" style="color:#8026FA;text-decoration:none;">Learn more about Hockia</a></p>`
+      : `<p style="color:#9ca3af;font-size:12px;margin:0;">You're receiving this because you're on Hockia.<br><a href="${settingsUrl}" style="color:#8026FA;text-decoration:none;">Manage notification preferences</a></p>`
 
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;background:#f9fafb;">

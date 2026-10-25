@@ -115,7 +115,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
       ) : (
         <>
           {offers.length > 0 ? (
-            <Rail title="Offers for members" subtitle={`Only on HOCKIA · ${country ?? ''}`.replace(/ · $/, '')} testId="market-rail-offers">
+            <Rail title="Offers for members" subtitle={`Only on Hockia · ${country ?? ''}`.replace(/ · $/, '')} testId="market-rail-offers">
               {offers.map((it) => <MarketTile key={it.id} item={it} wide surface="marketplace" onOpen={() => void open(it)} onMenu={() => setMenuFor(it)} />)}
             </Rail>
           ) : null}

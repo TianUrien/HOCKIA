@@ -53,7 +53,7 @@ export function AdminSpamSignals() {
     }
   }, [daysFilter, page])
 
-  useEffect(() => { document.title = 'Spam signals | HOCKIA Admin' }, [])
+  useEffect(() => { document.title = 'Spam signals | Hockia Admin' }, [])
   useEffect(() => { void fetchSignals() }, [fetchSignals])
 
   const handleBlock = async () => {

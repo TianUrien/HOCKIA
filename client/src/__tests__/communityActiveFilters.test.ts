@@ -13,7 +13,7 @@ describe('getActiveFilterChips', () => {
     expect(getActiveFilterChips(defaultFilters('all'), COUNTRIES, noop)).toEqual([])
   })
 
-  it('never includes the role/member-type as a chip (the chip row already shows it)', () => {
+  it('never includes the opportunity/member-type as a chip (the chip row already shows it)', () => {
     const chips = getActiveFilterChips(defaultFilters('coach'), COUNTRIES, noop)
     expect(chips).toEqual([])
   })

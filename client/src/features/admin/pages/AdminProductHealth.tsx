@@ -28,9 +28,9 @@ const TABS: Array<{
   icon: typeof GitBranch
   title: string
 }> = [
-  { key: 'activation', label: 'Activation', icon: GitBranch, title: 'Activation Funnel | HOCKIA Admin' },
-  { key: 'onboarding', label: 'Onboarding', icon: UserPlus, title: 'Onboarding Funnel | HOCKIA Admin' },
-  { key: 'retention', label: 'Retention', icon: TrendingDown, title: 'Retention | HOCKIA Admin' },
+  { key: 'activation', label: 'Activation', icon: GitBranch, title: 'Activation Funnel | Hockia Admin' },
+  { key: 'onboarding', label: 'Onboarding', icon: UserPlus, title: 'Onboarding Funnel | Hockia Admin' },
+  { key: 'retention', label: 'Retention', icon: TrendingDown, title: 'Retention | Hockia Admin' },
 ]
 
 const VALID_TABS = new Set(TABS.map((t) => t.key))

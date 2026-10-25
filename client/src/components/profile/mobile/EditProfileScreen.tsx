@@ -383,7 +383,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
                 <>
                   <CountrySelect appearance="field" label="First passport" showNationality value={d<number | null>('nationality_country_id') ?? null} onChange={(id) => set({ nationality_country_id: id })} />
                   <CountrySelect appearance="field" label="Second passport (optional)" showNationality value={d<number | null>('nationality2_country_id') ?? null} onChange={(id) => set({ nationality2_country_id: id })} />
-                  <p className="text-caption text-ink-3">Clubs filter roles by passport. An EU passport opens EU-only roles.</p>
+                  <p className="text-caption text-ink-3">Clubs filter opportunities by passport. An EU passport opens EU-only opportunities.</p>
                 </>
               )}
 

@@ -21,8 +21,8 @@ describe('chat history rows', () => {
   })
 
   it('says what happened last', () => {
-    expect(chatSummary([msg({ kind: 'opportunity_results', open_roles_total: 3 })])).toBe('3 roles found')
-    expect(chatSummary([msg({ kind: 'opportunity_results', opportunities: [{} as never] })])).toBe('1 role found')
+    expect(chatSummary([msg({ kind: 'opportunity_results', open_roles_total: 3 })])).toBe('3 opportunities found')
+    expect(chatSummary([msg({ kind: 'opportunity_results', opportunities: [{} as never] })])).toBe('1 opportunity found')
     expect(chatSummary([msg({ kind: 'results', total: 7, applied: { entity: 'players', gender_label: null, location_label: null, role_summary: '' } })])).toBe('7 players found')
     expect(chatSummary([msg({ kind: 'results', total: 1, applied: { entity: 'coaches', gender_label: null, location_label: null, role_summary: '' } })])).toBe('1 coach found')
     expect(chatSummary([msg({ kind: 'no_results' })])).toBe('Nothing found')

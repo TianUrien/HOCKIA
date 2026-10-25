@@ -47,14 +47,14 @@ export default function NativeUpdatePrompt() {
           </div>
           <h2 className="text-lg font-bold text-gray-900 mb-1">Update required</h2>
           <p className="text-sm text-gray-600 mb-5">
-            Please update HOCKIA to continue. This version is no longer supported.
+            Please update Hockia to continue. This version is no longer supported.
           </p>
           <button
             type="button"
             onClick={openStore}
             className="w-full py-3 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
-            <Download className="w-4 h-4" /> Update HOCKIA
+            <Download className="w-4 h-4" /> Update Hockia
           </button>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function NativeUpdatePrompt() {
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 text-sm">Update available</h3>
           <p className="text-xs text-gray-600 mt-0.5">
-            A new version of HOCKIA is available with the latest improvements.
+            A new version of Hockia is available with the latest improvements.
           </p>
         </div>
       </div>

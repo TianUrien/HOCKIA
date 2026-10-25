@@ -25,7 +25,7 @@ export function RolesRail({ className, module = HOME_V1_MODULES.rolesRail }: { c
 
   return (
     <section ref={impressionRef} className={className ?? 'flex flex-col gap-2 py-4'} data-testid="home-roles-rail">
-      <SectionHeader title="Roles for you" action="See all" to="/opportunities" onLinkClick={() => trackModuleClick(module.id, module.position, '/opportunities')} />
+      <SectionHeader title="Opportunities for you" action="See all" to="/opportunities" onLinkClick={() => trackModuleClick(module.id, module.position, '/opportunities')} />
       <div className="flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.slice(0, 10).map((o) => (
           <RoleCoverCard

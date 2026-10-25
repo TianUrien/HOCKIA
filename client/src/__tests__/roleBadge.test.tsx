@@ -53,7 +53,7 @@ function toHex(value: string): string {
   return '#' + [m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('')
 }
 
-describe('RoleBadge colours on the role/* tokens', () => {
+describe('RoleBadge colours on the opportunity/* tokens', () => {
   it('the tokens carry exactly the hex the badge rendered before', () => {
     const role = tokenRoles()
     for (const [name, [bg, ink]] of Object.entries(PREVIOUS)) {

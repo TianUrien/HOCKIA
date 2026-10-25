@@ -102,7 +102,7 @@ export function InboxRequests({
             const outcome = resolved[request.friendshipId]
             const busy = pendingId === request.friendshipId
             const person = request.person
-            const name = person?.full_name ?? person?.username ?? 'HOCKIA member'
+            const name = person?.full_name ?? person?.username ?? 'Hockia member'
             const to = person ? profilePath(person.role, person.username, person.id) : null
             const state = outcome === 'accepted' ? 'accepted' : outcome === 'declined' ? 'declined' : 'incoming'
             return (
@@ -151,7 +151,7 @@ export function InboxRequests({
           <ul>
             {outgoing.map((request) => {
               const person = request.person
-              const name = person?.full_name ?? person?.username ?? 'HOCKIA member'
+              const name = person?.full_name ?? person?.username ?? 'Hockia member'
               const to = person ? profilePath(person.role, person.username, person.id) : null
               return (
                 <RequestRow

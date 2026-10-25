@@ -146,7 +146,7 @@ export default function WorldProvincePage() {
 
         if (!provinceError && provinceData) {
           setProvince(provinceData)
-          document.title = `${provinceData.name} | ${countryData.name} | HOCKIA`
+          document.title = `${provinceData.name} | ${countryData.name} | Hockia`
           await fetchLeaguesAndClubData(provinceData.id)
         } else {
           navigate(`/world/${countrySlug}`, { replace: true })

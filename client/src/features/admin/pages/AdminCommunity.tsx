@@ -44,7 +44,7 @@ export function AdminCommunity() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Community & Q&A | HOCKIA Admin'
+    document.title = 'Community & Q&A | Hockia Admin'
     fetchData()
   }, [fetchData])
 

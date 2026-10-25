@@ -50,7 +50,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           ref={prefetch.ref}
           {...prefetch.handlers}
           onClick={openRole}
-          aria-label={`Open role: ${item.title}`}
+          aria-label={`Open opportunity: ${item.title}`}
           data-testid="opportunity-posted-open"
           className="-mx-2 -my-1 block min-h-[44px] w-[calc(100%+1rem)] rounded-[12px] px-2 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
         >

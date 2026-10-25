@@ -410,7 +410,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     <section className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 md:p-6">
       {/* Increment #5 — explanation-led lead. The synthesized verdict
           (qualitative tier + ranked highlights/caveats) tops the card,
-          with the HOCKIA AI panel narrating the same read directly beneath.
+          with the Hockia AI panel narrating the same read directly beneath.
           Both are recruiter + scope gated (render null otherwise), so for
           non-recruiters the card still opens on the availability headline. */}
       {verdict.isApplicable && (

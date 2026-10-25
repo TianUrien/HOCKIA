@@ -95,7 +95,7 @@ export function AdminAIOpinions() {
   }, [offset, ratingFilter])
 
   useEffect(() => {
-    document.title = 'AI Opinions | HOCKIA Admin'
+    document.title = 'AI Opinions | Hockia Admin'
   }, [])
 
   useEffect(() => {

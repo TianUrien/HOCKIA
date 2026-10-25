@@ -112,7 +112,7 @@ export default function RecentlyConnectedCard({
       'References from athletes, clubs and partners appear on your profile and help the community trust your brand.',
   }
   const defaultRationale =
-    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on HOCKIA trust your background.'
+    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on Hockia trust your background.'
   const rationaleCopy = profileRole && rationaleByRole[profileRole]
     ? rationaleByRole[profileRole]
     : defaultRationale
@@ -150,7 +150,7 @@ export default function RecentlyConnectedCard({
         // FriendsTab when full_name AND username are both null). The card
         // would otherwise read "Ask HOCKIA for a reference?" — confusing
         // and unbranded. These are rare orphan profiles; better to skip.
-        if (!f.fullName || f.fullName === 'HOCKIA Member') return false
+        if (!f.fullName || f.fullName === 'Hockia Member') return false
         if (excludeIds?.has(f.id)) return false
         if (sessionDismissed.has(f.id)) return false
         if (isDismissed(ownerProfileId, f.id)) return false

@@ -30,7 +30,7 @@ export const GOAL_OPTIONS: Record<GoalRole, { key: string; label: string }[]> = 
     { key: 'grow_coach', label: 'Grow as a coach' },
   ],
   club: [
-    { key: 'fill_role', label: 'Fill a role this season' },
+    { key: 'fill_role', label: 'Fill a spot this season' },
     { key: 'sign_abroad', label: 'Sign players from abroad' },
     { key: 'find_coach', label: 'Find a coach' },
     { key: 'find_sponsors', label: 'Find sponsors' },
@@ -126,21 +126,21 @@ export function goalRows(role: GoalRole, goal: Pick<MyGoal, 'options'>, data: Go
 
   if ((has('play_abroad') || has('coach_abroad')) && abroad > 0) {
     const who = role === 'player' && data.position && POSITION_PLURAL[data.position] ? ` for ${POSITION_PLURAL[data.position]}` : ''
-    rows.push({ key: 'abroad', goal: has('play_abroad') ? 'play_abroad' : 'coach_abroad', text: `${abroad} open ${plural(abroad, 'role', 'roles')} abroad${who}`, action: 'See', to: '/opportunities' })
+    rows.push({ key: 'abroad', goal: has('play_abroad') ? 'play_abroad' : 'coach_abroad', text: `${abroad} open ${plural(abroad, 'opportunity', 'opportunities')} abroad${who}`, action: 'See', to: '/opportunities' })
   }
   if (has('club_near_me') && home > 0 && countryName) {
-    rows.push({ key: 'home', goal: 'club_near_me', text: `${home} open ${plural(home, 'role', 'roles')} in ${countryInSentence(countryName)}`, action: 'See', to: '/opportunities' })
+    rows.push({ key: 'home', goal: 'club_near_me', text: `${home} open ${plural(home, 'opportunity', 'opportunities')} in ${countryInSentence(countryName)}`, action: 'See', to: '/opportunities' })
   }
   if (role === 'club' && has('fill_role')) {
     const open = data.open_roles ?? 0
     const waiting = data.applicants_waiting ?? 0
     if (open > 0) {
-      const parts = [`${open} open ${plural(open, 'role', 'roles')}`]
+      const parts = [`${open} open ${plural(open, 'opportunity', 'opportunities')}`]
       if (waiting > 0) parts.push(`${waiting} ${plural(waiting, 'applicant', 'applicants')} waiting`)
       rows.push({ key: 'review', goal: 'fill_role', text: parts.join(' · '), action: 'Review', to: '/opportunities' })
-      rows.push({ key: 'post', goal: 'fill_role', text: 'Post another role in under a minute', action: 'Post a role', to: '/dashboard/opportunities/new' })
+      rows.push({ key: 'post', goal: 'fill_role', text: 'Post another opportunity in under a minute', action: 'Post an opportunity', to: '/dashboard/opportunities/new' })
     } else {
-      rows.push({ key: 'post', goal: 'fill_role', text: 'Post a role in under a minute', action: 'Post a role', to: '/dashboard/opportunities/new' })
+      rows.push({ key: 'post', goal: 'fill_role', text: 'Post an opportunity in under a minute', action: 'Post an opportunity', to: '/dashboard/opportunities/new' })
     }
   }
   return rows.slice(0, 2)

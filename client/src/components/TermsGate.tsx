@@ -146,7 +146,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
 
         <div className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 space-y-4">
           <p>
-            By using HOCKIA, you agree to our{' '}
+            By using Hockia, you agree to our{' '}
             <button onClick={() => navigate('/terms')} className="text-hockia-primary underline font-medium">
               Terms & Conditions
             </button>{' '}
@@ -158,7 +158,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
             <p className="font-semibold text-gray-900">Community Guidelines</p>
-            <p>HOCKIA has zero tolerance for objectionable content or abusive behavior. By continuing, you agree to:</p>
+            <p>Hockia has zero tolerance for objectionable content or abusive behavior. By continuing, you agree to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Not post harassment, hate speech, threats, or inappropriate content</li>
               <li>Not send spam or unsolicited messages</li>
@@ -168,7 +168,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
             </ul>
             <p className="text-xs text-gray-500 mt-2">
               Violations may result in content removal and account suspension.
-              HOCKIA reviews all reports within 24 hours.
+              Hockia reviews all reports within 24 hours.
             </p>
           </div>
         </div>

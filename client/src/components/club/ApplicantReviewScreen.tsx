@@ -228,7 +228,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
   const steps = review && onRoad
     ? roadSteps({ status: review.status, talked: roadData?.talked ?? false, trial: roadData?.trial ?? false, firstName, shortlistedAt: roadData?.shortlistedAt, offer: roadData?.offer, signedAt: roadData?.signedAt })
     : []
-  const roleLabel = roadData?.role ? inviteRoleLabel(roadData.role) : 'this role'
+  const roleLabel = roadData?.role ? inviteRoleLabel(roadData.role) : 'this opportunity'
   const liveOffer = roadData?.offer?.status === 'live' ? roadData.offer : null
   // The player declined the newest offer: their reason, grey, under the road.
   const declinedNote = onRoad ? offerDeclinedNote(firstName, roadData?.offer) : null
@@ -388,12 +388,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
     if (review.status === 'pending') return { label: 'New', brand: true }
     if (review.status === 'shortlisted') return { label: 'Shortlisted', brand: false }
     if (review.status === 'maybe') return { label: 'Maybe', brand: false }
-    if (review.status === 'rejected') return { label: 'Declined', brand: false }
+    if (review.status === 'rejected') return { label: 'Not a fit', brand: false }
     return { label: review.status, brand: false }
   })()
   const heroLine = p ? [personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review?.age ? String(review.age) : null, ...passports].filter(Boolean).join(' · ') : ''
   const statusNote = review && review.status !== 'pending' && !onRoad
-    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.', filled: 'This role was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null
+    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You marked this application not a fit.', no_response: 'Closed without a reply.', filled: 'This opportunity was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null
     : null
   // Closed applications (no reply, filled, withdrawn, signing statuses) can't
   // be re-decided: no decision bar, just the grey note with Message.
@@ -485,7 +485,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 {decidable && (
                   <div data-testid="decision-bar">
                     <div className="flex gap-2.5">
-                      <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[120px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger transition-colors hover:bg-surface-muted disabled:opacity-40">Decline</button>
+                      <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[120px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger transition-colors hover:bg-surface-muted disabled:opacity-40">Not a fit</button>
                       <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[52px] w-[110px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-muted disabled:opacity-40">Maybe</button>
                       <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[52px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40">
                         <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist
@@ -875,9 +875,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
       {/* Decision bar */}
       {p && review && decidable && (
         <div className="fixed inset-x-0 bottom-0 border-t-[0.5px] border-line bg-white/94 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px]" data-testid="decision-bar">
-          {/* Figma O9 169:687: glass bar — Decline · Maybe quiet, Shortlist Primary, Message as a link. */}
+          {/* Figma O9 169:687: glass bar — Not a fit · Maybe quiet, Shortlist Primary, Message as a link. */}
           <div className="flex gap-2">
-            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[100px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger disabled:opacity-40">Decline</button>
+            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[52px] w-[100px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-status-danger disabled:opacity-40">Not a fit</button>
             <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[52px] w-[92px] items-center justify-center rounded-full bg-surface-subtle text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
             <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[52px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
               <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist

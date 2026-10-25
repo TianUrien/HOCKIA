@@ -29,9 +29,9 @@ const TABS: Array<{
   icon: typeof UserCheck
   title: string
 }> = [
-  { key: 'players', label: 'Players', icon: UserCheck, title: 'Player Analytics | HOCKIA Admin' },
-  { key: 'clubs', label: 'Clubs', icon: Building2, title: 'Club Analytics | HOCKIA Admin' },
-  { key: 'brands', label: 'Brands', icon: Store, title: 'Brand Analytics | HOCKIA Admin' },
+  { key: 'players', label: 'Players', icon: UserCheck, title: 'Player Analytics | Hockia Admin' },
+  { key: 'clubs', label: 'Clubs', icon: Building2, title: 'Club Analytics | Hockia Admin' },
+  { key: 'brands', label: 'Brands', icon: Store, title: 'Brand Analytics | Hockia Admin' },
 ]
 
 const VALID_ROLES = new Set(TABS.map((t) => t.key))
@@ -94,7 +94,7 @@ export function AdminUsers() {
 
       {/* Phase 3B + 3C: role-health summary at the top of every tab.
           Independent of the underlying page's own state — gives admins
-          a "biggest onboarding gap for this role" read at a glance. */}
+          a "biggest onboarding gap for this opportunity" read at a glance. */}
       <RoleHealthCard role={activeKey === 'players' ? 'player' : activeKey === 'clubs' ? 'club' : 'brand'} />
 
       {/* Render the underlying role page. These are the existing pages

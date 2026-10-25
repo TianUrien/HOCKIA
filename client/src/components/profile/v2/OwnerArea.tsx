@@ -154,7 +154,7 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
               {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
             </span>
             <span className="block truncate text-secondary text-ink-2">
-              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'role' : 'roles'}${names ? ` · ${names}` : ''}` : 'Post a role and players can apply'}
+              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'opportunity' : 'opportunities'}${names ? ` · ${names}` : ''}` : 'Post an opportunity and players can apply'}
             </span>
           </span>
         </div>
@@ -162,9 +162,9 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
           {toReview && (
             <button type="button" onClick={onReview} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
           )}
-          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
+          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post an opportunity</button>
           {recruiting && !toReview && (
-            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View roles</button>
+            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View opportunities</button>
           )}
         </div>
       </div>

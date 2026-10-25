@@ -77,7 +77,7 @@ export function InboxActivity() {
             const config = getNotificationConfig(notification)
             const unread = !notification.readAt
             const actor = notification.actor
-            const name = actor?.fullName || actor?.username || 'HOCKIA member'
+            const name = actor?.fullName || actor?.username || 'Hockia member'
             const description = config.getDescription?.(notification)
             const route = resolveNotificationRoute(notification)
             const isFriendRequest = notification.kind === 'friend_request_received'

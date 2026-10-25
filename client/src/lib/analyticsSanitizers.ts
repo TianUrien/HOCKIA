@@ -68,7 +68,7 @@ const IDENTIFYING_ROUTES: Array<[RegExp, string]> = [
 export function pathToSafeTitle(sanitizedPath: string, fallback: string): string {
   for (const [pattern, title] of IDENTIFYING_ROUTES) {
     if (pattern.test(sanitizedPath)) {
-      return `${title} | HOCKIA`
+      return `${title} | Hockia`
     }
   }
   return fallback

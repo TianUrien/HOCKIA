@@ -178,8 +178,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
           // Coaches: their own flag (open_to_coach), same as the desktop availability strip.
           <SettingsRow title="Open to coach" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to coach" checked={read('open_to_coach', false)} disabled={busy === 'open_to_coach'} onChange={() => void toggle('open_to_coach', false)} />} />
         )}
-        <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about roles." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
-        <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} roles` : 'Not set'} onClick={() => setLookingFor(true)} />
+        <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about opportunities." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
+        <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} opportunities` : 'Not set'} onClick={() => setLookingFor(true)} />
       </SettingsGroup>
       )}
 
@@ -229,7 +229,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
             {(['paid', 'development', 'either'] as const).map((value) => (
               <button key={value} type="button" onClick={() => { void write({ opportunity_preference: value }, 'opportunity_preference'); setLookingFor(false) }} className="flex h-[50px] w-full items-center justify-between px-4 text-left text-body text-ink-1">
-                {OPPORTUNITY_PREF_LABEL[value]} roles
+                {OPPORTUNITY_PREF_LABEL[value]} opportunities
                 {preference === value && <Check className="h-5 w-5 text-hockia-primary" strokeWidth={2.4} />}
               </button>
             ))}
@@ -256,8 +256,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 type Kind = { column: Extract<BoolColumn, `notify_${string}`>; title: string; subtitle: string; recruitableOnly?: boolean }
 const KINDS: Kind[] = [
   { column: 'notify_messages', title: 'Messages', subtitle: 'From clubs, coaches and friends.' },
-  { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or a role closed.', recruitableOnly: true },
-  { column: 'notify_opportunities', title: 'New roles', subtitle: 'New roles for your position, team and passports.', recruitableOnly: true },
+  { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or an opportunity closed.', recruitableOnly: true },
+  { column: 'notify_opportunities', title: 'New opportunities', subtitle: 'New opportunities for your position, team and passports.', recruitableOnly: true },
   { column: 'notify_friends', title: 'Friend requests', subtitle: 'New requests and accepted ones.' },
   { column: 'notify_references', title: 'References', subtitle: 'A friend asks for one, or writes you one.' },
   { column: 'notify_profile_views', title: 'Profile views', subtitle: 'Weekly summary of who looked at you.' },

@@ -17,7 +17,7 @@ const ApplyToOpportunityModal = lazy(() => import('@/components/ApplyToOpportuni
 /**
  * D3.3 · Invitation in chat (Figma 393:351; DEV NOTE 394:107). The invite
  * lands in the conversation with the club: the role, what it offers, the
- * note, then View role, Apply or Not interested. No fit, no applicant count.
+ * note, then View opportunity, Apply or Not interested. No fit, no applicant count.
  * Apply opens the normal Apply sheet with the note empty; the readiness check
  * still runs, and the server tags the application with the invite. Not
  * interested → respond_invite(decline); the club sees "<name> passed on this
@@ -94,7 +94,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
       const { data: vacancy, error } = await supabase.from('opportunities').select('*').eq('id', role.id).maybeSingle()
       if (error || !vacancy) {
         if (error) reportSupabaseError('InviteCard.openApply', error)
-        addToast('Couldn’t open the role. Please try again.', 'error')
+        addToast('Couldn’t open the opportunity. Please try again.', 'error')
         return
       }
       setApplyVacancy(vacancy as Vacancy)
@@ -134,7 +134,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         <>
           <div className="mt-3.5 flex gap-2.5">
             <button type="button" onClick={viewRole} className="flex h-11 flex-1 items-center justify-center rounded-full border border-line bg-white text-[16px] font-semibold text-ink-1" data-testid="invite-view-role">
-              View role
+              View opportunity
             </button>
             <button type="button" onClick={() => void apply()} disabled={opening} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="invite-apply">
               {opening ? 'Opening…' : 'Apply'}
@@ -155,7 +155,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {state.line}
             </span>
           )}
-          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">View role</button>
+          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">View opportunity</button>
         </div>
       )}
 
@@ -164,7 +164,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         open={confirmPass}
         onClose={() => setConfirmPass(false)}
         onConfirm={async () => { await decline(invite.id) }}
-        title="Not interested in this role?"
+        title="Not interested in this opportunity?"
         message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
         confirmLabel="Not interested"
         tone="primary"

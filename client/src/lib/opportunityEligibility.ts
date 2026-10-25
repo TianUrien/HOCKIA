@@ -153,7 +153,7 @@ export function opportunityMustHaveWarnings(
 
   if (vacancy.compensation_required && computeInterest(interestCandidate, { ...baseOpts, compensationRequired: true }).hardFail) {
     warnings.push(
-      `This opening is ${(compensationLabel(vacancy.compensation) ?? 'a development role').toLowerCase()}, but your profile says you're looking for paid.`,
+      `This opening is ${(compensationLabel(vacancy.compensation) ?? 'a development opportunity').toLowerCase()}, but your profile says you're looking for paid.`,
     )
   }
   if (vacancy.location_required && computeInterest(interestCandidate, { ...baseOpts, locationRequired: true }).hardFail) {

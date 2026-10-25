@@ -77,7 +77,7 @@ export function AdminOverview() {
   const [zeroActivityLoading, setZeroActivityLoading] = useState(true)
 
   useEffect(() => {
-    document.title = 'Overview | HOCKIA Admin'
+    document.title = 'Overview | Hockia Admin'
     setErrorBudget(getErrorBudgetStatus())
     const interval = setInterval(() => setErrorBudget(getErrorBudgetStatus()), 60000)
     return () => clearInterval(interval)
@@ -211,7 +211,7 @@ export function AdminOverview() {
           change={appsChange}
           changePct={appsChangePct}
           subtitle={ccStats?.application_conversion === null || ccStats?.application_conversion === undefined
-            ? 'view-to-apply: no role views yet'
+            ? 'view-to-apply: no opportunity views yet'
             : `${ccStats.application_conversion}% of viewers applied (${ccStats.applied_pairs} of ${ccStats.view_pairs} member·role pairs)`}
           loading={ccLoading}
         />

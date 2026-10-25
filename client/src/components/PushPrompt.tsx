@@ -30,7 +30,7 @@ const PUSH_PROMPT_HIDDEN_PREFIXES = [
 ] as const
 
 export const PUSH_ASK_TITLE = 'Stay in the loop'
-export const PUSH_ASK_BODY = 'Get notified about messages, applications and roles, even when the app is closed.'
+export const PUSH_ASK_BODY = 'Get notified about messages, applications and opportunities, even when the app is closed.'
 
 /**
  * The notification ask (design audit 2026-10-21, A1). A bottom sheet (r28)

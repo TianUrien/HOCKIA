@@ -266,7 +266,7 @@ export default function SettingsPage() {
       // so it never stays stuck, but the user still deserves to know it failed.
       logger.error('Failed to toggle push notifications:', error)
       addToast(
-        "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for HOCKIA in your iOS Settings.",
+        "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for Hockia in your iOS Settings.",
         'error',
       )
     }

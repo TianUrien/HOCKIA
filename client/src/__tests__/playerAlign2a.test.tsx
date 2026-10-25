@@ -309,7 +309,7 @@ describe('My applications rows (List item / Application)', () => {
     for (const s of ['maybe', 'rejected', 'no_response', 'filled', 'withdrawn']) expect(tone(s)).toBe('grey')
     expect(applicationStatusPill('maybe', null, true).label).toBe('Replied')
     expect(applicationStatusPill('rejected', null, true).label).toBe('Not this time')
-    expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Role closed', tone: 'grey' })
+    expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Opportunity closed', tone: 'grey' })
     const old = new Date(Date.now() - 16 * 86_400_000).toISOString()
     expect(applicationStatusPill('pending', old, true)).toMatchObject({ label: 'No reply · 16d', tone: 'grey' })
     for (const cls of Object.values(APPLICATION_TONE_TEXT)) expect(cls).not.toMatch(AMBER)
@@ -339,11 +339,11 @@ describe('My applications rows (List item / Application)', () => {
     expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 
-  it('Closed: "Not this time" (never "Declined") and "Role closed", both grey', () => {
+  it('Closed: "Not this time" (never "Declined") and "Opportunity closed", both grey', () => {
     applications = [app({ id: 'a3', status: 'rejected', active: false }), app({ id: 'a4', status: 'pending', roleOpen: false, active: false })]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications?segment=closed'))
     const statuses = screen.getAllByTestId('application-status')
-    expect(statuses.map((s) => s.textContent)).toEqual(['Not this time', 'Role closed'])
+    expect(statuses.map((s) => s.textContent)).toEqual(['Not this time', 'Opportunity closed'])
     for (const s of statuses) expect(s.className).toContain('text-ink-2')
     expect(document.body.textContent).not.toMatch(/Declined/)
   })
@@ -377,7 +377,7 @@ describe('Apply sheet', () => {
       </MemoryRouter>,
     )
 
-  it('eligible (O3): title + Cancel, the role card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
+  it('eligible (O3): title + Cancel, the opportunity card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
     sheet()
     expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
@@ -397,7 +397,7 @@ describe('Apply sheet', () => {
   })
 
   it('not eligible: a NEUTRAL callout with an info icon (never amber), Secondary "Message the club", Primary disabled', () => {
-    eligibility = { eligible: false, reason: 'This role requires an EU passport.' }
+    eligibility = { eligible: false, reason: 'This opportunity requires an EU passport.' }
     sheet()
     const callout = screen.getByTestId('apply-not-eligible')
     expect(callout.className).toContain('bg-surface-muted')
@@ -423,7 +423,7 @@ describe('Application sent', () => {
       </MemoryRouter>,
     )
 
-  it('O3b: green check, "Application sent", the role card, Primary Done and a "View in Applied" link', () => {
+  it('O3b: green check, "Application sent", the opportunity card, Primary Done and a "View in Applied" link', () => {
     sent()
     expect(screen.getByRole('heading', { name: 'Application sent' })).toBeInTheDocument()
     expect(screen.getByText('Hockey Team Bologna has your profile, career and highlights. Their answer arrives in your Inbox.')).toBeInTheDocument()

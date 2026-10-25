@@ -41,7 +41,7 @@ export default function PendingVerificationBadge({
   // "not yet verified" signal.
   if (verified) return null
 
-  const tooltip = "HOCKIA hasn't verified this club's claim yet."
+  const tooltip = "Hockia hasn't verified this club's claim yet."
 
   return (
     <span

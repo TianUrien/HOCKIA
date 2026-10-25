@@ -18,7 +18,7 @@ import {
 
 const NOW = new Date('2026-09-27T12:00:00Z')
 
-describe('row role line (DEV NOTE: always the role)', () => {
+describe('row role line (DEV NOTE: always the opportunity)', () => {
   const base = { position: null, secondary_position: null, coach_specialization: null, coach_specialization_custom: null }
   it('Player · positions', () => {
     expect(squadRoleLine({ ...base, role: 'player', position: 'midfielder', secondary_position: 'defender' })).toBe('Player · Midfielder · Defender')

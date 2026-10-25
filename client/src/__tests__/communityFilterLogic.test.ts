@@ -34,7 +34,7 @@ describe('isEuEligible (dual-aware, keep-unknown)', () => {
 })
 
 describe('availabilityFilterLabel (role-aware chip copy)', () => {
-  it('uses the role-correct verb per role', () => {
+  it('uses the opportunity-correct verb per role', () => {
     expect(availabilityFilterLabel('player')).toBe('Open to play')
     expect(availabilityFilterLabel('coach')).toBe('Open to coach')
     expect(availabilityFilterLabel('umpire')).toBe('Open to umpire')

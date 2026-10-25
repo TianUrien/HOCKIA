@@ -12,7 +12,7 @@ vi.mock('@/lib/auth', () => ({ useAuthStore: (sel?: (s: unknown) => unknown) => 
 vi.mock('@/components', () => ({ DualNationalityDisplay: ({ fallbackText }: { fallbackText?: string | null }) => <span>{fallbackText ?? ''}</span> }))
 // CI runs without env vars: never load the real Supabase client.
 vi.mock('@/lib/supabase', () => ({ supabase: { from: () => ({ select: () => ({}) }), rpc: async () => ({ data: null, error: null }) } }))
-vi.mock('@/hooks/useOpenRoleCounts', () => ({ openRolesLabel: (n: number | null | undefined) => (n && n > 0 ? `${n} open roles` : null), useOpenRoleCounts: () => new Map() }))
+vi.mock('@/hooks/useOpenRoleCounts', () => ({ openRolesLabel: (n: number | null | undefined) => (n && n > 0 ? `${n} open opportunities` : null), useOpenRoleCounts: () => new Map() }))
 vi.mock('@/hooks/useWorldClubLogo', () => ({ getPlayerLeagueName: (id: string | null) => (id === 'wc-lazio' ? 'Serie A Elite' : null) }))
 
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
@@ -42,12 +42,12 @@ describe('Card / Member for a player viewer', () => {
 })
 
 describe('status pill and club line', () => {
-  it('a club with open roles never shows a count or a pill over the photo (audit B1)', () => {
+  it('a club with open opportunities never shows a count or a pill over the photo (audit B1)', () => {
     render(<RecruiterCandidateCard member={{ ...club, open_role_count: 3 }} onPreview={() => {}} />)
     expect(screen.queryByText('Recruiting')).toBeNull()
     expect(screen.queryByText(/open role/)).toBeNull()
   })
-  it('a club with no open role has no pill (a stale toggle is not recruiting)', () => {
+  it('a club with no open opportunity has no pill (a stale toggle is not recruiting)', () => {
     render(<RecruiterCandidateCard member={{ ...club, open_role_count: 0 }} onPreview={() => {}} />)
     expect(screen.queryByText('Recruiting')).toBeNull()
   })

@@ -181,7 +181,7 @@ export interface RecommendationRow {
    *  — the ranker excludes those. */
   triage: 'pending' | 'shortlisted' | 'maybe'
   /** User-facing label shown on the Applicants screen
-   *  (Unsorted / Good fit / Maybe). */
+   *  (Unsorted / Top pick / Maybe). */
   triage_label: string
   fit_level: 'strong_match' | 'possible_match' | 'needs_more_info'
   bullets: string[]

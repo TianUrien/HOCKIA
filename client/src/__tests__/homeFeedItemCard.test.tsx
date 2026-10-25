@@ -61,7 +61,7 @@ describe('HomeFeedItemCard', () => {
       author_name: 'Author',
       author_avatar: null,
       author_role: 'player',
-      content: 'Hello HOCKIA community!',
+      content: 'Hello Hockia community!',
       images: null,
       like_count: 0,
       comment_count: 0,
@@ -70,7 +70,7 @@ describe('HomeFeedItemCard', () => {
 
     render(<HomeFeedItemCard item={item} />)
     expect(screen.getByTestId('user-post-card')).toBeInTheDocument()
-    expect(screen.getByText('Hello HOCKIA community!')).toBeInTheDocument()
+    expect(screen.getByText('Hello Hockia community!')).toBeInTheDocument()
   })
 
   it('renders MilestoneCard for 100% completion', () => {

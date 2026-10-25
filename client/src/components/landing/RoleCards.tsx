@@ -141,7 +141,7 @@ export function RoleCard({ role, now, onClick, className = '' }: {
       <div className="mt-auto flex items-center justify-between border-t border-line pt-4">
         <span className="text-[14px] leading-5 text-ink-3">Apply in the app</span>
         <span className={webButtonClassName({ variant: 'link', size: 'medium', className: 'h-5 group-hover/card:underline' })}>
-          View role
+          View opportunity
           <ChevronRight className={`${WEB_LINK_CHEVRON} group-hover/card:translate-x-0.5`} aria-hidden="true" />
         </span>
       </div>

@@ -63,33 +63,33 @@ describe('sanitizePath', () => {
 
 describe('pathToSafeTitle', () => {
   it('returns a generic title for identifying routes', () => {
-    expect(pathToSafeTitle('/players/id/:id', 'Valentina — Player | HOCKIA')).toBe(
-      'Player profile | HOCKIA',
+    expect(pathToSafeTitle('/players/id/:id', 'Valentina — Player | Hockia')).toBe(
+      'Player profile | Hockia',
     )
-    expect(pathToSafeTitle('/coaches/id/:id', 'John — Coach | HOCKIA')).toBe(
-      'Coach profile | HOCKIA',
+    expect(pathToSafeTitle('/coaches/id/:id', 'John — Coach | Hockia')).toBe(
+      'Coach profile | Hockia',
     )
-    expect(pathToSafeTitle('/clubs/id/:id', 'AFC | HOCKIA')).toBe('Club profile | HOCKIA')
-    expect(pathToSafeTitle('/umpires/id/:id', 'Pat | HOCKIA')).toBe('Umpire profile | HOCKIA')
-    expect(pathToSafeTitle('/brands/nike', 'Nike | HOCKIA')).toBe('Brand profile | HOCKIA')
-    expect(pathToSafeTitle('/opportunities/:id', 'Goalkeeper wanted | HOCKIA')).toBe(
-      'Opportunity detail | HOCKIA',
+    expect(pathToSafeTitle('/clubs/id/:id', 'AFC | Hockia')).toBe('Club profile | Hockia')
+    expect(pathToSafeTitle('/umpires/id/:id', 'Pat | Hockia')).toBe('Umpire profile | Hockia')
+    expect(pathToSafeTitle('/brands/nike', 'Nike | Hockia')).toBe('Brand profile | Hockia')
+    expect(pathToSafeTitle('/opportunities/:id', 'Goalkeeper wanted | Hockia')).toBe(
+      'Opportunity detail | Hockia',
     )
-    expect(pathToSafeTitle('/admin/users/:id', 'tianurien | Admin | HOCKIA')).toBe(
-      'Admin user detail | HOCKIA',
+    expect(pathToSafeTitle('/admin/users/:id', 'tianurien | Admin | Hockia')).toBe(
+      'Admin user detail | Hockia',
     )
-    expect(pathToSafeTitle('/conversations/:id', 'Chat with Maria | HOCKIA')).toBe(
-      'Conversation | HOCKIA',
+    expect(pathToSafeTitle('/conversations/:id', 'Chat with Maria | Hockia')).toBe(
+      'Conversation | Hockia',
     )
   })
 
   it('returns the fallback title for non-identifying routes', () => {
-    expect(pathToSafeTitle('/home', 'Feed | HOCKIA')).toBe('Feed | HOCKIA')
-    expect(pathToSafeTitle('/admin/ai-opinions', 'AI Opinions | HOCKIA Admin')).toBe(
-      'AI Opinions | HOCKIA Admin',
+    expect(pathToSafeTitle('/home', 'Feed | Hockia')).toBe('Feed | Hockia')
+    expect(pathToSafeTitle('/admin/ai-opinions', 'AI Opinions | Hockia Admin')).toBe(
+      'AI Opinions | Hockia Admin',
     )
-    expect(pathToSafeTitle('/dashboard/profile', 'My profile | HOCKIA')).toBe(
-      'My profile | HOCKIA',
+    expect(pathToSafeTitle('/dashboard/profile', 'My profile | Hockia')).toBe(
+      'My profile | Hockia',
     )
   })
 
@@ -97,7 +97,7 @@ describe('pathToSafeTitle', () => {
     // The whole point: an identifying route should ALWAYS produce
     // the generic title, regardless of what document.title contains.
     expect(
-      pathToSafeTitle('/players/id/:id', 'Real Full Name Here — Player | HOCKIA'),
+      pathToSafeTitle('/players/id/:id', 'Real Full Name Here — Player | Hockia'),
     ).not.toContain('Real Full Name Here')
   })
 })

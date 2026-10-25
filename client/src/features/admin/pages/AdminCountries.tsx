@@ -56,7 +56,7 @@ export function AdminCountries() {
   }, [filters])
 
   useEffect(() => {
-    document.title = 'Countries | HOCKIA Admin'
+    document.title = 'Countries | Hockia Admin'
     fetchData()
   }, [fetchData])
 
@@ -123,7 +123,7 @@ export function AdminCountries() {
             <Globe2 className="w-6 h-6 text-purple-600" /> Countries &amp; Nationalities
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Where HOCKIA&apos;s members are from, dual nationality, and EU eligibility.
+            Where Hockia&apos;s members are from, dual nationality, and EU eligibility.
           </p>
         </div>
         <button

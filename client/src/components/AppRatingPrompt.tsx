@@ -113,11 +113,11 @@ export default function AppRatingPrompt() {
         <div className="py-2 text-center">
           <div className="text-2xl">💜</div>
           <p className="mt-1 text-sm font-semibold text-gray-900">Thank you!</p>
-          <p className="mt-0.5 text-xs text-gray-600">Your feedback helps us improve HOCKIA.</p>
+          <p className="mt-0.5 text-xs text-gray-600">Your feedback helps us improve Hockia.</p>
         </div>
       ) : (
         <>
-          <h3 className="pr-6 text-base font-bold text-gray-900">Enjoying HOCKIA?</h3>
+          <h3 className="pr-6 text-base font-bold text-gray-900">Enjoying Hockia?</h3>
           <p className="mt-0.5 text-xs text-gray-600">
             Your feedback helps us improve the field hockey community.
           </p>
@@ -125,7 +125,7 @@ export default function AppRatingPrompt() {
           <div
             className="mt-3 flex items-center gap-1.5"
             role="radiogroup"
-            aria-label="Rate HOCKIA from 1 to 5 stars"
+            aria-label="Rate Hockia from 1 to 5 stars"
             onMouseLeave={() => setHover(0)}
           >
             {[1, 2, 3, 4, 5].map((n) => (

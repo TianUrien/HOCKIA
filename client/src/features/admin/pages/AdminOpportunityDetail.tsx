@@ -74,7 +74,7 @@ export function AdminOpportunityDetail() {
   }, [id, statusFilter, page])
 
   useEffect(() => {
-    document.title = 'Opportunity Detail | HOCKIA Admin'
+    document.title = 'Opportunity Detail | Hockia Admin'
     fetchData()
   }, [fetchData])
 
@@ -94,7 +94,7 @@ export function AdminOpportunityDetail() {
 
   const statusLabels: Record<ApplicationStatus, string> = {
     pending: 'Unsorted',
-    shortlisted: 'Good fit',
+    shortlisted: 'Top pick',
     maybe: 'Maybe',
     rejected: 'Not a fit',
   }
@@ -327,7 +327,7 @@ export function AdminOpportunityDetail() {
             </div>
             <div className="text-center p-3 bg-emerald-50 rounded-lg">
               <p className="text-2xl font-bold text-emerald-600">{stats.shortlisted}</p>
-              <p className="text-xs text-gray-500">Good fit</p>
+              <p className="text-xs text-gray-500">Top pick</p>
             </div>
             <div className="text-center p-3 bg-amber-50 rounded-lg">
               <p className="text-2xl font-bold text-amber-600">{stats.maybe}</p>
@@ -377,7 +377,7 @@ export function AdminOpportunityDetail() {
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50">
             <Star className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm font-medium text-gray-700">Good fit</span>
+            <span className="text-sm font-medium text-gray-700">Top pick</span>
             <span className="text-sm font-bold text-emerald-600">{stats.shortlisted}</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50">
@@ -410,7 +410,7 @@ export function AdminOpportunityDetail() {
           >
             <option value="all">All statuses</option>
             <option value="pending">Unsorted</option>
-            <option value="shortlisted">Good fit</option>
+            <option value="shortlisted">Top pick</option>
             <option value="maybe">Maybe</option>
             <option value="rejected">Not a fit</option>
           </select>

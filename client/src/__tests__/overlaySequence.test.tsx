@@ -55,7 +55,7 @@ const renderApp = (path = '/home') =>
 
 const termsModal = () => screen.queryByText(/terms of use/i)
 const cookieBanner = () => screen.queryByRole('region', { name: /cookie consent/i })
-const installCard = () => screen.queryByText('Install HOCKIA')
+const installCard = () => screen.queryByText('Install Hockia')
 
 function offerInstall() {
   const event = new Event('beforeinstallprompt') as Event & { prompt: () => Promise<void>; userChoice: Promise<unknown>; platforms: string[] }

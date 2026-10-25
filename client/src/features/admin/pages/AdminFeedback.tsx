@@ -122,7 +122,7 @@ export function AdminFeedback() {
   }, [offset, statusFilter, categoryFilter, urgentOnly])
 
   useEffect(() => {
-    document.title = 'User Feedback | HOCKIA Admin'
+    document.title = 'User Feedback | Hockia Admin'
   }, [])
 
   useEffect(() => {

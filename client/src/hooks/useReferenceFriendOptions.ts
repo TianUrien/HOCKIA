@@ -59,7 +59,7 @@ export function useReferenceFriendOptions(profileId: string | null) {
 
       const options: ReferenceFriendOption[] = (profiles ?? []).map((p) => ({
         id: p.id,
-        fullName: p.full_name || p.username || 'HOCKIA Member',
+        fullName: p.full_name || p.username || 'Hockia Member',
         username: p.username,
         avatarUrl: p.avatar_url,
         role: p.role,

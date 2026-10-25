@@ -68,7 +68,7 @@ export function RankedForSheet({ open, contexts, activeId, roles, onPick, onClos
         </button>
       </div>
       <div role="radiogroup" aria-label="Ranked for" className="flex flex-col gap-2 px-5 pb-4">
-        {roleContexts.length > 0 && <p className="pt-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Your open roles</p>}
+        {roleContexts.length > 0 && <p className="pt-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Your open opportunities</p>}
         {roleContexts.map((c) => option(c.id, roleTitle(c), roleDetail(c), c.id === activeId, () => onPick(c)))}
         {saved.length > 0 && <p className="pt-3 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Saved contexts</p>}
         {saved.map((c) => option(c.id, contextPillLabel(c), ['Saved search', c.region?.trim()].filter(Boolean).join(' · '), c.id === activeId, () => onPick(c)))}

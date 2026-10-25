@@ -15,8 +15,8 @@ import { NETWORK_ERROR_COPY, couldntLoadTitle } from '@/lib/networkCopy'
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
 
 describe('Community offline', () => {
-  it('one network line for the role page, sign-in and Community', () => {
-    expect(NETWORK_ERROR_COPY).toBe('Couldn’t reach HOCKIA. Check your connection and try again.')
+  it('one network line for the opportunity page, sign-in and Community', () => {
+    expect(NETWORK_ERROR_COPY).toBe('Couldn’t reach Hockia. Check your connection and try again.')
     expect(src('pages/OpportunityDetailPage.tsx')).toContain("from '@/lib/networkCopy'")
     expect(src('pages/AuthScreen.tsx')).toContain("from '@/lib/networkCopy'")
     expect(src('components/community/PeopleListView.tsx')).toContain('{NETWORK_ERROR_COPY}')

@@ -28,7 +28,7 @@ const TITLES: Record<ReportSubject, string> = {
   post: 'Report this post',
   comment: 'Report this comment',
   chat: 'Report this chat',
-  role: 'Report this role',
+  role: 'Report this opportunity',
   feed_item: 'Report this post',
   feed_item_comment: 'Report this comment',
   video: 'Report this video',

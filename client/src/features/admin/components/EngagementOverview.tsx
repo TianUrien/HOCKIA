@@ -122,11 +122,11 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
   return (
     <div className="space-y-3">
       {/* ── 1. ENGAGEMENT ─────────────────────────────────────────────── */}
-      <SectionHeading title="Engagement" hint="who is actually using HOCKIA" />
+      <SectionHeading title="Engagement" hint="who is actually using Hockia" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <MetricTile
           label="Daily Active Users"
-          info={<InfoTip metric="dau" interpretation={`${dau} people used HOCKIA on ${dauDay}, the last complete day. Today is never counted while it is still running. For a weekly-rhythm sport, daily spikes matter less than the weekly habit.`} />}
+          info={<InfoTip metric="dau" interpretation={`${dau} people used Hockia on ${dauDay}, the last complete day. Today is never counted while it is still running. For a weekly-rhythm sport, daily spikes matter less than the weekly habit.`} />}
           value={dau.toLocaleString()}
           sub={`active ${dauDay} · last complete day`}
         />
@@ -138,7 +138,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
         />
         <MetricTile
           label="Monthly Active Users"
-          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used HOCKIA in the last 30 complete days: the product's current reach.`} />}
+          info={<InfoTip metric="mau" interpretation={`${mau} distinct people used Hockia in the last 30 complete days: the product's current reach.`} />}
           value={mau.toLocaleString()}
           sub="active in the last 30 complete days"
         />
@@ -212,7 +212,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
       </div>
 
       {/* ── 4. NORTH STAR — THE RECRUITING LOOP ───────────────────────── */}
-      <SectionHeading title="North Star: Real Connections" hint="the recruiting loop, from a role posted to a signing" />
+      <SectionHeading title="North Star: Real Connections" hint="the recruiting loop, from an opportunity posted to a signing" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <RecruitingFunnelCard days={days} />
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
@@ -235,7 +235,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
 
       <p className="flex items-center gap-2 text-[11px] text-gray-400">
         <MessagesSquare className="h-3 w-3" />
-        Hover any ⓘ for what a metric means, how it’s calculated, and how HOCKIA compares to industry benchmarks.
+        Hover any ⓘ for what a metric means, how it’s calculated, and how Hockia compares to industry benchmarks.
       </p>
     </div>
   )

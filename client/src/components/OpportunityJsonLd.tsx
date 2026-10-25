@@ -204,7 +204,7 @@ export default function VacancyJsonLd({ vacancy, club }: VacancyJsonLdProps) {
       // Identifier for deduplication
       identifier: {
         '@type': 'PropertyValue',
-        name: 'HOCKIA Opportunity ID',
+        name: 'Hockia Opportunity ID',
         value: vacancy.id,
       },
     }
@@ -263,7 +263,7 @@ export function OpportunitiesListJsonLd({ opportunities, totalCount }: Opportuni
     return {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      name: 'Field Hockey Opportunities on HOCKIA',
+      name: 'Field Hockey Opportunities on Hockia',
       description: `Browse ${totalCount} open field hockey opportunities for players and coaches worldwide.`,
       numberOfItems: totalCount,
       itemListElement: opportunities.slice(0, 10).map((opp, index) => ({

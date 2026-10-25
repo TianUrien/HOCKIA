@@ -74,7 +74,7 @@ describe('club recruiting copy', () => {
     expect(rows.some((r) => /\b(his|her|him|himself|herself)\b/i.test(r.detail))).toBe(false)
   })
 
-  it('writes the role line under every person', () => {
+  it('writes the opportunity line under every person', () => {
     expect(personRoleLine({ role: 'player', position: 'midfielder', secondaryPosition: 'defender' })).toBe('Player · Midfielder · Defender')
     expect(personRoleLine({ role: 'player', position: 'midfielder', secondaryPosition: 'midfielder' })).toBe('Player · Midfielder')
   })

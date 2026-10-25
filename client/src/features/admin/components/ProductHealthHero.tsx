@@ -293,7 +293,7 @@ export function ProductHealthHero() {
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-1">
             <Activity className="w-4 h-4" />
-            HOCKIA Product Health Score
+            Hockia Product Health Score
           </div>
           <p className="text-xs text-gray-500">
             Strict score: only value-producing loops count. Computed {new Date(score.computed_at).toLocaleString()}.

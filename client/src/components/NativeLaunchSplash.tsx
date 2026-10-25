@@ -42,7 +42,7 @@ export default function NativeLaunchSplash() {
       data-testid="native-launch-splash"
       className="fixed inset-0 z-[9995] overflow-hidden"
       style={{ backgroundColor: '#5929a8' }}
-      aria-label="Loading HOCKIA"
+      aria-label="Loading Hockia"
     >
       <img
         src={LAUNCH_ARTWORK_URL}

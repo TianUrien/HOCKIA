@@ -23,7 +23,7 @@ const card = (applied: boolean, p: Partial<Vacancy> = {}, onOpen = vi.fn()) =>
   render(<RoleCard vacancy={vac(p)} clubName="Hockey Team Bologna" clubLogo={null} publisherRole="club" countryFlag="🇮🇹" league="Serie A1" applied={applied} onOpen={onOpen} />)
 
 describe('Card / Role', () => {
-  it('has no button inside: the whole card is one tap target named by the role title', () => {
+  it('has no button inside: the whole card is one tap target named by the opportunity title', () => {
     const onOpen = vi.fn()
     card(false, {}, onOpen)
     const buttons = screen.getAllByRole('button')

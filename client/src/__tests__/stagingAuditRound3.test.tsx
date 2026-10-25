@@ -157,7 +157,7 @@ describe('desktop closed role: Message the club', () => {
   it('applicant sees Message the club inside the closed box', () => {
     const onMessage = renderDesktop(true)
     const box = screen.getByTestId('own-application')
-    expect(box.textContent).toContain('This role is closed')
+    expect(box.textContent).toContain('This opportunity is closed')
     const btn = screen.getByTestId('closed-message-club')
     expect(box.contains(btn)).toBe(true)
     fireEvent.click(btn)
@@ -199,7 +199,7 @@ describe('desktop timeline: whose words the note is', () => {
     expect(screen.queryByTestId('timeline-club-note')).toBeNull()
   })
 
-  it('fixed copy (role filled) has no sparkle', async () => {
+  it('fixed copy (opportunity filled) has no sparkle', async () => {
     tables.opportunity_applications = { id: 'app-1', status: 'filled', applied_at: '2026-09-03T00:00:00Z', ai_feedback: null }
     tables.application_status_history = [{ ...history[0], new_status: 'filled' }]
     tables.application_views = []

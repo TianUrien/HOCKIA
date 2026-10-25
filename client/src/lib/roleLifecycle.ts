@@ -62,19 +62,19 @@ export const WAITING_APPLICATION_STATUSES = ['pending', 'shortlisted', 'maybe', 
  *  just what happened, and that applicants were told ONLY when some were still
  *  waiting (founder copy 2026-09-26; round 5: never claim it with 0). */
 export function closeRoleToast(outcome: RoleCloseOutcome, waitingApplicants = 0): string {
-  if (outcome !== 'filled') return 'Role closed.'
-  return waitingApplicants > 0 ? 'Role closed as filled. Applicants have been told.' : 'Role closed as filled.'
+  if (outcome !== 'filled') return 'Opportunity closed.'
+  return waitingApplicants > 0 ? 'Opportunity closed as filled. Applicants have been told.' : 'Opportunity closed as filled.'
 }
 
 /** Toast after a close that told the waiting players (Club speed CS6). */
 export function closeRoleToldToast(told: number, failed: number): string {
   const who = (n: number) => (n === 1 ? '1 player' : `${n} players`)
-  if (told === 0 && failed > 0) return `Role closed. Couldn’t tell ${who(failed)}.`
-  return failed > 0 ? `Role closed. ${who(told)} told; couldn’t tell ${failed}.` : `Role closed. ${who(told)} told.`
+  if (told === 0 && failed > 0) return `Opportunity closed. Couldn’t tell ${who(failed)}.`
+  return failed > 0 ? `Opportunity closed. ${who(told)} told; couldn’t tell ${failed}.` : `Opportunity closed. ${who(told)} told.`
 }
 
 /** Reopen toast — phone and desktop share it. */
-export const REOPEN_ROLE_TOAST = 'Role reopened.'
+export const REOPEN_ROLE_TOAST = 'Opportunity reopened.'
 
 /** The "not filled" close choice — phone and desktop share it. */
 export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'
@@ -85,7 +85,7 @@ export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'
 export const SIGNING_LOCK_STATUSES = ['signed', 'signed_pending_confirmation'] as const
 
 /** Founder copy 2026-10-09: why "Delete permanently" is off for such a role. */
-export const ROLE_HAS_SIGNING_MESSAGE = 'This role has a confirmed signing, so it can’t be deleted. Close it instead.'
+export const ROLE_HAS_SIGNING_MESSAGE = 'This opportunity has a confirmed signing, so it can’t be deleted. Close it instead.'
 
 /** True when a delete was refused by the server because the role has a signing
  *  (P0001 from guard_opportunity_delete_with_signing). */

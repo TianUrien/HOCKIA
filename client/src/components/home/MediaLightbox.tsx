@@ -326,7 +326,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
             <div className="flex items-center gap-2.5">
               <EntityAvatar src={author.avatarUrl} name={author.name} role={author.role} size={36} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-row font-semibold text-white">{author.name ?? 'HOCKIA member'}</p>
+                <p className="truncate text-row font-semibold text-white">{author.name ?? 'Hockia member'}</p>
                 <p className="truncate text-secondary text-[#d1d1d6]">{identityLine(author.role)}</p>
               </div>
               {author.profilePath && (

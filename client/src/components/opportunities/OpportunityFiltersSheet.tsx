@@ -58,8 +58,8 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
         <section className="flex flex-col gap-2.5">
           <h3 className="text-row font-semibold text-ink-1">Type</h3>
           <div className="flex flex-wrap gap-2">
-            <Chip label="Player roles" selected={draft.type === 'player'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'player' ? 'all' : 'player' }))} />
-            <Chip label="Coach roles" selected={draft.type === 'coach'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'coach' ? 'all' : 'coach', position: '', gender: '' }))} />
+            <Chip label="Player opportunities" selected={draft.type === 'player'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'player' ? 'all' : 'player' }))} />
+            <Chip label="Coach opportunities" selected={draft.type === 'coach'} onClick={() => setDraft((d) => ({ ...d, type: d.type === 'coach' ? 'all' : 'coach', position: '', gender: '' }))} />
           </div>
         </section>
 
@@ -95,7 +95,7 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
 
         {passportHint && (
           <SwitchCardRow
-            title="Only roles my passports qualify for"
+            title="Only opportunities my passports qualify for"
             description={passportHint}
             checked={draft.eligibleOnly}
             onChange={() => setDraft((d) => ({ ...d, eligibleOnly: !d.eligibleOnly }))}
@@ -109,7 +109,7 @@ export function OpportunityFiltersSheet({ open, onClose, value, onApply, countFo
           className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-1' })}
           data-testid="opportunity-filter-show"
         >
-          {count === 1 ? 'Show 1 role' : `Show ${count} roles`}
+          {count === 1 ? 'Show 1 opportunity' : `Show ${count} opportunities`}
         </button>
       </div>
     </BottomSheet>

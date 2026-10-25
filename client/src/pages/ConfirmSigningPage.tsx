@@ -97,7 +97,7 @@ export default function ConfirmSigningPage() {
       const text = signingShareText(clubName)
       try {
         if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-          await navigator.share({ title: 'HOCKIA', text, url: url ?? undefined })
+          await navigator.share({ title: 'Hockia', text, url: url ?? undefined })
           return
         }
         await navigator.clipboard.writeText(url ? `${text} ${url}` : text)

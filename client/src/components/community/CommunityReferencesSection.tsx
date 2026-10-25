@@ -302,7 +302,7 @@ export default function CommunityReferencesSection({
             {acceptedReferences.map((reference) => {
               const isExpanded = expandedRefId === reference.id
               const profile = reference.profile
-              const fullName = profile?.fullName ?? 'HOCKIA Member'
+              const fullName = profile?.fullName ?? 'Hockia Member'
               return (
                 <li
                   key={reference.id}
@@ -450,7 +450,7 @@ export default function CommunityReferencesSection({
             <ul className="space-y-2.5">
               {incomingRequests.map((request) => {
                 const requester = request.requesterProfile
-                const fullName = requester?.fullName ?? 'HOCKIA Member'
+                const fullName = requester?.fullName ?? 'Hockia Member'
                 return (
                   <li
                     key={request.id}
@@ -561,7 +561,7 @@ export default function CommunityReferencesSection({
           <ul className="space-y-2.5">
             {givenReferences.map((reference) => {
               const requester = reference.requesterProfile
-              const fullName = requester?.fullName ?? 'HOCKIA Member'
+              const fullName = requester?.fullName ?? 'Hockia Member'
               const hasEndorsement = Boolean(reference.endorsementText)
               return (
                 <li

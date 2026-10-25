@@ -252,10 +252,10 @@ export function stepProblem(d: PostRoleDraft, step: Step): string | null {
     return null
   }
   if (step === 2) {
-    if (!d.city.trim() || !d.country.trim()) return 'Add where the role is.'
+    if (!d.city.trim() || !d.country.trim()) return 'Add where the opportunity is.'
     return null
   }
-  if (d.description.length > DESCRIPTION_MAX) return `Keep “About the role” to ${DESCRIPTION_MAX} characters.`
+  if (d.description.length > DESCRIPTION_MAX) return `Keep “About the opportunity” to ${DESCRIPTION_MAX} characters.`
   return stepProblem(d, 1) ?? stepProblem(d, 2)
 }
 
@@ -268,7 +268,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     position: d.position,
     position_required: player && d.positionRequired,
     gender: player ? playerRoleGender(d.gender) : d.gender,
-    title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New role',
+    title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New opportunity',
     level_sought: d.level,
     level_required: player && d.levelRequired && d.level !== null,
     specialist_skills_wanted: player ? pruneSpecialistSkillsForPosition(d.skills, d.position) : [],
@@ -359,7 +359,7 @@ export function coachChecklist(d: PostRoleDraft): ChecklistItem[] {
     { key: 'pay', label: 'Pay', ok: d.pay !== null },
     { key: 'relocation', label: 'Housing and visa support', ok: d.benefits.includes('housing') && d.benefits.includes('visa') },
     { key: 'team', label: 'Team and level', ok: Boolean(d.gender && d.level) },
-    { key: 'about', label: 'A few lines about the role and the squad', ok: d.description.trim().length >= 40 },
+    { key: 'about', label: 'A few lines about the opportunity and the squad', ok: d.description.trim().length >= 40 },
   ]
 }
 
@@ -444,9 +444,9 @@ export function rolePostedCopy(d: Pick<PostRoleDraft, 'type' | 'position'>): Rol
   const player = d.type === 'player'
   const who = player ? 'players' : 'coaches'
   return {
-    title: `${positionLabel(d.position) ?? 'Your role'} is live`,
+    title: `${positionLabel(d.position) ?? 'Your opportunity'} is live`,
     body: `${player ? 'Players' : 'Coaches'} who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.`,
-    findLabel: `Find ${who} for this role`,
+    findLabel: `Find ${who} for this opportunity`,
     pushTitle: `Know when ${who} apply`,
   }
 }

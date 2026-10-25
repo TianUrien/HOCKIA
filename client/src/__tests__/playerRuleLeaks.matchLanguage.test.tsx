@@ -119,19 +119,19 @@ describe('Pulse OpportunitiesForYou — no "Matched" chip', () => {
   })
 })
 
-describe('Home YourWeekCard — "roles for you"', () => {
-  it('a player sees "roles for you", never "match"', () => {
+describe('Home YourWeekCard — "opportunities for you"', () => {
+  it('a player sees "opportunities for you", never "match"', () => {
     setViewer('player')
     oppsForYou.value.mode = 'matched'
     render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(screen.getByText('roles for you')).toBeInTheDocument()
+    expect(screen.getByText('opportunities for you')).toBeInTheDocument()
     expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
   })
 
   it('a coach sees the same wording', () => {
     setViewer('coach')
     render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(screen.getByText('roles for you')).toBeInTheDocument()
+    expect(screen.getByText('opportunities for you')).toBeInTheDocument()
     expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
   })
 })

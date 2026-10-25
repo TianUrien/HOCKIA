@@ -68,7 +68,7 @@ describe('PushPrompt: once per member, only after a moment of intent', () => {
     expect(await screen.findByText('Stay in the loop')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Stay in the loop' })).toBeInTheDocument()
     expect(screen.getByText(PUSH_ASK_BODY)).toBeInTheDocument()
-    expect(PUSH_ASK_BODY).toBe('Get notified about messages, applications and roles, even when the app is closed.')
+    expect(PUSH_ASK_BODY).toBe('Get notified about messages, applications and opportunities, even when the app is closed.')
     expect(PUSH_ASK_BODY).not.toContain('—')
     expect(screen.getByRole('button', { name: 'Turn on notifications' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Not now' })).toBeInTheDocument()

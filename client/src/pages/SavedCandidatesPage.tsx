@@ -151,7 +151,7 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
     // user can still remove it.
     return (
       <li className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
-        This player is no longer available on HOCKIA.
+        This player is no longer available on Hockia.
       </li>
     )
   }

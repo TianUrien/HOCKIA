@@ -61,7 +61,7 @@ export function AdminChurn() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Churn & Retention | HOCKIA Admin'
+    document.title = 'Churn & Retention | Hockia Admin'
     fetchData()
   }, [fetchData])
 

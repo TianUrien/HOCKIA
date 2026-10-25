@@ -25,18 +25,18 @@ beforeEach(() => { rpc.mockReset(); track.mockReset() })
 describe('goal card rows: real data only (Figma G3 / G5)', () => {
   it('player: roles abroad for their position; a row without data is hidden', () => {
     expect(goalRows('player', { options: ['play_abroad', 'get_sponsor'] }, { roles_abroad: 12, roles_home: 5, position: 'midfielder' }, 'United Kingdom'))
-      .toEqual([{ key: 'abroad', goal: 'play_abroad', text: '12 open roles abroad for midfielders', action: 'See', to: '/opportunities' }])
+      .toEqual([{ key: 'abroad', goal: 'play_abroad', text: '12 open opportunities abroad for midfielders', action: 'See', to: '/opportunities' }])
     expect(goalRows('player', { options: ['play_abroad'] }, { roles_abroad: 0 }, 'England')).toEqual([])
-    expect(goalRows('player', { options: ['club_near_me'] }, { roles_home: 1 }, 'Netherlands')[0].text).toBe('1 open role in the Netherlands')
+    expect(goalRows('player', { options: ['club_near_me'] }, { roles_home: 1 }, 'Netherlands')[0].text).toBe('1 open opportunity in the Netherlands')
   })
   it('never shows the Phase 4 rows (sponsor, ambassadors)', () => {
     expect(goalRows('player', { options: ['get_sponsor'] }, { roles_abroad: 3 }, 'England')).toEqual([])
     expect(goalRows('brand', { options: ['find_ambassadors'] }, {}, 'England')).toEqual([])
   })
-  it('club: open roles and applicants waiting, then post another; no roles = post a role', () => {
+  it('club: open opportunities and applicants waiting, then post another; no roles = post a role', () => {
     const rows = goalRows('club', { options: ['fill_role'] }, { open_roles: 2, applicants_waiting: 4 }, null)
-    expect(rows.map((r) => r.text)).toEqual(['2 open roles · 4 applicants waiting', 'Post another role in under a minute'])
-    expect(goalRows('club', { options: ['fill_role'] }, { open_roles: 0 }, null)[0].text).toBe('Post a role in under a minute')
+    expect(rows.map((r) => r.text)).toEqual(['2 open opportunities · 4 applicants waiting', 'Post another opportunity in under a minute'])
+    expect(goalRows('club', { options: ['fill_role'] }, { open_roles: 0 }, null)[0].text).toBe('Post an opportunity in under a minute')
   })
   it('title joins the picks in option order, then the member’s words', () => {
     expect(goalTitle('player', { options: ['get_sponsor', 'play_abroad'], other_text: 'Play in Germany' })).toBe('Play abroad · Get a sponsor · Play in Germany')

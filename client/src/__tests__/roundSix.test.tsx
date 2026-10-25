@@ -53,10 +53,10 @@ describe('Fit card: which role it measures', () => {
   const mid: ClubRole = { id: 'mid', title: '[QA] Midfielder R6', gender: 'Men' }
   const applied = { id: 'a1', status: 'pending', appliedAt: null, metadata: {}, role: mid, expiryDays: 14 } as ClubViewApplication
 
-  it('the active Ranked-for role wins over the role the player applied to', () => {
+  it('the active Ranked-for role wins over the opportunity the player applied to', () => {
     expect(pickFitRole({ application: applied, roles: [gk, mid], activeOpportunityId: 'gk' })).toBe(gk)
   })
-  it('no active role (or one that is not an open role of this kind) → the applied role, else the only open role', () => {
+  it('no active role (or one that is not an open opportunity of this kind) → the applied role, else the only open opportunity', () => {
     expect(pickFitRole({ application: applied, roles: [gk, mid], activeOpportunityId: null })).toBe(mid)
     expect(pickFitRole({ application: applied, roles: [gk, mid], activeOpportunityId: 'coach-role' })).toBe(mid)
     expect(pickFitRole({ application: null, roles: [gk], activeOpportunityId: null })).toBe(gk)
@@ -66,18 +66,18 @@ describe('Fit card: which role it measures', () => {
   const player = { playing_category: 'adult_men', last_active_at: new Date().toISOString(), current_club: null, full_name: 'Sam Player' }
   const fit = (state: 'green' | 'yellow' | 'grey', components: FitComponents) => ({ state, components, playerLeagueBanded: true, clubLeagueBanded: true })
 
-  it('the card names the role; a goalkeeper role on a midfielder shows with no chip', () => {
+  it('the card names the opportunity; a goalkeeper role on a midfielder shows with no chip', () => {
     render(<FitForRoleCard role={gk} player={player} fit={fit('grey', { gender_match: 1, competition_proximity: 1, availability: 1, recency: 1, position_match: 0, role_position: 'goalkeeper', candidate_position: 'midfielder' })} />)
     expect(screen.getByTestId('fit-card-title').textContent).toBe('Fit for [QA] Goalkeeper R6')
     expect(screen.queryByTestId('fit-badge')).toBeNull()
-    expect(screen.getByText('Midfielder · the role is for a Goalkeeper')).toBeTruthy()
+    expect(screen.getByText('Midfielder · the opportunity is for a Goalkeeper')).toBeTruthy()
     expect(screen.queryByText(/matches$/)).toBeNull()
   })
   it('a plain grey fit (no confirmed miss) still hides the card', () => {
     const { container } = render(<FitForRoleCard role={mid} player={{ ...player, playing_category: null }} fit={fit('grey', { gender_match: 0, competition_proximity: 0, availability: 0, recency: 0 })} />)
     expect(container.innerHTML).toBe('')
   })
-  it('green keeps the chip and the role name', () => {
+  it('green keeps the chip and the opportunity name', () => {
     render(<FitForRoleCard role={mid} player={player} fit={fit('green', { gender_match: 1, competition_proximity: 1, availability: 1, recency: 1, position_match: 1, role_position: 'midfielder', candidate_position: 'midfielder' })} />)
     expect(screen.getByTestId('fit-card-title').textContent).toBe('Fit for [QA] Midfielder R6')
     expect(screen.getByTestId('fit-badge').textContent).toContain('Strong fit')
@@ -91,18 +91,18 @@ describe('Fit card: which role it measures', () => {
 // ── 2. Category mismatch = no chip ───────────────────────────────────────────
 describe('category mismatch', () => {
   const base = { firstName: 'Sam', lastActiveDays: 0, playerClub: null, playerLeagueKnown: true, clubLeagueKnown: true }
-  it('women on a Men\'s role: "Adult women — the role is for Men’s"', () => {
+  it('women on a Men\'s role: "Adult women — the opportunity is for Men’s"', () => {
     const rows = fitRows({ gender_match: 0, competition_proximity: 1, availability: 1, recency: 1 }, { ...base, roleGender: 'Men', playerCategoryLabel: 'Adult women' })
     const cat = rows.find((r) => r.key === 'category')!
     expect(cat.ok).toBe(false)
-    expect(cat.detail).toBe('Adult women · the role is for Men’s')
+    expect(cat.detail).toBe('Adult women · the opportunity is for Men’s')
   })
   it('men on a Women\'s role, youth and Mixed wording', () => {
     const miss = (g: string) => fitRows({ gender_match: 0 }, { ...base, roleGender: g, playerCategoryLabel: 'Adult men' }).find((r) => r.key === 'category')!.detail
-    expect(miss('Women')).toBe('Adult men · the role is for Women’s')
-    expect(miss('Girls')).toBe('Adult men · the role is for Girls')
+    expect(miss('Women')).toBe('Adult men · the opportunity is for Women’s')
+    expect(miss('Girls')).toBe('Adult men · the opportunity is for Girls')
     const ok = fitRows({ gender_match: 1 }, { ...base, roleGender: 'Mixed', playerCategoryLabel: 'Adult men' }).find((r) => r.key === 'category')!.detail
-    expect(ok).toBe('Adult men · matches a Mixed role')
+    expect(ok).toBe('Adult men · matches a Mixed opportunity')
     expect(roleTeamWord('Boys')).toBe('Boys')
     expect(roleTeamWord(null)).toBeNull()
   })
@@ -114,7 +114,7 @@ describe('category mismatch', () => {
   it('women on a Men\'s role renders without a chip', () => {
     render(<FitForRoleCard role={{ id: 'm', title: 'Men’s midfielder', gender: 'Men' }} player={{ playing_category: 'adult_women', full_name: 'Alex' }} fit={{ state: 'grey', components: { gender_match: 0, competition_proximity: 1, availability: 1, recency: 1 }, playerLeagueBanded: true, clubLeagueBanded: true }} />)
     expect(screen.queryByTestId('fit-badge')).toBeNull()
-    expect(screen.getByText(/the role is for Men’s$/)).toBeTruthy()
+    expect(screen.getByText(/the opportunity is for Men’s$/)).toBeTruthy()
   })
   it('the migration caps a confirmed category miss and keeps the security model', () => {
     const sql = repo('supabase/migrations/20260930200000_club_fit_category_cap.sql')
