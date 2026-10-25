@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.inhockia.app',
-  appName: 'HOCKIA',
+  appName: 'Hockia',
   webDir: 'dist',
   // Capacitor's default WebView origin on Android is https://localhost.
   // Google Places (and any other HTTP-referrer-restricted API key) rejects
