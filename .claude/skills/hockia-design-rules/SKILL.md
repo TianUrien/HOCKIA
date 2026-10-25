@@ -45,7 +45,7 @@ Read the core rules below, then open only the reference you need:
 - **Amber only when the viewer must act** (a reply owed, ≤ 5 days left). Closed outcomes grey; trust (references) gold; success green.
 - **Sizes.** Every tap target ≥ 44 pt. Primary in sticky action bars 52 pt; Button Large 48, Small 36 (44 hit). Bottom sheets radius 28 everywhere (2026-10-11).
 - **Copy** is English, sentence case, gender-neutral (name or "they"), plain and specific. Never promise outcomes (placements, signings, guarantees, rankings, "accurate AI"); never invent metrics, percentages or counts; label sample data as illustrative.
-- **Players never see** fit scores, counts of other applicants, levels, rankings or reply-time estimates; players see "Not selected", never "Declined".
+- **Players never see** fit scores, counts of other applicants, levels, rankings or reply-time estimates; players see "Not this time", never "Declined" (2026-10-25, replaces "Not selected").
 - **No Save/bookmark surfaces** for players (2026-09-20). **No activity / last-seen signals** on profiles, cards or Community (2026-10-12); only the chat header may show activity, and only if the user allows it.
 - **Privacy & safety.** Every list, count, summary or AI read of people respects hidden profiles (blocked or frozen minors). Date of birth is owner-only (others see age). Never accept photos of ID documents. AI never judges or compares people by age, gender, nationality or appearance.
 - **Respect what exists.** Reuse the status words, enums and copy helpers already in code (`lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/statusTone.ts`, …) and existing components before inventing new ones. Flag anything that needs backend.
