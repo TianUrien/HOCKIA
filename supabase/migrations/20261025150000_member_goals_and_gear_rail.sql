@@ -44,6 +44,8 @@ AS $$
     ELSE ARRAY[]::text[]
   END;
 $$;
+-- Internal helper: only the SECURITY DEFINER functions below call it.
+REVOKE ALL ON FUNCTION public.goal_option_keys(text) FROM PUBLIC, anon, authenticated;
 
 -- The member's goal and whether Home should ask (G1 / G4).
 CREATE OR REPLACE FUNCTION public.get_my_goal()
@@ -132,6 +134,8 @@ AS $$
    WHERE lower(c.name) = lower(btrim(p_name)) OR lower(c.common_name) = lower(btrim(p_name))
    LIMIT 1;
 $$;
+-- Internal helper: only get_my_goal_actions calls it.
+REVOKE ALL ON FUNCTION public.country_family_by_name(text) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.get_my_goal_actions()
 RETURNS jsonb
