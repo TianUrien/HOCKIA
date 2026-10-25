@@ -69,7 +69,8 @@ function SetCard({ role, title, rows, onChange }: { role: GoalRole; title: strin
           <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">Your goal</p>
           <button type="button" onClick={onChange} className="-my-2 flex h-11 items-center text-row font-semibold text-brand-primary" data-testid="home-goal-change">Change</button>
         </div>
-        <p className="mt-1 truncate text-title text-ink-1">{title}</p>
+        {/* Two lines, so the goals just chosen read in full (design review 2026-10-25). */}
+        <p className="mt-1 line-clamp-2 text-title text-ink-1">{title}</p>
         {rows.length > 0 ? (
           <div className="mt-3 space-y-2">
             {rows.map((r) => (
@@ -170,7 +171,7 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
             {other ?? 'Other…'}
           </button>
         </div>
-        <div className="mt-4 flex items-center gap-3">
+        <div className={cn('flex items-center gap-3', count > 0 ? 'mt-4' : '-mb-2 mt-1')}>
           {count > 0 ? (
             <Button className="flex-1 rounded-full" loading={saving} onClick={() => void save()} data-testid="goal-save">
               That&rsquo;s my goal · {count} of {GOAL_MAX}

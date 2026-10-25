@@ -17,7 +17,7 @@ import { MoreMenu } from '@/components/safety/MoreMenu'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { SectionHeader } from '@/components/home/v1/primitives'
 import { MemberOfferCard } from './MemberOfferCard'
-import { OfferHero } from './OfferVisuals'
+import { BrandLogo, OfferHero } from './OfferVisuals'
 
 /**
  * "Gear and deals near you" on Home (Figma page 02, YG: HR1; founder
@@ -210,17 +210,26 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
       <button type="button" onClick={() => void open()} className="block w-full text-left">
         <span className="relative block h-[120px] w-full">
           <OfferHero url={tile.image_url} className="absolute inset-0 h-full w-full" />
+          {/* No photo: the brand's logo on the gradient, never a plain block (design review 2026-10-25). */}
+          {!tile.image_url ? (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <BrandLogo name={tile.brand_name} url={tile.brand_logo_url} className="h-12 w-12 rounded-[12px] shadow-[0_2px_10px_rgba(15,15,20,0.18)]" initialsClassName="text-[16px]" />
+            </span>
+          ) : null}
           {tile.kind === 'offer' ? (
             <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary">Offer</span>
           ) : null}
         </span>
-        <span className="block p-2.5 pr-8">
+        <span className="block p-2.5">
           <span className="block truncate text-caption text-ink-2">{tile.brand_name}</span>
           <span className="mt-0.5 block text-row font-semibold leading-[19px] text-ink-1 line-clamp-2">{tile.title}</span>
         </span>
       </button>
-      <button type="button" onClick={onMenu} aria-label={`Options for ${tile.title}`} className="absolute bottom-1 right-0 flex h-11 w-9 items-center justify-center text-ink-3">
-        <MoreHorizontal className="h-4 w-4" />
+      {/* Top-right of the image, a 28 pt glass circle with a 44 pt hit area, so the title keeps the full width. */}
+      <button type="button" onClick={onMenu} aria-label={`Options for ${tile.title}`} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center" data-testid="home-gear-tile-more">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm">
+          <MoreHorizontal className="h-4 w-4" />
+        </span>
       </button>
     </div>
   )

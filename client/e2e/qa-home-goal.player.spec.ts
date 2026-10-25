@@ -38,6 +38,8 @@ test.describe('home goal + gear rail QA', () => {
 
     const set = page.getByTestId('home-goal-set')
     await expect(set).toBeVisible()
+    // Rows come from real data a moment after the goal is saved.
+    await expect(page.getByTestId('home-goal-row-abroad')).toBeVisible({ timeout: 15_000 })
     await settle(page)
     await page.screenshot({ path: `${OUT}/phone-G3-set.png` })
 
