@@ -150,7 +150,7 @@ export default function MemberCard({
     }
     // Navigate to correct public profile based on role
     if (role === 'brand') {
-      navigate(brandSlug ? `/brands/${brandSlug}?ref=community` : '/marketplace')
+      navigate(brandSlug ? `/brands/${brandSlug}?ref=community` : '/community/brands')
     } else if (role === 'club') {
       navigate(`/clubs/id/${id}?ref=community`)
     } else if (role === 'umpire') {

@@ -8,6 +8,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { setProductNeed, type Need } from '@/lib/marketplace'
 
 export interface ProductImage {
   url: string
@@ -31,6 +32,8 @@ export interface CreateProductInput {
   description?: string
   images: ProductImage[]
   external_url?: string
+  /** Marketplace need (Figma 08 · Brands P6), saved right after the product. */
+  need?: Need | null
 }
 
 export interface UpdateProductInput {
@@ -38,6 +41,7 @@ export interface UpdateProductInput {
   description?: string
   images?: ProductImage[]
   external_url?: string
+  need?: Need | null
 }
 
 interface UseBrandProductsResult {
@@ -98,6 +102,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       if (rpcError) throw rpcError
 
       const response = result as unknown as { success: boolean; product_id: string }
+      if (data.need && response.product_id) await setProductNeed(response.product_id, data.need)
       await fetchProducts()
 
       return { success: true, product_id: response.product_id }
@@ -121,6 +126,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       })
 
       if (rpcError) throw rpcError
+      if (data.need) await setProductNeed(productId, data.need)
 
       await fetchProducts()
       return { success: true }

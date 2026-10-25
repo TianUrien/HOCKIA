@@ -7802,6 +7802,38 @@ export type Database = {
         Args: { p_options: string[]; p_other_text?: string }
         Returns: undefined
       }
+      get_my_brand_item_needs: { Args: never; Returns: { id: string; kind: string; need: string }[] }
+      get_marketplace: {
+        Args: { p_country_id?: number }
+        Returns: {
+          base_country_id: number
+          body: string
+          brand_category: string
+          brand_id: string
+          brand_logo_url: string
+          brand_name: string
+          brand_profile_id: string
+          brand_slug: string
+          country_id: number
+          created_at: string
+          id: string
+          image_url: string
+          kind: string
+          link_url: string
+          need: string
+          title: string
+        }[]
+      }
+      set_brand_offer_need: { Args: { p_offer_id: string; p_need: string }; Returns: undefined }
+      set_brand_product_need: { Args: { p_product_id: string; p_need: string }; Returns: undefined }
+      suggest_brand: {
+        Args: { p_brand_name: string; p_country_id?: number; p_link?: string; p_note?: string }
+        Returns: undefined
+      }
+      admin_list_brand_suggestions: {
+        Args: { p_limit?: number }
+        Returns: { brand_name: string; country_id: number; created_at: string; id: string; link: string; note: string; suggested_by: string }[]
+      }
       get_my_brand_offer_totals: {
         Args: { p_days?: number }
         Returns: {

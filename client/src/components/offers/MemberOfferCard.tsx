@@ -167,24 +167,3 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
     </div>
   )
 }
-
-/** Community › Brands rail tile (BT1): 240 pt, photo, brand, title. */
-export function OfferRailTile({ offer, visitId }: { offer: MemberOffer; visitId: string }) {
-  const navigate = useNavigate()
-  const ref = useOfferImpression<HTMLButtonElement>(offer.id, 'brands_tab', visitId)
-  return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={() => { trackOffer('brand_offer_open', offer.id, 'brands_tab'); navigate(`/offers/${offer.id}`, { state: { surface: 'brands_tab' } }) }}
-      className="w-[240px] shrink-0 snap-start overflow-hidden rounded-[24px] border border-line bg-white text-left"
-      data-testid="offer-rail-tile"
-    >
-      <OfferHero url={offer.image_url} className="h-[120px] w-full" />
-      <span className="block p-3">
-        <span className="block truncate text-secondary text-ink-2">{offer.brand_name}</span>
-        <span className="mt-0.5 block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</span>
-      </span>
-    </button>
-  )
-}

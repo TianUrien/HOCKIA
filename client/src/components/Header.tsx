@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Store, Search, SquarePlus } from 'lucide-react'
+import { Home, Users, Briefcase, Bell, Inbox, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
@@ -229,22 +229,9 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 {/* Separator */}
                 <div className="w-px h-6 bg-gray-200 mx-1" />
 
-                {/* Icon-only cluster: Marketplace + Discover + Messages + Notifications.
-                    Desktop keeps both Marketplace and AI access in the header
-                    (mobile uses the floating AI button above Dashboard instead). */}
-                <button
-                  onClick={() => handleNavigate('/marketplace')}
-                  className={`relative p-2 rounded-lg transition-colors ${
-                    isActive('/marketplace')
-                      ? 'text-hockia-primary bg-hockia-primary/10'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                  aria-label="Marketplace"
-                  title="Marketplace"
-                  aria-current={isActive('/marketplace') ? 'page' : undefined}
-                >
-                  <Store className="w-5 h-5" />
-                </button>
+                {/* Icon-only cluster: Hockia AI + Notifications. The Marketplace
+                    lives in Community › Brands (founder 2026-10-25, "by need and
+                    place"), so the store icon is gone. */}
                 <HockiaAiButton onClick={openHockiaAi} testId="header-hockia-ai-desktop" />
                 <button
                   onClick={() => toggleNotificationDrawer()}
@@ -266,7 +253,6 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               <>
                 {/* Unauthenticated primary nav links */}
                 {([
-                  { path: '/marketplace', label: 'Marketplace', icon: Store },
                   { path: '/opportunities', label: 'Opportunities', icon: Briefcase },
                   { path: '/community', label: 'Community', icon: Users },
                 ]).map(({ path, label, icon: Icon }) => (

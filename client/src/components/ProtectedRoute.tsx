@@ -78,7 +78,7 @@ const PROTECTED_ROUTE_PREFIXES = [
 // /opportunities/applications, inside the public /opportunities listings, so
 // the prefix match alone would let a signed-out visitor see the page shell.
 // Checked before the public-route match. Exact paths (plus sub-paths).
-const PROTECTED_EXACT_ROUTES = ['/opportunities/applications']
+const PROTECTED_EXACT_ROUTES = ['/opportunities/applications', '/community/brands/need']
 
 const ONBOARDING_EXEMPT_ROUTES = [
   // '/brands/onboarding' is the ONE onboarding surface that lives outside
