@@ -35,13 +35,13 @@ function useSeenOnce<T extends HTMLElement>(onSeen: () => void) {
   return ref
 }
 
-function ItemImage({ item, className, logoClassName }: { item: MarketItem; className: string; logoClassName: string }) {
+function ItemImage({ item, className, logoClassName, eager }: { item: MarketItem; className: string; logoClassName: string; eager?: boolean }) {
   return (
     <span className={cn('relative block overflow-hidden', className)}>
       <OfferHero url={item.image_url} className="absolute inset-0 h-full w-full" />
       {!item.image_url ? (
         <span className="absolute inset-0 flex items-center justify-center">
-          <BrandLogo name={item.brand_name} url={item.brand_logo_url} className={logoClassName} initialsClassName="text-[14px]" />
+          <BrandLogo name={item.brand_name} url={item.brand_logo_url} className={logoClassName} initialsClassName="text-[14px]" eager={eager} />
         </span>
       ) : null}
     </span>
@@ -81,10 +81,10 @@ export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: Mar
   return (
     <div ref={ref} className="flex items-center gap-3 rounded-[20px] bg-white p-3 shadow-[0_1px_2px_rgba(15,15,20,0.06)]" onContextMenu={(e) => { e.preventDefault(); onMenu() }} data-testid="market-row" data-kind={item.kind}>
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-        <ItemImage item={item} className="h-16 w-16 shrink-0 rounded-[14px]" logoClassName="h-9 w-9 rounded-[10px]" />
+        <ItemImage item={item} className="h-16 w-16 shrink-0 rounded-[14px]" logoClassName="h-10 w-10 rounded-[10px] shadow-[0_2px_10px_rgba(15,15,20,0.18)]" eager />
         <span className="min-w-0 flex-1">
           <span className="block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{item.title}</span>
-          <span className="mt-0.5 block truncate text-row text-ink-2">{line}</span>
+          <span className="mt-0.5 block text-row text-ink-2 line-clamp-2">{line}</span>
         </span>
       </button>
       {item.kind === 'offer' ? <OfferPill className="shrink-0" /> : null}
@@ -177,8 +177,10 @@ export function SuggestBrandSheet({ open, countryId, onClose }: { open: boolean;
   const [link, setLink] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
-  useEffect(() => { if (open) { setName(''); setLink(''); setNote('') } }, [open])
+  const [missing, setMissing] = useState(false)
+  useEffect(() => { if (open) { setName(''); setLink(''); setNote(''); setMissing(false) } }, [open])
   const send = async () => {
+    if (!name.trim()) { setMissing(true); return }
     setBusy(true)
     try {
       await suggestBrand(name, link, countryId, note)
@@ -197,10 +199,11 @@ export function SuggestBrandSheet({ open, countryId, onClose }: { open: boolean;
       <div className="space-y-3 px-5 pb-3" data-testid="suggest-brand-sheet">
         <h2 className="text-title text-ink-1">Suggest a brand</h2>
         <p className="text-row text-ink-2">Tell us who should be here. Only the HOCKIA team sees this.</p>
-        <input value={name} onChange={(e) => setName(e.target.value.slice(0, 80))} placeholder="Brand or service name" aria-label="Brand or service name" className={fieldInput} data-testid="suggest-brand-name" />
+        <input value={name} onChange={(e) => { setName(e.target.value.slice(0, 80)); setMissing(false) }} placeholder="Brand or service name" aria-label="Brand or service name" aria-invalid={missing || undefined} aria-describedby={missing ? 'suggest-brand-name-hint' : undefined} className={fieldInput} data-testid="suggest-brand-name" />
+        {missing ? <p id="suggest-brand-name-hint" role="alert" className="-mt-1 text-row text-ink-2">Add a brand or service name</p> : null}
         <input value={link} onChange={(e) => setLink(e.target.value.slice(0, 300))} placeholder="Website (optional)" aria-label="Website" inputMode="url" autoCapitalize="none" className={fieldInput} />
         <input value={note} onChange={(e) => setNote(e.target.value.slice(0, 300))} placeholder="What do they offer? (optional)" aria-label="What do they offer" className={fieldInput} />
-        <Button block className="rounded-full" loading={busy} disabled={!name.trim()} onClick={() => void send()} data-testid="suggest-brand-send">Send suggestion</Button>
+        <Button block className="rounded-full" loading={busy} onClick={() => void send()} data-testid="suggest-brand-send">Send suggestion</Button>
       </div>
     </BottomSheet>
   )

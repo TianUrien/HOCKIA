@@ -55,9 +55,12 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
   const country = countryId != null ? names([countryId])[0] ?? null : null
   const inCountry = country ? countryInSentence(country) : 'your country'
   const offers = items.filter((i) => i.kind === 'offer')
-  const byNeed = itemsByNeed(items)
+  // Each item shows once on the hub: offers live in "Offers for members",
+  // so the need rails and "Near you" only carry what is left.
+  const byNeed = itemsByNeed(items.filter((i) => i.kind !== 'offer'))
+  const chipNeeds = itemsByNeed(items)
   const order = needOrder(role, goal.data?.options ?? [])
-  const chips = NEEDS.filter((n) => (byNeed.get(n.key)?.length ?? 0) > 0)
+  const chips = NEEDS.filter((n) => (chipNeeds.get(n.key)?.length ?? 0) > 0)
   const low = items.length < LOW_SUPPLY
 
   const remove = (item: MarketItem, wholeBrand: boolean) =>
@@ -158,8 +161,11 @@ function Rail({ title, subtitle, onSeeAll, testId, children }: { title: string; 
         </div>
         {onSeeAll ? <button type="button" onClick={onSeeAll} className="flex h-11 shrink-0 items-center text-row font-semibold text-brand-primary">See all</button> : null}
       </div>
-      <div className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:px-0">
+      {/* scroll-padding keeps snap-start tiles at the 16 pt inset; the spacer
+          keeps a 16 pt end inset, which flex overflow drops from padding. */}
+      <div className="-mx-4 mt-3 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:scroll-px-0 lg:px-0">
         {children}
+        <span aria-hidden="true" className="w-1 shrink-0 lg:hidden" />
       </div>
     </section>
   )

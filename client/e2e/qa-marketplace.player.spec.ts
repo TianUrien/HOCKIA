@@ -12,6 +12,9 @@ const PHONE = { width: 393, height: 852 }
 
 async function settle(page: Page) {
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined)
+  // Logos fade in over 150 ms once decoded; wait so shots show them at rest.
+  await page.waitForFunction(() => Array.from(document.images).every((i) => i.complete), null, { timeout: 10_000 }).catch(() => undefined)
+  await page.waitForTimeout(400)
 }
 
 test.describe('marketplace QA', () => {
