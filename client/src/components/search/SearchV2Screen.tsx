@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
-import { ChevronRight, Clock, Search, Sparkles, X } from 'lucide-react'
+import { ChevronRight, Clock, Search, X } from 'lucide-react'
 import Flag from '@/components/Flag'
 import RoleBadge from '@/components/RoleBadge'
 import Skeleton from '@/components/Skeleton'
@@ -165,14 +165,13 @@ export function SearchV2Screen() {
         <button
           type="button"
           onClick={askAi}
-          className="flex w-full items-center gap-3 bg-brand-soft px-4 py-3 text-left active:bg-brand-soft-pressed"
+          // Hockia AI = cyan plus the mascot, never colour alone (rebrand 2026-10-25).
+          className="flex w-full items-center gap-3 border-y border-ai-accent/40 bg-ai-bg px-4 py-3 text-left active:opacity-90"
           data-testid="search-v2-ask-ai"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft-pressed text-hockia-primary">
-            <Sparkles className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
-          </span>
+          <img src="/hockia-ai/button_calm_96.webp" srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full" draggable={false} />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-semibold text-ink-1">{askAiLabel(query)}</span>
+            <span className="block truncate text-body font-semibold text-ai-text">{askAiLabel(query)}</span>
             {/* Caption size so the whole scope line fits beside the tile at 390px. */}
             <span className="block truncate text-caption text-ink-2">{SEARCH_SCOPE_LINE}</span>
           </span>
