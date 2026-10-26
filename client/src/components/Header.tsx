@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Home, Users, Briefcase, Bell, Inbox, Search, SquarePlus } from 'lucide-react'
+import { Users, Briefcase, Bell, Search, SquarePlus } from 'lucide-react'
 import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
@@ -139,12 +139,20 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
               aria-label="Hockia, go home"
             >
-              {/* One wordmark colour on every app page: brand violet (design
-                  audit B5). The tagline pill is marketing only, not app chrome. */}
+              {/* Phone: the ink wordmark only (the tab bar already says where
+                  you are). Web (rebrand page 16): the horizontal ink lockup,
+                  26 high; the wordmark never appears alone on the web. */}
               <img
                 src="/brand/wordmark/hockia-wordmark-black.svg"
                 alt=""
-                className="h-8"
+                className="h-8 lg:hidden"
+              />
+              <img
+                src="/brand/lockup/hockia-lockup-horizontal-ink.svg"
+                alt=""
+                width={126}
+                height={26}
+                className="hidden h-[26px] w-auto lg:block"
               />
             </button>
             
@@ -201,38 +209,63 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
           <div className="hidden lg:flex items-center gap-1">
             {user && profile ? (
               <>
-                {/* Primary nav links */}
+                {/* Primary nav (rebrand page 16): text only; active = ink on a
+                    soft violet pill. */}
                 {([
-                  { path: '/home', label: 'Home', icon: Home, dot: false },
-                  { path: '/community', label: 'Community', icon: Users, dot: false },
-                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, dot: false },
-                  { path: '/inbox', label: 'Inbox', icon: Inbox, dot: inboxDot },
-                ]).map(({ path, label, icon: Icon, dot }) => (
+                  { path: '/home', label: 'Home', dot: false },
+                  { path: '/community', label: 'Community', dot: false },
+                  { path: '/opportunities', label: 'Opportunities', dot: false },
+                  // Web only (founder 2026-10-26, page 16); phones reach it from Community.
+                  { path: '/community/brands', label: 'Marketplace', dot: false },
+                  { path: '/inbox', label: 'Inbox', dot: inboxDot },
+                ]).map(({ path, label, dot }) => {
+                  // Marketplace = Community › Brands, so Community is not lit there.
+                  const onBrands = isActive('/community/brands')
+                  const active = path === '/community/brands' ? onBrands
+                    : path === '/community' ? isActive(path) && !onBrands
+                    : isActive(path) || (path === '/inbox' && isActive('/messages'))
+                  return (
                   <button
                     key={path}
                     onClick={() => handleNavigate(path)}
-                    className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      (isActive(path) || (path === '/inbox' && isActive('/messages')))
-                        ? 'text-hockia-primary bg-hockia-primary/10'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    className={`relative rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors ${
+                      active
+                        ? 'bg-hockia-soft text-ink-1'
+                        : 'text-ink-2 hover:bg-surface-muted hover:text-ink-1'
                     }`}
-                    aria-current={(isActive(path) || (path === '/inbox' && isActive('/messages'))) ? 'page' : undefined}
+                    aria-current={active ? 'page' : undefined}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-4.5 h-4.5" />
-                      <span>{label}</span>
-                    </div>
+                    {label}
                     {dot && <NavDot className="right-1 top-1" />}
                   </button>
-                ))}
+                  )
+                })}
 
-                {/* Separator */}
-                <div className="w-px h-6 bg-gray-200 mx-1" />
+                {/* Search pill (rebrand page 16): opens /search. */}
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/search')}
+                  className="ml-3 flex h-10 w-[150px] items-center gap-2 rounded-full bg-surface-muted px-4 text-left text-[14px] text-ink-2 transition-colors hover:bg-surface-muted-pressed xl:w-[310px]"
+                  data-testid="header-search-desktop"
+                >
+                  <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                  <span className="truncate">Search<span className="hidden xl:inline"> players, clubs, opportunities</span></span>
+                </button>
 
-                {/* Icon-only cluster: Hockia AI + Notifications. The Marketplace
-                    lives in Community › Brands (founder 2026-10-25, "by need and
-                    place"), so the store icon is gone. */}
-                <HockiaAiButton onClick={openHockiaAi} testId="header-hockia-ai-desktop" />
+                {/* Hockia AI + Notifications. Marketplace is a text link in the
+                    nav above (web only); its content is the Community › Brands
+                    hub (founder 2026-10-25, "by need and place"). */}
+                {/* Ask Hockia AI pill (rebrand page 16): the one cyan element in
+                    the header, always with the mascot (cyan never alone). */}
+                <button
+                  type="button"
+                  onClick={openHockiaAi}
+                  className="ml-2 flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-ai-accent/60 bg-ai-bg pl-1 pr-3.5 text-[14px] font-semibold text-ai-text transition-colors hover:border-ai-accent"
+                  data-testid="header-hockia-ai-desktop"
+                >
+                  <img src="/hockia-ai/button_calm_96.webp" srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x" alt="" width={32} height={32} className="h-8 w-8 rounded-full" draggable={false} />
+                  Ask Hockia AI
+                </button>
                 <button
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
@@ -273,8 +306,16 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   </button>
                 ))}
 
-                {/* Separator */}
-                <div className="w-px h-6 bg-gray-200 mx-1" />
+                {/* Search pill (rebrand page 16): opens /search. */}
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/search')}
+                  className="ml-3 flex h-10 w-[150px] items-center gap-2 rounded-full bg-surface-muted px-4 text-left text-[14px] text-ink-2 transition-colors hover:bg-surface-muted-pressed xl:w-[310px]"
+                  data-testid="header-search-desktop"
+                >
+                  <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                  <span className="truncate">Search<span className="hidden xl:inline"> players, clubs, opportunities</span></span>
+                </button>
 
                 <button
                   onClick={() => handleNavigate('/')}
