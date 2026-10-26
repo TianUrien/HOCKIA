@@ -8,6 +8,8 @@ import {
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { SquircleBox } from '@/components/home/v1/primitives'
 import { cn } from '@/lib/utils'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /**
  * Own profile, under the hero (Figma PR2 101:46): Edit profile + Preview as…
@@ -71,7 +73,7 @@ export function NextStepIcon({ stepKey }: { stepKey: string }) {
 }
 
 /** The ONE primary card: the next step (ring + copy + CTA), or a role-specific card (applicants …). */
-export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, secondary = false, wrapperClassName = 'px-4 pt-3' }: {
+export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, secondary = false, wrapperClassName = 'px-4 pt-3', role }: {
   /** The next missing part's key: shows that item's icon (never a completeness %). */
   stepKey?: string | null
   title: string
@@ -84,11 +86,19 @@ export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, s
   secondary?: boolean
   /** Outer spacing; the desktop dashboard's side column passes ''. */
   wrapperClassName?: string
+  /** The owner's role: the photo / crest / logo step shows its Avatar / Placeholder. */
+  role?: string | null
 }) {
+  const photoStep = stepKey === 'photo' || stepKey === 'crest' || stepKey === 'logo'
+  const placeholder = photoStep && isRoleAvatarRole(role) ? (
+    <span className={cn('block h-12 w-12 shrink-0 overflow-hidden', role === 'brand' ? 'rounded-[12px]' : 'rounded-full')} data-testid="next-step-placeholder">
+      <RolePlaceholder role={role} label="" />
+    </span>
+  ) : null
   return (
     <div className={wrapperClassName}>
       <SquircleBox className="flex items-center gap-3 bg-hockia-soft px-4 py-3.5" >
-        {visual ?? (stepKey ? <NextStepIcon stepKey={stepKey} /> : null)}
+        {visual ?? placeholder ?? (stepKey ? <NextStepIcon stepKey={stepKey} /> : null)}
         <span className="min-w-0 flex-1">
           <span className="block line-clamp-2 text-body font-semibold text-ink-1">{title}</span>
           <span className="block line-clamp-2 text-secondary text-ink-2">{subtitle}</span>

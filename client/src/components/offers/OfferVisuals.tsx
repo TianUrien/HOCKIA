@@ -1,13 +1,13 @@
 import { cn } from '@/lib/utils'
-import { initialsOf } from '@/lib/communityCard'
 import { LogoTile } from '@/components/community/photo/LogoTile'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
-/** A brand's logo tile, or its initials in the brand-role ink (never a grey square). */
+/** A brand's logo tile, or the brand Avatar / Placeholder (never initials). */
 export function BrandLogo({ name, url, className, initialsClassName, eager }: { name: string; url: string | null; className: string; initialsClassName?: string; eager?: boolean }) {
   if (url) return <LogoTile src={url} name={name} role="brand" eager={eager} className={cn('ring-1 ring-line', className)} initialsClassName={initialsClassName} />
   return (
-    <span className={cn('flex items-center justify-center bg-white font-bold text-role-brand-ink ring-1 ring-line', className, initialsClassName)} aria-hidden="true">
-      {initialsOf(name)}
+    <span className={cn('block overflow-hidden', className)} aria-hidden="true">
+      <RolePlaceholder role="brand" label="" />
     </span>
   )
 }

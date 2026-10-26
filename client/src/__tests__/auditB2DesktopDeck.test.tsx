@@ -110,11 +110,12 @@ describe('Desktop member deck', () => {
     expect(card().getByTestId('member-desktop-references')).toHaveTextContent('2 accepted')
   })
 
-  it('has no mobile grabber and no silhouette: a no-photo member shows initials', () => {
+  it('has no mobile grabber; a no-photo member shows the Avatar / Placeholder, never initials', () => {
     renderDeck()
     const el = screen.getByTestId('member-deck-card')
     expect(el.querySelector('.h-\\[5px\\].w-9')).toBeNull()
-    expect(el.textContent).toContain('AR')
+    expect(el.querySelector('[data-testid="role-placeholder"]')).not.toBeNull()
+    expect(el.textContent).not.toContain('AR')
   })
 
   it('→ and ← page between members, Esc closes; the swipe event matches the phone deck', () => {

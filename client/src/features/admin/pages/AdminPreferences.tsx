@@ -21,6 +21,8 @@ import { getPreferenceSummary, getPreferenceUsers } from '../api/preferencesApi'
 import type { PreferenceSummary, PreferenceStat, PreferenceKey, PreferenceUser } from '../types'
 import { logger } from '@/lib/logger'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 // Preference metadata for display
 const PREFERENCE_CONFIG: Array<{
@@ -389,9 +391,7 @@ function UserDrillDown({ prefKey }: { prefKey: PreferenceKey }) {
                           {user.avatar_url ? (
                             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-[10px] font-medium text-gray-500">
-                              {user.full_name?.charAt(0) || '?'}
-                            </span>
+                            <RolePlaceholder role={isRoleAvatarRole(user.role) ? user.role : 'player'} label="" />
                           )}
                         </div>
                         <span className="font-medium text-gray-900 truncate max-w-[150px]">

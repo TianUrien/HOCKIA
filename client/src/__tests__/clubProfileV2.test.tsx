@@ -105,7 +105,7 @@ describe('ClubProfileV2 · squad rail', () => {
     ]
     renderScreen({}, { readOnly: true })
     const faces = screen.getAllByTestId('club-squad-face').map((f) => f.textContent)
-    expect(faces).toEqual(['ELEmmettCoach', 'LFLucíaDefender']) // initials circle + first name + line
+    expect(faces).toEqual(['EmmettCoach', 'LucíaDefender']) // placeholder (no letters) + first name + line
   })
 })
 

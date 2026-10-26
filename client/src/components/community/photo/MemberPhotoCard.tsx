@@ -3,13 +3,14 @@ import { LogoTile } from './LogoTile'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
-import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, initialsOf, roleGradient, type CardMember } from '@/lib/communityCard'
+import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, roleGradient, type CardMember } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
-import monogramRing from '@/assets/community/monogram-ring.svg'
 import { FitBadge } from '@/components/ui/FitBadge'
 import { NationalityLine } from '@/components/ui/NationalityBadges'
 import type { NationalityCountry } from '@/lib/nationality'
 import { useBrandOfferCount } from '@/components/offers/OffersWhereYouLive'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /**
  * Card / Member photo (Figma 6:100), Community grid on the phone. 3:4, radius
@@ -83,8 +84,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
               <LogoTile src={getImageUrl(brandLogo, 'avatar-md') ?? brandLogo} name={name} eager={priority} className="h-[88px] w-[88px] rounded-[20px] p-2.5" initialsClassName="text-[28px]" />
             ) : (
               <>
-                <img src={monogramRing} alt="" width={88} height={88} className="absolute inset-0" />
-                <span className="relative text-[34px] font-bold leading-[48px] text-white/90">{initialsOf(name)}</span>
+                <span className="block h-[88px] w-[88px] overflow-hidden rounded-full ring-[1.5px] ring-white/40"><RolePlaceholder role={isRoleAvatarRole(member.role) ? member.role : 'player'} label="" /></span>
               </>
             )}
           </span>
