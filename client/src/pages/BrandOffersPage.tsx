@@ -189,7 +189,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   }
 
   const list = (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-5">
       {offers.length > 0 ? (
         <p className="rounded-[20px] bg-brand-soft px-4 py-3 text-row text-brand-primary lg:hidden">
           Offers go live as soon as you publish. They reach members by where they live, never by nationality.
@@ -200,8 +200,8 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
         if (!rows?.length) return null
         return (
           <section key={g} aria-label={OFFER_GROUP_LABELS[g]}>
-            <h2 className="mb-2 px-1 text-caption font-semibold uppercase tracking-[0.06em] text-ink-2 lg:hidden">{OFFER_GROUP_LABELS[g]}</h2>
-            <div className="space-y-3">
+            <h2 className="mb-2 px-1 text-caption font-semibold uppercase tracking-[0.06em] text-ink-2 lg:px-0 lg:font-display lg:text-[12px] lg:font-bold lg:tracking-[0.12em]">{OFFER_GROUP_LABELS[g]}</h2>
+            <div className="space-y-3 lg:space-y-2.5">
               {rows.map((o) => (
                 <OfferRow key={o.id} offer={o} onOpen={() => openEdit(o)} onMenu={() => setMenuFor(o)} selected={!isPhone && deskOpen === o.id} />
               ))}
@@ -238,7 +238,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   return (
     <div className="min-h-screen bg-surface-subtle" data-testid="brand-offers">
       <Header mobileHidden />
-      <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:px-6 lg:pt-under-header-lg">
+      <main className="mx-auto max-w-[1200px] px-4 pb-28 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:max-w-[1376px] lg:px-12 lg:pt-under-header-lg">
         {isPhone ? (
           <>
             <LargeTitleBar
@@ -257,15 +257,18 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
             {body}
           </>
         ) : (
-          <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-8 pt-6">
-            <div>
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div>
-                  <h1 className="text-title-xl text-ink-1">Offers</h1>
-                  <p className="mt-1 text-row text-ink-2">{liveLimitLine(offers)}</p>
-                </div>
-                <Button size="small" className="rounded-full" icon={<Plus className="h-4 w-4" />} onClick={openNew} data-testid="offers-new">New offer</Button>
+          // Rebrand page 27 · Web · Offers list + editor: title row across the
+          // page (New offer is outline: Publish owns the primary), list 520.
+          <div className="pt-8">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1">Offers</h1>
+                {offers.length > 0 ? <p className="mt-0.5 text-[15px] leading-[1.45] text-ink-2">{liveLimitLine(offers)}</p> : null}
               </div>
+              <Button variant="secondary" className="shrink-0 rounded-full" icon={<Plus className="h-4 w-4" />} onClick={openNew} data-testid="offers-new">New offer</Button>
+            </div>
+          <div className="grid grid-cols-[400px_minmax(0,1fr)] items-start gap-6 min-[1440px]:grid-cols-[520px_minmax(0,1fr)]">
+            <div>
               {offers.length === 0 && !loading ? null : body}
             </div>
             <div>
@@ -286,12 +289,13 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
               ) : offers.length === 0 && !loading ? (
                 empty
               ) : (
-                <div className="rounded-[24px] bg-white p-8 text-row text-ink-2 shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
+                <div className="rounded-[24px] bg-white p-8 text-row text-ink-2 ring-1 ring-inset ring-line">
                   <p className="text-body font-semibold text-ink-1">Choose an offer to edit, or create a new one.</p>
                   <p className="mt-2">Offers go live as soon as you publish. They reach members by where they live, never by nationality.</p>
                 </div>
               )}
             </div>
+          </div>
           </div>
         )}
       </main>
