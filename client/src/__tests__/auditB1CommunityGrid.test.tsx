@@ -45,12 +45,13 @@ const members = [
 ]
 
 describe('Community grid (phone card anatomy on every screen size)', () => {
-  it('is responsive from 1024 px: four or five per row', () => {
+  it('is responsive from 1024 px: four per row up to 1439, five from 1440 (rebrand page 27)', () => {
     render(<MemberPhotoGrid members={members} />)
     const grid = screen.getByTestId('community-photo-grid')
     expect(grid.className).toContain('grid-cols-2')
     expect(grid.className).toContain('lg:grid-cols-4')
-    expect(grid.className).toContain('xl:grid-cols-5')
+    expect(grid.className).toContain('min-[1440px]:grid-cols-5')
+    expect(grid.className).not.toContain('xl:grid-cols-5')
   })
 
   it('clubs are full-width wide cards, never small tiles between people', () => {

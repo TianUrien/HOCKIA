@@ -104,7 +104,7 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
             <h3 className={`font-medium inline-flex items-center gap-1 ${club.is_claimed ? 'text-gray-900' : 'text-gray-500'}`}>
               {club.club_name}
               {club.verified && (
-                <BadgeCheck className="w-4 h-4 text-brand-primary flex-shrink-0" aria-label="Verified club" />
+                <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label="Verified club" />
               )}
             </h3>
             {club.profile_username && (

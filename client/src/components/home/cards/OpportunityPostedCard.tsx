@@ -99,7 +99,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
               </div>
             )}
             <span className="text-[13px] text-gray-500">{item.world_club_name}</span>
-            <span className="inline-flex items-center gap-0.5 rounded-full border border-line bg-surface-muted px-1.5 py-0.5 text-[9px] font-semibold text-ink-2">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-positive-soft px-1.5 py-0.5 text-[9px] font-semibold text-positive">
               <BadgeCheck className="h-2.5 w-2.5" />
               Official
             </span>

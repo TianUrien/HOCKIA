@@ -43,7 +43,7 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
               </span>
             )}
             {item.filled_via_hockia && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f0fd] px-2.5 py-1 text-xs font-semibold text-hockia-primary">
+              <span className="inline-flex items-center gap-1 rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-semibold text-hockia-primary">
                 <BadgeCheck className="h-3 w-3" />
                 Filled via Hockia
               </span>
