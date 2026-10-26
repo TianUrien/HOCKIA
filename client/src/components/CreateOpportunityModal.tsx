@@ -766,7 +766,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     ref={opportunityTypeRef}
                     value={formData.opportunity_type}
                     onChange={(e) => handleInputChange('opportunity_type', e.target.value as 'player' | 'coach')}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     title="Opportunity type"
                   >
                     <option value="player">Player position</option>
@@ -783,7 +783,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     id={priorityFieldId}
                     value={formData.priority || ''}
                     onChange={(e) => handleInputChange('priority', e.target.value as 'low' | 'medium' | 'high')}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     title="Priority level"
                   >
                     <option value="low">Low</option>
@@ -806,7 +806,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   maxLength={TITLE_MAX}
-                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent ${
                     errors.title ? 'border-status-danger' : 'border-line'
                   }`}
                   placeholder={
@@ -840,7 +840,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   type="text"
                   value={formData.organization_name ?? ''}
                   onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="e.g., Melbourne Hockey Club, Youth Academy"
                   autoCapitalize="words"
                   inputMode="text"
@@ -863,7 +863,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onChange={(e) => handleInputChange('position', e.target.value || undefined)}
                     aria-required={formData.opportunity_type === 'player' ? 'true' : undefined}
                     aria-invalid={errors.position ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white ${
                       errors.position ? 'border-status-danger' : 'border-line'
                     }`}
                     title="Position"
@@ -906,7 +906,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white ${
                       errors.gender ? 'border-status-danger' : 'border-line'
                     }`}
                     title="Category"
@@ -964,7 +964,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       value={formData.recruitment_problem || ''}
                       onChange={(e) => handleInputChange('recruitment_problem', e.target.value || undefined)}
                       aria-label="Recruitment problem"
-                      className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     >
                       <option value="">Optional</option>
                       {RECRUITMENT_PROBLEM_OPTIONS.map((o) => (
@@ -979,7 +979,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.level_sought || ''}
                         onChange={(e) => handleInputChange('level_sought', e.target.value || undefined)}
                         aria-label="Level sought"
-                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {LEVEL_SOUGHT_OPTIONS.map((o) => (
@@ -999,7 +999,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         value={formData.compensation || ''}
                         onChange={(e) => handleInputChange('compensation', e.target.value || undefined)}
                         aria-label="Compensation"
-                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {COMPENSATION_OPTIONS.map((o) => (
@@ -1029,7 +1029,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
                   maxLength={DESCRIPTION_MAX}
-                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent resize-none"
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "Describe the player opportunity, training environment, and development pathway..."
@@ -1093,7 +1093,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="date"
                     value={formData.start_date || ''}
                     onChange={(e) => handleInputChange('start_date', e.target.value || null)}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   />
                   {formData.opportunity_type === 'player' && (
                     <MustNiceToggle
@@ -1115,7 +1115,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="text"
                     value={formData.duration_text || ''}
                     onChange={(e) => handleInputChange('duration_text', e.target.value)}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="e.g., 12 months"
                   />
                 </div>
@@ -1133,13 +1133,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               onClick={() => handleInputChange('eu_passport_required', !formData.eu_passport_required)}
               className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors mb-4 ${
                 formData.eu_passport_required
-                  ? 'bg-blue-50 border-blue-300 text-blue-800'
+                  ? 'bg-hockia-soft border-brand-primary text-brand-text'
                   : 'bg-surface-subtle border-line text-ink-3 hover:border-line'
               }`}
             >
-              <Flag className={`w-5 h-5 flex-shrink-0 ${formData.eu_passport_required ? 'text-blue-600' : 'text-ink-4'}`} />
+              <Flag className={`w-5 h-5 flex-shrink-0 ${formData.eu_passport_required ? 'text-brand-primary' : 'text-ink-4'}`} />
               <span className="flex-1 text-left text-sm font-medium">EU Passport Required</span>
-              <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${formData.eu_passport_required ? 'bg-blue-600' : 'bg-gray-300'}`}>
+              <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${switchTrackClass(formData.eu_passport_required)}`}>
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${formData.eu_passport_required ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
               </div>
             </button>
@@ -1178,7 +1178,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="Add a requirement..."
                 />
                 <button
@@ -1209,18 +1209,18 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onClick={() => toggleBenefit(benefit.id)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       isSelected
-                        ? 'border-[#10b981] bg-green-50'
+                        ? 'border-brand-primary bg-hockia-soft'
                         : 'border-line bg-white hover:border-line'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2 ${
-                      isSelected ? 'bg-[#10b981]' : 'bg-gray-200'
+                      isSelected ? 'bg-brand-primary' : 'bg-surface-muted'
                     }`}>
                       <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-ink-3'}`} />
                     </div>
                     <p className="text-sm font-medium text-ink-1 text-center">{benefit.label}</p>
                     <p className={`text-xs mt-1 text-center ${
-                      isSelected ? 'text-green-600' : 'text-ink-3'
+                      isSelected ? 'text-brand-text' : 'text-ink-3'
                     }`}>
                       {isSelected ? '✓ Included' : '✗ Not included'}
                     </p>
@@ -1231,7 +1231,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
             {/* Benefits Summary — a count, not a percentage: there is no
                 "required" number of benefits, so a % reads as misleading. */}
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-surface-subtle rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-ink-2">
                   {benefitsCount} of {BENEFIT_OPTIONS.length} benefits added
@@ -1240,7 +1240,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               <progress
                 value={benefitsCount}
                 max={BENEFIT_OPTIONS.length}
-                className="w-full h-2 appearance-none rounded-full bg-gray-200 overflow-hidden [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-gray-200 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[#10b981] [&::-moz-progress-bar]:bg-[#10b981]"
+                className="w-full h-2 appearance-none rounded-full bg-line overflow-hidden [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-line [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-brand-primary [&::-moz-progress-bar]:bg-brand-primary"
                 aria-valuetext={`${benefitsCount} of ${BENEFIT_OPTIONS.length} benefits added`}
               />
             </div>
@@ -1258,13 +1258,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {(formData.custom_benefits || []).map((benefit: string, index: number) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-hockia-soft text-brand-text rounded-full text-sm"
                   >
                     {benefit}
                     <button
                       type="button"
                       onClick={() => removeCustomBenefit(index)}
-                      className="hover:text-purple-900 min-w-[44px] min-h-[44px] inline-flex items-center justify-center -m-2"
+                      className="hover:text-ink-1 min-w-[44px] min-h-[44px] inline-flex items-center justify-center -m-2"
                       aria-label="Remove benefit"
                     >
                       <X className="w-3 h-3" />
@@ -1283,7 +1283,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newCustomBenefit}
                   onChange={(e) => setNewCustomBenefit(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addCustomBenefit()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
@@ -1320,7 +1320,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('application_deadline', e.target.value || null)}
                   aria-invalid={errors.application_deadline ? true : undefined}
                   aria-describedby={errors.application_deadline ? `${applicationDeadlineFieldId}-error` : undefined}
-                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent ${
                     errors.application_deadline ? 'border-status-danger' : 'border-line'
                   }`}
                 />
@@ -1340,7 +1340,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="email"
                     value={formData.contact_email || ''}
                     onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="info@elitehockeyacademy.com"
                     inputMode="email"
                     autoCapitalize="none"
@@ -1358,7 +1358,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="tel"
                     value={formData.contact_phone || ''}
                     onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="+31 20 123 4567"
                     inputMode="tel"
                     autoComplete="tel"
@@ -1375,25 +1375,23 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-ink-1">Posting strength</h3>
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${
-                postingQuality.score >= 75 ? 'bg-green-100 text-green-700'
-                : postingQuality.score >= 50 ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-status-danger'
+                // A nudge, never a gate: green only once the posting is complete;
+                // otherwise neutral (the recruiter isn't required to act, so no amber or red).
+                postingQuality.missing.length === 0 ? 'bg-positive-soft text-positive' : 'bg-surface-muted text-ink-2'
               }`}>
                 {postingQuality.score}/100
               </span>
             </div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+            <div className="h-1.5 bg-line rounded-full overflow-hidden mb-3">
               <div
                 className={`h-full rounded-full transition-all ${
-                  postingQuality.score >= 75 ? 'bg-green-500'
-                  : postingQuality.score >= 50 ? 'bg-amber-500'
-                  : 'bg-red-400'
+                  postingQuality.missing.length === 0 ? 'bg-positive' : 'bg-brand-primary'
                 }`}
                 style={{ width: `${Math.max(4, postingQuality.score)}%` }}
               />
             </div>
             {postingQuality.missing.length === 0 ? (
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-positive">
                 Complete posting. This is what strong vacancies look like.
               </p>
             ) : (
@@ -1434,7 +1432,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             <Button
               onClick={() => handleSave()}
               disabled={isLoading}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
             >
               {isLoading ? 'Saving…' : 'Update opportunity'}
             </Button>
@@ -1451,7 +1449,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               <Button
                 onClick={() => handleSave('open')}
                 disabled={isLoading}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isLoading ? 'Publishing…' : 'Publish now'}
               </Button>
