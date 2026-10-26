@@ -7,6 +7,7 @@ import { initSentry } from '@/lib/sentryInit'
 import './globals.css'
 import App from './App.tsx'
 import LaunchSplashController from './components/LaunchSplashController'
+import LaunchIntro from './components/LaunchIntro'
 import { paintBootLaunchCanvas, warmLaunchArtwork } from './lib/launchSplash'
 import { initWebVitals } from './lib/monitor'
 import { queryClient } from './lib/queryClient'
@@ -122,6 +123,8 @@ export function RootApp() {
           {/* Last sibling: releases the native launch splash once the first
               frame is real (see components/LaunchSplashController). */}
           <LaunchSplashController />
+          {/* Splash intro: first launch after install or update only (founder 2026-10-26). */}
+          <LaunchIntro />
         </QueryClientProvider>
       </StrictMode>
     </Sentry.ErrorBoundary>

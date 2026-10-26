@@ -70,6 +70,16 @@ export default function NativeWelcome() {
   //                                 unauthenticated flow is the truth)
   // Read once per mount: hydration outcomes flow through the store, and
   // re-reading mid-flight could flap the frame.
+  // Stage height: the 488 design, yielding on short screens so the brand and
+  // both actions fit (min 340). Computed here, not in CSS: dividing lengths
+  // inside calc() (for the scale) is unsupported in older Android WebViews,
+  // which dropped the whole transform and pushed the players off-screen.
+  const [stageH, setStageH] = useState(() => welcomeStageHeight())
+  useEffect(() => {
+    const onResize = () => setStageH(welcomeStageHeight())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
   const [storedSession] = useState(() => hasPersistedSession())
   const showWelcome = authLoading ? !storedSession : !user
 
@@ -120,13 +130,12 @@ export default function NativeWelcome() {
           players (real photos, background removed; provenance and the
           players' and photographer's permission in docs/design-handoff) +
           the fade into the canvas. A fixed 390 × 488 design space, centred
-          and scaled from --stage-h so short phones (iPhone SE class) still
+          and scaled from the stage height so short phones (iPhone SE class) still
           fit the brand and both actions. ─────────────────────────────── */}
       <div
         className="relative w-full shrink-0"
         style={{
-          ['--stage-h' as string]: 'clamp(340px, min(488px, 100dvh - 356px), 488px)',
-          height: 'var(--stage-h)',
+          height: stageH,
         }}
       >
         <div
@@ -134,7 +143,7 @@ export default function NativeWelcome() {
           // run to the screen edge (the page clips), never to a hard vertical
           // line inside it; below 488 nothing shows through.
           className="absolute left-1/2 top-0 origin-top"
-          style={{ width: 390, height: 488, clipPath: 'inset(0 -240px)', transform: 'translateX(-50%) scale(calc(var(--stage-h) / 488px))' }}
+          style={{ width: 390, height: 488, clipPath: 'inset(0 -240px)', transform: `translateX(-50%) scale(${stageH / 488})` }}
           aria-hidden="true"
         >
           <img src="/native/welcome-halo.svg" alt="" width={360} height={360} className="absolute max-w-none" style={{ left: 1, top: 96, width: 360, height: 360 }} draggable={false} />
@@ -202,4 +211,9 @@ export default function NativeWelcome() {
       </div>
     </div>
   )
+}
+
+function welcomeStageHeight(): number {
+  const h = typeof window === 'undefined' ? 844 : window.innerHeight
+  return Math.min(488, Math.max(340, h - 356))
 }
