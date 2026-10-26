@@ -16,6 +16,12 @@ const isNative = (): boolean => Capacitor.isNativePlatform()
 export async function setAppBadge(count: number): Promise<void> {
   if (!isNative()) return
   try {
+    // Never ASK here: on iOS Badge.set/clear request notification permission
+    // first, which showed the system prompt on every fresh install at launch
+    // (logged out → clear). The ask belongs to the one-time in-app sheet
+    // (lib/pushAsk). Without permission there is no badge to sync anyway.
+    const { display } = await Badge.checkPermissions()
+    if (display !== 'granted') return
     const n = Math.max(0, Math.floor(Number(count) || 0))
     if (n <= 0) {
       await Badge.clear()
