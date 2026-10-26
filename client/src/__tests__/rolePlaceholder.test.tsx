@@ -72,10 +72,11 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(container.querySelector('svg')).toBeNull()
   })
 
-  it('falls back to initials when src is missing AND role is not recognised', () => {
+  // Founder 2026-10-26: never initials. Unknown role → the Player placeholder.
+  it('shows the Player placeholder, never initials, when src is missing AND role is not recognised', () => {
     const { container } = render(<Avatar initials="MG" role={null} />)
-    expect(container.querySelector('svg')).toBeNull()
-    expect(screen.getByText('MG')).toBeInTheDocument()
+    expect(container.querySelector('[data-testid="role-placeholder"]')?.getAttribute('data-role')).toBe('player')
+    expect(screen.queryByText('MG')).not.toBeInTheDocument()
   })
 
   it('omits the purple gradient bg class when the opportunity placeholder is rendered', () => {
@@ -86,10 +87,11 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(wrapper.className).not.toContain('from-hockia-primary')
   })
 
-  it('keeps the purple gradient bg class for the initials fallback (no role)', () => {
+  it('no longer has the purple initials block, even without a role', () => {
     const { container } = render(<Avatar initials="MG" />)
     const wrapper = container.firstChild as HTMLElement
-    expect(wrapper.className).toContain('from-hockia-primary')
+    expect(wrapper.className).not.toContain('from-hockia-primary')
+    expect(container.textContent).toBe('')
   })
 
   it('falls back to RolePlaceholder when src loads but errors (broken URL)', () => {
@@ -127,14 +129,18 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(container.querySelector('img')).toBeNull()
   })
 
-  // Batch C (2026-10-21): one no-photo treatment, the role gradient
-  // (lib/communityCard roleGradientStops) + white initials, letters only.
-  it('renders the opportunity gradient per role (smoke check across all 5 via Avatar)', () => {
+  // Avatar / Placeholder (founder 2026-10-26): the role gradient
+  // (lib/communityCard roleGradientStops), a silhouette for people and an
+  // icon for clubs and brands. Never initials.
+  it('renders the role gradient and the right mark per role (all 5 via Avatar)', () => {
     for (const role of ['player', 'coach', 'club', 'brand', 'umpire'] as const) {
       const { container, unmount } = render(<Avatar role={role} alt="Ana López" initials="AL" />)
       const stop = container.querySelector('linearGradient stop')
       expect(stop?.getAttribute('stop-color')).toBe(roleGradientStops(role)[0])
-      expect(container.querySelector('[data-testid="role-placeholder-initials"]')?.textContent).toBe('AL')
+      const org = role === 'club' || role === 'brand'
+      expect(container.querySelector('[data-testid="role-placeholder-icon"]') !== null).toBe(org)
+      expect(container.querySelector('[data-testid="role-placeholder-silhouette"]') !== null).toBe(!org)
+      expect(container.textContent).not.toContain('AL')
       unmount()
     }
   })
@@ -154,10 +160,11 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(roleGradientStops('coach')[0]).not.toBe(roleGradientStops('player')[0])
   })
 
-  it('no silhouette: initials only, letters only ("[QA] iOS Layout" → IL)', () => {
+  it('people get the head-and-shoulders silhouette and no letters, whatever the name', () => {
     const { container } = render(<RolePlaceholder role="coach" name="[QA] iOS Layout" label="" />)
-    expect(container.querySelector('path')).toBeNull()
-    expect(container.querySelector('circle')).toBeNull()
-    expect(container.querySelector('[data-testid="role-placeholder-initials"]')?.textContent).toBe('IL')
+    const silhouette = container.querySelector('[data-testid="role-placeholder-silhouette"]')
+    expect(silhouette?.querySelector('circle')).not.toBeNull()
+    expect(silhouette?.querySelector('ellipse')).not.toBeNull()
+    expect(container.querySelector('text')).toBeNull()
   })
 })

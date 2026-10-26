@@ -3,11 +3,12 @@ import { ChevronRight } from 'lucide-react'
 import { MIN_COVER_WIDTH } from '@/lib/coverQuality'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
-import { CLUB_BRAND_GRADIENT, CLUB_COVER_SCRIM, GLASS, HAIRLINE_ON_PHOTO, LIGHT_SHADOW, PRESS, clubCover, crestGradient, initialsOf } from '@/lib/communityCard'
+import { CLUB_BRAND_GRADIENT, CLUB_COVER_SCRIM, GLASS, HAIRLINE_ON_PHOTO, LIGHT_SHADOW, PRESS, clubCover, crestGradient } from '@/lib/communityCard'
 import { useSquircle } from '@/lib/squircle'
 import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import recruitingDot from '@/assets/community/recruiting-dot.svg'
 import { LogoTile } from './LogoTile'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
 /**
  * Card / Club wide (Figma 12:41): clubs always span both columns (founder
@@ -84,8 +85,8 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
               initialsClassName="text-[32px]"
             />
           ) : (
-            <span className="absolute right-[29px] top-8 flex h-24 w-24 items-center justify-center rounded-full border border-white/35 bg-white/[0.14] text-[36px] font-bold text-white/90">
-              {initialsOf(name)}
+            <span className="absolute right-[29px] top-8 block h-24 w-24 overflow-hidden rounded-full ring-1 ring-white/35">
+              <RolePlaceholder role="club" label="" />
             </span>
           )}
         </span>

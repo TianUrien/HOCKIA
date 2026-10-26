@@ -274,11 +274,11 @@ describe('what happened — rows', () => {
     const row = screen.getByTestId('happened-row-link')
     expect(row).toHaveAttribute('href', '/messages?new=club-1')
     expect(row.className).toMatch(/py-3\.5/)
-    // Organisation shape: a rounded square (radius = size / 4) at 40.
+    // No crest: the club Avatar / Placeholder, a circle at 40 (founder 2026-10-26), no letters.
     const crest = row.querySelector('span[style]') as HTMLElement
     expect(crest.style.width).toBe('40px')
-    expect(crest.style.borderRadius).toBe('10px')
-    expect(crest.textContent).toBe('CB')
+    expect(crest.style.borderRadius).toBe('20px')
+    expect(crest.textContent).toBe('')
     expect(screen.getByTestId('happened-line')).toHaveTextContent('Club B replied on Forward')
     expect(screen.getByTestId('happened-line').className).toMatch(/text-ink-1/)
     expect(screen.getByTestId('happened-when')).toHaveTextContent('3 Oct')

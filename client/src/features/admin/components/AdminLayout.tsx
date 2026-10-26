@@ -45,6 +45,8 @@ import {
 } from 'lucide-react'
 import { searchProfiles } from '../api/adminApi'
 import type { AdminProfileListItem } from '../types'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 interface NavItem {
   path: string
@@ -335,9 +337,7 @@ export function AdminLayout() {
                         {profile.avatar_url ? (
                           <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xs font-medium text-gray-500">
-                            {profile.full_name?.charAt(0) || '?'}
-                          </span>
+                          <RolePlaceholder role={isRoleAvatarRole(profile.role) ? profile.role : 'player'} label="" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">

@@ -15,7 +15,7 @@ import type { BrandPost } from '@/hooks/useBrandPosts'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { hasAnalyticsConsent } from '@/lib/cookieConsent'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
-import { GLASS, initialsOf } from '@/lib/communityCard'
+import { GLASS } from '@/lib/communityCard'
 import { positionLabel } from '@/lib/identity'
 import { instagramHandleOf } from '@/lib/brandEdit'
 import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
@@ -37,6 +37,7 @@ import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -370,8 +371,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
           <div className="mt-6 flex items-center gap-5">
             <div className="relative shrink-0">
-              <div className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px] bg-white p-2 ring-1 ring-inset ring-line">
-                {logo ? <img src={logo} alt="" className="h-16 w-16 object-contain" decoding="async" /> : <span className="font-display text-[40px] font-bold text-role-brand-ink">{initialsOf(brand.name).slice(0, 1)}</span>}
+              <div className={cn('flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px]', logo && 'bg-white p-2 ring-1 ring-inset ring-line')}>
+                {logo ? <img src={logo} alt="" className="h-16 w-16 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
               </div>
               <button type="button" onClick={props.onEdit} aria-label="Change logo" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
@@ -442,7 +443,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             </div>
 
             <aside className="sticky top-24 flex flex-col gap-6" data-testid="brand-owner-side">
-              {stepCopy && step && <PrimaryCard wrapperClassName="" stepKey={step.key} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
+              {stepCopy && step && <PrimaryCard role="brand" wrapperClassName="" stepKey={step.key} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
               <div className="rounded-[24px] bg-white p-2 ring-1 ring-inset ring-line [&>div]:bg-white">{partnersRow}</div>
               {showReach && (
                 <div className="rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" data-testid="brand-private-stats">
@@ -490,8 +491,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           </div>
           <div className="absolute inset-x-4 bottom-6 flex flex-col items-start gap-1.5">
             <div className="relative">
-              <div className="flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[20px] bg-white p-2 shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]">
-                {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" decoding="async" /> : <span className="text-[28px] font-bold text-[#be123c]">{initialsOf(brand.name).slice(0, 1)}</span>}
+              <div className={cn('flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[20px] shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]', logo && 'bg-white p-2')}>
+                {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
               </div>
               {owner && (
                 <button type="button" onClick={props.onEdit} aria-label="Change logo" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
@@ -526,7 +527,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               onOpen={() => navigate('/dashboard/offers')}
             />
           )}
-          {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
+          {stepCopy && step && <PrimaryCard role="brand" stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
 
           {/* Ambassador card — brand-initiated invites; only with something in it (B0). */}
           {showInvites && <div className="px-4">{invitesCard}</div>}

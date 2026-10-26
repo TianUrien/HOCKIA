@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { BlurImage } from './BlurImage'
-import { initialsOf } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
 import { SquircleBox } from './primitives'
 import pitchLines from '@/assets/home/signing-pitch-lines.svg'
 import confetti from '@/assets/home/signing-confetti.svg'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
 /**
  * The New signing card — option E, FINAL (Figma 60:194; spec 65:329):
@@ -28,10 +28,11 @@ export interface SigningArtProps {
 
 const CIRCLE = 'absolute top-0 h-[140px] w-[140px] overflow-hidden rounded-full bg-white ring-[6px] ring-white shadow-[0_8px_24px_rgba(15,15,20,0.12),0_1px_3px_rgba(15,15,20,0.08)]'
 
-function Initials({ name, className }: { name: string; className?: string }) {
+// No photo / crest: Avatar / Placeholder (never initials, founder 2026-10-26).
+function Initials({ role, className }: { name: string; role: 'player' | 'club'; className?: string }) {
   return (
-    <span aria-hidden="true" className={cn('flex h-full w-full items-center justify-center bg-hockia-soft text-[40px] font-bold text-hockia-primary', className)}>
-      {initialsOf(name)}
+    <span aria-hidden="true" className={cn('block h-full w-full', className)}>
+      <RolePlaceholder role={role} label="" />
     </span>
   )
 }
@@ -56,14 +57,14 @@ export function NewSigningArt({ personName, personAvatarUrl, clubName, clubCrest
           {photo ? (
             <BlurImage src={photo} lqip={getLqipUrl(personAvatarUrl)} eager className="h-full w-full" onError={() => setPhotoFailed(true)} />
           ) : (
-            <Initials name={personName} />
+            <Initials name={personName} role="player" />
           )}
         </span>
         <span className={cn(CIRCLE, 'left-[120px] flex items-center justify-center')}>
           {crest ? (
             <img src={crest} alt="" className="h-[96px] w-[96px] object-contain" decoding="async" onError={() => setCrestFailed(true)} />
           ) : (
-            <Initials name={clubName} className="bg-white text-ink-1" />
+            <Initials name={clubName} role="club" />
           )}
         </span>
       </div>

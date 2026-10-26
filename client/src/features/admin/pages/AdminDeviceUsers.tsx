@@ -13,6 +13,8 @@ import type { Column } from '../components'
 import { useDeviceUsers } from '../hooks/useDeviceUsers'
 import { formatAdminDate, formatAdminDateTime } from '../utils/formatDate'
 import type { DevicePlatformFilter, DeviceUser } from '../types'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 const PAGE_SIZE = 50
 
@@ -118,8 +120,8 @@ export function AdminDeviceUsers() {
           {row.avatar_url ? (
             <img src={row.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs text-gray-500">
-              {(row.full_name || row.email || '?').charAt(0).toUpperCase()}
+            <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+              <RolePlaceholder role={isRoleAvatarRole(row.role) ? row.role : 'player'} label="" />
             </div>
           )}
           <div className="min-w-0">

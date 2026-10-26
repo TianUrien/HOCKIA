@@ -35,7 +35,7 @@ export type NextStepAction =
 
 /** Copy + where the CTA goes, per part key. */
 export const NEXT_STEP_COPY: Record<string, { title: string; subtitle: string; cta: string; action: NextStepAction }> = {
-  photo: { title: 'Add a profile photo', subtitle: 'Clubs look at photos first', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
+  photo: { title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
   crest: { title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', action: { kind: 'edit' } },
   logo: { title: 'Add your logo', subtitle: 'Athletes recognise brands by it', cta: 'Add', action: { kind: 'edit' } },
   position: { title: 'Add your position', subtitle: 'Clubs search by position', cta: 'Add', action: { kind: 'edit', field: 'position' } },

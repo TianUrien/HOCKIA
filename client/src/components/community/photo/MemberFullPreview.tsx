@@ -47,7 +47,7 @@ import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { brandCategoryLabel, coachSpecialtyLabel, positionLabel } from '@/lib/identity'
 import {
   availableLabel, CLUB_BRAND_GRADIENT, displayPlace, placeLabel, PHOTO_SCRIM, GLASS, PRESS, LIGHT_SHADOW, crestGradient, friendsHereLabel, friendsSinceLabel,
-  inCommonCountLabel, initialsOf, rolePreviewGradient, teamLabel,
+  inCommonCountLabel, rolePreviewGradient, teamLabel,
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
 import type { Profile } from '../PeopleListView'
@@ -626,8 +626,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
               ) : brandLogo ? (
                 <LogoTile src={getImageUrl(brandLogo, 'avatar-lg') ?? brandLogo} name={name} eager className="absolute left-1/2 top-[33%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
               ) : (
-                <span className="absolute left-1/2 top-[33%] flex h-[140px] w-[140px] -translate-x-1/2 items-center justify-center rounded-full border-[1.5px] border-white/40 bg-white/[0.14] text-[52px] font-bold text-white">
-                  {initialsOf(name)}
+                <span className={`absolute left-1/2 top-[33%] block h-[140px] w-[140px] -translate-x-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${isBrand ? 'rounded-[28px]' : 'rounded-full'}`}>
+                  <RolePlaceholder role={isRoleAvatarRole(member.role) ? member.role : 'player'} label="" />
                 </span>
               )}
             </span>
@@ -1265,8 +1265,8 @@ function ImmersivePage(p: ImmersivePageProps) {
             ) : p.brandLogo ? (
               <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-[28%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
             ) : (
-              <span className="absolute left-1/2 top-[28%] flex h-[140px] w-[140px] -translate-x-1/2 items-center justify-center rounded-full border-[1.5px] border-white/40 bg-white/[0.14] text-[52px] font-bold text-white">
-                {initialsOf(p.name)}
+              <span className={`absolute left-1/2 top-[28%] block h-[140px] w-[140px] -translate-x-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${p.member.role === 'brand' ? 'rounded-[28px]' : 'rounded-full'}`}>
+                <RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} label="" />
               </span>
             )}
           </span>
@@ -1472,8 +1472,8 @@ function DesktopPage(p: ImmersivePageProps) {
             ) : p.brandLogo ? (
               <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-1/2 h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
             ) : (
-              <span className="absolute left-1/2 top-1/2 flex h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[1.5px] border-white/40 bg-white/[0.14] text-[52px] font-bold text-white">
-                {initialsOf(p.name)}
+              <span className={`absolute left-1/2 top-1/2 block h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${p.member.role === 'brand' ? 'rounded-[28px]' : 'rounded-full'}`}>
+                <RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} label="" />
               </span>
             )}
           </span>

@@ -25,6 +25,7 @@ import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 import { ANY_CATEGORY, CATEGORY_LABELS, COACH_UMPIRE_CATEGORIES, isValidCategoryArray } from '@/lib/hockeyCategories'
 import { cn } from '@/lib/utils'
 import { SetupSignOut } from './SetupSignOut'
+import { AddPhotoPrompt } from '@/components/profile/AddPhotoPrompt'
 import {
   COACH_CATEGORIES_HINT,
   COACH_PHOTO_HELPER,
@@ -131,6 +132,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
   // The same photo in its own shape, for full-screen views (saved with avatar_url).
   const [avatarFullUrl, setAvatarFullUrl] = useState<string | null>(profile?.avatar_full_url ?? null)
   const [uploading, setUploading] = useState(false)
+  const [photoPromptDismissed, setPhotoPromptDismissed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [aboutErrors, setAboutErrors] = useState<Partial<Record<CoachAboutYouField, string>>>({})
@@ -488,6 +490,22 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       >
         <h1 className="text-title text-ink-1">Your coaching</h1>
         <p className="mt-1.5 text-row text-ink-2">{COACH_STEP2_SUBTITLE}</p>
+
+        {/* End of onboarding (founder 2026-10-26): no photo yet → the Add a
+            photo prompt; dismissible, never blocks Finish. */}
+        {!avatar && !photoPromptDismissed && (
+          <>
+            <AddPhotoPrompt className="mt-5" role="coach" secondary busy={uploading} onAdd={() => void pickPhoto()} onDismiss={() => setPhotoPromptDismissed(true)} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+              onChange={(e) => void uploadPhoto(e.target.files?.[0])}
+              className="hidden"
+              aria-label="Upload profile photo"
+            />
+          </>
+        )}
 
         <div className="mt-6 space-y-5">
           <div>

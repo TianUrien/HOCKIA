@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Camera, Instagram, Settings, Share } from 'lucide-react'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
-import { GLASS, initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
+import { GLASS, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { BlurImage } from '@/components/home/v1/BlurImage'
 import { NationalityPills } from '@/components/ui/NationalityBadges'
 import type { NationalityCountry } from '@/lib/nationality'
@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 import { FitBadge } from '@/components/ui/FitBadge'
 import type { FitState } from '@/lib/clubRecruiting'
 import { BackGlyph } from '@/components/ui/BackGlyph'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /**
  * Profile v2 hero (Figma PR1 97:5 / PR2): the best photo full-bleed (540 pt),
@@ -81,7 +83,9 @@ export function ProfileHero({ photos, name, age, roleLine, place, nationalities 
         </div>
       )}
       {!current && !owner && (
-        <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-[88px] font-bold text-white/25">{initialsOf(name)}</span>
+        <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center pb-24">
+          <span className="block h-32 w-32 overflow-hidden rounded-full ring-1 ring-white/25"><RolePlaceholder role={isRoleAvatarRole(role) ? role : 'player'} label="" /></span>
+        </span>
       )}
       {!current && owner && (
         // PR25: a new profile gets the dashed photo target in the hero itself.

@@ -1,5 +1,4 @@
 import Avatar from '@/components/Avatar'
-import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { RoleLike } from '@/lib/identity'
 import { isOrganisationRole } from '@/lib/identity'
@@ -23,7 +22,9 @@ interface EntityAvatarProps {
 export function EntityAvatar({ src, name, role, size = 48, className }: EntityAvatarProps) {
   const label = name ?? ''
   if (isOrganisationRole(role)) {
-    const radius = Math.round(size / 4)
+    // Brands: rounded square (24 %). Clubs: the crest on white, or the
+    // Avatar / Placeholder shield in a circle when there is none.
+    const radius = !src && role !== 'brand' ? size / 2 : Math.round(size / 4)
     return (
       <span
         className={cn('flex shrink-0 items-center justify-center overflow-hidden', src ? 'border border-line bg-white' : '', className)}
@@ -38,9 +39,8 @@ export function EntityAvatar({ src, name, role, size = 48, className }: EntityAv
             style={{ width: size - 8, height: size - 8 }}
           />
         ) : (
-          // No crest / logo: the organisation no-photo treatment (violet for
-          // clubs, brand ink for brands) with large initials (Batch C).
-          <RolePlaceholder role={role === 'brand' ? 'brand' : 'club'} name={label} label="" />
+          // No crest / logo: Avatar / Placeholder (never initials).
+          <RolePlaceholder role={role === 'brand' ? 'brand' : 'club'} label="" />
         )}
       </span>
     )
@@ -50,7 +50,6 @@ export function EntityAvatar({ src, name, role, size = 48, className }: EntityAv
       <Avatar
         src={src}
         alt={label}
-        initials={getInitials(label) || '?'}
         role={role ?? undefined}
         className="!h-full !w-full"
       />

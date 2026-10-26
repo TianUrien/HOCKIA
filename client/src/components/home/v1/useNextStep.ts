@@ -34,6 +34,8 @@ export type NextStepVisual =
   | { kind: 'crests'; urls: Array<string | null> }
   | { kind: 'faces'; people: Array<{ url: string | null; name: string | null; role: string | null }> }
   | { kind: 'icon'; icon: 'camera' | 'check' | 'chart' | 'stick' | 'user' }
+  /** No photo yet: the owner's Avatar / Placeholder (founder 2026-10-26). */
+  | { kind: 'placeholder'; role: string }
 
 export interface NextStep {
   key: string
@@ -79,7 +81,7 @@ export function useNextStep() {
     const hasPhoto = Boolean(profile.avatar_url)
 
     if (isTalent || role === 'umpire') {
-      if (!hasPhoto) out.push({ key: 'photo', title: 'Add a profile photo', subtitle: 'Clubs look at photos first', cta: 'Add', visual: { kind: 'icon', icon: 'camera' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto) out.push({ key: 'photo', title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', visual: { kind: 'placeholder', role: role ?? 'player' }, to: OWN_PROFILE_EDIT_PATH })
       const checkIn = pulse.items.find((p) => p.item_type === 'availability_check_in' && !p.action_completed_at && !p.dismissed_at)
       if (checkIn && role !== 'umpire') {
         out.push({
