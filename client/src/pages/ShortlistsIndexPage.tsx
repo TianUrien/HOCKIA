@@ -17,7 +17,7 @@
 
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, BookmarkCheck, Plus, Star, Trash2, Pencil, Check, X } from 'lucide-react'
+import { ArrowLeft, BookmarkCheck, Check, ChevronRight, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -78,11 +78,8 @@ export default function ShortlistsIndexPage() {
 
         <header className="mb-6 flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
-              Shortlists
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <h1 className="text-title text-ink-1">Shortlists</h1>
+            <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
               Group players you're scouting. Only you see these lists.
             </p>
           </div>
@@ -90,9 +87,9 @@ export default function ShortlistsIndexPage() {
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0] transition-colors"
+              className="inline-flex h-11 shrink-0 items-center gap-1 px-1 text-[15px] font-semibold text-brand-text transition-opacity hover:opacity-80"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" strokeWidth={2} />
               New list
             </button>
           )}
@@ -194,8 +191,8 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
   }
 
   return (
-    <li className="rounded-xl border border-gray-200 bg-white hover:border-gray-300 transition-colors">
-      <div className="flex items-center gap-3 px-4 py-3">
+    <li className="rounded-[16px] bg-white ring-1 ring-inset ring-line transition-colors hover:bg-surface-subtle">
+      <div className="flex min-h-[64px] items-center gap-2 py-2 pl-4 pr-2">
         {editing ? (
           <input
             autoFocus
@@ -214,28 +211,28 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
         ) : (
           <Link to={`/dashboard/shortlists/${list.id}`} className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-semibold text-gray-900 truncate">{list.name}</span>
+              <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{list.name}</span>
               {list.is_default && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-hockia-primary bg-hockia-primary/10 rounded-full px-2 py-0.5">
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-brand-text">
                   <Star className="w-3 h-3 fill-current" />
                   Default
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="mt-0.5 text-secondary text-ink-2">
               {list.item_count} {list.item_count === 1 ? 'player' : 'players'}
             </p>
           </Link>
         )}
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="-mr-2 flex shrink-0 items-center">
           {editing ? (
             <>
               <button
                 type="button"
                 onClick={commitRename}
                 aria-label="Save name"
-                className="p-1.5 rounded-md text-hockia-primary hover:bg-hockia-primary/10"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-hockia-primary hover:bg-hockia-soft"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -243,7 +240,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 type="button"
                 onClick={() => { setDraft(list.name); setEditing(false) }}
                 aria-label="Cancel rename"
-                className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:bg-surface-muted"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -256,7 +253,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                   onClick={onSetDefault}
                   aria-label="Make this the default list"
                   title="Make default. Quick-saves land here"
-                  className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
                 >
                   <Star className="w-4 h-4" />
                 </button>
@@ -265,7 +262,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 type="button"
                 onClick={() => setEditing(true)}
                 aria-label="Rename"
-                className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-surface-muted hover:text-ink-1"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -274,17 +271,13 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                   type="button"
                   onClick={onDelete}
                   aria-label="Delete"
-                  className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
-              <button
-                type="button"
-                onClick={onOpen}
-                className="ml-1 px-3 py-1.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-700 hover:bg-gray-200"
-              >
-                Open
+              <button type="button" onClick={onOpen} aria-label={`Open ${list.name}`} className="flex h-11 w-8 items-center justify-center text-ink-4">
+                <ChevronRight className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
               </button>
             </>
           )}

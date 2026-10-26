@@ -69,14 +69,10 @@ export default function SavedCandidatesPage() {
         </button>
 
         <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
-            {noun}
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {isRecruiter
-              ? "Players you've saved from Community, search, or any profile. Only you can see this list."
-              : "People you've saved from Community, search, or any profile. Only you can see this list."}
+          <h1 className="text-title text-ink-1">Saved</h1>
+          {/* Rebrand page 28 · Saved: sentence case, and the privacy promise first. */}
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
+            Only you see who you saved. They’re never told.
           </p>
           {/* Active recruiting context drives the Club Fit chip on
               each saved candidate row. Self-hides for non-recruiter
@@ -205,7 +201,7 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
         type="button"
         onClick={handleRemove}
         disabled={savedState.mutating}
-        className="ml-2 p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+        className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-status-danger-soft hover:text-status-danger disabled:opacity-50"
         aria-label={`Remove ${profile.full_name} from saved`}
         title="Remove from saved"
       >
