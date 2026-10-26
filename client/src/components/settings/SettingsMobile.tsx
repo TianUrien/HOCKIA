@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, ChevronRight, FileText, HelpCircle, Languages, Lock, MessageSquare } from 'lucide-react'
+import { Bell, Check, ChevronRight, FileText, HelpCircle, Lock, MessageSquare } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -185,8 +185,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
       <SettingsGroup label="Preferences">
         <SettingsRow title="Notifications" value="Per type" icon={<Bell className="h-4 w-4" strokeWidth={2} />} onClick={() => go('notifications')} />
-        <SettingsRow title="Privacy" value={isPlayer ? (fullMatches === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-positive-soft text-positive" onClick={() => go('privacy')} />
-        <SettingsRow title="Language" value="English" icon={<Languages className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-[#e8edfd] text-[#3b5bdb]" />
+        <SettingsRow title="Privacy" value={isPlayer ? (fullMatches === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} onClick={() => go('privacy')} />
       </SettingsGroup>
 
       <SettingsGroup label="Account" footer={isClub ? undefined : dobFooter(isPlayer)}>
