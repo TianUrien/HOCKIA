@@ -86,8 +86,8 @@ const ENTRY_TYPE_VISUALS: Record<EntryTypeKey, EntryTypeVisual> = {
   panel: {
     label: 'Panel',
     Icon: Users,
-    badgeClass: 'bg-blue-50 text-blue-800',
-    borderClass: 'border-l-blue-400',
+    badgeClass: 'bg-surface-muted text-ink-2',
+    borderClass: 'border-l-line-strong',
   },
 }
 

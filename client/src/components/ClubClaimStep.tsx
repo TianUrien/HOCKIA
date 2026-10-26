@@ -556,8 +556,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   onClick={() => handleRegionSelect(region)}
                   className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-hockia-primary/5 transition-all text-left"
                 >
-                  <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-blue-500" />
+                  <div className="w-10 h-10 bg-surface-muted rounded-full flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-ink-2" />
                   </div>
                   <span className="font-medium text-gray-900">{region.name}</span>
                 </button>
@@ -650,7 +650,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   <div className="flex-1">
                     <span className="font-medium text-gray-900">{club.club_name}</span>
                     {club.is_claimed && (
-                      <span className="ml-2 text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">Claimed</span>
+                      <span className="ml-2 text-xs text-ink-2 bg-surface-muted px-2 py-0.5 rounded-full">Claimed</span>
                     )}
                   </div>
                 </button>
@@ -723,9 +723,9 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
 
           {/* Claimed club display */}
           {selectedClub && (
-            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center gap-3 p-4 bg-hockia-soft border border-brand-primary/20 rounded-xl mb-6">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-hockia-primary" />
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{selectedClub.club_name}</p>

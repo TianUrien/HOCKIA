@@ -171,7 +171,7 @@ export default function WorldPage() {
               <button
                 type="button"
                 key={country.country_id}
-                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all cursor-pointer group text-left w-full"
+                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-brand-primary/40 transition-all cursor-pointer group text-left w-full"
                 onClick={() => handleCountryClick(country.country_code)}
               >
                 <div className="flex items-start justify-between mb-4">
@@ -200,8 +200,8 @@ export default function WorldPage() {
                       <p className="text-sm text-gray-500">Explore clubs & leagues</p>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <MapPin className="w-4 h-4 text-blue-500" />
+                  <div className="w-8 h-8 rounded-full bg-hockia-soft flex items-center justify-center group-hover:bg-hockia-soft-hover transition-colors">
+                    <MapPin className="w-4 h-4 text-hockia-primary" />
                   </div>
                 </div>
 
@@ -233,7 +233,7 @@ export default function WorldPage() {
 
                 {/* CTA */}
                 <div
-                  className="w-full py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 group-hover:from-blue-600 group-hover:to-cyan-600 transition-all"
+                  className="w-full py-2.5 bg-brand-primary text-white rounded-lg font-medium flex items-center justify-center gap-2 group-hover:opacity-90 transition-all"
                 >
                   View Country
                   <span className="text-lg">→</span>

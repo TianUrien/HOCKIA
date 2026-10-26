@@ -18,8 +18,8 @@ export default function PrivacyPolicy() {
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Shield className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-hockia-soft rounded-xl flex items-center justify-center flex-shrink-0">
+              <Shield className="w-6 h-6 text-hockia-primary" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>

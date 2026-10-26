@@ -178,7 +178,7 @@ export default function AppRatingPrompt() {
                 </button>
               </div>
               {submitError && (
-                <p className="mt-2 text-xs text-rose-600" role="alert">
+                <p className="mt-2 text-xs text-status-danger" role="alert">
                   Couldn’t send your feedback. Please try again.
                 </p>
               )}

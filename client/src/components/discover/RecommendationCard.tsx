@@ -10,7 +10,7 @@ const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
   label: string; pillBg: string; pillText: string
 }> = {
   strong_match: { label: 'Strong match', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
-  possible_match: { label: 'Good match', pillBg: 'bg-sky-50', pillText: 'text-sky-700' },
+  possible_match: { label: 'Good match', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
   needs_more_info: { label: 'Needs more info', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
 }
 

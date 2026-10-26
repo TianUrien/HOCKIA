@@ -149,7 +149,7 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
               testId="share-channel-whatsapp"
             />
             <ShareRow
-              icon={<Mail className="h-5 w-5 text-blue-600" />}
+              icon={<Mail className="h-5 w-5 text-ink-2" />}
               label="Email"
               hint="Open your email app with a prefilled message"
               onClick={handleEmail}

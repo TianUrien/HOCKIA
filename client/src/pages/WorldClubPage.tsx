@@ -266,13 +266,13 @@ export default function WorldClubPage() {
                 {(menLeague || womenLeague) && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {menLeague && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-category-men-soft px-3 py-1 text-xs font-medium text-category-men">
                         <Trophy className="h-3 w-3" />
                         Men: {menLeague.name}
                       </span>
                     )}
                     {womenLeague && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-category-women-soft px-3 py-1 text-xs font-medium text-category-women">
                         <Trophy className="h-3 w-3" />
                         Women: {womenLeague.name}
                       </span>

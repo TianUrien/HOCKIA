@@ -29,14 +29,14 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
   const colors = {
     success: 'lg:bg-green-50 lg:border-green-200 lg:text-green-800',
     error: 'lg:bg-red-50 lg:border-red-200 lg:text-red-800',
-    info: 'lg:bg-blue-50 lg:border-blue-200 lg:text-blue-800',
+    info: 'lg:bg-surface-subtle lg:border-line lg:text-ink-1',
     neutral: 'lg:bg-surface-grouped lg:border-line lg:text-ink-1',
   }
 
   const iconColors = {
     success: 'text-green-400 lg:text-green-600',
     error: 'text-red-400 lg:text-red-600',
-    info: 'text-blue-300 lg:text-blue-600',
+    info: 'text-ink-4 lg:text-ink-2',
     neutral: 'text-white/70 lg:text-ink-2',
   }
 
