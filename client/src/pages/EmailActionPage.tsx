@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Loader2, Star, HelpCircle, X, CheckCircle2, Link2, Clock, ShieldAlert, RefreshCw } from 'lucide-react'
 import { SUPABASE_URL } from '@/lib/supabase'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 
 type Action = 'shortlisted' | 'maybe' | 'rejected' | 'renew'
 
@@ -97,11 +98,14 @@ export default function EmailActionPage() {
   }, [token, execute])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-sm max-w-md w-full p-8 text-center">
+    // Rebrand page 26 · email actions: the lockup on top, the result centred.
+    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <header className="flex h-[46px] shrink-0 items-center justify-center">
+        <img src="/brand/lockup/hockia-lockup-horizontal-ink.svg" alt="Hockia" width={108} height={22} className="h-[22px] w-auto" />
+      </header>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 text-center">
         <Card phase={phase} onConfirmReject={() => execute((phase as { info: ActionInfo }).info)} />
-        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">Hockia</div>
-      </div>
+      </main>
     </div>
   )
 }
@@ -118,8 +122,8 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         : 'Recording your response…'
     return (
       <>
-        <Loader2 className="w-10 h-10 mx-auto animate-spin text-hockia-primary" />
-        <h1 className="text-lg font-bold text-gray-900 mt-4">
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-hockia-primary" />
+        <h1 className="mt-8 text-title text-ink-1">
           {phase.kind === 'executing' ? executingLabel : 'Checking your link…'}
         </h1>
       </>
@@ -130,26 +134,26 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     const { info } = phase
     return (
       <>
-        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-          <X className="w-6 h-6 text-gray-600" />
+        <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+          <X className="h-9 w-9 text-ink-2" />
         </div>
-        <h1 className="text-lg font-bold text-gray-900 mt-4">
+        <h1 className="mt-8 text-title text-ink-1">
           Mark {info.applicant_name ?? 'this applicant'} as Not a fit?
         </h1>
-        <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+        <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
           For {info.opportunity_title ?? 'your opportunity'}. They&apos;ll be notified honestly. A
           clear answer beats silence.
         </p>
         <button
           type="button"
           onClick={onConfirmReject}
-          className="mt-5 w-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold text-sm rounded-xl px-5 py-3 hover:opacity-95 transition"
+          className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-8' })}
         >
           Yes, mark as Not a fit
         </button>
         <Link
           to={appLink(info)}
-          className="mt-3 block w-full text-sm font-medium text-gray-600 bg-gray-100 rounded-xl px-5 py-3 hover:bg-gray-200 transition"
+          className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}
         >
           Review in Hockia instead
         </Link>
@@ -162,7 +166,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
   const cta = (label = 'Review applicants in Hockia') => (
     <Link
       to={appLink(info)}
-      className="mt-5 inline-block bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold text-sm rounded-xl px-6 py-3 hover:opacity-95 transition"
+      className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-8' })}
     >
       {label}
     </Link>
@@ -173,11 +177,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
       const until = formatDeadline(info.new_deadline)
       return (
         <>
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-            <RefreshCw className="w-6 h-6 text-hockia-primary" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-positive-soft">
+            <RefreshCw className="h-9 w-9 text-positive" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">Opportunity renewed</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">Opportunity renewed</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             {info.opportunity_title ?? 'Your opportunity'} is open again
             {until ? ` and accepting applications until ${until}` : ''}.
           </p>
@@ -188,11 +192,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     case 'closed_by_publisher':
       return (
         <>
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-6 h-6 text-gray-500" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">This opportunity stays closed</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">This opportunity stays closed</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             {info.opportunity_title ?? 'This opportunity'} was closed from the app, so this link
             didn&apos;t change anything. You can reopen it anytime from your dashboard.
           </p>
@@ -204,11 +208,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         case 'shortlisted':
           return (
             <>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-                <Star className="w-6 h-6 text-hockia-primary" />
+              <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-positive-soft">
+                <Star className="h-9 w-9 text-positive" />
               </div>
-              <h1 className="text-lg font-bold text-gray-900 mt-4">{name} added to your shortlist</h1>
-              <p className="text-sm text-gray-600 mt-2">
+              <h1 className="mt-8 text-title text-ink-1">{name} added to your shortlist</h1>
+              <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
                 They&apos;ll see they&apos;re on your shortlist for {info.opportunity_title ?? 'your opportunity'}.
               </p>
               {cta()}
@@ -217,11 +221,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         case 'maybe':
           return (
             <>
-              <div className="w-12 h-12 bg-surface-grouped rounded-full flex items-center justify-center mx-auto">
-                <HelpCircle className="w-6 h-6 text-ink-2" />
+              <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+                <HelpCircle className="h-9 w-9 text-ink-2" />
               </div>
-              <h1 className="text-lg font-bold text-gray-900 mt-4">{name} marked as Maybe</h1>
-              <p className="text-sm text-gray-600 mt-2">
+              <h1 className="mt-8 text-title text-ink-1">{name} marked as Maybe</h1>
+              <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
                 You can revisit them anytime. They see their application as under review.
               </p>
               {cta()}
@@ -230,11 +234,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         default:
           return (
             <>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+                <CheckCircle2 className="h-9 w-9 text-ink-2" />
               </div>
-              <h1 className="text-lg font-bold text-gray-900 mt-4">{name} marked as Not a fit</h1>
-              <p className="text-sm text-gray-600 mt-2">
+              <h1 className="mt-8 text-title text-ink-1">{name} marked as Not a fit</h1>
+              <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
                 They&apos;ll be notified honestly. A clear answer beats silence.
               </p>
               {cta()}
@@ -244,11 +248,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     case 'already_handled':
       return (
         <>
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-6 h-6 text-green-600" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">This application was already handled</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">This application was already handled</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             {name}&apos;s application isn&apos;t pending anymore. It was already responded to. Nothing
             was changed.
           </p>
@@ -258,11 +262,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     case 'used':
       return (
         <>
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-6 h-6 text-green-600" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">This link was already used</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">This link was already used</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             {info.action === 'renew'
               ? 'This opportunity was already renewed with this link. Nothing was changed.'
               : 'Your response was recorded the first time. Nothing was changed.'}
@@ -273,11 +277,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     case 'expired':
       return (
         <>
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-            <Clock className="w-6 h-6 text-gray-500" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <Clock className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">This link has expired</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">This link has expired</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             Action links work for 14 days. You can still respond from your dashboard.
           </p>
           {cta('Open in Hockia')}
@@ -286,21 +290,21 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     case 'rate_limited':
       return (
         <>
-          <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-            <ShieldAlert className="w-6 h-6 text-amber-600" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <ShieldAlert className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">Too many requests</h1>
-          <p className="text-sm text-gray-600 mt-2">Please wait a minute and open the link again.</p>
+          <h1 className="mt-8 text-title text-ink-1">Too many requests</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Please wait a minute and open the link again.</p>
         </>
       )
     case 'error':
       return (
         <>
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-            <ShieldAlert className="w-6 h-6 text-red-500" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-status-danger-soft">
+            <ShieldAlert className="h-9 w-9 text-status-danger" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">Something went wrong</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">Something went wrong</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             Your response was not recorded. Please try the link again, or respond from your dashboard.
           </p>
           {cta('Open Hockia')}
@@ -309,11 +313,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
     default:
       return (
         <>
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-            <Link2 className="w-6 h-6 text-gray-500" />
+          <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+            <Link2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mt-4">This link isn&apos;t valid</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="mt-8 text-title text-ink-1">This link isn&apos;t valid</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             It may have been truncated by your email client. You can respond from your dashboard instead.
           </p>
           {cta('Open Hockia')}
