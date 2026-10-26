@@ -8,12 +8,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Globe, Building2, MapPin, Trophy, RefreshCw } from 'lucide-react'
+import { ChevronRight, Globe, RefreshCw } from 'lucide-react'
 import { Header } from '@/components'
 import WorldSearchDropdown from '@/components/WorldSearchDropdown'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { regionColor } from '@/lib/regionColors'
 
 interface CountryWithStats {
   country_id: number
@@ -103,23 +102,18 @@ export default function WorldPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-subtle">
       <Header />
 
-      <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
+      <main className="mx-auto max-w-3xl px-4 pt-under-header-lg pb-12 md:px-6">
         {/* Page Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F3F0FA] rounded-2xl mb-4">
-            <Globe className="w-7 h-7 text-hockia-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Clubs</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Every club and league, from hockey communities around the world
-          </p>
+        <div className="mb-5">
+          <h1 className="text-title text-ink-1">Explore clubs &amp; leagues</h1>
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Every club and league we know, by country.</p>
         </div>
 
         {/* Search */}
-        <div className="max-w-xl mx-auto mb-8">
+        <div className="mb-5">
           <WorldSearchDropdown
             query={searchQuery}
             onQueryChange={setSearchQuery}
@@ -166,81 +160,43 @@ export default function WorldPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          // Rebrand page 28 · Explore clubs & leagues: one compact row per
+          // country (flag, name, counts, chevron), two columns on wide screens.
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {filteredCountries.map((country) => (
-              <button
-                type="button"
-                key={country.country_id}
-                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-brand-primary/40 transition-all cursor-pointer group text-left w-full"
-                onClick={() => handleCountryClick(country.country_code)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full overflow-hidden shadow-sm border border-gray-200">
-                      <img
-                        src={getFlagUrl(country.country_code)}
-                        alt={`${country.country_name} flag`}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to emoji if image fails
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                          const span = document.createElement('span');
-                          span.className = 'text-3xl';
-                          span.textContent = country.flag_emoji || '🏳️';
-                          const parent = target.parentElement!;
-                          parent.replaceChildren(span);
-                          parent.className = 'w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center';
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 text-lg">{country.country_name}</h3>
-                      <p className="text-sm text-gray-500">Explore clubs & leagues</p>
-                    </div>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-hockia-soft flex items-center justify-center group-hover:bg-hockia-soft-hover transition-colors">
-                    <MapPin className="w-4 h-4 text-hockia-primary" />
-                  </div>
-                </div>
-
-                {/* Region Badge */}
-                <div className="mb-4 flex items-center gap-2">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${regionColor(country.region)}`}>
-                    {country.region}
-                  </span>
-                  {!country.has_regions && (
-                    <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      National
-                    </span>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                  <div className="flex items-center gap-1">
-                    <Building2 className="w-4 h-4" />
-                    <span className="text-gray-900 font-semibold">{country.total_clubs}</span>
-                    <span>clubs</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Trophy className="w-4 h-4" />
-                    <span className="text-gray-900 font-semibold">{country.league_count}</span>
-                    <span>leagues</span>
-                  </div>
-                </div>
-
-                {/* CTA */}
-                <div
-                  className="w-full py-2.5 bg-brand-primary text-white rounded-lg font-medium flex items-center justify-center gap-2 group-hover:opacity-90 transition-all"
+              <li key={country.country_id}>
+                <button
+                  type="button"
+                  className="flex min-h-[60px] w-full items-center gap-3 rounded-[16px] bg-white px-4 py-3 text-left ring-1 ring-inset ring-line transition-colors hover:bg-surface-subtle active:bg-surface-muted"
+                  onClick={() => handleCountryClick(country.country_code)}
                 >
-                  View Country
-                  <span className="text-lg">→</span>
-                </div>
-              </button>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-surface-muted ring-1 ring-inset ring-line">
+                    <img
+                      src={getFlagUrl(country.country_code)}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        // Fallback to the emoji flag if the image fails
+                        const target = e.currentTarget
+                        const span = document.createElement('span')
+                        span.className = 'text-xl'
+                        span.textContent = country.flag_emoji || '🏳️'
+                        target.parentElement?.replaceChildren(span)
+                      }}
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{country.country_name}</span>
+                    <span className="block truncate text-secondary text-ink-2">
+                      {country.total_clubs} {country.total_clubs === 1 ? 'club' : 'clubs'} · {country.league_count} {country.league_count === 1 ? 'league' : 'leagues'}
+                    </span>
+                  </span>
+                  <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.75} aria-hidden="true" />
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </main>
     </div>
