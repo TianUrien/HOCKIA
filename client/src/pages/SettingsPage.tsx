@@ -35,6 +35,7 @@ import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 export default function SettingsPage() {
   useDocumentTitle('Settings')
@@ -582,7 +583,7 @@ export default function SettingsPage() {
               id="account" 
               icon={Mail} 
               title="Account" 
-              iconBg="bg-blue-50 text-blue-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'account' && (
@@ -591,7 +592,7 @@ export default function SettingsPage() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-600">Login Email</span>
-                    <span className="flex items-center gap-1 text-xs text-green-600">
+                    <span className="flex items-center gap-1 text-xs text-positive">
                       <CheckCircle className="w-3 h-3" />
                       Verified
                     </span>
@@ -599,7 +600,7 @@ export default function SettingsPage() {
                   <p className="text-gray-900 font-medium">{user.email}</p>
 
                   {emailSuccess ? (
-                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <p className="text-xs text-positive mt-2 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
                       Confirmation sent to your new email. Check both inboxes to confirm the change.
                     </p>
@@ -669,7 +670,7 @@ export default function SettingsPage() {
                       <p className="text-xs text-red-600">{passwordError}</p>
                     )}
                     {passwordSuccess && (
-                      <p className="text-xs text-green-600 flex items-center gap-1">
+                      <p className="text-xs text-positive flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
                         Password updated. All other sessions have been signed out.
                       </p>
@@ -706,7 +707,7 @@ export default function SettingsPage() {
               id="notifications" 
               icon={Bell} 
               title="Notifications" 
-              iconBg="bg-indigo-50 text-indigo-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'notifications' && (
@@ -723,8 +724,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleNotificationToggle}
                       disabled={loadingToggles.has('opportunities')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyOpportunities ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyOpportunities)
                       } ${loadingToggles.has('opportunities') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('opportunities') ? (
@@ -752,8 +753,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleApplicationNotificationToggle}
                       disabled={loadingToggles.has('applications')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyApplications ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyApplications)
                       } ${loadingToggles.has('applications') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('applications') ? (
@@ -780,8 +781,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleFriendNotificationToggle}
                     disabled={loadingToggles.has('friends')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyFriends ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyFriends)
                     } ${loadingToggles.has('friends') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('friends') ? (
@@ -811,8 +812,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleReferenceNotificationToggle}
                       disabled={loadingToggles.has('references')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyReferences ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyReferences)
                       } ${loadingToggles.has('references') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('references') ? (
@@ -839,8 +840,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleMessageNotificationToggle}
                     disabled={loadingToggles.has('messages')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyMessages ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyMessages)
                     } ${loadingToggles.has('messages') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('messages') ? (
@@ -870,8 +871,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handlePushToggle}
                     disabled={!push.isSupported || push.permission === 'denied' || push.loading}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      push.isSubscribed ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(push.isSubscribed)
                     } ${!push.isSupported || push.permission === 'denied' || push.loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {push.loading ? (
@@ -897,8 +898,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleProfileViewNotificationToggle}
                     disabled={loadingToggles.has('profile_views')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyProfileViews ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyProfileViews)
                     } ${loadingToggles.has('profile_views') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('profile_views') ? (
@@ -914,7 +915,7 @@ export default function SettingsPage() {
                 </div>
 
                 {notificationSuccess && (
-                  <p className="text-xs text-green-600 flex items-center gap-1 px-4">
+                  <p className="text-xs text-positive flex items-center gap-1 px-4">
                     <CheckCircle className="w-3 h-3" />
                     Preferences updated
                   </p>
@@ -929,7 +930,7 @@ export default function SettingsPage() {
               id="privacy"
               icon={EyeOff}
               title="Privacy"
-              iconBg="bg-purple-50 text-purple-600"
+              iconBg="bg-surface-muted text-ink-2"
             />
 
             {expandedSection === 'privacy' && (
@@ -947,8 +948,8 @@ export default function SettingsPage() {
                     onClick={handleAnonymousBrowsingToggle}
                     disabled={loadingToggles.has('anonymous')}
                     aria-label={`Anonymous browsing: ${browseAnonymously ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      browseAnonymously ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(browseAnonymously)
                     } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('anonymous') ? (
@@ -977,8 +978,8 @@ export default function SettingsPage() {
                     onClick={handleShowLastActiveToggle}
                     disabled={loadingToggles.has('last-active')}
                     aria-label={`Show last active: ${showLastActive ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      showLastActive ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(showLastActive)
                     } ${loadingToggles.has('last-active') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('last-active') ? (
@@ -1008,7 +1009,7 @@ export default function SettingsPage() {
               id="support" 
               icon={HelpCircle} 
               title="Support" 
-              iconBg="bg-green-50 text-green-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'support' && (
@@ -1029,7 +1030,7 @@ export default function SettingsPage() {
               id="legal" 
               icon={Shield} 
               title="Legal" 
-              iconBg="bg-purple-50 text-purple-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'legal' && (
@@ -1046,7 +1047,7 @@ export default function SettingsPage() {
               id="about" 
               icon={Info} 
               title="About" 
-              iconBg="bg-gray-100 text-gray-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'about' && (

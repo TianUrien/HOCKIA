@@ -29,16 +29,16 @@ interface OpportunityCardProps {
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
-  housing: { icon: Home, label: 'Housing', iconColor: 'text-blue-500' },
+  housing: { icon: Home, label: 'Housing', iconColor: 'text-hockia-primary' },
   car: { icon: Car, label: 'Car', iconColor: 'text-hockia-primary' },
-  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-emerald-500' },
+  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-hockia-primary' },
   flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
-  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-orange-500' },
-  job: { icon: Briefcase, label: 'Job', iconColor: 'text-cyan-500' },
-  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-rose-500' },
-  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-indigo-500' },
-  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-green-500' },
-  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-teal-500' },
+  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-hockia-primary' },
+  job: { icon: Briefcase, label: 'Job', iconColor: 'text-hockia-primary' },
+  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-hockia-primary' },
+  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-hockia-primary' },
+  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-hockia-primary' },
+  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-hockia-primary' },
 }
 
 const MAX_VISIBLE_PERKS = 3
@@ -88,10 +88,10 @@ export default function OpportunityCard({
   const isImmediate = !vacancy.start_date
 
   // Coded opening type — matches HOCKIA's app-wide role colours
-  // (RoleBadge): player = blue (#2563EB), coach = teal-green (#0D9488).
+  // (RoleBadge): player = turf, coach = cyan (role tokens, rebrand 2026-10-25).
   const accent = isPlayerOpening
-    ? { dot: 'bg-blue-600', text: 'text-blue-600' }
-    : { dot: 'bg-teal-600', text: 'text-teal-600' }
+    ? { dot: 'bg-role-player-ink', text: 'text-role-player-ink' }
+    : { dot: 'bg-role-coach-ink', text: 'text-role-coach-ink' }
   const openingLabel = isPlayerOpening ? 'Player opening' : 'Coach opening'
 
   const handlePublisherClick = (e: React.MouseEvent) => {

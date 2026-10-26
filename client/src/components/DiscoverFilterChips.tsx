@@ -13,10 +13,10 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   if (filters.roles?.length) {
     filters.roles.forEach(r => chips.push({
       label: r.charAt(0).toUpperCase() + r.slice(1),
-      color: r === 'player' ? 'bg-blue-100 text-blue-800'
-        : r === 'coach' ? 'bg-teal-100 text-teal-800'
-        : r === 'club' ? 'bg-orange-100 text-orange-800'
-        : 'bg-rose-100 text-rose-800',
+      color: r === 'player' ? 'bg-hockia-soft text-brand-text'
+        : r === 'coach' ? 'bg-hockia-soft text-brand-text'
+        : r === 'club' ? 'bg-hockia-soft text-brand-text'
+        : 'bg-hockia-soft text-brand-text',
     }))
   }
 
@@ -50,20 +50,20 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   }
 
   if (filters.eu_passport) {
-    chips.push({ label: 'EU Passport', color: 'bg-blue-100 text-blue-800' })
+    chips.push({ label: 'EU Passport', color: 'bg-hockia-soft text-brand-text' })
   }
 
   if (filters.nationalities?.length) {
     filters.nationalities.forEach(n => chips.push({
       label: n,
-      color: 'bg-green-100 text-green-800',
+      color: 'bg-hockia-soft text-brand-text',
     }))
   }
 
   if (filters.locations?.length) {
     filters.locations.forEach(l => chips.push({
       label: `Based in ${l}`,
-      color: 'bg-cyan-100 text-cyan-800',
+      color: 'bg-hockia-soft text-brand-text',
     }))
   }
 
@@ -71,15 +71,15 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
     const label = filters.availability === 'open_to_play' ? 'Open to play'
       : filters.availability === 'open_to_coach' ? 'Open to coach'
       : 'Open to opportunities'
-    chips.push({ label, color: 'bg-emerald-100 text-emerald-800' })
+    chips.push({ label, color: 'bg-hockia-soft text-brand-text' })
   }
 
   if (filters.min_references != null) {
-    chips.push({ label: `${filters.min_references}+ references`, color: 'bg-violet-100 text-violet-800' })
+    chips.push({ label: `${filters.min_references}+ references`, color: 'bg-hockia-soft text-brand-text' })
   }
 
   if (filters.min_career_entries != null) {
-    chips.push({ label: `${filters.min_career_entries}+ career entries`, color: 'bg-indigo-100 text-indigo-800' })
+    chips.push({ label: `${filters.min_career_entries}+ career entries`, color: 'bg-hockia-soft text-brand-text' })
   }
 
   if (filters.leagues?.length) {
@@ -92,14 +92,14 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   if (filters.coach_specializations?.length) {
     filters.coach_specializations.forEach(s => chips.push({
       label: getSpecializationLabel(s),
-      color: 'bg-teal-100 text-teal-800',
+      color: 'bg-hockia-soft text-brand-text',
     }))
   }
 
   if (filters.countries?.length) {
     filters.countries.forEach(c => chips.push({
       label: `Playing in ${c}`,
-      color: 'bg-sky-100 text-sky-800',
+      color: 'bg-hockia-soft text-brand-text',
     }))
   }
 

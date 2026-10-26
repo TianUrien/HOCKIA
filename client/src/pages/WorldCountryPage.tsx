@@ -104,7 +104,7 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
             <h3 className={`font-medium inline-flex items-center gap-1 ${club.is_claimed ? 'text-gray-900' : 'text-gray-500'}`}>
               {club.club_name}
               {club.verified && (
-                <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" aria-label="Verified club" />
+                <BadgeCheck className="w-4 h-4 text-brand-primary flex-shrink-0" aria-label="Verified club" />
               )}
             </h3>
             {club.profile_username && (
@@ -115,7 +115,7 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
 
         <div className="flex items-center gap-2">
           {club.is_claimed ? (
-            <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-xs text-positive bg-positive-soft px-2 py-1 rounded-full">
               <CheckCircle className="w-3 h-3" />
               Active
             </span>
@@ -612,7 +612,7 @@ export default function WorldCountryPage() {
         <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
             <p className="text-gray-500">Country not found</p>
-            <Link to="/world" className="text-blue-600 hover:underline mt-2 inline-block">
+            <Link to="/world" className="text-brand-text hover:underline mt-2 inline-block">
               Back to World
             </Link>
           </div>
@@ -669,7 +669,7 @@ export default function WorldCountryPage() {
         </div>
 
         {/* Gradient Bar */}
-        <div className="h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-purple-500 rounded-full mb-8" />
+        <div className="h-1 bg-gradient-to-r from-brand-primary via-brand-primary to-hockia-soft rounded-full mb-8" />
 
         {hasRegions ? (
           /* ===== REGION-BASED COUNTRIES ===== */
@@ -685,20 +685,20 @@ export default function WorldCountryPage() {
                   <div
                     key={province.province_id}
                     onClick={() => navigate(`/world/${countrySlug}/${province.slug}`)}
-                    className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all cursor-pointer text-center"
+                    className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg hover:border-brand-primary/40 transition-all cursor-pointer text-center"
                   >
-                    <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <MapPin className="w-7 h-7 text-blue-500" />
+                    <div className="w-14 h-14 bg-hockia-soft rounded-full flex items-center justify-center mx-auto mb-4">
+                      <MapPin className="w-7 h-7 text-brand-primary" />
                     </div>
                     <h3 className="font-semibold text-gray-900 text-lg mb-1">{province.province_name}</h3>
                     <p className="text-sm text-gray-500 mb-4">{province.description}</p>
 
                     <div className="flex flex-wrap justify-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-hockia-soft text-brand-text rounded-full text-xs font-medium">
                         <Trophy className="w-3 h-3" />
                         {province.total_leagues} {province.total_leagues === 1 ? 'league' : 'leagues'}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-hockia-soft text-brand-text rounded-full text-xs font-medium">
                         <Building2 className="w-3 h-3" />
                         {province.total_clubs} {province.total_clubs === 1 ? 'club' : 'clubs'}
                       </span>
@@ -709,10 +709,10 @@ export default function WorldCountryPage() {
             </div>
 
             {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+            <div className="bg-surface-subtle border border-line rounded-2xl p-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-hockia-soft rounded-full flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 text-brand-text" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">{country.name}'s Hockey Structure</h3>

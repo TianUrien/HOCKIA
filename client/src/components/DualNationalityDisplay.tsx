@@ -164,7 +164,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
             <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
             <span>{country.nationality_name}</span>
             {isEu && (
-              <span className="ml-0.5 text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
+              <span className="ml-0.5 text-[10px] font-semibold text-eu-ink uppercase tracking-wide">
                 EU
               </span>
             )}
@@ -201,7 +201,7 @@ function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
             />
             <span className="truncate">{country.nationality_name}</span>
             {isEu && (
-              <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-px text-[10px] font-semibold text-blue-700">
+              <span className="inline-flex items-center rounded bg-eu-soft px-1.5 py-px text-[10px] font-semibold text-eu-ink">
                 EU
               </span>
             )}
@@ -280,7 +280,7 @@ function CardDisplay({
         <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
         <span>{primaryCountry.name}</span>
         {primaryIsEu && (
-          <span className="text-xs text-blue-600 font-medium">(EU)</span>
+          <span className="text-xs text-eu-ink font-medium">(EU)</span>
         )}
       </span>
     )
@@ -294,7 +294,7 @@ function CardDisplay({
           <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span>{primaryCountry.name}</span>
           {primaryIsEu && (
-            <span className="text-xs text-blue-600 font-medium">(EU)</span>
+            <span className="text-xs text-eu-ink font-medium">(EU)</span>
           )}
         </div>
       )}
@@ -304,7 +304,7 @@ function CardDisplay({
           <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span>{secondaryCountry.name}</span>
           {secondaryIsEu && (
-            <span className="text-xs text-blue-600 font-medium">(EU)</span>
+            <span className="text-xs text-eu-ink font-medium">(EU)</span>
           )}
         </div>
       )}
@@ -337,7 +337,7 @@ function FullDisplay({
           <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span className="font-medium">{primaryCountry.nationality_name}</span>
           {primaryIsEu && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
               EU
             </span>
           )}
@@ -350,7 +350,7 @@ function FullDisplay({
           <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span className="font-medium">{secondaryCountry.nationality_name}</span>
           {secondaryIsEu && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
               EU
             </span>
           )}

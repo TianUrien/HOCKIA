@@ -27,11 +27,11 @@ const CATEGORIES: Array<{
   icon: typeof Bug
   iconColor: string
 }> = [
-  { id: 'bug',       label: 'Something is broken',   description: 'A bug or error',           icon: Bug,           iconColor: 'text-rose-600' },
+  { id: 'bug',       label: 'Something is broken',   description: 'A bug or error',           icon: Bug,           iconColor: 'text-ink-2' },
   { id: 'confusing', label: 'Something is confusing', description: 'Unclear UX or copy',      icon: HelpCircle,    iconColor: 'text-ink-2' },
   { id: 'idea',      label: 'Idea or feature request', description: 'Something missing',     icon: Sparkles,      iconColor: 'text-hockia-primary' },
-  { id: 'praise',    label: 'Love it',                description: 'Tell us what works',     icon: Heart,         iconColor: 'text-pink-500' },
-  { id: 'other',     label: 'Other',                  description: 'Anything else',          icon: MessageSquare, iconColor: 'text-gray-600' },
+  { id: 'praise',    label: 'Love it',                description: 'Tell us what works',     icon: Heart,         iconColor: 'text-hockia-primary' },
+  { id: 'other',     label: 'Other',                  description: 'Anything else',          icon: MessageSquare, iconColor: 'text-ink-2' },
 ]
 
 const MIN_BODY_LENGTH = 50
@@ -142,8 +142,8 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
         {/* Success state */}
         {status.kind === 'success' ? (
           <div className="p-8 text-center">
-            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-              <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-positive-soft">
+              <CheckCircle2 className="h-7 w-7 text-positive" />
             </div>
             <h3 className="text-base font-semibold text-gray-900">Thanks, we got it.</h3>
             <p className="mt-1 text-sm text-gray-500">
@@ -212,7 +212,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                     className={
                       body.length < MIN_BODY_LENGTH
                         ? 'text-gray-400'
-                        : 'text-emerald-600'
+                        : 'text-positive'
                     }
                   >
                     {body.length < MIN_BODY_LENGTH
@@ -249,9 +249,9 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
 
               {/* Error */}
               {status.kind === 'error' && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-900">{status.message}</p>
+                <div className="rounded-lg bg-status-danger-soft border border-status-danger/30 p-3 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-status-danger flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-status-danger-strong">{status.message}</p>
                 </div>
               )}
             </div>

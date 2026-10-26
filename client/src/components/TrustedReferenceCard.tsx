@@ -110,7 +110,7 @@ export default function TrustedReferenceCard({
           <button
             type="button"
             onClick={handleOpenProfile}
-            className="flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
+            className="flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gold-line"
             aria-label={`View ${profileName}'s profile`}
           >
             <Avatar
@@ -139,7 +139,7 @@ export default function TrustedReferenceCard({
             <button
               type="button"
               onClick={handleOpenProfile}
-              className="text-base font-semibold text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500"
+              className="text-base font-semibold text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gold-line"
             >
               {profileName}
             </button>
@@ -147,7 +147,7 @@ export default function TrustedReferenceCard({
             <p className="text-base font-semibold text-slate-900">{profileName}</p>
           )}
           {showShield && (
-            <ShieldCheck className="h-5 w-5 flex-shrink-0 text-emerald-500" aria-hidden />
+            <ShieldCheck className="h-5 w-5 flex-shrink-0 text-gold" aria-hidden />
           )}
         </div>
 
@@ -211,7 +211,7 @@ export default function TrustedReferenceCard({
               type="button"
               onClick={() => onMessage(reference.profile?.id ?? null)}
               disabled={messageDisabled}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-500/20 transition-all hover:shadow-md hover:shadow-emerald-500/25 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {messageLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
               <span>{messageLoading ? 'Messaging…' : messageLabel}</span>

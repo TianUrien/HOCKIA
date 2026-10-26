@@ -873,7 +873,7 @@ export default function JourneyTab({
                   type="text"
                   value={entry.club_name}
                   onChange={event => updateField('club_name', event.target.value)}
-                  className={`mt-1 w-full rounded-lg border px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500 ${formErrors.club_name ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`mt-1 w-full rounded-lg border px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.club_name ? 'border-red-400' : 'border-gray-300'}`}
                   placeholder="Amsterdam Hockey Club"
                 />
                 {formErrors.club_name && <p className="mt-1 text-sm text-red-600">{formErrors.club_name}</p>}
@@ -889,7 +889,7 @@ export default function JourneyTab({
               id={`journey-category-${entry.id}`}
               value={entry.entry_type ?? ''}
               onChange={event => updateField('entry_type', event.target.value ? (event.target.value as JourneyType) : null)}
-              className={`mt-1 w-full rounded-lg border bg-white px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500 ${formErrors.entry_type ? 'border-red-400' : 'border-gray-300'}`}
+              className={`mt-1 w-full rounded-lg border bg-white px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.entry_type ? 'border-red-400' : 'border-gray-300'}`}
             >
               <option value="" disabled>
                 Select category...
@@ -912,7 +912,7 @@ export default function JourneyTab({
               type="text"
               value={entry.position_role}
               onChange={event => updateField('position_role', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               placeholder="Team captain"
             />
           </div>
@@ -926,7 +926,7 @@ export default function JourneyTab({
               type="text"
               value={entry.division_league}
               onChange={event => updateField('division_league', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               placeholder="Hoofdklasse"
             />
           </div>
@@ -936,7 +936,7 @@ export default function JourneyTab({
               Hockia AI as VERIFIED ("played for the Argentina national
               team") even when the title never names the country. */}
           {entry.entry_type === 'national_team' && (
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+            <div className="rounded-xl border border-line bg-surface-subtle p-4 space-y-3">
               <p className="text-sm font-medium text-gray-800">
                 Country represented
                 <span className="ml-2 text-xs font-normal text-gray-600">
@@ -957,7 +957,7 @@ export default function JourneyTab({
                     id={`journey-level-${entry.id}`}
                     value={entry.represented_level ?? ''}
                     onChange={(event) => updateField('represented_level', event.target.value || null)}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                   >
                     <option value="">Not specified</option>
                     <option value="senior">Senior</option>
@@ -978,7 +978,7 @@ export default function JourneyTab({
                       const n = parseInt(event.target.value, 10)
                       updateField('caps', Number.isFinite(n) && n >= 0 ? n : null)
                     }}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                     placeholder="12"
                   />
                 </div>
@@ -995,7 +995,7 @@ export default function JourneyTab({
               type="text"
               value={entry.location_city || ''}
               onChange={event => updateField('location_city', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               placeholder="Amsterdam"
             />
           </div>
@@ -1009,7 +1009,7 @@ export default function JourneyTab({
               type="text"
               value={entry.location_country || ''}
               onChange={event => updateField('location_country', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               placeholder="Netherlands"
             />
           </div>
@@ -1021,7 +1021,7 @@ export default function JourneyTab({
                 aria-label="Start month"
                 value={entry.startMonthDraft ?? ''}
                 onChange={event => updateDraftDate('start', 'month', event.target.value)}
-                className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500 ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
+                className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
               >
                 <option value="">Month</option>
                 {MONTH_OPTIONS.map(option => (
@@ -1034,7 +1034,7 @@ export default function JourneyTab({
                 aria-label="Start year"
                 value={entry.startYearDraft ?? ''}
                 onChange={event => updateDraftDate('start', 'year', event.target.value)}
-                className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500 ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
+                className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
               >
                 <option value="">Year</option>
                 {YEAR_OPTIONS.map(year => (
@@ -1055,7 +1055,7 @@ export default function JourneyTab({
                   type="checkbox"
                   checked={Boolean(entry.isCurrent)}
                   onChange={event => togglePresent(event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                  className="h-4 w-4 rounded border-gray-300 text-brand-primary focus-visible:ring-brand-primary"
                 />
                 Present
               </label>
@@ -1065,7 +1065,7 @@ export default function JourneyTab({
                 aria-label="End month"
                 value={entry.endMonthDraft ?? ''}
                 onChange={event => updateDraftDate('end', 'month', event.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                 disabled={entry.isCurrent}
               >
                 <option value="">Month</option>
@@ -1079,7 +1079,7 @@ export default function JourneyTab({
                 aria-label="End year"
                 value={entry.endYearDraft ?? ''}
                 onChange={event => updateDraftDate('end', 'year', event.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                 disabled={entry.isCurrent}
               >
                 <option value="">Year</option>
@@ -1101,7 +1101,7 @@ export default function JourneyTab({
               id={`journey-description-${entry.id}`}
               value={entry.description || ''}
               onChange={event => updateField('description', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               rows={3}
               placeholder="Professional player in the Hoofdklasse"
             />
@@ -1122,7 +1122,7 @@ export default function JourneyTab({
 
               <div className="flex flex-col gap-2">
                 <label
-                  className={`inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition ${uploadingImageId === entry.id ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-indigo-400 hover:text-indigo-600'}`}
+                  className={`inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition ${uploadingImageId === entry.id ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-brand-primary hover:text-brand-text'}`}
                 >
                   {uploadingImageId === entry.id ? (
                     <>
@@ -1169,7 +1169,7 @@ export default function JourneyTab({
                   type="text"
                   value={highlight}
                   onChange={event => handleHighlightChange(highlightIdx, event.target.value)}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                   placeholder="Top scorer 2023 season"
                 />
                 <button
@@ -1186,7 +1186,7 @@ export default function JourneyTab({
             <button
               type="button"
               onClick={addHighlight}
-              className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              className="inline-flex items-center gap-2 text-sm font-medium text-brand-text hover:opacity-80"
             >
               <Plus className="h-4 w-4" />
               Add highlight
@@ -1261,7 +1261,7 @@ export default function JourneyTab({
               <div className="space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-indigo-600">New career history entry</p>
+                    <p className="text-sm font-semibold text-brand-text">New career history entry</p>
                     <h3 className="text-xl font-semibold text-gray-900">Share a new milestone</h3>
                     <p className="text-sm text-gray-500">Fill out the form below to add it to your career history.</p>
                   </div>
@@ -1280,7 +1280,7 @@ export default function JourneyTab({
               <>
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-indigo-600">Career history</p>
+                    <p className="text-sm font-semibold text-brand-text">Career history</p>
                     <h3 className="text-xl font-semibold text-gray-900">Add a new entry</h3>
                     <p className="text-sm text-gray-500">Highlight a club, tournament, camp, or other milestone.</p>
                   </div>
@@ -1303,7 +1303,7 @@ export default function JourneyTab({
 
         {showEmptyState ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
               <Sparkles className="h-7 w-7" />
             </div>
             <h3 className="mb-2 text-xl font-semibold text-gray-900">No career history yet</h3>
@@ -1322,7 +1322,7 @@ export default function JourneyTab({
         ) : (
           <div className="relative">
             {/* Continuous vertical timeline line */}
-            <div className="pointer-events-none absolute left-5 top-5 bottom-5 w-0.5 bg-gradient-to-b from-indigo-200 via-gray-200 to-gray-100 md:left-6" />
+            <div className="pointer-events-none absolute left-5 top-5 bottom-5 w-0.5 bg-gradient-to-b from-hockia-soft via-gray-200 to-gray-100 md:left-6" />
             
             <div className="space-y-6">
               {ordered.map((entry, entryIndex) => {
@@ -1426,7 +1426,7 @@ export default function JourneyTab({
                                     <span aria-hidden="true">{c.flag_emoji}</span>
                                     <span>{c.name}</span>
                                     {levelLabel && (
-                                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                      <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
                                         {levelLabel}
                                       </span>
                                     )}
@@ -1463,7 +1463,7 @@ export default function JourneyTab({
                             {worldClub && (
                               <>
                                 <span className="text-gray-500">·</span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-2">
                                   <Globe2 className="h-3 w-3" />
                                   Directory
                                 </span>

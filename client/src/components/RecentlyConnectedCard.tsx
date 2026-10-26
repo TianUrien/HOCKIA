@@ -262,7 +262,7 @@ export default function RecentlyConnectedCard({
             <button
               type="button"
               onClick={handleAsk}
-              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
+              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             >
               Ask to vouch
               <ArrowRight className="h-3 w-3" />

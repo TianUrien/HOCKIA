@@ -256,7 +256,7 @@ export default function TrustedReferencesSection({
       <section className="space-y-5 rounded-3xl border border-gray-100 bg-white/80 p-6 shadow-sm shadow-gray-100">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Trusted References</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold text-gray-900">Key people who vouch for this profile</h2>
               <InfoTooltip label="How trusted references work" alignment="start">
@@ -266,7 +266,7 @@ export default function TrustedReferencesSection({
             <p className="text-sm text-gray-600">Message anyone to learn more.</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
+            <ShieldCheck className="h-4 w-4 text-gold" />
             {acceptedReferences.length}/{maxReferences} selected
           </span>
         </header>
@@ -336,7 +336,7 @@ export default function TrustedReferencesSection({
                     className={cn(
                       'rounded-full transition-all duration-200',
                       idx === activeIndex
-                        ? 'h-2 w-5 bg-emerald-500'
+                        ? 'h-2 w-5 bg-gold-soft0'
                         : 'h-2 w-2 bg-gray-300'
                     )}
                   />
@@ -353,7 +353,7 @@ export default function TrustedReferencesSection({
     <section className="space-y-6 rounded-3xl border border-gray-100 bg-white/80 p-6 shadow-sm shadow-gray-100">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Trusted References</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold text-gray-900">Key people who vouch for you</h2>
             <InfoTooltip label="How trusted references work" alignment="start">
@@ -373,7 +373,7 @@ export default function TrustedReferencesSection({
               trackReferenceModalOpen('header_cta')
               setAddModalOpen(true)
             }}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white"
           >
             <Plus className="h-4 w-4" />
             Add Reference
@@ -452,7 +452,7 @@ export default function TrustedReferencesSection({
             // friends, the empty state explains the friendship dependency
             // explicitly and routes them to /community to fix it — instead
             // of silently failing in the modal dropdown later.
-            <div className="min-w-full rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-6 text-center">
+            <div className="min-w-full rounded-2xl border border-dashed border-gold-line/40 bg-gold-soft p-6 text-center">
               {(() => {
                 if (!canCollectReferences) {
                   return (
@@ -470,7 +470,7 @@ export default function TrustedReferencesSection({
                   // route to /community.
                   return (
                     <div className="space-y-3">
-                      <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
+                      <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
                       <p className="text-sm font-semibold text-gray-900">
                         References are how clubs verify your hockey background
                       </p>
@@ -495,7 +495,7 @@ export default function TrustedReferencesSection({
                   // people.
                   return (
                     <div className="space-y-3">
-                      <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
+                      <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
                       <p className="text-sm font-semibold text-gray-900">
                         You've asked everyone in your network
                       </p>
@@ -505,7 +505,7 @@ export default function TrustedReferencesSection({
                       <button
                         type="button"
                         onClick={() => navigate('/community')}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-gold-line/40 bg-white px-4 py-2 text-sm font-semibold text-gold hover:bg-gold-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-line"
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" />
                         Find more people
@@ -524,7 +524,7 @@ export default function TrustedReferencesSection({
                   : 'Clubs scouting on Hockia see your references on your profile.'
                 return (
                   <div className="space-y-3">
-                    <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
+                    <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
                     <p className="text-sm font-semibold text-gray-900">
                       {headlineCopy}
                     </p>
@@ -539,7 +539,7 @@ export default function TrustedReferencesSection({
                         trackReferenceModalOpen('empty_state')
                         setAddModalOpen(true)
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-line"
                     >
                       Choose a connection
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -578,7 +578,7 @@ export default function TrustedReferencesSection({
                     trackReferenceModalOpen('header_cta')
                     setAddModalOpen(true)
                   }}
-                  className="min-w-[260px] flex-shrink-0 snap-center rounded-3xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-5 text-center text-emerald-700"
+                  className="min-w-[260px] flex-shrink-0 snap-center rounded-3xl border-2 border-dashed border-gold-line/40 bg-gold-soft p-5 text-center text-gold"
                 >
                   <Plus className="mx-auto mb-2 h-6 w-6" />
                   <p className="font-semibold">Add reference</p>
@@ -586,7 +586,7 @@ export default function TrustedReferencesSection({
                   {/* One-line "why" so a partial-profile owner sees the
                       motivation alongside the count, not just an
                       unexplained "X spots left" number. */}
-                  <p className="mt-2 text-xs text-emerald-600/80 leading-relaxed">
+                  <p className="mt-2 text-xs text-gold leading-relaxed">
                     Vouches from coaches, teammates, and clubs make your profile recruitable.
                   </p>
                 </button>
@@ -611,7 +611,7 @@ export default function TrustedReferencesSection({
                 className={cn(
                   'rounded-full transition-all duration-200',
                   idx === activeIndex
-                    ? 'h-2 w-5 bg-emerald-500'
+                    ? 'h-2 w-5 bg-gold-soft0'
                     : 'h-2 w-2 bg-gray-300'
                 )}
               />
@@ -656,7 +656,7 @@ export default function TrustedReferencesSection({
                       <button
                         type="button"
                         onClick={() => setEndorsementRequest(request)}
-                        className="flex-1 rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-emerald-500/40"
+                        className="flex-1 rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white"
                         disabled={isMutating('respond', request.id)}
                       >
                         {isMutating('respond', request.id) && endorsementRequest?.id === request.id ? 'Processing…' : 'Accept & endorse'}

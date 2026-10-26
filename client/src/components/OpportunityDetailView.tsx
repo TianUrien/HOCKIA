@@ -45,16 +45,16 @@ interface VacancyDetailViewProps {
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
-  housing: { icon: Home, label: 'Housing', iconColor: 'text-blue-500' },
+  housing: { icon: Home, label: 'Housing', iconColor: 'text-ink-2' },
   car: { icon: Car, label: 'Car', iconColor: 'text-hockia-primary' },
-  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-emerald-500' },
+  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-hockia-primary' },
   flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
-  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-orange-500' },
-  job: { icon: Briefcase, label: 'Job', iconColor: 'text-cyan-500' },
-  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-rose-500' },
-  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-indigo-500' },
-  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-green-500' },
-  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-teal-500' },
+  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-hockia-primary' },
+  job: { icon: Briefcase, label: 'Job', iconColor: 'text-hockia-primary' },
+  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-hockia-primary' },
+  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-hockia-primary' },
+  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-hockia-primary' },
+  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-hockia-primary' },
 }
 
 function getClubAbbreviation(name: string): string {
@@ -280,7 +280,7 @@ export default function VacancyDetailView({
                   <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" loading="eager" fetchPriority="high" role="club" />
                   <div className="mt-2 flex items-center gap-1.5">
                     <span className="text-lg font-bold text-gray-900">{clubName}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0f766e] border border-teal-100">Coach</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-role-coach-bg text-role-coach-ink border border-role-coach-ink/20">Coach</span>
                   </div>
                 </button>
                 {worldClub ? (
@@ -314,13 +314,13 @@ export default function VacancyDetailView({
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 {isUrgent && !closed && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-100">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-warning-soft text-status-warning border border-status-warning/30">
                     <AlertTriangle className="w-3 h-3" />
                     URGENT
                   </span>
                 )}
                 {cardType !== 'club' ? (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0f766e] border border-teal-100">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-role-coach-bg text-role-coach-ink border border-role-coach-ink/20">
                     COACH LISTED
                   </span>
                 ) : (
@@ -433,8 +433,8 @@ export default function VacancyDetailView({
             {vacancy.eu_passport_required === true && (
               <div className="mb-5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Requirements</p>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                  <Flag className="w-4 h-4 text-blue-500" />
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-eu-soft text-eu-ink border border-eu-ink/20">
+                  <Flag className="w-4 h-4 text-eu-ink" />
                   EU Passport Required
                 </span>
               </div>
@@ -606,11 +606,11 @@ export default function VacancyDetailView({
               ) : onApply && !eligibility.eligible ? (
                 // Ineligible — the opportunity stays fully readable, but
                 // Apply is replaced by a short, non-judgmental reason.
-                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
-                  <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-line bg-surface-subtle">
+                  <Info className="w-4 h-4 text-ink-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-semibold text-amber-900">You can&rsquo;t apply to this opportunity</p>
-                    <p className="text-amber-800 mt-0.5">{eligibility.reason}</p>
+                    <p className="font-semibold text-ink-1">You can&rsquo;t apply to this opportunity</p>
+                    <p className="text-ink-2 mt-0.5">{eligibility.reason}</p>
                   </div>
                 </div>
               ) : onApply ? (
@@ -659,14 +659,14 @@ export default function VacancyDetailView({
                 profile is missing data we'd use to confirm a fit. Never
                 blocks; just points them at the gap. */}
             {onApply && !closed && !hasApplied && !isPublisher && eligibility.eligible && eligibility.incompleteProfile && (
-              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-blue-100 bg-blue-50">
-                <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
+              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-line bg-surface-subtle">
+                <Info className="w-4 h-4 text-ink-2 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-ink-1">
                   <span>{eligibility.incompleteProfile} </span>
                   <button
                     type="button"
                     onClick={() => { onClose(); navigate('/dashboard/profile') }}
-                    className="font-semibold underline underline-offset-2 hover:text-blue-700"
+                    className="font-semibold underline underline-offset-2 hover:text-brand-text"
                   >
                     Complete profile
                   </button>
@@ -679,11 +679,11 @@ export default function VacancyDetailView({
                 Apply stays enabled, but they know the recruiter would read
                 them "Out of scope". */}
             {onApply && !closed && !hasApplied && !isPublisher && eligibility.eligible && mustHaveWarnings.length > 0 && (
-              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
-                <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-900">
+              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-line bg-surface-subtle">
+                <Info className="w-4 h-4 text-ink-2 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-ink-1">
                   <p className="font-semibold">You can still apply, but heads up:</p>
-                  <ul className="mt-1 list-disc pl-4 space-y-0.5 text-amber-800">
+                  <ul className="mt-1 list-disc pl-4 space-y-0.5 text-ink-2">
                     {mustHaveWarnings.map((w, i) => (
                       <li key={i}>{w}</li>
                     ))}
