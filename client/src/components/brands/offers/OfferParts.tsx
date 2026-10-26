@@ -56,7 +56,7 @@ export function OfferRow({ offer, onOpen, onMenu, selected = false }: OfferRowPr
   const shown = offerShownFields(offer)
   return (
     <div
-      className={cn('rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,20,0.06)]', selected && 'ring-2 ring-brand-primary')}
+      className={cn('rounded-[24px] bg-white p-4 shadow-[0_1px_2px_rgba(15,15,20,0.06)] lg:rounded-[16px] lg:shadow-none lg:ring-1 lg:ring-inset lg:ring-line', selected && 'bg-brand-soft lg:ring-[1.5px] lg:ring-brand-primary')}
       data-testid="offer-row"
     >
       <div className="flex items-start gap-3">

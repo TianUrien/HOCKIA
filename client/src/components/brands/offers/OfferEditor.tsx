@@ -61,7 +61,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
   const missing = offerMissing(f)
   const claim = unprovableClaim(`${f.title ?? ''} ${f.body ?? ''}`)
   const busy = saving !== null
-  const title = offer ? (layout === 'desktop' ? `Edit · ${offer.title ?? 'offer'}` : 'Edit offer') : 'New offer'
+  const title = offer ? 'Edit offer' : 'New offer'
 
   const submit = () => {
     setTried(true)
@@ -189,23 +189,38 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
     </div>
   )
 
+  // Rebrand page 27 · Web · Offers editor (736): form + a 260 "How members
+  // see it" column, then one publish row (note · Save draft · Publish).
   if (layout === 'desktop') {
     return (
-      <div className="rounded-[24px] bg-white p-8 shadow-[0_1px_2px_rgba(15,15,20,0.06)]" data-testid="offer-editor">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <h2 className="text-title text-ink-1">{title}</h2>
+      <div className="rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" data-testid="offer-editor">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h2 className="font-display text-[24px] font-bold leading-[1.2] text-ink-1">{title}</h2>
           <div className="flex items-center gap-3">
             {offer ? <OfferPill offer={offer} /> : null}
-            <button type="button" onClick={onCancel} className="text-row font-semibold text-ink-2">Close</button>
+            <button type="button" onClick={onCancel} className="flex h-11 items-center px-1 text-[14px] font-semibold text-ink-2 hover:text-ink-1">Close</button>
           </div>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-8">
+        <div className="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-6">
           {form}
-          <div className="space-y-4">
-            <p className="text-secondary font-semibold text-ink-2">How members see it</p>
+          <div className="sticky top-24 space-y-2.5">
+            <p className="text-[14px] font-medium leading-[1.3] text-ink-1">How members see it</p>
             {preview}
-            {actions}
           </div>
+        </div>
+        <div className="mt-6 flex items-center gap-4 border-t border-line pt-5">
+          <div className="min-w-0 flex-1">
+            {tried && missing ? <p className="text-secondary text-status-danger" role="alert">{missing}</p> : null}
+            <p className="text-secondary text-ink-2">
+              {isChange ? 'Changes go live right away. Hockia takes down offers that break the rules.' : 'Members see it right away. Hockia takes down offers that break the rules.'}
+            </p>
+          </div>
+          {!isChange ? (
+            <Button variant="secondary" className="rounded-full" onClick={() => onSave(f, false)} loading={saving === 'draft'} disabled={busy}>Save draft</Button>
+          ) : null}
+          <Button className="rounded-full" onClick={submit} loading={saving === 'submit'} disabled={busy} data-testid="offer-send">
+            {isChange ? 'Publish changes' : 'Publish'}
+          </Button>
         </div>
       </div>
     )
