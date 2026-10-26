@@ -37,7 +37,7 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold text-gray-900 truncate">{result.brand_name}</span>
             {result.brand_is_verified && (
-              <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label="Verified brand" />
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">

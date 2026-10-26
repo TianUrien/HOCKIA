@@ -32,7 +32,7 @@ export function CommunitySkeletons({ kind, layout }: { kind: CommunitySkeletonKi
   }
   if (kind === 'brand') {
     return (
-      <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5'} aria-busy="true" aria-label="Loading brands" data-testid="community-skeleton-brand">
+      <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 min-[1440px]:grid-cols-5'} aria-busy="true" aria-label="Loading brands" data-testid="community-skeleton-brand">
         {[...Array(layout === 'phone' ? 6 : 15)].map((_, i) => (
           <div key={i} className="flex aspect-[3/4] flex-col items-center justify-between rounded-[20px] bg-surface-muted p-3" data-testid="brand-card-skeleton">
             <span className="mt-6 h-16 w-16 rounded-[16px] bg-line" />
@@ -44,7 +44,7 @@ export function CommunitySkeletons({ kind, layout }: { kind: CommunitySkeletonKi
   }
   // People: the photo card shape on every screen size (audit B1).
   return (
-    <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5'} aria-busy="true" aria-label="Loading members" data-testid="community-skeleton-person">
+    <div className={layout === 'phone' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 min-[1440px]:grid-cols-5'} aria-busy="true" aria-label="Loading members" data-testid="community-skeleton-person">
       {[...Array(layout === 'phone' ? 6 : 15)].map((_, i) => (
         <div key={i} className="flex aspect-[3/4] flex-col justify-end gap-1.5 rounded-[20px] bg-surface-muted p-3" data-testid="member-tile-skeleton">
           <Bars />

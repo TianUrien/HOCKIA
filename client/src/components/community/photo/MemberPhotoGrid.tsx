@@ -111,7 +111,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
 
   return (
     <>
-      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5" data-testid="community-photo-grid" data-count={ids.length}>
+      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 min-[1440px]:grid-cols-5" data-testid="community-photo-grid" data-count={ids.length}>
         {members.map((m, i) => {
           if (m.role === 'club') {
             const cover = batch.photos.get(m.id)?.[0] ?? null
