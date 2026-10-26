@@ -77,13 +77,13 @@ export function ApplicantReviewEntry() {
   return <Screen><ApplicantReviewScreen key={applicationId} roleId={opportunityId} applicationId={applicationId} /></Screen>
 }
 
-/** Post a role (Figma 04 Club 330:318): phone clubs only. Desktop keeps the
- *  create modal on Opportunities; `/:id/edit` continues a draft. */
+/** Post a role (Figma 04 Club 330:318; desktop: rebrand page 27): clubs, on
+ *  every width. `/:id/edit` continues a draft or edits a live role. Coaches
+ *  keep the create modal on Opportunities. */
 export function PostRoleEntry() {
-  const isPhone = useMediaQuery(PHONE)
   const role = useAuthStore((s) => s.profile?.role)
   const { opportunityId } = useParams<{ opportunityId?: string }>()
-  if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace />
+  if (role && role !== 'club') return <Navigate to="/opportunities" replace />
   return <Screen><PostRoleScreen key={opportunityId ?? 'new'} draftId={opportunityId ?? null} /></Screen>
 }
 

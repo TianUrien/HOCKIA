@@ -552,9 +552,10 @@ export default function OpportunitiesPage() {
               data={myRoles}
               layout="desktop"
               subtitle={profile?.full_name ? `${profile.full_name} · your opportunities` : 'Your opportunities'}
-              onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
-              onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
-              onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
+              // Rebrand page 27: desktop clubs post and edit in the same three-step flow as phones.
+              onPostRole={() => navigate('/dashboard/opportunities/new')}
+              onEditRole={(role: ClubRole) => navigate(`/dashboard/opportunities/${role.id}/edit`)}
+              onPostAgainRole={(role: ClubRole) => navigate('/dashboard/opportunities/new', { state: { postAgainId: role.id } })}
             />
           ) : (
           <>
