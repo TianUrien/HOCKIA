@@ -423,7 +423,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
                 type="button"
                 disabled={isActionLoading(connection.id)}
                 onClick={() => void updateFriendship(connection.id, 'accepted', 'Connection request accepted.')}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isActionLoading(connection.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 Accept

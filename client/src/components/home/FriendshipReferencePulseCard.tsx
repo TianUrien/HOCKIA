@@ -115,7 +115,7 @@ export function FriendshipReferencePulseCard({
           <button
             type="button"
             onClick={handleAsk}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
           >
             <Shield className="w-3 h-3" aria-hidden="true" />
             Ask to vouch

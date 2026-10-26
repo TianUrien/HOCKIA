@@ -65,6 +65,11 @@ export default {
           900: t.ink.primary,
           950: t.surface.inverse,
         },
+        // Rebrand PR 6 part 2: legacy `slate-*` follows the same neutrals as gray.
+        slate: {
+          50: t.surface.subtle, 100: t.surface.muted, 200: t.line.default, 300: t.line.strong,
+          400: t.ink.tertiary, 500: t.ink.secondary, 600: '#5a5766', 700: '#3f3c4d', 800: '#262335', 900: t.ink.primary,
+        },
         // Rebrand PR 6: legacy `purple-*` (≈600 classes) resolves to the one
         // brand violet. 500 = brand.primary (was #a855f7, 3.96 on white, a
         // fail; now 5.70), 600/700 = hover/pressed, 100/200 = the soft fills;
@@ -84,17 +89,34 @@ export default {
         teal: {
           600: '#0f766e', // on teal-50: 3.59 → 5.25
         },
+        // Rebrand PR 6 part 2: green and emerald mean "positive / available"
+        // only, so both scales take the positive tokens (text 5.02 on white,
+        // 4.57 on the soft fill). Green buttons were converted at the call
+        // sites; what remains is states (Shortlisted, available, done steps).
         emerald: {
-          600: '#047857', // on emerald-50: 3.58 → 5.21
+          50: t.status['positive-soft'], 100: t.status['positive-soft'],
+          500: t.status.positive, 600: t.status.positive, 700: t.status.positive, 800: t.status.positive,
         },
+        // Rebrand PR 6 part 2: amber = the warning tokens (text 5.02 on white,
+        // 4.51 on the soft fill). It should only appear when the viewer must act.
         amber: {
-          600: '#b45309', // on amber-50: 3.07 → 4.84
+          50: t.status['warning-soft'], 100: t.status['warning-soft'],
+          600: t.status.warning, 700: t.status.warning, 800: t.status.warning, 900: t.status.warning,
+        },
+        // Rebrand PR 6 part 2: legacy indigo accents (focus rings, links,
+        // headings) take the brand violet, like purple. The accent-indigo
+        // tokens used for benefit tiles are separate and unchanged.
+        indigo: {
+          50: '#f5f3ff', 100: t.brand.soft, 200: t.brand['soft-hover'], 400: '#a78bfa',
+          500: t.brand.primary, 600: t.brand['primary-hover'], 700: t.brand['primary-pressed'],
         },
         blue: {
           500: '#2563eb', // on blue-50: 3.38 → 4.75
         },
         green: {
-          600: '#15803d', // on gray-50: 3.15 → 4.80
+          50: t.status['positive-soft'], 100: t.status['positive-soft'],
+          500: t.status.positive, 600: t.status.positive, // #15803d — on gray-50: 3.15 → 4.80
+          700: t.status.positive,
         },
         red: {
           // 500 also fixes the notification badge: white on the old #ef4444

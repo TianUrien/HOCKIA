@@ -230,7 +230,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
               className={cn(
                 'rounded-full transition-all duration-200',
                 idx === activeIndex
-                  ? 'h-2 w-5 bg-emerald-500'
+                  ? 'h-2 w-5 bg-gold-soft0'
                   : 'h-2 w-2 bg-gray-300'
               )}
             />
@@ -249,7 +249,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       className="scroll-mt-[88px] space-y-4 rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm sm:p-5"
     >
       <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Trusted References</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
         <h3 className="text-xl font-bold text-gray-900">Trusted by</h3>
         <p className="text-sm text-gray-600">{primaryName ? `Key people who vouch for ${primaryName}.` : 'Key people who vouch for this profile.'}</p>
       </header>

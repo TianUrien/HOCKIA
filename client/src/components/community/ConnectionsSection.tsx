@@ -479,7 +479,7 @@ function ConnectionRow({
                 type="button"
                 onClick={onAccept}
                 disabled={mutating}
-                className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-primary transition-colors disabled:opacity-50"
               >
                 <Check className="h-3 w-3" />
                 Accept

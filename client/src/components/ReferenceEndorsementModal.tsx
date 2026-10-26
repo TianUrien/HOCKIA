@@ -109,7 +109,7 @@ export default function ReferenceEndorsementModal({
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 font-semibold text-white shadow-lg shadow-emerald-500/30 transition-opacity disabled:opacity-60"
+            className="flex-1 rounded-2xl bg-brand-primary px-4 py-2 font-semibold text-white shadow-lg transition-opacity disabled:opacity-60"
           >
             {loading ? 'Saving…' : isEditMode ? 'Save Changes' : 'Accept & Share'}
           </button>
