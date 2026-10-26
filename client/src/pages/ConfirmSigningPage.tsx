@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Share } from 'lucide-react'
@@ -112,8 +113,8 @@ export default function ConfirmSigningPage() {
           <span className="flex h-28 w-28 items-center justify-center rounded-full bg-positive-soft text-positive" aria-hidden="true">
             <Check className="h-12 w-12" strokeWidth={2.6} />
           </span>
-          <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
-          <p className="mt-2 text-[16px] leading-[23px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
+          <h1 className="mt-5 text-title text-ink-1">{signedTitle(clubName, me?.role)}</h1>
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
             <Crest src={clubCrest} name={clubName} size={52} />
             <div className="min-w-0 flex-1">
@@ -123,10 +124,10 @@ export default function ConfirmSigningPage() {
             </div>
           </div>
         </div>
-        <button type="button" onClick={() => void share()} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1" data-testid="signing-share">
+        <button type="button" onClick={() => void share()} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })} data-testid="signing-share">
           <Share className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Share the news
         </button>
-        <button type="button" onClick={() => navigate('/dashboard/profile')} className="mt-2.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">
+        <button type="button" onClick={() => navigate('/dashboard/profile')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}>
           Done
         </button>
       </div>,
@@ -174,8 +175,8 @@ export default function ConfirmSigningPage() {
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
         <Crest src={clubCrest} name={clubName} size={80} />
-        <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
-        <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
+        <h1 className="mt-5 text-title text-ink-1">{confirmSigningTitle(clubName)}</h1>
+        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
           {rows.filter(([, v]) => !!v).map(([k, v], i) => (
             <div key={k}>

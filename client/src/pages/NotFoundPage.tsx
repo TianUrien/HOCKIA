@@ -1,56 +1,33 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Home } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { AuthStatus } from '@/components/auth/authUi'
+import { Button } from '@/components/ui/Button'
+import { SearchIcon } from '@/components/icons/HockiaIcons'
 
+/** Not found (rebrand page 28 · System): what happened, two ways on. */
 export default function NotFoundPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   useDocumentTitle('Page not found')
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full text-center">
-        {/* Logo */}
-        <div className="mb-8">
-          <img
-            src="/brand/wordmark/hockia-wordmark-black.svg"
-            alt="HOCKIA"
-            className="h-8 mx-auto"
-          />
-        </div>
-
-        {/* 404 indicator */}
-        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-3xl font-bold text-gray-400">404</span>
-        </div>
-
-        {/* Message */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Page not found
-        </h1>
-        <p className="text-gray-600 mb-8">
-          The page you're looking for doesn't exist or may have been moved.
-        </p>
-
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go Back
-          </button>
-          <button
-            onClick={() => navigate(user ? '/opportunities' : '/')}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-          >
-            <Home className="w-4 h-4" />
-            {user ? 'Opportunities' : 'Home'}
-          </button>
-        </div>
-      </div>
+    <div className="flex min-h-app-screen flex-col bg-white px-6 pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
+        <AuthStatus
+          tone="brand"
+          icon={<SearchIcon className="h-9 w-9" />}
+          title="We can’t find that page"
+          actions={
+            <>
+              <Button block onClick={() => navigate(user ? '/home' : '/')}>Go to Home</Button>
+              <Button block variant="secondary" onClick={() => navigate('/search')}>Search Hockia</Button>
+            </>
+          }
+        >
+          The link may be old, or the page was removed.
+        </AuthStatus>
+      </main>
     </div>
   )
 }

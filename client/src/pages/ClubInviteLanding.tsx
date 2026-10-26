@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Loader2, ShieldX, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -70,17 +71,19 @@ export default function ClubInviteLanding() {
     }
   }
 
+  // Rebrand page 28 · Club invite: lockup on top, the invitation centred.
   const shell = (children: React.ReactNode) => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-gray-100 text-center">
-        {children}
-      </div>
+    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <header className="flex h-[46px] shrink-0 items-center px-6">
+        <img src="/brand/lockup/hockia-lockup-horizontal-ink.svg" alt="Hockia" width={108} height={22} className="h-[22px] w-auto" />
+      </header>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 text-center">{children}</main>
     </div>
   )
 
   if (loading || authLoading) {
     return shell(
-      <div className="py-8 flex flex-col items-center text-gray-400">
+      <div className="flex flex-col items-center py-8 text-ink-3">
         <Loader2 className="w-7 h-7 animate-spin mb-3" />
         <p className="text-sm">Loading invitation…</p>
       </div>
@@ -90,12 +93,12 @@ export default function ClubInviteLanding() {
   if (!preview?.valid) {
     return shell(
       <>
-        <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-          <ShieldX className="w-7 h-7 text-gray-400" />
+        <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
+          <ShieldX className="h-9 w-9 text-ink-2" />
         </div>
-        <h1 className="text-lg font-bold text-gray-900 mb-1">Invite not available</h1>
-        <p className="text-sm text-gray-500 mb-6">This invite link is no longer valid. Ask the club for a new one.</p>
-        <button type="button" onClick={() => navigate('/')} className="w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
+        <h1 className="mt-8 text-title text-ink-1">Invite not available</h1>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">This invite link is no longer valid. Ask the club for a new one.</p>
+        <button type="button" onClick={() => navigate('/')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
           Go to Hockia
         </button>
       </>
@@ -111,9 +114,9 @@ export default function ClubInviteLanding() {
   const header = (
     <>
       <Avatar src={preview.club_avatar_url} alt={clubName} initials={clubName.slice(0, 2)} size="xl" role="club" className="mx-auto mb-4 shadow-sm" />
-      <p className="text-xs font-semibold uppercase tracking-wide text-brand-text mb-1">Club invitation</p>
-      <h1 className="text-xl font-bold text-gray-900">{clubName}</h1>
-      {preview.club_location && <p className="text-sm text-gray-500 mt-0.5">{preview.club_location}</p>}
+      <p className="mb-2 text-micro font-semibold uppercase tracking-[0.06em] text-brand-text">Club invitation</p>
+      <h1 className="text-title text-ink-1">{clubName} invited you to join its squad</h1>
+      {preview.club_location && <p className="mt-1 text-secondary text-ink-3">{preview.club_location}</p>}
     </>
   )
 
@@ -121,20 +124,20 @@ export default function ClubInviteLanding() {
   if (!isAuthed) {
     action = (
       <>
-        <p className="text-sm text-gray-600 mt-4 mb-5">Sign in or create your Hockia profile to join this club.</p>
-        <button type="button" onClick={handleSignIn} className="w-full rounded-xl bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors">
-          Sign in to join
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Sign in or create your Hockia profile to join this club.</p>
+        <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate(`/signup?next=${encodeURIComponent(`/invite/club/${token}`)}`) }} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>
+          Create my profile
         </button>
-        <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate(`/signup?next=${encodeURIComponent(`/invite/club/${token}`)}`) }} className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
-          Create an account
+        <button type="button" onClick={handleSignIn} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}>
+          I already have an account
         </button>
       </>
     )
   } else if (alreadyMember) {
     action = (
       <>
-        <p className="text-sm text-gray-600 mt-4 mb-5">You’re already a member of {clubName}.</p>
-        <button type="button" onClick={() => navigate(clubPath)} className="w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">You’re already a member of {clubName}.</p>
+        <button type="button" onClick={() => navigate(clubPath)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
           View club
         </button>
       </>
@@ -142,8 +145,8 @@ export default function ClubInviteLanding() {
   } else if (ineligibleRole) {
     action = (
       <>
-        <p className="text-sm text-gray-600 mt-4 mb-5">Only players and coaches can join a club as a member.</p>
-        <button type="button" onClick={() => navigate('/home')} className="w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Only players and coaches can join a club as a member.</p>
+        <button type="button" onClick={() => navigate('/home')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
           Go to Hockia
         </button>
       </>
@@ -151,8 +154,8 @@ export default function ClubInviteLanding() {
   } else {
     action = (
       <>
-        <p className="text-sm text-gray-600 mt-4 mb-5">Join {clubName} as a member. They’ll see you in their roster.</p>
-        <button type="button" onClick={handleJoin} disabled={joining} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors disabled:opacity-60">
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Join {clubName} as a member. They’ll see you in their roster.</p>
+        <button type="button" onClick={handleJoin} disabled={joining} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>
           {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
           {joining ? 'Joining…' : 'Join club'}
         </button>

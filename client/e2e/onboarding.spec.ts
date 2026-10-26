@@ -107,7 +107,7 @@ test.describe('@smoke onboarding routes — legacy redirects', () => {
     // Catch the 404 fallback by its visible text — the actual fallback uses
     // PageTitle text "Page not found" or similar. If that's not visible, we
     // landed on a dashboard.
-    const isNotFound = await page.getByText(/page not found|not found/i).isVisible().catch(() => false)
+    const isNotFound = await page.getByText(/page not found|not found|can’t find that page|can't find that page/i).isVisible().catch(() => false)
     expect(isNotFound).toBe(false)
     await context.close()
   })

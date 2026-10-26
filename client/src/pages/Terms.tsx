@@ -19,11 +19,11 @@ export default function Terms() {
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <FileText className="w-6 h-6 text-purple-600" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-hockia-soft">
+              <FileText className="h-6 w-6 text-hockia-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Terms & Conditions</h1>
+              <h1 className="mb-2 text-title text-ink-1">Terms & Conditions</h1>
               <p className="text-gray-600">Effective date: March 2026</p>
             </div>
           </div>
@@ -33,8 +33,8 @@ export default function Terms() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
           {/* Section 1 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">1. Introduction</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 These Terms & Conditions ("Terms") govern your access to and use of Hockia ("the Platform"), a social networking platform dedicated to the field hockey community. Hockia is available as a website at inhockia.com, a Progressive Web App (PWA), and native mobile applications for iOS and Android.
               </p>
@@ -51,8 +51,8 @@ export default function Terms() {
 
           {/* Section 2 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Eligibility</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">2. Eligibility</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 You must be at least 16 years old to create an account on Hockia. If you are between 16 and 18 years old, you must have consent from a parent or legal guardian to use the Platform.
               </p>
@@ -72,8 +72,8 @@ export default function Terms() {
 
           {/* Section 3 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Account Registration and Roles</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">3. Account Registration and Roles</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 To use Hockia, you must create an account using one of the following methods: email and password, Google Sign-In, or Sign In with Apple. During registration, you will select a role that defines your experience on the Platform:
               </p>
@@ -94,8 +94,8 @@ export default function Terms() {
 
           {/* Section 4 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. User Content and Intellectual Property</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">4. User Content and Intellectual Property</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 You retain ownership of all content you create, upload, or share on Hockia, including but not limited to: profile information, photos, videos, career history entries, messages, comments, references, endorsements, opportunity listings, applications, and brand posts ("User Content").
               </p>
@@ -121,8 +121,8 @@ export default function Terms() {
 
           {/* Section 5 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Platform Features and Acceptable Use</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">5. Platform Features and Acceptable Use</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>Hockia provides the following features, among others:</p>
               <ul className="list-none space-y-3 ml-4">
                 <li>- User profiles with personal information, career history, media galleries, and social links.</li>
@@ -156,8 +156,8 @@ export default function Terms() {
 
           {/* Section 6 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Opportunities and Applications</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">6. Opportunities and Applications</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Clubs and coaches may post opportunity listings on the Platform. Players and coaches may apply to these opportunities. Hockia serves as a connection platform and does not act as an employer, agent, or intermediary in any hiring or recruitment process.
               </p>
@@ -171,8 +171,8 @@ export default function Terms() {
 
           {/* Section 7 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Communications and Notifications</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">7. Communications and Notifications</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 By creating an account, you consent to receive communications from Hockia, including:
               </p>
@@ -193,8 +193,8 @@ export default function Terms() {
 
           {/* Section 8 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Moderation and Enforcement</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">8. Moderation and Enforcement</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Hockia reserves the right to monitor, review, and remove any User Content that violates these Terms or that we deem inappropriate, at our sole discretion.
               </p>
@@ -217,8 +217,8 @@ export default function Terms() {
 
           {/* Section 9 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Child Safety</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">9. Child Safety</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Hockia is committed to the safety and protection of minors. The Platform is not directed at children under 16, and we do not knowingly collect personal data from children under 16 without parental consent.
               </p>
@@ -235,8 +235,8 @@ export default function Terms() {
 
           {/* Section 10 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Disclaimer of Warranties</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">10. Disclaimer of Warranties</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Hockia is provided on an "as is" and "as available" basis without warranties of any kind, whether express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
               </p>
@@ -250,8 +250,8 @@ export default function Terms() {
 
           {/* Section 11 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Limitation of Liability</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">11. Limitation of Liability</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 To the fullest extent permitted by applicable law, Hockia, its operator, affiliates, and contributors shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, opportunities, goodwill, or other intangible losses, resulting from:
               </p>
@@ -269,8 +269,8 @@ export default function Terms() {
 
           {/* Section 12 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Account Termination and Deletion</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">12. Account Termination and Deletion</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 You may delete your account at any time through the Settings page. Upon account deletion, we will permanently remove your profile, personal data, messages, applications, media files, career history, and all associated content from our servers. Some data that was shared with other users (e.g., messages already delivered, references provided) may persist in the recipients' accounts.
               </p>
@@ -284,8 +284,8 @@ export default function Terms() {
 
           {/* Section 13 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. Third-Party Services</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">13. Third-Party Services</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Hockia may contain links to external websites or integrate with third-party services. We are not responsible for the content, privacy practices, or terms of any third-party services. Your use of third-party services is at your own risk and subject to their respective terms and policies.
               </p>
@@ -296,8 +296,8 @@ export default function Terms() {
 
           {/* Section 14 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Governing Law</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">14. Governing Law</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these Terms or your use of the Platform shall be resolved through good-faith negotiation. If a resolution cannot be reached, disputes may be submitted to the competent courts.
               </p>
@@ -308,8 +308,8 @@ export default function Terms() {
 
           {/* Section 15 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">15. Changes to These Terms</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">15. Changes to These Terms</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 We may update these Terms from time to time to reflect changes in our Platform, practices, or legal requirements. When we make material changes, we will notify you through the Platform or via email. Your continued use of Hockia after the effective date of updated Terms constitutes your acceptance of the changes.
               </p>
@@ -320,14 +320,14 @@ export default function Terms() {
 
           {/* Section 16 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">16. Contact</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">16. Contact</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>If you have any questions about these Terms, please contact us at:</p>
               <p className="flex items-center gap-2">
                 <span>📧</span>
                 <a
                   href="mailto:team@inhockia.com"
-                  className="text-hockia-primary hover:text-hockia-secondary transition-colors"
+                  className="text-brand-text transition-colors hover:opacity-80"
                 >
                   team@inhockia.com
                 </a>
