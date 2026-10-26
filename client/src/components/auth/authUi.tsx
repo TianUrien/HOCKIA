@@ -179,6 +179,23 @@ export function OrDivider() {
   )
 }
 
+/** Status screen body (rebrand page 26 · recovery & email links): an 88 icon
+ *  disc, the title, one line or two, and the actions pinned to the bottom.
+ *  `tone`: positive = a real success, brand = a soft violet note, neutral = info. */
+export function AuthStatus({ icon, tone = 'neutral', title, children, actions }: { icon: ReactNode; tone?: 'positive' | 'brand' | 'neutral'; title: ReactNode; children?: ReactNode; actions?: ReactNode }) {
+  const disc = tone === 'positive' ? 'bg-positive-soft text-positive' : tone === 'brand' ? 'bg-hockia-soft text-hockia-primary' : 'bg-surface-muted text-ink-2'
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <span className={cn('flex h-[88px] w-[88px] items-center justify-center rounded-full', disc)} aria-hidden="true">{icon}</span>
+        <h1 className="mt-8 text-title text-ink-1">{title}</h1>
+        {children && <div className="mt-3 text-[17px] leading-[22px] text-ink-2">{children}</div>}
+      </div>
+      {actions && <div className="space-y-3 pt-8">{actions}</div>}
+    </div>
+  )
+}
+
 /** Inline error under a form (role="alert"). */
 export function FormError({ children }: { children: ReactNode }) {
   if (!children) return null
