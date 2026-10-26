@@ -264,7 +264,7 @@ describe('Choose your role (101:892)', () => {
     const user = userEvent.setup()
     render(<MemoryRouter initialEntries={['/complete-profile']}><CompleteProfile /></MemoryRouter>)
     expect(await screen.findByRole('heading', { name: 'Choose your role' })).toBeInTheDocument()
-    expect(screen.getByText('You can’t change it later without support.')).toBeInTheDocument()
+    expect(screen.getByText(/You can’t change it later without support\./)).toBeInTheDocument()
 
     const cards = screen.getAllByRole('radio')
     expect(cards.map((c) => within(c).getByText(/^(Player|Coach|Club|Brand|Umpire)$/).textContent)).toEqual(['Player', 'Coach', 'Club', 'Brand', 'Umpire'])
@@ -276,24 +276,21 @@ describe('Choose your role (101:892)', () => {
     // No counts, scores or levels on any card.
     expect(screen.queryByText(/\d/)).not.toBeInTheDocument()
 
-    // Option card (460:40) with the 40 px icon tile: brand-soft at rest,
-    // white on the selected card, which gets the brand border + soft fill.
+    // Rebrand page 26: white option card with the role's colour dot; the
+    // selected card gets the 2 px violet border.
+    const DOT: Record<string, string> = { player: 'bg-role-player-ink', coach: 'bg-role-coach-ink', club: 'bg-role-club-ink', brand: 'bg-role-brand-ink', umpire: 'bg-role-umpire-ink' }
     for (const role of ['player', 'coach', 'club', 'brand', 'umpire']) {
-      const tile = screen.getByTestId(`role-icon-${role}`)
-      expect(tile).toHaveClass('h-10', 'w-10', 'bg-hockia-soft', 'text-hockia-primary')
-      expect(tile.querySelector('svg')).not.toBeNull()
+      expect(screen.getByTestId(`role-icon-${role}`)).toHaveClass('h-3', 'w-3', 'rounded-full', DOT[role])
     }
     const playerCard = screen.getByRole('radio', { name: /^Player/ })
-    expect(playerCard).toHaveClass('bg-surface-muted')
-    expect(playerCard).not.toHaveClass('ring-hockia-primary')
+    expect(playerCard).toHaveClass('bg-white', 'ring-line')
+    expect(playerCard).not.toHaveClass('ring-brand-primary')
 
     const cta = screen.getByRole('button', { name: 'Continue' })
     expect(cta).toBeDisabled()
     await user.click(playerCard)
     expect(playerCard).toHaveAttribute('aria-checked', 'true')
-    expect(playerCard).toHaveClass('bg-hockia-soft', 'ring-hockia-primary')
-    expect(screen.getByTestId('role-icon-player')).toHaveClass('bg-white')
-    expect(screen.getByTestId('role-icon-coach')).toHaveClass('bg-hockia-soft')
+    expect(playerCard).toHaveClass('ring-2', 'ring-brand-primary')
     expect(screen.getByRole('button', { name: 'Continue as a player' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Continue as a player' }))
 
@@ -350,15 +347,16 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByText('A real match photo gets more profile views.')).toBeInTheDocument()
     expect(screen.getByLabelText('Full name')).toBeInTheDocument()
     expect(screen.getByText('Date of birth')).toBeInTheDocument()
-    expect(screen.getByLabelText('Category')).toBeInTheDocument()
-    expect(screen.getByLabelText('Position')).toBeInTheDocument()
-    expect(screen.getByLabelText('Second position (optional)')).toBeInTheDocument()
+    // Rebrand page 26: category and positions are single-choice chip groups.
+    expect(screen.getByRole('radiogroup', { name: 'Category' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Position' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Second position (optional)' })).toBeInTheDocument()
 
     // Text field (472:243) on every field: input, Select (trailing chevron)
     // and the compact day / month / year selects share the muted 50 px look.
     expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[16px]', 'border-line', 'bg-white', 'text-[16px]')
     expect(screen.getByText('Full name')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
-    expect(screen.getByLabelText('Category')).toHaveClass('h-[50px]', 'bg-white', 'appearance-none', 'pr-11')
+    expect(within(screen.getByRole('radiogroup', { name: 'Position' })).getByRole('radio', { name: /Midfielder/ })).toHaveClass('h-11', 'rounded-full')
     expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-white', 'appearance-none')
     const dobGroup = screen.getByRole('group', { name: /date of birth/i })
     expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
@@ -373,8 +371,8 @@ describe('Set up (114:537 / 114:608)', () => {
     await user.selectOptions(screen.getByLabelText('Day'), '1')
     await user.selectOptions(screen.getByLabelText('Month'), '1')
     await user.selectOptions(screen.getByLabelText('Year'), '2000')
-    await user.selectOptions(screen.getByLabelText('Category'), 'adult_women')
-    await user.selectOptions(screen.getByLabelText('Position'), 'midfielder')
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Category' })).getAllByRole('radio')[0])
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Position' })).getByRole('radio', { name: /Midfielder/ }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('declare_date_of_birth', { p_dob: '2000-01-01' }))

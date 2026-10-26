@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Lock, Plus } from 'lucide-react'
+import { Lock, Plus } from 'lucide-react'
 import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
-import { fieldInput, fieldLabel, fieldReadOnly, fieldSelect } from '@/components/ui/fieldClasses'
+import { Chip } from '@/components/ui/Chip'
+import { ProfileIcon } from '@/components/icons/HockiaIcons'
+import { fieldInput, fieldLabel, fieldReadOnly } from '@/components/ui/fieldClasses'
 import CountrySelect from '@/components/CountrySelect'
 import DateOfBirthPicker from '@/components/DateOfBirthPicker'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
@@ -340,21 +342,22 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         >
           <h1 className="text-title text-ink-1">About you</h1>
 
+          {/* Rebrand page 26 · Set up 1: 88 photo picker + "Add a photo" link. */}
           <div className="mt-5 flex items-center gap-4">
             <button
               type="button"
               onClick={() => void pickPhoto()}
               disabled={uploading}
               aria-label={avatar ? 'Change photo' : 'Add photo'}
-              className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-3 disabled:opacity-60"
+              className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-muted text-ink-3 ring-1 ring-inset ring-line disabled:opacity-60"
             >
-              {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <Camera className="h-7 w-7" strokeWidth={1.75} />}
+              {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon className="h-8 w-8" />}
             </button>
             <div className="min-w-0 flex-1">
-              <Button variant="tonal" size="small" loading={uploading} onClick={() => void pickPhoto()}>
-                {avatar ? 'Change photo' : 'Add photo'}
-              </Button>
-              <p className="mt-1.5 text-caption text-ink-3">{PHOTO_HELPER}</p>
+              <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="h-11 text-[15px] font-semibold text-brand-text disabled:opacity-60" data-testid="setup-photo-link">
+                {uploading ? 'Uploading…' : avatar ? 'Change photo' : 'Add a photo'}
+              </button>
+              <p className="text-caption text-ink-3">{PHOTO_HELPER}</p>
             </div>
             <input
               ref={fileRef}
@@ -398,46 +401,25 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
               </div>
             )}
 
-            <div>
-              <label htmlFor="setup-category" className={fieldLabel}>Category</label>
-              <select
-                id="setup-category"
-                value={draft.playingCategory}
-                onChange={(e) => set({ playingCategory: e.target.value as PlayingCategory | '' })}
-                className={fieldSelect}
-                required
-              >
-                <option value="">Choose a category</option>
-                {PLAYING_CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="setup-position" className={fieldLabel}>Position</label>
-              <select
-                id="setup-position"
-                value={draft.position}
-                onChange={(e) => set({ position: e.target.value, secondaryPosition: draft.secondaryPosition === e.target.value ? '' : draft.secondaryPosition })}
-                className={fieldSelect}
-                required
-              >
-                <option value="">Choose a position</option>
-                {PLAYER_POSITIONS.map((p) => <option key={p} value={p}>{positionLabel(p)}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="setup-position-2" className={fieldLabel}>Second position (optional)</label>
-              <select
-                id="setup-position-2"
-                value={draft.secondaryPosition}
-                onChange={(e) => set({ secondaryPosition: e.target.value })}
-                className={fieldSelect}
-              >
-                <option value="">None</option>
-                {PLAYER_POSITIONS.filter((p) => p !== draft.position).map((p) => <option key={p} value={p}>{positionLabel(p)}</option>)}
-              </select>
-            </div>
+            {/* Category and positions as selectable chips (rebrand page 26). */}
+            <ChoiceChips
+              label="Category"
+              options={PLAYING_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+              value={draft.playingCategory}
+              onChange={(v) => set({ playingCategory: v as PlayingCategory })}
+            />
+            <ChoiceChips
+              label="Position"
+              options={PLAYER_POSITIONS.map((p) => ({ value: p, label: positionLabel(p) ?? p }))}
+              value={draft.position}
+              onChange={(v) => set({ position: v, secondaryPosition: draft.secondaryPosition === v ? '' : draft.secondaryPosition })}
+            />
+            <ChoiceChips
+              label="Second position (optional)"
+              options={PLAYER_POSITIONS.filter((p) => p !== draft.position).map((p) => ({ value: p, label: positionLabel(p) ?? p }))}
+              value={draft.secondaryPosition}
+              onChange={(v) => set({ secondaryPosition: draft.secondaryPosition === v ? '' : v })}
+            />
 
             <FormError>{error}</FormError>
           </div>
@@ -559,5 +541,21 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         </div>
       </form>
     </AuthShell>
+  )
+}
+
+/** Single-choice chip group (Chip / Selectable, rebrand page 26). Tapping the
+ *  chosen chip again only clears optional groups (handled by the caller). */
+function ChoiceChips({ label, options, value, onChange }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (value: string) => void }) {
+  const id = `setup-${label.toLowerCase().replace(/[^a-z]+/g, '-')}`
+  return (
+    <div>
+      <span id={id} className={fieldLabel}>{label}</span>
+      <div role="radiogroup" aria-labelledby={id} className="mt-1 flex flex-wrap gap-2">
+        {options.map((o) => (
+          <Chip key={o.value} label={o.label} selected={value === o.value} role="radio" aria-checked={value === o.value} aria-pressed={undefined} onClick={() => onChange(o.value)} />
+        ))}
+      </div>
+    </div>
   )
 }
