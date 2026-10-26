@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
-import { Input, Button } from '@/components'
+import { Mail } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { AuthShell, FormError } from '@/components/auth/authUi'
+import { fieldInput, fieldLabel } from '@/components/ui/fieldClasses'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
@@ -59,91 +61,47 @@ export default function ForgotPassword() {
     }
   }
 
+  // Rebrand page 26 · Forgot password: the white auth page, one field, one action.
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      {/* Background */}
-      <div className="absolute inset-0" aria-hidden="true">
-        <div className="h-full w-full bg-[url('/hero-desktop.webp')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-black/70" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-3xl p-6 sm:p-8 bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back to Sign In</span>
-          </button>
-
-          {success ? (
-            /* Success State */
-            <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Check your email</h3>
-              <p className="text-gray-400 mb-6">
-                We've sent a password reset link to<br />
-                <span className="text-white font-medium">{email}</span>
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Didn't receive the email? Check your spam folder or try again.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => setSuccess(false)}
-                className="w-full"
-              >
-                Try another email
-              </Button>
-            </div>
-          ) : (
-            /* Form State */
-            <>
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-hockia-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-8 h-8 text-hockia-secondary" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Forgot password?</h3>
-                <p className="text-gray-400">
-                  Enter your email and we'll send you a link to reset your password.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">Email</label>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="!bg-white/90"
-                    required
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-red-400 text-sm">{error}</p>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full min-h-[44px] bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
-                  disabled={loading}
-                >
-                  {loading ? 'Sending...' : 'Send Reset Link'}
-                </Button>
-              </form>
-            </>
-          )}
+    <AuthShell back={{ parent: 'Log in', onBack: () => navigate('/signin') }}>
+      {success ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-center">
+          <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+            <Mail className="h-9 w-9" strokeWidth={1.75} aria-hidden="true" />
+          </span>
+          <h1 className="mt-8 text-title text-ink-1">Check your inbox</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
+            We sent a reset link to <span className="font-semibold text-ink-1">{email}</span>. It works once, for a limited time.
+          </p>
+          <div className="mt-auto w-full space-y-3 pt-8">
+            <Button block variant="secondary" onClick={() => setSuccess(false)}>Use a different email</Button>
+          </div>
         </div>
-      </div>
-    </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate className="flex flex-1 flex-col pt-2">
+          <h1 className="text-title text-ink-1">Reset your password</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Enter the email you joined with and we’ll send you a link to choose a new one.</p>
+          <div className="mt-6">
+            <label htmlFor="reset-email" className={fieldLabel}>Email</label>
+            <input
+              id="reset-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={fieldInput}
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              required
+            />
+          </div>
+          {error && <div className="mt-4"><FormError>{error}</FormError></div>}
+          <div className="mt-auto pt-8">
+            <Button type="submit" block loading={loading} disabled={!email.trim()}>Send reset link</Button>
+          </div>
+        </form>
+      )}
+    </AuthShell>
   )
 }

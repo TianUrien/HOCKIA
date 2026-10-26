@@ -78,82 +78,103 @@ export function TermsLine({ className, tone = 'app' }: { className?: string; ton
   )
 }
 
-/* ────────────────────── Landing v3 auth layout ──────────────────────
- * Figma "Landing v3" (approved 6 Oct 2026): Log in 127:2141 / 127:2204, Sign
- * up 127:2261 / 127:2304. Desktop: surface-subtle page, 72 header (logo left,
- * "Back to home" right), a white card (radius 28, pad 40, 1 px line, shadow)
- * centred vertically with a 360 form, and the switch line under the card.
- * Phones: no card — a 56 top bar (back chevron, centred logo), content at 20
- * px gutters and the switch line pinned to the bottom (safe-area aware).
+/* ─────────────────── Auth layout (rebrand page 26) ───────────────────
+ * Phones: a 56 top bar with the back chevron only, content at 24 px gutters,
+ * the terms and switch lines pinned to the bottom (safe-area aware).
+ * 768–1023: the same column in a white card on the subtle page (unchanged).
+ * 1024 and up: the split layout — the photo panel on the left (lockup, halo,
+ * the two players, the tagline) and the 400 px form on the right.
  */
 
 interface AuthPageProps {
   children: ReactNode
-  /** "New to HOCKIA? Create an account" — under the card / pinned to the bottom. */
+  /** "Already a member? Log in" — pinned to the bottom / under the form. */
   switchLine: ReactNode
-  /** Phone top-bar back chevron. Omit when there is nowhere to go (native First run). */
+  /** Terms line shown above the switch line in the footer (Join, Create with email). */
+  footerNote?: ReactNode
+  /** Phone top-bar back chevron. Omit when there is nowhere to go (native first run). */
   onBack?: () => void
   /** Accessible name of the back chevron, "Back to <parent>". */
   backLabel?: string
   className?: string
 }
 
-export function AuthPage({ children, switchLine, onBack, backLabel = 'Back', className }: AuthPageProps) {
+export function AuthPage({ children, switchLine, footerNote, onBack, backLabel = 'Back', className }: AuthPageProps) {
   return (
-    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] md:bg-surface-subtle">
-      {/* Phone top bar (56) */}
-      <div className="relative flex h-14 shrink-0 items-center px-2 md:hidden">
-        {onBack ? (
-          <IconButton label={backLabel} tone="brand" onClick={onBack}>
-            <BackGlyph className="h-6 w-6" strokeWidth={2} />
-          </IconButton>
-        ) : (
-          <span className="w-11" />
-        )}
-        <Link to="/" aria-label="Hockia home" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
-          <AuthLogo />
-        </Link>
-      </div>
-
-      {/* Desktop header (72) */}
-      <header className="mx-auto hidden h-[72px] w-full max-w-[1280px] shrink-0 items-center justify-between px-10 md:flex">
-        <Link to="/" aria-label="Hockia home" className="flex items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
-          <AuthLogo />
-        </Link>
-        <Link to="/" className={webButtonClassName({ variant: 'link', size: 'medium' })}>
-          Back to home
-        </Link>
-      </header>
-
-      <main className={cn('flex w-full flex-1 flex-col md:items-center md:justify-center md:px-6 md:py-10', className)}>
-        <div className="flex w-full flex-1 flex-col px-5 pt-5 md:w-[440px] md:flex-none md:rounded-panel md:border md:border-line md:bg-white md:p-10 md:shadow-[0_12px_32px_rgba(15,15,20,0.06)]">
-          {children}
+    <div className="flex min-h-app-screen bg-white pt-[env(safe-area-inset-top)] md:bg-surface-subtle lg:bg-white lg:pt-0">
+      <AuthPhotoPanel />
+      <div className="flex w-full flex-col lg:w-1/2">
+        {/* Phone top bar (56): back only */}
+        <div className="relative flex h-14 shrink-0 items-center px-2 md:hidden">
+          {onBack ? (
+            <IconButton label={backLabel} tone="brand" onClick={onBack}>
+              <BackGlyph className="h-6 w-6" strokeWidth={2} />
+            </IconButton>
+          ) : (
+            <span className="w-11" />
+          )}
         </div>
-        <p className="mt-auto px-5 pb-[max(env(safe-area-inset-bottom),24px)] pt-8 text-center text-[15px] leading-[21px] text-ink-2 md:mt-8 md:p-0">
-          {switchLine}
-        </p>
-      </main>
+
+        {/* Tablet header (72); the photo panel carries the logo from 1024 up */}
+        <header className="mx-auto hidden h-[72px] w-full max-w-[1280px] shrink-0 items-center justify-between px-10 md:flex lg:hidden">
+          <Link to="/" aria-label="Hockia home" className="flex items-center rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring">
+            <img src="/brand/lockup/hockia-lockup-horizontal-ink.svg" alt="" width={136} height={28} className="h-7 w-auto" />
+          </Link>
+          <Link to="/" className={webButtonClassName({ variant: 'link', size: 'medium' })}>
+            Back to home
+          </Link>
+        </header>
+
+        <main className={cn('flex w-full flex-1 flex-col md:items-center md:justify-center md:px-6 md:py-10', className)}>
+          <div className="flex w-full flex-1 flex-col px-6 pt-2 md:w-[440px] md:flex-none md:rounded-panel md:border md:border-line md:bg-white md:p-10 md:shadow-[0_12px_32px_rgba(15,15,20,0.06)] lg:w-[400px] lg:border-0 lg:p-0 lg:shadow-none">
+            {children}
+          </div>
+          <div className="mt-auto flex flex-col gap-3 px-6 pb-[max(env(safe-area-inset-bottom),24px)] pt-8 md:mt-8 md:w-[440px] md:p-0 lg:mt-6 lg:w-[400px]">
+            {footerNote}
+            <p className="text-center text-[15px] leading-[21px] text-ink-2">{switchLine}</p>
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
 
-function AuthLogo() {
+/** Web photo panel (rebrand page 26 · Web, 720 × 900 design): positions are
+ *  percentages of the panel so the composition holds at any desktop size. */
+function AuthPhotoPanel() {
   return (
-    <>
-      <img src="/brand/svg/hockia-logo-violet.svg" alt="" width={300} height={243} className="h-6 w-auto md:h-7" />
-      <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" width={153} height={42} className="h-4 w-auto md:h-[18px]" />
-    </>
+    <aside className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-b from-purple-50 to-surface-subtle lg:block" aria-hidden="true">
+      <img src="/native/welcome-halo.svg" alt="" className="absolute aspect-square max-w-none" style={{ left: '13.9%', top: '16.7%', width: '72.2%' }} draggable={false} />
+      <img src="/native/player-man-fullbody.webp" alt="" width={587} height={620} className="absolute max-w-none object-contain" style={{ left: '9.7%', top: '29%', width: '57.2%', height: '48.2%' }} draggable={false} />
+      <img src="/native/player-woman-fullbody.webp" alt="" width={476} height={920} className="absolute max-w-none object-contain" style={{ left: '38.1%', top: '15.3%', width: '46.3%', height: '71.6%' }} draggable={false} />
+      <div className="absolute inset-x-0 bottom-0 h-[38%] bg-gradient-to-b from-surface-subtle/0 to-surface-subtle to-[60%]" />
+      <Link to="/" aria-label="Hockia home" tabIndex={-1} className="pointer-events-auto absolute left-16 top-14">
+        <img src="/brand/lockup/hockia-lockup-horizontal-ink.svg" alt="" width={157} height={32} className="h-8 w-auto" />
+      </Link>
+      <p className="absolute bottom-16 left-16 max-w-[520px] font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1">
+        Where field hockey sticks together.
+      </p>
+    </aside>
   )
 }
 
-/** Card heading: the symbol (desktop only — on phones it is in the top bar),
- *  the title 28/34 and the subtitle 15/21. */
+/** Heading (rebrand page 26): the large title and the 17 px subtitle. */
 export function AuthHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col">
-      <img src="/brand/svg/hockia-logo-violet.svg" alt="" width={300} height={243} className="mb-6 hidden h-9 w-auto self-start md:block" />
-      <h1 className="text-web3-title text-ink-1">{title}</h1>
-      {subtitle && <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{subtitle}</p>}
+    <div className="flex flex-col pt-2">
+      <h1 className="text-large-title text-ink-1">{title}</h1>
+      {subtitle && <p className="mt-3 text-[17px] leading-[22px] text-ink-2">{subtitle}</p>}
+    </div>
+  )
+}
+
+/** The "or" divider between the providers and email. */
+export function OrDivider() {
+  return (
+    <div className="flex items-center gap-3" aria-hidden="true">
+      <span className="h-px flex-1 bg-line" />
+      <span className="text-caption text-ink-3">or</span>
+      <span className="h-px flex-1 bg-line" />
     </div>
   )
 }

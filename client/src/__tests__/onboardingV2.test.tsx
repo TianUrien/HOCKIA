@@ -176,21 +176,21 @@ beforeEach(() => {
 })
 
 describe('route order: account first, then role, then set-up', () => {
-  it('First run (104:2096): headline, Apple then Google, Create with email, Log in — no role cards', () => {
+  it('Join (rebrand page 26): "Join Hockia", Google then Apple on the web, Create with email, Log in — no role cards', () => {
     mocks.signedOut.current = true
     renderAuthRoutes('/signup')
-    expect(screen.getByRole('heading', { name: 'Your game. Your network.' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Join Hockia' })).toBeInTheDocument()
     // The phone top bar's back chevron (icon only) precedes the actions on the web.
     const buttons = screen.getAllByRole('button').filter((b) => b.textContent)
-    expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
+    expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Google', 'Continue with Apple', 'Create with email'])
     // Web v3 social pills (Figma 127:2261): 52 tall, full width, pill; Apple
     // on the inverse surface, Google white with the line-strong border; 17 semibold.
-    const [apple, google] = buttons
+    const [google, apple] = buttons
     expect(apple).toHaveAttribute('data-provider', 'apple')
     expect(apple).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-surface-inverse', 'text-white', 'text-[17px]', 'font-semibold')
     expect(google).toHaveAttribute('data-provider', 'google')
     expect(google).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-white', 'border-line-strong', 'text-[17px]', 'font-semibold')
-    expect(screen.getByText('Free for players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
+    expect(screen.getByText('Create your account first. You’ll choose your role next.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
     // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
@@ -218,7 +218,7 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-white', 'rounded-[16px]')
     // One Primary Large (48) per screen; Back = Ghost icon button 44.
     expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-[52px]', 'w-full', 'bg-hockia-primary')
-    expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
+    expect(screen.getByRole('button', { name: 'Back to Join' })).toHaveClass('h-11', 'w-11', 'rounded-full')
 
     await user.type(email, 'new@example.com')
     await user.type(screen.getByLabelText('Password'), 'LongEnough1')

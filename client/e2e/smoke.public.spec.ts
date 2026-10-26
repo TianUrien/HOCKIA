@@ -19,7 +19,7 @@ test.describe('@smoke public', () => {
   test('signup page loads and shows the first-run choices', async ({ page }) => {
     await page.goto('/signup')
 
-    await expect(page.getByRole('heading', { name: /your game\. your network\./i })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('heading', { name: /join hockia/i })).toBeVisible({ timeout: 20000 })
     await expect(page.getByRole('button', { name: /continue with apple/i })).toBeVisible({ timeout: 20000 })
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible({ timeout: 20000 })
     await expect(page.getByRole('button', { name: /create with email/i })).toBeVisible({ timeout: 20000 })
