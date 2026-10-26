@@ -8,7 +8,7 @@ import { getNotificationConfig, resolveNotificationRoute } from '@/components/no
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ActivityIconCircle, ActivityRow } from '@/components/ui/ActivityRow'
 import { buttonClassName } from '@/components/ui/buttonClasses'
-import { formatActivityAge } from '@/lib/inboxTime'
+import { activityGroup, formatActivityAge } from '@/lib/inboxTime'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
 import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
@@ -74,10 +74,14 @@ export function InboxActivity() {
       ) : (
         <ul>
           {rows.map((notification, index) => {
+            // Grouped by day (rebrand page 19): Today · This week · Earlier.
+            const group = activityGroup(notification.createdAt)
+            const header = index === 0 || activityGroup(rows[index - 1].createdAt) !== group
+            const lastInGroup = index === rows.length - 1 || activityGroup(rows[index + 1].createdAt) !== group
             const config = getNotificationConfig(notification)
             const unread = !notification.readAt
             const actor = notification.actor
-            const name = actor?.fullName || actor?.username || 'HOCKIA member'
+            const name = actor?.fullName || actor?.username || 'Hockia member'
             const description = config.getDescription?.(notification)
             const route = resolveNotificationRoute(notification)
             const isFriendRequest = notification.kind === 'friend_request_received'
@@ -93,8 +97,9 @@ export function InboxActivity() {
             }
             return (
               <li key={notification.id}>
+                {header && <h3 className="px-5 pb-1 pt-4 text-micro font-semibold uppercase tracking-[0.06em] text-ink-3" data-testid="activity-group">{group}</h3>}
                 <ActivityRow
-                  className={index === rows.length - 1 ? 'is-last' : undefined}
+                  className={lastInGroup ? 'is-last' : undefined}
                   leading={
                     actor
                       ? <EntityAvatar src={actor.avatarUrl} name={name} role={actor.role} size={40} />

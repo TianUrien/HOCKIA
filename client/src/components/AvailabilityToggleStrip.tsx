@@ -49,7 +49,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
       id: 'available_for_appointments',
       label: 'Open to umpire',
       active: Boolean(profile.available_for_appointments),
-      activeGradient: 'from-sky-400 to-blue-500',
+      activeGradient: 'from-role-umpire-ink to-role-umpire-ink',
       tooltip: 'Available to be appointed to matches by clubs and federations.',
     }]
   } else if (role === 'club' || role === 'brand') {
@@ -58,7 +58,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
       id: 'open_to_opportunities',
       label: role === 'club' ? 'Recruiting' : 'Open to partnerships',
       active: Boolean(profile.open_to_opportunities),
-      activeGradient: 'from-blue-500 to-indigo-500',
+      activeGradient: role === 'club' ? 'from-role-club-ink to-role-club-ink' : 'from-role-brand-ink to-role-brand-ink',
       tooltip:
         role === 'club'
           ? 'Actively recruiting players and coaches for your teams.'
@@ -71,21 +71,21 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
             id: 'open_to_play',
             label: 'Open to Play',
             active: Boolean(profile.open_to_play),
-            activeGradient: 'from-emerald-400 to-green-500',
+            activeGradient: 'from-status-positive to-status-positive',
             tooltip: 'Looking to join a team or club to play regular matches.',
           }
         : {
             id: 'open_to_coach',
             label: 'Open to Coach',
             active: Boolean(profile.open_to_coach),
-            activeGradient: 'from-violet-500 to-purple-600',
-            tooltip: 'Looking for a head, assistant, or youth coaching role.',
+            activeGradient: 'from-role-coach-ink to-role-coach-ink',
+            tooltip: 'Looking for a head, assistant, or youth coaching opportunity.',
           },
       {
         id: 'open_to_opportunities',
         label: 'Open to Opportunities',
         active: Boolean(profile.open_to_opportunities),
-        activeGradient: 'from-blue-500 to-indigo-500',
+        activeGradient: 'from-brand-primary to-brand-primary',
         tooltip:
           role === 'player'
             ? 'Broader than playing: trials, transfers, sponsorships, or other offers.'

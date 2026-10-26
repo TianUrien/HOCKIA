@@ -55,7 +55,7 @@ Deno.test('the other application statuses keep the position wording', () => {
     vacancy_title: 'Senior men 1st XI midfielder',
     position: 'midfielder',
   }, 'Dublin HC')
-  assertEquals(filled.body, 'Senior men 1st XI midfielder has been filled. Thanks for applying. New roles are open.')
+  assertEquals(filled.body, 'Senior men 1st XI midfielder has been filled. Thanks for applying. New opportunities are open.')
 })
 
 // Round 9 (QA re-check item 18): a role posted without a typed title is stored
@@ -85,7 +85,7 @@ Deno.test('a generated headline names the position, a typed title stays', () => 
     vacancy_title: 'Goalkeeper',
     position: 'goalkeeper',
   }, 'Dublin HC')
-  assertEquals(barePosition.body, 'Goalkeeper has been filled. Thanks for applying. New roles are open.')
+  assertEquals(barePosition.body, 'Goalkeeper has been filled. Thanks for applying. New opportunities are open.')
 
   const typed = buildPushPayload('vacancy_application_status', {
     status: 'shortlisted',

@@ -449,7 +449,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 {(() => {
                   const trustTrailing = requesterRole?.toLowerCase() === 'umpire'
                     ? 'helps assigners and clubs trust your background.'
-                    : 'helps clubs scouting on HOCKIA trust your background.'
+                    : 'helps clubs scouting on Hockia trust your background.'
                   return selectedFriend
                     ? `Once ${selectedFriend.fullName.split(' ')[0]} accepts, this reference appears on your profile and ${trustTrailing}`
                     : `Once accepted, this reference appears on your profile and ${trustTrailing}`
@@ -468,7 +468,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                   requestNote.length > MAX_NOTE_LENGTH
                 }
                 onClick={handleSubmit}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-opacity disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-lg transition-opacity disabled:opacity-60"
               >
                 <UserPlus className="h-4 w-4" />
                 {isSubmitting ? 'Sending...' : 'Send Request'}

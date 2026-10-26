@@ -80,7 +80,7 @@ export default function CredibilityNetworkCard({
           type="button"
           onClick={onAddReference}
           disabled={addReferenceDisabled}
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-emerald-600 transition-colors disabled:opacity-60 disabled:hover:bg-emerald-500"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-primary text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-brand-primary transition-colors disabled:opacity-60 disabled:hover:bg-brand-primary"
         >
           <Plus className="h-4 w-4" />
           Add Reference

@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { RoleCard } from '@/components/opportunities/RoleCard'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
-import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
+import { BENEFIT_TILES, genderPill, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
   COACH_POSITIONS, COACH_TEAM_HINT, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
@@ -26,7 +26,7 @@ import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/Role
 import { useOwnerCrest } from '@/hooks/useOwnerCrest'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
-import { CATEGORY_DOT_CLASSES, categoryFamily } from '@/lib/opportunityCopy'
+import { categoryFamily } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
@@ -34,6 +34,9 @@ import { ANDROID_CHROME } from '@/lib/platformChrome'
 import { MascotAvatar } from '@/components/hockiaAi/mascot'
 import { applyAiDraft, checkSummary, type PostRoleStartState } from '@/lib/postRoleAi'
 import { postAgainDraft } from '@/lib/postAgain'
+import { Header } from '@/components'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { buttonClassName } from '@/components/ui/buttonClasses'
 
 /**
  * Post a role (Figma 04 Club 330:318 The role → 330:431 The offer →
@@ -49,10 +52,10 @@ interface Props {
   draftId: string | null
 }
 
-const STEP_COPY: Record<Step, { title: string; sub: string; back: string | null }> = {
-  1: { title: 'What are you looking for?', sub: 'Step 1 of 3 · The role', back: null },
-  2: { title: 'What do you offer?', sub: 'Step 2 of 3 · The offer', back: 'The role' },
-  3: { title: 'Check and post', sub: 'Step 3 of 3 · How players will see it', back: 'The offer' },
+const STEP_COPY: Record<Step, { title: string; sub: string; back: string | null; part: string }> = {
+  1: { title: 'What are you looking for?', sub: 'Step 1 of 3 · The opportunity', back: null, part: 'The position' },
+  2: { title: 'What do you offer?', sub: 'Step 2 of 3 · The offer', back: 'The opportunity', part: 'The offer' },
+  3: { title: 'Check and post', sub: 'Step 3 of 3 · How players will see it', back: 'The offer', part: 'Check and post' },
 }
 
 export default function PostRoleScreen({ draftId }: Props) {
@@ -123,6 +126,9 @@ export default function PostRoleScreen({ draftId }: Props) {
   const [whereOpen, setWhereOpen] = useState(false)
   const [whereText, setWhereText] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  // Rebrand page 27 · Web · Post an opportunity: the same three steps on
+  // desktop, the form in a card and a live "How players see it" column.
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   // A new role: prefill Where from the club profile as it loads (profile,
   // then the countries list), until the club changes anything.
@@ -174,7 +180,10 @@ export default function PostRoleScreen({ draftId }: Props) {
     return () => { cancelled = true }
   }, [draftId, profile?.id, navigate])
 
-  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [step])
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 })
+    if (isDesktop) window.scrollTo({ top: 0 })
+  }, [step, isDesktop])
 
   const set = <K extends keyof PostRoleDraft>(key: K, value: PostRoleDraft[K]) => { touched.current = true; setProblem(null); setDraft((d) => ({ ...d, [key]: value })) }
   const toggleIn = (key: 'skills' | 'benefits', v: string) => { touched.current = true; setDraft((d) => ({ ...d, [key]: d[key].includes(v) ? d[key].filter((x) => x !== v) : [...d[key], v] })) }
@@ -274,7 +283,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
     } catch (err) {
       logger.error('[PostRole] post failed', err)
-      addToast('Could not post the role. Try again.', 'error')
+      addToast('Could not post the opportunity. Try again.', 'error')
     } finally {
       setSaving(null)
     }
@@ -338,15 +347,16 @@ export default function PostRoleScreen({ draftId }: Props) {
   // Live cover preview (Figma O4): the club's colours from its crest, the team chip, the role.
   const previewPill = genderPill(draft.gender)
   const previewFamily = categoryFamily(draft.gender)
-  const previewTitle = draft.title.trim() || positionLabel(draft.position) || (isPlayer ? 'Your role' : 'Coaching role')
+  const previewTitle = draft.title.trim() || positionLabel(draft.position) || (isPlayer ? 'Your opportunity' : 'Coaching opportunity')
   const previewClub = cover.clubName ?? profile?.full_name ?? 'Your club'
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
     ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
 
   return (
-    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="post-role-screen">
-      <header className="shrink-0">
+    <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:h-auto lg:min-h-screen lg:bg-surface-subtle lg:pt-0" data-testid="post-role-screen">
+      {isDesktop && <Header />}
+      <header className="shrink-0 lg:hidden">
         <div className="relative flex h-11 items-center justify-between px-4">
           <button type="button" onClick={back} className="flex h-11 items-center gap-0.5 text-body text-hockia-primary" aria-label={copy.back ? `Back to ${copy.back}` : 'Cancel'}>
             {copy.back && <BackGlyph className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
@@ -354,11 +364,11 @@ export default function PostRoleScreen({ draftId }: Props) {
           </button>
           {aiCheck ? (
             <span className="pointer-events-none absolute inset-x-24 flex flex-col items-center text-center" data-testid="post-role-ai-header">
-              <span className="text-body font-semibold leading-[21px] text-ink-1">Check your role</span>
+              <span className="text-body font-semibold leading-[21px] text-ink-1">Check your opportunity</span>
               <span className="text-caption text-ink-3">{aiMode ? 'Drafted by Hockia AI · Beta' : 'Posted again · same details'}</span>
             </span>
           ) : (
-            <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
+            <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit opportunity' : 'New opportunity'}</span>
           )}
           {editing ? <span aria-hidden="true" /> : (
             <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
@@ -371,16 +381,42 @@ export default function PostRoleScreen({ draftId }: Props) {
         </div>
       </header>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-6">
+      {isDesktop && (
+        <div className="mx-auto w-full max-w-[1376px] px-12 pt-under-header-lg" data-testid="post-role-desktop-head">
+          <div className="flex items-end gap-4 pt-8">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-[12px] font-bold uppercase leading-[1.2] tracking-[0.12em] text-brand-text">
+                {aiCheck ? (aiMode ? 'Drafted by Hockia AI · Beta' : 'Posted again · same details') : `Step ${step} of 3`}
+              </p>
+              <h1 className="mt-1 font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1">
+                {aiCheck ? 'Check your opportunity' : `${editing ? 'Edit opportunity' : 'New opportunity'} · ${copy.part}`}
+              </h1>
+            </div>
+            {!editing && (
+              <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 shrink-0 items-center px-1 text-[14px] font-semibold text-brand-text disabled:opacity-40">
+                {saving === 'draft' ? 'Saving…' : 'Save draft'}
+              </button>
+            )}
+          </div>
+          <div className="mt-6 flex gap-2" aria-hidden="true">
+            {[1, 2, 3].map((n) => <span key={n} className={cn('h-1 flex-1 rounded-[2px]', n <= step ? 'bg-hockia-primary' : 'bg-line')} />)}
+          </div>
+        </div>
+      )}
+
+      <div className="flex min-h-0 flex-1 flex-col lg:mx-auto lg:grid lg:w-full lg:max-w-[1376px] lg:flex-none lg:grid-cols-[minmax(0,1fr)_416px] lg:items-start lg:gap-6 lg:px-12 lg:pb-16 lg:pt-6">
+      <div className="flex min-h-0 flex-1 flex-col lg:rounded-[24px] lg:bg-white lg:px-1 lg:pb-5 lg:pt-1 lg:ring-1 lg:ring-inset lg:ring-line">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-6 lg:flex-none lg:overflow-visible lg:pb-0">
         {aiCheck ? (
-          <div className="flex items-center px-5 pt-3 text-ink-3">
+          <div className="flex items-center px-5 pt-3 text-ink-3 lg:hidden">
             <span className="flex-1 text-micro font-semibold uppercase tracking-[0.44px]">Preview</span>
             <span className="text-caption">Live preview</span>
           </div>
         ) : (
-          <div className="px-5 pt-4">
-            <h1 className="text-title-xl text-ink-1">{copy.title}</h1>
-            <p className="mt-1 text-secondary text-ink-2">{copy.sub}</p>
+          <div className="px-5 pt-4 lg:pt-5">
+            <h1 className="text-title-xl text-ink-1 lg:hidden">{copy.title}</h1>
+            {copy.title !== copy.part && <h2 className="hidden font-display text-[24px] font-bold leading-[1.2] text-ink-1 lg:block">{copy.title}</h2>}
+            <p className="mt-1 text-secondary text-ink-2 lg:hidden">{copy.sub}</p>
           </div>
         )}
 
@@ -392,7 +428,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                 <span className="text-secondary text-ink-3">Live preview</span>
               </div>
               <RoleCover coverUrl={draft.coverUrl} crestUrl={cover.crestUrl} palette={cover.palette} scrim="card" className="mt-2 h-[196px] rounded-[20px]">
-                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
+                {previewPill && previewFamily && <span className="absolute left-3 top-3"><GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[previewFamily]}>{previewPill.label}</GlassChip></span>}
                 {/* Add photo / Change (Figma 158:426 / 158:506): a glass pill on the preview. */}
                 <button
                   type="button"
@@ -424,7 +460,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               )}
             </section>
             <div className="px-5 pt-5">
-              <Segments label="Role type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setProblem(null); setDraft((d) => switchRoleType(d, v)) }} />
+              <Segments label="Opportunity type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setProblem(null); setDraft((d) => switchRoleType(d, v)) }} />
             </div>
             <Section
               label={isPlayer ? 'Position' : 'Role'}
@@ -440,7 +476,7 @@ export default function PostRoleScreen({ draftId }: Props) {
             <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint={isPlayer ? 'Players outside this team can’t apply.' : COACH_TEAM_HINT}>
               <TeamChips label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
             </Section>
-            <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`The role’s headline, shown above the position. Up to ${TITLE_MAX} characters.`}>
+            <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`The opportunity’s headline, shown above the position. Up to ${TITLE_MAX} characters.`}>
               <input
                 value={draft.title}
                 onChange={(e) => set('title', e.target.value.slice(0, TITLE_MAX))}
@@ -458,7 +494,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               <Segments label="Level" value={draft.level} options={LEVELS} onChange={(v) => set('level', draft.level === v ? null : v)} />
             </Section>
             {isPlayer && (
-              <Section label="Specialist skills" trailing={<HardnessPill label="Specialist skills" on={draft.skillsRequired} onToggle={() => set('skillsRequired', !draft.skillsRequired)} />} hint="Pick any that matter for this role.">
+              <Section label="Specialist skills" trailing={<HardnessPill label="Specialist skills" on={draft.skillsRequired} onToggle={() => set('skillsRequired', !draft.skillsRequired)} />} hint="Pick any that matter for this opportunity.">
                 <Chips label="Specialist skills" values={draft.skills} options={skillsFor(draft.position)} onToggle={(v) => toggleIn('skills', v)} />
               </Section>
             )}
@@ -540,7 +576,7 @@ export default function PostRoleScreen({ draftId }: Props) {
 
         {step === 3 && profile && (
           <>
-            <div className="px-5 pt-5" aria-label="Preview" data-testid="post-role-preview">
+            <div className="px-5 pt-5 lg:hidden" aria-label="Preview" data-testid="post-role-preview">
               <div className="pointer-events-none">
                 <RoleCard
                   vacancy={draftAsVacancy(draft, profile.id)}
@@ -562,7 +598,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                     <p className="min-w-0 flex-1 text-secondary leading-[18px] text-ink-1">I filled this in from what you wrote. Check each part, then post. Nothing is live yet.</p>
                   </div>
                 ) : (
-                  <p className="rounded-[16px] bg-surface-subtle px-3.5 py-3 text-secondary leading-[18px] text-ink-1" data-testid="post-again-note">Same details as your closed role. Dates and applicants start fresh. Add a start date if you have one, then post. Nothing is live yet.</p>
+                  <p className="rounded-[16px] bg-surface-subtle px-3.5 py-3 text-secondary leading-[18px] text-ink-1" data-testid="post-again-note">Same details as your closed opportunity. Dates and applicants start fresh. Add a start date if you have one, then post. Nothing is live yet.</p>
                 )}
                 {checkSummary(draft, { fromClub }).map((sec) => (
                   <div key={sec.key} className="flex flex-col gap-1 rounded-[16px] bg-surface-subtle px-4 py-3" data-testid={`ai-summary-${sec.key}`}>
@@ -587,12 +623,12 @@ export default function PostRoleScreen({ draftId }: Props) {
               </div>
             )}
             {(!aiCheck || aboutOpen) && (
-            <Section label="About the role" trailing={<Muted>Optional</Muted>}>
+            <Section label="About the opportunity" trailing={<Muted>Optional</Muted>}>
               <textarea
                 value={draft.description}
                 onChange={(e) => set('description', e.target.value.slice(0, DESCRIPTION_MAX))}
                 placeholder="Who you are, training days, the city, what the season looks like…"
-                aria-label="About the role"
+                aria-label="About the opportunity"
                 // Grows with the text (an AI draft is several lines); 4–12 rows.
                 rows={Math.min(12, Math.max(4, draft.description.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 36)), 0)))}
                 className="w-full resize-none rounded-[12px] bg-surface-grouped px-4 py-3 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
@@ -625,18 +661,43 @@ export default function PostRoleScreen({ draftId }: Props) {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2.5">
-        {problem && <p role="alert" className="pb-2 text-center text-secondary text-status-danger">{problem}</p>}
-        <button type="button" onClick={next} disabled={!loaded || saving !== null} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white active:opacity-90 disabled:opacity-60">
+      <div className="shrink-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2.5 lg:flex lg:items-center lg:justify-end lg:gap-3 lg:border-t-0 lg:px-5 lg:pb-0 lg:pt-5">
+        {problem && <p role="alert" className="pb-2 text-center text-secondary text-status-danger lg:mr-auto lg:pb-0 lg:text-left">{problem}</p>}
+        {isDesktop && (
+          <button type="button" onClick={back} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full' })}>
+            {copy.back ? 'Back' : 'Cancel'}
+          </button>
+        )}
+        <button type="button" onClick={next} disabled={!loaded || saving !== null} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white active:opacity-90 disabled:opacity-60 lg:h-[52px] lg:w-auto lg:px-6 lg:shadow-glow-brand">
           {step === 3
-            ? (editing ? (saving === 'post' ? 'Saving…' : 'Save changes') : (saving === 'post' ? 'Posting…' : 'Post role'))
+            ? (editing ? (saving === 'post' ? 'Saving…' : 'Save changes') : (saving === 'post' ? 'Posting…' : 'Post opportunity'))
             : 'Continue'}
         </button>
+      </div>
+      </div>
+
+      {isDesktop && profile && (
+        <aside className="sticky top-24 rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" aria-label="Preview" data-testid="post-role-desktop-preview">
+          <p className="text-[14px] font-medium leading-[1.3] text-ink-1">{isPlayer ? 'How players see it' : 'How coaches see it'}</p>
+          <div className="pointer-events-none mt-3">
+            <RoleCard
+              vacancy={draftAsVacancy(draft, profile.id)}
+              clubName={profile.full_name ?? 'Your club'}
+              clubLogo={profile.avatar_url ?? null}
+              publisherRole={profile.role}
+              countryFlag={flag}
+              league={league ?? null}
+              applied={false}
+              onOpen={() => undefined}
+            />
+          </div>
+        </aside>
+      )}
       </div>
 
       <BottomSheet open={whereOpen} onClose={() => setWhereOpen(false)} ariaLabel="Where">
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2">
-          <h2 className="pb-3 text-body font-semibold text-ink-1">Where is the role?</h2>
+          <h2 className="pb-3 text-body font-semibold text-ink-1">Where is the opportunity?</h2>
           <LocationAutocomplete
             value={whereText}
             onChange={setWhereText}
@@ -656,7 +717,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       <BottomSheet open={confirmCancel && editing} onClose={() => setConfirmCancel(false)} ariaLabel="Discard changes?">
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2">
           <h2 className="text-[20px] font-bold text-ink-1">Discard changes?</h2>
-          <p className="mt-1 text-row text-ink-2">The role stays as it was.</p>
+          <p className="mt-1 text-row text-ink-2">The opportunity stays as it was.</p>
           <div className="mt-4 flex flex-col gap-2.5">
             <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
             <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
@@ -667,7 +728,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       <BottomSheet open={confirmCancel && !editing} onClose={() => setConfirmCancel(false)} ariaLabel="Save as draft?">
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2">
           <h2 className="text-[20px] font-bold text-ink-1">Save as draft?</h2>
-          <p className="mt-1 text-row text-ink-2">Keep what you’ve written and finish the role later from Opportunities.</p>
+          <p className="mt-1 text-row text-ink-2">Keep what you’ve written and finish the opportunity later from Opportunities.</p>
           <div className="mt-4 flex flex-col gap-2.5">
             <button type="button" onClick={() => { setConfirmCancel(false); void saveDraft() }} className="flex h-[50px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Save draft</button>
             <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>

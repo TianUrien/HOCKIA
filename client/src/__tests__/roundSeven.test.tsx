@@ -57,7 +57,7 @@ const inRouter = (ui: React.ReactElement, path = '/') => render(<MemoryRouter in
 const NOW = new Date(2026, 9, 2, 12) // 2 Oct 2026, local
 
 // ── 1 · "See the offer" lands on the tapped role's offer card ────────────────
-describe('1 · See the offer anchors the offer of the role it was tapped on', () => {
+describe('1 · See the offer anchors the offer of the opportunity it was tapped on', () => {
   const offer = (id: string, applicationId: string) => ({ id, metadata: { type: 'opportunity_offer', offer_id: `o-${id}`, application_id: applicationId, opportunity_id: 'r' } })
   const thread = [
     { id: 'm1', metadata: undefined },
@@ -83,7 +83,7 @@ describe('1 · See the offer anchors the offer of the role it was tapped on', ()
     expect(chat).toContain('findOfferAnchor(messages, anchorApplicationId)')
     expect(chat).not.toContain('2200')
   })
-  it('OwnApplicationRoad hands the application id to onSeeOffer; the role page and inbox carry it in state', () => {
+  it('OwnApplicationRoad hands the application id to onSeeOffer; the opportunity page and inbox carry it in state', () => {
     const onSeeOffer = vi.fn()
     inRouter(<OwnApplicationRoad applicationId="app-A" status="offered" onMessage={vi.fn()} onSeeOffer={onSeeOffer} onChanged={vi.fn()} />)
     fireEvent.click(screen.getByTestId('own-application-see-offer'))
@@ -102,13 +102,13 @@ describe('2 · a withdrawn application is never described as unanswered', () => 
   it('role card: "1 withdrawn" alone after a withdrawal; no-reply and withdrawn named separately', () => {
     expect(closedBreakdown({ noReply: 0, filled: 0, withdrawn: 1 }, 14)).toBe('1 withdrawn')
     expect(closedBreakdown({ noReply: 2, filled: 0, withdrawn: 1 }, 14)).toBe('2 closed without a reply after 14 days · 1 withdrawn')
-    expect(closedBreakdown({ noReply: 0, filled: 1, withdrawn: 0 }, 14)).toBe('1 closed when the role was filled')
+    expect(closedBreakdown({ noReply: 0, filled: 1, withdrawn: 0 }, 14)).toBe('1 closed when the opportunity was filled')
     expect(closedBreakdown({ noReply: 0, filled: 0, withdrawn: 0 }, 14)).toBeNull()
   })
-  it('To review note: only real no-reply closes count as "closed on this role"', () => {
+  it('To review note: only real no-reply closes count as "closed on this opportunity"', () => {
     expect(toReviewClosedNote({ noReply: 0, withdrawn: 1 })).toBe('1 withdrawn')
-    expect(toReviewClosedNote({ noReply: 1, withdrawn: 0 })).toBe('1 has closed without a reply on this role so far')
-    expect(toReviewClosedNote({ noReply: 2, withdrawn: 1 })).toBe('2 have closed without a reply on this role so far · 1 withdrawn')
+    expect(toReviewClosedNote({ noReply: 1, withdrawn: 0 })).toBe('1 has closed without a reply on this opportunity so far')
+    expect(toReviewClosedNote({ noReply: 2, withdrawn: 1 })).toBe('2 have closed without a reply on this opportunity so far · 1 withdrawn')
     expect(toReviewClosedNote({ noReply: 0, withdrawn: 0 })).toBeNull()
     expect(src('components/club/ApplicantsScreen.tsx')).toContain('toReviewClosedNote(p)')
     expect(src('components/club/ClubOpportunitiesScreen.tsx')).toContain('closedBreakdown(p, expiryDays)')
@@ -118,7 +118,7 @@ describe('2 · a withdrawn application is never described as unanswered', () => 
 // ── 3 + 7 · the club's signing line names the role, in the thread and the inbox ──
 describe('3 · "You marked <name> as signed for <role>"', () => {
   const line = 'E2E Test FC marked you as signed for Men’s 1st player. Confirm it on Hockia to add the signing to your career.'
-  it('reuses the role title the server line carries', () => {
+  it('reuses the opportunity title the server line carries', () => {
     expect(recruitingEventLine('signing_marked', line, { isMine: true, otherFirstName: 'Facundo' })).toBe('You marked Facundo as signed for Men’s 1st player. Waiting for them to confirm.')
     expect(recruitingEventLine('signing_marked', line, { isMine: false, otherFirstName: 'E2E' })).toBe(line)
     // An unexpected shape still reads, without a role.
@@ -282,7 +282,7 @@ describe('14 · dates outside the road read day first ("2 Oct")', () => {
       expect(src(f), f).not.toContain('${MONTH[d.getMonth()]} ${d.getDate()}')
     }
   })
-  it('My applications and the role card follow', () => {
+  it('My applications and the opportunity card follow', () => {
     const applied = new Date(NOW); applied.setDate(applied.getDate() - 40)
     expect(appliedLine(applied.toISOString(), NOW)).toMatch(/^Applied \d{1,2} [A-Z][a-z]{2}$/)
     expect(appliedOnLine('2026-09-03T10:00:00')).toBe('Applied 3 Sep 2026')

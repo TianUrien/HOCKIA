@@ -18,11 +18,11 @@ export default function PrivacyPolicy() {
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Shield className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-hockia-soft rounded-xl flex items-center justify-center flex-shrink-0">
+              <Shield className="w-6 h-6 text-hockia-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
+              <h1 className="mb-2 text-title text-ink-1">Privacy Policy</h1>
               <p className="text-gray-600">Effective date: March 2026</p>
             </div>
           </div>
@@ -32,13 +32,13 @@ export default function PrivacyPolicy() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
           {/* Section 1 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">1. Introduction</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                Welcome to HOCKIA ("we", "us", "our"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our platform, available at inhockia.com, as a Progressive Web App (PWA), and through our native mobile applications for iOS and Android (collectively, "the Platform").
+                Welcome to Hockia ("we", "us", "our"). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you use our platform, available at inhockia.com, as a Progressive Web App (PWA), and through our native mobile applications for iOS and Android (collectively, "the Platform").
               </p>
               <p>
-                By creating an account or using any part of the Platform, you agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please do not use HOCKIA.
+                By creating an account or using any part of the Platform, you agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please do not use Hockia.
               </p>
             </div>
           </section>
@@ -47,8 +47,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 2 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Information We Collect</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">2. Information We Collect</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>We collect the following categories of information:</p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.1 Account Information</h3>
@@ -112,8 +112,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 3 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. How We Use Your Information</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">3. How We Use Your Information</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>We use your information for the following purposes:</p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.1 Platform Operation</h3>
@@ -156,8 +156,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 4 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Third-Party Services and Data Sharing</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">4. Third-Party Services and Data Sharing</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 We use trusted third-party services to operate and improve the Platform. These services process data on our behalf and are contractually obligated to protect your information:
               </p>
@@ -165,14 +165,14 @@ export default function PrivacyPolicy() {
                 <li><strong>Supabase:</strong> Database hosting, user authentication, and file storage. Your data is stored in encrypted databases hosted in the European Union.</li>
                 <li><strong>Google Analytics (GA4):</strong> Anonymous usage analytics to understand how the Platform is used. We track page views, feature usage, and aggregate trends. Your user ID is associated with analytics data to provide personalized insights.</li>
                 <li><strong>Sentry:</strong> Error monitoring and crash reporting. When errors occur, diagnostic data (including device type, browser, and error details) is sent to Sentry to help us identify and fix issues.</li>
-                <li><strong>Resend:</strong> Transactional and notification email delivery. Your email address and name are shared with Resend solely for the purpose of delivering emails from HOCKIA.</li>
+                <li><strong>Resend:</strong> Transactional and notification email delivery. Your email address and name are shared with Resend solely for the purpose of delivering emails from Hockia.</li>
                 <li><strong>Web Push Services:</strong> Push notification delivery through browser APIs. Your push subscription token is stored to deliver notifications.</li>
               </ul>
               <p className="font-medium mt-4">
                 We do not sell, rent, or trade your personal data to any third party. We do not share your data with advertisers.
               </p>
               <p>
-                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of HOCKIA, its users, or the public.
+                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of Hockia, its users, or the public.
               </p>
             </div>
           </section>
@@ -181,8 +181,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 5 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Data Storage and Security</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">5. Data Storage and Security</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 Your data is stored securely using industry-standard encryption and security practices. All data in transit is encrypted using HTTPS/TLS. Passwords are cryptographically hashed and never stored in plain text.
               </p>
@@ -199,10 +199,10 @@ export default function PrivacyPolicy() {
 
           {/* Section 6 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Cookies, Local Storage, and Tracking</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">6. Cookies, Local Storage, and Tracking</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                HOCKIA uses browser local storage (not traditional cookies) to maintain your session, store preferences, and improve your experience. The following data is stored locally on your device:
+                Hockia uses browser local storage (not traditional cookies) to maintain your session, store preferences, and improve your experience. The following data is stored locally on your device:
               </p>
               <ul className="list-none space-y-2 ml-4">
                 <li>- Authentication session tokens (to keep you signed in).</li>
@@ -224,8 +224,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 7 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Your Rights and Choices</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">7. Your Rights and Choices</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>You have the following rights regarding your personal data:</p>
               <ul className="list-none space-y-3 ml-4">
                 <li><strong>Access:</strong> You can view and access all your personal data through your profile and Settings page at any time.</li>
@@ -245,8 +245,8 @@ export default function PrivacyPolicy() {
 
           {/* Section 8 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Data Retention</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">8. Data Retention</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 We retain your personal data for as long as your account is active and as needed to provide our services. When you delete your account, your personal data is permanently removed from our servers.
               </p>
@@ -266,13 +266,13 @@ export default function PrivacyPolicy() {
 
           {/* Section 9 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Children's Privacy</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">9. Children's Privacy</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                HOCKIA is not directed at children under 16 years of age. We do not knowingly collect personal data from children under 16 without verifiable parental consent. If we learn that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that information promptly.
+                Hockia is not directed at children under 16 years of age. We do not knowingly collect personal data from children under 16 without verifiable parental consent. If we learn that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that information promptly.
               </p>
               <p>
-                If you are a parent or guardian and believe your child has provided personal data to HOCKIA without your consent, please contact us at team@inhockia.com.
+                If you are a parent or guardian and believe your child has provided personal data to Hockia without your consent, please contact us at team@inhockia.com.
               </p>
             </div>
           </section>
@@ -281,10 +281,10 @@ export default function PrivacyPolicy() {
 
           {/* Section 10 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. International Data Transfers</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">10. International Data Transfers</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                HOCKIA serves users worldwide. Your data may be transferred to and processed in countries other than your own, including countries within the European Union where our primary database is hosted. We ensure that any international data transfers comply with applicable data protection laws and that appropriate safeguards are in place.
+                Hockia serves users worldwide. Your data may be transferred to and processed in countries other than your own, including countries within the European Union where our primary database is hosted. We ensure that any international data transfers comply with applicable data protection laws and that appropriate safeguards are in place.
               </p>
             </div>
           </section>
@@ -293,13 +293,13 @@ export default function PrivacyPolicy() {
 
           {/* Section 11 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Changes to This Policy</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">11. Changes to This Policy</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
                 We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or Platform features. When we make material changes, we will notify you through the Platform or via email before the changes take effect.
               </p>
               <p>
-                We encourage you to review this Privacy Policy periodically. Your continued use of HOCKIA after the effective date of an updated policy constitutes your acceptance of the changes.
+                We encourage you to review this Privacy Policy periodically. Your continued use of Hockia after the effective date of an updated policy constitutes your acceptance of the changes.
               </p>
             </div>
           </section>
@@ -308,14 +308,14 @@ export default function PrivacyPolicy() {
 
           {/* Section 12 */}
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Contact</h2>
-            <div className="space-y-4 text-gray-700 leading-relaxed">
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">12. Contact</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>If you have any questions, concerns, or requests regarding your privacy or this policy, please contact us at:</p>
               <p className="flex items-center gap-2">
                 <span>📧</span>
                 <a
                   href="mailto:team@inhockia.com"
-                  className="text-hockia-primary hover:text-hockia-secondary transition-colors"
+                  className="text-brand-text transition-colors hover:opacity-80"
                 >
                   team@inhockia.com
                 </a>

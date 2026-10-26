@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, Sparkles } from 'lucide-react'
-import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { buttonClassName } from '@/components/ui/buttonClasses'
-import { CrestTile } from '@/components/opportunities/RoleCover'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { showFullMatchNudge } from '@/lib/opportunityCopy'
@@ -21,15 +19,16 @@ interface ApplicationSentProps {
 
 /**
  * Application sent (Figma O3b 153:422, Opportunities v2): sheet content
- * after the send morph — a green check, "Application sent", who reviews it
- * and where to follow it, the role card, Done, "View in Applied". Uses the
+ * after the send morph — a green check, "Application sent", who reviews it,
+ * What happens next (rebrand page 20), "View my applications" and "Back to
+ * opportunities" ("Back to the opportunity" when it opened on the role page). Uses the
  * moment for the one action that raises reply rate — a full match video —
  * shown only to a player who has none yet. The tip speaks about clubs in
  * general and never about what other applicants were asked (privacy).
  */
 export const FULL_MATCH_TIP = 'Add a full match video now. It’s what clubs ask for most after an application.'
 
-export function ApplicationSent({ clubName, clubLogo, publisherRole, identity, roleLine, onClose }: ApplicationSentProps) {
+export function ApplicationSent({ clubName, identity, roleLine, onClose }: ApplicationSentProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
@@ -55,6 +54,13 @@ export function ApplicationSent({ clubName, clubLogo, publisherRole, identity, r
   }, [userId, isPlayer, linkCount])
   const nudge = showFullMatchNudge(profile?.role, fullMatchCount)
   const line = identity ? sentLine(identity) : `${clubName} has your profile, career and highlights. Their answer arrives in your Inbox.`
+  const onList = location.pathname === '/opportunities'
+  const reviewer = identity?.postedBy ? identity.postedBy.firstName : 'The club'
+  const steps = [
+    { title: 'Sent', detail: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, dot: 'bg-positive' },
+    { title: `${reviewer} reviews it`, detail: 'The answer arrives in your Inbox', dot: 'bg-brand-primary' },
+    { title: 'You get an answer', detail: 'Shortlisted or not this time', dot: 'bg-ink-4' },
+  ]
   const subline = identity ? (identity.hiringClub ? (identity.postedBy ? `${identity.hiringClub.name} · posted by ${identity.postedBy.name}` : identity.hiringClub.name) : identity.displayName) : clubName
 
   return (
@@ -64,14 +70,23 @@ export function ApplicationSent({ clubName, clubLogo, publisherRole, identity, r
       </span>
       <h2 className="mt-4 text-title text-ink-1">Application sent</h2>
       <p className="mt-2 text-[14px] leading-[19px] text-ink-2">{line}</p>
-      <div className="mt-5 flex w-full items-center gap-3 rounded-[16px] bg-surface-subtle p-3 text-left">
-        {identity?.hiringClub
-          ? <CrestTile src={identity.hiringClub.logo} name={identity.hiringClub.name} size={40} radius={12} />
-          : <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={40} />}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleLine || clubName}</p>
-          <p className="truncate text-secondary text-ink-2">{subline}</p>
-        </div>
+      {/* What happens next (rebrand page 20): when and what, never how long
+          the club takes (players see no reply-time estimates). */}
+      <div className="mt-5 w-full rounded-[16px] border border-line bg-white p-4 text-left shadow-card" data-testid="what-happens-next">
+        <p className="text-micro font-semibold uppercase tracking-[0.06em] text-ink-3">What happens next</p>
+        <ol className="mt-3">
+          {steps.map((st, i) => (
+            <li key={st.title} className="relative flex gap-3 pb-3 last:pb-0">
+              {i < steps.length - 1 && <span aria-hidden="true" className="absolute left-[5px] top-4 h-[calc(100%-12px)] w-px bg-line" />}
+              <span aria-hidden="true" className={`mt-1.5 h-[11px] w-[11px] shrink-0 rounded-full ${st.dot}`} />
+              <span className="min-w-0">
+                <span className="block text-[15px] font-semibold leading-5 text-ink-1">{st.title}</span>
+                <span className="block text-secondary text-ink-2">{st.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        {roleLine && <p className="mt-3 truncate border-t border-line pt-3 text-secondary text-ink-2" data-testid="application-sent-role">{roleLine} · {subline}</p>}
       </div>
       {nudge && (
         <button
@@ -84,15 +99,22 @@ export function ApplicationSent({ clubName, clubLogo, publisherRole, identity, r
           <span className="text-secondary text-ink-2">{FULL_MATCH_TIP}</span>
         </button>
       )}
-      <button type="button" onClick={onClose} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-5' })} data-testid="application-sent-done">
-        Done
-      </button>
       <button
         type="button"
         onClick={() => { onClose(); navigate('/opportunities/applications', { state: { from: location.pathname } }) }}
-        className="mt-3 h-11 text-[16px] font-semibold leading-[21px] text-brand-primary"
+        className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-5' })}
+        data-testid="application-sent-view"
       >
-        View in Applied
+        View my applications
+      </button>
+      <button
+        type="button"
+        onClick={onClose}
+        className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-2.5' })}
+        data-testid="application-sent-done"
+      >
+        {/* Closing returns to where the member applied: the list, or the opportunity (now showing Applied). */}
+        {onList ? 'Back to opportunities' : 'Back to the opportunity'}
       </button>
     </div>
   )

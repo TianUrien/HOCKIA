@@ -145,39 +145,39 @@ beforeEach(() => {
 describe('Opportunities · Roles by viewer', () => {
   const both = [role('r-player', 'player', 'Striker wanted'), role('r-coach', 'coach', 'Head Coach, Men 1st XI')]
 
-  it('a candidate coach sees coaching roles only, with no match, counts or Save', async () => {
+  it('a candidate coach sees coaching opportunities only, with no match, counts or Save', async () => {
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
     expect(screen.getByText('Head Coach, Men 1st XI')).toBeInTheDocument()
     expect(screen.queryByText('Striker wanted')).toBeNull()
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching roles · 1 open')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 1 open')
     const card = screen.getByTestId('role-card')
     expect(card.textContent).not.toMatch(/fit|match|applicant|save/i)
     expect(within(card).getAllByRole('button')).toHaveLength(1)
     // Roles · Applied — and no My roles for a coach who does not recruit.
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Roles', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Opportunities', 'Applied'])
   })
 
-  it('a player keeps the whole list and the Open roles | Applied control', async () => {
+  it('a player keeps the whole list and the Open opportunities | Applied control', async () => {
     authState = { user: { id: 'p1' }, profile: { id: 'p1', role: 'player' } }
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Open roles · 2', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities · 2', 'Applied'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
-  it('a coach who recruits keeps the whole list and gets My roles', async () => {
+  it('a coach who recruits keeps the whole list and gets My opportunities', async () => {
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Roles', 'Applied', 'My roles'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Opportunities', 'Applied', 'My opportunities'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
-  it('My roles works on desktop too (D3, 16 Oct 2026): ?view=mine opens the coach\'s own roles, Roles keeps the list', async () => {
+  it('My opportunities works on desktop too (D3, 16 Oct 2026): ?view=mine opens the coach\'s own roles, Roles keeps the list', async () => {
     phone = false
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     tables = { opportunities: both }
@@ -204,10 +204,10 @@ describe('Opportunities · no coaching role open', () => {
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getByTestId('coach-roles-empty')).toBeInTheDocument())
     expect(screen.queryByTestId('role-card')).toBeNull()
-    expect(screen.getByText('No coaching roles open right now')).toBeInTheDocument()
-    expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('4 coaching roles were posted on Hockia this year')
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching roles · 0 open')
-    const alerts = screen.getByRole('switch', { name: 'Coaching role alerts' })
+    expect(screen.getByText('No coaching opportunities open right now')).toBeInTheDocument()
+    expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('4 coaching opportunities were posted on Hockia this year')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 0 open')
+    const alerts = screen.getByRole('switch', { name: 'Coaching opportunity alerts' })
     expect(alerts).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(alerts)
     expect(toggleSpy).toHaveBeenCalledWith('notify_opportunities', true)
@@ -228,7 +228,7 @@ describe('Opportunities · no coaching role open', () => {
     rerender(<CoachRolesEmptyState {...base} postedThisYear={0} />)
     expect(screen.queryByTestId('coach-roles-posted-line')).toBeNull()
     rerender(<CoachRolesEmptyState {...base} postedThisYear={1} />)
-    expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('1 coaching role was posted on Hockia this year')
+    expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('1 coaching opportunity was posted on Hockia this year')
     expect(coachingRolesPostedLine(Number.NaN)).toBeNull()
   })
 
@@ -251,7 +251,7 @@ describe('Opportunities · no coaching role open', () => {
     expect(rows[0].textContent).toContain('San Vicente · Spain · Closed 20 Sep')
     expect(rows[1].textContent).toContain('Concordia 1906 · Croatia · Closed 2 Dec 2025')
     const pills = screen.getAllByTestId('coach-closed-role-status')
-    expect(pills.map((p) => p.textContent)).toEqual(['Not selected', 'No reply'])
+    expect(pills.map((p) => p.textContent)).toEqual(['Not this time', 'No reply'])
     for (const p of pills) {
       expect(p.className).toContain('text-ink-2')
       expect(p.className).not.toMatch(/amber|fdf1e4|red|rose/)
@@ -264,11 +264,11 @@ describe('Opportunities · no coaching role open', () => {
   it('no pill on a closed role the coach did not apply to; no switch state leak', () => {
     render(<CoachRolesEmptyState {...base} />)
     expect(screen.queryByTestId('coach-closed-role-status')).toBeNull()
-    expect(screen.getByRole('switch', { name: 'Coaching role alerts' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: 'Coaching opportunity alerts' })).toHaveAttribute('aria-checked', 'false')
   })
 
   it('helpers', () => {
-    expect(closedRoleOwnStatus('pending')).toBe('Role closed')
+    expect(closedRoleOwnStatus('pending')).toBe('Opportunity closed')
     expect(closedRoleOwnStatus(undefined)).toBeNull()
     expect(closedRoleMeta({ clubName: 'San Vicente', country: null })).toBe('San Vicente')
     expect(closedRoleDate(null, NOW)).toBeNull()
@@ -281,7 +281,7 @@ describe('Opportunities · no coaching role open', () => {
 })
 
 // ── My roles ────────────────────────────────────────────────────────────────
-describe('Opportunities · My roles (coach who recruits)', () => {
+describe('Opportunities · My opportunities (coach who recruits)', () => {
   const ownRole = (statuses: string[]) => ({
     ...role('own-1', 'player', 'Women’s 1s'),
     club_id: 'coach-1',
@@ -304,10 +304,10 @@ describe('Opportunities · My roles (coach who recruits)', () => {
     expect(review.className).toContain('text-white')
     expect(Array.from(document.querySelectorAll('button')).filter((b) => b.className.includes('bg-hockia-primary'))).toHaveLength(0)
     const group = screen.getByTestId('club-scouting-group')
-    expect(group.textContent).toContain('Find players for this role')
+    expect(group.textContent).toContain('Find players for this opportunity')
     expect(group.textContent).toContain('Shortlist')
     // No Open / Closed control until a closed role exists.
-    expect(screen.queryByRole('tablist', { name: 'Role status' })).toBeNull()
+    expect(screen.queryByRole('tablist', { name: 'Opportunity status' })).toBeNull()
     fireEvent.click(review)
     expect(navigateSpy).toHaveBeenCalledWith('/dashboard/opportunities/own-1/applicants', { state: { from: '/opportunities?view=mine' } })
   })
@@ -329,22 +329,22 @@ describe('Opportunities · My roles (coach who recruits)', () => {
     expect(recruitingForLine(null, null)).toBeNull()
   })
 
-  it('the page opens My roles for a recruiting coach (segment with the open count) and hides the list', async () => {
+  it('the page opens My opportunities for a recruiting coach (segment with the open count) and hides the list', async () => {
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     tables = { opportunities: [role('r-coach', 'coach', 'Head Coach, Men 1st XI')] }
     myRoles = { ...myRoles, open: [ownRole(['pending'])] }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
-    fireEvent.click(screen.getByRole('tab', { name: 'My roles · 1' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'My opportunities · 1' }))
     await waitFor(() => expect(screen.getByTestId('coach-my-roles')).toBeInTheDocument())
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')
     expect(screen.getByText('Review 1 applicant')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Post a role' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Post an opportunity' }))
     expect(screen.getByTestId('create-role-modal')).toBeInTheDocument()
   })
 
-  it('a candidate coach cannot reach My roles by URL', async () => {
+  it('a candidate coach cannot reach My opportunities by URL', async () => {
     tables = { opportunities: [role('r-coach', 'coach', 'Head Coach, Men 1st XI')] }
     wrap(<OpportunitiesPage />, '/opportunities?view=mine')
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
@@ -356,10 +356,10 @@ describe('Opportunities · My roles (coach who recruits)', () => {
 describe('Home · Your week for a coach', () => {
   const labels = (c: HTMLElement) => Array.from(c.querySelectorAll('.text-caption')).map((n) => n.textContent)
 
-  it('a coach who recruits gets the club version, linking to My roles', () => {
+  it('a coach who recruits gets the club version, linking to My opportunities', () => {
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     const { container } = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(container)).toEqual(['to review', 'profile views', 'open role'])
+    expect(labels(container)).toEqual(['to review', 'profile views', 'open opportunity'])
     expect(screen.getByTestId('your-week-0').getAttribute('href')).toBe('/opportunities?view=mine')
     expect(screen.getByTestId('your-week-0').querySelector('.text-figure')?.className).toContain('text-hockia-primary')
   })
@@ -367,19 +367,19 @@ describe('Home · Your week for a coach', () => {
   it('a coach who does not recruit gets the player version, whatever the stored mode', () => {
     pulseMode = 'recruit'
     const { container } = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(container)).toEqual(['profile views', 'roles for you', 'club replies'])
+    expect(labels(container)).toEqual(['profile views', 'opportunities for you', 'club replies'])
   })
 
   it('a recruiting coach on "find" mode, or on desktop, gets the player version', () => {
     authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
     pulseMode = 'find'
     const first = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(first.container)).toEqual(['profile views', 'roles for you', 'club replies'])
+    expect(labels(first.container)).toEqual(['profile views', 'opportunities for you', 'club replies'])
     first.unmount()
     pulseMode = 'recruit'
     phone = false
     const second = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(second.container)).toEqual(['roles for you', 'profile views', 'club replies'])
+    expect(labels(second.container)).toEqual(['opportunities for you', 'profile views', 'club replies'])
   })
 })
 

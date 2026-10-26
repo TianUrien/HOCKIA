@@ -130,13 +130,13 @@ function clean(s: string | null | undefined): string {
 }
 
 export function pageTitle(row: PublicOpportunityRow): string {
-  return `${clean(row.title)} at ${organisationName(row)} | HOCKIA`
+  return `${clean(row.title)} at ${organisationName(row)} | Hockia`
 }
 
 export function metaDescription(row: PublicOpportunityRow): string {
   const where = [row.location_city, row.location_country].filter(Boolean).join(', ')
   const lead = `${roleLabel(row)} role at ${organisationName(row)}${where ? ` in ${where}` : ''}.`
-  const body = row.description ? ` ${row.description}` : ' Apply on HOCKIA, the field hockey network.'
+  const body = row.description ? ` ${row.description}` : ' Apply on Hockia, the field hockey network.'
   return truncate(lead + body, 160)
 }
 
@@ -194,7 +194,7 @@ export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Rec
     jobLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', ...(row.location_city ? { addressLocality: row.location_city } : {}), ...(row.location_country ? { addressCountry: countryCode(row.location_country) ?? row.location_country } : {}) } },
     directApply: true,
     url: `${siteUrl}/opportunities/${row.id}`,
-    identifier: { '@type': 'PropertyValue', name: 'HOCKIA Opportunity ID', value: row.id },
+    identifier: { '@type': 'PropertyValue', name: 'Hockia Opportunity ID', value: row.id },
   }
 }
 

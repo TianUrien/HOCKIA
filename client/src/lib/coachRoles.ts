@@ -25,7 +25,7 @@ export function isRecruitingCoach(profile: CoachModeProfile | null | undefined):
 
 /** "Coaching roles · 0 open" — the line over the candidate's list. */
 export function coachingRolesOpenLine(open: number): string {
-  return `Coaching roles · ${open} open`
+  return `Coaching opportunities · ${open} open`
 }
 
 /**
@@ -35,8 +35,8 @@ export function coachingRolesOpenLine(open: number): string {
 export function coachingRolesPostedLine(count: number | null | undefined): string | null {
   if (typeof count !== 'number' || !Number.isFinite(count) || count <= 0) return null
   return count === 1
-    ? '1 coaching role was posted on Hockia this year'
-    : `${count} coaching roles were posted on Hockia this year`
+    ? '1 coaching opportunity was posted on Hockia this year'
+    : `${count} coaching opportunities were posted on Hockia this year`
 }
 
 /** The first instant of `now`'s calendar year (UTC), for the "this year" count. */
@@ -65,7 +65,7 @@ export function closedRoleDate(closedAt: string | null, now = new Date()): strin
 
 /**
  * The coach's own status on a closed role they applied to, in the
- * player-side words (No reply / Not selected / Role closed …). Always drawn
+ * player-side words (No reply / Not this time / Role closed …). Always drawn
  * grey: the role is closed, so there is nothing left for the coach to act on.
  */
 export function closedRoleOwnStatus(status: string | null | undefined): string | null {
@@ -84,7 +84,7 @@ export function recruitingForLine(worldClubName: string | null | undefined, curr
 /** Where the applicant screens go back to: a coach's roles live under My roles. */
 export function recruiterRolesHome(profile: CoachModeProfile | null | undefined): { path: string; label: string } {
   return isRecruitingCoach(profile)
-    ? { path: '/opportunities?view=mine', label: 'My roles' }
+    ? { path: '/opportunities?view=mine', label: 'My opportunities' }
     : { path: '/opportunities', label: 'Opportunities' }
 }
 

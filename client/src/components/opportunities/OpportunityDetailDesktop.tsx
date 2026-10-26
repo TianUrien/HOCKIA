@@ -18,8 +18,22 @@ import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
-  APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView,
-  compensationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
+  APPLICATION_TONE_CLASS,
+  NOTE_TILE,
+  PAID_TILE,
+  SPECIALIST_TILE,
+  specialistIcon,
+  applicationStatusPill,
+  appliedOnLine,
+  categoryFamily,
+  categoryTagClass,
+  closedRoleView,
+  compensationText,
+  genderPill,
+  postedOnlyLine,
+  roleBenefits,
+  roleHeadline,
+  CATEGORY_DOT_ON_PHOTO_CLASSES,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -60,7 +74,7 @@ const CARD = 'rounded-[16px] border-[0.5px] border-line bg-white'
  * column: identity (hiring club | posted by), four facts in one row, what the
  * club offers 3-up, what they're looking for as a table, the publisher's
  * words at Body L, how applying works 3-up. Same states as the phone page:
- * Applied ✓ with the status line, Not selected / Withdrawn, a closed role
+ * Applied ✓ with the status line, Not this time / Withdrawn, a closed role
  * greyed under "Closed" with the viewer's own application block.
  */
 export function OpportunityDetailDesktop({
@@ -146,7 +160,7 @@ export function OpportunityDetailDesktop({
               <h1 className="break-words text-[28px] font-bold leading-[34px] tracking-[-0.015em] text-white" data-testid="role-title">{headline.title}</h1>
               <div className="flex flex-wrap gap-1.5" data-testid="role-detail-meta">
                 {positionText && <GlassChip testId="role-detail-position">{positionText}</GlassChip>}
-                {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
+                {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
                 {roleStat && <GlassChip testId="role-detail-status">{roleStat.label}</GlassChip>}
                 {closed && <GlassChip testId="role-closed-label">Closed</GlassChip>}
               </div>
@@ -155,25 +169,21 @@ export function OpportunityDetailDesktop({
 
           {!isPublisher && !closed && (canApply || hasApplied) && (
             <div className="mt-4" data-testid="role-action-bar">
-              {hasApplied && status && !notSelected && (
-                <div className={`mb-2.5 flex items-center ${withdrawn ? 'justify-end' : 'justify-between'}`}>
-                  {!withdrawn && <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>}
+              {hasApplied && status && (
+                <div className="mb-2.5 flex items-center justify-between">
+                  <span className={`rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid={notSelected ? 'not-selected-state' : withdrawn ? 'withdrawn-state' : undefined}>{status.label}</span>
                   <button type="button" onClick={goApplications} className="text-secondary font-semibold text-hockia-primary hover:underline">View my applications</button>
                 </div>
               )}
               <div className="flex items-center gap-3">
-                {notSelected ? (
-                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">Not selected</span>
-                ) : withdrawn ? (
-                  <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">Withdrawn</span>
-                ) : hasApplied ? (
+                {notSelected || withdrawn ? null : hasApplied ? (
                   <span className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="applied-state">
                     <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
                   </span>
                 ) : (
                   <button type="button" onClick={onApply} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="role-apply">Apply</button>
                 )}
-                <button type="button" onClick={onMessage} className="inline-flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-subtle" data-testid="role-message">
+                <button type="button" onClick={onMessage} className={`inline-flex h-[52px] ${notSelected || withdrawn ? 'flex-1' : 'shrink-0'} items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-subtle`} data-testid="role-message">
                   <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
                 </button>
               </div>
@@ -256,9 +266,9 @@ export function OpportunityDetailDesktop({
           {closedView === 'visitor' && (
             <section className="pt-4" data-testid="role-closed-notice">
               <div className="rounded-card bg-surface-grouped p-4">
-                <p className="text-row font-semibold text-ink-1">This role is closed</p>
+                <p className="text-row font-semibold text-ink-1">This opportunity is closed</p>
                 <p className="mt-1 text-secondary text-ink-2">It’s no longer taking applications.</p>
-                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">See open roles</button>
+                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">See open opportunities</button>
               </div>
             </section>
           )}
@@ -267,7 +277,7 @@ export function OpportunityDetailDesktop({
             {clubNote && !closed && (
               <section className="pt-4" data-testid="club-note">
                 <div className="rounded-card bg-surface-grouped p-4">
-                  <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+                  <p className="text-secondary font-semibold text-ink-2">Not this time · The club’s note</p>
                   <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
                   <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
                 </div>
@@ -277,9 +287,9 @@ export function OpportunityDetailDesktop({
             {/* Four facts in one row (Figma 194:946): Team in the category colour, never elsewhere. */}
             <section className="grid grid-cols-4 gap-3 pt-6" data-testid="role-key-facts">
               {pill && (
-                <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching role' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
+                <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
               )}
-              {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching role' : vacancy.position_required ? 'Required' : null} />}
+              {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : vacancy.position_required ? 'Required' : null} />}
               <Fact label="Starts" value={startsValue} sub={duration} />
               <Fact label="Apply by" value={applyByValue} sub={applyBySub} />
             </section>
@@ -307,7 +317,7 @@ export function OpportunityDetailDesktop({
                   <span className="flex flex-wrap justify-end gap-1.5">
                     {specialists.map((s) => (
                       <span key={s} className="flex items-center gap-1 text-[14px] leading-[19px] text-ink-1">
-                        <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}><SPECIALIST_TILE.icon className="h-3 w-3" strokeWidth={1.8} /></span>
+                        <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}>{(() => { const SkillIcon = specialistIcon(s); return <SkillIcon className="h-3 w-3" strokeWidth={1.8} /> })()}</span>
                         {humanizeToken(s)}
                       </span>
                     ))}
@@ -317,7 +327,7 @@ export function OpportunityDetailDesktop({
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this role’s position, team and passport
+                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this opportunity’s position, team and passport
                 </p>
               )}
             </section>

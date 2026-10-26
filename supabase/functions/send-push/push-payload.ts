@@ -446,12 +446,12 @@ export function buildPushPayload(
           break
         case 'rejected':
           title = `${club} updated your application`
-          body = `You weren't selected for ${position} this time.`
+          body = `Not this time for ${position}.`
           break
         case 'filled':
           // Founder copy 2026-09-26; names the role by its title; mirrors client config.ts.
-          title = `${club} filled the role`
-          body = `${typedTitle ?? humanPos ?? 'The role'} has been filled. Thanks for applying. New roles are open.`
+          title = `${club} filled the opportunity`
+          body = `${typedTitle ?? humanPos ?? 'The opportunity'} has been filled. Thanks for applying. New opportunities are open.`
           break
         default:
           title = `${club} updated your application`

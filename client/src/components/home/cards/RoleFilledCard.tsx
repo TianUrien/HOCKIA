@@ -31,21 +31,21 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
         createdAt={item.created_at}
         profilePath={publisherPath}
       />
-      <FeedCardCaption icon={<CheckCircle2 />}>Role filled</FeedCardCaption>
+      <FeedCardCaption icon={<CheckCircle2 />}>Opportunity filled</FeedCardCaption>
 
       <FeedCardBody>
         <h3 className="text-[17px] font-semibold leading-6 text-gray-900">{item.title}</h3>
         {(item.position || item.filled_via_hockia) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {item.position && (
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium capitalize text-blue-700">
+              <span className="rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-medium capitalize text-brand-text">
                 {positionLabel(item.position)}
               </span>
             )}
             {item.filled_via_hockia && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f0fd] px-2.5 py-1 text-xs font-semibold text-hockia-primary">
+              <span className="inline-flex items-center gap-1 rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-semibold text-hockia-primary">
                 <BadgeCheck className="h-3 w-3" />
-                Filled via HOCKIA
+                Filled via Hockia
               </span>
             )}
           </div>

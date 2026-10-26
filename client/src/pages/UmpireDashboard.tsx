@@ -248,8 +248,8 @@ export default function UmpireDashboard({
 
   useEffect(() => {
     document.title = profile?.full_name
-      ? `${profile.full_name} · Umpire | HOCKIA`
-      : 'Umpire | HOCKIA'
+      ? `${profile.full_name} · Umpire | Hockia`
+      : 'Umpire | Hockia'
   }, [profile?.full_name])
 
   if (!profile) return null
@@ -350,7 +350,7 @@ export default function UmpireDashboard({
                       size="sm"
                       onClick={() => navigate(`/umpires/id/${profile.id}?view=public`)}
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                      title="See how your profile looks to other HOCKIA members"
+                      title="See how your profile looks to other Hockia members"
                     >
                       <Eye className="w-4 h-4 flex-shrink-0" />
                       <span className="hidden xs:inline">Network View</span>

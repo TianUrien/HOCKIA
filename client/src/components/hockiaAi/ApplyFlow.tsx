@@ -94,7 +94,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
           <Turn><p className="flex items-center gap-2 text-secondary font-semibold text-brand-primary" data-testid="apply-drafting"><Loader2 className="h-4 w-4 animate-spin" /> Drafting your application…</p></Turn>
         )}
 
-        {phase === 'closed' && <Turn><p className="text-[16px] leading-[22px] text-ink-1" data-testid="apply-closed">This role isn’t taking applications any more.</p></Turn>}
+        {phase === 'closed' && <Turn><p className="text-[16px] leading-[22px] text-ink-1" data-testid="apply-closed">This opportunity isn’t taking applications any more.</p></Turn>}
         {phase === 'error' && <Turn><p className="text-[16px] leading-[22px] text-ink-1" data-testid="apply-error">Oops, I lost the signal for a second. Close this and try again in a moment.</p></Turn>}
         {phase === 'already' && (
           <Turn>
@@ -105,10 +105,10 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
 
         {(phase === 'draft' || phase === 'sending') && vacancy && (
           <Turn>
-            <p className="text-[16px] leading-[22px] text-ink-1">{eligibility?.eligible ? 'Done drafting. Check it and send when you’re happy. Nothing goes out until you tap Send.' : 'I checked this role first:'}</p>
+            <p className="text-[16px] leading-[22px] text-ink-1">{eligibility?.eligible ? 'Done drafting. Check it and send when you’re happy. Nothing goes out until you tap Send.' : 'I checked this opportunity first:'}</p>
             {eligibility && !eligibility.eligible ? (
               <div className="mt-2.5 rounded-[16px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" data-testid="apply-not-eligible">
-                {(eligibility.reason ?? 'This role is for another team category.').replace(/\.$/, '')}, so this role can’t take your application. You can still message the club.
+                {(eligibility.reason ?? 'This opportunity is for another team category.').replace(/\.$/, '')}, so this opportunity can’t take your application. You can still message the club.
               </div>
             ) : (
               <div className="mt-2.5 overflow-hidden rounded-[20px] border border-line bg-white shadow-[0_6px_18px_rgba(74,31,148,0.08)]" data-testid="apply-draft-card">
@@ -151,10 +151,10 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
                 <button type="button" onClick={() => { onClose(); navigate('/opportunities/applications') }} className="text-secondary font-semibold text-positive">Follow it in Applied</button>
               </span>
             </div>
-            <p className="mt-2.5 text-[16px] leading-[22px] text-ink-1">{profile?.highlight_video_url ? 'Nice one. Want me to look for similar roles while they review it?' : 'Nice one. While they review it, want to add a highlights video? Clubs can watch you play before they reply.'}</p>
+            <p className="mt-2.5 text-[16px] leading-[22px] text-ink-1">{profile?.highlight_video_url ? 'Nice one. Want me to look for similar opportunities while they review it?' : 'Nice one. While they review it, want to add a highlights video? Clubs can watch you play before they reply.'}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {!profile?.highlight_video_url && <button type="button" onClick={onAddVideo} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-video">Add a highlights video</button>}
-              <button type="button" onClick={() => onFindSimilar(`Find roles like ${roleLine}`)} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-similar">Find similar roles</button>
+              <button type="button" onClick={() => onFindSimilar(`Find opportunities like ${roleLine}`)} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-similar">Find similar opportunities</button>
             </div>
           </Turn>
         )}

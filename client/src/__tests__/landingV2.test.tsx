@@ -176,7 +176,7 @@ describe('Landing v3 — nav', () => {
     expect(within(nav).getByRole('link', { name: 'For clubs' })).toHaveAttribute('href', '/world')
     expect(within(nav).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/signin')
     expect(within(nav).getByRole('link', { name: 'Create a profile' })).toHaveAttribute('href', '/signup')
-    expect(within(nav).getByRole('link', { name: 'HOCKIA home' })).toHaveAttribute('href', '/')
+    expect(within(nav).getByRole('link', { name: 'Hockia home' })).toHaveAttribute('href', '/')
   })
 
   it('is fixed, transparent at the top and a glass capsule once scrollY passes 8', async () => {
@@ -255,12 +255,12 @@ describe('Landing v3 — motion', () => {
   })
 })
 
-describe('Landing v3 — open roles', () => {
-  it('hides the whole section when there are no open roles', async () => {
+describe('Landing v3 — open opportunities', () => {
+  it('hides the whole section when there are no open opportunities', async () => {
     arm([])
     await renderLanding()
     await waitFor(() => expect(h.invoke).toHaveBeenCalled())
-    expect(screen.queryByText('Open roles')).not.toBeInTheDocument()
+    expect(screen.queryByText('Open opportunities')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Your next club could be anywhere.' })).not.toBeInTheDocument()
     expect(h.from).not.toHaveBeenCalled()
   })
@@ -269,7 +269,7 @@ describe('Landing v3 — open roles', () => {
     arm(null, new Error('boom'))
     await renderLanding()
     await waitFor(() => expect(h.invoke).toHaveBeenCalled())
-    expect(screen.queryByText('Open roles')).not.toBeInTheDocument()
+    expect(screen.queryByText('Open opportunities')).not.toBeInTheDocument()
   })
 
   it('shows the newest three as cards, each one link to its role page, with the crest strip from the wider read', async () => {
@@ -291,7 +291,7 @@ describe('Landing v3 — open roles', () => {
     expect(cards[0]).toHaveTextContent('Starts 16 Sep · 3 months')
     expect(within(cards[0]).getByRole('list', { name: 'Package' })).toHaveTextContent('HousingFlightsJob')
     expect(cards[0]).toHaveTextContent('Apply in the app')
-    expect(cards[0]).toHaveTextContent('View role')
+    expect(cards[0]).toHaveTextContent('View opportunity')
     // Crest = the club avatar, drawn with multiply over white.
     const crest = within(cards[0]).getAllByRole('presentation')[0] as HTMLImageElement
     expect(crest.getAttribute('src')).toBe('https://cdn/htb.png')
@@ -320,7 +320,7 @@ describe('Landing v3 — open roles', () => {
     expect(crests[0]).toHaveAttribute('title', 'Hockey Team Bologna')
 
     // "See all open roles" → /opportunities.
-    for (const a of screen.getAllByRole('link', { name: /see all open roles/i })) expect(a).toHaveAttribute('href', '/opportunities')
+    for (const a of screen.getAllByRole('link', { name: /see all open opportunities/i })) expect(a).toHaveAttribute('href', '/opportunities')
   })
 
   it('still shows the cards when the flag lookup fails', async () => {
@@ -358,7 +358,7 @@ describe('landingRoles helpers', () => {
     expect(openRoleTitle({ title: 'U18 keeper for the summer', position: 'goalkeeper' })).toBe('U18 keeper for the summer')
     expect(openRoleTitle({ title: 'goalkeeper', position: 'goalkeeper' })).toBe('Goalkeeper wanted')
     expect(openRoleTitle({ title: '  ', position: 'head_coach' })).toBe('Head coach wanted')
-    expect(openRoleTitle({ title: null, position: null })).toBe('Open role')
+    expect(openRoleTitle({ title: null, position: null })).toBe('Open opportunity')
   })
 
   it('maps a public row to the card: position, team, when, packages, place; "Unknown Club" is dropped', () => {

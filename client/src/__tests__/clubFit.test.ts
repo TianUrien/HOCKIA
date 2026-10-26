@@ -566,7 +566,7 @@ describe('computeClubFit', () => {
       expect(computeClubFit(womensClub, holder, opts).components.position_match).toBeCloseTo(0.5, 5)
     })
 
-    it('position + specialist average into the role component', () => {
+    it('position + specialist average into the opportunity component', () => {
       const mid = { ...baseFemalePlayer, position: 'midfielder', secondary_position: null }
       const flicker = computeClubFit(womensClub, { ...mid, specialist_skills: ['drag_flicker'] }, { targetPosition: 'midfielder', targetSpecialists: ['drag_flicker'] })
       const plain = computeClubFit(womensClub, { ...mid, specialist_skills: [] }, { targetPosition: 'midfielder', targetSpecialists: ['drag_flicker'] })

@@ -67,7 +67,7 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
     <div ref={ref} className="mb-6">
       <AuroraHero accent="#c026d3">
         <div className="flex items-start justify-between gap-3">
-          <HeroLabel>Your week on HOCKIA</HeroLabel>
+          <HeroLabel>Your week on Hockia</HeroLabel>
           {streakDays >= 2 && (
             <HeroChip>
               <Flame className="h-3 w-3 text-emerald-600" />

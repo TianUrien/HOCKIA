@@ -78,7 +78,7 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(screen.getByText('MG')).toBeInTheDocument()
   })
 
-  it('omits the purple gradient bg class when the role placeholder is rendered', () => {
+  it('omits the purple gradient bg class when the opportunity placeholder is rendered', () => {
     const { container } = render(<Avatar role="coach" />)
     // Outer wrapper should NOT have the legacy purple-to-purple gradient
     // since the SVG fills the box itself.
@@ -129,7 +129,7 @@ describe('Avatar — role-placeholder fallback', () => {
 
   // Batch C (2026-10-21): one no-photo treatment, the role gradient
   // (lib/communityCard roleGradientStops) + white initials, letters only.
-  it('renders the role gradient per role (smoke check across all 5 via Avatar)', () => {
+  it('renders the opportunity gradient per role (smoke check across all 5 via Avatar)', () => {
     for (const role of ['player', 'coach', 'club', 'brand', 'umpire'] as const) {
       const { container, unmount } = render(<Avatar role={role} alt="Ana López" initials="AL" />)
       const stop = container.querySelector('linearGradient stop')

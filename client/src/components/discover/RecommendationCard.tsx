@@ -10,7 +10,7 @@ const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
   label: string; pillBg: string; pillText: string
 }> = {
   strong_match: { label: 'Strong match', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
-  possible_match: { label: 'Good match', pillBg: 'bg-sky-50', pillText: 'text-sky-700' },
+  possible_match: { label: 'Good match', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
   needs_more_info: { label: 'Needs more info', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
 }
 
@@ -18,7 +18,7 @@ const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
 // applicant on the Applicants screen. `pending` = Unsorted = no badge
 // (that's the AI's primary surface; nothing to acknowledge).
 const TRIAGE_PRESET: Record<string, { bg: string; text: string }> = {
-  shortlisted: { bg: 'bg-emerald-50', text: 'text-emerald-700' }, // Good fit
+  shortlisted: { bg: 'bg-emerald-50', text: 'text-emerald-700' }, // Top pick
   maybe: { bg: 'bg-surface-grouped', text: 'text-ink-2' },
 }
 

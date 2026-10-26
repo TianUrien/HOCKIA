@@ -255,7 +255,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
           )}
         </GroupCard>
         <p className="text-secondary text-ink-2">
-          {hasEu ? 'Your EU passport opens every role that needs one.' : 'If you also hold a European passport, add it: it opens every role that needs one.'}
+          {hasEu ? 'Your EU passport opens every opportunity that needs one.' : 'If you also hold a European passport, add it: it opens every opportunity that needs one.'}
         </p>
 
         <SectionLabel>Visas &amp; work permits</SectionLabel>

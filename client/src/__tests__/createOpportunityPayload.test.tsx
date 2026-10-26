@@ -232,7 +232,7 @@ describe('CreateOpportunityModal — coach role team', () => {
     renderModal({ initialOpportunityType: 'coach' })
     const values = Array.from((screen.getByTitle('Category') as HTMLSelectElement).options).map((o) => o.value)
     expect(values).toEqual(['', 'Men', 'Women', 'Mixed', 'Boys', 'Girls'])
-    expect(screen.getByText('Boys and Girls are for coach and staff roles only.')).toBeInTheDocument()
+    expect(screen.getByText('Boys and Girls are for coach and staff opportunities only.')).toBeInTheDocument()
   })
 
   it('keeps a coach role\'s team on edit (no longer erased)', async () => {
@@ -252,5 +252,27 @@ describe('CreateOpportunityModal — coach role team', () => {
     await user.click(screen.getByRole('button', { name: /Update opportunity/ }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
     expect(updatePayload).toMatchObject({ gender: 'Boys' })
+  })
+})
+
+// CodeQL clear-text storage (2026-10-25): the autosaved draft leaves out the
+// category (gender); a restored draft asks for it again.
+describe('CreateOpportunityModal — draft storage', () => {
+  it('autosaves the role without its category', async () => {
+    renderModal()
+    await fillPlayerRequired()
+    await waitFor(() => expect(window.localStorage.getItem('vacancyDraft:new:club-1')).toContain('Senior Women First XI'), { timeout: 2000 })
+    const stored = JSON.parse(window.localStorage.getItem('vacancyDraft:new:club-1') ?? '{}')
+    expect(stored.formData).toMatchObject({ title: 'Senior Women First XI', position: 'midfielder' })
+    expect(stored.formData).not.toHaveProperty('gender')
+  })
+
+  it('a draft saved before the change restores the title but asks for the category again', async () => {
+    window.localStorage.setItem('vacancyDraft:new:club-1', JSON.stringify({
+      formData: { opportunity_type: 'player', title: 'Senior Women First XI', gender: 'Women' }, newRequirement: '', newCustomBenefit: '',
+    }))
+    renderModal()
+    await waitFor(() => expect(screen.getByLabelText(/Opportunity title/)).toHaveValue('Senior Women First XI'))
+    expect(screen.getByTitle('Category')).toHaveValue('')
   })
 })

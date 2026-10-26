@@ -232,7 +232,7 @@ function notification(over: Partial<NotificationRecord>): NotificationRecord {
 }
 
 describe('what happened — amber rule', () => {
-  it('an expired application is a neutral grey line that names the role', () => {
+  it('an expired application is a neutral grey line that names the opportunity', () => {
     const titles = new Map([['o1', 'Goalkeeper · Serie A1']])
     const lines = happenedLinesFromNotification(notification({ metadata: { opportunity_ids: ['o1'], count: 1 } }), titles)
     expect(lines).toHaveLength(1)

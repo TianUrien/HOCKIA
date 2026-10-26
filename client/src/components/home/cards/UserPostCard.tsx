@@ -140,7 +140,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
     const url = `${getShareOrigin()}${detailPath}`
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: item.author_name ?? 'HOCKIA', url })
+        await navigator.share({ title: item.author_name ?? 'Hockia', url })
         return
       }
       await navigator.clipboard.writeText(url)

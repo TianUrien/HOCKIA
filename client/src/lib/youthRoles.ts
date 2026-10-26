@@ -16,7 +16,7 @@ export function playerRoleGender<T extends string>(gender: T | null | undefined)
   return gender
 }
 
-export const YOUTH_PLAYER_ROLE_MESSAGE = 'Player roles are for adult teams. Under-18 players can’t be recruited on Hockia.'
+export const YOUTH_PLAYER_ROLE_MESSAGE = 'Player opportunities are for adult teams. Under-18 players can’t be recruited on Hockia.'
 
 /** Hint under the Team picker on a coach role (Boys/Girls are offered there only). */
-export const COACH_TEAM_HINT = 'Boys and Girls are for coach and staff roles only.'
+export const COACH_TEAM_HINT = 'Boys and Girls are for coach and staff opportunities only.'

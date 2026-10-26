@@ -83,11 +83,11 @@ describe('SettingsMobile · hub', () => {
 })
 
 describe('SettingsMobile · notifications and privacy', () => {
-  it('a club gets no My applications / New roles', () => {
+  it('a club gets no My applications / New opportunities', () => {
     as('club')
     renderAt('notifications')
     expect(screen.queryByText('My applications')).toBeNull()
-    expect(screen.queryByText('New roles')).toBeNull()
+    expect(screen.queryByText('New opportunities')).toBeNull()
     expect(screen.getByText('Messages')).toBeTruthy()
   })
 
@@ -95,7 +95,7 @@ describe('SettingsMobile · notifications and privacy', () => {
     as('player')
     renderAt('notifications')
     expect(screen.getByText('My applications')).toBeTruthy()
-    expect(screen.getByText('New roles')).toBeTruthy()
+    expect(screen.getByText('New opportunities')).toBeTruthy()
   })
 
   it('the full-match setting is for players only (hidden for clubs and coaches)', () => {

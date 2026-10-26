@@ -9,6 +9,9 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // Light only in v1 (rebrand, founder 2026-10-25): `dark:` variants need a
+  // .dark class that nothing sets, so they never apply.
+  darkMode: 'class',
   theme: {
     screens: {
       'xs': '420px',
@@ -42,29 +45,85 @@ export default {
         //
         // Ratios measured on white unless noted. Re-run the axe sweep before
         // changing any of these.
+        // Rebrand PR 6 (2026-10-26): the whole gray scale resolves to the
+        // rebrand neutrals, so ~6,300 legacy `gray-*` classes take the new
+        // violet-tinted greys without an unreviewable call-site diff. Each
+        // step keeps or beats the contrast it had (on white: 400 4.84 vs
+        // 4.83, 500 5.42, 600 7.02, 700 10.69). 600–800 sit between
+        // ink.secondary and ink.primary so the text hierarchy survives.
+        // New code still uses the semantic names (ink-*, line, surface-*).
         gray: {
-          400: '#6b7280', // was #9ca3af — 2.54 (fail) → 4.83. ~191 nodes.
+          50: t.surface.subtle,
+          100: t.surface.muted,
+          200: t.line.default,
+          300: t.line.strong,
+          400: t.ink.tertiary, // was #6b7280 (the 2026-07-27 AA fix) — 4.84 on white
+          500: t.ink.secondary,
+          600: '#5a5766',
+          700: '#3f3c4d',
+          800: '#262335',
+          900: t.ink.primary,
+          950: t.surface.inverse,
+        },
+        // Rebrand PR 6 part 2: legacy `slate-*` follows the same neutrals as gray.
+        slate: {
+          50: t.surface.subtle, 100: t.surface.muted, 200: t.line.default, 300: t.line.strong,
+          400: t.ink.tertiary, 500: t.ink.secondary, 600: '#5a5766', 700: '#3f3c4d', 800: '#262335', 900: t.ink.primary,
+        },
+        // Rebrand PR 6: legacy `purple-*` (≈600 classes) resolves to the one
+        // brand violet. 500 = brand.primary (was #a855f7, 3.96 on white, a
+        // fail; now 5.70), 600/700 = hover/pressed, 100/200 = the soft fills;
+        // the steps in between follow the violet scale the brand is built on.
+        purple: {
+          50: '#f5f3ff',
+          100: t.brand.soft,
+          200: t.brand['soft-hover'],
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: t.brand.primary,
+          600: t.brand['primary-hover'],
+          700: t.brand['primary-pressed'],
+          800: '#4c1d95',
+          900: '#3b0a7a',
         },
         teal: {
           600: '#0f766e', // on teal-50: 3.59 → 5.25
         },
+        // Rebrand PR 6 part 2: green and emerald mean "positive / available"
+        // only, so both scales take the positive tokens (text 5.02 on white,
+        // 4.57 on the soft fill). Green buttons were converted at the call
+        // sites; what remains is states (Shortlisted, available, done steps).
         emerald: {
-          600: '#047857', // on emerald-50: 3.58 → 5.21
+          50: t.status['positive-soft'], 100: t.status['positive-soft'],
+          500: t.status.positive, 600: t.status.positive, 700: t.status.positive, 800: t.status.positive,
         },
+        // Rebrand PR 6 part 2: amber = the warning tokens (text 5.02 on white,
+        // 4.51 on the soft fill). It should only appear when the viewer must act.
         amber: {
-          600: '#b45309', // on amber-50: 3.07 → 4.84
+          50: t.status['warning-soft'], 100: t.status['warning-soft'],
+          600: t.status.warning, 700: t.status.warning, 800: t.status.warning, 900: t.status.warning,
+        },
+        // Rebrand PR 6 part 2: legacy indigo accents (focus rings, links,
+        // headings) take the brand violet, like purple. The accent-indigo
+        // tokens used for benefit tiles are separate and unchanged.
+        indigo: {
+          50: '#f5f3ff', 100: t.brand.soft, 200: t.brand['soft-hover'], 400: '#a78bfa',
+          500: t.brand.primary, 600: t.brand['primary-hover'], 700: t.brand['primary-pressed'],
         },
         blue: {
           500: '#2563eb', // on blue-50: 3.38 → 4.75
         },
         green: {
-          600: '#15803d', // on gray-50: 3.15 → 4.80
+          50: t.status['positive-soft'], 100: t.status['positive-soft'],
+          500: t.status.positive, 600: t.status.positive, // #15803d — on gray-50: 3.15 → 4.80
+          700: t.status.positive,
         },
         red: {
           // 500 also fixes the notification badge: white on the old #ef4444
           // was 3.76, below AA; on this value it is 4.83.
-          500: '#dc2626', // on gray-50: 3.60 → 4.62
-          600: '#b91c1c', // on red-50: 4.41 → 5.91
+          500: t.status.danger, // #dc2626 — on gray-50: 3.60 → 4.62
+          600: t.status['danger-strong'], // #b91c1c — on red-50: 4.41 → 5.91
+          50: t.status['danger-soft'], // rebrand PR 6: the danger tint
         },
         rose: {
           600: '#be123c', // on rose-50: 4.28 → 5.72
@@ -118,6 +177,10 @@ export default {
         // role-<role>-bg / role-<role>-ink: the RoleBadge pair per role
         // (player, coach, club, brand). Umpire has no pair: it stays neutral.
         role: t.role,
+        // Rebrand 2026-10-25: ai-* (Hockia AI: cyan plus the spark or mascot, never
+        // colour alone) and reference-* (gold, references only).
+        ai: t.ai,
+        reference: t.reference,
         status: t.status,
         accent: t.accent,
         social: t.social,
@@ -135,7 +198,8 @@ export default {
       },
       // Figma type scale (SF Pro sizes; family comes from --font-sans). Weights 400/500/600/700.
       fontSize: {
-        'large-title': ['34px', { lineHeight: '41px', letterSpacing: '-0.015em', fontWeight: '700' }],
+        // Rebrand 2026-10-25: Heading/H1 (Satoshi Bold 40, -3.5 %), the section roots.
+        'large-title': ['40px', { lineHeight: '44px', letterSpacing: '-0.035em', fontWeight: '700' }],
         title: ['22px', { lineHeight: '27px', fontWeight: '700' }],
         // Page titles inside pushed phone screens (Figma Title XL) and big tile
         // figures (Your week, Pulse week tiles).
@@ -178,12 +242,21 @@ export default {
       // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·
       // sheet = radius/2xl 28 (founder ruling 2026-10-11: every bottom sheet,
       // app-wide; was radius/xl 20).
+      // Rebrand 2026-10-25 elevation (Figma effect styles Elevation/1–3, Glow/Brand).
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        float: 'var(--shadow-float)',
+        overlay: 'var(--shadow-overlay)',
+        'glow-brand': 'var(--shadow-glow-brand)',
+      },
+      // Rebrand 2026-10-25 radius scale (xs 8 · sm 12 · md 16 · lg 24 · xl 30 ·
+      // 2xl 44). Cards 24, tiles 12, sheets 28 (rule since 2026-10-11).
       borderRadius: {
         tile: `${r.sm}px`,
         card: `${r.lg}px`,
-        sheet: `${r['2xl']}px`,
-        // radius/2xl 28: the landing closing panel and the web auth card.
-        panel: `${r['2xl']}px`,
+        sheet: `${r.sheet}px`,
+        // The landing closing panel and the web auth card share the sheet radius.
+        panel: `${r.sheet}px`,
       },
       keyframes: {
         shimmer: {

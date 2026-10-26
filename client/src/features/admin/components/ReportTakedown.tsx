@@ -37,7 +37,7 @@ const NOUN: Record<string, string> = {
   feed_item_comment: 'comment',
   video: 'video',
   // Takedown of a role = its cover photo comes down; the role stays open.
-  opportunity: 'role cover photo',
+  opportunity: 'opportunity cover photo',
 }
 
 function contentNoun(type: string | null): string {
@@ -51,7 +51,7 @@ function contextLine(p: ContentPreview): string {
     case 'reference_comment': return `on ${owner} reference`
     case 'profile_comment': return `on ${owner} profile`
     case 'video': return 'video'
-    case 'opportunity': return 'role cover photo'
+    case 'opportunity': return 'opportunity cover photo'
     case 'feed_item': return 'reference'
     default: return 'post'
   }

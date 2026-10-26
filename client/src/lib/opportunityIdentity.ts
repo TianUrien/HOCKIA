@@ -95,7 +95,7 @@ export function reviewsLine(id: RoleIdentity): string {
 /** Under the identity card when a coach posted for a club. */
 export function onBehalfNote(id: RoleIdentity): string | null {
   return id.kind === 'coach-for-club' && id.postedBy && id.hiringClub
-    ? `${id.postedBy.firstName} posted this role on behalf of ${id.hiringClub.name}. Messages go to the coach.`
+    ? `${id.postedBy.firstName} posted this opportunity on behalf of ${id.hiringClub.name}. Messages go to the coach.`
     : null
 }
 /** "Posted by Ana García" for cards; null when the club itself posted or the coach is the title. */

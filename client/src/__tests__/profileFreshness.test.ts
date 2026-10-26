@@ -12,7 +12,7 @@ const daysAgo = (n: number): string =>
 
 describe('pickFreshnessNudge', () => {
   describe('null / empty inputs', () => {
-    it('returns null when the role has no relevant signals', () => {
+    it('returns null when the opportunity has no relevant signals', () => {
       expect(pickFreshnessNudge('player', {}, NOW)).toBeNull()
     })
 
@@ -72,7 +72,7 @@ describe('pickFreshnessNudge', () => {
       expect(nudge?.daysSince).toBe(120)
     })
 
-    it('does not nudge about a section the role does not own (e.g. posts for player)', () => {
+    it('does not nudge about a section the opportunity does not own (e.g. posts for player)', () => {
       expect(
         pickFreshnessNudge(
           'player',

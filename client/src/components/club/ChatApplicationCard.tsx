@@ -24,7 +24,7 @@ export function ChatApplicationCard({ app, expiryDays }: { app: ClubApplication;
         </span>
         <span className="min-w-0 flex-1">
           <span className="line-clamp-2 block text-[15px] font-semibold leading-5 text-ink-1">{applicationCardTitle(app)}</span>
-          <span className={cn('block truncate text-caption', detail.urgent ? 'font-semibold text-amber-600' : 'text-ink-2')}>{detail.text}</span>
+          <span className={cn('block truncate text-caption', detail.urgent ? 'font-semibold text-status-warning' : 'text-ink-2')}>{detail.text}</span>
         </span>
         <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={1.75} aria-hidden="true" />
       </Link>

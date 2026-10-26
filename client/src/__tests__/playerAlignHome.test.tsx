@@ -21,7 +21,7 @@ describe('Your week (player)', () => {
     phone.value = true
     const { container } = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
     const labels = Array.from(container.querySelectorAll('.text-caption')).map((n) => n.textContent)
-    expect(labels).toEqual(['profile views', 'roles for you', 'club reply'])
+    expect(labels).toEqual(['profile views', 'opportunities for you', 'club reply'])
     const figures = Array.from(container.querySelectorAll('.text-figure'))
     expect(figures.map((f) => f.textContent)).toEqual(['12', '6', '1'])
     for (const f of figures) {
@@ -32,7 +32,7 @@ describe('Your week (player)', () => {
   it('desktop keeps its order', () => {
     phone.value = false
     render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    const labels = screen.getAllByText(/profile views|roles for you|club reply/).map((n) => n.textContent)
-    expect(labels).toEqual(['roles for you', 'profile views', 'club reply'])
+    const labels = screen.getAllByText(/profile views|opportunities for you|club reply/).map((n) => n.textContent)
+    expect(labels).toEqual(['opportunities for you', 'profile views', 'club reply'])
   })
 })

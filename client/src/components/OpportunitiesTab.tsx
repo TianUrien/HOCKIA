@@ -741,7 +741,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
             </h2>
             <p className="text-sm text-gray-500">
               {readOnly
-                ? `${vacancies.length} live role${vacancies.length === 1 ? '' : 's'}`
+                ? `${vacancies.length} live ${vacancies.length === 1 ? 'opportunity' : 'opportunities'}`
                 : `${vacancies.length} total opportunit${vacancies.length === 1 ? 'y' : 'ies'}`}
             </p>
           </div>

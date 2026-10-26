@@ -160,7 +160,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         className,
       ].join(' ')}
       data-testid="ai-opinion-panel"
-      aria-label="HOCKIA AI fit opinion"
+      aria-label="Hockia AI fit opinion"
       aria-busy={status.kind === 'loading'}
     >
       <header className="flex items-start gap-2.5 mb-2">
@@ -169,7 +169,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         </span>
         <div className="flex-1 min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
-            HOCKIA AI · fit opinion <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
+            Hockia AI · fit opinion <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
             Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your recruiting context.

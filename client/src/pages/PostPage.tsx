@@ -130,7 +130,7 @@ export default function PostPage() {
           metadata: postData.metadata ?? null,
         }
         setItem(feedItem)
-        document.title = `${author.full_name ?? 'A post'} on HOCKIA`
+        document.title = `${author.full_name ?? 'A post'} on Hockia`
       } catch (err) {
         logger.error('[PostPage] failed to load post', err)
         if (!cancelled) setLoadError(true)

@@ -137,7 +137,7 @@ describe('recruiting context + per-role shortlist', () => {
     ]
     expect(playerContexts(rows, new Set(['r1', 'r3']), 'activeClosed').map((r) => r.id)).toEqual(['open', 'custom'])
   })
-  it('each role has its own list (named after the role); no role → default list', () => {
+  it('each role has its own list (named after the opportunity); no role → default list', () => {
     const lists = [
       { id: 'd', name: 'Saved players', is_default: true },
       { id: 'm', name: 'Men’s 1st player', is_default: false },

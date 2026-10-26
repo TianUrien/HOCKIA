@@ -55,7 +55,7 @@ export default function ClubClaimConfirmModal({
         <p className="mt-3 text-sm text-gray-600">
           You are about to claim{' '}
           <span className="font-semibold text-gray-900">{clubName}</span> as its
-          official representative on HOCKIA. This means you’ll be able to post
+          official representative on Hockia. This means you’ll be able to post
           opportunities, accept members, and represent the club to the community.
         </p>
 

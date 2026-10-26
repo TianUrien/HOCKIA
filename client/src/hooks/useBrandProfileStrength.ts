@@ -74,7 +74,7 @@ export function useBrandProfileStrength({ brand, ambassadorCount = 0 }: UseBrand
         id: 'contact',
         label: 'Contact Info',
         hint: 'Add your website or Instagram link',
-        unlockCopy: 'A direct way for people to reach you outside HOCKIA.',
+        unlockCopy: 'A direct way for people to reach you outside Hockia.',
         weight: 20,
         completed: hasContact,
         actionId: 'edit-profile',

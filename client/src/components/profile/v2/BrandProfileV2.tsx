@@ -35,6 +35,8 @@ import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
 import { BackGlyph } from '@/components/ui/BackGlyph'
+import { switchTrackClass } from '@/components/ui/switchClasses'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -146,6 +148,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const compact = useScrolledPast(heroRef)
   const [bioOpen, setBioOpen] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
+  // Rebrand page 27 · Web · Brand dashboard (owner): its own desktop layout.
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   // Home's views card links here with ?viewers=1 (ruling 2026-10-16): open who viewed you.
   useEffect(() => {
     if (!owner) return
@@ -247,6 +251,85 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: props.onMessage, disabled: props.sendingMessage, testId: 'brand-message' }
   const buttons: ActionBarButton[] = owner ? [] : props.canMessage ? [followButton, messageButton] : [followButton]
 
+
+  // Shared by the phone page and the desktop dashboard.
+  const invitesCard = (
+            <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', invitesPrimary ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid="brand-invites-card">
+              <div className="flex items-center gap-3">
+                {pending.length > 0 ? (
+                  <span className="relative h-10 shrink-0" style={{ width: 40 + (Math.min(pending.length, 2) - 1) * 20 }} aria-hidden="true">
+                    {pending.slice(0, 2).map((p, i) => (
+                      <span key={i} className="absolute top-0" style={{ left: i * 20 }}><FaceCircle url={p.avatar_url} name={p.full_name} role="player" size="avatar-sm" initialsClassName="text-[12px]" className="h-10 w-10 ring-2 ring-white" /></span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-hockia-primary"><UserPlus className="h-5 w-5" strokeWidth={1.8} /></span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+                    {pending.length > 0 ? `${pending.length} ${pending.length === 1 ? 'invite' : 'invites'} waiting for a reply` : 'Invite athletes to represent you'}
+                  </span>
+                  <span className="block truncate text-secondary text-ink-2">
+                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? 'Athlete').join(' · ') : 'They accept from their inbox'}
+                  </span>
+                </span>
+              </div>
+              <div className="flex gap-2.5">
+                <button type="button" onClick={props.onInvite} className={cn('flex h-11 flex-1 items-center justify-center rounded-full text-[16px] font-semibold', invitesPrimary ? 'bg-hockia-primary text-white' : 'border border-line bg-white text-hockia-primary')}>+ Invite athletes</button>
+                {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">View invites</button>}
+              </div>
+            </div>
+  )
+  const reachStats = (
+            <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
+              {reach.map((s) => (
+                <div key={s.label} className="flex flex-1 flex-col items-center py-3">
+                  <span className="text-title tabular-nums text-ink-1">{s.value}</span>
+                  <span className="text-caption text-ink-2">{s.label}</span>
+                </div>
+              ))}
+            </div>
+  )
+  const seeViewers = (
+            <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
+              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+            </button>
+  )
+  const partnersRow = (
+            <div className="flex items-center gap-3 rounded-[20px] bg-surface-subtle px-4 py-3.5">
+              <span className="min-w-0 flex-1">
+                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">Open to partners</span>
+                <span className="block text-secondary text-ink-2">Players and clubs see you’re looking for ambassadors</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={partners.value}
+                aria-label="Open to partners"
+                onClick={partners.toggle}
+                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', switchTrackClass(partners.value))}
+                data-testid="brand-partners-switch"
+              >
+                <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
+              </button>
+            </div>
+  )
+  const productTiles = (desktop: boolean) => props.products.map((p) => {
+    const img = firstImage(p)
+    const n = tapsByProduct.get(p.id) ?? 0
+    return (
+      <button key={p.id} type="button" onClick={() => openProduct(p)} className={cn('flex shrink-0 flex-col items-start gap-1.5 text-left', desktop ? 'w-full' : 'w-[160px]')} data-testid="brand-product">
+        <span className={cn('relative block h-[160px] overflow-hidden rounded-[20px] border-[0.5px] border-[rgba(15,15,20,0.06)]', desktop ? 'w-full' : 'w-[160px]')} style={img ? undefined : { backgroundImage: 'linear-gradient(143deg, rgb(247,242,255) 14%, rgb(232,224,250) 86%)' }}>
+          {img ? <BlurImage src={getImageUrl(img, 'gallery') ?? img} lqip={getLqipUrl(img)} className="h-full w-full" /> : <span className="flex h-full w-full items-center justify-center text-hockia-primary/60"><Package className="h-10 w-10" strokeWidth={1.4} /></span>}
+        </span>
+        <span className="w-full truncate text-[14px] font-semibold leading-[19px] text-ink-1">{p.name}</span>
+        <span className="w-full truncate text-caption text-ink-2">
+          {owner ? `${n} ${n === 1 ? 'tap' : 'taps'}` : p.external_url ? 'View ↗' : (p.description?.trim() || ' ')}
+        </span>
+      </button>
+    )
+  })
+
   const moreMenu = (cls: string) => (!owner ? <ProfileActionMenu targetId={brand.profile_id} targetName={brand.name} triggerClassName={cls} iconClassName="h-[22px] w-[22px]" /> : null)
 
   const anchors = ANCHORS.filter((a) => (
@@ -255,6 +338,126 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
         : a.id === 'updates' ? owner || tiles.length > 0
           : true
   ))
+
+  const viewersSheet = owner ? (
+    <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel="Profile views">
+      <div className="px-1 pb-4">
+        {(searches.summary?.total ?? 0) > 0 && (
+          <p className="px-3 pb-2 text-secondary text-ink-2" data-testid="brand-viewers-searches">
+            Your brand appeared in {searches.summary?.total} {searches.summary?.total === 1 ? 'search' : 'searches'} in the last 7 days.
+          </p>
+        )}
+        <ProfileViewersSection />
+      </div>
+    </BottomSheet>
+  ) : null
+
+  // Rebrand page 27 · Web · Brand dashboard (owner), ≥1024: cover band,
+  // identity row with Preview / Edit, then the main column (offers, products,
+  // ambassadors, updates, about) and a side column (next step, open to
+  // partners, reach). Visitors keep the shared profile layout.
+  if (owner && isDesktop) {
+    const card = 'rounded-[24px] bg-white px-2 pb-6 ring-1 ring-inset ring-line'
+    return (
+      <div className="bg-surface-subtle pb-12" data-testid="brand-profile-v2">
+        <div className="mx-auto w-full max-w-[1280px] px-12 pt-3 min-[1440px]:px-0" data-testid="brand-owner-desktop">
+          <section className={cn('relative h-[180px] overflow-hidden rounded-[24px]', !cover && 'bg-gradient-to-b from-role-brand-bg to-white')} data-testid="brand-hero">
+            {cover && <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />}
+            <button type="button" onClick={props.onEdit} className="absolute right-4 top-4 inline-flex h-11 items-center gap-2 rounded-full bg-white/90 px-4 text-[14px] font-semibold text-ink-1 shadow-sm hover:bg-white" data-testid={cover ? 'brand-edit-cover' : 'brand-hero-add-cover'}>
+              <Camera className="h-4 w-4" strokeWidth={1.8} /> {cover ? 'Change cover' : 'Add a cover'}
+            </button>
+          </section>
+
+          <div className="mt-6 flex items-center gap-5">
+            <div className="relative shrink-0">
+              <div className="flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px] bg-white p-2 ring-1 ring-inset ring-line">
+                {logo ? <img src={logo} alt="" className="h-16 w-16 object-contain" decoding="async" /> : <span className="font-display text-[40px] font-bold text-role-brand-ink">{initialsOf(brand.name).slice(0, 1)}</span>}
+              </div>
+              <button type="button" onClick={props.onEdit} aria-label="Change logo" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="min-w-0 truncate font-display text-[30px] font-bold leading-[1.15] tracking-[-0.03em] text-ink-1">{brand.name}</h1>
+                <VerifiedBadge verified={brand.is_verified} className="shrink-0" />
+              </div>
+              <p className="mt-1 truncate text-[15px] leading-[1.45] text-ink-2">{[category, placeLine].filter(Boolean).join(' · ')}</p>
+            </div>
+            <button type="button" onClick={() => void share()} aria-label="Share brand" className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 hover:bg-surface-subtle">
+              <Share className="h-5 w-5" strokeWidth={1.8} />
+            </button>
+            <OwnerButtons inline onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What athletes and clubs see', onSelect: () => props.onViewPublic?.() }]} />
+          </div>
+
+          <div className="mt-6 grid grid-cols-[minmax(0,1fr)_360px] items-start gap-6 min-[1440px]:grid-cols-[minmax(0,1fr)_416px]">
+            <div className="flex min-w-0 flex-col gap-6">
+              {!myOffers.isLoading && (
+                <OffersCard desktop offers={myOffers.offers} totals={offerTotals} onCreate={() => navigate('/dashboard/offers/new')} onOpen={() => navigate('/dashboard/offers')} />
+              )}
+              {showInvites && invitesCard}
+              <div className={card}>
+                <Section id="products" title="Products" action="+ Add product" onAction={props.onAddProduct}>
+                  <div className="grid grid-cols-2 gap-4 px-4 min-[1280px]:grid-cols-3">
+                    <button type="button" onClick={props.onAddProduct} className="flex h-[160px] w-full flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-hockia-primary/50 bg-hockia-soft/40 text-[15px] font-semibold text-hockia-primary" data-testid="brand-add-product">
+                      <Plus className="h-6 w-6" strokeWidth={2.2} /> Add product
+                    </button>
+                    {productTiles(true)}
+                  </div>
+                </Section>
+              </div>
+              <div className={card}>
+                <Section id="ambassadors" title={props.ambassadorTotal > 0 ? `Ambassadors · ${props.ambassadorTotal}` : 'Ambassadors'} action="+ Invite" onAction={props.onInvite}>
+                  {props.ambassadors.length > 0 ? (
+                    <div className="flex flex-wrap gap-4 px-4">
+                      {props.ambassadors.map((a) => (
+                        <button key={a.player_id} type="button" onClick={() => navigate(a.role === 'coach' ? `/coaches/id/${a.player_id}` : `/players/id/${a.player_id}`)} className="flex w-20 flex-col items-center gap-1" data-testid="brand-ambassador">
+                          <FaceCircle url={a.avatar_url} name={a.full_name} role={a.role ?? 'player'} size="avatar-md" initialsClassName="text-[18px]" className="h-16 w-16" />
+                          <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{(a.full_name ?? 'Athlete').split(/\s+/)[0]}</span>
+                          <span className="w-full truncate text-center text-caption text-ink-3">{positionLabel(a.position) || 'Athlete'}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : <p className="px-4 text-body text-ink-3">No ambassadors yet.</p>}
+                </Section>
+              </div>
+              <div className={card}>
+                <Section id="updates" title="Latest updates" action="+ Post update" onAction={props.onPostUpdate}>
+                  {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : <p className="px-4 text-body text-ink-3">No updates yet.</p>}
+                </Section>
+              </div>
+              <div className={card}>
+                <Section id="about" title="About" action="Edit" onAction={props.onEdit}>
+                  <div className="flex flex-col items-start gap-1.5 px-4">
+                    {bio ? <p className="whitespace-pre-line text-body text-ink-1">{bio}</p> : <p className="text-body text-ink-3">No description yet</p>}
+                    <div className="w-full pt-2">
+                      {category && <DetailRow label="Category" value={category} />}
+                      {countryName && <DetailRow label="Country" value={countryName} />}
+                      {brand.website_url && <DetailRow label="Website" value={hostOf(brand.website_url)} href={/^https?:\/\//i.test(brand.website_url) ? brand.website_url : `https://${brand.website_url}`} />}
+                      {instagram && <DetailRow label="Instagram" value={`@${instagram}`} href={`https://instagram.com/${instagram}`} />}
+                    </div>
+                  </div>
+                </Section>
+              </div>
+            </div>
+
+            <aside className="sticky top-24 flex flex-col gap-6" data-testid="brand-owner-side">
+              {stepCopy && step && <PrimaryCard wrapperClassName="" stepKey={step.key} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
+              <div className="rounded-[24px] bg-white p-2 ring-1 ring-inset ring-line [&>div]:bg-white">{partnersRow}</div>
+              {showReach && (
+                <div className="rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" data-testid="brand-private-stats">
+                  <h2 className="pb-3 font-display text-[19px] font-bold leading-[1.25] text-ink-1">Reach this week</h2>
+                  {reachStats}
+                  {seeViewers}
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+        {viewersSheet}
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white pb-8" data-testid="brand-profile-v2">
@@ -326,69 +529,13 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           {stepCopy && step && <PrimaryCard stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}
 
           {/* Ambassador card — brand-initiated invites; only with something in it (B0). */}
-          {showInvites && <div className="px-4">
-            <div className={cn('flex flex-col gap-3 rounded-[24px] p-4', invitesPrimary ? 'bg-hockia-soft' : 'border border-line bg-white')} data-testid="brand-invites-card">
-              <div className="flex items-center gap-3">
-                {pending.length > 0 ? (
-                  <span className="relative h-10 shrink-0" style={{ width: 40 + (Math.min(pending.length, 2) - 1) * 20 }} aria-hidden="true">
-                    {pending.slice(0, 2).map((p, i) => (
-                      <span key={i} className="absolute top-0" style={{ left: i * 20 }}><FaceCircle url={p.avatar_url} name={p.full_name} role="player" size="avatar-sm" initialsClassName="text-[12px]" className="h-10 w-10 ring-2 ring-white" /></span>
-                    ))}
-                  </span>
-                ) : (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-hockia-primary"><UserPlus className="h-5 w-5" strokeWidth={1.8} /></span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                    {pending.length > 0 ? `${pending.length} ${pending.length === 1 ? 'invite' : 'invites'} waiting for a reply` : 'Invite athletes to represent you'}
-                  </span>
-                  <span className="block truncate text-secondary text-ink-2">
-                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? 'Athlete').join(' · ') : 'They accept from their inbox'}
-                  </span>
-                </span>
-              </div>
-              <div className="flex gap-2.5">
-                <button type="button" onClick={props.onInvite} className={cn('flex h-11 flex-1 items-center justify-center rounded-full text-[16px] font-semibold', invitesPrimary ? 'bg-hockia-primary text-white' : 'border border-line bg-white text-hockia-primary')}>+ Invite athletes</button>
-                {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">View invites</button>}
-              </div>
-            </div>
-          </div>}
+          {showInvites && <div className="px-4">{invitesCard}</div>}
 
           {/* Private stats: hidden while every number is zero (no zero headline). */}
-          {showReach && <div className="px-4" data-testid="brand-private-stats">
-            <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
-              {reach.map((s) => (
-                <div key={s.label} className="flex flex-1 flex-col items-center py-3">
-                  <span className="text-title tabular-nums text-ink-1">{s.value}</span>
-                  <span className="text-caption text-ink-2">{s.label}</span>
-                </div>
-              ))}
-            </div>
-            <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
-              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
-            </button>
-          </div>}
+          {showReach && <div className="px-4" data-testid="brand-private-stats">{reachStats}{seeViewers}</div>}
 
           {/* Open to partners */}
-          <div className="px-4">
-            <div className="flex items-center gap-3 rounded-[20px] bg-surface-subtle px-4 py-3.5">
-              <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">Open to partners</span>
-                <span className="block text-secondary text-ink-2">Players and clubs see you’re looking for ambassadors</span>
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={partners.value}
-                aria-label="Open to partners"
-                onClick={partners.toggle}
-                className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', partners.value ? 'bg-[#15803d]' : 'bg-gray-300')}
-                data-testid="brand-partners-switch"
-              >
-                <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />
-              </button>
-            </div>
-          </div>
+          <div className="px-4">{partnersRow}</div>
         </div>
       )}
 
@@ -412,21 +559,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 <Plus className="h-6 w-6" strokeWidth={2.2} /> Add product
               </button>
             )}
-            {props.products.map((p) => {
-              const img = firstImage(p)
-              const n = tapsByProduct.get(p.id) ?? 0
-              return (
-                <button key={p.id} type="button" onClick={() => openProduct(p)} className="flex w-[160px] shrink-0 flex-col items-start gap-1.5 text-left" data-testid="brand-product">
-                  <span className="relative block h-[160px] w-[160px] overflow-hidden rounded-[20px] border-[0.5px] border-[rgba(15,15,20,0.06)]" style={img ? undefined : { backgroundImage: 'linear-gradient(143deg, rgb(247,242,255) 14%, rgb(232,224,250) 86%)' }}>
-                    {img ? <BlurImage src={getImageUrl(img, 'gallery') ?? img} lqip={getLqipUrl(img)} className="h-full w-full" /> : <span className="flex h-full w-full items-center justify-center text-hockia-primary/60"><Package className="h-10 w-10" strokeWidth={1.4} /></span>}
-                  </span>
-                  <span className="w-full truncate text-[14px] font-semibold leading-[19px] text-ink-1">{p.name}</span>
-                  <span className="w-full truncate text-caption text-ink-2">
-                    {owner ? `${n} ${n === 1 ? 'tap' : 'taps'}` : p.external_url ? 'View ↗' : (p.description?.trim() || ' ')}
-                  </span>
-                </button>
-              )
-            })}
+            {productTiles(false)}
           </div>
         </Section>
       )}
@@ -474,18 +607,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       </Section>
 
       </ProfileLayout>
-      {owner && (
-        <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel="Profile views">
-          <div className="px-1 pb-4">
-            {(searches.summary?.total ?? 0) > 0 && (
-              <p className="px-3 pb-2 text-secondary text-ink-2" data-testid="brand-viewers-searches">
-                Your brand appeared in {searches.summary?.total} {searches.summary?.total === 1 ? 'search' : 'searches'} in the last 7 days.
-              </p>
-            )}
-            <ProfileViewersSection />
-          </div>
-        </BottomSheet>
-      )}
+      {viewersSheet}
     </div>
   )
 }

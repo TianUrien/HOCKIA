@@ -110,7 +110,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
             <Film className="h-4 w-4 text-hockia-primary flex-shrink-0" />
             Highlight videos
           </h3>
-          <p className="text-xs text-gray-500">Hosted on HOCKIA. Play instantly, no external links.</p>
+          <p className="text-xs text-gray-500">Hosted on Hockia. Play instantly, no external links.</p>
         </div>
         {!readOnly && (
           <Button variant="primary" onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
@@ -137,7 +137,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
             </div>
             <p className="text-sm font-semibold text-gray-900">Add your highlight reel</p>
             <p className="mx-auto mb-4 mt-1 max-w-xs text-xs text-gray-500">
-              Upload a video so clubs and coaches can evaluate you. It plays directly inside HOCKIA.
+              Upload a video so clubs and coaches can evaluate you. It plays directly inside Hockia.
             </p>
             <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
               <Button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5">

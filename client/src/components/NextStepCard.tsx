@@ -66,7 +66,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
         {/* Body — celebratory state when complete, next-step CTA otherwise */}
         {isComplete ? (
           <div className="flex items-start gap-3 md:gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm">
+            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-brand-primary text-white shadow-sm">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">

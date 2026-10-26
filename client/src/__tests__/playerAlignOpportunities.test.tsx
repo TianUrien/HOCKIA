@@ -5,6 +5,7 @@
  * Muted 48 message button + Primary / Tonal action.
  */
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { InfoIcon } from '@/components/icons/HockiaIcons'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import type { Vacancy } from '@/lib/supabase'
@@ -23,7 +24,7 @@ const card = (applied: boolean, p: Partial<Vacancy> = {}, onOpen = vi.fn()) =>
   render(<RoleCard vacancy={vac(p)} clubName="Hockey Team Bologna" clubLogo={null} publisherRole="club" countryFlag="🇮🇹" league="Serie A1" applied={applied} onOpen={onOpen} />)
 
 describe('Card / Role', () => {
-  it('has no button inside: the whole card is one tap target named by the role title', () => {
+  it('has no button inside: the whole card is one tap target named by the opportunity title', () => {
     const onOpen = vi.fn()
     card(false, {}, onOpen)
     const buttons = screen.getAllByRole('button')
@@ -78,11 +79,12 @@ describe('rolePackageItems', () => {
     const [skill] = rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false, specialist_skills_wanted: ['drag_flicker'] })
     expect(skill).toMatchObject({ type: 'skill', label: 'Drag flicker', tileClass: 'bg-hockia-soft text-hockia-primary' })
   })
-  it('notes use the Info icon on a surface-muted tile; real items keep their own icon', () => {
+  it('notes use the Hockia Info icon on a surface-muted tile; real items keep their own icon', () => {
     const [note] = rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false })
     expect(note.tileClass).toContain('bg-surface-muted')
+    expect(note.icon).toBe(InfoIcon)
     const { container } = render(<note.icon />)
-    expect(container.querySelector('svg')?.getAttribute('class')).toContain('lucide-info')
+    expect(container.querySelector('svg')).not.toBeNull()
   })
   it('notes: "Paid or unpaid", and "Package not listed · ask the club" when nothing is listed', () => {
     expect(rolePackageItems({ compensation: 'either', benefits: [], eu_passport_required: false })[0]).toMatchObject({ type: 'note', label: 'Paid or unpaid' })

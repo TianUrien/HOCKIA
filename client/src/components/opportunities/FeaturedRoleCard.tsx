@@ -1,7 +1,7 @@
 import type { Vacancy } from '@/lib/supabase'
 import type { CrestPalette } from '@/lib/crestPalette'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
-import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill, isPaid, roleBenefits, roleHeadline, whenLine } from '@/lib/opportunityCopy'
+import { categoryFamily, genderPill, isPaid, roleBenefits, roleHeadline, whenLine, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
 import { HOCKIA_FALLBACK } from '@/lib/crestPalette'
 import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
@@ -36,7 +36,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
   const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
   const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
   const chips = [...(isPaid(vacancy) ? ['€ Paid'] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
-  const eyebrow = ['FEATURED ROLE', status && status.label !== 'New' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
+  const eyebrow = ['FEATURED OPPORTUNITY', status && status.label !== 'New' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
 
   if (layout === 'wide') {
     const stripColor = withAlpha((palette ?? HOCKIA_FALLBACK).stops[2], 0.62)
@@ -49,7 +49,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
         {...press.handlers}
         {...prefetch.handlers}
         className="group block w-full text-left transition-transform duration-200 [transform-origin:center] [will-change:transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
-        aria-label={`Featured role: ${headline.title} at ${clubName}`}
+        aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
         data-testid="featured-role"
       >
         <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="none" className="h-[400px] rounded-[28px] shadow-[0_12px_30px_rgba(0,0,0,0.12)] transition-shadow duration-200 group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
@@ -58,7 +58,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
             <span className="text-caption font-semibold tracking-[0.04em] text-white/85">{eyebrow}</span>
             <h2 className="line-clamp-2 text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-white">{headline.title}</h2>
             <div className="flex flex-wrap gap-2">
-              {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip>}
+              {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip>}
               {wideChips.map((c) => <GlassChip key={c}>{c}</GlassChip>)}
               <GlassChip>{whenLine(vacancy)}</GlassChip>
             </div>
@@ -83,7 +83,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
       {...press.handlers}
       {...prefetch.handlers}
       className="block w-full text-left [transform-origin:center] [will-change:transform]"
-      aria-label={`Featured role: ${headline.title} at ${clubName}`}
+      aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
       data-testid="featured-role"
     >
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="hero" className="h-[440px] rounded-[28px] shadow-[0_16px_40px_rgba(15,15,20,0.14),0_2px_4px_rgba(15,15,20,0.06)]">
@@ -99,7 +99,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
           </div>
           {(pill || chips.length > 0) && (
             <div className="flex flex-wrap gap-1.5">
-              {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]}>{pill.label}</GlassChip>}
+              {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]}>{pill.label}</GlassChip>}
               {chips.map((c) => <GlassChip key={c}>{c}</GlassChip>)}
             </div>
           )}

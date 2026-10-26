@@ -172,13 +172,13 @@ export function HockiaAiSheet() {
   const roleSuggestions = roleContext ? [
     { eyebrow: 'ASK', label: CHECK_PROFILE_AGAINST_ROLE, run: () => send(CHECK_PROFILE_AGAINST_ROLE) },
     ...(canBuild ? [{ eyebrow: 'DO IT FOR ME', label: 'Prepare my application', run: () => prepareApplication(roleContext) }] : []),
-    { eyebrow: 'LEARN', label: roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club?', run: () => send(roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club about this role?') },
+    { eyebrow: 'LEARN', label: roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club?', run: () => send(roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club about this opportunity?') },
   ] : []
   const roleChip = roleContext ? (
     <span className="mx-auto flex max-w-full items-center gap-2 rounded-full bg-white py-1 pl-1.5 pr-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-role-chip">
       <img src={roleContext.logoUrl ?? undefined} alt="" className={cn('h-6 w-6 rounded-full object-contain', !roleContext.logoUrl && 'hidden')} />
       <span className="truncate text-secondary font-semibold text-ink-1">{roleContext.label}</span>
-      <button type="button" onClick={clearRole} aria-label="Stop asking about this role" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3"><X className="h-3.5 w-3.5" /></button>
+      <button type="button" onClick={clearRole} aria-label="Stop asking about this opportunity" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3"><X className="h-3.5 w-3.5" /></button>
     </span>
   ) : null
   const roleSuggestion = (r: { eyebrow: string; label: string; run: () => void }) => (
@@ -269,7 +269,7 @@ export function HockiaAiSheet() {
                 <MascotHello height={96} className="-ml-1 shrink-0" />
                 <div className="min-w-0 flex-1 pt-3">
                   <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this role. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)}</p>
+                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this opportunity. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)}</p>
                 </div>
               </div>
               {roleContext ? (
@@ -290,7 +290,7 @@ export function HockiaAiSheet() {
             <div className="flex flex-col items-center pb-4 text-center" data-testid="hockia-ai-home">
               <MascotHello height={200} />
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? `Hi ${firstName}, I’m Hockia AI` : 'Hi, I’m Hockia AI'}</h2>
-              <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about roles, clubs, players or the game.</p>
+              <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about opportunities, clubs, players or the game.</p>
               {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
               {!roleContext && (planCard ?? buildChip) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
               <div className={cn('grid w-full grid-cols-2 gap-2.5', roleContext && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>

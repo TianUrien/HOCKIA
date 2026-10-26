@@ -248,7 +248,7 @@ export function QuestionsListView() {
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to ask a question"
-        message="Sign in or create a free HOCKIA account to ask questions to the field hockey community."
+        message="Sign in or create a free Hockia account to ask questions to the field hockey community."
       />
     </div>
   )

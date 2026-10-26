@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Lock, CheckCircle } from 'lucide-react'
-import { Input, Button } from '@/components'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { AuthShell, AuthStatus, FormError } from '@/components/auth/authUi'
+import { CheckIcon, InfoIcon } from '@/components/icons/HockiaIcons'
+import { fieldInput, fieldLabel } from '@/components/ui/fieldClasses'
+import { PASSWORD_HELP } from '@/lib/onboardingV2'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -43,17 +47,17 @@ export default function ResetPassword() {
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('The two passwords don’t match.')
       return
     }
 
     // Validate password strength
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long')
+      setError('Use at least 8 characters.')
       return
     }
     if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
-      setError('Password must include uppercase, lowercase, and a number')
+      setError('Add an uppercase letter, a lowercase letter and a number.')
       return
     }
 
@@ -73,11 +77,6 @@ export default function ResetPassword() {
       await supabase.auth.signOut({ scope: 'global' })
 
       setSuccess(true)
-
-      // Redirect to login after a short delay (user must re-authenticate)
-      setTimeout(() => {
-        navigate('/')
-      }, 2000)
     } catch (err) {
       logger.error('[RESET_PASSWORD] Error:', err)
       setError(err instanceof Error ? err.message : 'Failed to reset password')
@@ -88,128 +87,82 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 text-sm">Verifying reset link...</p>
+      <AuthShell>
+        <div className="flex flex-1 items-center justify-center" role="status">
+          <Loader2 className="h-8 w-8 animate-spin text-hockia-primary" aria-label="Checking your reset link" />
         </div>
-      </div>
+      </AuthShell>
+    )
+  }
+
+  // Rebrand page 26 · recovery: Choose a new password → Password updated, or
+  // This link has expired. After a reset every session is signed out (security),
+  // so "updated" sends the member to Log in rather than claiming they're signed in.
+  if (success) {
+    return (
+      <AuthShell>
+        <AuthStatus
+          tone="positive"
+          icon={<CheckIcon className="h-9 w-9" />}
+          title="Password updated"
+          actions={<Button block onClick={() => navigate('/signin')}>Log in</Button>}
+        >
+          For your safety you’re signed out on every device. Log in with your new password.
+        </AuthStatus>
+      </AuthShell>
+    )
+  }
+
+  if (error && !password) {
+    return (
+      <AuthShell back={{ parent: 'Log in', onBack: () => navigate('/signin') }}>
+        <AuthStatus
+          icon={<InfoIcon className="h-9 w-9" />}
+          title="This link has expired"
+          actions={
+            <>
+              <Button block onClick={() => navigate('/forgot-password')}>Send a new link</Button>
+              <Button block variant="secondary" onClick={() => navigate('/signin')}>Back to log in</Button>
+            </>
+          }
+        >
+          Reset links work once and for a limited time. Ask for a new one, it takes a few seconds.
+        </AuthStatus>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      {/* Background */}
-      <div className="absolute inset-0" aria-hidden="true">
-        <div className="h-full w-full bg-[url('/hero-desktop.webp')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-black/70" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-3xl p-6 sm:p-8 bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
-          {success ? (
-            /* Success State */
-            <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Password updated!</h3>
-              <p className="text-gray-400 mb-6">
-                Your password has been successfully reset. All sessions have been signed out for security. Redirecting you to sign in...
-              </p>
-              <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <AuthShell back={{ parent: 'Log in', onBack: () => navigate('/signin') }}>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-1 flex-col pt-2">
+        <h1 className="text-title text-ink-1">Choose a new password</h1>
+        <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Use a password you don’t use anywhere else.</p>
+        <div className="mt-6 space-y-4">
+          <div>
+            <label htmlFor="new-password" className={fieldLabel}>New password</label>
+            <div className="relative">
+              <input id="new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className={`${fieldInput} pr-12`} autoComplete="new-password" aria-describedby="new-password-help" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3">
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-          ) : error && !password ? (
-            /* Error State - Invalid/Expired Link */
-            <div className="text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-8 h-8 text-red-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Link expired</h3>
-              <p className="text-gray-400 mb-6">{error}</p>
-              <Button
-                variant="primary"
-                onClick={() => navigate('/forgot-password')}
-                className="w-full bg-gradient-to-r from-hockia-primary to-hockia-secondary"
-              >
-                Request new link
-              </Button>
+            <p id="new-password-help" className="mt-1.5 text-caption text-ink-3">{PASSWORD_HELP}</p>
+          </div>
+          <div>
+            <label htmlFor="confirm-password" className={fieldLabel}>Confirm password</label>
+            <div className="relative">
+              <input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${fieldInput} pr-12`} autoComplete="new-password" required />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'} className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3">
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-          ) : (
-            /* Form State */
-            <>
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-hockia-primary/20 flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-hockia-secondary" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Set new password</h3>
-                <p className="text-gray-400">
-                  Enter your new password below.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">New Password</label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter new password"
-                      className="!bg-white/90"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">At least 8 characters, with a lowercase letter, an uppercase letter and a number</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">Confirm Password</label>
-                  <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      className="!bg-white/90"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {error && password && (
-                  <p className="text-red-400 text-sm">{error}</p>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full min-h-[44px] bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
-                  disabled={loading}
-                >
-                  {loading ? 'Updating...' : 'Reset Password'}
-                </Button>
-              </form>
-            </>
-          )}
+          </div>
+          {error && password && <FormError>{error}</FormError>}
         </div>
-      </div>
-    </div>
+        <div className="mt-auto pt-8">
+          <Button type="submit" block loading={loading} disabled={!password || !confirmPassword}>Update password</Button>
+        </div>
+      </form>
+    </AuthShell>
   )
 }

@@ -129,7 +129,7 @@ export default function ShortlistScreen() {
       {!data.loading && !data.error && list.length === 0 && (
         <div className="px-5 py-4">
           <p className="text-row text-ink-3">
-            {chip === 'applied' ? 'No applicants shortlisted for this role yet.' : chip === 'scouted' ? 'No one scouted for this role yet.' : 'No one on this shortlist yet.'}
+            {chip === 'applied' ? 'No applicants shortlisted for this opportunity yet.' : chip === 'scouted' ? 'No one scouted for this opportunity yet.' : 'No one on this shortlist yet.'}
           </p>
           {chip !== 'applied' && (
             <button type="button" onClick={() => navigate('/dashboard/find-players')} className="mt-3 flex h-11 items-center rounded-full bg-surface-grouped px-4 text-row font-semibold text-ink-1">Find players</button>

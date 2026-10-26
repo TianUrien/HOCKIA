@@ -75,12 +75,12 @@ beforeEach(() => {
 
 // ── Home · Your week (DEV NOTE 355:910) ───────────────────────────────────
 describe('club Your week', () => {
-  it('shows to review · profile views · open roles; the role numbers open Opportunities', () => {
+  it('shows to review · profile views · open opportunities; the opportunity numbers open Opportunities', () => {
     const stats = clubWeekStats({ toReview: 3, views: 6, openRoles: 1 })
-    expect(stats.map((s) => `${s.value} ${s.label}`)).toEqual(['3 to review', '6 profile views', '1 open role'])
+    expect(stats.map((s) => `${s.value} ${s.label}`)).toEqual(['3 to review', '6 profile views', '1 open opportunity'])
     expect(stats.map((s) => s.to)).toEqual(['/opportunities', '/pulse', '/opportunities'])
     expect(stats[0].accent).toBe(true)
-    expect(clubWeekStats({ toReview: 0, views: 1, openRoles: 2 }).map((s) => s.label)).toEqual(['to review', 'profile view', 'open roles'])
+    expect(clubWeekStats({ toReview: 0, views: 1, openRoles: 2 }).map((s) => s.label)).toEqual(['to review', 'profile view', 'open opportunities'])
   })
 })
 
@@ -94,8 +94,8 @@ describe('club Inbox', () => {
   it('the amber notice counts conversations the club never wrote in, and hides at 0', () => {
     expect(inboxWaitingNotice([{ waiting: false, applied: true }])).toBeNull()
     const all = inboxWaitingNotice(Array.from({ length: 10 }, () => ({ waiting: true, applied: true })).concat([{ waiting: false, applied: true }]))
-    expect(all).toEqual({ title: '10 people waiting for a first reply', sub: 'All of them applied to your roles.' })
-    expect(inboxWaitingNotice([{ waiting: true, applied: true }, { waiting: true, applied: false }])?.sub).toBe('1 of them applied to your roles.')
+    expect(all).toEqual({ title: '10 people waiting for a first reply', sub: 'All of them applied to your opportunities.' })
+    expect(inboxWaitingNotice([{ waiting: true, applied: true }, { waiting: true, applied: false }])?.sub).toBe('1 of them applied to your opportunities.')
     expect(inboxWaitingNotice([{ waiting: true, applied: false }])).toEqual({ title: '1 person waiting for a first reply', sub: null })
   })
   it('Requests keeps the red dot for clubs too (founder 2026-09-27) — no count', () => {
@@ -107,7 +107,7 @@ describe('club Inbox', () => {
 const app = (p: Partial<ClubApplication> = {}): ClubApplication => ({ id: 'a1', opportunityId: 'r1', status: 'pending', appliedAt: '2026-09-17T10:00:00Z', updatedAt: '2026-09-17T10:00:00Z', roleTitle: 'Men’s 1st player', rolePosition: 'midfielder', ...p })
 describe('club Chat application card', () => {
   const now = new Date('2026-09-23T12:00:00Z')
-  it('names the role it applied to', () => {
+  it('names the opportunity it applied to', () => {
     expect(applicationCardTitle(app())).toBe('Applied to Midfielder · Men’s 1st player')
     expect(applicationCardTitle(app({ roleTitle: 'Midfielder' }))).toBe('Applied to Midfielder')
   })
@@ -124,7 +124,7 @@ describe('club Chat application card', () => {
     expect(pickApplication([app({ id: 'a', status: 'rejected', appliedAt: '2026-08-01' }), app({ id: 'b', status: 'no_response', appliedAt: '2026-09-01' })])?.id).toBe('b')
     expect(pickApplication([])).toBeNull()
   })
-  it('renders the card linking to the role’s Applicants', () => {
+  it('renders the card linking to the opportunity’s Applicants', () => {
     render(<MemoryRouter><ChatApplicationCard app={app({ appliedAt: new Date().toISOString() })} expiryDays={14} /></MemoryRouter>)
     const card = screen.getByTestId('chat-application-card')
     expect(card.getAttribute('href')).toBe('/dashboard/opportunities/r1/applicants')
@@ -189,7 +189,7 @@ describe('Settings — club', () => {
     expect(screen.getByText('Linked · Leinster Division 1A')).toBeInTheDocument()
     expect(screen.getByText('Contact email')).toBeInTheDocument()
     expect(screen.getByText('Private · players message you on Hockia')).toBeInTheDocument()
-    expect(screen.getByText('Your league and crest show on your roles and profile. Recruiting lives in Opportunities.')).toBeInTheDocument()
+    expect(screen.getByText('Your league and crest show on your opportunities and profile. Recruiting lives in Opportunities.')).toBeInTheDocument()
   })
   it('Contact email opens its sheet; a bad email is refused before saving', () => {
     render(withClient(<SettingsMobile section="hub" />))

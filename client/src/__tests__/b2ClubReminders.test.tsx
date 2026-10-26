@@ -180,7 +180,7 @@ describe('B2 notification kinds', () => {
     }
   })
 
-  it('route: the applicant (one) → the role’s Applicants (one role) → Opportunities; the push agrees', () => {
+  it('route: the applicant (one) → the opportunity’s Applicants (one role) → Opportunities; the push agrees', () => {
     const cases: [NotificationMetadata, string][] = [
       [{ opportunity_id: 'r1', application_id: 'a1' }, '/dashboard/opportunities/r1/applicants/a1'],
       [{ opportunity_id: 'r1' }, '/dashboard/opportunities/r1/applicants'],

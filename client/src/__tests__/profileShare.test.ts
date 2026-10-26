@@ -32,11 +32,11 @@ describe('buildProfileUrl', () => {
 
 describe('role-specific share copy', () => {
   it.each<ShareableRole>(['player', 'coach', 'umpire', 'club', 'brand'])(
-    'shareMessage(%s) embeds the URL and says HOCKIA', (role) => {
+    'shareMessage(%s) embeds the URL and says Hockia', (role) => {
       const url = `${ORIGIN}/players/janed`
       const msg = shareMessage(role, url)
       expect(msg).toContain(url)
-      expect(msg).toContain('HOCKIA')
+      expect(msg).toContain('Hockia')
     }
   )
 
@@ -53,7 +53,7 @@ describe('role-specific share copy', () => {
 
   it('shareEmail returns subject + body, with the URL in the body', () => {
     const { subject, body } = shareEmail('player', 'https://x.test/p/1')
-    expect(subject).toContain('HOCKIA')
+    expect(subject).toContain('Hockia')
     expect(body).toContain('https://x.test/p/1')
   })
 })
@@ -69,7 +69,7 @@ describe('whatsappShareUrl', () => {
     expect(wa).toContain('%20')
   })
 
-  it('encodes special characters in the role-specific message', () => {
+  it('encodes special characters in the opportunity-specific message', () => {
     // The curly apostrophe in our copy must round-trip
     const wa = whatsappShareUrl('coach', 'https://x.test/c/1')
     const decoded = decodeURIComponent(wa.split('text=')[1])

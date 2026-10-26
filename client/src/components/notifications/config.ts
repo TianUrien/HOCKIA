@@ -34,6 +34,7 @@ const removedLabel = (type: string | null): string =>
 export type NotificationRenderConfig = {
   icon: LucideIcon
   badgeText: string
+  /** Icon tile (rebrand page 19): violet for opportunities, gold for references, amber only when the recruiter must act, green for real positives, neutral otherwise. */
   accentClassName: string
   getTitle: (notification: NotificationRecord) => string
   getDescription?: (notification: NotificationRecord) => string | null
@@ -41,7 +42,7 @@ export type NotificationRenderConfig = {
 }
 
 const getActorName = (notification: NotificationRecord) =>
-  notification.actor?.fullName || notification.actor?.username || 'A HOCKIA member'
+  notification.actor?.fullName || notification.actor?.username || 'A Hockia member'
 
 const getMetadataString = (notification: NotificationRecord, key: string): string | null => {
   const value = notification.metadata?.[key]
@@ -91,12 +92,12 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'maybe':
       return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
     case 'rejected':
-      return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
+      return { title: `${club} updated your application`, body: `Not this time for ${position}.` }
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
-      const role = typedTitle ?? humanPos ?? 'The role'
-      return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying. New roles are open.` }
+      const role = typedTitle ?? humanPos ?? 'The opportunity'
+      return { title: `${club} filled the opportunity`, body: `${role} has been filled. Thanks for applying. New opportunities are open.` }
     }
     default:
       return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
@@ -161,7 +162,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   friend_request_received: {
     icon: UserPlus,
     badgeText: 'Friend request',
-    accentClassName: 'bg-indigo-50 text-indigo-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} sent you a friend request`,
     getDescription: (notification) => notification.actor?.baseLocation ?? null,
     getRoute: () => friendRequestsRoute,
@@ -169,7 +170,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   friend_request_accepted: {
     icon: UserCheck,
     badgeText: 'Friendship update',
-    accentClassName: 'bg-indigo-50 text-indigo-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} accepted your friend request`,
     getDescription: () => "You can now view each other's activity.",
     getRoute: () => friendsRoute,
@@ -240,7 +241,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_comment_like: {
     icon: Heart,
     badgeText: 'Comment like',
-    accentClassName: 'bg-rose-50 text-rose-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} liked your profile comment`,
     getDescription: () => 'Keep the conversation going!',
     getRoute: () => commentRoute,
@@ -248,7 +249,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   reference_request_received: {
     icon: Handshake,
     badgeText: 'Reference request',
-    accentClassName: 'bg-emerald-50 text-emerald-700',
+    accentClassName: 'bg-gold-soft text-gold',
     getTitle: (notification) => `${getActorName(notification)} requested a reference`,
     getDescription: (notification) => formatRelationshipType(getMetadataString(notification, 'relationship_type')) || null,
     // Reference requests are accepted/declined inside TrustedReferencesSection
@@ -260,7 +261,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   reference_request_accepted: {
     icon: ShieldCheck,
     badgeText: 'Reference accepted',
-    accentClassName: 'bg-indigo-50 text-indigo-600',
+    accentClassName: 'bg-gold-soft text-gold',
     getTitle: (notification) => `${getActorName(notification)} accepted your reference request`,
     getDescription: (notification) => getMetadataString(notification, 'endorsement_text'),
     getRoute: () => referenceAcceptedRoute,
@@ -268,7 +269,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   reference_request_rejected: {
     icon: UserX,
     badgeText: 'Reference update',
-    accentClassName: 'bg-rose-50 text-rose-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} declined your reference request`,
     getDescription: (notification) => formatRelationshipType(getMetadataString(notification, 'relationship_type')) || null,
     getRoute: () => referencesRoute,
@@ -276,7 +277,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   reference_updated: {
     icon: RefreshCcw,
     badgeText: 'Reference updated',
-    accentClassName: 'bg-indigo-50 text-indigo-600',
+    accentClassName: 'bg-gold-soft text-gold',
     getTitle: (notification) => `${getActorName(notification)} updated their reference`,
     getDescription: (notification) => getMetadataString(notification, 'endorsement_text'),
     getRoute: () => referencesRoute,
@@ -284,7 +285,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   message_received: {
     icon: MessageSquare,
     badgeText: 'Message',
-    accentClassName: 'bg-sky-50 text-sky-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => {
       const messageCount = notification.metadata?.message_count
       const count = typeof messageCount === 'number' ? messageCount : 1
@@ -299,7 +300,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   conversation_started: {
     icon: MessageSquare,
     badgeText: 'Conversation',
-    accentClassName: 'bg-sky-50 text-sky-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} started a conversation`,
     getDescription: (notification) => getMetadataString(notification, 'subject'),
     getRoute: conversationRoute,
@@ -307,7 +308,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   opportunity_published: {
     icon: Briefcase,
     badgeText: 'New opportunity',
-    accentClassName: 'bg-orange-50 text-orange-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => {
       const title = getMetadataString(notification, 'opportunity_title')
       const clubName = getMetadataString(notification, 'club_name')
@@ -330,7 +331,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   vacancy_application_received: {
     icon: Briefcase,
     badgeText: 'New applicant',
-    accentClassName: 'bg-purple-50 text-purple-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     // Producer emits 'opportunity_title' (NOT 'vacancy_title' — that key
     // belongs to vacancy_application_status), and no applicant_name: the
     // ACTOR of this notification is the applicant. Reading the wrong keys
@@ -347,7 +348,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   vacancy_application_status: {
     icon: ClipboardCheck,
     badgeText: 'Application update',
-    accentClassName: 'bg-purple-50 text-purple-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => applicationStatusCopy(notification).title,
     getDescription: (notification) => applicationStatusCopy(notification).body,
     // Recipient is the applicant, not the club, so route to the public
@@ -359,7 +360,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   applications_expired: {
     icon: Hourglass,
     badgeText: 'Application update',
-    accentClassName: 'bg-gray-100 text-gray-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     // Per-player AGGREGATE from the auto-expiry sweep (Task 3b): one
     // notification covering every application that closed that day. Copy is
     // NEUTRAL about the club (teams often answer off-platform — never blame
@@ -371,7 +372,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
         : `${count} applications are no longer active`
     },
     getDescription: () =>
-      "Applications close automatically after a while without an update on HOCKIA. It’s never a reflection on you. Fresh opportunities are open now.",
+      "Applications close automatically after a while without an update on Hockia. It’s never a reflection on you. Fresh opportunities are open now.",
     getRoute: () => '/opportunities',
   },
   // B2 · publisher reminders. The server writes the copy (first names only,
@@ -380,7 +381,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   applicant_last_call: {
     icon: Hourglass,
     badgeText: 'Last call',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-status-warning-soft text-status-warning',
     getTitle: (notification) => getMetadataString(notification, 'title') || 'Last day to answer an applicant',
     getDescription: (notification) => getMetadataString(notification, 'summary') || 'An application closes tomorrow.',
     getRoute: clubReminderRoute,
@@ -388,7 +389,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   applicants_closing_soon: {
     icon: Hourglass,
     badgeText: 'Closing soon',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-status-warning-soft text-status-warning',
     getTitle: (notification) => getMetadataString(notification, 'title') || 'Players are waiting for your answer',
     getDescription: (notification) => getMetadataString(notification, 'summary') || 'Some applications close soon.',
     getRoute: clubReminderRoute,
@@ -396,7 +397,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_completed: {
     icon: CheckCircle2,
     badgeText: 'Profile milestone',
-    accentClassName: 'bg-emerald-50 text-emerald-600',
+    accentClassName: 'bg-status-positive-soft text-status-positive',
     getTitle: () => 'Your profile is complete',
     // Role-agnostic copy. The notification fires for every role (player,
     // coach, club, brand, umpire); "so scouts can find you" implied a
@@ -407,15 +408,15 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   account_verified: {
     icon: BadgeCheck,
     badgeText: 'Account verified',
-    accentClassName: 'bg-emerald-50 text-emerald-600',
+    accentClassName: 'bg-status-positive-soft text-status-positive',
     getTitle: () => 'Your account has been verified',
-    getDescription: () => 'You now have full access to the HOCKIA platform.',
+    getDescription: () => 'You now have full access to the Hockia platform.',
     getRoute: () => '/settings',
   },
   ambassador_request_received: {
     icon: Award,
     badgeText: 'Ambassador invite',
-    accentClassName: 'bg-rose-50 text-rose-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => {
       const brandName = getMetadataString(notification, 'brand_name')
       return brandName
@@ -428,7 +429,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   ambassador_request_accepted: {
     icon: Award,
     badgeText: 'Ambassador update',
-    accentClassName: 'bg-rose-50 text-rose-600',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
     getRoute: () => '/dashboard/profile?tab=ambassadors',
@@ -467,7 +468,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   club_invitation_received: {
     icon: Users,
     badgeText: 'Club invite',
-    accentClassName: 'bg-violet-50 text-violet-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => `${getActorName(notification)} invited you to join their club`,
     getDescription: (notification) => notification.actor?.baseLocation ?? null,
     // Route to the inviting club's profile so the invitee can see who it is.
@@ -476,7 +477,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   club_invitation_accepted: {
     icon: UserCheck,
     badgeText: 'Club update',
-    accentClassName: 'bg-violet-50 text-violet-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => `${getActorName(notification)} joined your club`,
     getDescription: () => 'They now appear in your Members.',
     getRoute: () => '/dashboard/profile',
@@ -484,7 +485,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_viewed: {
     icon: Eye,
     badgeText: 'Profile views',
-    accentClassName: 'bg-purple-50 text-purple-600',
+    accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => {
       const uniqueViewers = notification.metadata?.unique_viewers
       const count = typeof uniqueViewers === 'number' ? uniqueViewers : 1
@@ -506,7 +507,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   recruiting_update: {
     icon: Handshake,
     badgeText: 'Recruiting',
-    accentClassName: 'bg-emerald-50 text-emerald-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => getMetadataString(notification, 'title') || 'Recruiting update',
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     getRoute: defaultConfig.getRoute,
@@ -514,8 +515,8 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   system_announcement: {
     icon: Megaphone,
     badgeText: 'Announcement',
-    accentClassName: 'bg-gray-100 text-gray-700',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'HOCKIA update',
+    accentClassName: 'bg-surface-grouped text-ink-2',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'Hockia update',
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     // The safety notice about a removed account is read in place when its
     // conversation is no longer listed (it would open an empty inbox).

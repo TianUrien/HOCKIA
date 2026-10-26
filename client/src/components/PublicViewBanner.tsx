@@ -47,7 +47,7 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
                   You are viewing your network profile.
                 </p>
                 <p className="text-white/80 text-xs md:text-sm leading-tight mt-0.5">
-                  This is how other HOCKIA members see you.
+                  This is how other Hockia members see you.
                 </p>
               </div>
             </div>

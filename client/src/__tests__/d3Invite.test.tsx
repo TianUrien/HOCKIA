@@ -43,9 +43,9 @@ describe('who can be invited (DEV NOTE 394:102 + ruling 2026-09-27)', () => {
 })
 
 describe('the sheet copy (D3.2)', () => {
-  it('drafts the note from the role fields and the club name only', () => {
+  it('drafts the note from the opportunity fields and the club name only', () => {
     expect(draftInviteNote({ firstName: 'Facundo', clubName: 'Kilkenny Hockey Club', role: role() })).toBe(
-      'Hi Facundo, we’re recruiting a midfielder for Kilkenny Hockey Club’s Men’s team, and your profile stood out. The role includes pay, housing, flights, insurance and a job. Would you like to apply?',
+      'Hi Facundo, we’re recruiting a midfielder for Kilkenny Hockey Club’s Men’s team, and your profile stood out. The opportunity includes pay, housing, flights, insurance and a job. Would you like to apply?',
     )
     expect(draftInviteNote({ firstName: 'Ana', clubName: 'Club X', role: role({ position: 'forward', gender: 'Women', compensation: 'unpaid', benefits: [] }) })).toBe(
       'Hi Ana, we’re recruiting a forward for Club X’s Women’s team, and your profile stood out. Would you like to apply?',
@@ -61,15 +61,15 @@ describe('the sheet copy (D3.2)', () => {
   })
   it('the footer is gender-neutral', () => {
     const footer = inviteSheetFooter('Facundo')
-    expect(footer).toBe('Facundo sees the role and your note in Inbox. If they apply, they go straight to To review, marked Invited.')
+    expect(footer).toBe('Facundo sees the opportunity and your note in Inbox. If they apply, they go straight to To review, marked Invited.')
     expect(footer).not.toMatch(/\b(he|his|him|she|her)\b/i)
   })
   it('maps the server’s refusals to what the club reads', () => {
     expect(inviteErrorMessage({ message: 'Daily invite limit reached (20 per day)' })).toBe(inviteLimitReason(20))
-    expect(inviteErrorMessage({ message: 'This person can\'t be invited to this role' })).toBe('This player can’t be invited to this role.')
+    expect(inviteErrorMessage({ message: 'This person can\'t be invited to this role' })).toBe('This player can’t be invited to this opportunity.')
     expect(inviteErrorMessage({ message: 'This player already has an open invite from you' })).toBe('This player already has an open invite from you.')
-    expect(inviteErrorMessage({ message: 'This player has already applied to one of your roles' })).toBe('This player has already applied to one of your roles.')
-    expect(inviteErrorMessage({ message: 'This player passed on this role' })).toBe('This player passed on this role.')
+    expect(inviteErrorMessage({ message: 'This player has already applied to one of your roles' })).toBe('This player has already applied to one of your opportunities.')
+    expect(inviteErrorMessage({ message: 'This player passed on this role' })).toBe('This player passed on this opportunity.')
     expect(inviteErrorMessage({ message: 'boom' })).toBe('Couldn’t send the invite. Please try again.')
   })
 })
@@ -83,10 +83,10 @@ describe('the invite card state (D3.3)', () => {
   it('applied / passed / expired / role closed', () => {
     expect(inviteCardState({ ...base, viewer: 'player', status: 'applied' }).line).toBe('Applied')
     expect(inviteCardState({ ...base, viewer: 'club', status: 'applied' }).line).toBe('Facundo applied')
-    expect(inviteCardState({ ...base, viewer: 'club', status: 'declined' }).line).toBe('Facundo passed on this role')
-    expect(inviteCardState({ ...base, viewer: 'player', status: 'declined' })).toMatchObject({ muted: true, line: 'You passed on this role' })
+    expect(inviteCardState({ ...base, viewer: 'club', status: 'declined' }).line).toBe('Facundo passed on this opportunity')
+    expect(inviteCardState({ ...base, viewer: 'player', status: 'declined' })).toMatchObject({ muted: true, line: 'You passed on this opportunity' })
     expect(inviteCardState({ ...base, viewer: 'player', status: 'sent', expiresAt: '2026-09-29T00:00:00Z' })).toMatchObject({ muted: true, actionable: false, line: 'This invitation has expired' })
-    expect(inviteCardState({ ...base, viewer: 'player', status: 'sent', roleOpen: false })).toMatchObject({ muted: true, actionable: false, line: 'This role is closed' })
+    expect(inviteCardState({ ...base, viewer: 'player', status: 'sent', roleOpen: false })).toMatchObject({ muted: true, actionable: false, line: 'This opportunity is closed' })
   })
 })
 
@@ -181,7 +181,7 @@ describe('row action (D3.1, DEV NOTE 394:98)', () => {
     rerender(<InviteAction pill="invited" invitable onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-invited').textContent).toBe('Invited')
     rerender(<InviteAction pill="passed" invitable onInvite={onInvite} />)
-    expect(screen.getByTestId('invite-pill-passed').getAttribute('aria-label')).toBe('Passed on this role')
+    expect(screen.getByTestId('invite-pill-passed').getAttribute('aria-label')).toBe('Passed on this opportunity')
     expect(screen.queryByTestId('invite-button')).toBeNull()
     rerender(<InviteAction pill={null} invitable={false} onInvite={onInvite} />)
     expect(screen.queryByTestId('invite-button')).toBeNull()
@@ -233,7 +233,7 @@ describe('Invite sheet (D3.2)', () => {
   it('the template label has no sparkle (sparkle is for real AI text only)', () => {
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
     const label = screen.getByTestId('invite-note-draft')
-    expect(label.textContent).toContain('Drafted from the role · tap to edit')
+    expect(label.textContent).toContain('Drafted from the opportunity · tap to edit')
     expect(label.querySelector('.lucide-sparkles')).toBeNull()
     expect(label.querySelector('.lucide-pencil')).not.toBeNull()
   })
@@ -242,12 +242,12 @@ describe('Invite sheet (D3.2)', () => {
     inv.declined = ['r1']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
     // The active role was passed on → said so, nothing preselected, the club picks.
-    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player. Choose another role.')
+    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player. Choose another opportunity.')
     expect(screen.getAllByTestId('invite-role')).toHaveLength(2)
     expect(screen.getAllByTestId('invite-role').every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true)
     expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)
     const passedRow = screen.getAllByTestId('invite-role').find((r) => r.getAttribute('data-passed'))!
-    expect(passedRow.textContent).toContain('Passed on this role')
+    expect(passedRow.textContent).toContain('Passed on this opportunity')
     fireEvent.click(passedRow)
     expect(screen.getAllByTestId('invite-role')).toHaveLength(2) // the passed role can't be chosen
     fireEvent.click(screen.getAllByTestId('invite-role').find((r) => !r.getAttribute('data-passed'))!)
@@ -255,10 +255,10 @@ describe('Invite sheet (D3.2)', () => {
     await waitFor(() => expect(inv.send).toHaveBeenCalledWith(expect.objectContaining({ opportunityId: 'r2' })))
   })
 
-  it('passed on every open role → nothing to send', () => {
+  it('passed on every open opportunity → nothing to send', () => {
     inv.declined = ['r1', 'r2']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
-    expect(screen.getAllByTestId('invite-role').every((r) => r.textContent?.includes('Passed on this role'))).toBe(true)
+    expect(screen.getAllByTestId('invite-role').every((r) => r.textContent?.includes('Passed on this opportunity'))).toBe(true)
     expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)
   })
 
@@ -278,7 +278,7 @@ describe('Invite sheet (D3.2)', () => {
     expect(screen.getByTestId('invite-error').textContent).toBe(inviteLimitReason(20))
   })
 
-  it('no open roles → says so; nothing to send', () => {
+  it('no open opportunities → says so; nothing to send', () => {
     inv.roles = []
     render(<InviteSheet open player={player} activeRoleId={null} onClose={vi.fn()} />)
     expect(screen.getByTestId('invite-no-roles')).toBeTruthy()
@@ -287,7 +287,7 @@ describe('Invite sheet (D3.2)', () => {
 })
 
 describe('Invitation in chat (D3.3)', () => {
-  it('player: role facts, the note, View role / Apply / Not interested — no fit, no counts', () => {
+  it('player: role facts, the note, View opportunity / Apply / Not interested — no fit, no counts', () => {
     inRouter(<InviteCard inviteId="i1" opportunityId="r1" isMine={false} fallbackText="x" />)
     expect(screen.getByText('Invitation to apply')).toBeTruthy()
     expect(screen.getByText('Midfielder · Men’s 1st player')).toBeTruthy()
@@ -319,7 +319,7 @@ describe('Invitation in chat (D3.3)', () => {
     ;(inv.card as { role: { status: string } }).role.status = 'closed'
     inRouter(<InviteCard inviteId="i1" opportunityId="r1" isMine={false} fallbackText="x" />)
     expect(screen.getByTestId('invite-card').className).toContain('border-line')
-    expect(screen.getByTestId('invite-card-status').textContent).toBe('This role is closed')
+    expect(screen.getByTestId('invite-card-status').textContent).toBe('This opportunity is closed')
     expect(screen.queryByTestId('invite-apply')).toBeNull()
   })
 

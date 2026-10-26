@@ -119,6 +119,12 @@ invariant is restated in the root `CLAUDE.md`.
   roles are rejected. Minors are never exposed to recruiting.
 - `age-gate` is the only anon-facing function for this flow and is IP
   rate-limited, fail-closed.
+- Client drafts never store DOB: the autosaved form drafts in
+  `localStorage` (set-up flows, the 3-step wizard, Edit profile, a role
+  being posted) leave out date of birth, nationalities / passports and a
+  role's category through `client/src/lib/draftPrivacy.ts`, on write and on
+  read; a restored draft takes them from the profile or asks again
+  (2026-10-25, CodeQL js/clear-text-storage-of-sensitive-data #32–#36).
 
 ### 3.6 Recruiting pipeline guards
 

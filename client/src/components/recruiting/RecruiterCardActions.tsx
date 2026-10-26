@@ -92,7 +92,7 @@ function AddFriendItem({ playerId, playerName }: { playerId: string; playerName:
       onClick={() =>
         isAuthenticated
           ? void sendRequest()
-          : addToast('Sign in with your HOCKIA profile to connect.', 'error')
+          : addToast('Sign in with your Hockia profile to connect.', 'error')
       }
       ariaLabel={`Add ${playerName} as a friend`}
     />

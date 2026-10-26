@@ -158,7 +158,7 @@ export default function HeroIdentityCard({
     if (!url) return
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: profile.full_name ?? 'HOCKIA profile', url })
+        await navigator.share({ title: profile.full_name ?? 'Hockia profile', url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -436,7 +436,7 @@ export default function HeroIdentityCard({
               {recruiterActions.invite?.pill === 'invited' || recruiterActions.invite?.pill === 'passed' ? (
                 <span
                   className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-2"
-                  aria-label={recruiterActions.invite.pill === 'passed' ? 'Passed on this role' : undefined}
+                  aria-label={recruiterActions.invite.pill === 'passed' ? 'Passed on this opportunity' : undefined}
                   data-testid={recruiterActions.invite.pill === 'passed' ? 'profile-passed-pill' : 'profile-invited-pill'}
                 >
                   {recruiterActions.invite.pill === 'passed' ? 'Passed' : 'Invited'}

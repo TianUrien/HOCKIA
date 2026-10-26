@@ -7,7 +7,10 @@
  */
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { AuthStatus, FormError } from '@/components/auth/authUi'
+import { Button } from '@/components/ui/Button'
+import { CheckIcon, StickAndBallIcon } from '@/components/icons/HockiaIcons'
+import { fieldInput, fieldLabel } from '@/components/ui/fieldClasses'
 import { SUPABASE_URL } from '@/lib/supabase'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -44,50 +47,38 @@ export default function JuniorsWaitlistPage() {
     }
   }
 
+  // Rebrand page 28 · Hockia Juniors: lockup, one field, one action.
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">HOCKIA Juniors</h1>
+    <div className="flex min-h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
+      <header className="flex h-[46px] shrink-0 items-center px-6">
+        <img src="/brand/lockup/hockia-lockup-horizontal-ink.svg" alt="Hockia" width={108} height={22} className="h-[22px] w-auto" />
+      </header>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-6">
         {phase === 'done' ? (
-          <>
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mt-6">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-            </div>
-            <p className="text-sm text-gray-600 mt-4 leading-relaxed">
-              You&apos;re on the list. The moment HOCKIA Juniors opens, you&apos;ll
-              be the first to know.
-            </p>
-          </>
+          <AuthStatus tone="positive" icon={<CheckIcon className="h-9 w-9" />} title="You’re on the list">
+            The moment Hockia Juniors opens, you’ll be the first to know.
+          </AuthStatus>
         ) : (
-          <>
-            <p className="text-sm text-gray-600 mt-4 leading-relaxed">
-              We&apos;re building a version of HOCKIA with protections designed
-              for young players. Leave your email and be first in when it opens.
-            </p>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="mt-5 w-full h-11 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent text-center"
-            />
-            {phase === 'error' && (
-              <p className="text-sm text-red-600 mt-2" role="alert">
-                Please check the email address and try again.
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={join}
-              disabled={phase === 'saving'}
-              className="mt-4 w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
-            >
-              {phase === 'saving' ? <Loader2 className="w-4 h-4 animate-spin inline" /> : 'Keep me posted'}
-            </button>
-          </>
+          <form onSubmit={(e) => { e.preventDefault(); void join() }} noValidate className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-hockia-soft text-hockia-primary" aria-hidden="true">
+                <StickAndBallIcon className="h-9 w-9" />
+              </span>
+              <h1 className="mt-8 text-title text-ink-1">Hockia Juniors</h1>
+              <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Hockia is for players 18 and over for now. Join the waitlist and we’ll email you when Juniors opens.</p>
+              <div className="mt-6 w-full text-left">
+                <label htmlFor="juniors-email" className={fieldLabel}>Email</label>
+                <input id="juniors-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={fieldInput} autoComplete="email" inputMode="email" autoCapitalize="none" required />
+                <p className="mt-1.5 text-caption text-ink-3">Only used to tell you when Juniors opens.</p>
+                {phase === 'error' && <div className="mt-3"><FormError>Please check the email address and try again.</FormError></div>}
+              </div>
+            </div>
+            <div className="pt-8">
+              <Button type="submit" block loading={phase === 'saving'}>Join the waitlist</Button>
+            </div>
+          </form>
         )}
-        <div className="mt-6 text-xs tracking-wide text-gray-400 font-semibold">HOCKIA</div>
-      </div>
+      </main>
     </div>
   )
 }

@@ -154,7 +154,7 @@ export default function FindPlayersScreen() {
             <p className="text-secondary leading-[18px] text-ink-2">
               {levelUnknown
                 ? `${ownLeague?.name} has no level on Hockia yet, so fit can’t compare levels. Players are ranked by full matches, highlights and career.`
-                : 'No role picked. Players are ranked by full matches, highlights and career. Pick a role to see fit.'}
+                : 'No opportunity picked. Players are ranked by full matches, highlights and career. Pick an opportunity to see fit.'}
             </p>
           </div>
         </div>

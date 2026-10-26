@@ -27,35 +27,35 @@ interface TierGroup {
 }
 
 const TIER_GROUPS: TierGroup[] = [
-  { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-gray-400', statuses: ['pending'] },
+  { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-ink-4', statuses: ['pending'] },
   // offer_declined is only ever a history row (respond_to_offer puts the
   // application straight back to shortlisted); listed so no status is orphaned.
-  { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted', 'offer_declined'] },
+  { key: 'shortlisted', label: 'Top pick', icon: Star, iconClass: 'text-positive', statuses: ['shortlisted', 'offer_declined'] },
   { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
-  // Past Good fit on the offer / signing road (Club v2 actions, phone only).
+  // Past Top pick on the offer / signing road (Club v2 actions, phone only).
   // Desktop stays v1 (founder ruling): shown for the record with the phone
   // road's grey tag (clubRoadTag), no status menu; tapping opens the profile.
   {
     key: 'offer-signing',
     label: 'Offer & signing',
     icon: Handshake,
-    iconClass: 'text-gray-500',
+    iconClass: 'text-ink-3',
     statuses: ['offered', 'accepted', 'signed_pending_confirmation', 'signed'],
     readOnly: true,
   },
-  { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-red-500', statuses: ['rejected'] },
+  { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-status-danger', statuses: ['rejected'] },
   // The expiry sweep flips un-triaged applications to 'no_response'. Those
   // rows are fetched and were counted in the header, but no tier rendered
   // them — so once the sweep arms, a club would read "5 applicants" above 2
   // cards. They get their own tier: still the club's applicants, just past
   // the response window.
-  { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-gray-400', statuses: ['no_response'] },
+  { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-ink-4', statuses: ['no_response'] },
   // The role was filled (by someone else or this applicant): kept visible so
   // the header count matches the cards, but closed — no status changes.
-  { key: 'filled', label: 'Role filled', icon: CheckCircle2, iconClass: 'text-gray-400', statuses: ['filled'], readOnly: true },
+  { key: 'filled', label: 'Opportunity filled', icon: CheckCircle2, iconClass: 'text-ink-4', statuses: ['filled'], readOnly: true },
   // D4 re-check (2026-10-02): the publisher can read applications the player
   // withdrew. Shown for the record, never re-decided.
-  { key: 'withdrawn', label: 'Withdrawn', icon: Undo2, iconClass: 'text-gray-400', statuses: ['withdrawn'], readOnly: true },
+  { key: 'withdrawn', label: 'Withdrawn', icon: Undo2, iconClass: 'text-ink-4', statuses: ['withdrawn'], readOnly: true },
 ]
 
 export default function ApplicantsList() {
@@ -82,7 +82,7 @@ export default function ApplicantsList() {
   // to this opportunity, which silently changed Fit chips + the
   // Community carousel everywhere — "spooky action at a distance" the
   // recruiter never asked for. The applicants list itself renders no
-  // Club Fit chip (its Good fit / Maybe / Not a fit labels are manual
+  // Club Fit chip (its Top pick / Maybe / Not a fit labels are manual
   // shortlist tiers from application.status, not context-derived), so
   // the auto-scope had no on-page effect anyway. Recruiters who DO want
   // to scope Community to an opportunity can still do it explicitly via
@@ -217,7 +217,7 @@ export default function ApplicantsList() {
                     count: 1,
                     topEndorsement: ref.endorsement_text ? {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
+                      endorserName: endorser?.full_name ?? 'Hockia Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     } : null,
@@ -227,7 +227,7 @@ export default function ApplicantsList() {
                   if (!existing.topEndorsement && ref.endorsement_text) {
                     existing.topEndorsement = {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
+                      endorserName: endorser?.full_name ?? 'Hockia Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     }
@@ -363,10 +363,10 @@ export default function ApplicantsList() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-subtle flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-hockia-primary mb-4"></div>
-          <p className="text-gray-600">Loading applicants...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-line border-t-hockia-primary mb-4"></div>
+          <p className="text-ink-2">Loading applicants...</p>
         </div>
       </div>
     )
@@ -374,11 +374,11 @@ export default function ApplicantsList() {
 
   if (error || !opportunity) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-subtle flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600 mb-6">{error || 'Opportunity not found.'}</p>
+          <h2 className="text-2xl font-bold text-ink-1 mb-2">Error</h2>
+          <p className="text-ink-2 mb-6">{error || 'Opportunity not found.'}</p>
           <button
             type="button"
             onClick={() => navigate('/dashboard/profile')}
@@ -393,28 +393,28 @@ export default function ApplicantsList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[env(safe-area-inset-top)] pb-16">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)] pb-16">
       {/* Header */}
-      <div className="bg-white/95 backdrop-blur border-b border-gray-100">
+      <div className="bg-white/95 backdrop-blur border-b border-line">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink-1"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Opportunities
           </button>
 
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold text-ink-1 sm:text-3xl">
               Applicants for {opportunity.title}
             </h1>
-            <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+            <p className="mt-2 flex items-center gap-2 text-sm text-ink-2">
               <Users className="h-4 w-4" />
               {applications.length} applicant{applications.length !== 1 ? 's' : ''}
               {filteredApplications.length !== applications.length && (
-                <span className="text-gray-400">
+                <span className="text-ink-4">
                   ({filteredApplications.length} shown)
                 </span>
               )}
@@ -425,20 +425,20 @@ export default function ApplicantsList() {
           {applications.length > 0 && (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-4" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, location, nationality..."
-                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
+                  className="w-full rounded-lg border border-line bg-white py-2 pl-9 pr-8 text-sm text-ink-1 placeholder:text-ink-4 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     aria-label="Clear search"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-2"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -449,7 +449,7 @@ export default function ApplicantsList() {
                   aria-label="Filter by position"
                   value={positionFilter}
                   onChange={(e) => setPositionFilter(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
+                  className="rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink-2 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
                 >
                   <option value="">All positions</option>
                   {availablePositions.map((pos) => (
@@ -467,22 +467,22 @@ export default function ApplicantsList() {
       {/* Content */}
       <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         {referencesUnavailable && applications.length > 0 && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mb-4 rounded-lg border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-sm text-status-warning">
             Reference data could not be loaded. Applicant references may not be shown.
           </div>
         )}
         {applications.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center">
+          <div className="rounded-2xl border border-line bg-white p-10 text-center">
             <div className="mb-4 text-5xl">📭</div>
-            <h3 className="mb-2 text-lg font-semibold text-gray-900 sm:text-xl">No Applicants Yet</h3>
-            <p className="text-sm text-gray-600 sm:text-base">
+            <h3 className="mb-2 text-lg font-semibold text-ink-1 sm:text-xl">No Applicants Yet</h3>
+            <p className="text-sm text-ink-2 sm:text-base">
               Applications will appear here once candidates start applying to this opportunity.
             </p>
           </div>
         ) : filteredApplications.length === 0 ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center">
-            <h3 className="mb-2 text-lg font-semibold text-gray-900">No matches</h3>
-            <p className="text-sm text-gray-600">
+          <div className="rounded-2xl border border-line bg-white p-10 text-center">
+            <h3 className="mb-2 text-lg font-semibold text-ink-1">No matches</h3>
+            <p className="text-sm text-ink-2">
               No applicants match your current search or filter.
             </p>
             <button
@@ -501,10 +501,10 @@ export default function ApplicantsList() {
                 <section key={group.key}>
                   <div className="mb-3 flex items-center gap-2">
                     <Icon className={`h-4 w-4 ${group.iconClass}`} />
-                    <h2 className="text-sm font-semibold text-gray-700">
+                    <h2 className="text-sm font-semibold text-ink-2">
                       {group.label}
                     </h2>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-2">
                       {group.applications.length}
                     </span>
                   </div>

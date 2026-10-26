@@ -30,7 +30,7 @@ export function RankedForControl({ kind = 'player', className }: { kind?: 'playe
   const roles = useMemo(() => {
     if (kind === 'player') return scouting.roles
     const m = new Map<string, { title: string; toReview: number }>()
-    for (const c of contexts) if (c.opportunity_id) m.set(c.opportunity_id, { title: c.label ?? 'Coaching role', toReview: 0 })
+    for (const c of contexts) if (c.opportunity_id) m.set(c.opportunity_id, { title: c.label ?? 'Coaching opportunity', toReview: 0 })
     return m
   }, [kind, scouting.roles, contexts])
 

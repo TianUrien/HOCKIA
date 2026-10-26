@@ -109,7 +109,7 @@ export default function ContactModal() {
         {/* Body */}
         <div className="p-5 pt-3">
           <p className="text-sm text-gray-600">
-            Questions before joining HOCKIA? We're happy to help — reach the team at:
+            Questions before joining Hockia? We're happy to help — reach the team at:
           </p>
 
           {/* The email itself — selectable, with an always-works Copy action. */}

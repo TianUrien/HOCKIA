@@ -95,7 +95,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
     <BottomSheet open={open} onClose={onClose} ariaLabel={`Offer to ${firstName}`}>
       <div className="overflow-y-auto px-5 pb-3 pt-1" data-testid="offer-sheet">
         <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">Offer to {firstName}</h2>
-        <p className="mt-1 text-[14px] leading-5 text-ink-2">Filled in from your role. Change anything that’s different for {firstName}.</p>
+        <p className="mt-1 text-[14px] leading-5 text-ink-2">Filled in from your opportunity. Change anything that’s different for {firstName}.</p>
 
         <div className="mt-3.5 overflow-hidden rounded-2xl bg-surface-grouped">
           <Row label="Role" value={roleLabel} open={false} testId="offer-row-role" />

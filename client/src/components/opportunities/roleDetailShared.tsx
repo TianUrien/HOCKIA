@@ -46,7 +46,7 @@ export async function shareRole(vacancy: Vacancy, title: string, addToast: (mess
     await navigator.clipboard.writeText(url)
     addToast('Link copied', 'success')
   } catch (err) {
-    if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this role', 'error')
+    if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this opportunity', 'error')
   }
 }
 

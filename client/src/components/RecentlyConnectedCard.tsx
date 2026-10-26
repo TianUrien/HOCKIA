@@ -112,7 +112,7 @@ export default function RecentlyConnectedCard({
       'References from athletes, clubs and partners appear on your profile and help the community trust your brand.',
   }
   const defaultRationale =
-    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on HOCKIA trust your background.'
+    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on Hockia trust your background.'
   const rationaleCopy = profileRole && rationaleByRole[profileRole]
     ? rationaleByRole[profileRole]
     : defaultRationale
@@ -150,7 +150,7 @@ export default function RecentlyConnectedCard({
         // FriendsTab when full_name AND username are both null). The card
         // would otherwise read "Ask HOCKIA for a reference?" — confusing
         // and unbranded. These are rare orphan profiles; better to skip.
-        if (!f.fullName || f.fullName === 'HOCKIA Member') return false
+        if (!f.fullName || f.fullName === 'Hockia Member') return false
         if (excludeIds?.has(f.id)) return false
         if (sessionDismissed.has(f.id)) return false
         if (isDismissed(ownerProfileId, f.id)) return false
@@ -262,7 +262,7 @@ export default function RecentlyConnectedCard({
             <button
               type="button"
               onClick={handleAsk}
-              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
+              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             >
               Ask to vouch
               <ArrowRight className="h-3 w-3" />

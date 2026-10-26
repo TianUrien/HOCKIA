@@ -39,7 +39,9 @@ vi.mock('@/hooks/useCountries', () => ({
   isEuCountryCode: () => false,
 }))
 vi.mock('@/hooks/useBodyScrollLock', () => ({ useBodyScrollLock: () => undefined }))
-vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
+// Phone layouts by default; `desktopWidth` turns on the ≥1024 desktop variants.
+let desktopWidth = false
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: (q: string) => (q.includes('min-width: 1024px') ? desktopWidth : true) }))
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('@/lib/analytics', () => ({ trackApplicationSubmit: vi.fn() }))
@@ -287,10 +289,10 @@ describe('Chat bubbles', () => {
     expect(el.className).toContain('rounded-card')
     expect(el.className).not.toMatch(/gradient/)
   })
-  it('incoming: grey', () => {
+  it('incoming: a white card (rebrand page 22)', () => {
     bubble(false)
     const el = screen.getByTestId('message-bubble')
-    expect(el.className).toContain('bg-surface-grouped')
+    expect(el.className).toContain('bg-white')
     expect(el.className).not.toMatch(/gradient|bg-hockia-primary/)
   })
 })
@@ -308,29 +310,29 @@ describe('My applications rows (List item / Application)', () => {
     for (const s of ['shortlisted', 'offered', 'accepted', 'signed']) expect(tone(s)).toBe('positive')
     for (const s of ['maybe', 'rejected', 'no_response', 'filled', 'withdrawn']) expect(tone(s)).toBe('grey')
     expect(applicationStatusPill('maybe', null, true).label).toBe('Replied')
-    expect(applicationStatusPill('rejected', null, true).label).toBe('Not selected')
-    expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Role closed', tone: 'grey' })
+    expect(applicationStatusPill('rejected', null, true).label).toBe('Not this time')
+    expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Opportunity closed', tone: 'grey' })
     const old = new Date(Date.now() - 16 * 86_400_000).toISOString()
     expect(applicationStatusPill('pending', old, true)).toMatchObject({ label: 'No reply · 16d', tone: 'grey' })
     for (const cls of Object.values(APPLICATION_TONE_TEXT)) expect(cls).not.toMatch(AMBER)
   })
 
-  it('Active · N | Closed · N, rows with title, "Club · Country", status words and a day-first applied date', () => {
+  it('Active · N | Archived · N, cards with title, "Club · Country", a status chip and a day-first applied date', () => {
     applications = [
       app({ id: 'a1', status: 'maybe' }),
       app({ id: 'a2', status: 'shortlisted', club: { id: 'club-2', name: 'North East H.C.', avatarUrl: null, role: 'club' }, country: 'Australia' }),
       app({ id: 'a3', status: 'rejected', active: false }),
     ]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications'))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active · 2', 'Closed · 1'])
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active · 2', 'Archived · 1'])
     const rows = screen.getAllByTestId('application-row')
     expect(rows).toHaveLength(2)
     expect(within(rows[0]).getByTestId('application-role-title')).toHaveTextContent('Forward')
     expect(within(rows[0]).getByText('Hockey Team Bologna · Italy')).toBeInTheDocument()
     const replied = within(rows[0]).getByTestId('application-status')
     expect(replied).toHaveTextContent('Replied')
-    expect(replied.className).toContain('text-ink-2')
-    expect(replied.className).not.toMatch(/positive|bg-/)
+    expect(replied.className).toContain('bg-surface-grouped text-ink-2')
+    expect(replied.className).not.toMatch(/positive/)
     expect(within(rows[0]).getByTestId('application-applied')).toHaveTextContent('Applied 4 Mar')
     expect(within(rows[0]).getByTestId('application-row-chevron')).toBeInTheDocument()
     const shortlisted = within(rows[1]).getByTestId('application-status')
@@ -339,11 +341,11 @@ describe('My applications rows (List item / Application)', () => {
     expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 
-  it('Closed: "Not selected" (never "Declined") and "Role closed", both grey', () => {
+  it('Closed: "Not this time" (never "Declined") and "Opportunity closed", both grey', () => {
     applications = [app({ id: 'a3', status: 'rejected', active: false }), app({ id: 'a4', status: 'pending', roleOpen: false, active: false })]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications?segment=closed'))
     const statuses = screen.getAllByTestId('application-status')
-    expect(statuses.map((s) => s.textContent)).toEqual(['Not selected', 'Role closed'])
+    expect(statuses.map((s) => s.textContent)).toEqual(['Not this time', 'Opportunity closed'])
     for (const s of statuses) expect(s.className).toContain('text-ink-2')
     expect(document.body.textContent).not.toMatch(/Declined/)
   })
@@ -370,6 +372,7 @@ const vacancy = {
 } as unknown as Vacancy
 
 describe('Apply sheet', () => {
+  afterEach(() => { desktopWidth = false })
   const sheet = () =>
     render(
       <MemoryRouter>
@@ -377,16 +380,18 @@ describe('Apply sheet', () => {
       </MemoryRouter>,
     )
 
-  it('eligible (O3): title + Cancel, the role card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
+  it('eligible (O3, rebrand page 20): "Apply" + Close, the opportunity card, the profile card, three Detail rows with a chevron, the note box with a counter, and the one Primary', () => {
     sheet()
     expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    expect(screen.getByTestId('apply-profile-card')).toBeInTheDocument()
     expect(screen.getByTestId('apply-role-summary')).toHaveTextContent('Hockey Team Bologna')
     const rows = screen.getAllByTestId('apply-detail-row')
     expect(rows.map((r) => r.firstElementChild?.textContent)).toEqual(['Available from', 'Passport', 'Contact'])
     for (const r of rows) expect(r.querySelector('svg')).not.toBeNull()
     expect(screen.getByPlaceholderText('Add a note to the club (optional)')).toBeInTheDocument()
-    expect(screen.getByText('0 / 600')).toBeInTheDocument()
+    expect(screen.getByText('0 / 500')).toBeInTheDocument()
+    expect(screen.getByText('Optional · max 500 characters')).toBeInTheDocument()
     const send = screen.getByTestId('send-application')
     expect(send).toHaveTextContent('Send application')
     expect(send).not.toBeDisabled()
@@ -396,8 +401,22 @@ describe('Apply sheet', () => {
     expect(screen.getByText('Your profile, career and highlights are sent automatically. Withdraw any time from Applied.')).toBeInTheDocument()
   })
 
+  it('desktop (rebrand page 27 · Web · Apply dialog): heading, profile card, optional message, Cancel + Send application; no detail rows', () => {
+    desktopWidth = true
+    sheet()
+    expect(screen.getByTestId('apply-dialog-desktop')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
+    expect(screen.getByTestId('apply-profile-card')).toBeInTheDocument()
+    expect(screen.queryAllByTestId('apply-detail-row')).toHaveLength(0)
+    expect(screen.getByText('Max 500 characters')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    const send = screen.getByTestId('send-application')
+    expect(send).toHaveTextContent('Send application')
+    expect(send).not.toBeDisabled()
+  })
+
   it('not eligible: a NEUTRAL callout with an info icon (never amber), Secondary "Message the club", Primary disabled', () => {
-    eligibility = { eligible: false, reason: 'This role requires an EU passport.' }
+    eligibility = { eligible: false, reason: 'This opportunity requires an EU passport.' }
     sheet()
     const callout = screen.getByTestId('apply-not-eligible')
     expect(callout.className).toContain('bg-surface-muted')
@@ -423,14 +442,18 @@ describe('Application sent', () => {
       </MemoryRouter>,
     )
 
-  it('O3b: green check, "Application sent", the role card, Primary Done and a "View in Applied" link', () => {
+  it('O3b (rebrand page 20): green check, "Application sent", What happens next, Primary "View my applications", Secondary back', () => {
     sent()
     expect(screen.getByRole('heading', { name: 'Application sent' })).toBeInTheDocument()
     expect(screen.getByText('Hockey Team Bologna has your profile, career and highlights. Their answer arrives in your Inbox.')).toBeInTheDocument()
-    const done = screen.getByTestId('application-sent-done')
-    expect(done.className).toContain('bg-hockia-primary')
-    const follow = screen.getByRole('button', { name: 'View in Applied' })
-    expect(follow.className).not.toContain('bg-hockia-primary')
+    expect(screen.getByTestId('what-happens-next')).toHaveTextContent('You get an answer')
+    expect(screen.getByTestId('what-happens-next').textContent).not.toMatch(/within|days/i)
+    const view = screen.getByTestId('application-sent-view')
+    expect(view).toHaveTextContent('View my applications')
+    expect(view.className).toContain('bg-hockia-primary')
+    const back = screen.getByTestId('application-sent-done')
+    expect(back).toHaveTextContent(/^Back to/)
+    expect(back.className).not.toContain('bg-hockia-primary')
     expect(document.body.innerHTML).not.toMatch(AMBER)
   })
 

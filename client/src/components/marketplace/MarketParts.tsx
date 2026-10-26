@@ -198,7 +198,7 @@ export function SuggestBrandSheet({ open, countryId, onClose }: { open: boolean;
     <BottomSheet open={open} onClose={onClose} ariaLabel="Suggest a brand">
       <div className="space-y-3 px-5 pb-3" data-testid="suggest-brand-sheet">
         <h2 className="text-title text-ink-1">Suggest a brand</h2>
-        <p className="text-row text-ink-2">Tell us who should be here. Only the HOCKIA team sees this.</p>
+        <p className="text-row text-ink-2">Tell us who should be here. Only the Hockia team sees this.</p>
         <input value={name} onChange={(e) => { setName(e.target.value.slice(0, 80)); setMissing(false) }} placeholder="Brand or service name" aria-label="Brand or service name" aria-invalid={missing || undefined} aria-describedby={missing ? 'suggest-brand-name-hint' : undefined} className={fieldInput} data-testid="suggest-brand-name" />
         {missing ? <p id="suggest-brand-name-hint" role="alert" className="-mt-1 text-row text-ink-2">Add a brand or service name</p> : null}
         <input value={link} onChange={(e) => setLink(e.target.value.slice(0, 300))} placeholder="Website (optional)" aria-label="Website" inputMode="url" autoCapitalize="none" className={fieldInput} />

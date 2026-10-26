@@ -63,7 +63,7 @@ export default function OpportunityResultsResponse({
               onClick={() => setExpanded(e => !e)}
               className="mt-1 flex h-11 w-full items-center justify-center rounded-[12px] text-secondary font-semibold text-hockia-primary"
             >
-              {expanded ? 'Show fewer' : `Show all ${opportunities.length} roles`}
+              {expanded ? 'Show fewer' : `Show all ${opportunities.length} opportunities`}
             </button>
           )}
         </div>

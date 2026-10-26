@@ -9,6 +9,7 @@
  * locks the role. Nothing here is the only place a rule exists.
  */
 import { isAdultByDob } from '@/lib/openToPlay'
+import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
 
 export type OnboardingRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -64,7 +65,7 @@ export const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forwar
 export type PlayerPosition = (typeof PLAYER_POSITIONS)[number]
 
 export const PHOTO_HELPER = 'A real match photo gets more profile views.'
-export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about roles.'
+export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about opportunities.'
 /** Under 18: the switch is not offered and the copy promises nothing
  *  about being suggested — suggestions are 18+ AND open, server-side. */
 // Ruling 2026-10-16: the 18+ gate stays; juniors get the waitlist only (an
@@ -138,7 +139,7 @@ export function parseWizardDraft(raw: string | null, now: number = Date.now()): 
     }
     const step = parsed.step === 1 || parsed.step === 2 || parsed.step === 3 ? parsed.step : null
     const formData = parsed.formData && typeof parsed.formData === 'object' && !Array.isArray(parsed.formData)
-      ? (parsed.formData as Record<string, unknown>)
+      ? withoutSensitiveDraftFields(parsed.formData as Record<string, unknown>)
       : null
     return { step, formData }
   } catch {
@@ -146,9 +147,9 @@ export function parseWizardDraft(raw: string | null, now: number = Date.now()): 
   }
 }
 
-/** Serialises a wizard draft for storage. */
+/** Serialises a wizard draft for storage, without personal details (see draftPrivacy). */
 export function serializeWizardDraft(step: WizardDraftStep, formData: Record<string, unknown>, now: number = Date.now()): string {
-  return JSON.stringify({ step, formData, savedAt: new Date(now).toISOString() })
+  return JSON.stringify({ step, formData: withoutSensitiveDraftFields(formData), savedAt: new Date(now).toISOString() })
 }
 
 // ── Set up (coaches) ─────────────────────────────────────────────────────────
@@ -161,11 +162,11 @@ export const COACH_PHOTO_HELPER = 'A clear coaching photo gets more views.'
 export const COACH_STEP2_SUBTITLE = 'Step 2 of 2 · clubs filter coaches by these.'
 export const COACH_CATEGORIES_HINT = 'Pick every category you coach.'
 export const COACH_RECRUIT_QUESTION = 'Do you recruit players for a team?'
-export const COACH_RECRUIT_HINT = 'Yes adds My roles and Find players to your app. You can change this in Settings.'
+export const COACH_RECRUIT_HINT = 'Yes adds My opportunities and Find players to your app. You can change this in Settings.'
 export const OPEN_TO_COACH_HELPER = 'Clubs can see you’re available and message you.'
 
 export const COACH_RECRUIT_OPTIONS: ReadonlyArray<{ value: boolean; title: string; detail: string }> = [
-  { value: true, title: 'Yes, I recruit for my team', detail: 'Post roles and review applicants for your club.' },
+  { value: true, title: 'Yes, I recruit for my team', detail: 'Post opportunities and review applicants for your club.' },
   { value: false, title: 'Not right now', detail: 'Use Hockia for your own coaching career.' },
 ]
 
@@ -257,7 +258,8 @@ export interface CoachSetupDraft {
  * Reads a stored coach draft. Accepts the v2 shape `{ draft, savedAt }` and
  * migrates the 3-step wizard's `{ step, formData, savedAt }` (field names of
  * the old CompleteProfile form). The old wizard preselected "Not right now",
- * so only an explicit `true` survives as an answer. Null when missing,
+ * so only an explicit `true` survives as an answer. Date of birth and
+ * nationalities are never restored (see draftPrivacy). Null when missing,
  * unreadable or older than WIZARD_DRAFT_MAX_AGE_DAYS. Pure.
  */
 export function parseCoachDraft(raw: string | null, now: number = Date.now()): Partial<CoachSetupDraft> | null {
@@ -270,16 +272,13 @@ export function parseCoachDraft(raw: string | null, now: number = Date.now()): P
       if (Number.isFinite(ageDays) && ageDays > WIZARD_DRAFT_MAX_AGE_DAYS) return null
     }
     const isObj = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === 'object' && !Array.isArray(v)
-    if (isObj(parsed.draft)) return parsed.draft as Partial<CoachSetupDraft>
+    if (isObj(parsed.draft)) return withoutSensitiveDraftFields(parsed.draft as Partial<CoachSetupDraft>)
     if (!isObj(parsed.formData)) return null
     const f = parsed.formData
     const out: Partial<CoachSetupDraft> = {}
     const str = (k: string) => (typeof f[k] === 'string' ? (f[k] as string) : undefined)
     const num = (k: string) => (typeof f[k] === 'number' ? (f[k] as number) : undefined)
     if (str('fullName') !== undefined) out.fullName = str('fullName')
-    if (str('dateOfBirth') !== undefined) out.dateOfBirth = str('dateOfBirth')
-    if (num('nationalityCountryId') !== undefined) out.nationalityCountryId = num('nationalityCountryId')
-    if (num('nationality2CountryId') !== undefined) out.nationality2CountryId = num('nationality2CountryId')
     if (str('city') !== undefined) out.location = str('city')
     if (str('baseCity') !== undefined) out.baseCity = str('baseCity')
     if (num('baseCountryId') !== undefined) out.baseCountryId = num('baseCountryId')
@@ -296,7 +295,7 @@ export function parseCoachDraft(raw: string | null, now: number = Date.now()): P
   }
 }
 
-/** Serialises a coach draft (v2 shape, same as the player's). */
+/** Serialises a coach draft (v2 shape, same as the player's), without personal details. */
 export function serializeCoachDraft(draft: CoachSetupDraft, now: number = Date.now()): string {
-  return JSON.stringify({ draft, savedAt: new Date(now).toISOString() })
+  return JSON.stringify({ draft: withoutSensitiveDraftFields(draft), savedAt: new Date(now).toISOString() })
 }

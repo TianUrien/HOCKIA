@@ -100,7 +100,7 @@ export function AdminDirectory() {
   }, [searchQuery, roleFilter, statusFilter, testFilter, zeroActivityFilter, page])
 
   useEffect(() => {
-    document.title = 'User Directory | HOCKIA Admin'
+    document.title = 'User Directory | Hockia Admin'
     fetchProfiles()
   }, [fetchProfiles])
 

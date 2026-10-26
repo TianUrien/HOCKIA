@@ -47,13 +47,13 @@ export default function WelcomeValueCard() {
     <div
       className="relative flex items-start gap-3 rounded-2xl border border-hockia-primary/15 bg-gradient-to-br from-hockia-primary/5 via-white to-hockia-secondary/5 px-4 py-3 sm:px-5 sm:py-4"
       role="region"
-      aria-label="Welcome to HOCKIA"
+      aria-label="Welcome to Hockia"
     >
       <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10 text-hockia-primary">
         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1 pr-6">
-        <p className="text-sm font-semibold text-gray-900">Welcome to HOCKIA</p>
+        <p className="text-sm font-semibold text-gray-900">Welcome to Hockia</p>
         <p className="mt-0.5 text-sm text-gray-600">
           Build your hockey profile, get discovered by clubs and coaches, and share your profile externally.
         </p>

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.inhockia.app',
-  appName: 'HOCKIA',
+  appName: 'Hockia',
   webDir: 'dist',
   // Capacitor's default WebView origin on Android is https://localhost.
   // Google Places (and any other HTTP-referrer-restricted API key) rejects
@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
     // WebView canvas before the first web paint = the launch artwork's bottom
     // colour, so the hand-off from the native splash can never flash white.
     // Once the page paints, html/body (white in the app) cover it.
-    backgroundColor: '#7b39ec',
+    backgroundColor: '#fbfafd',
   },
   ios: {
     scheme: 'HOCKIA',
@@ -40,11 +40,12 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     // WKWebView + scroll-view colour before the first web paint. Was #ffffff,
     // which is what showed in the home-indicator band under the launch
-    // artwork. Now the artwork's bottom colour (#7b39ec, its last pixel row).
+    // artwork. Now the launch canvas (#fbfafd, rebrand 2026-10-25; was the violet
+    // artwork's bottom row, #7b39ec).
     // After the page paints, WebKit repaints the scroll view with the
     // document's own background (white in the app; violet while the in-app
     // splash holds the launch canvas — src/lib/launchSplash.ts).
-    backgroundColor: '#7b39ec',
+    backgroundColor: '#fbfafd',
     preferredContentMode: 'mobile',
   },
   plugins: {
@@ -55,7 +56,7 @@ const config: CapacitorConfig = {
       // same artwork so the hand-off is invisible.
       launchAutoHide: false,
       launchFadeOutDuration: 0,
-      backgroundColor: '#5929a8',
+      backgroundColor: '#fbfafd',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,

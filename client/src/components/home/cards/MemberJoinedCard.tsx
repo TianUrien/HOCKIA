@@ -27,7 +27,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
         createdAt={item.created_at}
         profilePath={profilePath}
       />
-      <FeedCardCaption icon={<UserPlus />}>Joined HOCKIA</FeedCardCaption>
+      <FeedCardCaption icon={<UserPlus />}>Joined Hockia</FeedCardCaption>
 
       {hasDetails && (
         <FeedCardBody>

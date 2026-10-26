@@ -23,6 +23,8 @@ import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLo
 import { assessPostingQuality } from '@/lib/opportunityQuality'
 import { deadlineBounds, deadlineError } from '@/lib/roleLifecycle'
 import { requestPushAsk } from '@/lib/pushAsk'
+import { withoutRoleCategory } from '@/lib/draftPrivacy'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -65,12 +67,6 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   opportunity_type: vacancy?.opportunity_type || initialOpportunityType || 'player',
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
-  // A legacy youth PLAYER role opens with no category (under-18s are never
-  // recruitable), so saving asks for an adult one. Coach roles keep theirs
-  // (Boys/Girls included); a legacy coach role with none is asked for one.
-  gender: ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
-    ? playerRoleGender(vacancy?.gender)
-    : vacancy?.gender) || undefined,
   description: vacancy?.description || '',
   location_city: vacancy?.location_city || '',
   location_country: vacancy?.location_country || '',
@@ -103,6 +99,19 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   availability_required: (vacancy as Record<string, unknown>)?.availability_required === true,
   specialists_required: (vacancy as Record<string, unknown>)?.specialists_required === true,
 })
+
+/**
+ * The role's category (gender), kept in its own state rather than formData so
+ * the autosaved draft never holds it (see draftPrivacy; CodeQL
+ * js/clear-text-storage-of-sensitive-data #32). A restored draft asks again.
+ * A legacy youth PLAYER role opens with no category (under-18s are never
+ * recruitable), so saving asks for an adult one. Coach roles keep theirs
+ * (Boys/Girls included); a legacy coach role with none is asked for one.
+ */
+const buildInitialRoleCategory = (vacancy?: Vacancy | null, initialOpportunityType?: 'player' | 'coach'): string | undefined =>
+  ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
+    ? playerRoleGender(vacancy?.gender)
+    : vacancy?.gender) || undefined
 
 const getVacancyDraftKey = (profileId: string) => `vacancyDraft:new:${profileId}`
 
@@ -161,13 +170,11 @@ function MustNiceToggle({
         aria-describedby={error ? errorId : undefined}
         onClick={() => onChange(!checked)}
         className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-1.5 text-xs font-medium transition-colors ${
-          checked ? 'text-emerald-700' : 'text-gray-500'
+          checked ? 'text-ink-1' : 'text-ink-3'
         }`}
       >
         <span
-          className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
-            checked ? 'bg-emerald-600' : 'bg-gray-300'
-          }`}
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${switchTrackClass(checked)}`}
         >
           <span
             className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
@@ -178,7 +185,7 @@ function MustNiceToggle({
         <span>{checked ? 'Must have' : 'Nice to have'}</span>
       </button>
       {error && (
-        <p id={errorId} className="mt-0.5 text-xs text-red-600">
+        <p id={errorId} className="mt-0.5 text-xs text-status-danger">
           {error}
         </p>
       )}
@@ -203,6 +210,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const { addToast } = useToastStore()
 
   const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(seedVacancy, initialOpportunityType))
+  const [roleCategory, setRoleCategory] = useState<string | undefined>(buildInitialRoleCategory(seedVacancy, initialOpportunityType))
 
   // Live posting-strength assessment (Market Phase 3) — recomputes as the
   // club fills the form; nudge only, never blocks publishing.
@@ -319,8 +327,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
           const base = buildInitialFormData(null, initialOpportunityType)
-          const restored = { ...base, ...(parsed.formData || {}) }
+          const restored = { ...base, ...withoutRoleCategory(parsed.formData || {}) }
           setFormData(restored)
+          setRoleCategory(undefined)
           setNewRequirement(parsed.newRequirement ?? '')
           setNewCustomBenefit(parsed.newCustomBenefit ?? '')
           // Restore location autocomplete state from draft
@@ -344,6 +353,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       initial.organization_name = profile.current_club
     }
     setFormData(initial)
+    setRoleCategory(buildInitialRoleCategory(seedVacancy, initialOpportunityType))
   }, [addToast, editingVacancy, templateVacancy, seedVacancy, initialOpportunityType, isOpen, profile, user])
 
   useBodyScrollLock(isOpen)
@@ -429,7 +439,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
     setIsDirty(true)
-    setFormData(prev => {
+    if (field === 'gender') setRoleCategory(value)
+    // Back to a player role: a youth team isn't valid there (DB CHECK
+    // opportunities_player_role_not_youth), so it clears; adult teams stay.
+    if (field === 'opportunity_type' && value === 'player') setRoleCategory((prev) => playerRoleGender(prev) || undefined)
+    if (field !== 'gender') setFormData(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'opportunity_type' && value === 'coach') {
         next.position = undefined  // reset — coach has different position options
@@ -447,11 +461,6 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
       // Increment #3 — drop GK-only tags (Sweeper Keeper) when the position
       // moves away from goalkeeper, so a gated tag can't leak via stale state.
-      // Back to a player role: a youth team isn't valid there (DB CHECK
-      // opportunities_player_role_not_youth), so it clears; adult teams stay.
-      if (field === 'opportunity_type' && value === 'player') {
-        next.gender = playerRoleGender(prev.gender) || undefined
-      }
       if (field === 'position') {
         next.specialist_skills_wanted = pruneSpecialistSkillsForPosition(prev.specialist_skills_wanted, value)
       }
@@ -522,9 +531,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     // role (founder ruling 2026-09-26), adult-only for player roles.
     if (formData.opportunity_type === 'player') {
       if (!formData.position) newErrors.position = 'Position is required'
-      if (!formData.gender) newErrors.gender = 'Category is required'
-      else if (isYouthGender(formData.gender)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
-    } else if (!formData.gender) {
+      if (!roleCategory) newErrors.gender = 'Category is required'
+      else if (isYouthGender(roleCategory)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
+    } else if (!roleCategory) {
       newErrors.gender = 'Category is required'
     }
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
@@ -592,7 +601,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         opportunity_type: formData.opportunity_type || 'player',
         title: formData.title!,
         position: formData.position || null,
-        gender: formData.gender || null,
+        gender: roleCategory || null,
         description: formData.description || null,
         location_city: formData.location_city!,
         location_country: formData.location_country!,
@@ -694,20 +703,20 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         tabIndex={-1}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-line">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-gray-700" />
+            <div className="w-10 h-10 bg-surface-muted rounded-lg flex items-center justify-center">
+              <Briefcase className="w-5 h-5 text-ink-2" />
             </div>
             <div>
-              <h2 id={titleId} className="text-xl font-bold text-gray-900">
+              <h2 id={titleId} className="text-xl font-bold text-ink-1">
                 {editingVacancy ? 'Edit opportunity' : templateVacancy ? 'Post again' : 'Create new opportunity'}
               </h2>
-              <p id={subtitleId} className="text-sm text-gray-600">
+              <p id={subtitleId} className="text-sm text-ink-2">
                 {editingVacancy 
                   ? 'Update your opportunity details' 
                   : templateVacancy
-                    ? 'A new role with the same details. Dates and applicants start fresh.'
+                    ? 'A new opportunity with the same details. Dates and applicants start fresh.'
                   : formData.opportunity_type === 'player'
                     ? 'Create a new player position opportunity'
                     : 'Create a new coaching position opportunity'
@@ -720,10 +729,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             type="button"
             onClick={handleClose}
             disabled={isLoading}
-            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center hover:bg-surface-muted rounded-lg transition-colors disabled:opacity-50"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-ink-3" />
           </button>
         </div>
 
@@ -732,32 +741,32 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           {submitError && (
             <div
               role="alert"
-              className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+              className="flex items-start gap-3 rounded-lg border border-status-danger/30 bg-status-danger-soft p-3 text-sm text-status-danger"
             >
-              <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" aria-hidden="true" />
+              <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-status-danger" aria-hidden="true" />
               <span>{submitError}</span>
             </div>
           )}
           {/* Basic Information */}
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Briefcase className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-semibold text-gray-900">Basic information</h3>
+              <Briefcase className="w-5 h-5 text-ink-2" />
+              <h3 className="text-lg font-semibold text-ink-1">Basic information</h3>
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Opportunity Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTypeFieldId}>
-                    Opportunity type <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={opportunityTypeFieldId}>
+                    Opportunity type <span className="text-status-danger">*</span>
                   </label>
                   <select
                     id={opportunityTypeFieldId}
                     ref={opportunityTypeRef}
                     value={formData.opportunity_type}
                     onChange={(e) => handleInputChange('opportunity_type', e.target.value as 'player' | 'coach')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     title="Opportunity type"
                   >
                     <option value="player">Player position</option>
@@ -767,14 +776,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
                 {/* Priority Level */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={priorityFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={priorityFieldId}>
                     Priority level
                   </label>
                   <select
                     id={priorityFieldId}
                     value={formData.priority || ''}
                     onChange={(e) => handleInputChange('priority', e.target.value as 'low' | 'medium' | 'high')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     title="Priority level"
                   >
                     <option value="low">Low</option>
@@ -786,8 +795,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
               {/* Opportunity Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={opportunityTitleFieldId}>
-                  Opportunity title <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={opportunityTitleFieldId}>
+                  Opportunity title <span className="text-status-danger">*</span>
                 </label>
                 <input
                   id={opportunityTitleFieldId}
@@ -797,8 +806,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   maxLength={TITLE_MAX}
-                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
-                    errors.title ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent ${
+                    errors.title ? 'border-status-danger' : 'border-line'
                   }`}
                   placeholder={
                     formData.opportunity_type === 'player'
@@ -812,9 +821,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 />
                 <div className="mt-1 flex items-start justify-between gap-3">
                   {errors.title
-                    ? <p id={titleErrorId} className="text-sm text-red-600">{errors.title}</p>
+                    ? <p id={titleErrorId} className="text-sm text-status-danger">{errors.title}</p>
                     : <span />}
-                  <span className="flex-shrink-0 text-xs text-gray-400">
+                  <span className="flex-shrink-0 text-xs text-ink-4">
                     {(formData.title || '').length}/{TITLE_MAX}
                   </span>
                 </div>
@@ -823,7 +832,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               {/* Organization Name - shown for coaches, optional for clubs */}
               {profile?.role === 'coach' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={organizationNameFieldId}>
+                <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={organizationNameFieldId}>
                   Organization / On behalf of
                 </label>
                 <input
@@ -831,12 +840,12 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   type="text"
                   value={formData.organization_name ?? ''}
                   onChange={(e) => handleInputChange('organization_name', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="e.g., Melbourne Hockey Club, Youth Academy"
                   autoCapitalize="words"
                   inputMode="text"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-ink-3">
                   The club, academy, or organization this opportunity is for. Shown on the card so applicants know who is hiring.
                 </p>
               </div>
@@ -846,16 +855,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 animate-in fade-in duration-200">
                 {/* Position */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position {formData.opportunity_type === 'player' && <span className="text-red-500">*</span>}
+                  <label className="block text-sm font-medium text-ink-2 mb-2">
+                    Position {formData.opportunity_type === 'player' && <span className="text-status-danger">*</span>}
                   </label>
                   <select
                     value={formData.position || ''}
                     onChange={(e) => handleInputChange('position', e.target.value || undefined)}
                     aria-required={formData.opportunity_type === 'player' ? 'true' : undefined}
                     aria-invalid={errors.position ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
-                      errors.position ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white ${
+                      errors.position ? 'border-status-danger' : 'border-line'
                     }`}
                     title="Position"
                   >
@@ -875,7 +884,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       </>
                     )}
                   </select>
-                  {errors.position && <p className="mt-1 text-sm text-red-600">{errors.position}</p>}
+                  {errors.position && <p className="mt-1 text-sm text-status-danger">{errors.position}</p>}
                   {formData.opportunity_type === 'player' && (
                     <MustNiceToggle
                       criterionLabel="position"
@@ -887,18 +896,18 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
                 {/* Category (team) — every role; Boys/Girls on coach roles only */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-ink-2 mb-2">
+                    Category <span className="text-status-danger">*</span>
                   </label>
                   <select
-                    value={formData.gender || ''}
+                    value={roleCategory || ''}
                     onChange={(e) =>
                       handleInputChange('gender', e.target.value || undefined)
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white ${
-                      errors.gender ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white ${
+                      errors.gender ? 'border-status-danger' : 'border-line'
                     }`}
                     title="Category"
                   >
@@ -917,9 +926,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       </>
                     )}
                   </select>
-                  {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}
+                  {errors.gender && <p className="mt-1 text-sm text-status-danger">{errors.gender}</p>}
                   {formData.opportunity_type !== 'player' && !errors.gender && (
-                    <p className="mt-1 text-xs text-gray-500">{COACH_TEAM_HINT}</p>
+                    <p className="mt-1 text-xs text-ink-3">{COACH_TEAM_HINT}</p>
                   )}
                 </div>
               </div>
@@ -947,15 +956,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               {/* Recruiter intent (Matching Increment #4) — player opps only.
                   Kept simple: clarify intent, not fill an HR form. */}
               {formData.opportunity_type === 'player' && (
-                <div className="space-y-4 rounded-lg border border-gray-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">What you're looking for</p>
+                <div className="space-y-4 rounded-lg border border-line p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-4">What you're looking for</p>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">What are you solving this season?</label>
+                    <label className="block text-sm font-medium text-ink-2 mb-1.5">What are you solving this season?</label>
                     <select
                       value={formData.recruitment_problem || ''}
                       onChange={(e) => handleInputChange('recruitment_problem', e.target.value || undefined)}
                       aria-label="Recruitment problem"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                      className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                     >
                       <option value="">Optional</option>
                       {RECRUITMENT_PROBLEM_OPTIONS.map((o) => (
@@ -965,12 +974,12 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Level sought</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Level sought</label>
                       <select
                         value={formData.level_sought || ''}
                         onChange={(e) => handleInputChange('level_sought', e.target.value || undefined)}
                         aria-label="Level sought"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {LEVEL_SOUGHT_OPTIONS.map((o) => (
@@ -985,12 +994,12 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Compensation</label>
+                      <label className="block text-sm font-medium text-ink-2 mb-1.5">Compensation</label>
                       <select
                         value={formData.compensation || ''}
                         onChange={(e) => handleInputChange('compensation', e.target.value || undefined)}
                         aria-label="Compensation"
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent bg-white"
+                        className="w-full px-3 py-3 border border-line rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent bg-white"
                       >
                         <option value="">Select</option>
                         {COMPENSATION_OPTIONS.map((o) => (
@@ -1005,13 +1014,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400">Level pre-fills from your club’s level. Change it if you’re recruiting above or below. Mark any criterion “Must have” to require it. Players who miss it read as “Outside your context”.</p>
+                  <p className="text-[11px] text-ink-4">Level pre-fills from your club’s level. Change it if you’re recruiting above or below. Mark any criterion “Must have” to require it. Players who miss it read as “Outside your context”.</p>
                 </div>
               )}
 
               {/* Description */}
               <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={descriptionFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={descriptionFieldId}>
                   Description
                 </label>
                 <textarea
@@ -1020,14 +1029,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
                   maxLength={DESCRIPTION_MAX}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent resize-none"
                   placeholder={
                     formData.opportunity_type === 'player'
                       ? "Describe the player opportunity, training environment, and development pathway..."
-                      : "Describe the coaching role, responsibilities, and team environment..."
+                      : "Describe the coaching opportunity, responsibilities, and team environment..."
                   }
                 />
-                <div className="mt-1 text-right text-xs text-gray-400">
+                <div className="mt-1 text-right text-xs text-ink-4">
                   {(formData.description || '').length}/{DESCRIPTION_MAX}
                 </div>
               </div>
@@ -1035,10 +1044,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
 
           {/* Location & Timeline */}
-          <section className="border-t border-gray-200 pt-6">
+          <section className="border-t border-line pt-6">
             <div className="flex items-center gap-2 mb-4">
-              <GlobeIcon className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-semibold text-gray-900">Location & Timeline</h3>
+              <GlobeIcon className="w-5 h-5 text-ink-2" />
+              <h3 className="text-lg font-semibold text-ink-1">Location & Timeline</h3>
             </div>
 
             <div className="space-y-4">
@@ -1076,7 +1085,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Start Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={startDateFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={startDateFieldId}>
                     Start date
                   </label>
                   <input
@@ -1084,7 +1093,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="date"
                     value={formData.start_date || ''}
                     onChange={(e) => handleInputChange('start_date', e.target.value || null)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   />
                   {formData.opportunity_type === 'player' && (
                     <MustNiceToggle
@@ -1098,7 +1107,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
                 {/* Duration */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={durationFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={durationFieldId}>
                     Duration
                   </label>
                   <input
@@ -1106,7 +1115,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="text"
                     value={formData.duration_text || ''}
                     onChange={(e) => handleInputChange('duration_text', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="e.g., 12 months"
                   />
                 </div>
@@ -1115,8 +1124,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
 
           {/* Requirements */}
-          <section className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h3>
+          <section className="border-t border-line pt-6">
+            <h3 className="text-lg font-semibold text-ink-1 mb-4">Requirements</h3>
 
             {/* EU Passport toggle */}
             <button
@@ -1124,25 +1133,25 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               onClick={() => handleInputChange('eu_passport_required', !formData.eu_passport_required)}
               className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors mb-4 ${
                 formData.eu_passport_required
-                  ? 'bg-blue-50 border-blue-300 text-blue-800'
-                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'
+                  ? 'bg-hockia-soft border-brand-primary text-brand-text'
+                  : 'bg-surface-subtle border-line text-ink-3 hover:border-line'
               }`}
             >
-              <Flag className={`w-5 h-5 flex-shrink-0 ${formData.eu_passport_required ? 'text-blue-600' : 'text-gray-400'}`} />
+              <Flag className={`w-5 h-5 flex-shrink-0 ${formData.eu_passport_required ? 'text-brand-primary' : 'text-ink-4'}`} />
               <span className="flex-1 text-left text-sm font-medium">EU Passport Required</span>
-              <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${formData.eu_passport_required ? 'bg-blue-600' : 'bg-gray-300'}`}>
+              <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${switchTrackClass(formData.eu_passport_required)}`}>
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${formData.eu_passport_required ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
               </div>
             </button>
 
             <div className="space-y-3">
               {(formData.requirements || []).map((req: string, index: number) => (
-                <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <span className="flex-1 text-sm text-gray-700">{req}</span>
+                <div key={index} className="flex items-center gap-2 p-3 bg-surface-subtle rounded-lg">
+                  <span className="flex-1 text-sm text-ink-2">{req}</span>
                   <button
                     type="button"
                     onClick={() => removeRequirement(index)}
-                    className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-red-600 transition-colors"
+                    className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-ink-4 hover:text-status-danger transition-colors"
                     aria-label="Remove requirement"
                   >
                     <X className="w-4 h-4" />
@@ -1151,7 +1160,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               ))}
               
               {(!formData.requirements || formData.requirements.length === 0) && (
-                <p className="text-sm text-gray-500 italic py-2">
+                <p className="text-sm text-ink-3 italic py-2">
                   {formData.opportunity_type === 'player'
                     ? "e.g., Minimum 3 years competitive experience, U18 age group"
                     : "e.g., UEFA B coaching license, 5+ years coaching experience"
@@ -1169,13 +1178,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="Add a requirement..."
                 />
                 <button
                   type="button"
                   onClick={addRequirement}
-                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
+                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-line rounded-lg hover:bg-surface-subtle transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add requirement
@@ -1185,8 +1194,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
 
           {/* Benefits Package */}
-          <section className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Benefits package</h3>
+          <section className="border-t border-line pt-6">
+            <h3 className="text-lg font-semibold text-ink-1 mb-4">Benefits package</h3>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
               {BENEFIT_OPTIONS.map((benefit) => {
@@ -1200,18 +1209,18 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onClick={() => toggleBenefit(benefit.id)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       isSelected
-                        ? 'border-[#10b981] bg-green-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-brand-primary bg-hockia-soft'
+                        : 'border-line bg-white hover:border-line'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2 ${
-                      isSelected ? 'bg-[#10b981]' : 'bg-gray-200'
+                      isSelected ? 'bg-brand-primary' : 'bg-surface-muted'
                     }`}>
-                      <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-500'}`} />
+                      <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-ink-3'}`} />
                     </div>
-                    <p className="text-sm font-medium text-gray-900 text-center">{benefit.label}</p>
+                    <p className="text-sm font-medium text-ink-1 text-center">{benefit.label}</p>
                     <p className={`text-xs mt-1 text-center ${
-                      isSelected ? 'text-green-600' : 'text-gray-500'
+                      isSelected ? 'text-brand-text' : 'text-ink-3'
                     }`}>
                       {isSelected ? '✓ Included' : '✗ Not included'}
                     </p>
@@ -1222,26 +1231,26 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
             {/* Benefits Summary — a count, not a percentage: there is no
                 "required" number of benefits, so a % reads as misleading. */}
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-surface-subtle rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-ink-2">
                   {benefitsCount} of {BENEFIT_OPTIONS.length} benefits added
                 </span>
               </div>
               <progress
                 value={benefitsCount}
                 max={BENEFIT_OPTIONS.length}
-                className="w-full h-2 appearance-none rounded-full bg-gray-200 overflow-hidden [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-gray-200 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[#10b981] [&::-moz-progress-bar]:bg-[#10b981]"
+                className="w-full h-2 appearance-none rounded-full bg-line overflow-hidden [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-line [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-brand-primary [&::-moz-progress-bar]:bg-brand-primary"
                 aria-valuetext={`${benefitsCount} of ${BENEFIT_OPTIONS.length} benefits added`}
               />
             </div>
           </section>
 
           {/* Additional Custom Benefits */}
-          <section className="border-t border-gray-200 pt-6">
+          <section className="border-t border-line pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">💡</span>
-              <h3 className="text-lg font-semibold text-gray-900">Additional custom benefits</h3>
+              <h3 className="text-lg font-semibold text-ink-1">Additional custom benefits</h3>
             </div>
             
             <div className="space-y-3">
@@ -1249,13 +1258,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {(formData.custom_benefits || []).map((benefit: string, index: number) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-hockia-soft text-brand-text rounded-full text-sm"
                   >
                     {benefit}
                     <button
                       type="button"
                       onClick={() => removeCustomBenefit(index)}
-                      className="hover:text-purple-900 min-w-[44px] min-h-[44px] inline-flex items-center justify-center -m-2"
+                      className="hover:text-ink-1 min-w-[44px] min-h-[44px] inline-flex items-center justify-center -m-2"
                       aria-label="Remove benefit"
                     >
                       <X className="w-3 h-3" />
@@ -1274,13 +1283,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newCustomBenefit}
                   onChange={(e) => setNewCustomBenefit(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addCustomBenefit()}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
                   type="button"
                   onClick={addCustomBenefit}
-                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
+                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-line rounded-lg hover:bg-surface-subtle transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add custom benefit
@@ -1290,16 +1299,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
 
           {/* Application Details */}
-          <section className="border-t border-gray-200 pt-6">
+          <section className="border-t border-line pt-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">📅</span>
-              <h3 className="text-lg font-semibold text-gray-900">Application details</h3>
+              <h3 className="text-lg font-semibold text-ink-1">Application details</h3>
             </div>
 
             <div className="space-y-4">
               {/* Application Deadline */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={applicationDeadlineFieldId}>
+                <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={applicationDeadlineFieldId}>
                   Application deadline
                 </label>
                 <input
@@ -1311,19 +1320,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(e) => handleInputChange('application_deadline', e.target.value || null)}
                   aria-invalid={errors.application_deadline ? true : undefined}
                   aria-describedby={errors.application_deadline ? `${applicationDeadlineFieldId}-error` : undefined}
-                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent ${
-                    errors.application_deadline ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent ${
+                    errors.application_deadline ? 'border-status-danger' : 'border-line'
                   }`}
                 />
                 {errors.application_deadline && (
-                  <p id={`${applicationDeadlineFieldId}-error`} className="mt-1 text-sm text-red-600">{errors.application_deadline}</p>
+                  <p id={`${applicationDeadlineFieldId}-error`} className="mt-1 text-sm text-status-danger">{errors.application_deadline}</p>
                 )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Contact Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactEmailFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={contactEmailFieldId}>
                     Contact email
                   </label>
                   <input
@@ -1331,7 +1340,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="email"
                     value={formData.contact_email || ''}
                     onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="info@elitehockeyacademy.com"
                     inputMode="email"
                     autoCapitalize="none"
@@ -1341,7 +1350,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
                 {/* Contact Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={contactPhoneFieldId}>
+                  <label className="block text-sm font-medium text-ink-2 mb-2" htmlFor={contactPhoneFieldId}>
                     Contact phone
                   </label>
                   <input
@@ -1349,7 +1358,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     type="tel"
                     value={formData.contact_phone || ''}
                     onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-[#10b981] focus:border-transparent"
+                    className="w-full px-4 py-3 border border-line rounded-lg focus-visible:ring-2 focus-visible:ring-brand-primary focus:border-transparent"
                     placeholder="+31 20 123 4567"
                     inputMode="tel"
                     autoComplete="tel"
@@ -1362,41 +1371,39 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           {/* Posting strength — live quality nudge (Market Phase 3). Same
               8-point checklist the admin Market tab scores postings with;
               a NUDGE only, never a gate: publishing stays zero-friction. */}
-          <section className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+          <section className="bg-surface-subtle border border-line rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-900">Posting strength</h3>
+              <h3 className="text-sm font-semibold text-ink-1">Posting strength</h3>
               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${
-                postingQuality.score >= 75 ? 'bg-green-100 text-green-700'
-                : postingQuality.score >= 50 ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-700'
+                // A nudge, never a gate: green only once the posting is complete;
+                // otherwise neutral (the recruiter isn't required to act, so no amber or red).
+                postingQuality.missing.length === 0 ? 'bg-positive-soft text-positive' : 'bg-surface-muted text-ink-2'
               }`}>
                 {postingQuality.score}/100
               </span>
             </div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+            <div className="h-1.5 bg-line rounded-full overflow-hidden mb-3">
               <div
                 className={`h-full rounded-full transition-all ${
-                  postingQuality.score >= 75 ? 'bg-green-500'
-                  : postingQuality.score >= 50 ? 'bg-amber-500'
-                  : 'bg-red-400'
+                  postingQuality.missing.length === 0 ? 'bg-positive' : 'bg-brand-primary'
                 }`}
                 style={{ width: `${Math.max(4, postingQuality.score)}%` }}
               />
             </div>
             {postingQuality.missing.length === 0 ? (
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-positive">
                 Complete posting. This is what strong vacancies look like.
               </p>
             ) : (
               <>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-ink-3 mb-2">
                   Complete postings attract more applicants. Consider adding:
                 </p>
                 <ul className="space-y-1">
                   {postingQuality.missing.map((c) => (
-                    <li key={c.key} className="text-xs text-gray-600">
-                      <span className="font-medium text-gray-800">{c.label}</span>
-                      <span className="text-gray-400">: {c.hint}</span>
+                    <li key={c.key} className="text-xs text-ink-2">
+                      <span className="font-medium text-ink-1">{c.label}</span>
+                      <span className="text-ink-4">: {c.hint}</span>
                     </li>
                   ))}
                 </ul>
@@ -1412,11 +1419,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             QA-flagged as a confusing dead-end. Editing an existing row
             keeps the single update CTA — the form's status select
             inside the modal controls the destination state there. */}
-        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 p-6 border-t border-line bg-surface-subtle">
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="w-full sm:w-auto whitespace-nowrap px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+            className="w-full sm:w-auto whitespace-nowrap px-6 py-3 text-ink-2 hover:bg-surface-muted rounded-lg transition-colors font-medium disabled:opacity-50"
             type="button"
           >
             Cancel
@@ -1425,7 +1432,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             <Button
               onClick={() => handleSave()}
               disabled={isLoading}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
             >
               {isLoading ? 'Saving…' : 'Update opportunity'}
             </Button>
@@ -1442,7 +1449,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               <Button
                 onClick={() => handleSave('open')}
                 disabled={isLoading}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isLoading ? 'Publishing…' : 'Publish now'}
               </Button>

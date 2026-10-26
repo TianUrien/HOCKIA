@@ -83,7 +83,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
       onChanged()
     } catch (err) {
       logger.error('[RoleActions] reopen failed', err)
-      addToast('Could not reopen the role. Try again.', 'error')
+      addToast('Could not reopen the opportunity. Try again.', 'error')
     } finally {
       setBusy(false)
     }
@@ -117,7 +117,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
         <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
       </button>
 
-      <BottomSheet open={sheet === 'menu' && isClosed} onClose={() => setSheet(null)} ariaLabel="Closed role actions">
+      <BottomSheet open={sheet === 'menu' && isClosed} onClose={() => setSheet(null)} ariaLabel="Closed opportunity actions">
         {/* Figma 05 CS3 205:5722: Post again leads; Reopen keeps today's +30 days; Edit keeps it closed. */}
         <div className="flex flex-col gap-3 px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-1" data-testid="closed-role-actions">
           <div>
@@ -128,21 +128,21 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
           <button type="button" onClick={() => { setSheet(null); postAgain() }} className="flex items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left disabled:opacity-50" data-testid="role-actions-post-again">
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] leading-[22px] text-brand-primary">Post again</span>
-              <span className="block text-secondary text-ink-2">A new role with the same details. Dates and applicants start fresh. You check it before it goes live.</span>
+              <span className="block text-secondary text-ink-2">A new opportunity with the same details. Dates and applicants start fresh. You check it before it goes live.</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
           )}
           <button type="button" disabled={busy} onClick={() => void reopen()} className="flex items-center gap-3 rounded-[16px] bg-surface-subtle px-4 py-3 text-left disabled:opacity-50" data-testid="role-actions-reopen">
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] leading-[22px] text-ink-1">Reopen this role</span>
-              <span className="block text-secondary text-ink-2">Same role and applicants, open again for 30 days</span>
+              <span className="block text-[17px] leading-[22px] text-ink-1">Reopen this opportunity</span>
+              <span className="block text-secondary text-ink-2">Same opportunity and applicants, open again for 30 days</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => { setSheet(null); if (onEdit) onEdit(); else navigate(`/dashboard/opportunities/${role.id}/edit`) }} className="flex items-center gap-3 rounded-[16px] bg-surface-subtle px-4 py-3 text-left disabled:opacity-50">
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] leading-[22px] text-ink-1">Edit role</span>
+              <span className="block text-[17px] leading-[22px] text-ink-1">Edit opportunity</span>
               <span className="block text-secondary text-ink-2">Change the details; it stays closed</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
@@ -151,26 +151,26 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
         </div>
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'menu' && !isClosed} onClose={() => setSheet(null)} ariaLabel="Role actions">
+      <BottomSheet open={sheet === 'menu' && !isClosed} onClose={() => setSheet(null)} ariaLabel="Opportunity actions">
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-1" data-testid="role-actions-sheet">
           <p className="truncate pb-3 text-center text-secondary font-semibold text-ink-2">{role.title}</p>
           <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
             {isOpen && (
               <button type="button" className={item} disabled={finding} onClick={() => void find()} data-testid="role-actions-find">
-                <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? 'Find players for this role' : 'Find coaches for this role'}
+                <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? 'Find players for this opportunity' : 'Find coaches for this opportunity'}
               </button>
             )}
             <button type="button" className={item} onClick={() => { setSheet(null); if (onEdit) onEdit(); else navigate(`/dashboard/opportunities/${role.id}/edit`) }}>
-              <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Edit role
+              <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Edit opportunity
             </button>
             {isOpen && (
               <button type="button" className={item} onClick={() => setSheet('close')}>
-                <XCircle className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Close role
+                <XCircle className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Close opportunity
               </button>
             )}
             {isClosed && (
               <button type="button" className={item} disabled={busy} onClick={() => void reopen()}>
-                <RotateCcw className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Reopen role
+                <RotateCcw className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Reopen opportunity
               </button>
             )}
           </div>

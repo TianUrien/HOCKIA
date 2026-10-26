@@ -61,7 +61,7 @@ export function AdminMessagingHealth() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Messaging Health | HOCKIA Admin'
+    document.title = 'Messaging Health | Hockia Admin'
     fetchData()
   }, [fetchData])
 

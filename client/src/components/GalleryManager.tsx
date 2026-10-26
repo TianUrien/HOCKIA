@@ -834,7 +834,7 @@ export default function GalleryManager({
                       ? 'text-green-500'
                       : item.status === 'error'
                       ? 'text-red-500'
-                      : 'text-blue-500'
+                      : 'text-brand-primary'
                   }`}
                 />
               </div>
@@ -982,7 +982,7 @@ export default function GalleryManager({
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <button
                         onClick={() => saveCaption(item)}
-                        className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-400 sm:flex-none sm:min-w-[120px]"
+                        className="flex-1 rounded-lg bg-brand-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-primary disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:min-w-[120px]"
                         disabled={savingCaptionId === item.id}
                         type="button"
                       >

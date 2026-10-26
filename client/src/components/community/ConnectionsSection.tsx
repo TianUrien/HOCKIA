@@ -183,7 +183,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
       <header className="flex items-start justify-between gap-3 mb-4">
         <div>
           <h2 className="text-base font-semibold text-gray-900">Connections</h2>
-          <p className="mt-0.5 text-xs text-gray-500">People in your HOCKIA network.</p>
+          <p className="mt-0.5 text-xs text-gray-500">People in your Hockia network.</p>
         </div>
         <Link
           to="/dashboard/profile/friends"
@@ -355,7 +355,7 @@ function EmptyState({ tab, isOwner }: { tab: TabId; isOwner: boolean }) {
   const copy =
     tab === 'connections'
       ? isOwner
-        ? 'No connections yet. Find people on HOCKIA to grow your network.'
+        ? 'No connections yet. Find people on Hockia to grow your network.'
         : 'No connections to show yet.'
       : tab === 'requests'
         ? 'No pending requests.'
@@ -395,7 +395,7 @@ function ConnectionRow({
   onOpenProfile,
 }: ConnectionRowProps) {
   const friend = edge.friend
-  const fullName = friend?.full_name || friend?.username || 'HOCKIA Member'
+  const fullName = friend?.full_name || friend?.username || 'Hockia Member'
   const initials = (friend?.full_name ?? '')
     .split(' ')
     .map((p) => p[0])
@@ -479,7 +479,7 @@ function ConnectionRow({
                 type="button"
                 onClick={onAccept}
                 disabled={mutating}
-                className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-primary transition-colors disabled:opacity-50"
               >
                 <Check className="h-3 w-3" />
                 Accept

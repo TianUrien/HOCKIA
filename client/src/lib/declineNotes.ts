@@ -25,21 +25,21 @@ export const DECLINE_BODY_MAX = 540
 
 const WHY: Record<string, string> = {
   position_filled: 'We’ve filled this position',
-  different_position: 'We’re looking for a different position for this role',
-  different_level: 'We’re looking for a different level for this role',
-  timing: 'The timing doesn’t work for this role',
-  location: 'The location doesn’t work for this role',
-  eligibility: 'We need different eligibility for this role',
-  profile_incomplete: 'We need a fuller profile for this role',
-  video_missing: 'We need match video for this role',
-  other: 'We’ve decided to go another way for this role',
-  role_closed: 'We’ve closed this role',
+  different_position: 'We’re looking for a different position for this opportunity',
+  different_level: 'We’re looking for a different level for this opportunity',
+  timing: 'The timing doesn’t work for this opportunity',
+  location: 'The location doesn’t work for this opportunity',
+  eligibility: 'We need different eligibility for this opportunity',
+  profile_incomplete: 'We need a fuller profile for this opportunity',
+  video_missing: 'We need match video for this opportunity',
+  other: 'We’ve decided to go another way for this opportunity',
+  role_closed: 'We’ve closed this opportunity',
 }
 
 /** The note body after the greeting, for a reason code (or 'role_closed'). */
 export function declineNoteBody(reason: string, roleTitle: string): string {
   const why = WHY[reason] ?? WHY.other
-  const title = roleTitle.trim() || 'this role'
+  const title = roleTitle.trim() || 'this opportunity'
   return `thank you for applying to ${title}. ${why}, so we won’t move forward this time. We’d be glad to see you apply to our next roles.`
 }
 

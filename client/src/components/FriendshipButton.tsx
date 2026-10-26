@@ -68,7 +68,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
   if (isOwnProfile) return null
 
   const handleAuthRequired = () => {
-    addToast('Sign in with your HOCKIA profile to manage connections.', 'error')
+    addToast('Sign in with your Hockia profile to manage connections.', 'error')
   }
 
   const handleAction = async (action: () => Promise<void>) => {
@@ -122,7 +122,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
           type="button"
           disabled={mutating}
           onClick={() => void acceptRequest()}
-          className={cn(BTN_BASE, 'bg-gradient-to-r from-emerald-500 to-emerald-600 font-semibold text-white shadow-sm')}
+          className={cn(BTN_BASE, 'bg-brand-primary font-semibold text-white shadow-sm')}
         >
           {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Accept

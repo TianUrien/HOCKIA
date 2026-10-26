@@ -146,16 +146,17 @@ export function initialsOf(name: string | null | undefined): string {
 }
 
 /**
- * No-photo background per role (Figma Card / Member photo, Kind=No photo):
- * the role colour, lighter top-left to darker bottom-right. Players blue,
- * coaches teal, umpires grey; brands use the brand role ink.
+ * No-photo background per role (rebrand 2026-10-25, Gradient/Role/* and
+ * --gradient-role-* in globals.css): the role colour, lighter top-left to
+ * darker bottom-right. Player turf, coach cyan, club blue, brand rust,
+ * umpire ink.
  */
 const ROLE_GRADIENT: Record<CommunityRole, [string, string]> = {
-  player: ['rgb(59, 111, 224)', 'rgb(22, 53, 122)'],
-  coach: ['rgb(20, 137, 127)', 'rgb(10, 61, 57)'],
-  umpire: ['rgb(91, 91, 107)', 'rgb(37, 37, 46)'],
-  brand: ['rgb(190, 18, 60)', 'rgb(95, 9, 30)'],
-  club: ['rgb(108, 43, 217)', 'rgb(52, 18, 120)'],
+  player: ['rgb(38, 127, 73)', 'rgb(13, 51, 28)'],
+  coach: ['rgb(16, 151, 183)', 'rgb(3, 61, 75)'],
+  umpire: ['rgb(39, 35, 61)', 'rgb(13, 12, 23)'],
+  brand: ['rgb(194, 77, 38)', 'rgb(80, 30, 13)'],
+  club: ['rgb(49, 119, 255)', 'rgb(18, 48, 113)'],
 }
 
 /** The two gradient stops for a role (the no-photo SVG in RolePlaceholder). */
@@ -188,7 +189,7 @@ export function clubCover(coverUrl: string | null | undefined, crestUrl: string 
 }
 
 /** Brand gradient for Cover=None, and the stand-in for a crest without a stored colour. */
-export const CLUB_BRAND_GRADIENT = 'linear-gradient(152deg, rgb(108, 43, 217) 7%, rgb(52, 18, 120) 79%)'
+export const CLUB_BRAND_GRADIENT = 'linear-gradient(152deg, rgb(124, 58, 237) 7%, rgb(52, 18, 120) 79%)'
 
 /** "rgb(r, g, b)" → the Cover=Crest gradient (crest colour, darkened towards the bottom right). */
 export function crestGradient(hex: string | null | undefined): string {

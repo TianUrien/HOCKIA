@@ -18,12 +18,13 @@ interface AvailabilityPillProps {
 
 // Per-variant styling. Labels come from availabilityLabel (single source of
 // truth) unless an explicit `label` is passed.
+// Rebrand PR 6: solid role tokens, no ad-hoc gradients.
 const VARIANT_GRADIENT: Record<AvailabilityVariant, string> = {
-  play: 'bg-gradient-to-r from-emerald-400 to-green-500',
-  coach: 'bg-gradient-to-r from-violet-500 to-purple-600',
-  umpire: 'bg-gradient-to-r from-sky-400 to-blue-500',
-  partnerships: 'bg-gradient-to-r from-indigo-500 to-blue-600',
-  recruiting: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+  play: 'bg-status-positive', // available = positive (the one green)
+  coach: 'bg-role-coach-ink',
+  umpire: 'bg-role-umpire-ink',
+  partnerships: 'bg-role-brand-ink',
+  recruiting: 'bg-role-club-ink',
 }
 const VARIANT_LABEL: Record<AvailabilityVariant, string> = {
   play: 'Open to play',

@@ -77,15 +77,15 @@ function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
     // Avoid the word "References" — that's the dedicated profile_references
     // system on its own UI surface. Calling comments "References" on umpire
     // profiles makes both surfaces ambiguous.
-    return 'Peer notes from HOCKIA members.'
+    return 'Peer notes from Hockia members.'
   }
   if (role === 'club') {
     return 'Notes from players, coaches, and visitors.'
   }
   if (role === 'brand') {
-    return 'Notes from the HOCKIA community.'
+    return 'Notes from the Hockia community.'
   }
-  return 'Verified testimonials from HOCKIA members.'
+  return 'Verified testimonials from Hockia members.'
 }
 
 /** Role-aware copy shown on the owner's own Comments tab when they cannot
@@ -593,7 +593,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             <div className="flex items-center gap-3">
               <ShieldAlert className="h-5 w-5 text-gray-400" />
               <p>
-                Sign in with a HOCKIA profile to leave a public, attributed comment.
+                Sign in with a Hockia profile to leave a public, attributed comment.
               </p>
             </div>
           )}
@@ -625,7 +625,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   src={existingComment.author?.avatar_url}
                   initials={getInitials(existingComment.author?.full_name ?? existingComment.author?.username ?? null)}
                   size="md"
-                  alt={existingComment.author?.full_name || existingComment.author?.username || 'HOCKIA member'}
+                  alt={existingComment.author?.full_name || existingComment.author?.username || 'Hockia member'}
                   enablePreview
                   previewTitle={existingComment.author?.full_name || existingComment.author?.username || undefined}
                   role={existingComment.author?.role}
@@ -635,7 +635,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-gray-900">
-                          {existingComment.author?.full_name || existingComment.author?.username || 'HOCKIA member'}
+                          {existingComment.author?.full_name || existingComment.author?.username || 'Hockia member'}
                         </p>
                         <RoleBadge role={existingComment.author?.role} />
                       </div>
@@ -781,7 +781,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                       src={comment.author?.avatar_url}
                       initials={getInitials(comment.author?.full_name ?? comment.author?.username ?? null)}
                       size="md"
-                      alt={comment.author?.full_name || comment.author?.username || 'Former HOCKIA member'}
+                      alt={comment.author?.full_name || comment.author?.username || 'Former Hockia member'}
                       enablePreview
                       previewTitle={comment.author?.full_name || comment.author?.username || undefined}
                       role={comment.author?.role}
@@ -791,7 +791,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold text-gray-900">
-                              {comment.author?.full_name || comment.author?.username || 'Former HOCKIA member'}
+                              {comment.author?.full_name || comment.author?.username || 'Former Hockia member'}
                             </p>
                             <RoleBadge role={comment.author?.role} />
                           </div>

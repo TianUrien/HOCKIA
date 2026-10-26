@@ -79,7 +79,7 @@ test.describe('Signup Flow', () => {
   test('first run offers Apple, Google, Create with email and Log in — no role cards', async ({ page }) => {
     await page.goto('/signup')
     await dismissOverlays(page)
-    await expect(page.getByRole('heading', { name: 'Your game. Your network.' })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('heading', { name: 'Join Hockia' })).toBeVisible({ timeout: 5000 })
     await expect(page.getByRole('button', { name: /continue with apple/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /create with email/i })).toBeVisible()

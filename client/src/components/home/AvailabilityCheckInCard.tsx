@@ -203,7 +203,7 @@ export function AvailabilityCheckInCard({
               type="button"
               onClick={handleConfirm}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-1.5 text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary text-white px-4 py-1.5 text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <Zap className="w-3 h-3" aria-hidden="true" />
               Yes, still open

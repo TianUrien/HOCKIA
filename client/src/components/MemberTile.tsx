@@ -450,7 +450,7 @@ export default function MemberTile(props: MemberTileProps) {
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to view profile"
-        message="Sign in or create a free HOCKIA account to view member profiles."
+        message="Sign in or create a free Hockia account to view member profiles."
       />
     </>
   )

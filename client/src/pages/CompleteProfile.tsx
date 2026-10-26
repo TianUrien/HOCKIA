@@ -993,7 +993,7 @@ export default function CompleteProfile() {
       if (isPersonRole) {
         const dob = formData.dateOfBirth || formSnapshot.dateOfBirth || ''
         if (!dob) {
-          throw new Error('Please enter your date of birth. HOCKIA is an 18+ platform.')
+          throw new Error('Please enter your date of birth. Hockia is an 18+ platform.')
         }
         const { data: dobResult, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
         if (dobError) {

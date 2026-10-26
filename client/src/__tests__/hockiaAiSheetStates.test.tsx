@@ -97,32 +97,32 @@ beforeEach(() => {
 
 describe('Hockia AI sheet — answer states', () => {
   it('loading: "Thinking…" with the live steps, never a silent wait or skeleton cards', () => {
-    setChat([msg({ role: 'user', content: 'Goalkeeper roles' }), msg({ role: 'assistant', status: 'sending' })], true)
-    useDiscoverChat.setState({ steps: [{ id: 's1', label: 'Reading open roles', state: 'now' }] })
+    setChat([msg({ role: 'user', content: 'Goalkeeper opportunities' }), msg({ role: 'assistant', status: 'sending' })], true)
+    useDiscoverChat.setState({ steps: [{ id: 's1', label: 'Reading open opportunities', state: 'now' }] })
     const { container } = renderSheet()
     expect(screen.getByRole('status', { name: 'Thinking' })).toHaveTextContent('Thinking…')
-    expect(screen.getByTestId('hockia-ai-step')).toHaveTextContent('Reading open roles')
+    expect(screen.getByTestId('hockia-ai-step')).toHaveTextContent('Reading open opportunities')
     expect(container.querySelector('[data-testid*="skeleton"]')).toBeNull()
     expect(container.innerHTML).not.toMatch(/animate-pulse/)
   })
 
-  it('answer: role rows as "Club · Position" / "League · package", pool caption, chevron to the role page', () => {
+  it('answer: role rows as "Club · Position" / "League · package", pool caption, chevron to the opportunity page', () => {
     setChat([
-      msg({ role: 'user', content: 'Goalkeeper roles in Serie A1' }),
+      msg({ role: 'user', content: 'Goalkeeper opportunities in Serie A1' }),
       msg({
         role: 'assistant', kind: 'opportunity_results', content: 'I found 2 goalkeeper roles in Italy you can apply to.',
         opportunities: roles, open_roles_total: 24, opportunity_filters: ['Goalkeeper', 'Italy'],
-        suggested_actions: [{ label: 'Roles with housing', intent: { type: 'free_text', query: 'Goalkeeper roles with housing' } }],
+        suggested_actions: [{ label: 'Roles with housing', intent: { type: 'free_text', query: 'Goalkeeper opportunities with housing' } }],
       }),
     ])
     const { container } = renderSheet()
 
-    expect(screen.getByTestId('ai-user-bubble')).toHaveTextContent('Goalkeeper roles in Serie A1')
+    expect(screen.getByTestId('ai-user-bubble')).toHaveTextContent('Goalkeeper opportunities in Serie A1')
     const rows = screen.getAllByTestId('ai-role-result')
     expect(rows).toHaveLength(2)
     expect(within(rows[0]).getByText('HC Bra · Goalkeeper')).toBeInTheDocument()
     expect(within(rows[0]).getByText('Bra, Italy · Housing, Paid')).toBeInTheDocument()
-    expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open opportunities · updated today')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(FORBIDDEN_PLAYER_TEXT)
     for (const row of rows) expect(row.outerHTML).not.toMatch(/gradient/)
 
@@ -132,38 +132,38 @@ describe('Hockia AI sheet — answer states', () => {
 
   it('no match: the zero-result message, the pool line and chips', () => {
     setChat([
-      msg({ role: 'user', content: 'Goalkeeper roles in Serie A1' }),
+      msg({ role: 'user', content: 'Goalkeeper opportunities in Serie A1' }),
       msg({
         role: 'assistant', kind: 'no_results', content: 'There are no goalkeeper roles in Italy you can apply to right now.',
         opportunities: [], opportunity_filters: ['Goalkeeper', 'Italy'], open_roles_total: 24,
-        suggested_actions: [{ label: 'Show all open roles', intent: { type: 'free_text', query: 'Show me all open roles for me' } }],
+        suggested_actions: [{ label: 'Show all open opportunities', intent: { type: 'free_text', query: 'Show me all open opportunities for me' } }],
         cta: { label: 'Browse all opportunities', route: '/opportunities' },
       }),
     ])
     renderSheet()
     expect(screen.getByText(/no goalkeeper roles in Italy/)).toBeInTheDocument()
-    expect(screen.getByText('From 24 open roles · updated today')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open opportunities · updated today')).toBeInTheDocument()
     const chips = screen.getAllByTestId('ai-chip').map(c => c.textContent)
-    expect(chips).toEqual(['Show all open roles', 'Browse all opportunities'])
+    expect(chips).toEqual(['Show all open opportunities', 'Browse all opportunities'])
     expect(screen.queryByTestId('ai-role-result')).toBeNull()
   })
 
-  it("can't answer: neutral text with Open roles for me / Improve my profile", () => {
+  it("can't answer: neutral text with Opportunities for me / Improve my profile", () => {
     setChat([
       msg({ role: 'user', content: 'Who will win the Olympics?' }),
-      msg({ role: 'assistant', kind: 'text', content: "I can help with clubs, players and roles on HOCKIA, not that one." }),
+      msg({ role: 'assistant', kind: 'text', content: "I can help with clubs, players and roles on Hockia, not that one." }),
     ])
     renderSheet()
     expect(screen.getByText(/not that one/)).toBeInTheDocument()
     const chips = screen.getAllByTestId('ai-chip').map(c => c.textContent)
-    expect(chips).toEqual(['Open roles for me', 'Improve my profile'])
+    expect(chips).toEqual(['Opportunities for me', 'Improve my profile'])
     fireEvent.click(screen.getByRole('button', { name: 'Improve my profile' }))
     expect(screen.getByText('Edit profile page')).toBeInTheDocument()
   })
 
-  it('error: neutral SoftErrorCard (no amber) with Try again / Open roles for me BELOW the card', () => {
+  it('error: neutral SoftErrorCard (no amber) with Try again / Opportunities for me BELOW the card', () => {
     setChat([
-      msg({ role: 'user', content: 'Goalkeeper roles' }),
+      msg({ role: 'user', content: 'Goalkeeper opportunities' }),
       msg({ role: 'assistant', status: 'error', content: 'Search failed', error: 'Search failed' }),
     ])
     renderSheet()
@@ -173,18 +173,18 @@ describe('Hockia AI sheet — answer states', () => {
     expect(card.outerHTML).not.toMatch(/amber|warning|gradient/)
     expect(card).toHaveTextContent(/trouble connecting/)
     const chips = screen.getAllByTestId('ai-chip')
-    expect(chips.map(c => c.textContent)).toEqual(['Try again', 'Open roles for me'])
+    expect(chips.map(c => c.textContent)).toEqual(['Try again', 'Opportunities for me'])
     for (const chip of chips) expect(card.contains(chip)).toBe(false)
 
     const sendMessage = vi.fn()
     useDiscoverChat.setState({ sendMessage })
     fireEvent.click(chips[0])
-    expect(sendMessage).toHaveBeenCalledWith('Goalkeeper roles')
+    expect(sendMessage).toHaveBeenCalledWith('Goalkeeper opportunities')
     fireEvent.click(chips[1])
     expect(screen.getByText('Opportunities page')).toBeInTheDocument()
   })
 
-  it('cap reached: the limit card with only "Open roles for me"', () => {
+  it('cap reached: the limit card with only "Opportunities for me"', () => {
     setChat([
       msg({ role: 'user', content: 'One more' }),
       msg({ role: 'assistant', kind: 'cap_reached', content: CAP_REACHED_COPY, suggested_actions: [] }),
@@ -193,7 +193,7 @@ describe('Hockia AI sheet — answer states', () => {
     const card = screen.getByTestId('ai-notice-card')
     expect(card).toHaveTextContent("You've reached today's limit. Try again tomorrow.")
     expect(card).toHaveAttribute('data-tone', 'neutral')
-    expect(screen.getAllByTestId('ai-chip').map(c => c.textContent)).toEqual(['Open roles for me'])
+    expect(screen.getAllByTestId('ai-chip').map(c => c.textContent)).toEqual(['Opportunities for me'])
   })
 
   it('a player never sees ranking lines even when the model writes one', () => {
@@ -210,15 +210,15 @@ describe('Hockia AI sheet — answer states', () => {
 
 describe('lib/hockiaAi', () => {
   it('chips depend on the viewer role', () => {
-    expect(cantAnswerChips('player').map(c => c.label)).toEqual(['Open roles for me', 'Improve my profile'])
+    expect(cantAnswerChips('player').map(c => c.label)).toEqual(['Opportunities for me', 'Improve my profile'])
     expect(cantAnswerChips('club').map(c => c.label)).toEqual(['Improve my profile'])
-    expect(errorChips('coach').map(c => c.label)).toEqual(['Try again', 'Open roles for me'])
+    expect(errorChips('coach').map(c => c.label)).toEqual(['Try again', 'Opportunities for me'])
     expect(errorChips('brand').map(c => c.label)).toEqual(['Try again'])
-    expect(capReachedChips('player').map(c => c.label)).toEqual(['Open roles for me'])
+    expect(capReachedChips('player').map(c => c.label)).toEqual(['Opportunities for me'])
     expect(capReachedChips('club')).toEqual([])
   })
 
-  it('examples: players get the role example, clubs keep their own three', () => {
+  it('examples: players get the opportunity example, clubs keep their own three', () => {
     expect(exampleQueriesFor({ role: 'player' })).toContain(ROLE_EXAMPLE)
     expect(exampleQueriesFor({ role: 'player' })).toHaveLength(3)
     expect(exampleQueriesFor({ role: 'club' })).toHaveLength(3)
@@ -229,8 +229,8 @@ describe('lib/hockiaAi', () => {
   })
 
   it('fromOpenRolesCaption: singular, plural, unknown', () => {
-    expect(fromOpenRolesCaption(1)).toBe('From 1 open role · updated today')
-    expect(fromOpenRolesCaption(24)).toBe('From 24 open roles · updated today')
+    expect(fromOpenRolesCaption(1)).toBe('From 1 open opportunity · updated today')
+    expect(fromOpenRolesCaption(24)).toBe('From 24 open opportunities · updated today')
     expect(fromOpenRolesCaption(undefined)).toBeNull()
     expect(fromOpenRolesCaption(null)).toBeNull()
     expect(fromOpenRolesCaption(-1)).toBeNull()
@@ -245,7 +245,7 @@ describe('lib/hockiaAi', () => {
 
   it('role row text: club · position, league/location · package', () => {
     expect(roleResultTitle(roles[0])).toBe('HC Bra · Goalkeeper')
-    expect(roleResultTitle({ organization: null, position_label: null, title: 'Open role' })).toBe('Open role')
+    expect(roleResultTitle({ organization: null, position_label: null, title: 'Open opportunity' })).toBe('Open opportunity')
     expect(roleResultMeta({ ...roles[0], league_label: 'Serie A1' })).toBe('Serie A1 · Housing, Paid')
     expect(roleResultMeta({ league_label: null, location_label: null, benefit_labels: [] })).toBeNull()
   })

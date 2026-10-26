@@ -80,7 +80,7 @@ export function openRoleTitle(row: Pick<PublicOpportunity, 'title' | 'position'>
   const pos = positionLabel(row.position)
   if (typed && typed.toLowerCase() !== pos?.toLowerCase()) return typed
   if (pos) return `${pos} wanted`
-  return typed || 'Open role'
+  return typed || 'Open opportunity'
 }
 
 /** opportunity_gender → the card's team tag. */

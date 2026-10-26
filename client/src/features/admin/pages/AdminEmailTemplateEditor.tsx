@@ -67,7 +67,7 @@ export function AdminEmailTemplateEditor() {
   }, [templateId])
 
   useEffect(() => {
-    document.title = 'Edit Template | HOCKIA Admin'
+    document.title = 'Edit Template | Hockia Admin'
     fetchDetail()
   }, [fetchDetail])
 

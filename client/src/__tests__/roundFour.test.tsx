@@ -112,7 +112,7 @@ beforeEach(() => {
 
 
 // ── 2. Open roles follow the closed-role publisher rules ────────────────────
-describe('open roles: hidden club + blocked pair (migration)', () => {
+describe('open opportunities: hidden club + blocked pair (migration)', () => {
   const sql = read('../../../supabase/migrations/20260929100000_open_roles_hidden_club_fence.sql')
   it('replaces the open-roles read policy with the fenced one, open rows only', () => {
     expect(sql).toMatch(/DROP POLICY IF EXISTS "Public can view open opportunities"/)
@@ -228,20 +228,20 @@ const feedItem = {
 describe('club screens', () => {
   // Design audit 2026-10-21 (A5): role cards carry no buttons. The role block
   // is one tap target for every viewer; Apply is gated on the role page.
-  it('the feed role card has no Apply or View role button, for any viewer', () => {
+  it('the feed role card has no Apply or View opportunity button, for any viewer', () => {
     for (const role of ['club', 'player', 'coach', 'brand', 'umpire']) {
       authState = { user: { id: `${role}-9` }, profile: { id: `${role}-9`, role } }
       const { unmount } = render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
       expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
-      expect(screen.queryByRole('button', { name: 'View role' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'View opportunity' })).toBeNull()
       unmount()
     }
   })
 
-  it('tapping the role block opens the v2 role page', () => {
+  it('tapping the opportunity block opens the v2 role page', () => {
     authState = { user: { id: 'club-1' }, profile: { id: 'club-1', role: 'club' } }
     render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
-    fireEvent.click(screen.getByRole('button', { name: 'Open role: Women’s 1st team midfielder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open opportunity: Women’s 1st team midfielder' }))
     expect(navigateSpy).toHaveBeenCalledWith('/opportunities/opp-9')
   })
   // Founder 2026-10-22: the Hockia AI mascot (not a sparkle) is in the phone
@@ -271,7 +271,7 @@ describe('club screens', () => {
   it('role toasts: close, reopen, and "Changes saved." after an edit', () => {
     // Round 5: the reopen copy is shared with desktop; the filled toast knows how many were waiting.
     expect(read('../components/club/RoleActions.tsx')).toContain("addToast(REOPEN_ROLE_TOAST, 'success')")
-    expect(read('../lib/roleLifecycle.ts')).toContain("export const REOPEN_ROLE_TOAST = 'Role reopened.'")
+    expect(read('../lib/roleLifecycle.ts')).toContain("export const REOPEN_ROLE_TOAST = 'Opportunity reopened.'")
     // Club speed CS6: a close that told the waiting players says how many; otherwise the filled toast knows how many were left.
     expect(read('../components/club/CloseRoleSheet.tsx')).toContain("closeRoleToldToast(told.told, told.failed) : closeRoleToast(chosen, left)")
     expect(read('../components/club/PostRoleScreen.tsx')).toContain("addToast('Changes saved.', 'success')")
@@ -292,9 +292,9 @@ describe('player bits', () => {
     expect(screen.getByTestId('player-hero-empty-sub').textContent).toMatch(/Mark yourself open to play/)
   })
 
-  it('My applications: the divider sits under the text column so chevrons line up', () => {
+  it('My applications: one card per application (rebrand page 20), no list dividers', () => {
     const src = read('../pages/MyApplicationsPage.tsx')
-    expect(src).toContain('border-b border-line py-3 pr-3 group-last:border-b-0')
+    expect(src).toContain('rounded-[20px] border border-line bg-white p-4')
     expect(src).not.toContain('divide-y')
   })
 
@@ -316,12 +316,12 @@ describe('player bits', () => {
 
 // ── 8. Role filled copy + league by team ────────────────────────────────────
 describe('wording', () => {
-  it('push mirrors the client: the role title names the filled role', () => {
+  it('push mirrors the client: the opportunity title names the filled role', () => {
     const src = read('../../../supabase/functions/send-push/push-payload.ts')
     // Round 9: a generated headline ("Men's midfielder") yields the bare position; a typed title still names the role.
-    expect(src).toContain("body = `${typedTitle ?? humanPos ?? 'The role'} has been filled.")
+    expect(src).toContain("body = `${typedTitle ?? humanPos ?? 'The opportunity'} has been filled.")
   })
-  it('role-description-draft picks the league from the role team via leagueForTeam', () => {
+  it('role-description-draft picks the league from the opportunity team via leagueForTeam', () => {
     const src = read('../../../supabase/functions/role-description-draft/index.ts')
     expect(src).toContain('leagueForTeam(answers.team, p.mens_league_division, p.womens_league_division)')
   })

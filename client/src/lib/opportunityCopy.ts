@@ -7,8 +7,14 @@
  */
 import type { LucideIcon } from 'lucide-react'
 import {
-  Home, Plane, Briefcase, Shield, DollarSign, Globe, Car, Dumbbell, Utensils, GraduationCap, Target, Info,
-} from 'lucide-react'
+  BenefitBonusesIcon, BenefitCarIcon, BenefitEducationIcon, BenefitEquipmentIcon, BenefitFlightsIcon, BenefitHousingIcon,
+  BenefitInsuranceIcon, BenefitJobIcon, BenefitMealsIcon, BenefitPaidIcon, BenefitVisaIcon, InfoIcon,
+  SkillDefensiveLeaderIcon, SkillDragFlickerIcon, SkillIndoorIcon, SkillPenaltyCornerIcon, SkillPlaymakerIcon,
+  SkillPressingIcon, SkillSweeperKeeperIcon, SkillTargetForwardIcon, StickAndBallIcon, type HockiaIcon,
+} from '@/components/icons/HockiaIcons'
+
+/** A Lucide icon or one from the Hockia set (rebrand PR 4): same props. */
+export type TileIcon = LucideIcon | HockiaIcon
 import { differenceInCalendarDays } from 'date-fns'
 import { dayFirst, parseDayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
@@ -71,6 +77,12 @@ const CATEGORY_TAG_CLASSES: Record<CategoryFamily, string> = {
 /** Filter dot / inline marker colour class for a category. */
 export const CATEGORY_DOT_CLASSES: Record<CategoryFamily, string> = {
   women: 'bg-category-women', men: 'bg-category-men', mixed: 'bg-category-mixed',
+}
+
+/** The dot on a glass or dark tag over a photo (rebrand 2026-10-25,
+ *  team-*-on-photo): lighter hues that stay visible on the scrim. */
+export const CATEGORY_DOT_ON_PHOTO_CLASSES: Record<CategoryFamily, string> = {
+  women: 'bg-category-women-dark', men: 'bg-category-men-dark', mixed: 'bg-category-mixed-dark',
 }
 
 export function categoryTagClass(gender: string | null | undefined): string | null {
@@ -204,20 +216,20 @@ export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {
   return `Apply by ${dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline}`
 }
 
-export interface BenefitTile { key: string; label: string; icon: LucideIcon; tileClass: string; detail: string }
+export interface BenefitTile { key: string; label: string; icon: TileIcon; tileClass: string; detail: string }
 
 /** The nine package benefits (Figma Filters › Package), with the card tile tints. */
 export const BENEFIT_TILES: Record<string, BenefitTile> = {
-  housing: { key: 'housing', label: 'Housing', icon: Home, tileClass: 'bg-accent-blue-soft text-accent-blue-ink', detail: 'Provided by the club' },
-  flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Covered' },
-  job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Work arranged alongside hockey' },
-  insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-accent-red-soft text-status-danger-strong', detail: 'Covered by the club' },
-  bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
-  visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Sponsorship arranged' },
-  car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-accent-teal-soft-2 text-accent-teal', detail: 'Kit and stick provided' },
-  meals: { key: 'meals', label: 'Meals', icon: Utensils, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Study alongside hockey' },
+  housing: { key: 'housing', label: 'Housing', icon: BenefitHousingIcon, tileClass: 'bg-accent-blue-soft text-accent-blue-ink', detail: 'Provided by the club' },
+  flights: { key: 'flights', label: 'Flights', icon: BenefitFlightsIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Covered' },
+  job: { key: 'job', label: 'Job', icon: BenefitJobIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Work arranged alongside hockey' },
+  insurance: { key: 'insurance', label: 'Insurance', icon: BenefitInsuranceIcon, tileClass: 'bg-accent-red-soft text-status-danger-strong', detail: 'Covered by the club' },
+  bonuses: { key: 'bonuses', label: 'Bonuses', icon: BenefitBonusesIcon, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
+  visa: { key: 'visa', label: 'Visa', icon: BenefitVisaIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Sponsorship arranged' },
+  car: { key: 'car', label: 'Car', icon: BenefitCarIcon, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
+  equipment: { key: 'equipment', label: 'Equipment', icon: BenefitEquipmentIcon, tileClass: 'bg-accent-teal-soft-2 text-accent-teal', detail: 'Kit and stick provided' },
+  meals: { key: 'meals', label: 'Meals', icon: BenefitMealsIcon, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
+  education: { key: 'education', label: 'Education', icon: BenefitEducationIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Study alongside hockey' },
 }
 
 export const PACKAGE_FILTER_KEYS = ['paid', 'housing', 'flights', 'job', 'insurance', 'bonuses', 'visa', 'car', 'equipment'] as const
@@ -227,9 +239,19 @@ export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = {
   paid: 'Paid', housing: 'Housing', flights: 'Flights', job: 'Job', insurance: 'Insurance', bonuses: 'Bonuses', visa: 'Visa', car: 'Car', equipment: 'Equipment',
 }
 
-export const SPECIALIST_TILE = { icon: Target, tileClass: 'bg-hockia-soft text-hockia-primary' }
+export const SPECIALIST_TILE = { icon: StickAndBallIcon as TileIcon, tileClass: 'bg-hockia-soft text-hockia-primary' }
+
+/** Specialist skill icons (Figma Assets › Icon/skill-*); unknown skills get the stick and ball. */
+const SKILL_ICONS: Record<string, TileIcon> = {
+  drag_flicker: SkillDragFlickerIcon, penalty_corner: SkillPenaltyCornerIcon, playmaker: SkillPlaymakerIcon,
+  target_forward: SkillTargetForwardIcon, defensive_leader: SkillDefensiveLeaderIcon, sweeper_keeper: SkillSweeperKeeperIcon,
+  pressing: SkillPressingIcon, indoor: SkillIndoorIcon,
+}
+export function specialistIcon(skill: string): TileIcon {
+  return SKILL_ICONS[skill] ?? SPECIALIST_TILE.icon
+}
 // Requirements are information, never a call to act, so the tile is neutral (amber rule).
-export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-surface-muted text-ink-2' }
+export const REQUIREMENT_TILE = { icon: InfoIcon as TileIcon, tileClass: 'bg-surface-muted text-ink-2' }
 
 /** "Paid" / "Development" / "Compensation not stated". */
 export function compensationText(v: Pick<Vacancy, 'compensation'>): string {
@@ -257,10 +279,10 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
  * information, never a call to act) and Note (subtle grey, a check).
  */
 export type PackageItemType = 'benefit' | 'skill' | 'requirement' | 'note'
-export interface PackageItem { key: string; type: PackageItemType; label: string; icon: LucideIcon; tileClass: string }
+export interface PackageItem { key: string; type: PackageItemType; label: string; icon: TileIcon; tileClass: string }
 
-export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
-export const NOTE_TILE = { icon: Info, tileClass: 'bg-surface-muted text-ink-2' }
+export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: BenefitPaidIcon, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
+export const NOTE_TILE = { icon: InfoIcon as TileIcon, tileClass: 'bg-surface-muted text-ink-2' }
 export const PACKAGE_NOT_LISTED = 'Package not listed · ask the club'
 export const MAX_CARD_PACKAGE_ITEMS = 6
 
@@ -280,7 +302,7 @@ export function rolePackageItems(
   else if (comp) items.push({ key: 'comp', type: 'note', label: compensationText(v), ...NOTE_TILE })
   for (const b of roleBenefits(v)) items.push({ key: b.key, type: 'benefit', label: b.label, icon: b.icon, tileClass: b.tileClass })
   for (const s of (v.specialist_skills_wanted ?? []).slice(0, 2)) {
-    items.push({ key: `skill-${s}`, type: 'skill', label: humanizeToken(s) ?? s, icon: SPECIALIST_TILE.icon, tileClass: SPECIALIST_TILE.tileClass })
+    items.push({ key: `skill-${s}`, type: 'skill', label: humanizeToken(s) ?? s, icon: specialistIcon(s), tileClass: SPECIALIST_TILE.tileClass })
   }
   const requirement: PackageItem | null = v.eu_passport_required
     ? { key: 'eu-passport', type: 'requirement', label: 'EU passport', icon: REQUIREMENT_TILE.icon, tileClass: REQUIREMENT_TILE.tileClass }

@@ -296,7 +296,7 @@ export default function NotificationsDrawer() {
     const config = getNotificationConfig(notification)
     const Icon = config.icon
     const actor = notification.actor
-    const fullName = actor.fullName || actor.username || 'HOCKIA member'
+    const fullName = actor.fullName || actor.username || 'Hockia member'
     const initials = fullName.slice(0, 2).toUpperCase()
     const displayTime = formatRelativeTime(notification.createdAt)
     const description = config.getDescription?.(notification)
@@ -474,7 +474,7 @@ export default function NotificationsDrawer() {
                 <button
                   type="button"
                   onClick={() => void markAllRead()}
-                  className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 min-h-[44px] text-sm font-medium text-[#0866FF] transition hover:bg-blue-50"
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 min-h-[44px] text-sm font-medium text-brand-text transition hover:bg-hockia-soft"
                 >
                   <CheckCheck className="h-4 w-4" />
                   Mark all as read

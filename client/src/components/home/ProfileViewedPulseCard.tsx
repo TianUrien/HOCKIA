@@ -93,7 +93,7 @@ export function ProfileViewedPulseCard({
 
   return (
     <article
-      className="relative rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm"
+      className="relative rounded-2xl border border-brand-primary/15 bg-gradient-to-br from-hockia-soft to-white p-4 shadow-sm"
       data-testid="pulse-profile-viewed-by-recruiters"
     >
       <button
@@ -106,11 +106,11 @@ export function ProfileViewedPulseCard({
       </button>
 
       <div className="flex items-start gap-3 pr-6">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
-          <Eye className="w-5 h-5 text-blue-600" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+          <Eye className="w-5 h-5 text-hockia-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 mb-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-text mb-0.5">
             This week
           </p>
           <p className="text-sm font-semibold text-gray-900 leading-snug">{headline}</p>
@@ -118,7 +118,7 @@ export function ProfileViewedPulseCard({
           <button
             type="button"
             onClick={handleSee}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
           >
             See viewers
           </button>

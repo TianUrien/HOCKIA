@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  ArrowLeft,
   Mail,
   Lock,
   Trash2,
@@ -35,6 +34,16 @@ import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
+import { switchTrackClass } from '@/components/ui/switchClasses'
+
+const SETTINGS_NAV: { id: string; label: string }[] = [
+  { id: 'account', label: 'Account' },
+  { id: 'notifications', label: 'Notifications' },
+  { id: 'privacy', label: 'Privacy' },
+  { id: 'support', label: 'Help and feedback' },
+  { id: 'legal', label: 'Legal' },
+  { id: 'about', label: 'About' },
+]
 
 export default function SettingsPage() {
   useDocumentTitle('Settings')
@@ -43,7 +52,7 @@ export default function SettingsPage() {
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const { section: routeSection } = useParams<{ section?: string }>()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [expandedSection, setExpandedSection] = useState<string | null>('account')
+  const [expandedSection, setExpandedSection] = useState<string>('account')
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -266,7 +275,7 @@ export default function SettingsPage() {
       // so it never stays stuck, but the user still deserves to know it failed.
       logger.error('Failed to toggle push notifications:', error)
       addToast(
-        "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for HOCKIA in your iOS Settings.",
+        "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for Hockia in your iOS Settings.",
         'error',
       )
     }
@@ -457,7 +466,7 @@ export default function SettingsPage() {
   }
 
   const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section)
+    setExpandedSection(section)
   }
 
   if (!user || !profile) {
@@ -465,33 +474,27 @@ export default function SettingsPage() {
   }
 
   // Section header component
-  const SectionHeader = ({ 
-    id, 
-    icon: Icon, 
-    title, 
-    iconBg 
-  }: { 
+  // Rebrand page 27 · Settings (web): the left nav picks the section; the
+  // panel shows only that section under a static heading (no accordion).
+  const sectionCard = (id: string) =>
+    `overflow-hidden rounded-[20px] bg-white ring-1 ring-inset ring-line ${expandedSection === id ? '' : 'hidden'}`
+
+  const SectionHeader = ({
+    icon: Icon,
+    title,
+    iconBg,
+  }: {
     id: string
     icon: React.ElementType
     title: string
-    iconBg: string 
+    iconBg: string
   }) => (
-    <button
-      onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors rounded-xl"
-    >
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center`}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+    <div className="flex items-center gap-3 p-4">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
+        <Icon className="h-5 w-5" />
       </div>
-      <ChevronRight 
-        className={`w-5 h-5 text-gray-400 transition-transform ${
-          expandedSection === id ? 'rotate-90' : ''
-        }`} 
-      />
-    </button>
+      <h2 className="font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">{title}</h2>
+    </div>
   )
 
   // Link row component for navigation items
@@ -547,42 +550,49 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-subtle">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 md:px-6 pt-under-header-lg pb-32">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/dashboard/profile')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors group"
-        >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-medium">Back</span>
-        </button>
-
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-              <p className="text-gray-600 mt-1">Manage your account and preferences</p>
-            </div>
-            <span className="px-3 py-1 rounded-full text-sm font-medium capitalize bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white">
-              {profile.role}
-            </span>
-          </div>
+      <main className="mx-auto max-w-[1100px] px-4 pb-32 pt-under-header-lg md:px-6">
+        <div className="mb-6">
+          <h1 className="text-title text-ink-1">Settings</h1>
         </div>
 
-        {/* Settings Sections */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-[220px_minmax(0,1fr)] items-start gap-8">
+          <nav aria-label="Settings sections" className="sticky top-24 flex flex-col gap-1">
+            {SETTINGS_NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => toggleSection(item.id)}
+                aria-current={expandedSection === item.id ? 'page' : undefined}
+                className={`flex h-11 items-center rounded-full px-4 text-left text-[15px] font-medium transition-colors ${expandedSection === item.id ? 'bg-hockia-soft text-ink-1' : 'text-ink-2 hover:bg-surface-muted hover:text-ink-1'}`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signOutLoading}
+              className="mt-2 flex h-11 items-center gap-2 rounded-full px-4 text-left text-[15px] font-medium text-status-danger transition-colors hover:bg-status-danger-soft disabled:opacity-50"
+            >
+              {signOutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+              {signOutLoading ? 'Signing out…' : 'Log out'}
+            </button>
+          </nav>
+
+          <div>
+        {/* Settings Sections (gap, not space-y: hidden sections take no room) */}
+        <div className="flex flex-col gap-4">
           
           {/* ACCOUNT SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('account')}>
             <SectionHeader 
               id="account" 
               icon={Mail} 
               title="Account" 
-              iconBg="bg-blue-50 text-blue-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'account' && (
@@ -590,8 +600,8 @@ export default function SettingsPage() {
                 {/* Login Email */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600">Login Email</span>
-                    <span className="flex items-center gap-1 text-xs text-green-600">
+                    <span className="text-sm font-medium text-gray-600">Login email</span>
+                    <span className="flex items-center gap-1 text-xs text-positive">
                       <CheckCircle className="w-3 h-3" />
                       Verified
                     </span>
@@ -599,7 +609,7 @@ export default function SettingsPage() {
                   <p className="text-gray-900 font-medium">{user.email}</p>
 
                   {emailSuccess ? (
-                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <p className="text-xs text-positive mt-2 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
                       Confirmation sent to your new email. Check both inboxes to confirm the change.
                     </p>
@@ -627,11 +637,11 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                {/* Change Password */}
+                {/* Change password */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-3">
                     <Lock className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-600">Change Password</span>
+                    <span className="text-sm font-medium text-gray-600">Change password</span>
                   </div>
                   
                   <form onSubmit={handlePasswordChange} className="space-y-3">
@@ -669,7 +679,7 @@ export default function SettingsPage() {
                       <p className="text-xs text-red-600">{passwordError}</p>
                     )}
                     {passwordSuccess && (
-                      <p className="text-xs text-green-600 flex items-center gap-1">
+                      <p className="text-xs text-positive flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
                         Password updated. All other sessions have been signed out.
                       </p>
@@ -680,19 +690,19 @@ export default function SettingsPage() {
                       disabled={passwordLoading}
                       className="w-full px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                     >
-                      {passwordLoading ? 'Updating...' : 'Update Password'}
+                      {passwordLoading ? 'Updating...' : 'Update password'}
                     </button>
                   </form>
                 </div>
 
-                {/* Delete Account */}
+                {/* Delete account */}
                 <button
                   onClick={() => setDeleteModalOpen(true)}
                   className="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors group"
                 >
                   <div className="flex items-center gap-3">
                     <Trash2 className="w-5 h-5 text-red-600" />
-                    <span className="text-red-700 font-medium">Delete Account</span>
+                    <span className="text-red-700 font-medium">Delete account</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600" />
                 </button>
@@ -701,12 +711,12 @@ export default function SettingsPage() {
           </div>
 
           {/* NOTIFICATIONS SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('notifications')}>
             <SectionHeader 
               id="notifications" 
               icon={Bell} 
               title="Notifications" 
-              iconBg="bg-indigo-50 text-indigo-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'notifications' && (
@@ -715,7 +725,7 @@ export default function SettingsPage() {
                 {(profile.role === 'player' || profile.role === 'coach') && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Opportunity Notifications</p>
+                      <p className="text-gray-900 font-medium text-sm">Opportunity notifications</p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         Email when new opportunities are published
                       </p>
@@ -723,8 +733,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleNotificationToggle}
                       disabled={loadingToggles.has('opportunities')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyOpportunities ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyOpportunities)
                       } ${loadingToggles.has('opportunities') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('opportunities') ? (
@@ -744,7 +754,7 @@ export default function SettingsPage() {
                 {profile.role === 'club' && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Application Notifications</p>
+                      <p className="text-gray-900 font-medium text-sm">Application notifications</p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         Email when players apply to your opportunities
                       </p>
@@ -752,8 +762,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleApplicationNotificationToggle}
                       disabled={loadingToggles.has('applications')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyApplications ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyApplications)
                       } ${loadingToggles.has('applications') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('applications') ? (
@@ -772,7 +782,7 @@ export default function SettingsPage() {
                 {/* Friend Request Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Friend Request Emails</p>
+                    <p className="text-gray-900 font-medium text-sm">Friend request emails</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       Email when someone sends you a friend request
                     </p>
@@ -780,8 +790,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleFriendNotificationToggle}
                     disabled={loadingToggles.has('friends')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyFriends ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyFriends)
                     } ${loadingToggles.has('friends') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('friends') ? (
@@ -803,7 +813,7 @@ export default function SettingsPage() {
                 {profile.role !== 'club' && profile.role !== 'brand' && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Reference Request Emails</p>
+                      <p className="text-gray-900 font-medium text-sm">Reference request emails</p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         Email when someone requests a reference from you
                       </p>
@@ -811,8 +821,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handleReferenceNotificationToggle}
                       disabled={loadingToggles.has('references')}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                        notifyReferences ? 'bg-indigo-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                        switchTrackClass(notifyReferences)
                       } ${loadingToggles.has('references') ? 'opacity-50' : ''}`}
                     >
                       {loadingToggles.has('references') ? (
@@ -831,7 +841,7 @@ export default function SettingsPage() {
                 {/* Message Digest Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Message Email Digests</p>
+                    <p className="text-gray-900 font-medium text-sm">Message email digests</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       Email digest for unread messages (max once every 6 hours)
                     </p>
@@ -839,8 +849,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleMessageNotificationToggle}
                     disabled={loadingToggles.has('messages')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyMessages ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyMessages)
                     } ${loadingToggles.has('messages') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('messages') ? (
@@ -858,7 +868,7 @@ export default function SettingsPage() {
                 {/* Push Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Push Notifications</p>
+                    <p className="text-gray-900 font-medium text-sm">Push notifications</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {!push.isSupported
                         ? 'Not supported on this device'
@@ -870,8 +880,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handlePushToggle}
                     disabled={!push.isSupported || push.permission === 'denied' || push.loading}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      push.isSubscribed ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(push.isSubscribed)
                     } ${!push.isSupported || push.permission === 'denied' || push.loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {push.loading ? (
@@ -889,7 +899,7 @@ export default function SettingsPage() {
                 {/* Profile View Digest Emails -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Profile View Emails</p>
+                    <p className="text-gray-900 font-medium text-sm">Profile view emails</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       Daily email summary of who viewed your profile
                     </p>
@@ -897,8 +907,8 @@ export default function SettingsPage() {
                   <button
                     onClick={handleProfileViewNotificationToggle}
                     disabled={loadingToggles.has('profile_views')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      notifyProfileViews ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(notifyProfileViews)
                     } ${loadingToggles.has('profile_views') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('profile_views') ? (
@@ -914,7 +924,7 @@ export default function SettingsPage() {
                 </div>
 
                 {notificationSuccess && (
-                  <p className="text-xs text-green-600 flex items-center gap-1 px-4">
+                  <p className="text-xs text-positive flex items-center gap-1 px-4">
                     <CheckCircle className="w-3 h-3" />
                     Preferences updated
                   </p>
@@ -924,12 +934,12 @@ export default function SettingsPage() {
           </div>
 
           {/* PRIVACY SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('privacy')}>
             <SectionHeader
               id="privacy"
               icon={EyeOff}
               title="Privacy"
-              iconBg="bg-purple-50 text-purple-600"
+              iconBg="bg-surface-muted text-ink-2"
             />
 
             {expandedSection === 'privacy' && (
@@ -937,7 +947,7 @@ export default function SettingsPage() {
                 <FullMatchVisibilitySetting />
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Anonymous Browsing</p>
+                    <p className="text-gray-900 font-medium text-sm">Anonymous browsing</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       When enabled, you won't appear in other users' "Who viewed your profile" lists
                     </p>
@@ -947,8 +957,8 @@ export default function SettingsPage() {
                     onClick={handleAnonymousBrowsingToggle}
                     disabled={loadingToggles.has('anonymous')}
                     aria-label={`Anonymous browsing: ${browseAnonymously ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      browseAnonymously ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(browseAnonymously)
                     } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('anonymous') ? (
@@ -967,7 +977,7 @@ export default function SettingsPage() {
                     Chat (profiles never show activity, ruling 2026-10-11). */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Show Last Active</p>
+                    <p className="text-gray-900 font-medium text-sm">Show last active</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       When enabled, people you chat with see “Active today” in the conversation header. Turn off to hide it.
                     </p>
@@ -977,8 +987,8 @@ export default function SettingsPage() {
                     onClick={handleShowLastActiveToggle}
                     disabled={loadingToggles.has('last-active')}
                     aria-label={`Show last active: ${showLastActive ? 'on' : 'off'}`}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                      showLastActive ? 'bg-indigo-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      switchTrackClass(showLastActive)
                     } ${loadingToggles.has('last-active') ? 'opacity-50' : ''}`}
                   >
                     {loadingToggles.has('last-active') ? (
@@ -995,7 +1005,7 @@ export default function SettingsPage() {
 
                 {/* Blocked Accounts */}
                 <div className="mt-4">
-                  <p className="text-gray-900 font-medium text-sm mb-3">Blocked Accounts</p>
+                  <p className="text-gray-900 font-medium text-sm mb-3">Blocked accounts</p>
                   <BlockedAccountsList />
                 </div>
               </div>
@@ -1003,12 +1013,12 @@ export default function SettingsPage() {
           </div>
 
           {/* SUPPORT SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('support')}>
             <SectionHeader 
               id="support" 
               icon={HelpCircle} 
               title="Support" 
-              iconBg="bg-green-50 text-green-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'support' && (
@@ -1016,7 +1026,7 @@ export default function SettingsPage() {
                 <LinkRow 
                   to="mailto:team@inhockia.com"
                   icon={Mail} 
-                  label="Contact Support" 
+                  label="Contact support" 
                   external 
                 />
               </div>
@@ -1024,12 +1034,12 @@ export default function SettingsPage() {
           </div>
 
           {/* LEGAL SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('legal')}>
             <SectionHeader 
               id="legal" 
               icon={Shield} 
               title="Legal" 
-              iconBg="bg-purple-50 text-purple-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'legal' && (
@@ -1041,18 +1051,18 @@ export default function SettingsPage() {
           </div>
 
           {/* ABOUT SECTION */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className={sectionCard('about')}>
             <SectionHeader 
               id="about" 
               icon={Info} 
               title="About" 
-              iconBg="bg-gray-100 text-gray-600" 
+              iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'about' && (
               <div className="px-4 pb-4 space-y-1">
                 <AboutAppCard />
-                <LinkRow to="/developers" icon={Code} label="For Developers" />
+                <LinkRow to="/developers" icon={Code} label="For developers" />
               </div>
             )}
           </div>
@@ -1060,27 +1070,15 @@ export default function SettingsPage() {
           {/* STAGING-ONLY QA TOOLS — renders null in production */}
           <StagingQaResetCard />
 
-          {/* SIGN OUT BUTTON */}
-          <button
-            onClick={handleSignOut}
-            disabled={signOutLoading}
-            className="w-full flex items-center justify-center gap-2 p-4 bg-white rounded-2xl shadow-sm border border-gray-200 hover:bg-red-50 hover:border-red-200 transition-colors text-red-600 font-medium disabled:opacity-50"
-          >
-            {signOutLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <LogOut className="w-5 h-5" />
-            )}
-            <span>{signOutLoading ? 'Signing out...' : 'Sign Out'}</span>
-          </button>
-
+        </div>
+          </div>
         </div>
       </main>
 
       {/* Footer with legal links + official HOCKIA social channels. */}
       <Footer />
 
-      {/* Delete Account Modal */}
+      {/* Delete account Modal */}
       <DeleteAccountModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}

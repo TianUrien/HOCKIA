@@ -160,7 +160,7 @@ export function LandingNav({ onCta }: { onCta: (cta: 'create_profile', place: st
         <Link
           to="/"
           className="flex h-11 shrink-0 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
-          aria-label="HOCKIA home"
+          aria-label="Hockia home"
         >
           <Logo wordmarkClass={scrolled ? 'hidden lg:block' : ''} />
         </Link>
@@ -307,7 +307,7 @@ function OpenRolesSection() {
         const rows = await fetchLandingRoles(now)
         if (!cancelled) setData(rows)
       } catch (err) {
-        logger.debug('[Landing] open roles unavailable', err)
+        logger.debug('[Landing] open opportunities unavailable', err)
       }
     })()
     return () => { cancelled = true }
@@ -321,7 +321,7 @@ function OpenRolesSection() {
       onClick={() => trackDbEvent('cta_click', undefined, undefined, { cta: 'open_roles_all', location: place })}
       className={`${LINK_M} h-5`}
     >
-      See all open roles
+      See all open opportunities
       <ChevronRight className={WEB_LINK_CHEVRON} aria-hidden="true" />
     </Link>
   )
@@ -331,7 +331,7 @@ function OpenRolesSection() {
       <div className={`${CONTAINER} flex flex-col gap-5 lg:gap-8`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
           <div className="flex flex-col gap-3">
-            <p className="text-web3-eyebrow uppercase text-brand-primary">Open roles</p>
+            <p className="text-web3-eyebrow uppercase text-brand-primary">Open opportunities</p>
             <h2 id="open-roles-title" className="text-[32px] font-extrabold leading-[38px] tracking-[-0.02em] text-ink-1 lg:text-web3-h2">
               Your next club could be anywhere.
             </h2>
@@ -345,7 +345,7 @@ function OpenRolesSection() {
             the gutters, the next card peeking. Desktop: three columns. */}
         <ul
           className="snap-rail -mx-5 flex gap-3 overflow-x-auto px-5 pb-1 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0"
-          aria-label="Open roles"
+          aria-label="Open opportunities"
         >
           {data.roles.map((r) => (
             <li key={r.id} className="w-[300px] shrink-0 snap-start lg:w-auto">

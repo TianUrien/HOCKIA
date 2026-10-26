@@ -152,17 +152,17 @@ describe('launch splash hand-off', () => {
   })
   describe('launch canvas (no white home-indicator band)', () => {
     const canvas = () => [document.documentElement.style.backgroundColor, document.body.style.backgroundColor]
-    const VIOLET = 'rgb(123, 57, 236)' // #7b39ec, the artwork's bottom row
+    const CANVAS = 'rgb(251, 250, 253)' // #fbfafd, the launch canvas
 
-    it('is the artwork bottom colour', () => {
-      expect(LAUNCH_CANVAS_COLOR).toBe('#7b39ec')
+    it('is the launch canvas colour', () => {
+      expect(LAUNCH_CANVAS_COLOR).toBe('#fbfafd')
     })
 
-    it('boot paint → splash first frame: html+body stay violet while the splash is up, white canvas returns on unmount', () => {
+    it('boot paint → splash first frame: html+body hold the canvas while the splash is up, white canvas returns on unmount', () => {
       paintBootLaunchCanvas()
-      expect(canvas()).toEqual([VIOLET, VIOLET])
+      expect(canvas()).toEqual([CANVAS, CANVAS])
       const { unmount } = render(<div><NativeLaunchSplash /><LaunchSplashController /></div>)
-      expect(canvas()).toEqual([VIOLET, VIOLET]) // controller dropped the boot hold, the splash still holds
+      expect(canvas()).toEqual([CANVAS, CANVAS]) // controller dropped the boot hold, the splash still holds
       unmount()
       expect(canvas()).toEqual(['', ''])
     })
@@ -175,7 +175,7 @@ describe('launch splash hand-off', () => {
 
     it('a splash mounted later in the session holds the canvas only while mounted', () => {
       const { unmount } = render(<NativeLaunchSplash />)
-      expect(canvas()).toEqual([VIOLET, VIOLET])
+      expect(canvas()).toEqual([CANVAS, CANVAS])
       unmount()
       expect(canvas()).toEqual(['', ''])
     })

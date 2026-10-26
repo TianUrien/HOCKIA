@@ -89,7 +89,7 @@ vi.mock('@/components/ProfileActionMenu', () => ({ default: () => null }))
 // The "…" on the role: only where "Edit role" goes matters here.
 vi.mock('@/components/club/RoleActions', () => ({
   RoleActions: ({ onEdit }: { onEdit?: () => void }) => (
-    <button type="button" data-testid="role-edit" data-custom-edit={onEdit ? 'yes' : 'no'} onClick={() => onEdit?.()}>Edit role</button>
+    <button type="button" data-testid="role-edit" data-custom-edit={onEdit ? 'yes' : 'no'} onClick={() => onEdit?.()}>Edit opportunity</button>
   ),
 }))
 vi.mock('@/pages/ApplicantsList', () => ({ default: () => <div data-testid="applicants-v1" /> }))
@@ -223,7 +223,7 @@ describe('route guard · Applicant review', () => {
     ['player', PLAYER, true],
     ['non-recruiting coach', CANDIDATE_COACH, false],
     ['player', PLAYER, false],
-  ])('%s · phone=%s → back to the role’s applicants', (_n, profile, phone) => {
+  ])('%s · phone=%s → back to the opportunity’s applicants', (_n, profile, phone) => {
     as(profile); fx.phone = phone as boolean
     open()
     expect(screen.getByTestId('where').textContent).toBe(APPLICANTS)
@@ -278,17 +278,17 @@ describe('route guard · Hockia suggests', () => {
 
 // ── 2 · a coach owner's way back ───────────────────────────────────────────
 describe('Applicants · back and edit for the owner', () => {
-  it('a coach goes back to My roles; no link to the club Opportunities tab', () => {
+  it('a coach goes back to My opportunities; no link to the club Opportunities tab', () => {
     as(COACH)
     inRouter(<ApplicantsScreen roleId="r1" />)
-    const back = screen.getByRole('button', { name: 'Back to My roles' })
+    const back = screen.getByRole('button', { name: 'Back to My opportunities' })
     expect(screen.queryByRole('button', { name: 'Back to Opportunities' })).toBeNull()
     fireEvent.click(back)
     expect(navigateSpy).toHaveBeenCalledWith('/opportunities?view=mine')
     expect(navigateSpy).not.toHaveBeenCalledWith('/opportunities')
   })
 
-  it('a coach’s Edit role opens their own role form on My roles, never the club phone editor', () => {
+  it('a coach’s Edit opportunity opens their own role form on My opportunities, never the club phone editor', () => {
     as(COACH)
     inRouter(<ApplicantsScreen roleId="r1" />)
     const edit = screen.getByTestId('role-edit')
@@ -314,7 +314,7 @@ describe('Applicants · back and edit for the owner', () => {
   })
 
   it('recruiterRolesHome', () => {
-    expect(recruiterRolesHome(COACH)).toEqual({ path: '/opportunities?view=mine', label: 'My roles' })
+    expect(recruiterRolesHome(COACH)).toEqual({ path: '/opportunities?view=mine', label: 'My opportunities' })
     expect(recruiterRolesHome(CLUB)).toEqual({ path: '/opportunities', label: 'Opportunities' })
     expect(recruiterRolesHome(CANDIDATE_COACH)).toEqual({ path: '/opportunities', label: 'Opportunities' })
     expect(recruiterRolesHome(null)).toEqual({ path: '/opportunities', label: 'Opportunities' })
@@ -327,7 +327,7 @@ describe('publisherOrganisation', () => {
     expect(publisherOrganisation({ role: 'club', full_name: ' E2E Test FC ', avatar_url: 'crest.png' }, null, null)).toEqual({ name: 'E2E Test FC', avatarUrl: 'crest.png', isClub: true })
   })
 
-  it('a coach: organisation on the role → world club → club on the profile', () => {
+  it('a coach: organisation on the opportunity → world club → club on the profile', () => {
     const coach = { role: 'coach', coach_recruits_for_team: true, full_name: 'Jo Coach', avatar_url: 'jo.jpg', current_club: 'Typed Club' }
     expect(publisherOrganisation(coach, { organization_name: 'Role Org' }, { club_name: 'Barnes HC', avatar_url: 'barnes.png' })).toEqual({ name: 'Role Org', avatarUrl: null, isClub: false })
     expect(publisherOrganisation(coach, { organization_name: null }, { club_name: 'Barnes HC', avatar_url: 'barnes.png' })).toEqual({ name: 'Barnes HC', avatarUrl: 'barnes.png', isClub: false })
@@ -340,7 +340,7 @@ describe('publisherOrganisation', () => {
     expect(org).toEqual({ name: null, avatarUrl: null, isClub: false })
   })
 
-  it('the hook reads the role’s world club first, then the coach’s', async () => {
+  it('the hook reads the opportunity’s world club first, then the coach’s', async () => {
     as({ ...COACH, current_world_club_id: 'wc-coach' })
     fx.tables = { world_clubs: [{ club_name: 'Barnes HC', avatar_url: 'barnes.png' }] }
     const Probe = ({ role }: { role: { world_club_id?: string | null; organization_name?: string | null } | null }) => {
@@ -410,7 +410,7 @@ describe('Applicant review · coach owner', () => {
     return inRouter(<ApplicantReviewScreen roleId="r1" applicationId="a1" />)
   }
 
-  it('mark as signed names the role’s organisation, never the coach', async () => {
+  it('mark as signed names the opportunity’s organisation, never the coach', async () => {
     as(COACH)
     fx.road = road({ organization_name: 'Barnes HC' })
     openReview('accepted')
@@ -425,7 +425,7 @@ describe('Applicant review · coach owner', () => {
     expect(sheet.querySelector('img[src*="jo.jpg"]')).toBeNull()
   })
 
-  it('the offer sheet names the organisation (the club typed on the coach’s profile when the role has none)', async () => {
+  it('the offer sheet names the organisation (the club typed on the coach’s profile when the opportunity has none)', async () => {
     as(COACH)
     fx.road = road()
     openReview('shortlisted')
@@ -437,7 +437,7 @@ describe('Applicant review · coach owner', () => {
     expect(screen.getByTestId('offer-sheet').textContent).not.toContain('Jo Coach')
   })
 
-  it('a coach with no club on the role or the profile cannot mark a signing', async () => {
+  it('a coach with no club on the opportunity or the profile cannot mark a signing', async () => {
     as({ ...COACH, current_club: null })
     fx.road = road()
     openReview('accepted')

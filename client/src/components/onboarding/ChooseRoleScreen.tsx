@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Eye, Shield, Sparkles, Target, Users, type LucideIcon } from 'lucide-react'
+import { CheckIcon } from '@/components/icons/HockiaIcons'
 import { AuthShell, FormError } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
 import { ONBOARDING_ROLES, ROLE_CARDS, ROLE_LOCK_COPY, roleCtaLabel, type OnboardingRole } from '@/lib/onboardingV2'
@@ -7,24 +7,23 @@ import { cn } from '@/lib/utils'
 import { SetupSignOut } from './SetupSignOut'
 
 /**
- * Choose your role (Figma 04 Player 101:892) — shown right after the account
- * exists (email verification or OAuth return) and before any set-up. Option
- * cards (460:40) for player / coach / club / brand / umpire with the 40 px
- * icon tile (brand-soft; white on the selected card), one line each, then the
- * single Primary "Continue as a <role>". Selected = brand border, brand-soft
- * fill and a check. The role is locked after this (prevent_role_change): the
+ * Choose your role (rebrand page 26; was Figma 04 Player 101:892) — shown
+ * right after the account exists (email verification or OAuth return) and
+ * before any set-up. White option cards with the role's colour dot, title and
+ * one line, then the single Primary "Continue as a <role>". Selected = 2 px
+ * violet border and a check. The role is locked after this (prevent_role_change): the
  * copy says so.
  *
  * Mounted by CompleteProfile when no role is known yet; `onSelect` creates
  * the profile row (create_profile_for_new_user) and fires `role_selected`.
  */
-/** Figma Icon/* → lucide (no icon library is added, per the handoff). */
-const ROLE_ICONS: Record<OnboardingRole, LucideIcon> = {
-  player: Target,
-  coach: Users,
-  club: Shield,
-  brand: Sparkles,
-  umpire: Eye,
+/** Role colour dots (role tokens, rebrand 2026-10-25). */
+const ROLE_DOT: Record<OnboardingRole, string> = {
+  player: 'bg-role-player-ink',
+  coach: 'bg-role-coach-ink',
+  club: 'bg-role-club-ink',
+  brand: 'bg-role-brand-ink',
+  umpire: 'bg-role-umpire-ink',
 }
 
 interface ChooseRoleScreenProps {
@@ -40,14 +39,15 @@ export default function ChooseRoleScreen({ onSelect, busy = false, error, onSign
 
   return (
     <AuthShell trailing={<SetupSignOut />}>
-      <div className="pt-6">
+      <div className="pt-2">
         <h1 className="text-title text-ink-1">Choose your role</h1>
-        <p className="mt-1.5 text-row text-ink-2">{ROLE_LOCK_COPY}</p>
+        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">This shapes your profile and what Hockia shows you. {ROLE_LOCK_COPY}</p>
       </div>
-      <div role="radiogroup" aria-label="Role" className="mt-6 space-y-2.5">
+      {/* Rebrand page 26 · Choose your role: white option cards with the
+          role's colour dot; selected = 2 px violet border and a check. */}
+      <div role="radiogroup" aria-label="Role" className="mt-6 space-y-2">
         {ROLE_CARDS.map((card) => {
           const selected = role === card.role
-          const Icon = ROLE_ICONS[card.role]
           return (
             <button
               key={card.role}
@@ -57,33 +57,16 @@ export default function ChooseRoleScreen({ onSelect, busy = false, error, onSign
               disabled={busy}
               onClick={() => setRole(card.role)}
               className={cn(
-                'flex min-h-[64px] w-full items-center gap-3 rounded-card px-4 py-3 text-left transition-colors disabled:opacity-60',
-                selected ? 'bg-hockia-soft ring-[1.5px] ring-inset ring-hockia-primary' : 'bg-surface-muted active:bg-surface-muted-pressed',
+                'flex min-h-[58px] w-full items-center gap-3 rounded-[18px] bg-white px-3.5 py-2 text-left transition-colors disabled:opacity-60',
+                selected ? 'ring-2 ring-inset ring-brand-primary' : 'ring-1 ring-inset ring-line active:bg-surface-muted',
               )}
             >
-              <span
-                aria-hidden="true"
-                data-testid={`role-icon-${card.role}`}
-                className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] text-hockia-primary',
-                  selected ? 'bg-white' : 'bg-hockia-soft',
-                )}
-              >
-                <Icon className="h-5 w-5" strokeWidth={2} />
-              </span>
+              <span aria-hidden="true" data-testid={`role-icon-${card.role}`} className={cn('h-3 w-3 shrink-0 rounded-full', ROLE_DOT[card.role])} />
               <span className="min-w-0 flex-1">
-                <span className="block text-body font-semibold text-ink-1">{card.title}</span>
-                <span className="block text-secondary text-ink-2">{card.detail}</span>
+                <span className="block font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">{card.title}</span>
+                <span className="block text-[12px] font-medium leading-[1.3] text-ink-2">{card.detail}</span>
               </span>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
-                  selected ? 'bg-hockia-primary text-white' : 'ring-1 ring-inset ring-line',
-                )}
-              >
-                {selected && <Check className="h-4 w-4" strokeWidth={2.5} />}
-              </span>
+              {selected && <CheckIcon className="h-6 w-6 shrink-0 text-brand-primary" />}
             </button>
           )
         })}

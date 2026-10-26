@@ -3,7 +3,7 @@ import { roleViewerGate } from '@/lib/roleViewerGate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Check, ChevronRight, MessageCircle, Share, X, type LucideIcon } from 'lucide-react'
+import { Check, ChevronRight, MessageCircle, Share, X } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import type { CrestPalette } from '@/lib/crestPalette'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -21,8 +21,26 @@ import { dayFirst } from '@/lib/dayFirst'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
-  APPLICATION_TONE_CLASS, CATEGORY_DOT_CLASSES, NOTE_TILE, PAID_TILE, SPECIALIST_TILE, applicationStatusPill, appliedOnLine, categoryFamily, categoryTagClass, closedRoleView, clubNoteFromFeedback,
-  closesSoonLabel, compensationText, formatDurationText, genderPill, postedOnlyLine, roleBenefits, roleHeadline,
+  APPLICATION_TONE_CLASS,
+  NOTE_TILE,
+  PAID_TILE,
+  SPECIALIST_TILE,
+  specialistIcon,
+  type TileIcon,
+  applicationStatusPill,
+  appliedOnLine,
+  categoryFamily,
+  categoryTagClass,
+  closedRoleView,
+  clubNoteFromFeedback,
+  closesSoonLabel,
+  compensationText,
+  formatDurationText,
+  genderPill,
+  postedOnlyLine,
+  roleBenefits,
+  roleHeadline,
+  CATEGORY_DOT_ON_PHOTO_CLASSES,
 } from '@/lib/opportunityCopy'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { daysUntil, isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
@@ -69,7 +87,7 @@ const HERO_HEIGHT = 440
  * Message / Apply bar.
  *
  * States kept from v1: after applying a tinted Applied ✓ with a status
- * line; Not selected / Withdrawn as one grey state; a CLOSED role stays
+ * line; Not this time / Withdrawn as one grey state; a CLOSED role stays
  * readable, greyed, under a "Closed" label with no Apply — an applicant sees
  * their own application block, anyone else "This role is closed".
  */
@@ -100,7 +118,7 @@ export function OpportunityDetailMobile({
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
   const status = hasApplied ? applicationStatusPill(applicationStatus ?? 'pending', null, vacancy.status === 'open') : null
-  // Players only ever see "Not selected": one grey state in the footer, no chip.
+  // Players only ever see "Not this time": one grey state in the footer, no chip.
   const notSelected = hasApplied && applicationStatus === 'rejected'
   // Withdrawn (D4): one grey state in the footer too — never next to an "Applied" button.
   const withdrawn = hasApplied && applicationStatus === 'withdrawn'
@@ -163,7 +181,7 @@ export function OpportunityDetailMobile({
       await navigator.clipboard.writeText(url)
       addToast('Link copied', 'success')
     } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this role', 'error')
+      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this opportunity', 'error')
     }
   }
 
@@ -216,7 +234,7 @@ export function OpportunityDetailMobile({
           <h1 className="break-words text-title-xl text-white" data-testid="role-title">{headline.title}</h1>
           <div className="flex flex-wrap gap-1.5" data-testid="role-detail-meta">
             {positionText && <GlassChip testId="role-detail-position">{positionText}</GlassChip>}
-            {pill && family && <GlassChip dotClass={CATEGORY_DOT_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
+            {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
             {roleStat && <GlassChip testId="role-detail-status">{roleStat.label}</GlassChip>}
             {closed && <GlassChip testId="role-closed-label">Closed</GlassChip>}
           </div>
@@ -290,10 +308,10 @@ export function OpportunityDetailMobile({
       {closedView === 'visitor' && (
         <section className="px-4 pt-3" data-testid="role-closed-notice">
           <div className="rounded-card bg-surface-grouped p-3.5">
-            <p className="text-row font-semibold text-ink-1">This role is closed</p>
+            <p className="text-row font-semibold text-ink-1">This opportunity is closed</p>
             <p className="mt-1 text-secondary text-ink-2">It’s no longer taking applications.</p>
             <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary">
-              See open roles
+              See open opportunities
             </button>
           </div>
         </section>
@@ -303,7 +321,7 @@ export function OpportunityDetailMobile({
       {clubNote && !closed && (
         <section className="px-4 pt-3.5" data-testid="club-note">
           <div className="rounded-card bg-surface-grouped p-3.5">
-            <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+            <p className="text-secondary font-semibold text-ink-2">Not this time · The club’s note</p>
             <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
             <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
           </div>
@@ -313,9 +331,9 @@ export function OpportunityDetailMobile({
       {/* Key facts (Figma 148:397): Team in the category colour, never elsewhere. */}
       <section className="grid grid-cols-2 gap-2.5 px-4 pt-5" data-testid="role-key-facts">
         {pill && (
-          <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching role' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
+          <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
         )}
-        {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching role' : vacancy.position_required ? 'Required' : null} />}
+        {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : vacancy.position_required ? 'Required' : null} />}
         <Fact label="Starts" value={startsValue} sub={duration} />
         <Fact label="Apply by" value={applyByValue} sub={applyBySub} />
       </section>
@@ -350,7 +368,7 @@ export function OpportunityDetailMobile({
             <span className="flex flex-wrap justify-end gap-1.5">
               {specialists.map((s) => (
                 <span key={s} className="flex items-center gap-1 text-[14px] leading-[19px] text-ink-1">
-                  <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}><SPECIALIST_TILE.icon className="h-3 w-3" strokeWidth={1.8} /></span>
+                  <span className={`flex h-5 w-5 items-center justify-center rounded-[6px] ${SPECIALIST_TILE.tileClass}`}>{(() => { const SkillIcon = specialistIcon(s); return <SkillIcon className="h-3 w-3" strokeWidth={1.8} /> })()}</span>
                   {humanizeToken(s)}
                 </span>
               ))}
@@ -360,7 +378,7 @@ export function OpportunityDetailMobile({
         </div>
         {!closed && !isPublisher && relevant && (
           <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
-            <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this role’s position, team and passport
+            <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this opportunity’s position, team and passport
           </p>
         )}
       </section>
@@ -400,27 +418,27 @@ export function OpportunityDetailMobile({
 
       {!isPublisher && !closed && (canApply || hasApplied) && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t-[0.5px] border-line bg-white/92 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-[12px] lg:hidden" data-testid="role-action-bar">
-          {hasApplied && status && !notSelected && (
-            <div className={`mb-2 flex items-center ${withdrawn ? 'justify-end' : 'justify-between'}`}>
-              {!withdrawn && <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>}
+          {/* Status chip (rebrand page 20): In review violet, Shortlisted green,
+              Not this time / Withdrawn neutral grey, never a red or a grey bar. */}
+          {hasApplied && status && (
+            <div className="mb-2 flex items-center justify-between">
+              <span className={`rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid={notSelected ? 'not-selected-state' : withdrawn ? 'withdrawn-state' : undefined}>{status.label}</span>
               <button type="button" onClick={() => navigate('/opportunities/applications', { state: { from: location.pathname } })} className="text-secondary font-semibold text-hockia-primary">
                 View my applications
               </button>
             </div>
           )}
+          {notSelected || withdrawn ? (
+            // The application ended: the chip above says so; the club can still be messaged.
+            <button type="button" onClick={onMessage} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full border border-line bg-white text-body font-semibold text-ink-1 active:bg-surface-muted-pressed" data-testid="role-message">
+              <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
+            </button>
+          ) : (
           <div className="flex items-center gap-2.5">
             <button type="button" onClick={onMessage} aria-label={identity.postedBy ? messageLabel(identity) : 'Message club'} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 active:bg-surface-muted-pressed" data-testid="role-message">
               <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.6} />
             </button>
-            {notSelected ? (
-              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">
-                Not selected
-              </span>
-            ) : withdrawn ? (
-              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">
-                Withdrawn
-              </span>
-            ) : hasApplied ? (
+            {hasApplied ? (
               <span className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="applied-state">
                 <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
               </span>
@@ -430,6 +448,7 @@ export function OpportunityDetailMobile({
               </button>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -470,7 +489,7 @@ export function Fact({ label, value, sub, className, tinted = false }: { label: 
  * List item / Benefit (Figma 148:418): a 40 px tile in the Package colours,
  * title 16 semibold, detail 13 ink-2. Note type = subtle grey tile, info.
  */
-export function BenefitItem({ icon: Icon, tileClass, title, detail, type, className }: { icon: LucideIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note'; className?: string }) {
+export function BenefitItem({ icon: Icon, tileClass, title, detail, type, className }: { icon: TileIcon; tileClass: string; title: string; detail?: string | null; type: 'benefit' | 'note'; className?: string }) {
   return (
     <li className={className ?? 'flex items-center gap-3 py-2'} data-type={type}>
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${tileClass}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>

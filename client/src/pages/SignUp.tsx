@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
-import { AuthHeading, AuthPage, FormError, TermsLine } from '@/components/auth/authUi'
+import { AuthHeading, AuthPage, FormError, OrDivider, TermsLine } from '@/components/auth/authUi'
 import { switchLink } from '@/components/auth/authClasses'
 import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { useAuthStore } from '@/lib/auth'
@@ -19,7 +19,8 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
  * No role is picked here any more — SignUp used to open with five role cards
  * (that step now lives in components/onboarding/ChooseRoleScreen, shown once
  * the account exists). Layout and styling follow the web spec (AuthPage);
- * the flows and the copy are unchanged.
+ * the flows are unchanged. Rebrand page 26 (2026-10-26): "Join Hockia",
+ * providers in platform order, "or", Create with email, terms in the footer.
  */
 export default function SignUp() {
   const navigate = useNavigate()
@@ -40,10 +41,11 @@ export default function SignUp() {
 
   return (
     <AuthPage
-      // On the web the chevron goes back to the landing page; in the native
-      // app this screen is the start, so there is nothing to go back to.
-      onBack={Capacitor.isNativePlatform() ? undefined : () => navigate('/')}
-      backLabel="Back to home"
+      // Back to the landing page on the web, to Welcome in the app (Welcome
+      // is the app's start since rebrand page 26).
+      onBack={() => navigate('/')}
+      backLabel={Capacitor.isNativePlatform() ? 'Back to Welcome' : 'Back to home'}
+      footerNote={<TermsLine tone="web" />}
       switchLine={
         <>
           Already a member?{' '}
@@ -53,10 +55,12 @@ export default function SignUp() {
         </>
       }
     >
-      <AuthHeading title="Your game. Your network." subtitle="Free for players, coaches, clubs, umpires and brands." />
-      <div className="mt-6 flex flex-col gap-4">
+      {/* Rebrand page 26 · Join: account first, role next. */}
+      <AuthHeading title="Join Hockia" subtitle="Create your account first. You’ll choose your role next." />
+      <div className="mt-8 flex flex-col gap-3">
         <FormError>{error}</FormError>
         <OAuthButtons intent="signup" next={next} onError={setError} appearance="web" />
+        <OrDivider />
         <button
           type="button"
           onClick={() => navigate(`/signup/email${search}`)}
@@ -64,9 +68,6 @@ export default function SignUp() {
         >
           Create with email
         </button>
-        {/* Founder ruling 2026-10-03: the standard line sits under the actions
-            it governs, so the OAuth path sees it too. */}
-        <TermsLine tone="web" />
       </div>
     </AuthPage>
   )

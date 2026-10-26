@@ -109,7 +109,7 @@ export function useNextStep() {
       if (matched.length > 0) {
         out.push({
           key: 'roles',
-          title: matched.length === 1 ? '1 role matches you' : `${matched.length} roles match you`,
+          title: matched.length === 1 ? '1 opportunity matches you' : `${matched.length} opportunities match you`,
           subtitle: [positionLabel(profile.position) || null, matched[0].club_name].filter(Boolean).join(' · ') || null,
           cta: 'See',
           visual: { kind: 'crests', urls: matched.slice(0, 3).map((o) => o.club_avatar_url) },

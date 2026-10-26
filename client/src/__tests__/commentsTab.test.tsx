@@ -247,7 +247,7 @@ describe('CommentsTab', () => {
     expect(screen.queryByText(/You can't leave a comment on your own/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ask for feedback/i })).not.toBeInTheDocument()
     // Anonymous-visitor sign-in prompt must NOT appear either.
-    expect(screen.queryByText(/Sign in with a HOCKIA profile/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Sign in with a Hockia profile/i)).not.toBeInTheDocument()
   })
 
   it('shows the sign-in prompt to an anonymous visitor (no auth)', async () => {
@@ -258,7 +258,7 @@ describe('CommentsTab', () => {
 
     // Anonymous visitor sees the sign-in prompt, not the composer or owner copy.
     expect(
-      await screen.findByText(/Sign in with a HOCKIA profile to leave a public, attributed comment/i)
+      await screen.findByText(/Sign in with a Hockia profile to leave a public, attributed comment/i)
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /post comment/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/You can't leave a comment on your own/i)).not.toBeInTheDocument()

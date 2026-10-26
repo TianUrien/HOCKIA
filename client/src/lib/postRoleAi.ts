@@ -80,7 +80,7 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
   return [
     {
       key: 'role',
-      label: 'The role',
+      label: 'The opportunity',
       lines: [join([pos, title && title.toLowerCase() !== (pos ?? '').toLowerCase() ? title : null, team ? `${team} team` : null])].filter(Boolean),
       optionalMissing: player && !d.level ? ['level'] : [],
       neededMissing: [!d.position ? (player ? 'position' : 'role') : null, !d.gender ? 'team' : null].filter((x): x is string => Boolean(x)),
@@ -97,11 +97,11 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
       label: 'Where',
       lines: place ? [join([place, opts.fromClub ? 'from your club profile' : null])] : [],
       optionalMissing: [],
-      neededMissing: d.city.trim() && d.country.trim() ? [] : ['where the role is'],
+      neededMissing: d.city.trim() && d.country.trim() ? [] : ['where the opportunity is'],
     },
     {
       key: 'about',
-      label: 'About the role',
+      label: 'About the opportunity',
       lines: d.description.trim() ? [d.description.trim()] : [],
       optionalMissing: d.description.trim() ? [] : ['description'],
       neededMissing: [],
@@ -112,6 +112,6 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
 /** Why Hockia AI couldn't draft, in the toast. */
 export function aiDraftFailedCopy(reason: string | null | undefined): string {
   return reason === 'limit'
-    ? 'You’ve used today’s Hockia AI drafts. Your words are in “About the role”. Fill in the rest.'
-    : 'Hockia AI couldn’t draft this right now. Your words are in “About the role”. Fill in the rest.'
+    ? 'You’ve used today’s Hockia AI drafts. Your words are in “About the opportunity”. Fill in the rest.'
+    : 'Hockia AI couldn’t draft this right now. Your words are in “About the opportunity”. Fill in the rest.'
 }

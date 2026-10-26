@@ -15,12 +15,12 @@ import RoleBadge from '@/components/RoleBadge'
  */
 const CLIENT = resolve(__dirname, '../..')
 
-/** The hex pairs the badge rendered before the token move (bg, ink). */
+/** The hex pairs the badge renders (bg, ink): rebrand role colours, 2026-10-25. */
 const PREVIOUS: Record<string, [string, string]> = {
-  player: ['#eff6ff', '#2563eb'],
-  coach: ['#f0fdfa', '#0f766e'],
-  club: ['#fff7ed', '#c2410c'],
-  brand: ['#fff1f2', '#be123c'],
+  player: ['#e8f0eb', '#1b6b3a'],
+  coach: ['#e6f2f5', '#07809d'],
+  club: ['#e9effd', '#2563eb'],
+  brand: ['#f6ece8', '#a63e1b'],
 }
 
 function tokenRoles(): Record<string, string> {
@@ -53,7 +53,7 @@ function toHex(value: string): string {
   return '#' + [m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('')
 }
 
-describe('RoleBadge colours on the role/* tokens', () => {
+describe('RoleBadge colours on the opportunity/* tokens', () => {
   it('the tokens carry exactly the hex the badge rendered before', () => {
     const role = tokenRoles()
     for (const [name, [bg, ink]] of Object.entries(PREVIOUS)) {

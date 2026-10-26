@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, type SyntheticEvent } from 'react'
-import { hideNativeSplash, holdLaunchCanvas, LAUNCH_ARTWORK_URL } from '@/lib/launchSplash'
+import { hideNativeSplash, holdLaunchCanvas, LAUNCH_ARTWORK_URL, LAUNCH_CANVAS_COLOR } from '@/lib/launchSplash'
 
 /**
  * NativeLaunchSplash — in-app continuation of the NATIVE LAUNCH SCREEN.
@@ -41,8 +41,8 @@ export default function NativeLaunchSplash() {
     <div
       data-testid="native-launch-splash"
       className="fixed inset-0 z-[9995] overflow-hidden"
-      style={{ backgroundColor: '#5929a8' }}
-      aria-label="Loading HOCKIA"
+      style={{ backgroundColor: LAUNCH_CANVAS_COLOR }}
+      aria-label="Loading Hockia"
     >
       <img
         src={LAUNCH_ARTWORK_URL}

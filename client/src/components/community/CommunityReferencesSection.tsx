@@ -280,7 +280,7 @@ export default function CommunityReferencesSection({
               Coaches, teammates, and clubs vouching for you.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 flex-shrink-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft px-2.5 py-1 text-xs font-semibold text-gold flex-shrink-0">
             <ShieldCheck className="h-3 w-3" />
             {acceptedCount}/{maxReferences}
           </span>
@@ -302,7 +302,7 @@ export default function CommunityReferencesSection({
             {acceptedReferences.map((reference) => {
               const isExpanded = expandedRefId === reference.id
               const profile = reference.profile
-              const fullName = profile?.fullName ?? 'HOCKIA Member'
+              const fullName = profile?.fullName ?? 'Hockia Member'
               return (
                 <li
                   key={reference.id}
@@ -334,7 +334,7 @@ export default function CommunityReferencesSection({
                           {fullName}
                         </button>
                         <ShieldCheck
-                          className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0"
+                          className="h-3.5 w-3.5 text-gold flex-shrink-0"
                           aria-label="Vouched"
                         />
                         {profile?.role && (
@@ -407,11 +407,11 @@ export default function CommunityReferencesSection({
                     trackReferenceModalOpen('list_cta')
                     setInternalAddOpen(true)
                   }}
-                  className="w-full rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="w-full rounded-xl border border-dashed border-gold-line/40 bg-gold-soft px-4 py-3 text-sm font-semibold text-gold hover:bg-gold-soft transition-colors inline-flex items-center justify-center gap-1.5"
                 >
                   <Plus className="h-4 w-4" />
                   Add Reference
-                  <span className="ml-1 text-xs font-normal text-emerald-600/80">
+                  <span className="ml-1 text-xs font-normal text-gold">
                     ({maxReferences - acceptedCount} of {maxReferences} spots left)
                   </span>
                 </button>
@@ -450,7 +450,7 @@ export default function CommunityReferencesSection({
             <ul className="space-y-2.5">
               {incomingRequests.map((request) => {
                 const requester = request.requesterProfile
-                const fullName = requester?.fullName ?? 'HOCKIA Member'
+                const fullName = requester?.fullName ?? 'Hockia Member'
                 return (
                   <li
                     key={request.id}
@@ -501,7 +501,7 @@ export default function CommunityReferencesSection({
                         type="button"
                         onClick={() => setEndorsementRequest(request)}
                         disabled={isMutating('respond', request.id)}
-                        className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-60 transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-primary disabled:opacity-60 transition-colors"
                       >
                         <Check className="h-3.5 w-3.5" />
                         Accept & endorse
@@ -561,7 +561,7 @@ export default function CommunityReferencesSection({
           <ul className="space-y-2.5">
             {givenReferences.map((reference) => {
               const requester = reference.requesterProfile
-              const fullName = requester?.fullName ?? 'HOCKIA Member'
+              const fullName = requester?.fullName ?? 'Hockia Member'
               const hasEndorsement = Boolean(reference.endorsementText)
               return (
                 <li
@@ -600,7 +600,7 @@ export default function CommunityReferencesSection({
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                             hasEndorsement
-                              ? 'bg-emerald-50 text-emerald-700'
+                              ? 'bg-gold-soft text-gold'
                               : 'bg-surface-grouped text-ink-2'
                           }`}
                         >
@@ -620,7 +620,7 @@ export default function CommunityReferencesSection({
                           type="button"
                           onClick={() => setEditingReference(reference)}
                           disabled={isMutating('edit', reference.id)}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-gold hover:text-gold disabled:opacity-50"
                         >
                           <Pencil className="h-3 w-3" />
                           {hasEndorsement ? 'Edit endorsement' : 'Add endorsement'}
@@ -738,8 +738,8 @@ function SelectedEmptyState({
     )
   }
   return (
-    <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-6 text-center">
-      <ShieldCheck className="mx-auto h-7 w-7 text-emerald-500" aria-hidden="true" />
+    <div className="rounded-xl border border-dashed border-gold-line/40 bg-gold-soft px-4 py-6 text-center">
+      <ShieldCheck className="mx-auto h-7 w-7 text-gold" aria-hidden="true" />
       <p className="mt-2 text-sm font-semibold text-gray-900">No references yet</p>
       <p className="mt-1 text-xs text-gray-600">
         Ask coaches, teammates, and clubs to vouch for you. Each one strengthens your profile.
@@ -748,7 +748,7 @@ function SelectedEmptyState({
         <button
           type="button"
           onClick={onAddReference}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-primary transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Reference

@@ -84,7 +84,7 @@ export function YourWeekScreen() {
   const tiles: WeekTile[] = [
     { id: 'views', value: views, label: views === 1 ? 'Profile view' : 'Profile views', sub: viewsDeltaLine(views, priorViews), tone: views > priorViews ? 'positive' : 'grey' },
     { id: 'recruiters', value: clubs + coaches, label: clubs + coaches === 1 ? 'Recruiter' : 'Recruiters', sub: recruitersLine(clubs, coaches) },
-    { id: 'roles', value: roles.roles.total, label: roles.roles.total === 1 ? 'New role' : 'New roles', sub: newRolesLine(roles.roles.forPosition, position), to: '/opportunities' },
+    { id: 'roles', value: roles.roles.total, label: roles.roles.total === 1 ? 'New opportunity' : 'New opportunities', sub: newRolesLine(roles.roles.forPosition, position), to: '/opportunities' },
     { id: 'replies', value: replies.length, label: replies.length === 1 ? 'Club reply' : 'Club replies', sub: clubReplyLine(replies.map((r) => r.club_name)), to: '/opportunities/applications' },
   ]
   const tilesLoading = vis.loading || roles.loading || apps.loading

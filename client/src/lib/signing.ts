@@ -452,9 +452,9 @@ export function offerContractNote(publisherIsClub: boolean, organisation?: strin
 
 /** The close-the-role toggle's line: the others still waiting get the kind note. */
 export function closeRoleNote(waiting: number): string {
-  if (waiting <= 0) return 'No one else is waiting on this role.'
-  if (waiting === 1) return 'The 1 player still waiting gets a kind note that the role is filled.'
-  return `The ${waiting} players still waiting get a kind note that the role is filled.`
+  if (waiting <= 0) return 'No one else is waiting on this opportunity.'
+  if (waiting === 1) return 'The 1 player still waiting gets a kind note that the opportunity is filled.'
+  return `The ${waiting} players still waiting get a kind note that the opportunity is filled.`
 }
 
 // ── Player: confirm (D4.5) and signed (D4.6) ──
@@ -619,7 +619,8 @@ export const SIGNING_CLUB_MISSING_MESSAGE = 'This signing can’t be confirmed y
 export function signingErrorMessage(err: unknown, fallback: string): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
-  return hit ? `${hit.replaceAll('\'', '’')}.` : fallback
+  // The server still says "role"; members read "opportunity" (rebrand 2026-10-25).
+  return hit ? `${hit.replaceAll('\'', '’').replace(/\brole\b/g, 'opportunity')}.` : fallback
 }
 
 // ── Club lists: where road applicants sit, and the grey tag on the row ──
@@ -653,7 +654,7 @@ export function clubRoadTag(status: string): string | null {
 /** The grey tag on a row under Closed that says why it closed (no tag = no reply). */
 export function closedApplicantTag(status: string): string | null {
   if (status === 'withdrawn') return 'Withdrawn'
-  if (status === 'filled') return 'Role filled'
+  if (status === 'filled') return 'Opportunity filled'
   return null
 }
 

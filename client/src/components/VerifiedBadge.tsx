@@ -31,6 +31,7 @@ function formatGrantedDate(iso: string): string {
  * Role-agnostic: brand verification still lives on `brands.is_verified`;
  * callers pass the right source via `verified`.
  */
+/** Green success check (founder 2026-10-26): verification is a state, not identity, and blue clashed with the Club role colour. */
 export default function VerifiedBadge({
   verified,
   verifiedAt,
@@ -42,12 +43,12 @@ export default function VerifiedBadge({
   const iconClass = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'
   const grantedLabel = verifiedAt ? formatGrantedDate(verifiedAt) : ''
   const tooltip = grantedLabel
-    ? `Verified by HOCKIA · ${grantedLabel}`
-    : 'Verified by HOCKIA'
+    ? `Verified by Hockia · ${grantedLabel}`
+    : 'Verified by Hockia'
 
   return (
     <span
-      className={cn('inline-flex items-center text-blue-500', className)}
+      className={cn('inline-flex items-center text-positive', className)}
       role="img"
       aria-label="Verified profile"
       title={tooltip}

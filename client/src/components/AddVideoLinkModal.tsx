@@ -156,9 +156,9 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
             </div>
           )}
 
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm font-medium text-blue-900">Supported platforms</p>
-            <p className="mt-1 text-sm text-blue-700">
+          <div className="rounded-lg border border-line bg-surface-subtle p-4">
+            <p className="text-sm font-medium text-ink-1">Supported platforms</p>
+            <p className="mt-1 text-sm text-ink-2">
               YouTube (`youtube.com`, `youtu.be`), Vimeo (`vimeo.com`), and Google Drive (`drive.google.com`). If your link includes splash page parameters we will clean them up.
             </p>
           </div>

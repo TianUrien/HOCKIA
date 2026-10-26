@@ -122,9 +122,12 @@ export default function CreateWithEmail() {
   }
 
   return (
-    <AuthShell back={{ parent: 'Start', onBack: () => navigate(`/signup${search}`) }} title="Create with email">
-      <form onSubmit={submit} noValidate className="flex flex-1 flex-col pt-4">
-        <div className="space-y-4">
+    <AuthShell back={{ parent: 'Join', onBack: () => navigate(`/signup${search}`) }}>
+      <form onSubmit={submit} noValidate className="flex flex-1 flex-col pt-2">
+        {/* Rebrand page 26 · Create with email */}
+        <h1 className="text-title text-ink-1">Create your account</h1>
+        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Use an email you check. Clubs reply there too.</p>
+        <div className="mt-6 space-y-4">
           <div>
             <label htmlFor="signup-email" className={fieldLabel}>Email</label>
             <input

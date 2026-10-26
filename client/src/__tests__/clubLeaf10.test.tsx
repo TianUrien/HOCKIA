@@ -288,8 +288,8 @@ describe('ClubOpportunitiesScreen first run (D1.25)', () => {
   it('no roles: one clear action, scouting before posting, no segmented control or counters', () => {
     renderOpps()
     expect(screen.getByTestId('club-opportunities-first-run')).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Post your first role' })).toBeTruthy()
-    expect(screen.getByText(/Describe the role once\. Players who fit find it in Opportunities/)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Post your first opportunity' })).toBeTruthy()
+    expect(screen.getByText(/Describe the opportunity once\. Players who fit find it in Opportunities/)).toBeTruthy()
     expect(screen.getByText('Not ready to post? Find players and shortlist them first.')).toBeTruthy()
     expect(screen.queryByRole('radiogroup')).toBeNull()
     expect(screen.queryByRole('tablist')).toBeNull()
@@ -298,10 +298,10 @@ describe('ClubOpportunitiesScreen first run (D1.25)', () => {
     expect(screen.queryByTestId('club-shortlist-count')).toBeNull()
   })
 
-  it('Post a role and the + ask how to start (Club speed CS1); Start from scratch opens step 1; Find players now opens with No context', () => {
+  it('Post an opportunity and the + ask how to start (Club speed CS1); Start from scratch opens step 1; Find players now opens with No context', () => {
     renderOpps()
     // The card's button and the + in the nav do the same.
-    const posts = screen.getAllByRole('button', { name: 'Post a role' })
+    const posts = screen.getAllByRole('button', { name: 'Post an opportunity' })
     expect(posts).toHaveLength(2)
     for (const b of posts) {
       navigateMock.mockClear()

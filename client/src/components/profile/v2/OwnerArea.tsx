@@ -14,15 +14,19 @@ import { cn } from '@/lib/utils'
  * (secondary 44) → ONE primary card (the next step) → private stats marked
  * "only you".
  */
-export function OwnerButtons({ onEdit, previews }: {
+export function OwnerButtons({ onEdit, previews, inline = false }: {
   onEdit: () => void
+  /** Desktop identity row: two 52 pt outline pills, no row padding. */
+  inline?: boolean
   /** "Preview as…" options (PR3): e.g. "Someone on Hockia", "A club". */
   previews: Array<{ key: string; label: string; detail: string; onSelect: () => void }>
 }) {
   const [open, setOpen] = useState(false)
-  const btn = 'flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white text-[15px] font-semibold text-ink-1 transition-transform duration-300 active:scale-[0.97]'
+  const btn = inline
+    ? 'flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-white px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-subtle'
+    : 'flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white text-[15px] font-semibold text-ink-1 transition-transform duration-300 active:scale-[0.97]'
   return (
-    <div className="flex gap-2.5 px-4 pt-4">
+    <div className={inline ? 'flex shrink-0 gap-3' : 'flex gap-2.5 px-4 pt-4'}>
       <button type="button" onClick={onEdit} className={btn} data-testid="profile-edit"><Pencil className="h-4 w-4" strokeWidth={1.8} /> Edit profile</button>
       <button type="button" onClick={() => setOpen(true)} className={btn} data-testid="profile-preview-as"><Eye className="h-4 w-4" strokeWidth={1.8} /> Preview as…</button>
       <BottomSheet open={open} onClose={() => setOpen(false)} ariaLabel="Preview as">
@@ -67,7 +71,7 @@ export function NextStepIcon({ stepKey }: { stepKey: string }) {
 }
 
 /** The ONE primary card: the next step (ring + copy + CTA), or a role-specific card (applicants …). */
-export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, secondary = false }: {
+export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, secondary = false, wrapperClassName = 'px-4 pt-3' }: {
   /** The next missing part's key: shows that item's icon (never a completeness %). */
   stepKey?: string | null
   title: string
@@ -78,9 +82,11 @@ export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, s
   visual?: ReactNode
   /** Another card owns the screen's one primary button: white pill, brand text. */
   secondary?: boolean
+  /** Outer spacing; the desktop dashboard's side column passes ''. */
+  wrapperClassName?: string
 }) {
   return (
-    <div className="px-4 pt-3">
+    <div className={wrapperClassName}>
       <SquircleBox className="flex items-center gap-3 bg-hockia-soft px-4 py-3.5" >
         {visual ?? (stepKey ? <NextStepIcon stepKey={stepKey} /> : null)}
         <span className="min-w-0 flex-1">
@@ -154,7 +160,7 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
               {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
             </span>
             <span className="block truncate text-secondary text-ink-2">
-              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'role' : 'roles'}${names ? ` · ${names}` : ''}` : 'Post a role and players can apply'}
+              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'opportunity' : 'opportunities'}${names ? ` · ${names}` : ''}` : 'Post an opportunity and players can apply'}
             </span>
           </span>
         </div>
@@ -162,9 +168,9 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
           {toReview && (
             <button type="button" onClick={onReview} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
           )}
-          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post a role</button>
+          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post an opportunity</button>
           {recruiting && !toReview && (
-            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View roles</button>
+            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View opportunities</button>
           )}
         </div>
       </div>

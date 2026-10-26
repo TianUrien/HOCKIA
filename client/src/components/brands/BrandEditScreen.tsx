@@ -16,6 +16,7 @@ import type { BrandDetail } from '@/hooks/useBrand'
 import type { UpdateBrandInput } from '@/hooks/useMyBrand'
 import { cn } from '@/lib/utils'
 import { useQueuedToggle } from '@/hooks/useQueuedToggle'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 /**
  * Edit profile — brand, phone (Figma PR22 130:1226). Logo and one cover at
@@ -208,7 +209,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
               aria-checked={partners.value}
               aria-label="Open to partners"
               onClick={partners.toggle}
-              className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', partners.value ? 'bg-[#15803d]' : 'bg-gray-300')}
+              className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', switchTrackClass(partners.value))}
               data-testid="brand-edit-partners"
             >
               <span className={cn('absolute top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow transition-transform duration-200', partners.value ? 'translate-x-[22px]' : 'translate-x-[2px]')} />

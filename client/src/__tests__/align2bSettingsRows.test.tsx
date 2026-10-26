@@ -68,7 +68,8 @@ describe('Settings · hub rows', () => {
     const privacy = rowOf('Privacy')
     expect(privacy.textContent).toContain('Clubs & coaches')
     expect(privacy.querySelector('.rounded-tile')).not.toBeNull()
-    expect(rowOf('Language').textContent).toContain('English')
+    // The app Language row is gone (founder 2026-10-26, rebrand page 23); "Languages" spoken stays.
+    expect(screen.queryByText('Language')).toBeNull()
     const account = rowOf('Email & sign-in')
     expect(account.textContent).toContain('Google')
     expect(account.querySelector('svg.lucide-chevron-right')).not.toBeNull()

@@ -63,10 +63,10 @@ export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRol
   onClose: () => void
 }) {
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel="Shortlist for a role">
+    <BottomSheet open={open} onClose={onClose} ariaLabel="Shortlist for an opportunity">
       <div className="px-5 pb-3 pt-1">
-        <h2 className="text-title text-ink-1">Shortlist for which role?</h2>
-        <p className="mt-1 text-secondary text-ink-2">Each role keeps its own shortlist.</p>
+        <h2 className="text-title text-ink-1">Shortlist for which opportunity?</h2>
+        <p className="mt-1 text-secondary text-ink-2">Each opportunity keeps its own shortlist.</p>
         <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="list">
           {roles.map((r) => {
             const done = shortlistedRoleIds.includes(r.id)
@@ -74,7 +74,7 @@ export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRol
               <button key={r.id} type="button" role="listitem" disabled={done} onClick={() => onPick(r)} className="flex min-h-[52px] w-full items-center gap-3 px-4 py-2.5 text-left disabled:opacity-60">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body text-ink-1">{r.title}</span>
-                  {appliedRoleId === r.id && <span className="block text-secondary text-ink-2">Applied to this role</span>}
+                  {appliedRoleId === r.id && <span className="block text-secondary text-ink-2">Applied to this opportunity</span>}
                 </span>
                 {done && <Check className="h-5 w-5 text-hockia-primary" strokeWidth={2.4} />}
               </button>

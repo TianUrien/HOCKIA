@@ -247,17 +247,17 @@ export default function OpportunityDetailPage() {
   // SEO: Update page title and meta tags for crawlers
   useEffect(() => {
     if (!opportunity || !club) {
-      document.title = 'Field Hockey Opportunity | HOCKIA'
+      document.title = 'Field Hockey Opportunity | Hockia'
       return
     }
 
     // Dynamic page title
-    const pageTitle = `${opportunity.title} at ${club.full_name || 'Club'} | HOCKIA`
+    const pageTitle = `${opportunity.title} at ${club.full_name || 'Club'} | Hockia`
     document.title = pageTitle
 
     // Build meta description
     const location = [opportunity.location_city, opportunity.location_country].filter(Boolean).join(', ')
-    const metaDescription = `${opportunity.title} opportunity at ${club.full_name || 'a club'}${location ? ` in ${location}` : ''}. ${opportunity.description?.slice(0, 120) || 'Apply now on HOCKIA - the field hockey community platform.'}`
+    const metaDescription = `${opportunity.title} opportunity at ${club.full_name || 'a club'}${location ? ` in ${location}` : ''}. ${opportunity.description?.slice(0, 120) || 'Apply now on Hockia - the field hockey community platform.'}`
 
     // Update or create meta description
     const metaDescTag = document.querySelector('meta[name="description"]')
@@ -284,14 +284,14 @@ export default function OpportunityDetailPage() {
 
     // Cleanup: restore defaults when leaving page
     return () => {
-      document.title = 'HOCKIA | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
+      document.title = 'Hockia | Field Hockey Community'
+      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
 
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
-      if (ogTitle) ogTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
+      if (ogTitle) ogTitle.setAttribute('content', 'Hockia | Field Hockey Community')
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)
       if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com')
-      if (twitterTitle) twitterTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
+      if (twitterTitle) twitterTitle.setAttribute('content', 'Hockia | Field Hockey Community')
       if (twitterDesc) twitterDesc.setAttribute('content', defaultDesc)
     }
   }, [opportunity, club])
@@ -342,7 +342,7 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center px-4" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="max-w-sm text-center" role="alert" data-testid="role-load-failed">
-            <h1 className="text-[20px] font-semibold leading-6 text-ink-1">Couldn’t load this role</h1>
+            <h1 className="text-[20px] font-semibold leading-6 text-ink-1">Couldn’t load this opportunity</h1>
             <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
             <button
               type="button"
@@ -363,8 +363,8 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="text-center">
-            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">Role not found</h1>
-            <p className="mb-6 text-row text-ink-2">This role may have been removed.</p>
+            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">Opportunity not found</h1>
+            <p className="mb-6 text-row text-ink-2">This opportunity may have been removed.</p>
             <button
               type="button"
               onClick={() => navigate('/opportunities')}
@@ -508,7 +508,7 @@ export default function OpportunityDetailPage() {
         onClose={() => setShowSignInPrompt(false)}
         title={wallTitle}
         action={wallTitle.includes('message') ? 'message' : 'apply'}
-        message="Sign in or create a free HOCKIA account to apply to this opportunity."
+        message="Sign in or create a free Hockia account to apply to this opportunity."
       />
 
       {/* Apply Modal */}

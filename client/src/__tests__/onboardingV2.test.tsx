@@ -176,21 +176,21 @@ beforeEach(() => {
 })
 
 describe('route order: account first, then role, then set-up', () => {
-  it('First run (104:2096): headline, Apple then Google, Create with email, Log in — no role cards', () => {
+  it('Join (rebrand page 26): "Join Hockia", Google then Apple on the web, Create with email, Log in — no role cards', () => {
     mocks.signedOut.current = true
     renderAuthRoutes('/signup')
-    expect(screen.getByRole('heading', { name: 'Your game. Your network.' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Join Hockia' })).toBeInTheDocument()
     // The phone top bar's back chevron (icon only) precedes the actions on the web.
     const buttons = screen.getAllByRole('button').filter((b) => b.textContent)
-    expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Apple', 'Continue with Google', 'Create with email'])
+    expect(buttons.map((b) => b.textContent)).toEqual(['Continue with Google', 'Continue with Apple', 'Create with email'])
     // Web v3 social pills (Figma 127:2261): 52 tall, full width, pill; Apple
     // on the inverse surface, Google white with the line-strong border; 17 semibold.
-    const [apple, google] = buttons
+    const [google, apple] = buttons
     expect(apple).toHaveAttribute('data-provider', 'apple')
     expect(apple).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-surface-inverse', 'text-white', 'text-[17px]', 'font-semibold')
     expect(google).toHaveAttribute('data-provider', 'google')
     expect(google).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-white', 'border-line-strong', 'text-[17px]', 'font-semibold')
-    expect(screen.getByText('Free for players, coaches, clubs, umpires and brands.')).toBeInTheDocument()
+    expect(screen.getByText('Create your account first. You’ll choose your role next.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/signin')
     // Founder ruling 2026-10-03: the Terms line sits under the OAuth path too.
     expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
@@ -211,14 +211,14 @@ describe('route order: account first, then role, then set-up', () => {
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
 
     // Field header (472:180) + Text field (472:243): 13 semibold ink-2 label;
-    // 50 tall, surface-muted, radius 12, 16 px value, ink-3 placeholder.
+    // 50 tall, white with a 1 px border, radius 16 (rebrand), 16 px value, ink-3 placeholder.
     const email = screen.getByLabelText('Email')
-    expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]', 'placeholder:text-ink-3')
-    expect(screen.getByText('Email')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
-    expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-surface-muted', 'rounded-[12px]')
+    expect(email).toHaveClass('h-[50px]', 'w-full', 'rounded-[16px]', 'border-line', 'bg-white', 'text-[16px]', 'placeholder:text-ink-3')
+    expect(screen.getByText('Email')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
+    expect(screen.getByLabelText('Password')).toHaveClass('h-[50px]', 'bg-white', 'rounded-[16px]')
     // One Primary Large (48) per screen; Back = Ghost icon button 44.
-    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-12', 'w-full', 'bg-hockia-primary')
-    expect(screen.getByRole('button', { name: 'Back to Start' })).toHaveClass('h-11', 'w-11', 'rounded-full')
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('h-[52px]', 'w-full', 'bg-hockia-primary')
+    expect(screen.getByRole('button', { name: 'Back to Join' })).toHaveClass('h-11', 'w-11', 'rounded-full')
 
     await user.type(email, 'new@example.com')
     await user.type(screen.getByLabelText('Password'), 'LongEnough1')
@@ -264,7 +264,7 @@ describe('Choose your role (101:892)', () => {
     const user = userEvent.setup()
     render(<MemoryRouter initialEntries={['/complete-profile']}><CompleteProfile /></MemoryRouter>)
     expect(await screen.findByRole('heading', { name: 'Choose your role' })).toBeInTheDocument()
-    expect(screen.getByText('You can’t change it later without support.')).toBeInTheDocument()
+    expect(screen.getByText(/You can’t change it later without support\./)).toBeInTheDocument()
 
     const cards = screen.getAllByRole('radio')
     expect(cards.map((c) => within(c).getByText(/^(Player|Coach|Club|Brand|Umpire)$/).textContent)).toEqual(['Player', 'Coach', 'Club', 'Brand', 'Umpire'])
@@ -276,24 +276,21 @@ describe('Choose your role (101:892)', () => {
     // No counts, scores or levels on any card.
     expect(screen.queryByText(/\d/)).not.toBeInTheDocument()
 
-    // Option card (460:40) with the 40 px icon tile: brand-soft at rest,
-    // white on the selected card, which gets the brand border + soft fill.
+    // Rebrand page 26: white option card with the role's colour dot; the
+    // selected card gets the 2 px violet border.
+    const DOT: Record<string, string> = { player: 'bg-role-player-ink', coach: 'bg-role-coach-ink', club: 'bg-role-club-ink', brand: 'bg-role-brand-ink', umpire: 'bg-role-umpire-ink' }
     for (const role of ['player', 'coach', 'club', 'brand', 'umpire']) {
-      const tile = screen.getByTestId(`role-icon-${role}`)
-      expect(tile).toHaveClass('h-10', 'w-10', 'bg-hockia-soft', 'text-hockia-primary')
-      expect(tile.querySelector('svg')).not.toBeNull()
+      expect(screen.getByTestId(`role-icon-${role}`)).toHaveClass('h-3', 'w-3', 'rounded-full', DOT[role])
     }
     const playerCard = screen.getByRole('radio', { name: /^Player/ })
-    expect(playerCard).toHaveClass('bg-surface-muted')
-    expect(playerCard).not.toHaveClass('ring-hockia-primary')
+    expect(playerCard).toHaveClass('bg-white', 'ring-line')
+    expect(playerCard).not.toHaveClass('ring-brand-primary')
 
     const cta = screen.getByRole('button', { name: 'Continue' })
     expect(cta).toBeDisabled()
     await user.click(playerCard)
     expect(playerCard).toHaveAttribute('aria-checked', 'true')
-    expect(playerCard).toHaveClass('bg-hockia-soft', 'ring-hockia-primary')
-    expect(screen.getByTestId('role-icon-player')).toHaveClass('bg-white')
-    expect(screen.getByTestId('role-icon-coach')).toHaveClass('bg-hockia-soft')
+    expect(playerCard).toHaveClass('ring-2', 'ring-brand-primary')
     expect(screen.getByRole('button', { name: 'Continue as a player' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Continue as a player' }))
 
@@ -350,18 +347,19 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByText('A real match photo gets more profile views.')).toBeInTheDocument()
     expect(screen.getByLabelText('Full name')).toBeInTheDocument()
     expect(screen.getByText('Date of birth')).toBeInTheDocument()
-    expect(screen.getByLabelText('Category')).toBeInTheDocument()
-    expect(screen.getByLabelText('Position')).toBeInTheDocument()
-    expect(screen.getByLabelText('Second position (optional)')).toBeInTheDocument()
+    // Rebrand page 26: category and positions are single-choice chip groups.
+    expect(screen.getByRole('radiogroup', { name: 'Category' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Position' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Second position (optional)' })).toBeInTheDocument()
 
     // Text field (472:243) on every field: input, Select (trailing chevron)
     // and the compact day / month / year selects share the muted 50 px look.
-    expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[12px]', 'bg-surface-muted', 'text-[16px]')
-    expect(screen.getByText('Full name')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
-    expect(screen.getByLabelText('Category')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none', 'pr-11')
-    expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-surface-muted', 'appearance-none')
+    expect(screen.getByLabelText('Full name')).toHaveClass('h-[50px]', 'rounded-[16px]', 'border-line', 'bg-white', 'text-[16px]')
+    expect(screen.getByText('Full name')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
+    expect(within(screen.getByRole('radiogroup', { name: 'Position' })).getByRole('radio', { name: /Midfielder/ })).toHaveClass('h-11', 'rounded-full')
+    expect(screen.getByLabelText('Day')).toHaveClass('h-[50px]', 'bg-white', 'appearance-none')
     const dobGroup = screen.getByRole('group', { name: /date of birth/i })
-    expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-secondary', 'font-semibold', 'text-ink-2')
+    expect(document.getElementById(dobGroup.getAttribute('aria-labelledby') ?? '')).toHaveClass('text-[14px]', 'font-medium', 'text-ink-1')
 
     // The Day/Month/Year picker is unchanged: years descend from a recent one
     // (was pinned on the public sign-up path before the account-first flow).
@@ -373,8 +371,8 @@ describe('Set up (114:537 / 114:608)', () => {
     await user.selectOptions(screen.getByLabelText('Day'), '1')
     await user.selectOptions(screen.getByLabelText('Month'), '1')
     await user.selectOptions(screen.getByLabelText('Year'), '2000')
-    await user.selectOptions(screen.getByLabelText('Category'), 'adult_women')
-    await user.selectOptions(screen.getByLabelText('Position'), 'midfielder')
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Category' })).getAllByRole('radio')[0])
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Position' })).getByRole('radio', { name: /Midfielder/ }))
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('declare_date_of_birth', { p_dob: '2000-01-01' }))
@@ -396,12 +394,12 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByText('Passport')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add second/i })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Open to play' })).toBeChecked()
-    expect(screen.getByText('Clubs can see you and message you about roles.')).toBeInTheDocument()
+    expect(screen.getByText('Clubs can see you and message you about opportunities.')).toBeInTheDocument()
     // List item / Switch (472:186), as Confirm signing uses: muted grouped
     // card holding the SettingsRow with the green switch.
     const row = screen.getByTestId('open-to-play-row')
     expect(row).toHaveClass('rounded-card', 'bg-surface-muted')
-    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-positive')
+    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-brand-primary') // violet on the web (rebrand 2026-10-25)
     expect(within(row).getByText('Open to play')).toHaveClass('text-body')
 
     await user.click(screen.getByRole('button', { name: 'Skip' }))
@@ -455,6 +453,28 @@ describe('Set up (114:537 / 114:608)', () => {
     render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
     expect(screen.getByText('Locked after registration.')).toBeInTheDocument()
     expect(screen.queryByLabelText('Year')).not.toBeInTheDocument()
+  })
+
+  // CodeQL clear-text storage (2026-10-25): the autosaved draft never holds
+  // the date of birth or passports.
+  it('the autosaved draft keeps the name and leaves out DOB and passports', async () => {
+    mocks.profile.current = { ...playerProfile('1994-03-07'), nationality_country_id: 30, nationality2_country_id: 44 }
+    render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
+    await waitFor(() => expect(localStorage.getItem('hockia-onboarding-v2:player:u-1')).not.toBeNull())
+    const raw = localStorage.getItem('hockia-onboarding-v2:player:u-1') ?? ''
+    expect(JSON.parse(raw).draft).toMatchObject({ fullName: 'Sam Rivers', position: 'midfielder' })
+    expect(raw).not.toMatch(/1994-03-07|dateOfBirth|passport1|passport2|showSecondPassport/)
+  })
+
+  it('a draft saved before the change restores the name but asks for the DOB again', () => {
+    mocks.profile.current = { ...playerProfile(years(25)), full_name: '', date_of_birth: null, position: null, playing_category: null }
+    localStorage.setItem('hockia-onboarding-v2:player:u-1', JSON.stringify({
+      draft: { fullName: 'Jo Park', dateOfBirth: '1994-03-07', passport1: 30 }, savedAt: new Date().toISOString(),
+    }))
+    render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
+    expect(screen.getByLabelText('Full name')).toHaveValue('Jo Park')
+    expect(screen.getByLabelText('Year')).toHaveValue('')
+    expect(screen.getByLabelText('Day')).toHaveValue('')
   })
 })
 

@@ -31,13 +31,13 @@ export default function SearchAppearancesCard({
   if (total <= 0) return null
 
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 sm:p-5 shadow-sm">
+    <div className="rounded-xl border border-line bg-surface-subtle p-4 sm:p-5 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 text-blue-700">
+        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-hockia-soft text-hockia-primary">
           <Eye className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-800 mb-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3 mb-0.5">
             Search appearances
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">
@@ -58,7 +58,7 @@ export default function SearchAppearancesCard({
                 return (
                   <div
                     key={d.day}
-                    className="flex-1 rounded-sm bg-blue-200"
+                    className="flex-1 rounded-sm bg-hockia-soft-hover"
                     style={{ height: `${Math.max(heightPct, 6)}%` }}
                     title={`${d.day}: ${d.appearances}`}
                   />

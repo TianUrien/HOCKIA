@@ -30,7 +30,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
         profilePath={`/brands/${item.brand_slug}`}
         subtitle={brandCategoryLabel(item.brand_category)}
         right={item.brand_is_verified ? (
-          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-blue-500" aria-label="Verified brand" />
+          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-positive" aria-label="Verified brand" />
         ) : undefined}
       />
 

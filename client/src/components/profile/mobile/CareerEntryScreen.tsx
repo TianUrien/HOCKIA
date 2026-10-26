@@ -16,6 +16,7 @@ import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import type { CareerHistoryRow } from '@/hooks/useCareerTimeline'
+import { switchTrackClass } from '@/components/ui/switchClasses'
 
 /**
  * Career entry (Figma 145:671) — one entry, every career_history field:
@@ -329,7 +330,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
             <span className="block text-row font-semibold text-ink-1">I’m still here</span>
             <span className="block text-caption text-ink-3">Shows as “Present”{isClub ? ' and keeps this as your current club.' : '.'}</span>
           </span>
-          <span className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors', stillHere ? 'bg-positive' : 'bg-line')}>
+          <span className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors', switchTrackClass(stillHere))}>
             <span className={cn('absolute top-0.5 h-[27px] w-[27px] rounded-full bg-white shadow transition-all', stillHere ? 'left-[22px]' : 'left-0.5')} />
           </span>
         </button>

@@ -2,7 +2,7 @@
  * ShortlistDetailPage — P1.5 (Spec G.8).
  *
  * Rows: avatar, HockeyContextLine, ClubFitChip, status pill (4-way
- * Unsorted / Good fit / Maybe / Not a fit), inline note (auto-save),
+ * Unsorted / Top pick / Maybe / Not a fit), inline note (auto-save),
  * Open profile + Remove actions. Empty state explains how to add
  * players to the list.
  *
@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { Chip } from '@/components/ui/Chip'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, BookmarkCheck, Star, Trash2, ExternalLink, FolderInput } from 'lucide-react'
 import Header from '@/components/Header'
@@ -27,11 +28,11 @@ import {
   type ShortlistItemSummary,
 } from '@/hooks/useShortlists'
 
-const STATUS_OPTIONS: { value: ShortlistItemStatus; label: string; pill: string }[] = [
-  { value: 'unsorted', label: 'Unsorted', pill: 'bg-gray-100 text-gray-700' },
-  { value: 'good_fit', label: 'Good fit', pill: 'bg-emerald-100 text-emerald-800' },
-  { value: 'maybe',    label: 'Maybe',    pill: 'bg-surface-grouped text-ink-2' },
-  { value: 'not_a_fit',label: 'Not a fit',pill: 'bg-red-100 text-red-800' },
+const STATUS_OPTIONS: { value: ShortlistItemStatus; label: string }[] = [
+  { value: 'unsorted', label: 'Unsorted' },
+  { value: 'good_fit', label: 'Top pick' },
+  { value: 'maybe', label: 'Maybe' },
+  { value: 'not_a_fit', label: 'Not a fit' },
 ]
 
 export default function ShortlistDetailPage() {
@@ -86,17 +87,16 @@ export default function ShortlistDetailPage() {
         </Link>
 
         <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
+          <h1 className="flex flex-wrap items-center gap-2 text-title text-ink-1">
             {listName ?? 'Shortlist'}
             {isDefault && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-hockia-primary bg-hockia-primary/10 rounded-full px-2 py-0.5 ml-1">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-hockia-soft px-2 py-0.5 font-sans text-caption font-semibold text-brand-text">
                 <Star className="w-3 h-3 fill-current" />
                 Default
               </span>
             )}
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
             {items.length} {items.length === 1 ? 'player' : 'players'} · only you see this.
           </p>
         </header>
@@ -177,7 +177,7 @@ function ShortlistItemRow({
         <button
           type="button"
           onClick={onRemove}
-          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
           aria-label="Remove"
         >
           <Trash2 className="w-4 h-4" />
@@ -230,23 +230,20 @@ function ShortlistItemRow({
             className="mb-2"
           />
 
-          {/* Status pills */}
-          <div className="flex flex-wrap gap-1.5 mb-2">
+          {/* Status (rebrand: Chip / Selectable — soft violet when chosen, 44 pt
+              tall; status words carry the meaning, no red or green fills). */}
+          <div role="radiogroup" aria-label="Status" className="mb-2 flex flex-wrap gap-1.5">
             {STATUS_OPTIONS.map((opt) => (
-              <button
+              <Chip
                 key={opt.value}
-                type="button"
+                label={opt.label}
+                selected={item.status === opt.value}
+                role="radio"
+                aria-checked={item.status === opt.value}
+                aria-pressed={undefined}
                 onClick={() => onStatusChange(opt.value)}
-                aria-pressed={item.status === opt.value}
-                className={[
-                  'text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors',
-                  item.status === opt.value
-                    ? opt.pill + ' ring-2 ring-offset-1 ring-current'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100',
-                ].join(' ')}
-              >
-                {opt.label}
-              </button>
+                className="px-3 text-[13px]"
+              />
             ))}
           </div>
 
@@ -268,7 +265,7 @@ function ShortlistItemRow({
           <button
             type="button"
             onClick={onOpen}
-            className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
             aria-label="Open profile"
             title="Open profile"
           >
@@ -277,7 +274,7 @@ function ShortlistItemRow({
           <button
             type="button"
             onClick={() => setMoveMenuOpen((v) => !v)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
             aria-label="Move to another shortlist"
             title="Move to…"
           >
@@ -286,7 +283,7 @@ function ShortlistItemRow({
           <button
             type="button"
             onClick={onRemove}
-            className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
             aria-label="Remove from list"
             title="Remove"
           >

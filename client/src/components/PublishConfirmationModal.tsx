@@ -74,8 +74,8 @@ export default function PublishConfirmationModal({
         {/* Header */}
         <div className="flex items-start justify-between p-6 pb-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-positive-soft rounded-full flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-6 h-6 text-positive" />
             </div>
             <div className="flex-1">
               <h2 id="publish-confirmation-title" className="text-xl font-bold text-gray-900 mb-1">
@@ -99,14 +99,14 @@ export default function PublishConfirmationModal({
 
         {/* Content */}
         <div className="px-6 pb-2">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <div className="bg-surface-subtle border border-line rounded-lg p-4 mb-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-ink-2 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-amber-900 text-sm mb-1">
+                <h3 className="font-semibold text-ink-1 text-sm mb-1">
                   Before you publish:
                 </h3>
-                <ul className="text-sm text-amber-800 space-y-1">
+                <ul className="text-sm text-ink-2 space-y-1">
                   <li>• This opportunity will be visible to candidates globally</li>
                   <li>• Candidates will be able to apply immediately</li>
                   <li>• You can edit or close it anytime after publishing</li>
@@ -134,7 +134,7 @@ export default function PublishConfirmationModal({
             ref={confirmButtonRef}
             onClick={handleConfirm}
             disabled={isLoading}
-            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-lg shadow-green-500/30"
+            className="flex-1 bg-brand-primary hover:opacity-90 text-white font-semibold"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">

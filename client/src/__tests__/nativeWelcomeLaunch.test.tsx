@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 /**
  * Launch-screen flicker (founder report, 2026-08-17): a signed-in member
- * opening the app saw the unauthenticated welcome ("Create account") for
+ * opening the app saw the unauthenticated welcome ("Get started") for
  * <1s before the redirect fired, because the welcome rendered while the
  * auth store was still hydrating the persisted session.
  *
@@ -50,7 +50,7 @@ const renderWelcome = () =>
     </MemoryRouter>,
   )
 
-const welcomeVisible = () => screen.queryByRole('link', { name: /create account/i }) !== null
+const welcomeVisible = () => screen.queryByRole('link', { name: /get started/i }) !== null
 const splashVisible = () => screen.queryByTestId('native-launch-splash') !== null
 
 describe('NativeWelcome — launch frame selection', () => {

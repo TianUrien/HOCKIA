@@ -83,7 +83,7 @@ export default function WorldClubPage() {
           return
         }
         setClub(clubData)
-        document.title = `${clubData.club_name} | HOCKIA`
+        document.title = `${clubData.club_name} | Hockia`
 
         // Fan out lookups sequentially. Each is a small single-row read
         // and the user-perceived load time is dominated by the initial
@@ -266,13 +266,13 @@ export default function WorldClubPage() {
                 {(menLeague || womenLeague) && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {menLeague && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-category-men-soft px-3 py-1 text-xs font-medium text-category-men">
                         <Trophy className="h-3 w-3" />
                         Men: {menLeague.name}
                       </span>
                     )}
                     {womenLeague && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 px-3 py-1 text-xs font-medium text-pink-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-category-women-soft px-3 py-1 text-xs font-medium text-category-women">
                         <Trophy className="h-3 w-3" />
                         Women: {womenLeague.name}
                       </span>
@@ -287,7 +287,7 @@ export default function WorldClubPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                      Claimed on HOCKIA
+                      Claimed on Hockia
                     </p>
                     <p className="mt-0.5 truncate text-sm text-gray-700">
                       {claimedProfile?.full_name || 'View this club’s full profile, opportunities, and members.'}
@@ -306,7 +306,7 @@ export default function WorldClubPage() {
 
             {!claimedProfilePath && (
               <p className="mt-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
-                This club hasn’t been claimed on HOCKIA yet.
+                This club hasn’t been claimed on Hockia yet.
               </p>
             )}
           </div>
