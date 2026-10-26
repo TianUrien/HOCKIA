@@ -1,5 +1,5 @@
+import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useEffect, useRef, useState } from 'react'
-import { Mail } from 'lucide-react'
 import { resendVerificationEmail } from '@/lib/auth'
 
 interface ResendVerificationButtonProps {
@@ -73,46 +73,38 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
 
   return (
     <div className="space-y-3">
+      {/* Rebrand page 26 · Check your inbox: one violet action; the cooldown
+          reads as a calm countdown, never a green "success" button. */}
       <button
+        type="button"
         onClick={handleResend}
         disabled={disabled}
-        className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-          cooldown > 0
-            ? 'bg-green-100 text-green-700 cursor-not-allowed'
-            : isLoading
-            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white hover:opacity-90'
-        }`}
+        className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}
       >
         {isLoading ? (
           <>
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            Sending...
-          </>
-        ) : cooldown > 0 ? (
-          <>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Resend available in {cooldown}s
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+            Sending…
           </>
         ) : (
-          <>
-            <Mail className="w-5 h-5" />
-            Resend Verification Email
-          </>
+          'Resend email'
         )}
       </button>
+      {cooldown > 0 && (
+        <p className="text-center text-caption text-ink-3" aria-live="polite">
+          Didn’t get it? You can resend in {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')}.
+        </p>
+      )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-status-danger-soft rounded-[12px] px-3.5 py-2.5">
+          <p className="text-sm text-status-danger">{error}</p>
         </div>
       )}
 
       {sent && cooldown > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm text-green-700">
+        <div className="bg-positive-soft rounded-[12px] px-3.5 py-2.5">
+          <p className="text-sm text-positive">
             Check your inbox for a new verification link.
           </p>
         </div>

@@ -65,8 +65,9 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
   it('OAuth first, email + password visible immediately, Forgot password present', () => {
     render(<AuthScreen />)
     const buttons = screen.getAllByRole('button')
-    expect(buttons[1]).toHaveTextContent(/continue with apple/i)
-    expect(buttons[2]).toHaveTextContent(/continue with google/i)
+    // Web: Google first (rebrand page 26); Apple first only in the iOS app.
+    expect(buttons[1]).toHaveTextContent(/continue with google/i)
+    expect(buttons[2]).toHaveTextContent(/continue with apple/i)
     expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     const forgot = screen.getByRole('link', { name: /forgot password/i })
@@ -76,8 +77,8 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     // One Primary Large (52 pill), full width.
     expect(screen.getByRole('button', { name: /^log in$/i })).toHaveClass('h-[52px]', 'w-full', 'rounded-full', 'bg-brand-primary')
     // OAuth pills: Apple black, Google white with the 1.5 px line-strong border.
-    expect(buttons[1]).toHaveClass('h-[52px]', 'rounded-full', 'bg-surface-inverse')
-    expect(buttons[2]).toHaveClass('h-[52px]', 'rounded-full', 'border-line-strong')
+    expect(buttons[2]).toHaveClass('h-[52px]', 'rounded-full', 'bg-surface-inverse')
+    expect(buttons[1]).toHaveClass('h-[52px]', 'rounded-full', 'border-line-strong')
     // Fields: surface-muted, radius 14, 52 tall, no border; "Show" toggle inside.
     expect(screen.getByLabelText('Password')).toHaveClass('h-[52px]', 'rounded-[14px]', 'bg-surface-muted')
     expect(screen.getByRole('button', { name: /show password/i })).toHaveTextContent('Show')
@@ -85,7 +86,8 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     expect(screen.getByRole('button', { name: /back to start/i })).toHaveClass('h-11', 'w-11', 'rounded-full')
     expect(screen.getByRole('link', { name: 'Back to home' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-    expect(screen.getByText('Log in to your Hockia profile.')).toBeInTheDocument()
+    // Rebrand page 26: no subtitle under "Welcome back".
+    expect(screen.queryByText('Log in to your Hockia profile.')).toBeNull()
     // Sign-up-only things never appear here.
     expect(screen.queryByText(/by continuing, you agree/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
@@ -107,8 +109,8 @@ describe('AuthScreen — Log in (Figma 114:477)', () => {
     render(<AuthScreen />)
     expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/signup')
     expect(screen.getByText(/New to Hockia\?/)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /email me a link instead/i }))
-    expect(screen.getByRole('button', { name: /email me a sign-in link/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /email me a sign-in link instead/i }))
+    expect(screen.getByRole('button', { name: /^email me a sign-in link$/i })).toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
   })
 })

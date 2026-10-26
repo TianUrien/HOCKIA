@@ -143,12 +143,12 @@ describe('Facebook Login (behind VITE_ENABLE_FACEBOOK_LOGIN)', () => {
     expect(screen.queryByRole('button', { name: /continue with facebook/i })).toBeNull()
   })
 
-  it('is the third button, after Apple and Google, when on', () => {
+  it('is the third button, after Google and Apple (web order), when on', () => {
     vi.stubEnv('VITE_ENABLE_FACEBOOK_LOGIN', 'true')
     setUa(UA.safariIos)
     render(<OAuthButtons intent="signup" onError={vi.fn()} />)
     const labels = screen.getAllByRole('button').map((b) => b.textContent)
-    expect(labels).toEqual(['Continue with Apple', 'Continue with Google', 'Continue with Facebook'])
+    expect(labels).toEqual(['Continue with Google', 'Continue with Apple', 'Continue with Facebook'])
     fireEvent.click(screen.getByRole('button', { name: /continue with facebook/i }))
     expect(mocks.startOAuthSignIn).toHaveBeenCalledWith('facebook')
   })

@@ -20,8 +20,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { detectInAppBrowser } from '@/lib/inAppBrowser'
-import { AuthHeading, AuthPage, FormError } from '@/components/auth/authUi'
-import { orDivider, switchLink, webFieldInput, webFieldLabel } from '@/components/auth/authClasses'
+import { AuthHeading, AuthPage, FormError, OrDivider } from '@/components/auth/authUi'
+import { switchLink, webFieldInput, webFieldLabel } from '@/components/auth/authClasses'
 import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
@@ -239,13 +239,14 @@ export default function AuthScreen() {
 
   return (
     <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
-      <AuthHeading title="Welcome back" subtitle="Log in to your Hockia profile." />
+      {/* Rebrand page 26 · Log in: title, providers (platform order), or, email. */}
+      <AuthHeading title="Welcome back" />
 
-      <div className="mt-6">
+      <div className="mt-8">
         <OAuthButtons intent="signin" next={next} onError={setError} appearance="web" />
       </div>
 
-      <div className={`${orDivider} my-4`} aria-hidden="true">or</div>
+      <div className="my-4"><OrDivider /></div>
 
       <form onSubmit={passwordMode ? handlePasswordSignIn : handleSendMagicLink} noValidate className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
@@ -324,15 +325,13 @@ export default function AuthScreen() {
           {passwordMode ? 'Log in' : 'Email me a sign-in link'}
         </button>
 
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => { setPasswordMode((m) => !m); setError(null); setUserNotFound(false) }}
-            className={`${LINK_M} h-11`}
-          >
-            {passwordMode ? 'Email me a link instead' : 'Use a password instead'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => { setPasswordMode((m) => !m); setError(null); setUserNotFound(false) }}
+          className={webButtonClassName({ variant: 'secondary', size: 'large', block: true })}
+        >
+          {passwordMode ? 'Email me a sign-in link instead' : 'Use a password instead'}
+        </button>
       </form>
     </AuthPage>
   )

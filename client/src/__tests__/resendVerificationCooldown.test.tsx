@@ -35,12 +35,12 @@ describe('ResendVerificationButton cooldown', () => {
 
     const button = screen.getByRole('button')
     expect(button).toBeDisabled()
-    expect(button.textContent).toContain('Resend available in 60s')
+    expect(screen.getByText(/You can resend in 1:00/)).toBeInTheDocument()
 
     // 10s later: still locked — this is the window that used to re-enable.
     act(() => vi.advanceTimersByTime(10_000))
     expect(screen.getByRole('button')).toBeDisabled()
-    expect(screen.getByRole('button').textContent).toContain('50s')
+    expect(screen.getByText(/You can resend in 0:50/)).toBeInTheDocument()
 
     // After the full minute the button is usable again.
     act(() => vi.advanceTimersByTime(50_000))
@@ -59,7 +59,7 @@ describe('ResendVerificationButton cooldown', () => {
     await act(async () => { await Promise.resolve() })
 
     expect(screen.getByRole('button')).toBeDisabled()
-    expect(screen.getByRole('button').textContent).toContain('52s')
+    expect(screen.getByText(/You can resend in 0:52/)).toBeInTheDocument()
     expect(screen.queryByText(/for security purposes/i)).not.toBeInTheDocument()
   })
 

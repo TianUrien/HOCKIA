@@ -8,11 +8,16 @@ import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { SocialButton } from '@/components/ui/SocialButton'
 import { ContinueInBrowser } from './ContinueInBrowser'
+import { getRuntimePlatform } from '@/lib/appVersion'
+
+/** Rebrand page 26: Apple first in the iOS app (HIG); Google first on Android and the web. */
+const providerOrder: Array<'apple' | 'google'> = getRuntimePlatform() === 'ios-native' ? ['apple', 'google'] : ['google', 'apple']
 
 /**
  * "Continue with Apple" / "Continue with Google" — the fast path on First run
  * (Figma 104:2096) and Log in (114:477), drawn with Button / Social
- * (535:8381): Large 48, radius 12, Apple first per HIG. In sign-up the role is NOT chosen here (account-first onboarding,
+ * (535:8381). Order (rebrand page 26): Apple first in the iOS app per HIG,
+ * Google first on Android and the web. In sign-up the role is NOT chosen here (account-first onboarding,
  * founder rulings 2026-10-03): nothing is stashed in localStorage; the role is
  * asked on "Choose your role" once the account exists, so an OAuth return
  * always lands there via /auth/callback → /complete-profile.
@@ -60,12 +65,11 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
 
   return (
     <div className={cn(appearance === 'web' ? 'space-y-4' : 'space-y-3', className)}>
-      <SocialButton provider="apple" appearance={appearance} onClick={() => start('apple')}>
-        Continue with Apple
-      </SocialButton>
-      <SocialButton provider="google" appearance={appearance} onClick={() => start('google')}>
-        Continue with Google
-      </SocialButton>
+      {providerOrder.map((provider) => (
+        <SocialButton key={provider} provider={provider} appearance={appearance} onClick={() => start(provider)}>
+          {provider === 'apple' ? 'Continue with Apple' : 'Continue with Google'}
+        </SocialButton>
+      ))}
       {showFacebook && (
         <SocialButton provider="facebook" appearance={appearance} onClick={() => start('facebook')}>
           Continue with Facebook
