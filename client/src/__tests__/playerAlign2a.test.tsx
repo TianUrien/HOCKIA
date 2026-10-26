@@ -39,7 +39,9 @@ vi.mock('@/hooks/useCountries', () => ({
   isEuCountryCode: () => false,
 }))
 vi.mock('@/hooks/useBodyScrollLock', () => ({ useBodyScrollLock: () => undefined }))
-vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => true }))
+// Phone layouts by default; `desktopWidth` turns on the ≥1024 desktop variants.
+let desktopWidth = false
+vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: (q: string) => (q.includes('min-width: 1024px') ? desktopWidth : true) }))
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 vi.mock('@/lib/analytics', () => ({ trackApplicationSubmit: vi.fn() }))
@@ -370,6 +372,7 @@ const vacancy = {
 } as unknown as Vacancy
 
 describe('Apply sheet', () => {
+  afterEach(() => { desktopWidth = false })
   const sheet = () =>
     render(
       <MemoryRouter>
@@ -396,6 +399,20 @@ describe('Apply sheet', () => {
     expect(screen.queryByRole('button', { name: 'Message the club' })).toBeNull()
     expect(screen.queryByTestId('apply-not-eligible')).toBeNull()
     expect(screen.getByText('Your profile, career and highlights are sent automatically. Withdraw any time from Applied.')).toBeInTheDocument()
+  })
+
+  it('desktop (rebrand page 27 · Web · Apply dialog): heading, profile card, optional message, Cancel + Send application; no detail rows', () => {
+    desktopWidth = true
+    sheet()
+    expect(screen.getByTestId('apply-dialog-desktop')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Apply to Hockey Team Bologna' })).toBeInTheDocument()
+    expect(screen.getByTestId('apply-profile-card')).toBeInTheDocument()
+    expect(screen.queryAllByTestId('apply-detail-row')).toHaveLength(0)
+    expect(screen.getByText('Max 500 characters')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    const send = screen.getByTestId('send-application')
+    expect(send).toHaveTextContent('Send application')
+    expect(send).not.toBeDisabled()
   })
 
   it('not eligible: a NEUTRAL callout with an info icon (never amber), Secondary "Message the club", Primary disabled', () => {

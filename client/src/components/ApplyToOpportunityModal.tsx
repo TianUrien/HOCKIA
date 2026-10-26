@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ChevronRight, Info } from 'lucide-react'
+import { ChevronRight, Info, Play } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { calculateAge } from '@/lib/utils'
 import { format } from 'date-fns'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -74,6 +76,7 @@ export default function ApplyToVacancyModal({
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const displayClub = clubName?.trim() || vacancy.organization_name?.trim() || 'the club'
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: displayClub, publisherAvatar: clubLogo ?? null })
@@ -202,6 +205,91 @@ export default function ApplyToVacancyModal({
     </button>
   )
 
+  const sendButton = (block: boolean) => (
+    // Send morph: the pill narrows to a 52 pt circle with a spinner, then a green check.
+    <button
+      type="button"
+      disabled={blocked || isSubmitting || sending === 'done'}
+      aria-disabled={blocked || undefined}
+      aria-busy={sending === 'sending' || undefined}
+      onClick={() => void handleSubmit()}
+      className={`flex h-[52px] items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] text-white transition-[width,background-color] duration-[var(--spring-ms,420ms)] [transition-timing-function:var(--spring,cubic-bezier(0.2,0.8,0.2,1))] ${sending === 'done' ? 'w-[52px] bg-positive' : sending === 'sending' ? 'w-[52px] bg-brand-primary' : `${block ? 'w-full' : 'px-6 shadow-glow-brand'} bg-brand-primary active:opacity-90 disabled:opacity-50`}`}
+      data-testid="send-application"
+      data-state={sending}
+    >
+      {sending === 'done' ? <Check className="h-6 w-6" strokeWidth={2.5} aria-label="Sent" /> : sending === 'sending' ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-label="Sending" /> : 'Send application'}
+    </button>
+  )
+
+  // Rebrand page 27 · Web · Apply dialog (560): one centred dialog over the
+  // opportunity — what the club will see (the profile card), an optional
+  // message, Cancel + Send application. The detail rows stay on phones.
+  if (isDesktop) {
+    const age = calculateAge(profile?.date_of_birth)
+    const flags = passports.map((c) => c.flag_emoji).filter(Boolean).join(' ')
+    const profileLine = [positionLabel(profile?.position), genderPill(profile?.gender)?.label, flags, profile?.base_location?.split(',')[0]?.trim()].filter(Boolean).join(' · ')
+    const hasVideo = Boolean(profile?.highlight_video_url)
+    const seer = identity.postedBy ? identity.postedBy.firstName : 'The club'
+    return (
+      <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`} className="lg:max-w-[560px]">
+        <div className="flex flex-col gap-4 px-7 pb-5" data-testid="apply-dialog-desktop">
+          <div className="flex items-center gap-3">
+            <h2 className="min-w-0 flex-1 font-display text-[24px] font-bold leading-[1.2] tracking-[-0.025em] text-ink-1">Apply to {identity.hiringClub?.name ?? displayClub}</h2>
+            <button type="button" onClick={handleClose} className="-mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-surface-subtle" aria-label="Close" data-testid="apply-close">
+              <CloseIcon className="h-5 w-5" />
+            </button>
+          </div>
+          <p className="text-[15px] leading-[1.45] text-ink-2">
+            {seer} will see your profile card{hasVideo ? ' and your highlight video' : ''}. You don’t need to send anything they already have.
+          </p>
+          <div className="flex items-center gap-3 rounded-[16px] bg-surface-subtle p-3.5" data-testid="apply-profile-card">
+            <EntityAvatar src={profile?.avatar_url ?? null} name={profile?.full_name ?? ''} role={profile?.role ?? 'player'} size={48} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-medium leading-[1.3] text-ink-1">{profile?.full_name || 'Your profile'}{age !== null ? `, ${age}` : ''}</p>
+              {profileLine && <p className="mt-0.5 truncate text-[13px] leading-[1.4] text-ink-2">{profileLine}</p>}
+            </div>
+            {hasVideo && (
+              <span className="flex shrink-0 items-center gap-1 text-[14px] font-medium text-brand-text" data-testid="apply-profile-video">
+                Highlight <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+              </span>
+            )}
+          </div>
+
+          {blocked ? (
+            <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-muted px-3.5 py-3 text-[14px] leading-[19px] text-ink-2" role="status" data-testid="apply-not-eligible">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-2" strokeWidth={1.8} aria-hidden="true" />
+              <p>{blockedReason} {blockedFooter}</p>
+            </div>
+          ) : (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[14px] font-medium leading-[1.3] text-ink-1">{noteHeading(identity)} (optional)</span>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={`Add a note to ${noteTarget}`}
+                rows={3}
+                maxLength={500}
+                className="min-h-[96px] w-full resize-none rounded-[16px] border border-line bg-white px-4 py-3.5 text-[16px] leading-[1.45] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary"
+              />
+              <span className="flex justify-between text-caption text-ink-3"><span>Max 500 characters</span><span aria-live="polite">{message.length} / 500</span></span>
+            </label>
+          )}
+
+          {error && <p className="text-secondary text-status-danger" role="alert">{error}</p>}
+
+          <div className="flex items-center justify-end gap-3 pt-1">
+            <button type="button" onClick={handleClose} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full' })}>Cancel</button>
+            {blocked ? (
+              <button type="button" onClick={messageClub} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full' })}>
+                {identity.postedBy ? `Message ${identity.postedBy.firstName}` : 'Message the club'}
+              </button>
+            ) : sendButton(false)}
+          </div>
+        </div>
+      </BottomSheet>
+    )
+  }
+
   return (
     <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`}>
       <div className="flex flex-col px-5 pb-2 pt-1">
@@ -277,19 +365,7 @@ export default function ApplyToVacancyModal({
               {identity.postedBy ? `Message ${identity.postedBy.firstName}` : 'Message the club'}
             </button>
           )}
-          {/* Send morph: the pill narrows to a 52 pt circle with a spinner, then a green check. */}
-          <button
-            type="button"
-            disabled={blocked || isSubmitting || sending === 'done'}
-            aria-disabled={blocked || undefined}
-            aria-busy={sending === 'sending' || undefined}
-            onClick={() => void handleSubmit()}
-            className={`flex h-[52px] items-center justify-center rounded-full text-[16px] font-semibold leading-[21px] text-white transition-[width,background-color] duration-[var(--spring-ms,420ms)] [transition-timing-function:var(--spring,cubic-bezier(0.2,0.8,0.2,1))] ${sending === 'done' ? 'w-[52px] bg-positive' : sending === 'sending' ? 'w-[52px] bg-brand-primary' : 'w-full bg-brand-primary active:opacity-90 disabled:opacity-50'}`}
-            data-testid="send-application"
-            data-state={sending}
-          >
-            {sending === 'done' ? <Check className="h-6 w-6" strokeWidth={2.5} aria-label="Sent" /> : sending === 'sending' ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-label="Sending" /> : 'Send application'}
-          </button>
+          {sendButton(true)}
           <p className="text-center text-caption text-ink-3">
             {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from Applied.'}
           </p>
