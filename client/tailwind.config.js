@@ -45,8 +45,41 @@ export default {
         //
         // Ratios measured on white unless noted. Re-run the axe sweep before
         // changing any of these.
+        // Rebrand PR 6 (2026-10-26): the whole gray scale resolves to the
+        // rebrand neutrals, so ~6,300 legacy `gray-*` classes take the new
+        // violet-tinted greys without an unreviewable call-site diff. Each
+        // step keeps or beats the contrast it had (on white: 400 4.84 vs
+        // 4.83, 500 5.42, 600 7.02, 700 10.69). 600–800 sit between
+        // ink.secondary and ink.primary so the text hierarchy survives.
+        // New code still uses the semantic names (ink-*, line, surface-*).
         gray: {
-          400: '#6b7280', // was #9ca3af — 2.54 (fail) → 4.83. ~191 nodes.
+          50: t.surface.subtle,
+          100: t.surface.muted,
+          200: t.line.default,
+          300: t.line.strong,
+          400: t.ink.tertiary, // was #6b7280 (the 2026-07-27 AA fix) — 4.84 on white
+          500: t.ink.secondary,
+          600: '#5a5766',
+          700: '#3f3c4d',
+          800: '#262335',
+          900: t.ink.primary,
+          950: t.surface.inverse,
+        },
+        // Rebrand PR 6: legacy `purple-*` (≈600 classes) resolves to the one
+        // brand violet. 500 = brand.primary (was #a855f7, 3.96 on white, a
+        // fail; now 5.70), 600/700 = hover/pressed, 100/200 = the soft fills;
+        // the steps in between follow the violet scale the brand is built on.
+        purple: {
+          50: '#f5f3ff',
+          100: t.brand.soft,
+          200: t.brand['soft-hover'],
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: t.brand.primary,
+          600: t.brand['primary-hover'],
+          700: t.brand['primary-pressed'],
+          800: '#4c1d95',
+          900: '#3b0a7a',
         },
         teal: {
           600: '#0f766e', // on teal-50: 3.59 → 5.25
@@ -66,8 +99,9 @@ export default {
         red: {
           // 500 also fixes the notification badge: white on the old #ef4444
           // was 3.76, below AA; on this value it is 4.83.
-          500: '#dc2626', // on gray-50: 3.60 → 4.62
-          600: '#b91c1c', // on red-50: 4.41 → 5.91
+          500: t.status.danger, // #dc2626 — on gray-50: 3.60 → 4.62
+          600: t.status['danger-strong'], // #b91c1c — on red-50: 4.41 → 5.91
+          50: t.status['danger-soft'], // rebrand PR 6: the danger tint
         },
         rose: {
           600: '#be123c', // on rose-50: 4.28 → 5.72
