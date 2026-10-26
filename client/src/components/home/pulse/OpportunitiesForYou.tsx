@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { categoryTagClass } from '@/lib/opportunityCopy'
 import { closesLabel } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { Hourglass, ChevronRight } from 'lucide-react'
@@ -56,12 +57,12 @@ function OpportunityRailCard({ item, onOpen }: {
 
       <div className="mt-2 flex min-h-[1.5rem] flex-wrap items-center gap-1.5">
         {item.position && (
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+          <span className="rounded-full bg-hockia-soft px-2 py-0.5 text-[10px] font-medium text-brand-text">
             {positionLabel(item.position)}
           </span>
         )}
         {item.gender && (
-          <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-medium text-pink-700">
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${categoryTagClass(item.gender) ?? 'bg-surface-muted text-ink-2'}`}>
             {opportunityGenderToTeamLabel(item.gender)}
           </span>
         )}

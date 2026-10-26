@@ -834,7 +834,7 @@ export default function GalleryManager({
                       ? 'text-green-500'
                       : item.status === 'error'
                       ? 'text-red-500'
-                      : 'text-blue-500'
+                      : 'text-brand-primary'
                   }`}
                 />
               </div>

@@ -111,7 +111,7 @@ export default function ClubInviteLanding() {
   const header = (
     <>
       <Avatar src={preview.club_avatar_url} alt={clubName} initials={clubName.slice(0, 2)} size="xl" role="club" className="mx-auto mb-4 shadow-sm" />
-      <p className="text-xs font-semibold uppercase tracking-wide text-violet-500 mb-1">Club invitation</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-brand-text mb-1">Club invitation</p>
       <h1 className="text-xl font-bold text-gray-900">{clubName}</h1>
       {preview.club_location && <p className="text-sm text-gray-500 mt-0.5">{preview.club_location}</p>}
     </>

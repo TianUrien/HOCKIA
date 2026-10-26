@@ -51,8 +51,8 @@ export default function VerifyEmail() {
       case 'expired':
         return (
           <>
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-orange-600" />
+            <div className="w-16 h-16 bg-status-warning-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-status-warning" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Verification Link Invalid
@@ -89,8 +89,8 @@ export default function VerifyEmail() {
       case 'unverified_signin':
         return (
           <>
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-orange-600" />
+            <div className="w-16 h-16 bg-status-warning-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-status-warning" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Email Verification Required
@@ -110,8 +110,8 @@ export default function VerifyEmail() {
       default:
         return (
           <>
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-hockia-soft rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-hockia-primary" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Check Your Inbox

@@ -372,7 +372,7 @@ export default function WorldProvincePage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full border-2 border-sky-200 overflow-hidden">
+            <div className="w-16 h-16 rounded-full border-2 border-line overflow-hidden">
               <img
                 src={flagUrl}
                 alt={`${country.name} flag`}
@@ -386,7 +386,7 @@ export default function WorldProvincePage() {
                   span.textContent = country.flag_emoji || '';
                   const parent = target.parentElement!;
                   parent.replaceChildren(span);
-                  parent.className = 'w-16 h-16 rounded-full bg-gradient-to-br from-sky-100 to-white border-2 border-sky-200 flex items-center justify-center';
+                  parent.className = 'w-16 h-16 rounded-full bg-gradient-to-br from-surface-muted to-white border-2 border-line flex items-center justify-center';
                 }}
               />
             </div>

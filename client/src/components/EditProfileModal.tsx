@@ -1224,7 +1224,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-500 focus-visible:ring-blue-500"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-primary focus-visible:ring-brand-primary"
                       checked={formData.open_to_opportunities}
                       onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
                     />
@@ -1399,7 +1399,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-500 focus-visible:ring-blue-500"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-primary focus-visible:ring-brand-primary"
                       checked={formData.open_to_opportunities}
                       onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
                     />

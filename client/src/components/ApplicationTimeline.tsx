@@ -242,7 +242,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
     nodes.push({ key: 'applied', icon: Send, label: 'You applied', date: appliedAt, dotClass: 'bg-hockia-primary' })
   }
   if (firstViewedAt) {
-    nodes.push({ key: 'viewed', icon: Eye, label: 'The club viewed your application', date: firstViewedAt, dotClass: 'bg-sky-400' })
+    nodes.push({ key: 'viewed', icon: Eye, label: 'The club viewed your application', date: firstViewedAt, dotClass: 'bg-brand-primary' })
   }
   if (responded && currentStatus) {
     const badge = playerApplicationStatusBadge(currentStatus)

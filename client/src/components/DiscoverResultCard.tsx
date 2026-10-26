@@ -23,7 +23,7 @@ const FIT_LEVEL_PRESET: Record<NonNullable<DiscoverResult['fit_level']>, {
   pillText: string
 }> = {
   strong_match: { label: 'Strong match', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
-  possible_match: { label: 'Good match', pillBg: 'bg-sky-50', pillText: 'text-sky-700' },
+  possible_match: { label: 'Good match', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
   needs_more_info: { label: 'Needs more info', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
 }
 
@@ -37,7 +37,7 @@ function WorldClubPill({ claimed }: { claimed: boolean }) {
   return (
     <span
       className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
-        claimed ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+        claimed ? 'bg-emerald-50 text-emerald-700' : 'bg-surface-muted text-ink-2'
       }`}
       title={claimed
         ? 'Active on Hockia. You can message them inside the platform'

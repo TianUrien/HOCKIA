@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { categoryTagClass } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
@@ -59,12 +60,12 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
         {hasChips && (
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
             {item.position && (
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+              <span className="rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-medium text-brand-text">
                 {positionLabel(item.position)}
               </span>
             )}
             {item.gender && (
-              <span className="rounded-full bg-pink-50 px-2.5 py-1 text-xs font-medium text-pink-700">
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${categoryTagClass(item.gender) ?? 'bg-surface-muted text-ink-2'}`}>
                 {opportunityGenderToTeamLabel(item.gender)}
               </span>
             )}
@@ -91,14 +92,14 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
                 containerClassName="h-5 w-5 flex-shrink-0"
               />
             ) : (
-              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-orange-200 bg-orange-50">
-                <span className="text-[7px] font-bold text-orange-600">
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-line bg-surface-muted">
+                <span className="text-[7px] font-bold text-ink-2">
                   {item.world_club_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </span>
               </div>
             )}
             <span className="text-[13px] text-gray-500">{item.world_club_name}</span>
-            <span className="inline-flex items-center gap-0.5 rounded-full border border-orange-100 bg-[#FFF7ED] px-1.5 py-0.5 text-[9px] font-semibold text-[#c2410c]">
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-line bg-surface-muted px-1.5 py-0.5 text-[9px] font-semibold text-ink-2">
               <BadgeCheck className="h-2.5 w-2.5" />
               Official
             </span>

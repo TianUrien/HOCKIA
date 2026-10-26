@@ -38,7 +38,7 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
         {(item.position || item.filled_via_hockia) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {item.position && (
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium capitalize text-blue-700">
+              <span className="rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-medium capitalize text-brand-text">
                 {positionLabel(item.position)}
               </span>
             )}
