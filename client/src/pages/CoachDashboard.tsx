@@ -539,8 +539,8 @@ export default function CoachDashboard({
         return
       }
     }
-    setTriggerCreateVacancy(true)
-    handleTabChange('opportunities')
+    // The three-step Post flow (PostRoleScreen), as for clubs.
+    navigate('/dashboard/opportunities/new')
   }
 
 

@@ -204,3 +204,20 @@ describe('Post an opportunity · step 3 for coach roles', () => {
     expect(rolePostedPath('abc')).toBe('/dashboard/opportunities/abc/posted')
   })
 })
+
+// Coaches who recruit post in the same flow, on behalf of a club or academy.
+describe('organisation (coaches posting on behalf of a club)', () => {
+  it('prefills from the coach default, writes organization_name, and stays empty for clubs', () => {
+    const coach = emptyDraft({ baseLocation: null, countryName: null, organizationName: '  Barnes HC ' })
+    expect(coach.organizationName).toBe('Barnes HC')
+    expect(draftToRow({ ...coach, position: 'head_coach', type: 'coach' }, 'coach-1', 'open').organization_name).toBe('Barnes HC')
+    const club = base()
+    expect(club.organizationName).toBe('')
+    expect(draftToRow(club, 'club-1', 'open').organization_name).toBeNull()
+  })
+  it('reads organization_name back when editing', () => {
+    const d = draftFromRow({ id: 'r1', opportunity_type: 'coach', organization_name: 'Youth Academy' } as unknown as Vacancy)
+    expect(d.organizationName).toBe('Youth Academy')
+    expect(draftFromRow({ id: 'r2' } as unknown as Vacancy).organizationName).toBe('')
+  })
+})

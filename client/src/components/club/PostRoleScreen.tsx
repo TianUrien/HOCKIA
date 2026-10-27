@@ -34,6 +34,7 @@ import { ANDROID_CHROME } from '@/lib/platformChrome'
 import { MascotAvatar } from '@/components/hockiaAi/mascot'
 import { applyAiDraft, checkSummary, type PostRoleStartState } from '@/lib/postRoleAi'
 import { postAgainDraft } from '@/lib/postAgain'
+import { roleIdentity } from '@/lib/opportunityIdentity'
 import { Header } from '@/components'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { buttonClassName } from '@/components/ui/buttonClasses'
@@ -73,6 +74,7 @@ export default function PostRoleScreen({ draftId }: Props) {
   const [aboutOpen, setAboutOpen] = useState(false)
   const startedAt = useRef(Date.now())
   const profile = useAuthStore((s) => s.profile)
+  const refreshProfile = useAuthStore((s) => s.refreshProfile)
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
   const cover = useOwnerCrest(profile)
@@ -110,7 +112,15 @@ export default function PostRoleScreen({ draftId }: Props) {
     if (previous) void deleteStorageObject({ bucket: 'role-covers', publicUrl: previous, context: 'post-role:remove-cover' })
   }
   const clubCountry = profile?.nationality_country_id ? getCountryById(profile.nationality_country_id) : null
-  const defaults = useMemo(() => ({ baseLocation: profile?.base_location ?? null, countryName: clubCountry?.name ?? null }), [profile?.base_location, clubCountry?.name])
+  // A coach who recruits posts here too (on behalf of their club or academy);
+  // their roles live under Opportunities · My opportunities.
+  const isCoachPublisher = profile?.role === 'coach'
+  const rolesHome = isCoachPublisher ? '/opportunities?view=mine' : '/opportunities'
+  const defaults = useMemo(() => ({
+    baseLocation: profile?.base_location ?? null,
+    countryName: clubCountry?.name ?? null,
+    organizationName: isCoachPublisher ? profile?.current_club ?? null : null,
+  }), [profile?.base_location, clubCountry?.name, isCoachPublisher, profile?.current_club])
 
   const [step, setStep] = useState<Step>(checkMode ? 3 : 1)
   const [draft, setDraft] = useState<PostRoleDraft>(() => seed(emptyDraft(defaults)))
@@ -150,7 +160,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     void supabase.from('opportunities').select('*').eq('id', postAgainId).eq('club_id', profile.id).maybeSingle().then(({ data }) => {
       if (cancelled) return
       const row = data as Vacancy | null
-      if (!row) { navigate('/opportunities', { replace: true }); return }
+      if (!row) { navigate(rolesHome, { replace: true }); return }
       setDraft(postAgainDraft(draftFromRow(row)))
       // Measured against the empty form, so Cancel offers Save draft.
       initial.current = JSON.stringify(emptyDraft(defaults))
@@ -168,7 +178,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       if (cancelled) return
       const row = data as Vacancy | null
       if (!row || (row.status !== 'draft' && row.status !== 'open' && row.status !== 'closed')) {
-        navigate('/opportunities', { replace: true })
+        navigate(rolesHome, { replace: true })
         return
       }
       if (row.status !== 'draft') setLiveStatus(row.status)
@@ -178,7 +188,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       setLoaded(true)
     })
     return () => { cancelled = true }
-  }, [draftId, profile?.id, navigate])
+  }, [draftId, profile?.id, navigate, rolesHome])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
@@ -199,6 +209,17 @@ export default function PostRoleScreen({ draftId }: Props) {
       if (error) throw error
       return draft.id
     }
+    if (isCoachPublisher) {
+      // The opportunities INSERT policy needs coach_recruits_for_team (as the old form did).
+      if (profile.coach_recruits_for_team !== true) {
+        const { error: flagError } = await supabase.from('profiles').update({ coach_recruits_for_team: true }).eq('id', profile.id)
+        if (flagError) throw flagError
+        await refreshProfile()
+      }
+      // Link the directory club only when the role is for the coach's own club.
+      const ownClub = (profile.current_club ?? '').trim()
+      row.world_club_id = ownClub && draft.organizationName.trim() === ownClub ? profile.current_world_club_id ?? null : null
+    }
     const { data, error } = await supabase.from('opportunities').insert(row as never).select('id').single()
     if (error) throw error
     const id = (data as { id: string }).id
@@ -215,7 +236,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       if (!id) return
       initial.current = JSON.stringify(draft)
       addToast('Draft saved', 'success')
-      navigate('/opportunities', { replace: true, state: { highlight: id } })
+      navigate(rolesHome, { replace: true, state: { highlight: id } })
     } catch (err) {
       logger.error('[PostRole] save draft failed', err)
       addToast('Could not save the draft. Try again.', 'error')
@@ -252,7 +273,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       const active = useRecruitingContextStore.getState().rows.find((r) => r.is_active)
       if (liveStatus === 'open' && active?.opportunity_id === draft.id) await scopeToRole(draft.id)
       addToast('Changes saved.', 'success')
-      navigate('/opportunities', { replace: true, state: { highlight: draft.id } })
+      navigate(rolesHome, { replace: true, state: { highlight: draft.id } })
     } catch (err) {
       logger.error('[PostRole] edit failed', err)
       addToast('Could not save the changes. Try again.', 'error')
@@ -302,7 +323,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     setProblem(null)
     if (step > 1 && !aiCheck) { setStep((s) => (s - 1) as Step); return }
     if (dirty) setConfirmCancel(true)
-    else navigate('/opportunities')
+    else navigate(rolesHome)
   }
 
   const draftWithAI = async () => {
@@ -352,6 +373,31 @@ export default function PostRoleScreen({ draftId }: Props) {
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
     ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
+
+  // The card exactly as members will see it: the hiring club, and "posted by"
+  // the coach when a coach recruits for one (same identity as the lists).
+  const identity = roleIdentity({
+    publisherRole: profile?.role,
+    publisherName: profile?.full_name ?? null,
+    publisherAvatar: profile?.avatar_url ?? null,
+    organizationName: draft.organizationName,
+    worldClub: isCoachPublisher && cover.clubName && draft.organizationName.trim() === cover.clubName.trim() ? { name: cover.clubName, avatarUrl: cover.crestUrl } : null,
+    publisherCurrentClub: null,
+    publisherCoachRole: (profile as { coach_current_role?: string | null } | null)?.coach_current_role ?? null,
+  })
+  const previewCard = profile ? (
+    <RoleCard
+      vacancy={draftAsVacancy(draft, profile.id)}
+      clubName={identity.displayName}
+      clubLogo={identity.displayLogo}
+      publisherRole={identity.hiringClub ? 'club' : 'coach'}
+      postedBy={identity.kind === 'coach-for-club' && identity.postedBy ? { name: identity.postedBy.name, avatar: identity.postedBy.avatar, roleLabel: identity.postedBy.roleLabel } : null}
+      countryFlag={flag}
+      league={league ?? null}
+      applied={false}
+      onOpen={() => undefined}
+    />
+  ) : null
 
   return (
     <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:h-auto lg:min-h-screen lg:bg-surface-subtle lg:pt-0" data-testid="post-role-screen">
@@ -486,6 +532,19 @@ export default function PostRoleScreen({ draftId }: Props) {
                 className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
               />
             </Section>
+            {isCoachPublisher && (
+              <Section label="On behalf of" trailing={<Muted>Optional</Muted>} hint="The club or academy you’re recruiting for. Shown on the card so applicants know who’s hiring.">
+                <input
+                  value={draft.organizationName}
+                  onChange={(e) => set('organizationName', e.target.value.slice(0, 120))}
+                  placeholder="e.g. Melbourne Hockey Club"
+                  aria-label="On behalf of"
+                  autoCapitalize="words"
+                  className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
+                  data-testid="post-role-organization"
+                />
+              </Section>
+            )}
             <Section
               label="Level"
               trailing={isPlayer ? <HardnessPill label="Level" on={draft.levelRequired} onToggle={() => set('levelRequired', !draft.levelRequired)} /> : <Muted>Optional</Muted>}
@@ -578,16 +637,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           <>
             <div className="px-5 pt-5 lg:hidden" aria-label="Preview" data-testid="post-role-preview">
               <div className="pointer-events-none">
-                <RoleCard
-                  vacancy={draftAsVacancy(draft, profile.id)}
-                  clubName={profile.full_name ?? 'Your club'}
-                  clubLogo={profile.avatar_url ?? null}
-                  publisherRole={profile.role}
-                  countryFlag={flag}
-                  league={league ?? null}
-                  applied={false}
-                  onOpen={() => undefined}
-                />
+                {previewCard}
               </div>
             </div>
             {aiCheck && (
@@ -680,16 +730,7 @@ export default function PostRoleScreen({ draftId }: Props) {
         <aside className="sticky top-24 rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" aria-label="Preview" data-testid="post-role-desktop-preview">
           <p className="text-[14px] font-medium leading-[1.3] text-ink-1">{isPlayer ? 'How players see it' : 'How coaches see it'}</p>
           <div className="pointer-events-none mt-3">
-            <RoleCard
-              vacancy={draftAsVacancy(draft, profile.id)}
-              clubName={profile.full_name ?? 'Your club'}
-              clubLogo={profile.avatar_url ?? null}
-              publisherRole={profile.role}
-              countryFlag={flag}
-              league={league ?? null}
-              applied={false}
-              onOpen={() => undefined}
-            />
+            {previewCard}
           </div>
         </aside>
       )}
@@ -719,7 +760,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           <h2 className="text-[20px] font-bold text-ink-1">Discard changes?</h2>
           <p className="mt-1 text-row text-ink-2">The opportunity stays as it was.</p>
           <div className="mt-4 flex flex-col gap-2.5">
-            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
+            <button type="button" onClick={() => { setConfirmCancel(false); navigate(rolesHome) }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
             <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
           </div>
         </div>
@@ -731,7 +772,7 @@ export default function PostRoleScreen({ draftId }: Props) {
           <p className="mt-1 text-row text-ink-2">Keep what you’ve written and finish the opportunity later from Opportunities.</p>
           <div className="mt-4 flex flex-col gap-2.5">
             <button type="button" onClick={() => { setConfirmCancel(false); void saveDraft() }} className="flex h-[50px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Save draft</button>
-            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
+            <button type="button" onClick={() => { setConfirmCancel(false); navigate(rolesHome) }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-status-danger">Discard</button>
             <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
           </div>
         </div>
