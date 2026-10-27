@@ -715,7 +715,7 @@ export default function OpportunitiesPage() {
                 <p className="text-ink-2 mt-0.5">
                   Opportunities here are player and coach roster openings.
                   You can see what clubs are building, but Apply is hidden.
-                  Umpire appointments and assessments will live here when we open them.
+                  Umpiring opportunities and assessments will live here when we open them.
                 </p>
               </div>
             </div>

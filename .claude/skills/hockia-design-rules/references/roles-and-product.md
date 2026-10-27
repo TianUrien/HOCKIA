@@ -46,10 +46,10 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 ## Umpire
 - **Who:** a field hockey official building an officiating career.
 - **Promise:** "Keep your officiating history in one place."
-- **Job today:** a credible officiating profile, federation, level, formats, languages, appointments timeline, references, and a network of officials.
-- **Can:** appointments, references (since 2026-04), friends, messages, posts, Community "Umpires" tab; Hockia AI: find officials, add an appointment.
-- **Can't yet:** apply to anything. Opportunities is browse-only ("Umpire appointments and assessments will live here when we open them"); no umpire role types; can't post roles.
-- **Profile:** Overview (federation without a flag, level, available for appointments), Appointments, References, Posts, About (languages are umpire-only). No Career section.
+- **Job today:** a credible officiating profile, federation, level, formats, languages, matches officiated (the record), references, and a network of officials.
+- **Can:** log matches officiated, references (since 2026-04), friends, messages, posts, Community "Umpires" tab; Hockia AI: find officials, add my latest match.
+- **Can't yet:** apply to anything. Opportunities is browse-only ("Umpiring opportunities and assessments will live here when we open them"); no umpire role types; can't post roles.
+- **Profile:** Overview (federation without a flag, level, Open to umpire), Matches officiated, References, Posts, About (languages are umpire-only). No Career section.
 - **Note:** the only role still on the legacy 3-step onboarding wizard.
 
 ## Brand
@@ -68,6 +68,6 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 
 ## Strategic rulings (founder, 2026-10-16)
 - **Clubs first.** Growth and design attention go first to clubs (and recruiting coaches): the loop needs posted roles. When priorities compete, pick the change that gets more roles posted or more applicants answered.
-- **Umpires: profile only for now.** Officiating history, references and network; Opportunities stays browse-only. Don't design an umpire appointments marketplace without a new ruling.
+- **Umpires: profile only for now.** Officiating history, references and network; Opportunities stays browse-only. Don't design an umpiring marketplace without a new ruling. Never say "appointments" for umpires: "Matches officiated", "Recent matches", "Add my latest match" (founder 2026-10-03, confirmed 2026-10-27).
 - **Free for every role until traction.** Don't design paywalls, premium tiers, locked features or upsells.
 - **Juniors: waitlist only.** The 18+ age gate stays; no junior or parental-consent product. Copy must not suggest under-18 accounts can continue.

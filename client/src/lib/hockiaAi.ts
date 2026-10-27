@@ -88,7 +88,7 @@ const ROLE_EXAMPLES: Record<string, string[]> = {
   umpire: [
     'What should I add to my officiating record?',
     'Show me umpires based in my country',
-    'How do I add an appointment?',
+    'How do I add my latest match?',
   ],
 }
 

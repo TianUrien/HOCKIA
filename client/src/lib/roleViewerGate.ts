@@ -19,7 +19,7 @@ export interface RoleViewerGate {
 
 export const COACH_ON_PLAYER_ROLE_NOTE = 'This opportunity is for players. Coaching opportunities are in Opportunities.'
 export const PLAYER_ON_COACH_ROLE_NOTE = 'This opportunity is for coaches. Player opportunities are in Opportunities.'
-export const UMPIRE_BROWSE_NOTE = 'You can browse opportunities here. Umpire appointments and assessments will live here when we open them.'
+export const UMPIRE_BROWSE_NOTE = 'You can browse opportunities here. Umpiring opportunities and assessments will live here when we open them.'
 export const BRAND_BROWSE_NOTE = 'You can browse opportunities here. Applying is for players and coaches.'
 
 export function roleViewerGate(o: {
