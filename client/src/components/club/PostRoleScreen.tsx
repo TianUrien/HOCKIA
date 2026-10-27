@@ -406,7 +406,8 @@ export default function PostRoleScreen({ draftId }: Props) {
         <div className="relative flex h-11 items-center justify-between px-4">
           <button type="button" onClick={back} className="flex h-11 items-center gap-0.5 text-body text-hockia-primary" aria-label={copy.back ? `Back to ${copy.back}` : 'Cancel'}>
             {copy.back && <BackGlyph className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
-            {copy.back && ANDROID_CHROME ? null : (copy.back ?? 'Cancel')}
+            {/* "Back", not the step name: "The opportunity" ran into the centred title on iPhone. */}
+            {copy.back ? (ANDROID_CHROME ? null : 'Back') : 'Cancel'}
           </button>
           {aiCheck ? (
             <span className="pointer-events-none absolute inset-x-24 flex flex-col items-center text-center" data-testid="post-role-ai-header">

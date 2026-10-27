@@ -87,6 +87,10 @@ html[data-native='1'] {
    unchanged. */
 html {
   overflow-x: clip;
+  /* No double-tap zoom (two quick taps zoomed the whole native app to ~2×,
+     device lab 2026-10-27). Pinch-zoom stays: the viewport keeps
+     user-scalable=yes for accessibility. */
+  touch-action: manipulation;
 }
 
 /* HOCKIA Brand Colors & Custom Properties */

@@ -47,6 +47,15 @@ import { BrandOffersSection } from '@/components/offers/OffersWhereYouLive'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
+/** The search hint follows the tab (Brands said "players, coaches, clubs"; device lab 2026-10-27). */
+const SEARCH_HINT_BY_TAB: Partial<Record<CommunityTab, string>> = {
+  players: 'Search players',
+  coaches: 'Search coaches',
+  clubs: 'Search clubs',
+  umpires: 'Search umpires',
+  brands: 'Search brands',
+}
+
 const TITLE_BY_TAB: Record<CommunityTab, string> = {
   all: 'Community',
   players: 'Players',
@@ -158,6 +167,13 @@ export default function CommunityPage() {
     tab && VALID_TABS.includes(tab as CommunityTab)
       ? (tab as CommunityTab)
       : 'all'
+  // Tabs a recruiting context ranks (it never applies to brands, umpires or clubs).
+  const contextTab = activeTab === 'all' || activeTab === 'players' || activeTab === 'coaches'
+  // A new tab starts with no count, so the old tab's number never shows under the new title.
+  useEffect(() => {
+    setTotalCount(null)
+    setFilteredCount(null)
+  }, [activeTab])
 
   // Unknown /community/<garbage> redirects to /community instead of
   // silently rendering the All grid under a stale URL. QA flagged
@@ -390,8 +406,9 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* The one context control (Figma U1): recruiters only, self-hides for everyone else. */}
-          {!clubView && isRecruiterViewer && (
+          {/* The one context control (Figma U1): recruiters only, self-hides for everyone else.
+              Only where the context ranks people: All, Players, Coaches (not Brands, Umpires, Clubs). */}
+          {!clubView && isRecruiterViewer && contextTab && (
             <div className="mb-3" data-testid="community-ranked-for">
               <RankedForControl kind={tab === 'coaches' ? 'coach' : 'player'} />
             </div>
@@ -409,7 +426,7 @@ export default function CommunityPage() {
                   data-keyboard-shortcut="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search players, coaches, clubs"
+                  placeholder={SEARCH_HINT_BY_TAB[activeTab] ?? 'Search players, coaches, clubs'}
                   className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
                   autoComplete="off"
                   enterKeyHint="search"
@@ -513,7 +530,7 @@ export default function CommunityPage() {
                   it explicit that results are role-filtered + ranked for
                   the active recruiting search, with a one-tap escape to
                   widen back to everyone (without clearing the scope). */}
-              {scopedRole && !(clubView && activeTab === 'players') && (
+              {scopedRole && contextTab && !(clubView && activeTab === 'players') && (
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-hockia-primary/20 bg-hockia-primary/[0.04] px-4 py-2.5">
                   <p className="min-w-0 text-xs text-gray-700">
                     {/* Keyed so the banner copy crossfades when toggling between

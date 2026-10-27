@@ -120,7 +120,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const age = (profile as { server_age?: number | null }).server_age ?? (profile.date_of_birth ? calculateAge(profile.date_of_birth) : null)
   const level = profile.umpire_level?.trim() || null
   const spec = specializationLabel(profile.officiating_specialization)
-  const roleLine = ['Umpire', spec].filter(Boolean).join(' · ')
+  // Same lead as the Community card and preview ("Umpire · Regional"), then the format.
+  const roleLine = ['Umpire', level, spec].filter(Boolean).join(' · ')
   const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
   const nationalities = useMemo(() => nationalityCountries([profile.nationality_country_id, profile.nationality2_country_id], countries), [profile.nationality_country_id, profile.nationality2_country_id, countries])
   const photos = useMemo(() => {
