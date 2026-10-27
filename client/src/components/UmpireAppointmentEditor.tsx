@@ -49,7 +49,7 @@ interface EntryTypeMeta {
 const ENTRY_TYPES: EntryTypeMeta[] = [
   {
     value: 'appointment',
-    label: 'Appointment',
+    label: 'Match',
     icon: CalendarIcon,
     hint: 'A match, tournament, or event you officiated.',
     fields: {
@@ -61,8 +61,8 @@ const ENTRY_TYPES: EntryTypeMeta[] = [
     showEndDate: true,
     showMatchDetails: true,
     showLocation: true,
-    addTitle: 'Add an appointment',
-    editTitle: 'Edit appointment',
+    addTitle: 'Add a match',
+    editTitle: 'Edit match',
   },
   {
     value: 'milestone',
@@ -459,7 +459,7 @@ export default function UmpireAppointmentEditor({
                 onChange={(e) => setForm({ ...form, event_name: e.target.value })}
                 placeholder={
                   meta.value === 'appointment' ? 'EuroHockey Junior Championship 2026' :
-                  meta.value === 'milestone' ? 'First international appointment' :
+                  meta.value === 'milestone' ? 'First international match' :
                   meta.value === 'certification' ? 'FIH Level 2' :
                   'FIH World Panel'
                 }

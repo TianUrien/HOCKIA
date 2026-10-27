@@ -35,7 +35,7 @@
 - Sections: skills once, friends + mutual, videos 16:9 (hide unplayable for the viewer), references (gold), career timeline, posts & photos grid (text-post tiles included), comments near About, About (3 lines + details).
 - Sponsor: confirmed ambassador = logo + "<Brand> athlete ✓" linking to the brand; self-declared = plain "<Brand> player" (no logo or link; hidden if the same brand is confirmed).
 - Private stats are owner-only; no invented metrics. Languages are umpire-only. Coaches have no licences field.
-- Club: cover carousel, crest tile + verified, Recruiting now, roles, squad, posts, About. Coach: specialisation, categories, "Coaches at", open roles. Umpire: federation (no flag), level, appointments timeline. Brand: cover, logo, followers/ambassadors, products (taps to store counted with consent), "Open to partners" (default off).
+- Club: cover carousel, crest tile + verified, Recruiting now, roles, squad, posts, About. Coach: specialisation, categories, "Coaches at", open roles. Umpire: federation (no flag), level, matches officiated timeline. Brand: cover, logo, followers/ambassadors, products (taps to store counted with consent), "Open to partners" (default off).
 
 ## Opportunities v2 (2026-10-16)
 - App Store structure: featured card + themed rails (Roles for you · Paid, with housing · Closing soon ≤ 14 days) + full list. Featured = most relevant role that takes the viewer's application and matches their position, else soonest deadline, else newest; needs ≥ 3 roles in the list. A rail hides under 2 cards.

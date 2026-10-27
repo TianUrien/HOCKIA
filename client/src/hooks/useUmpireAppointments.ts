@@ -64,7 +64,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
       setAppointments(data ?? [])
     } catch (err) {
       logger.error('[useUmpireAppointments] fetch failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load appointments')
+      setError(err instanceof Error ? err.message : 'Failed to load matches')
     } finally {
       setLoading(false)
     }
@@ -89,7 +89,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return data
       } catch (err) {
         logger.error('[useUmpireAppointments] create failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to create appointment')
+        setError(err instanceof Error ? err.message : 'Failed to create match')
         return null
       }
     },
@@ -111,7 +111,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return data
       } catch (err) {
         logger.error('[useUmpireAppointments] update failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to update appointment')
+        setError(err instanceof Error ? err.message : 'Failed to update match')
         return null
       }
     },
@@ -131,7 +131,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return true
       } catch (err) {
         logger.error('[useUmpireAppointments] delete failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to delete appointment')
+        setError(err instanceof Error ? err.message : 'Failed to delete match')
         return false
       }
     },

@@ -80,7 +80,7 @@ function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
     case 'umpire':
       return {
         question: 'Still active as an umpire?',
-        rationale: 'A weekly confirmation keeps your appointments and references current.',
+        rationale: 'A weekly confirmation keeps your matches and references current.',
       }
   }
 }

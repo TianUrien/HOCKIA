@@ -57,7 +57,7 @@ export interface UmpireProfileV2Props {
 
 const ANCHORS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'appointments', label: 'Appointments' },
+  { id: 'appointments', label: 'Matches' },
   { id: 'references', label: 'References' },
   { id: 'posts', label: 'Posts' },
   { id: 'about', label: 'About' },
@@ -283,17 +283,17 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
         )}
         <div className="flex gap-2.5">
           <FactTile label="Level" value={level ?? (owner ? 'Add level' : 'Not set')} detail={level && since ? `Since ${since}` : null} tone={level ? undefined : 'muted'} />
-          <FactTile label="Available" value={available ? 'For appointments' : 'Not right now'} detail={available ? 'Open to tournaments' : null} tone={available ? 'positive' : 'muted'} />
+          <FactTile label="Available" value={available ? 'Open to umpire' : 'Not right now'} detail={available ? 'Tournaments and leagues' : null} tone={available ? 'positive' : 'muted'} />
         </div>
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
       </section>
 
-      {/* Appointments (the officiating record) */}
+      {/* Matches officiated (the record; never "appointments", founder 2026-10-03) */}
       {(owner || apptCount > 0) && (
-        <Section id="appointments" title={apptCount > 0 ? `Appointments · ${apptCount}` : 'Appointments'} action={owner ? '+ Add' : apptCount > 3 ? 'See all' : null} onAction={() => props.onOpenSection('officiating')}>
+        <Section id="appointments" title={apptCount > 0 ? `Matches officiated · ${apptCount}` : 'Matches officiated'} action={owner ? '+ Add' : apptCount > 3 ? 'See all' : null} onAction={() => props.onOpenSection('officiating')}>
           <div className="flex flex-col px-4">
             {appts.appointments.slice(0, 3).map((a) => <AppointmentRow key={a.id} a={a} flag={flagForCountryName(countries, a.location_country)} />)}
-            {apptCount === 0 && !appts.loading && <p className="text-body text-ink-3">No appointments yet. Add the tournaments and finals you’ve officiated.</p>}
+            {apptCount === 0 && !appts.loading && <p className="text-body text-ink-3">No matches yet. Add the tournaments and finals you’ve officiated.</p>}
           </div>
         </Section>
       )}
