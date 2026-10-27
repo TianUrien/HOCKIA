@@ -1198,9 +1198,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
   // narrowing, filtered when narrowing.
+  // Only once loaded: a partial list flashed "Umpires · 1" before "· 2"
+  // (device lab 2026-10-27).
   useEffect(() => {
+    if (isLoading) return
     onFilteredCountChange?.(filteredMembers.length)
-  }, [filteredMembers.length, onFilteredCountChange])
+  }, [filteredMembers.length, onFilteredCountChange, isLoading])
 
   // Count of players-with-video in the current pool. filteredMembers.filter is
   // idempotent here: when the toggle is OFF it counts the video subset of the
