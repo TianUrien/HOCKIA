@@ -46,6 +46,8 @@ export interface PostRoleDraft {
   description: string
   /** Optional cover photo (opportunities.cover_url, public URL in role-covers); null = generated cover in the club's colours. */
   coverUrl: string | null
+  /** Coaches who recruit: the club or academy the role is for (opportunities.organization_name). Empty for clubs. */
+  organizationName: string
 }
 
 export const TITLE_MAX = 120
@@ -154,6 +156,8 @@ export function normalizeDuration(raw: string | null | undefined): string | null
 export interface ClubDefaults {
   baseLocation: string | null
   countryName: string | null
+  /** A coach's current club, prefilled as "On behalf of". */
+  organizationName?: string | null
 }
 
 /** City and country prefilled from the club profile ("Kilkenny, Ireland"). */
@@ -191,6 +195,7 @@ export function emptyDraft(defaults: ClubDefaults): PostRoleDraft {
     euPassport: false,
     description: '',
     coverUrl: null,
+    organizationName: defaults.organizationName?.trim() ?? '',
   }
 }
 
@@ -223,6 +228,7 @@ export function draftFromRow(v: Vacancy): PostRoleDraft {
     euPassport: v.eu_passport_required ?? false,
     description: v.description ?? '',
     coverUrl: v.cover_url ?? null,
+    organizationName: v.organization_name ?? '',
   }
 }
 
@@ -286,6 +292,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     eu_passport_required: d.euPassport,
     description: d.description.trim().slice(0, DESCRIPTION_MAX) || null,
     cover_url: d.coverUrl,
+    organization_name: d.organizationName.trim() || null,
     status,
   }
 }

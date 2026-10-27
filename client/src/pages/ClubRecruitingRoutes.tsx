@@ -77,24 +77,26 @@ export function ApplicantReviewEntry() {
   return <Screen><ApplicantReviewScreen key={applicationId} roleId={opportunityId} applicationId={applicationId} /></Screen>
 }
 
-/** Post a role (Figma 04 Club 330:318; desktop: rebrand page 27): clubs, on
- *  every width. `/:id/edit` continues a draft or edits a live role. Coaches
- *  keep the create modal on Opportunities. */
+/** Post a role (Figma 04 Club 330:318; desktop: rebrand page 27): clubs and
+ *  coaches (who recruit on behalf of a club or academy), on every width.
+ *  `/:id/edit` continues a draft or edits a live role. */
 export function PostRoleEntry() {
   const role = useAuthStore((s) => s.profile?.role)
   const { opportunityId } = useParams<{ opportunityId?: string }>()
-  if (role && role !== 'club') return <Navigate to="/opportunities" replace />
+  if (role && role !== 'club' && role !== 'coach') return <Navigate to="/opportunities" replace />
   return <Screen><PostRoleScreen key={opportunityId ?? 'new'} draftId={opportunityId ?? null} /></Screen>
 }
 
-/** Role posted (Figma 04 Club D1.26): phone clubs only; the screen loads the
- *  role itself, so a refresh shows the same screen. Desktop → Opportunities. */
+/** Role posted (Figma 04 Club D1.26): phone clubs and coaches; the screen
+ *  loads the role itself, so a refresh shows the same screen. Desktop →
+ *  Opportunities (a coach's: My opportunities). */
 export function RolePostedEntry() {
   const isPhone = useMediaQuery(PHONE)
   const role = useAuthStore((s) => s.profile?.role)
   const { opportunityId } = useParams<{ opportunityId: string }>()
   if (!opportunityId) return <Navigate to="/opportunities" replace />
-  if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace state={{ highlight: opportunityId }} />
+  if (role && role !== 'club' && role !== 'coach') return <Navigate to="/opportunities" replace />
+  if (!isPhone) return <Navigate to={role === 'coach' ? '/opportunities?view=mine' : '/opportunities'} replace state={{ highlight: opportunityId }} />
   if (!role) return <Blank />
   return <Screen><RolePostedScreen key={opportunityId} roleId={opportunityId} /></Screen>
 }

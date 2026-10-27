@@ -26,10 +26,9 @@ describe('Club speed CS3 · Post again', () => {
     expect(closedRoleLine('2026-09-12', 'filled', day)).toBe('Closed 12 Sep · filled')
     expect(closedRoleLine(null, null, day)).toBe('Closed')
   })
-  it('is offered on the closed role sheet, the start sheet and desktop', () => {
+  it('is offered on the closed role sheet, the start sheet and desktop (desktop and coaches open the Post flow with postAgainId)', () => {
     expect(read('../components/club/RoleActions.tsx')).toContain('data-testid="role-actions-post-again"')
     expect(read('../components/club/PostRoleStartSheet.tsx')).toContain("go({ postAgainId: r.id }, 'post_again')")
-    expect(read('../pages/OpportunitiesPage.tsx')).toContain('templateVacancy={templateRole}')
-    expect(read('../components/CreateOpportunityModal.tsx')).toContain("templateVacancy ? 'Post again'")
+    expect(read('../pages/OpportunitiesPage.tsx')).toContain("navigate('/dashboard/opportunities/new', { state: { postAgainId: role.id } })")
   })
 })

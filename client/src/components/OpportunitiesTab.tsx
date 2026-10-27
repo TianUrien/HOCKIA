@@ -227,7 +227,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
 }
 
 export default function VacanciesTab({ profileId, readOnly = false, triggerCreate, onCreateTriggered, initialOpportunityType }: VacanciesTabProps) {
-  const { user, profile, refreshProfile } = useAuthStore()
+  const { user, profile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const navigate = useNavigate()
   const location = useLocation()
@@ -360,19 +360,19 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     }
   }, [targetUserId, fetchVacancies, fetchUserApplications])
 
-  // Clubs post and edit in the three-step flow on every width (rebrand
-  // page 27); coaches keep the create modal.
-  const isClubOwner = !readOnly && profile?.role === 'club'
+  // Clubs and coaches post and edit in the three-step flow on every width
+  // (PostRoleScreen; it also turns on a coach's recruiter flag before saving).
+  const isPublisher = !readOnly && (profile?.role === 'club' || profile?.role === 'coach')
 
   // Handle external trigger to create vacancy
   useEffect(() => {
     if (triggerCreate) {
       onCreateTriggered?.()
-      if (isClubOwner) { navigate('/dashboard/opportunities/new'); return }
+      if (isPublisher) { navigate('/dashboard/opportunities/new'); return }
       setShowModal(true)
       setEditingVacancy(null)
     }
-  }, [triggerCreate, onCreateTriggered, isClubOwner, navigate])
+  }, [triggerCreate, onCreateTriggered, isPublisher, navigate])
 
   const handleApply = (vacancy: Vacancy) => {
     if (!user) {
@@ -466,36 +466,13 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   }
 
   const handleCreateNew = async () => {
-    if (isClubOwner) { navigate('/dashboard/opportunities/new'); return }
-    // Coaches default to coach_recruits_for_team=false; the opportunities
-    // INSERT policy (migration 20260508500000) requires role='coach' AND
-    // coach_recruits_for_team=true. The Coach dashboard's own Create CTA
-    // flips this flag first (CoachDashboard.handleCreateOpportunity), but
-    // these in-tab Create buttons are reachable directly — notably via the
-    // Home Pulse "Post an opportunity" CTA → /dashboard/profile/opportunities
-    // → this tab's "Create First Opportunity" — and previously skipped the
-    // flip, so a non-recruiter coach filled the whole form and hit a 403 on
-    // submit. Opt them into recruiter mode before opening the modal.
-    if (profile?.role === 'coach' && profile.coach_recruits_for_team !== true) {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ coach_recruits_for_team: true })
-          .eq('id', profile.id)
-        if (error) throw error
-        await refreshProfile()
-      } catch (err) {
-        logger.error('[OpportunitiesTab] failed to enable recruiter mode', err)
-        addToast('Unable to enable recruiter mode. Please try again.', 'error')
-        return
-      }
-    }
+    if (isPublisher) { navigate('/dashboard/opportunities/new'); return }
     setEditingVacancy(null)
     setShowModal(true)
   }
 
   const handleEdit = (vacancy: Vacancy) => {
-    if (isClubOwner) { navigate(`/dashboard/opportunities/${vacancy.id}/edit`); return }
+    if (isPublisher) { navigate(`/dashboard/opportunities/${vacancy.id}/edit`); return }
     setEditingVacancy(vacancy)
     setShowModal(true)
   }

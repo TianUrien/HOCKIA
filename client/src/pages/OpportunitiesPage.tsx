@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Header from '../components/Header'
-import CreateOpportunityModal from '../components/CreateOpportunityModal'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
 import { OpportunitiesListJsonLd } from '../components/OpportunityJsonLd'
@@ -105,11 +104,11 @@ export default function OpportunitiesPage() {
   // The viewer's own status per applied role — the preview shows the real
   // status (No reply, Shortlisted…) instead of a generic "submitted".
   const [applicationStatuses, setApplicationStatuses] = useState<Record<string, string>>({})
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  // Coach v2 · My roles: "Edit role" / a draft's Continue open the coach's own role form.
-  const [editingRole, setEditingRole] = useState<Vacancy | null>(null)
-  // Club speed CS3 · Post again: a closed role that seeds a new one in the create form.
-  const [templateRole, setTemplateRole] = useState<Vacancy | null>(null)
+  // Clubs and coaches post, edit and post again in the three-step flow
+  // (PostRoleScreen) on every width; the old create modal is gone from here.
+  const postNew = () => navigate('/dashboard/opportunities/new')
+  const editRole = useCallback((role: { id: string }) => navigate(`/dashboard/opportunities/${role.id}/edit`), [navigate])
+  const postAgain = useCallback((role: { id: string }) => navigate('/dashboard/opportunities/new', { state: { postAgainId: role.id } }), [navigate])
 
   // Coach v2 (Figma D6.2 377:614 · D6.4 377:1814), phone only. A candidate
   // coach's Roles list holds coaching roles only; a coach who recruits keeps
@@ -142,11 +141,11 @@ export default function OpportunitiesPage() {
     const all = [...myRoles.open, ...myRoles.closed]
     const edit = pendingEditRoleId ? all.find((r) => r.id === pendingEditRoleId) : null
     const again = pendingPostAgainId ? all.find((r) => r.id === pendingPostAgainId) : null
-    if (edit) { setTemplateRole(null); setEditingRole(edit); setShowCreateModal(true) }
-    else if (again) { setEditingRole(null); setTemplateRole(again); setShowCreateModal(true) }
+    if (edit) editRole(edit)
+    else if (again) postAgain(again)
     setPendingEditRoleId(null)
     setPendingPostAgainId(null)
-  }, [pendingEditRoleId, pendingPostAgainId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed])
+  }, [pendingEditRoleId, pendingPostAgainId, showMyRoles, myRoles.loading, myRoles.open, myRoles.closed, editRole, postAgain])
   const settings = useProfileWriter()
 
   // Opportunities v2 (phone and desktop): filters sheet + quick chips + role
@@ -566,7 +565,7 @@ export default function OpportunitiesPage() {
             <LargeTitleBar
               title="Opportunities"
               trailing={showMyRoles ? (
-                <IconButton label="Post an opportunity" onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}>
+                <IconButton label="Post an opportunity" onClick={postNew}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
               ) : user ? (
@@ -694,7 +693,7 @@ export default function OpportunitiesPage() {
             {user && <HockiaAiButton onClick={openAi} />}
             {canPostOpportunity && !showMyRoles && (
               <Button
-                onClick={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
+                onClick={postNew}
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
@@ -761,9 +760,9 @@ export default function OpportunitiesPage() {
                 profile={profile}
                 data={myRoles}
                 layout={isPhone ? 'phone' : 'desktop'}
-                onPostRole={() => { setEditingRole(null); setTemplateRole(null); setShowCreateModal(true) }}
-                onEditRole={(role: ClubRole) => { setTemplateRole(null); setEditingRole(role); setShowCreateModal(true) }}
-                onPostAgainRole={(role: ClubRole) => { setEditingRole(null); setTemplateRole(role); setShowCreateModal(true) }}
+                onPostRole={postNew}
+                onEditRole={(role: ClubRole) => editRole(role)}
+                onPostAgainRole={(role: ClubRole) => postAgain(role)}
               />
             </Suspense>
           ) : coachEmpty && isPhone ? (
@@ -863,7 +862,7 @@ export default function OpportunitiesPage() {
                       : 'As a club, you can post opportunities to attract players and coaches.'}
                   </p>
                   <Button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={postNew}
                     className="mx-auto inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                   >
                     <Plus className="w-4 h-4" />
@@ -1004,25 +1003,6 @@ export default function OpportunitiesPage() {
         passportHint={passportHint}
       />
 
-      {/* Create Opportunity — launched directly from the feed for clubs
-          and recruiter-coaches, so posting doesn't require a dashboard
-          detour. Refetches the feed on success so the new opportunity
-          appears immediately. */}
-      {showCreateModal && (
-        <CreateOpportunityModal
-          isOpen={showCreateModal}
-          editingVacancy={editingRole}
-          templateVacancy={templateRole}
-          onClose={() => { setShowCreateModal(false); setEditingRole(null); setTemplateRole(null) }}
-          onSuccess={() => {
-            setShowCreateModal(false)
-            setEditingRole(null)
-            setTemplateRole(null)
-            fetchVacancies({ skipCache: true })
-            myRoles.refresh()
-          }}
-        />
-      )}
 
     </>
   )
