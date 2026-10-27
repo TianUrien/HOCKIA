@@ -182,7 +182,7 @@ export function ActivityScreen() {
 function Stack({ visual }: { visual: NextStep['visual'] }) {
   if (visual.kind === 'placeholder') {
     return (
-      <span className="block h-10 w-10 shrink-0 overflow-hidden rounded-full" aria-hidden="true">
+      <span className={cn('block h-10 w-10 shrink-0 overflow-hidden', visual.role === 'brand' ? 'rounded-[10px]' : 'rounded-full')} aria-hidden="true">
         <RolePlaceholder role={isRoleAvatarRole(visual.role) ? visual.role : 'player'} label="" />
       </span>
     )

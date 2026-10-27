@@ -122,7 +122,7 @@ const ICONS = { camera: Camera, check: Check, chart: LineChart, stick: Check, us
 function Visual({ visual }: { visual: NextStepVisual }) {
   if (visual.kind === 'placeholder') {
     return (
-      <span className="block h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-white/60" aria-hidden="true" data-testid="next-step-placeholder">
+      <span className={cn('block h-14 w-14 shrink-0 overflow-hidden ring-2 ring-white/60', visual.role === 'brand' ? 'rounded-[14px]' : 'rounded-full')} aria-hidden="true" data-testid="next-step-placeholder">
         <RolePlaceholder role={isRoleAvatarRole(visual.role) ? visual.role : 'player'} label="" />
       </span>
     )

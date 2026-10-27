@@ -360,14 +360,19 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     }
   }, [targetUserId, fetchVacancies, fetchUserApplications])
 
+  // Clubs post and edit in the three-step flow on every width (rebrand
+  // page 27); coaches keep the create modal.
+  const isClubOwner = !readOnly && profile?.role === 'club'
+
   // Handle external trigger to create vacancy
   useEffect(() => {
     if (triggerCreate) {
+      onCreateTriggered?.()
+      if (isClubOwner) { navigate('/dashboard/opportunities/new'); return }
       setShowModal(true)
       setEditingVacancy(null)
-      onCreateTriggered?.()
     }
-  }, [triggerCreate, onCreateTriggered])
+  }, [triggerCreate, onCreateTriggered, isClubOwner, navigate])
 
   const handleApply = (vacancy: Vacancy) => {
     if (!user) {
@@ -461,6 +466,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   }
 
   const handleCreateNew = async () => {
+    if (isClubOwner) { navigate('/dashboard/opportunities/new'); return }
     // Coaches default to coach_recruits_for_team=false; the opportunities
     // INSERT policy (migration 20260508500000) requires role='coach' AND
     // coach_recruits_for_team=true. The Coach dashboard's own Create CTA
@@ -489,6 +495,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   }
 
   const handleEdit = (vacancy: Vacancy) => {
+    if (isClubOwner) { navigate(`/dashboard/opportunities/${vacancy.id}/edit`); return }
     setEditingVacancy(vacancy)
     setShowModal(true)
   }
