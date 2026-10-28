@@ -15,7 +15,7 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { PASSWORD_HELP, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
-import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
 
 /**
  * Create with email (Figma 04 Player 114:434): email, password ("At least 8
@@ -100,6 +100,7 @@ export default function CreateWithEmail() {
         setError(extractErrorMessage(signUpError, 'Sign up failed. Please try again.'))
         return
       }
+      reportCaptchaCoverage('signup')
       if (!data.user) {
         setError('No user data returned from signup.')
         return

@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLimit'
-import { captchaErrorMessage, getCaptchaToken, warmCaptcha } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
 
 /**
  * ForgotPassword - Request password reset email
@@ -51,6 +51,7 @@ export default function ForgotPassword() {
         const captcha = captchaErrorMessage(resetError.message)
         throw captcha ? new Error(captcha) : resetError
       }
+      reportCaptchaCoverage('reset')
 
       setSuccess(true)
     } catch (err) {
