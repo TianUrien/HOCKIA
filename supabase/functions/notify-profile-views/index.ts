@@ -4,6 +4,7 @@ import { captureException } from '../_shared/sentry.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import {
+  digestSpreadMs,
   ProfileViewWebhookPayload,
   RecipientData,
   ViewerProfile,
@@ -14,10 +15,6 @@ import {
 } from '../_shared/profile-views-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
-
-// Window over which concurrent digest invocations spread their single send
-// (ms). ~60 rows over 8 s stays under Resend's 10 req/s.
-const SEND_SPREAD_MS = 8000
 
 /**
  * ============================================================================
@@ -241,10 +238,18 @@ Deno.serve(async (req: Request) => {
     // statement, and each INSERT fires this webhook at once — 63 sends in
     // the same second on 2026-09-21 blew through Resend's 10 req/s and six
     // members never got their digest (Sentry SUPABASE-EDGE-FUNCTIONS-B).
-    // Spread the burst: each invocation waits a random slice of the window
-    // before its single send, which keeps the batch under the limit; the
-    // sender's own 429 retry with jitter covers the residue.
-    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * SEND_SPREAD_MS)))
+    // Spread the burst: each invocation waits a random slice of a window
+    // sized to its batch (the rows sharing its created_at) before its single
+    // send, which keeps the batch under the limit; the sender's own 429 retry
+    // with jitter covers the residue. 2026-10-28: the window was a fixed 8 s
+    // and 4 of 122 digests failed on 2026-10-26.
+    const { count: batchSize, error: batchError } = await supabase
+      .from('profile_view_email_queue')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_at', queueRecord.created_at)
+    if (batchError) logger.warn('Could not size the digest batch', { error: batchError.message })
+    const spreadMs = digestSpreadMs(batchError ? null : batchSize)
+    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * spreadMs)))
 
     // Send tracked email
     const result = await sendTrackedEmail({
