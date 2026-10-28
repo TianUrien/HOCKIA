@@ -19,6 +19,11 @@
  * Sentry hears about it once per request with the attempt count and reasons.
  * Callers still send their auth request without a token (the server
  * decides); the screens turn a captcha refusal into a "Try again" state.
+ *
+ * 2026-10-28 (before enforcing): every request the server ACCEPTS reports
+ * whether it carried a token (`reportCaptchaCoverage`), unsampled and with the
+ * reason when it didn't. Accepted password sign-ins without a token are the
+ * real members enforcement would lock out; the share has to be near zero first.
  */
 
 import * as Sentry from '@sentry/react'
@@ -57,6 +62,8 @@ let widgetId: string | null = null
 let host: HTMLDivElement | null = null
 /** The widget currently waiting for a token; a newer render settles it as "superseded". */
 let active: { cancel: () => void } | null = null
+/** The last token request per action, read once by `reportCaptchaCoverage` when the server answers. */
+const lastResult = new Map<CaptchaAction, CaptchaResult>()
 
 /** HOCKIA's widget (Cloudflare account HOCKIA, "HOCKIA auth": managed; inhockia.com,
  *  www, staging, localhost). Site keys are public by design — every browser gets it. */
@@ -159,6 +166,12 @@ export async function getCaptchaToken(action: CaptchaAction): Promise<string | u
  * renders one more fresh widget before giving up.
  */
 export async function getCaptchaTokenResult(action: CaptchaAction): Promise<CaptchaResult> {
+  const result = await requestToken(action)
+  lastResult.set(action, result)
+  return result
+}
+
+async function requestToken(action: CaptchaAction): Promise<CaptchaResult> {
   if (!siteKey() || typeof window === 'undefined' || typeof document === 'undefined') return { attempts: 0 }
   const reasons: string[] = []
   let attempts = 0
@@ -245,6 +258,31 @@ function reportUnavailable(action: CaptchaAction, reason: string, attempts: numb
       level: 'info',
       tags: { captcha_action: action, captcha_reason: reason, captcha_attempts: String(attempts) },
       extra: { captcha_reasons: reasons.join(',') },
+    })
+  } catch { /* never block sign-in on reporting */ }
+}
+
+/**
+ * The server accepted a request for `action`: say whether it carried a token.
+ * Unsampled (sentryInit skips the expected-outcome sampling for the
+ * `captcha_coverage` tag) and grouped per action and outcome, so the share of
+ * accepted requests without a token reads straight off the two groups.
+ */
+export function reportCaptchaCoverage(action: CaptchaAction): void {
+  const result = lastResult.get(action)
+  lastResult.delete(action)
+  if (!result || !siteKey()) return
+  const coverage = result.token ? 'token' : 'missing'
+  try {
+    Sentry.captureMessage(`captcha coverage (${action}: ${coverage})`, {
+      level: 'info',
+      tags: {
+        captcha_coverage: coverage,
+        captcha_action: action,
+        captcha_reason: result.reason ?? 'none',
+        captcha_attempts: String(result.attempts),
+      },
+      fingerprint: ['captcha-coverage', action, coverage],
     })
   } catch { /* never block sign-in on reporting */ }
 }

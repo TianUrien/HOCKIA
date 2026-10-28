@@ -85,6 +85,11 @@ export const EXPECTED_USER_ERRORS: { key: string; match: string }[] = [
 /** Share of expected outcomes sent (counts in Sentry are ×4 estimates). */
 export const EXPECTED_SAMPLE_RATE = 0.25
 
+/** Measurements that must all arrive, so never sampled: captcha coverage (lib/captcha, 2026-10-28). */
+export function isUnsampledMeasure(tags: Record<string, unknown> | undefined): boolean {
+  return Boolean(tags?.captcha_coverage)
+}
+
 /** The expected-outcome key for an error message or raw error, or null for a real error. */
 export function expectedErrorKey(message: string, original?: unknown): string | null {
   if (isExpectedRefusal(original) || EXPECTED_REFUSAL_MESSAGES.some((m) => message.includes(m))) return 'refusal'

@@ -50,15 +50,28 @@ Principles the code follows:
   survive the retry are reported to Sentry once per request (action, reason,
   attempt count); a check left unanswered or the app going to the background
   is not reported.
+  Coverage (2026-10-28, source: production auth and edge logs, Sentry): every
+  request Supabase accepts reports to Sentry whether it carried a token
+  (`captcha coverage (<action>: token|missing)`, unsampled, with the reason).
+  Enforcement waits until accepted password sign-ins without a token are near
+  zero: on 2026-10-27 a member on Chrome for iPhone signed in twice without one.
+  Captcha is NOT enforced in production yet. The 2026-10-28 sign-in surge was
+  automated: 79 identical password attempts in 4 minutes from two emulated
+  Android devices (Turnstile error 200100), and none succeeded.
 - Admin access is a JWT `app_metadata` claim checked server-side by
   `is_platform_admin()`; the client only hides UI (`features/admin/README.md`).
 - Native apps are first-party clients identified by their WebView origin
   (`https://app.inhockia.com`), which is on the CORS allowlist; CORS is not an
   auth boundary (`_shared/cors.ts`).
-- Login, signup and several public endpoints are rate-limited through the
-  database-backed `check_rate_limit` RPC; callers fail closed when the RPC
-  errors (`client/src/lib/rateLimit.ts`, `public-opportunities`, `age-gate`,
-  `application-action`, `nl-search`).
+- Sign-in attempts are limited only by Supabase Auth's per-IP limits (dashboard:
+  Authentication › Rate Limits). `check_login_rate_limit` is a stub that always
+  answers "allowed" (`20261006100000_audit_db_hardening.sql`): keyed on a typed
+  email, it let anyone lock a member out and never limited direct calls to the
+  sign-in endpoint. Do not bring it back as a per-email limiter.
+- Signup, password reset and several public endpoints are rate-limited through
+  the database-backed `check_rate_limit` RPC. The client pre-checks fail open
+  (`client/src/lib/rateLimit.ts`); the edge functions (`public-opportunities`,
+  `age-gate`, `application-action`, `nl-search`) enforce it server-side.
 
 ## 3. Authorization in the database
 

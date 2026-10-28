@@ -27,7 +27,7 @@ import { clearShortlistsStore } from '@/hooks/useShortlists'
 import { clearSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { clearRecruitingContext } from '@/hooks/useRecruitingContext'
 import { clearSignedThumbnailCache } from '@/hooks/useSignedVideoThumbnail'
-import { getCaptchaToken } from '@/lib/captcha'
+import { getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
 import { clearPersonalDraftsOnDevice } from '@/lib/profileDrafts'
 
 interface AuthState {
@@ -757,6 +757,7 @@ export const resendVerificationEmail = async (email: string): Promise<{ success:
       return { success: false, error: error.message }
     }
 
+    reportCaptchaCoverage('resend')
     return { success: true }
   } catch (err) {
     logger.error('Unexpected error resending verification:', err)
