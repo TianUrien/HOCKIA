@@ -15,6 +15,28 @@ import { escapeHtml } from './html-escape.ts'
 export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
 
+/**
+ * Window over which one weekly batch of digest invocations spreads its sends
+ * (ms). The generator inserts every recipient's queue row in one statement,
+ * so the batch shares one created_at and each row fires its own webhook at
+ * once. Resend allows 10 req/s; aim for 5 so the 429 retries and other mail
+ * have room. A fixed 8 s window stopped fitting when batches grew past ~80
+ * (122 rows on 2026-10-26: 4 digests failed with 429). The 100 s cap
+ * (500 recipients) keeps the wait plus a fully retried send inside the
+ * 150 s edge wall-clock limit.
+ */
+export const DIGEST_SENDS_PER_SECOND = 5
+export const DIGEST_SPREAD_MIN_MS = 8_000
+export const DIGEST_SPREAD_MAX_MS = 100_000
+/** Batch size assumed when the count query fails: wide enough for today's batches. */
+export const DIGEST_BATCH_FALLBACK = 150
+
+export function digestSpreadMs(batchSize: number | null): number {
+  const size = batchSize ?? DIGEST_BATCH_FALLBACK
+  const ms = Math.ceil(size / DIGEST_SENDS_PER_SECOND) * 1000
+  return Math.min(DIGEST_SPREAD_MAX_MS, Math.max(DIGEST_SPREAD_MIN_MS, ms))
+}
+
 export interface ProfileViewQueueRecord {
   id: string
   recipient_id: string
