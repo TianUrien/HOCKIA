@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { recoverFromStaleChunk } from '@/lib/swUpdate'
+import { STALE_CHUNK_KEY, STALE_RETRY_WINDOW_MS, claimStaleChunkRecovery, isStaleChunkRecoveryRunning, recoverFromStaleChunk } from '@/lib/swUpdate'
 
 type Listener = () => void
 
@@ -60,5 +60,26 @@ describe('stale chunk recovery (prod 2026-10-18)', () => {
     const reload2 = vi.fn()
     await recoverFromStaleChunk({ reload: reload2, timeoutMs: 20 })
     expect(reload2).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('stale chunk guard (prod 2026-10-30)', () => {
+  afterEach(() => sessionStorage.clear())
+
+  it('allows one recovery per minute, then again for a later deploy in the same tab', () => {
+    const t0 = 1_000_000
+    expect(claimStaleChunkRecovery(t0)).toBe(true)
+    expect(claimStaleChunkRecovery(t0 + 5_000)).toBe(false) // the reload didn't help: no loop
+    expect(claimStaleChunkRecovery(t0 + STALE_RETRY_WINDOW_MS + 1)).toBe(true)
+  })
+
+  it('treats the old "1" marker as an old recovery, not a block', () => {
+    sessionStorage.setItem(STALE_CHUNK_KEY, '1')
+    expect(claimStaleChunkRecovery()).toBe(true)
+  })
+
+  it('reports a running recovery so routes wait for the reload instead of the error screen', async () => {
+    await recoverFromStaleChunk({ reload: vi.fn(), timeoutMs: 1 })
+    expect(isStaleChunkRecoveryRunning()).toBe(true)
   })
 })

@@ -14,7 +14,7 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
-import { STALE_CHUNK_KEY, isSafeSilentUpdate, recoverFromStaleChunk, registerServiceWorker } from './lib/swUpdate'
+import { claimStaleChunkRecovery, isSafeSilentUpdate, recoverFromStaleChunk, registerServiceWorker } from './lib/swUpdate'
 import { hasPersistedSession } from './lib/persistedSession'
 import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
@@ -40,13 +40,12 @@ if (import.meta.env.PROD) {
 }
 
 // A lazy chunk replaced by a newer release (any dynamic import, not only the
-// routes behind lazyWithRetry): activate the new worker and reload, once per
-// tab session (prod 2026-10-18: /admin showed "Something went wrong").
+// routes behind lazyWithRetry): activate the new worker and reload, unless a
+// recovery already ran in the last minute (prod 2026-10-18: /admin showed
+// "Something went wrong"). preventDefault makes the import resolve to
+// undefined; lazyWithRetry keeps the route waiting for the reload.
 window.addEventListener('vite:preloadError', (event) => {
-  try {
-    if (sessionStorage.getItem(STALE_CHUNK_KEY)) return
-    sessionStorage.setItem(STALE_CHUNK_KEY, '1')
-  } catch { /* storage blocked: still recover once */ }
+  if (!claimStaleChunkRecovery()) return
   event.preventDefault()
   void recoverFromStaleChunk()
 })
