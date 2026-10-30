@@ -132,7 +132,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3 lg:mr-8">
             <button
               type="button"
               onClick={() => handleNavigate(user ? '/home' : '/')}
@@ -228,7 +228,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   <button
                     key={path}
                     onClick={() => handleNavigate(path)}
-                    className={`relative rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors ${
+                    className={`relative whitespace-nowrap rounded-full px-3 py-2 text-[15px] font-medium transition-colors ${
                       active
                         ? 'bg-hockia-soft text-ink-1'
                         : 'text-ink-2 hover:bg-surface-muted hover:text-ink-1'
@@ -241,15 +241,19 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   )
                 })}
 
-                {/* Search pill (rebrand page 16): opens /search. */}
+                {/* Search (rebrand page 16): opens /search. Below 1440 the
+                    compact header (Figma "Web · Community 1280", 1024–1439)
+                    shows a round icon; the ::before widens the hit area to 44. */}
                 <button
                   type="button"
                   onClick={() => handleNavigate('/search')}
-                  className="ml-3 flex h-10 w-[150px] items-center gap-2 rounded-full bg-surface-muted px-4 text-left text-[14px] text-ink-2 transition-colors hover:bg-surface-muted-pressed xl:w-[310px]"
+                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
+                  aria-label="Search"
+                  title="Search"
                   data-testid="header-search-desktop"
                 >
                   <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-                  <span className="truncate">Search<span className="hidden xl:inline"> players, clubs, opportunities</span></span>
+                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">Search players, clubs, opportunities</span>
                 </button>
 
                 {/* Hockia AI + Notifications. Marketplace is a text link in the
@@ -260,11 +264,13 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 <button
                   type="button"
                   onClick={openHockiaAi}
-                  className="ml-2 flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-ai-accent/60 bg-ai-bg pl-1 pr-3.5 text-[14px] font-semibold text-ai-text transition-colors hover:border-ai-accent"
+                  className="relative ml-2 flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ai-accent/60 bg-ai-bg text-[14px] font-semibold text-ai-text transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:border-ai-accent min-[1440px]:w-auto min-[1440px]:justify-start min-[1440px]:pl-1 min-[1440px]:pr-3.5"
+                  aria-label="Ask Hockia AI"
+                  title="Ask Hockia AI"
                   data-testid="header-hockia-ai-desktop"
                 >
                   <img src="/hockia-ai/button_calm_96.webp" srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x" alt="" width={32} height={32} className="h-8 w-8 rounded-full" draggable={false} />
-                  Ask Hockia AI
+                  <span className="hidden min-[1440px]:inline" aria-hidden="true">Ask Hockia AI</span>
                 </button>
                 <button
                   onClick={() => toggleNotificationDrawer()}
@@ -306,15 +312,19 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   </button>
                 ))}
 
-                {/* Search pill (rebrand page 16): opens /search. */}
+                {/* Search (rebrand page 16): opens /search. Below 1440 the
+                    compact header (Figma "Web · Community 1280", 1024–1439)
+                    shows a round icon; the ::before widens the hit area to 44. */}
                 <button
                   type="button"
                   onClick={() => handleNavigate('/search')}
-                  className="ml-3 flex h-10 w-[150px] items-center gap-2 rounded-full bg-surface-muted px-4 text-left text-[14px] text-ink-2 transition-colors hover:bg-surface-muted-pressed xl:w-[310px]"
+                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
+                  aria-label="Search"
+                  title="Search"
                   data-testid="header-search-desktop"
                 >
                   <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-                  <span className="truncate">Search<span className="hidden xl:inline"> players, clubs, opportunities</span></span>
+                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">Search players, clubs, opportunities</span>
                 </button>
 
                 <button
