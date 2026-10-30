@@ -18,7 +18,7 @@ import { getAuthRedirectUrl } from './siteUrl'
 import { checkLoginRateLimit, checkSignupRateLimit, formatRateLimitError } from './rateLimit'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
-import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
 
 export type MagicLinkRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -138,6 +138,7 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
       return { ok: false, error: 'Could not send the link. Please try again.' }
     }
 
+    reportCaptchaCoverage('magic_link')
     logger.debug('[magicLink] Link sent', { emailDomain: email.split('@')[1], intent })
     return { ok: true }
   } catch (err) {

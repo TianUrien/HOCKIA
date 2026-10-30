@@ -6,6 +6,8 @@ import { hapticLight } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
 import { SquircleBox } from './primitives'
 import { FaceCircle } from './FaceCircle'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
 import { HOME_V1_MODULES, recordModuleImpression, recordNextStepImpression, trackModuleClick, trackNextStepAction, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { navState } from '@/lib/navSource'
@@ -118,6 +120,13 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
 const ICONS = { camera: Camera, check: Check, chart: LineChart, stick: Check, user: User }
 
 function Visual({ visual }: { visual: NextStepVisual }) {
+  if (visual.kind === 'placeholder') {
+    return (
+      <span className={cn('block h-14 w-14 shrink-0 overflow-hidden ring-2 ring-white/60', visual.role === 'brand' ? 'rounded-[14px]' : 'rounded-full')} aria-hidden="true" data-testid="next-step-placeholder">
+        <RolePlaceholder role={isRoleAvatarRole(visual.role) ? visual.role : 'player'} label="" />
+      </span>
+    )
+  }
   if (visual.kind === 'icon') {
     const Icon = ICONS[visual.icon]
     return (

@@ -340,8 +340,9 @@ describe('Opportunities · My opportunities (coach who recruits)', () => {
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')
     expect(screen.getByText('Review 1 applicant')).toBeInTheDocument()
+    // Coaches post in the three-step flow, as clubs do (no more create modal here).
     fireEvent.click(screen.getByRole('button', { name: 'Post an opportunity' }))
-    expect(screen.getByTestId('create-role-modal')).toBeInTheDocument()
+    expect(navigateSpy).toHaveBeenCalledWith('/dashboard/opportunities/new')
   })
 
   it('a candidate coach cannot reach My opportunities by URL', async () => {

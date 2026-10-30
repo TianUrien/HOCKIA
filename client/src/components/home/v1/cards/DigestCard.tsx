@@ -1,11 +1,12 @@
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { BlurImage } from '../BlurImage'
-import { initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
 import { SectionHeader } from '../primitives'
 import { useHomeV1 } from '../homeV1Context'
 import { trackCardClick } from '@/lib/homeInstrumentation'
 import type { MembersDigestFeedItem } from '@/types/homeFeed'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /**
  * Digest — new members (Figma 60:316): "N joined this week" and a 3×2 photo
@@ -43,7 +44,7 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
               {src ? (
                 <BlurImage src={src} lqip={getLqipUrl(m.avatar_url)} className="h-full w-full" imgClassName={cn(more && 'scale-110 blur-[5px]')} />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-[22px] font-semibold text-white" style={{ backgroundImage: roleGradient((m.role as CommunityRole) || 'player') }}>{initialsOf(m.full_name)}</span>
+                <RolePlaceholder role={isRoleAvatarRole(m.role) ? m.role : 'player'} label="" />
               )}
               {more && (
                 <span className="absolute inset-0 flex items-center justify-center bg-[rgba(15,15,20,0.42)] text-title tabular-nums text-white">+{extra}</span>

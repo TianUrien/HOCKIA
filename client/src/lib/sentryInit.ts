@@ -29,7 +29,7 @@ import * as SentryCapacitor from '@sentry/capacitor'
 import type { CapacitorOptions } from '@sentry/capacitor'
 import { Capacitor } from '@capacitor/core'
 import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
-import { EXPECTED_SAMPLE_RATE, expectedErrorKey } from '@/lib/sentryFilters'
+import { EXPECTED_SAMPLE_RATE, expectedErrorKey, isUnsampledMeasure } from '@/lib/sentryFilters'
 import { scrubBreadcrumb, scrubEvent } from '@/lib/sentryScrub'
 import { getAppVersion } from '@/lib/appVersion'
 
@@ -149,6 +149,8 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
         .join('\n')
       // Expected outcomes the UI already explains: counted (sampled, info,
       // grouped per kind) so a surge is visible, but never paging.
+      // A measurement, not a failure: every one counts (lib/captcha coverage).
+      if (isUnsampledMeasure(event.tags)) return scrubEvent(event)
       const expected = expectedErrorKey(message, original)
       if (expected) {
         if (Math.random() >= EXPECTED_SAMPLE_RATE) return null

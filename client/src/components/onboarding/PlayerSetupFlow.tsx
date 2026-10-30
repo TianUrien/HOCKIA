@@ -27,6 +27,7 @@ import { CATEGORY_LABELS, PLAYING_CATEGORIES, playingCategoryToLegacyGender, typ
 import { positionLabel } from '@/lib/identity'
 import { SetupSignOut } from './SetupSignOut'
 import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
+import { AddPhotoPrompt } from '@/components/profile/AddPhotoPrompt'
 import {
   OPEN_TO_PLAY_HELPER,
   OPEN_TO_PLAY_NEEDS_DOB,
@@ -139,6 +140,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   // The same photo in its own shape, for full-screen views (saved with avatar_url).
   const [avatarFullUrl, setAvatarFullUrl] = useState<string | null>(profile?.avatar_full_url ?? null)
   const [uploading, setUploading] = useState(false)
+  const [photoPromptDismissed, setPhotoPromptDismissed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const viewedRef = useRef<Set<Step>>(new Set())
@@ -451,6 +453,22 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       >
         <h1 className="text-title text-ink-1">Where you play</h1>
         <p className="mt-1.5 text-row text-ink-2">All optional. You can add these later from your profile.</p>
+
+        {/* End of onboarding (founder 2026-10-26): no photo yet → the Add a
+            photo prompt; dismissible, never blocks Finish. */}
+        {!avatar && !photoPromptDismissed && (
+          <>
+            <AddPhotoPrompt className="mt-5" role="player" secondary busy={uploading} onAdd={() => void pickPhoto()} onDismiss={() => setPhotoPromptDismissed(true)} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+              onChange={(e) => void uploadPhoto(e.target.files?.[0])}
+              className="hidden"
+              aria-label="Upload profile photo"
+            />
+          </>
+        )}
 
         <div className="mt-6 space-y-4">
           <WorldClubSearch

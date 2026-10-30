@@ -35,7 +35,7 @@ export type NextStepAction =
 
 /** Copy + where the CTA goes, per part key. */
 export const NEXT_STEP_COPY: Record<string, { title: string; subtitle: string; cta: string; action: NextStepAction }> = {
-  photo: { title: 'Add a profile photo', subtitle: 'Clubs look at photos first', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
+  photo: { title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
   crest: { title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', action: { kind: 'edit' } },
   logo: { title: 'Add your logo', subtitle: 'Athletes recognise brands by it', cta: 'Add', action: { kind: 'edit' } },
   position: { title: 'Add your position', subtitle: 'Clubs search by position', cta: 'Add', action: { kind: 'edit', field: 'position' } },
@@ -57,8 +57,8 @@ export const NEXT_STEP_COPY: Record<string, { title: string; subtitle: string; c
   open_to_coach: { title: 'Set Open to coach', subtitle: 'Clubs filter by it', cta: 'Set', action: { kind: 'edit' } },
   level: { title: 'Add your umpire level', subtitle: 'Clubs and leagues look for it', cta: 'Add', action: { kind: 'edit' } },
   federation: { title: 'Add your federation', subtitle: 'Shown on your profile', cta: 'Add', action: { kind: 'edit' } },
-  available: { title: 'Set Available for appointments', subtitle: 'Leagues filter by it', cta: 'Set', action: { kind: 'edit' } },
-  appointments: { title: 'Add your first appointment', subtitle: 'Your officiating record', cta: 'Add', action: { kind: 'edit' } },
+  available: { title: 'Say you’re open to umpire', subtitle: 'Leagues filter by it', cta: 'Set', action: { kind: 'edit' } },
+  appointments: { title: 'Add your latest match', subtitle: 'Your officiating record', cta: 'Add', action: { kind: 'edit' } },
   country: { title: 'Add your country', subtitle: 'Shown on your profile', cta: 'Add', action: { kind: 'edit' } },
   year_founded: { title: 'Add the year founded', subtitle: 'Shown in About', cta: 'Add', action: { kind: 'edit' } },
   contact: { title: 'Add a website or email', subtitle: 'So players can reach you', cta: 'Add', action: { kind: 'edit' } },

@@ -66,7 +66,7 @@ interface EntryTypeVisual {
 
 const ENTRY_TYPE_VISUALS: Record<EntryTypeKey, EntryTypeVisual> = {
   appointment: {
-    label: 'Appointment',
+    label: 'Match',
     Icon: CalendarIcon,
     badgeClass: 'bg-emerald-50 text-emerald-800',
     borderClass: 'border-l-emerald-400',
@@ -200,8 +200,8 @@ export default function UmpireAppointmentsSection({
             </p>
             <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
               {isOwnProfile
-                ? 'Appointments, milestones, certifications, and panel inductions live here. Add your first one from your dashboard.'
-                : 'When this umpire logs appointments, milestones, certifications, or panel inductions, they will appear here.'}
+                ? 'Matches officiated, milestones, certifications and panel inductions live here. Add your first one from your dashboard.'
+                : 'When this umpire adds matches officiated, milestones, certifications or panel inductions, they will appear here.'}
             </p>
             {isOwnProfile && (
               <button

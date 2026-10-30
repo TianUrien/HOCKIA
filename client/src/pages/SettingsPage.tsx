@@ -33,7 +33,7 @@ import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
-import { captchaErrorMessage, getCaptchaToken } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 
 const SETTINGS_NAV: { id: string; label: string }[] = [
@@ -399,6 +399,7 @@ export default function SettingsPage() {
       if (verifyError) {
         throw new Error(captchaErrorMessage(verifyError.message) ?? 'Current password is incorrect')
       }
+      reportCaptchaCoverage('reverify')
 
       const { error } = await supabase.auth.updateUser({
         password: passwordForm.newPassword,

@@ -56,7 +56,9 @@ export default function Avatar({
   // generic purple/initials block for a role-tinted SVG placeholder.
   // Purely cosmetic — `profiles.avatar_url` is still NULL in the DB and
   // every profile-strength scorer correctly counts the photo as missing.
-  const showRolePlaceholder = (!src || imageError) && isRoleAvatarRole(role)
+  // Never initials (founder 2026-10-26): no photo → Avatar / Placeholder,
+  // Player when the role isn't known.
+  const placeholderRole = isRoleAvatarRole(role) ? role : 'player'
   const { openPreview } = useProfileImagePreview()
   const canPreview = Boolean(enablePreview && src)
 
@@ -104,11 +106,6 @@ export default function Avatar({
     <div
       className={cn(
         'relative aspect-square rounded-full overflow-hidden font-semibold text-white flex items-center justify-center flex-shrink-0',
-        // When a RolePlaceholder will fill the box, skip the purple gradient
-        // background so the role-tinted SVG isn't sandwiched on top of it.
-        // Otherwise keep the legacy purple block as the bg for the initials
-        // / "?" fallback (preserves prior look for callers without a role).
-        !showRolePlaceholder && 'bg-gradient-to-br from-hockia-primary to-hockia-secondary',
         canPreview &&
           (previewInteraction === 'auto'
             ? 'cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-hockia-primary'
@@ -137,14 +134,10 @@ export default function Avatar({
             onError={() => setImageError(true)}
           />
         </>
-      ) : showRolePlaceholder && isRoleAvatarRole(role) ? (
+      ) : (
         // The accessible name is provided by the parent (e.g. a card or
         // button labelled with the user's name), so mark the SVG decorative.
-        <RolePlaceholder role={role} initials={initials} name={alt} label="" />
-      ) : initials ? (
-        <span>{initials}</span>
-      ) : (
-        <span>?</span>
+        <RolePlaceholder role={placeholderRole} label="" />
       )}
     </div>
   )

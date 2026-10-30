@@ -73,6 +73,7 @@ export default function RolePostedScreen({ roleId }: Props) {
   const [scope, setScope] = useState<ScopeFields | null>(null)
 
   const clubId = profile?.id ?? null
+  const rolesHome = profile?.role === 'coach' ? '/opportunities?view=mine' : '/opportunities'
   useEffect(() => {
     if (!clubId) return
     let cancelled = false
@@ -80,13 +81,13 @@ export default function RolePostedScreen({ roleId }: Props) {
       if (cancelled) return
       if (error) logger.warn('[RolePosted] role not loaded', error)
       const row = data as { club_id: string; status: string | null; opportunity_type: PostedRole['type'] | null; position: PostedRole['position']; title?: string | null; gender?: string | null; location_city?: string | null } | null
-      if (!row || row.club_id !== clubId) { navigate('/opportunities', { replace: true }); return }
-      if (row.status !== 'open') { navigate('/opportunities', { replace: true, state: { highlight: roleId } }); return }
+      if (!row || row.club_id !== clubId) { navigate(rolesHome, { replace: true }); return }
+      if (row.status !== 'open') { navigate(rolesHome, { replace: true, state: { highlight: roleId } }); return }
       setRole({ type: row.opportunity_type ?? 'player', position: row.position })
       setScope({ title: row.title ?? null, gender: row.gender ?? null, city: row.location_city?.trim() || null })
     })
     return () => { cancelled = true }
-  }, [clubId, roleId, navigate])
+  }, [clubId, roleId, navigate, rolesHome])
 
   useEffect(() => {
     let cancelled = false
@@ -108,7 +109,7 @@ export default function RolePostedScreen({ roleId }: Props) {
     if (showPush) { recordDismissal(); markPushAskDone(profile?.id) }
     navigate(to, { replace: true, state })
   }
-  const done = () => leave('/opportunities', { highlight: roleId })
+  const done = () => leave(rolesHome, { highlight: roleId })
 
   // Find players / Find coaches for THIS role: make it the active recruiting
   // context first (same scope Post role writes), so Community / Find players
@@ -148,7 +149,7 @@ export default function RolePostedScreen({ roleId }: Props) {
             <Check className="h-10 w-10" strokeWidth={2.4} />
           </span>
           <h1 className="text-center text-title-xl text-ink-1">{copy.title}</h1>
-          <EntityAvatar src={profile?.avatar_url ?? null} name={profile?.full_name ?? null} role="club" size={64} />
+          <EntityAvatar src={profile?.avatar_url ?? null} name={profile?.full_name ?? null} role={profile?.role === 'coach' ? 'coach' : 'club'} size={64} />
           <p className="text-center text-[15px] leading-[21px] text-ink-2">{copy.body}</p>
 
           <div className="flex w-full items-center gap-2.5 rounded-[14px] bg-surface-grouped px-3.5 py-3">

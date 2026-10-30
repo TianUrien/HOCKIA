@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXPECTED_SAMPLE_RATE, expectedErrorKey } from '@/lib/sentryFilters'
+import { EXPECTED_SAMPLE_RATE, expectedErrorKey, isUnsampledMeasure } from '@/lib/sentryFilters'
 import { tracesRateFor } from '@/lib/sentryInit'
 
 describe('expected outcomes are counted, not hidden (2026-10-19)', () => {
@@ -17,6 +17,12 @@ describe('expected outcomes are counted, not hidden (2026-10-19)', () => {
   })
   it('samples at a quarter', () => {
     expect(EXPECTED_SAMPLE_RATE).toBe(0.25)
+  })
+  it('never samples the captcha coverage measurement, though its message says captcha', () => {
+    expect(expectedErrorKey('captcha coverage (login: missing)')).toBe('captcha_failed')
+    expect(isUnsampledMeasure({ captcha_coverage: 'missing' })).toBe(true)
+    expect(isUnsampledMeasure({ expected: 'captcha_failed' })).toBe(false)
+    expect(isUnsampledMeasure(undefined)).toBe(false)
   })
 })
 

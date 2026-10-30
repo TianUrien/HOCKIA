@@ -17,6 +17,7 @@ import type { UpdateBrandInput } from '@/hooks/useMyBrand'
 import { cn } from '@/lib/utils'
 import { useQueuedToggle } from '@/hooks/useQueuedToggle'
 import { switchTrackClass } from '@/components/ui/switchClasses'
+import RolePlaceholder from '@/components/RolePlaceholder'
 
 /**
  * Edit profile — brand, phone (Figma PR22 130:1226). Logo and one cover at
@@ -169,8 +170,8 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
       {/* Media: logo + one cover (tap to change) */}
       <div className="flex flex-col gap-2.5 bg-white p-4">
         <div className="flex items-center gap-3.5">
-          <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading !== null} className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-line bg-white" aria-label="Change logo">
-            {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" /> : <span className="text-[28px] font-bold text-[#be123c]">{brand.name.slice(0, 1).toUpperCase()}</span>}
+          <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading !== null} className={`flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] ${logo ? 'border border-line bg-white' : ''}`} aria-label="Change logo">
+            {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" /> : <RolePlaceholder role="brand" label="" />}
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-[16px] font-semibold leading-[21px] text-ink-1">Brand logo</p>

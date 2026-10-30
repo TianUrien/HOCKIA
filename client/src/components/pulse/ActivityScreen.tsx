@@ -18,6 +18,8 @@ import { WhoLookedAtYou } from './WhoLookedAtYou'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { AVAILABLE_RING } from '@/lib/homeEngagement'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
 const TIP_KEYS = new Set(['photo', 'complete', 'crest', 'umpire'])
@@ -178,6 +180,13 @@ export function ActivityScreen() {
 }
 
 function Stack({ visual }: { visual: NextStep['visual'] }) {
+  if (visual.kind === 'placeholder') {
+    return (
+      <span className={cn('block h-10 w-10 shrink-0 overflow-hidden', visual.role === 'brand' ? 'rounded-[10px]' : 'rounded-full')} aria-hidden="true">
+        <RolePlaceholder role={isRoleAvatarRole(visual.role) ? visual.role : 'player'} label="" />
+      </span>
+    )
+  }
   if (visual.kind === 'icon') {
     return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[18px]" aria-hidden="true">{visual.icon === 'user' ? '👤' : visual.icon === 'chart' ? '📈' : visual.icon === 'camera' ? '📷' : '🏑'}</span>
   }

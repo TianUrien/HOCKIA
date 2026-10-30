@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { getImageUrl } from '@/lib/imageUrl'
-import { initialsOf, roleGradient, type CommunityRole } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /**
- * A member's face in a circle. No photo → the Community no-photo treatment:
- * the role gradient (player blue · coach teal · umpire grey · brand) with
- * white initials — the same everywhere in the app (Figma Home review 11 Oct).
+ * A member's face in a circle. No photo → Avatar / Placeholder (the role
+ * silhouette; never initials, founder 2026-10-26), the same everywhere.
  */
-export function FaceCircle({ url, name, role, className, initialsClassName = 'text-[15px]', size = 'avatar-md' }: {
+export function FaceCircle({ url, role, className, size = 'avatar-md' }: {
   url: string | null | undefined
+  /** Kept for callers (and future alt text); not drawn: never initials. */
   name: string | null | undefined
   role?: string | null
   className?: string
+  /** Kept for callers; unused since the placeholder has no letters. */
   initialsClassName?: string
   size?: 'avatar-sm' | 'avatar-md' | 'avatar-lg'
 }) {
@@ -23,13 +25,7 @@ export function FaceCircle({ url, name, role, className, initialsClassName = 'te
       {src ? (
         <img src={src} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" onError={() => setFailed(true)} />
       ) : (
-        <span
-          aria-hidden="true"
-          className={cn('flex h-full w-full items-center justify-center font-semibold text-white', initialsClassName)}
-          style={{ backgroundImage: roleGradient(((role as CommunityRole) || 'player')) }}
-        >
-          {initialsOf(name)}
-        </span>
+        <RolePlaceholder role={isRoleAvatarRole(role) ? role : 'player'} label="" />
       )}
     </span>
   )

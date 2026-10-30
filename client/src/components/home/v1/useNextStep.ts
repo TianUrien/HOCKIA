@@ -25,7 +25,7 @@ export const BRAND_VIEWERS_PATH = '/dashboard/profile?viewers=1'
  *   player / open coach : profile photo (new user, H12a) > availability
  *                         check-in > clubs replied > roles match > who viewed > tip
  *   club / recruiting coach : applicants > a role with no applicants > available now > tip
- *   brand  : profile views + Community search appearances ("Post")
+ *   brand  : logo (no logo yet) > profile views + Community search appearances
  *   umpire : umpiring level
  * Nothing pending → "Your week" (CTA Activity → /pulse). Every number comes
  * from a query Pulse already runs — no new data source.
@@ -34,6 +34,8 @@ export type NextStepVisual =
   | { kind: 'crests'; urls: Array<string | null> }
   | { kind: 'faces'; people: Array<{ url: string | null; name: string | null; role: string | null }> }
   | { kind: 'icon'; icon: 'camera' | 'check' | 'chart' | 'stick' | 'user' }
+  /** No photo yet: the owner's Avatar / Placeholder (founder 2026-10-26). */
+  | { kind: 'placeholder'; role: string }
 
 export interface NextStep {
   key: string
@@ -79,7 +81,7 @@ export function useNextStep() {
     const hasPhoto = Boolean(profile.avatar_url)
 
     if (isTalent || role === 'umpire') {
-      if (!hasPhoto) out.push({ key: 'photo', title: 'Add a profile photo', subtitle: 'Clubs look at photos first', cta: 'Add', visual: { kind: 'icon', icon: 'camera' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto) out.push({ key: 'photo', title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', visual: { kind: 'placeholder', role: role ?? 'player' }, to: OWN_PROFILE_EDIT_PATH })
       const checkIn = pulse.items.find((p) => p.item_type === 'availability_check_in' && !p.action_completed_at && !p.dismissed_at)
       if (checkIn && role !== 'umpire') {
         out.push({
@@ -154,10 +156,14 @@ export function useNextStep() {
           to: '/community',
         })
       }
-      if (!hasPhoto && role === 'club') out.push({ key: 'crest', title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', visual: { kind: 'icon', icon: 'camera' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto && role === 'club') out.push({ key: 'crest', title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', visual: { kind: 'placeholder', role: 'club' }, to: OWN_PROFILE_EDIT_PATH })
+      // A coach who recruits skips the talent branch: the photo step goes here (founder 2026-10-26).
+      if (!hasPhoto && recruitingCoach) out.push({ key: 'photo', title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', visual: { kind: 'placeholder', role: 'coach' }, to: OWN_PROFILE_EDIT_PATH })
     }
 
     if (role === 'brand') {
+      // No logo yet: the brand placeholder and "Add your logo" lead (founder 2026-10-26).
+      if (!hasPhoto) out.push({ key: 'logo', title: 'Add your logo', subtitle: 'Athletes recognise brands by it', cta: 'Add', visual: { kind: 'placeholder', role: 'brand' }, to: OWN_PROFILE_EDIT_PATH })
       const searches = search.summary?.total ?? 0
       out.push({
         key: 'brand',

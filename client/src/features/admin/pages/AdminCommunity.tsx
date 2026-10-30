@@ -18,7 +18,8 @@ import { getCommunityAnalytics } from '../api/analyticsApi'
 import type { CommunityAnalytics } from '../types'
 import { logger } from '@/lib/logger'
 import { getRoleColors, getRoleSolidColor } from '@/lib/roleColors'
-import { getInitials } from '@/lib/utils'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 type DaysFilter = 7 | 30 | 90
 
@@ -327,10 +328,8 @@ export function AdminCommunity() {
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs font-medium text-gray-600">
-                                {getInitials(contributor.full_name)}
-                              </span>
+                            <div className="w-8 h-8 overflow-hidden rounded-full">
+                              <RolePlaceholder role={isRoleAvatarRole(contributor.role) ? contributor.role : 'player'} label="" />
                             </div>
                           )}
                           <span className="text-sm font-medium text-gray-900">

@@ -33,7 +33,7 @@ import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 /** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
-import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, resetCaptcha, warmCaptcha } from '@/lib/captcha'
+import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -173,6 +173,7 @@ export default function AuthScreen() {
         setError('Something went wrong. Please try again.')
         return
       }
+      reportCaptchaCoverage('login')
       stashRedirectIntent(next)
       trackLogin('password')
       // The auth store's onAuthStateChange redirects via the effect above.

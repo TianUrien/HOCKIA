@@ -38,9 +38,10 @@ describe('RoleCover', () => {
 })
 
 describe('CrestTile without a crest', () => {
-  it('is the violet club treatment with letters-only initials, not grey initials', () => {
+  it('is the club Avatar / Placeholder (shield on the club gradient), never initials', () => {
     render(<CrestTile src={null} name="[QA] Club Test" size={48} radius={14} />)
     expect(screen.getByTestId('role-placeholder').getAttribute('data-role')).toBe('club')
-    expect(screen.getByTestId('role-placeholder-initials').textContent).toBe('CT')
+    expect(screen.getByTestId('role-placeholder-icon')).toBeInTheDocument()
+    expect(screen.queryByText('CT')).not.toBeInTheDocument()
   })
 })
