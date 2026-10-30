@@ -273,7 +273,7 @@ HOCKIA Hockey | inhockia.com$t$,
 
 Hi{{contact_name_greeting}},
 
-Clubs on Hockia post opportunities and receive applications from verified players and coaches, complete with highlight videos, references, and playing history.
+Clubs on Hockia post opportunities and receive applications from players and coaches, complete with highlight videos, references, and playing history.
 
 What you can do:
 - Post opportunities (for players and coaches)
@@ -287,7 +287,7 @@ Questions? Reply to this email. We read every message.
 
 ---
 Hockia | inhockia.com$t$,
-     $t$[{"text":"How clubs use Hockia","type":"heading","level":1},{"text":"Hi{{contact_name_greeting}},","type":"paragraph"},{"text":"Clubs on Hockia post opportunities and receive applications from verified players and coaches, complete with highlight videos, references, and playing history.","type":"paragraph"},{"type":"card","title":"What you can do","fields":[{"label":"Post opportunities","value":"For players and coaches"},{"label":"Browse talent","value":"Filter by position, nationality, experience"},{"label":"Get applications","value":"With video, references and history"}]},{"url":"{{cta_url}}","text":"Get started, it's free","type":"button"},{"text":"Questions? Reply to this email. We read every message.","type":"footnote"}]$t$::jsonb),
+     $t$[{"text":"How clubs use Hockia","type":"heading","level":1},{"text":"Hi{{contact_name_greeting}},","type":"paragraph"},{"text":"Clubs on Hockia post opportunities and receive applications from players and coaches, complete with highlight videos, references, and playing history.","type":"paragraph"},{"type":"card","title":"What you can do","fields":[{"label":"Post opportunities","value":"For players and coaches"},{"label":"Browse talent","value":"Filter by position, nationality, experience"},{"label":"Get applications","value":"With video, references and history"}]},{"url":"{{cta_url}}","text":"Get started, it's free","type":"button"},{"text":"Questions? Reply to this email. We read every message.","type":"footnote"}]$t$::jsonb),
     -- profile_view_digest
     ($t$profile_view_digest$t$,
      $t${{view_count}} viewed your HOCKIA profile$t$,
