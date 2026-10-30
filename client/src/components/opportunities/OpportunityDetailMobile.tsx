@@ -132,13 +132,16 @@ export function OpportunityDetailMobile({
   const [wordsOpen, setWordsOpen] = useState(false)
 
   // The hero sits under the status bar: light icons while it is on screen,
-  // dark again once the white body scrolls past it (and on unmount).
+  // dark again once the white body scrolls past it (and on unmount). Past the
+  // hero a glass strip covers the status bar, or the body text would run
+  // under the clock (Android device pass, 2026-10-30).
+  const [pastHero, setPastHero] = useState(false)
   useEffect(() => {
     let light = true
     void setStatusBarForBackground('dark-bg')
     const onScroll = () => {
       const shouldBeLight = window.scrollY < HERO_HEIGHT - 80
-      if (shouldBeLight !== light) { light = shouldBeLight; void setStatusBarForBackground(light ? 'dark-bg' : 'light-bg') }
+      if (shouldBeLight !== light) { light = shouldBeLight; setPastHero(!light); void setStatusBarForBackground(light ? 'dark-bg' : 'light-bg') }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => { window.removeEventListener('scroll', onScroll); void setStatusBarForBackground('light-bg') }
@@ -214,6 +217,9 @@ export function OpportunityDetailMobile({
 
   return (
     <div className="bg-white pb-[calc(84px+env(safe-area-inset-bottom))]" data-testid="role-detail">
+      {pastHero && (
+        <div aria-hidden="true" className="fixed inset-x-0 top-0 z-30 bg-white/92 backdrop-blur-[12px] lg:hidden" style={{ height: 'env(safe-area-inset-top)' }} data-testid="role-status-scrim" />
+      )}
       {/* Hero: the cover under the status bar, glass controls, the title pinned to the bottom. */}
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={identity.displayLogo} palette={palette} scrim="hero" className="w-full" style={{ height: HERO_HEIGHT }}>
         <div className="absolute right-4 flex items-center gap-2.5" style={{ top: 'calc(env(safe-area-inset-top) + 8px)' }}>
