@@ -177,9 +177,14 @@ Deno.test('template renderer escapes headings, is_html values and avatars', asyn
     true,
   )
   const para = renderBlock({ type: 'paragraph', is_html: true, text: '<a href="https://x.test">{{name}}</a>' }, vars)
-  assert(para.includes('<a href="https://x.test">&lt;i&gt;Ana&lt;/i&gt;</a>'))
+  assert(para.includes('<a style="color: #6c2bd9;" href="https://x.test">&lt;i&gt;Ana&lt;/i&gt;</a>'))
+  // a template link that sets its own style keeps it
+  assert(renderBlock({ type: 'paragraph', is_html: true, text: '<a style="color: red;" href="https://x.test">x</a>' }, vars).includes('<a style="color: red;" href'))
   assertEquals(renderBlock({ type: 'button', text: 'Go', url: '{{url}}' }, vars), '')
-  assertFalse(renderAvatarHtml('http://insecure.test/a.png', 'Ana').includes('<img'))
+  // Not https: the role placeholder, never the given URL and never initials.
+  assertFalse(renderAvatarHtml('http://insecure.test/a.png', 'Ana').includes('insecure.test'))
+  assert(renderAvatarHtml('http://insecure.test/a.png', 'Ana', 48, 'coach').includes('/brand/email/placeholder-coach-144.png'))
+  assert(renderAvatarHtml(null, 'Ana', 48, 'not-a-role').includes('/brand/email/placeholder-player-144.png'))
   assert(renderAvatarHtml('https://secure.test/a.png', 'Ana').includes('<img src="https://secure.test/a.png"'))
 })
 

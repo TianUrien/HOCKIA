@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
+import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
 
 /**
  * ============================================================================
@@ -60,11 +61,11 @@ function escapeHtml(s: string): string {
 
 function shell(inner: string): string {
   return `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f6f6f8;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#5b21b6;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        ${EMAIL_LOGO_HTML}
         ${inner}
       </td></tr>
     </table>
@@ -73,7 +74,7 @@ function shell(inner: string): string {
 }
 
 const btn = (url: string, label: string) =>
-  `<div style="margin-top:20px;"><a href="${url}" style="display:inline-block;background:#6d28d9;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${label}</a></div>`
+  `<div style="margin-top:20px;"><a href="${url}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${label}</a></div>`
 
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
@@ -178,44 +179,44 @@ Deno.serve(async (req: Request) => {
 
     if (queueRecord.kind === 'goodbye') {
       const waitlistUrl = `${HOCKIA_BASE_URL}/juniors-waitlist?e=${encodeURIComponent(btoa(person.email))}`
-      subject = 'Your HOCKIA profile is saved for you'
+      subject = 'Your Hockia profile is saved for you'
       html = shell(`
-        <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
-        <p style="font-size:15px;color:#374151;line-height:1.6;">
-          HOCKIA is 18+ for now. Your profile is <strong>saved, not deleted</strong>.
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
+          Hockia is 18+ for now. Your profile is <strong>saved, not deleted</strong>.
           Everything you built is waiting for you.
         </p>
-        <p style="font-size:15px;color:#374151;line-height:1.6;">
-          We're building <strong>HOCKIA Juniors</strong>, a version with protections
+        <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
+          We're building <strong>Hockia Juniors</strong>, a version with protections
           designed for young players. Want to be first to know when it opens?
         </p>
         ${btn(waitlistUrl, 'Keep me posted')}
-        <p style="font-size:13px;color:#6b7280;line-height:1.5;margin-top:20px;">
+        <p style="font-size:13px;color:#6b6878;line-height:1.5;margin-top:20px;">
           Questions, or want your data removed instead? Just reply, or write to
-          <a href="mailto:team@inhockia.com" style="color:#6d28d9;">team@inhockia.com</a>.
+          <a href="mailto:team@inhockia.com" style="color:#6c2bd9;">team@inhockia.com</a>.
           We answer every message.
         </p>`)
       text = [
         `Hi ${firstName},`, '',
-        'HOCKIA is 18+ for now. Your profile is saved, not deleted. Everything you built is waiting for you.',
-        "We're building HOCKIA Juniors, a version with protections designed for young players. Want to be first to know when it opens?",
+        'Hockia is 18+ for now. Your profile is saved, not deleted. Everything you built is waiting for you.',
+        "We're building Hockia Juniors, a version with protections designed for young players. Want to be first to know when it opens?",
         waitlistUrl, '',
         'Questions, or want your data removed instead? Write to team@inhockia.com. We answer every message.',
       ].join('\n')
     } else if (queueRecord.kind === 'welcome_back') {
       const suggestions = await fetchSuggestions(supabase, person.id, [], 3)
-      subject = 'Welcome back: your HOCKIA profile is live again'
+      subject = 'Welcome back: your Hockia profile is live again'
       html = shell(`
-        <div style="font-size:20px;font-weight:700;color:#111827;">Happy 18th, ${escapeHtml(firstName)}! 🎉</div>
-        <p style="font-size:15px;color:#374151;line-height:1.6;">
-          Your HOCKIA profile is live again, exactly as you left it. The hockey
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Happy 18th, ${escapeHtml(firstName)}! 🎉</div>
+        <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
+          Your Hockia profile is live again, exactly as you left it. The hockey
           market kept moving while you were away; here's what's open right now:
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         ${btn(`${HOCKIA_BASE_URL}/opportunities`, 'Browse open opportunities')}`)
       text = [
         `Happy 18th, ${firstName}!`, '',
-        'Your HOCKIA profile is live again, exactly as you left it.',
+        'Your Hockia profile is live again, exactly as you left it.',
         suggestionsText(suggestions, HOCKIA_BASE_URL), '',
         `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,
       ].join('\n')
@@ -230,13 +231,13 @@ Deno.serve(async (req: Request) => {
         ? 'A few days left to confirm your date of birth'
         : 'Confirm your date of birth to keep your full profile active'
       html = shell(`
-        <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
-        <p style="font-size:15px;color:#374151;line-height:1.6;">
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
           ${isReminder
-            ? `Quick reminder: you have until <strong>${deadlineStr}</strong> to confirm your date of birth on HOCKIA.`
-            : 'HOCKIA is an 18+ platform, and your profile doesn’t have a date of birth yet. Confirming takes one tap after signing in.'}
+            ? `Quick reminder: you have until <strong>${deadlineStr}</strong> to confirm your date of birth on Hockia.`
+            : 'Hockia is an 18+ platform, and your profile doesn’t have a date of birth yet. Confirming takes one tap after signing in.'}
         </p>
-        <p style="font-size:14px;color:#374151;line-height:1.6;">
+        <p style="font-size:14px;color:#3f3c4d;line-height:1.6;">
           ${isReminder
             ? 'After that date your profile is temporarily hidden from discovery and new messages until you confirm. Nothing is deleted.'
             : `You have until <strong>${deadlineStr}</strong>. After that your profile is temporarily hidden from discovery and new messages until you confirm. Nothing is deleted.`}
@@ -246,8 +247,8 @@ Deno.serve(async (req: Request) => {
       text = [
         `Hi ${firstName},`, '',
         isReminder
-          ? `Quick reminder: you have until ${deadlineStr} to confirm your date of birth on HOCKIA.`
-          : `HOCKIA is an 18+ platform, and your profile doesn't have a date of birth yet. Confirming takes one tap after signing in.`,
+          ? `Quick reminder: you have until ${deadlineStr} to confirm your date of birth on Hockia.`
+          : `Hockia is an 18+ platform, and your profile doesn't have a date of birth yet. Confirming takes one tap after signing in.`,
         `After ${deadlineStr} your profile is temporarily hidden from discovery and new messages until you confirm. Nothing is deleted. Your birthdate stays private; other members only ever see your age.`,
         '', `Confirm now: ${HOCKIA_BASE_URL}`,
       ].join('\n')

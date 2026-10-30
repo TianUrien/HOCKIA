@@ -54,7 +54,7 @@ Deno.test('every member value is escaped in the HTML (names, role, organisation,
   assertStringIncludes(html, '&lt;b&gt;Role&lt;/b&gt; &quot;quoted&quot;')
 })
 
-Deno.test('avatars render only from https URLs; anything else falls back to initials', () => {
+Deno.test('avatars render only from https URLs; anything else is the role placeholder, never initials', () => {
   const items = toApplicantItems([
     row({ applicant_avatar_url: 'https://cdn.example.com/a.png' }),
     row({ applicant_full_name: 'Ben Ito', applicant_avatar_url: 'http://insecure.example.com/b.png' }),
@@ -64,10 +64,11 @@ Deno.test('avatars render only from https URLs; anything else falls back to init
   assertStringIncludes(html, 'src="https://cdn.example.com/a.png"')
   assertFalse(html.includes('insecure.example.com'))
   assertFalse(html.includes('javascript:'))
-  assertStringIncludes(html, '>BI<') // initials
+  assertStringIncludes(html, '/brand/email/placeholder-player-144.png')
+  assertFalse(html.includes('>BI<'))
 })
 
-Deno.test('Last call email: founder copy, Review + Decline with a kind note deep link, footer', () => {
+Deno.test('Last call email: founder copy, Review + Not a fit deep link, footer', () => {
   const items = toItems([
     row({ closes_at: '2026-10-10T08:00:00Z' }),
     row({ applicant_full_name: 'Ben Ito', closes_at: '2026-10-15T08:00:00Z' }),
@@ -77,14 +78,14 @@ Deno.test('Last call email: founder copy, Review + Decline with a kind note deep
   assertStringIncludes(email.html, 'Ana applied on 25 Sep. Tomorrow the application closes on its own and Ana is told you didn&#39;t reply. A short answer either way is better than none.')
   assertStringIncludes(email.html, '>Review Ana<')
   assertStringIncludes(email.html, `${BASE}/dashboard/opportunities/${ROLE}/applicants/${items[0].applicationId}?decline=1`)
-  assertStringIncludes(email.html, '>Decline with a kind note<')
+  assertStringIncludes(email.html, '>Not a fit, with a kind note<')
   assertStringIncludes(email.html, '1 more is waiting: Ben.')
   assertStringIncludes(email.html, 'Last reminder for Ana.')
   assertStringIncludes(email.html, 'Change emails in Settings → Notifications.')
-  assertStringIncludes(email.text, `Decline with a kind note: ${BASE}/dashboard/opportunities/${ROLE}/applicants/${items[0].applicationId}?decline=1`)
-  // No token triage buttons any more.
+  assertStringIncludes(email.text, `Not a fit, with a kind note: ${BASE}/dashboard/opportunities/${ROLE}/applicants/${items[0].applicationId}?decline=1`)
+  // No token triage buttons any more (the "Not a fit" link opens the app's sheet).
   assertFalse(email.html.includes('/email-action'))
-  assertFalse(/Good fit|Not a fit|Maybe/.test(email.html))
+  assertFalse(/Good fit|Maybe/.test(email.html))
 })
 
 Deno.test('Closing soon email: N players waiting, soonest first, fit badges, amber chip only ≤5 days, Review N players', () => {
@@ -101,15 +102,15 @@ Deno.test('Closing soon email: N players waiting, soonest first, fit badges, amb
   assert(order[0] < order[1] && order[1] < order[2], 'soonest-closing first')
   assertStringIncludes(email.html, '>Strong fit<')
   // Possible fit is neutral (surface/muted, ink-secondary), never yellow (design review 9 Oct).
-  assertStringIncludes(email.html, 'background:#f4f4f7;color:#5b5b6b;font-size:12px;font-weight:600;line-height:18px;">Possible fit<')
+  assertStringIncludes(email.html, 'background:#f1eff6;color:#6b6878;font-size:12px;font-weight:600;line-height:18px;">Possible fit<')
   assertFalse(email.html.includes('#fef7c3'))
   assertEquals((email.html.match(/>Strong fit</g) ?? []).length + (email.html.match(/>Possible fit</g) ?? []).length, 2)
   assertStringIncludes(email.html, `href="${BASE}/settings/notifications"`)
-  assertStringIncludes(email.html, 'background:#fffaeb;color:#b54708;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes Tuesday')
-  assertStringIncludes(email.html, 'background:#f2f4f7;color:#475467;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes 20 Oct')
+  assertStringIncludes(email.html, 'background:#fdf1e4;color:#b45309;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes Tuesday')
+  assertStringIncludes(email.html, 'background:#f1eff6;color:#6b6878;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">Closes 20 Oct')
   assertStringIncludes(email.html, '>Review 3 players<')
   assertStringIncludes(email.html, `href="${BASE}/dashboard/opportunities/${ROLE}/applicants"`)
-  assertStringIncludes(email.html, 'Not the right fit? Declining takes one tap, and Hockia AI drafts a kind note you can edit.')
+  assertStringIncludes(email.html, 'Not the right fit? Marking it &quot;Not a fit&quot; takes one tap, and Hockia AI drafts a kind note you can edit.')
   assertStringIncludes(email.html, 'Player · Midfielder · Argentina')
 })
 
@@ -157,7 +158,7 @@ Deno.test('new-applications batch: one Review link (applicant when one, Applican
   const two = renderNewApplicationsEmail({ items: toApplicantItems([row(), row({ applicant_full_name: 'Ben Ito' })], TZ), baseUrl: BASE })
   assertStringIncludes(two.html, `href="${BASE}/dashboard/opportunities/${ROLE}/applicants"`)
   const roles = renderNewApplicationsEmail({ items: toApplicantItems([row(), row({ opportunity_id: 'other-role', role_title: 'Goalkeeper' })], TZ), baseUrl: BASE })
-  assertEquals(roles.subject, '2 new applicants for your roles')
+  assertEquals(roles.subject, '2 new applicants for your opportunities')
   assertStringIncludes(roles.html, `href="${BASE}/opportunities"`)
   for (const e of [one, two, roles]) {
     assertFalse(e.html.includes('/email-action'))

@@ -6,6 +6,7 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
+import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
 
 /**
  * ============================================================================
@@ -216,35 +217,35 @@ Deno.serve(async (req: Request) => {
       : 'Updates on your applications'
 
     const entryHtml = (e: StatusEntry) => e.status === 'shortlisted'
-      ? `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
-           <div style="font-size:15px;font-weight:600;color:#111827;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
-           <div style="font-size:13px;color:#6b7280;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
-           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
+      ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
+           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
          </td></tr>`
-      : `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
-           <div style="font-size:15px;font-weight:600;color:#111827;">Not this time: ${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
+      : `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">Not this time: ${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
            ${e.note
-             ? `<div style="font-size:14px;color:#111827;margin-top:8px;padding:12px 14px;background:#f4f4f7;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
-             : `<div style="font-size:13px;color:#6b7280;margin-top:2px;">It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.</div>`}
-           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">See your application →</a>` : ''}
+             ? `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
+             : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.</div>`}
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">See your application →</a>` : ''}
          </td></tr>`
 
     const html = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f6f6f8;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#5b21b6;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
-        <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
+        ${EMAIL_LOGO_HTML}
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
           ${entries.map(entryHtml).join('')}
         </table>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         <div style="margin-top:20px;">
-          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#111827;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open HOCKIA</a>
+          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">Open Hockia</a>
         </div>
-        <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
+        <p style="font-size:12px;color:#73707c;margin-top:24px;">
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Notification settings</a>
         </p>
       </td></tr>
     </table>
@@ -260,7 +261,7 @@ Deno.serve(async (req: Request) => {
         : `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability.`),
       suggestionsText(suggestions, HOCKIA_BASE_URL),
       '',
-      `Open HOCKIA: ${HOCKIA_BASE_URL}/opportunities`,
+      `Open Hockia: ${HOCKIA_BASE_URL}/opportunities`,
     ].join('\n')
 
     const rendered = await renderTemplate(supabase, 'application_status', {

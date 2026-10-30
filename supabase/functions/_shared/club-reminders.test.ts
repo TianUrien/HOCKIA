@@ -282,7 +282,7 @@ Deno.test('new-applications subject and the hourly gap', () => {
   const items = toApplicantItems([row(), row({ applicant_full_name: 'Ben Ito' })], 'UTC')
   assertEquals(newApplicationsSubject([items[0]]), 'Ana applied for First team midfielder')
   assertEquals(newApplicationsSubject(items), '2 new applicants for First team midfielder')
-  assertEquals(newApplicationsSubject([items[0], { ...items[1], opportunityId: ROLE_B }]), '2 new applicants for your roles')
+  assertEquals(newApplicationsSubject([items[0], { ...items[1], opportunityId: ROLE_B }]), '2 new applicants for your opportunities')
   const now = new Date('2026-10-09T12:00:00Z')
   assert(newApplicationsDue(null, now))
   assert(newApplicationsDue('2026-10-09T11:00:00Z', now))

@@ -219,6 +219,7 @@ Deno.serve(async (req: Request) => {
       request_note: reference.request_note || '',
       requester_location: requester.base_location?.trim() || '',
       requester_avatar_url: requester.avatar_url || '',
+      avatar_role: requester.role || '',
       cta_url: `${HOCKIA_BASE_URL}/references`,
       profile_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
@@ -246,7 +247,7 @@ Deno.serve(async (req: Request) => {
         reference.relationship_type,
         reference.request_note
       )
-      subject = `${requesterName} requested a reference on HOCKIA`
+      subject = `${requesterName} requested a reference on Hockia`
       logger.info('Falling back to hardcoded template')
     }
 

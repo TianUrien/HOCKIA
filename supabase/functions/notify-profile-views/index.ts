@@ -210,7 +210,7 @@ Deno.serve(async (req: Request) => {
       cta_url: `${HOCKIA_BASE_URL}/home?tab=pulse`,
       // Label matches the destination: the Pulse (visibility card when it
       // applies), NOT the viewers list — don't promise that list.
-      cta_label: 'See your week on HOCKIA',
+      cta_label: 'See your week on Hockia',
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
@@ -229,8 +229,8 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(recipient as RecipientData, viewers, stats)
       emailText = generateEmailText(recipient as RecipientData, viewers, stats)
       subject = stats.uniqueViewers === 1
-        ? 'Someone viewed your HOCKIA profile'
-        : `${stats.uniqueViewers} people viewed your HOCKIA profile`
+        ? 'Someone viewed your Hockia profile'
+        : `${stats.uniqueViewers} people viewed your Hockia profile`
       logger.info('Falling back to hardcoded template')
     }
 

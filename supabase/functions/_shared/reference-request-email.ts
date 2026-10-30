@@ -1,6 +1,7 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
-import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
+import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
 
 /**
  * Shared Email Template for Reference Request Notifications
@@ -13,7 +14,7 @@ import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const SENDER_EMAIL = 'Hockia <team@inhockia.com>'
 export const REPLY_TO_EMAIL = 'team@inhockia.com'
 export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
@@ -72,53 +73,36 @@ export interface RecipientData {
   notify_references: boolean
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
 export function generateEmailHtml(
   requester: RequesterData,
   relationshipType: string,
   requestNote: string | null
 ): string {
-  const displayName = requester.full_name?.trim() || 'A HOCKIA member'
+  const displayName = requester.full_name?.trim() || 'A Hockia member'
   const location = requester.base_location?.trim() || null
 
   const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
-  const initials = getInitials(displayName)
 
-  const avatarSrc = safeHttpsUrl(requester.avatar_url)
-  const avatarHtml = avatarSrc
-    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
-        <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
-        </tr>
-      </table>`
+  const avatarHtml = emailAvatarHtml(requester.avatar_url, displayName, requester.role)
 
   const detailItems: string[] = []
 
   detailItems.push(
-    `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
+    `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
   )
 
   if (location) {
     detailItems.push(
-      `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
+      `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
     )
   }
 
   const requestNoteHtml = requestNote?.trim()
     ? `
-    <div style="background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
-      <p style="color: #92400e; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Message from ${escapeHtml(displayName)}</p>
-      <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(requestNote.trim())}</p>
+    <div style="background: #f1eff6; border: 1px solid #e6e3ee; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
+      <p style="color: #6b6878; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Message from ${escapeHtml(displayName)}</p>
+      <p style="color: #0e0b1a; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(requestNote.trim())}</p>
     </div>`
     : ''
 
@@ -129,25 +113,25 @@ export function generateEmailHtml(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Reference request</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">A HOCKIA member has asked you to write a reference for them.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Reference request</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">A Hockia member has asked you to write a reference for them.</p>
 
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="56" valign="top">
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
+            <p style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
             <div>
               ${detailItems.join('\n              ')}
             </div>
@@ -158,18 +142,18 @@ export function generateEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #6d28d9; font-weight: 600; text-decoration: none;">View request &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">View request &rarr;</a>
     </p>
 
-    <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View their profile</a> to learn more.
+    <p style="color: #73707c; font-size: 14px; margin: 0;">
+      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View their profile</a> to learn more.
     </p>
   </div>
 
-  <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you have a HOCKIA account.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+  <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
+    <p style="color: #73707c; font-size: 12px; margin: 0;">
+      You're receiving this because you have a Hockia account.<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 
@@ -182,13 +166,13 @@ export function generateEmailText(
   relationshipType: string,
   requestNote: string | null
 ): string {
-  const displayName = requester.full_name?.trim() || 'A HOCKIA member'
+  const displayName = requester.full_name?.trim() || 'A Hockia member'
   const location = requester.base_location?.trim() || null
 
   const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const lines = [
-    'Reference Request on HOCKIA',
+    'Reference request on Hockia',
     '',
     `${displayName} has asked you to write a reference for them.`,
     `Relationship: ${relationshipType}`,
@@ -211,7 +195,7 @@ export function generateEmailText(
     profileUrl,
     '',
     '---',
-    "You're receiving this because you're on HOCKIA.",
+    "You're receiving this because you're on Hockia.",
     `Manage preferences: ${UNSUBSCRIBE_URL}`
   )
 

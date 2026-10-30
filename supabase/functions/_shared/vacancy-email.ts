@@ -1,6 +1,7 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 import { positionLabel } from './display-labels.ts'
 import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML } from './email-brand.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -14,7 +15,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const SENDER_EMAIL = 'Hockia <team@inhockia.com>'
 export const REPLY_TO_EMAIL = 'team@inhockia.com'
 export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
@@ -60,11 +61,11 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   const detailItems: string[] = []
   
   if (position) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(position)}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(position)}</span>`)
   }
   
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
   }
 
   return `
@@ -74,40 +75,40 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <!-- Main Content -->
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">New opportunity posted</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">A new opportunity was just published that may be relevant to you.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">New opportunity posted</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">A new opportunity was just published that may be relevant to you.</p>
 
     <!-- Vacancy Card -->
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-      <h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(vacancy.title)}</h2>
-      <p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(safeClubName)}</p>
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+      <h2 style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(vacancy.title)}</h2>
+      <p style="color: #6c2bd9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(safeClubName)}</p>
 
       ${detailItems.length > 0 ? `<div style="margin-bottom: 16px;">${detailItems.join('')}</div>` : ''}
 
-      ${summary ? `<p style="color: #4b5563; margin: 0; font-size: 14px; line-height: 1.6;">${escapeHtml(summary)}${hasMoreSummary ? '...' : ''}</p>` : ''}
+      ${summary ? `<p style="color: #5a5766; margin: 0; font-size: 14px; line-height: 1.6;">${escapeHtml(summary)}${hasMoreSummary ? '...' : ''}</p>` : ''}
     </div>
 
     <!-- CTA -->
     <p style="margin: 0 0 24px 0;">
-      <a href="${escapeHtml(vacancyUrl)}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
+      <a href="${escapeHtml(vacancyUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
     </p>
   </div>
 
   <!-- Footer -->
-  <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you have a HOCKIA account.<br>
-      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+  <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
+    <p style="color: #73707c; font-size: 12px; margin: 0;">
+      You're receiving this because you have a Hockia account.<br>
+      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 
@@ -135,7 +136,7 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
 
   // Build text content
   const lines: string[] = [
-    'New opportunity posted on HOCKIA',
+    'New opportunity posted on Hockia',
     '',
     'A new opportunity was just published that may be relevant to you.',
     '',
@@ -162,7 +163,7 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
     vacancyUrl,
     '',
     '---',
-    "You're receiving this because you have a HOCKIA account.",
+    "You're receiving this because you have a Hockia account.",
     `Notification settings: ${HOCKIA_BASE_URL}/settings`
   )
 

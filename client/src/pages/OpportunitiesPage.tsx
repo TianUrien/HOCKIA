@@ -669,7 +669,7 @@ export default function OpportunitiesPage() {
                   ? 'See what clubs are looking for across the Hockia network.'
                   : isLoading || fetchError
                     ? 'Open opportunities from clubs and coaches'
-                    : `${mobileList.length} open opportunity${mobileList.length === 1 ? '' : 's'} from clubs and coaches`}
+                    : `${mobileList.length} open ${mobileList.length === 1 ? 'opportunity' : 'opportunities'} from clubs and coaches`}
               </p>
             </div>
             {user && (profile?.role === 'player' || profile?.role === 'coach') && (

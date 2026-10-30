@@ -223,7 +223,7 @@ Deno.serve(async (req: Request) => {
     // Fetch the applicant profile
     const { data: applicant, error: applicantError } = await supabase
       .from('profiles')
-      .select('id, username, full_name, position, secondary_position, base_location, avatar_url, is_test_account, is_blocked, frozen_minor_at')
+      .select('id, username, full_name, position, secondary_position, base_location, avatar_url, role, is_test_account, is_blocked, frozen_minor_at')
       .eq('id', application.applicant_id)
       .single()
 
@@ -393,6 +393,7 @@ Deno.serve(async (req: Request) => {
       applicant_position: positions.join(' \u2022 '),
       applicant_location: applicant.base_location?.trim() || '',
       applicant_avatar_url: applicant.avatar_url || '',
+      avatar_role: applicant.role || '',
       cta_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }

@@ -1,6 +1,6 @@
 # Notification System
 
-This directory contains the Edge Functions for email notifications on HOCKIA.
+This directory contains the Edge Functions for email notifications on Hockia.
 
 ## Architecture Overview
 
@@ -38,7 +38,7 @@ The notification system is split into **two completely isolated modes**:
 │   │  • generateEmailHtml()  - Production email template              │      │
 │   │  • generateEmailText()  - Plain text version                     │      │
 │   │  • sendEmail()          - Resend API integration                 │      │
-│   │  • Sender: "HOCKIA <team@inhockia.com>"                     │      │
+│   │  • Sender: "Hockia <team@inhockia.com>"                     │      │
 │   │                                                                  │      │
 │   └─────────────────────────────────────────────────────────────────┘      │
 │                                                                             │
@@ -147,10 +147,10 @@ Both functions require these secrets (set in Supabase Dashboard):
 
 Both functions use the **identical** email template:
 
-- **Sender:** `HOCKIA <team@inhockia.com>`
-- **Subject:** `New opportunity on HOCKIA: {vacancy.title}`
+- **Sender:** `Hockia <team@inhockia.com>`
+- **Subject:** `New opportunity on Hockia: {vacancy.title}`
 - **Design:** Purple gradient header, vacancy card, CTA button
-- **Footer:** "You're receiving this because you're on HOCKIA" + manage preferences link
+- **Footer:** "You're receiving this because you're on Hockia" + manage preferences link
 
 ## Isolation Guarantees
 
@@ -201,9 +201,9 @@ pg_cron (daily 10:00 UTC)
 
 | Reminder | Delay | Subject |
 |----------|-------|---------|
-| 1 | 24 hours after signup | "Complete your HOCKIA profile and start connecting" |
-| 2 | 72 hours after signup | "Your HOCKIA profile is almost ready" |
-| 3 | 7 days after signup | "Last chance to complete your HOCKIA profile" |
+| 1 | 24 hours after signup | "Complete your Hockia profile and start connecting" |
+| 2 | 72 hours after signup | "Your Hockia profile is almost ready" |
+| 3 | 7 days after signup | "Last chance to complete your Hockia profile" |
 
 Each reminder only sends after the previous one has been processed. This prevents sending all 3 at once for users who signed up long ago.
 

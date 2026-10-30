@@ -1,6 +1,7 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
-import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
+import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
 
 /**
  * Reference Reminder Email Helpers (Phase 3.2)
@@ -35,15 +36,6 @@ export interface ReminderSuggestedFriend {
   role: string | null
 }
 
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
 
 /**
  * Recipient first-name extraction. Falls back to "there" if both full_name
@@ -106,16 +98,8 @@ export function generateReminderEmailHtml(
   const friendName = friendDisplayName(friend)
   const friendFirst = friendFirstName(friend)
   const ctaUrl = buildReminderCtaUrl(HOCKIA_BASE_URL, friend.id)
-  const initials = getInitials(friendName)
 
-  const avatarSrc = safeHttpsUrl(friend.avatar_url)
-  const avatarHtml = avatarSrc
-    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(friendName)}" style="width: 48px; height: 48px; border-radius: 24px; object-fit: cover;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #10b981 0%, #34d399 100%);">
-        <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
-        </tr>
-      </table>`
+  const avatarHtml = emailAvatarHtml(friend.avatar_url, friendName, friend.role)
 
   return `
 <!DOCTYPE html>
@@ -124,53 +108,53 @@ export function generateReminderEmailHtml(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Add trust to your HOCKIA profile</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on HOCKIA. They could vouch for your hockey.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Add trust to your Hockia profile</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on Hockia. They could vouch for your hockey.</p>
 
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="56" valign="top">
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(friendName)}</p>
-            <p style="color: #6b7280; margin: 0; font-size: 14px;">A HOCKIA connection</p>
+            <p style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(friendName)}</p>
+            <p style="color: #6b6878; margin: 0; font-size: 14px;">A Hockia connection</p>
           </td>
         </tr>
       </table>
     </div>
 
-    <p style="color: #374151; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
-      References are short vouches from coaches, teammates and clubs you've connected with on HOCKIA. They appear on your profile and give the clubs and coaches scouting on HOCKIA more confidence in your background.
+    <p style="color: #3f3c4d; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
+      References are short vouches from coaches, teammates and clubs you've connected with on Hockia. They appear on your profile and give the clubs and coaches scouting on Hockia more confidence in your background.
     </p>
 
-    <p style="color: #374151; margin: 0 0 24px 0; font-size: 15px; line-height: 1.6;">
+    <p style="color: #3f3c4d; margin: 0 0 24px 0; font-size: 15px; line-height: 1.6;">
       One reference is usually enough to make a difference, and asking takes about a minute.
     </p>
 
     <div style="text-align: center; margin: 32px 0;">
       <a href="${escapeHtml(ctaUrl)}"
-         style="display: inline-block; background: #10b981; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 15px;">
+         style="display: inline-block; background: #7c3aed; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 15px;">
         Ask ${escapeHtml(friendFirst)} for a reference
       </a>
     </div>
 
   </div>
 
-  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0 16px 0;">
+  <hr style="border: none; border-top: 1px solid #e6e3ee; margin: 32px 0 16px 0;">
 
-  <p style="color: #9ca3af; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
-    You're receiving this because you have email notifications turned on for references on HOCKIA.
-    <a href="${escapeHtml(UNSUBSCRIBE_URL)}" style="color: #6b7280; text-decoration: underline;">Manage email preferences</a>.
+  <p style="color: #73707c; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
+    You're receiving this because you have email notifications turned on for references on Hockia.
+    <a href="${escapeHtml(UNSUBSCRIBE_URL)}" style="color: #6b6878; text-decoration: underline;">Manage email preferences</a>.
   </p>
 
 </body>
@@ -187,13 +171,13 @@ export function generateReminderEmailText(
   const ctaUrl = buildReminderCtaUrl(HOCKIA_BASE_URL, friend.id)
 
   return [
-    'Add trust to your HOCKIA profile',
+    'Add trust to your Hockia profile',
     '',
     `Hi ${firstName},`,
     '',
-    `You're connected with ${friendName} on HOCKIA. They could vouch for your hockey.`,
+    `You're connected with ${friendName} on Hockia. They could vouch for your hockey.`,
     '',
-    'References are short vouches from coaches, teammates and clubs you\'ve connected with on HOCKIA. They appear on your profile and give the clubs and coaches scouting on HOCKIA more confidence in your background.',
+    'References are short vouches from coaches, teammates and clubs you\'ve connected with on Hockia. They appear on your profile and give the clubs and coaches scouting on Hockia more confidence in your background.',
     '',
     'One reference is usually enough to make a difference, and asking takes about a minute.',
     '',
@@ -201,7 +185,7 @@ export function generateReminderEmailText(
     ctaUrl,
     '',
     '---',
-    'You\'re receiving this because you have email notifications turned on for references on HOCKIA.',
+    'You\'re receiving this because you have email notifications turned on for references on Hockia.',
     `Manage email preferences: ${UNSUBSCRIBE_URL}`,
   ].join('\n')
 }
