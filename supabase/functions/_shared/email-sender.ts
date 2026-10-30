@@ -26,7 +26,7 @@ import { captureException } from './sentry.ts'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const RESEND_BATCH_API_URL = 'https://api.resend.com/emails/batch'
-const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+const SENDER_EMAIL = 'Hockia <team@inhockia.com>'
 const REPLY_TO_EMAIL = 'team@inhockia.com'
 const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`

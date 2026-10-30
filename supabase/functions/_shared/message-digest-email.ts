@@ -13,7 +13,7 @@ import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const SENDER_EMAIL = 'Hockia <team@inhockia.com>'
 export const REPLY_TO_EMAIL = 'team@inhockia.com'
 export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
@@ -70,7 +70,7 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
   const avatarSrc = safeHttpsUrl(conv.sender_avatar_url)
   const avatarHtml = avatarSrc
     ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(conv.sender_name)}" style="width: 40px; height: 40px; border-radius: 20px;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; border-radius: 20px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
+    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; border-radius: 20px; background: linear-gradient(135deg, #6c2bd9 0%, #7c3aed 100%);">
         <tr>
           <td align="center" valign="middle" style="width: 40px; height: 40px; color: white; font-weight: bold; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
@@ -81,15 +81,15 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
     : `${conv.message_count} new messages`
 
   return `
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="48" valign="middle">
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0; font-size: 16px; font-weight: 600;">${escapeHtml(conv.sender_name)}</p>
-            <p style="color: #6b7280; margin: 2px 0 0 0; font-size: 14px;">${messageLabel}</p>
+            <p style="color: #0e0b1a; margin: 0; font-size: 16px; font-weight: 600;">${escapeHtml(conv.sender_name)}</p>
+            <p style="color: #6b6878; margin: 2px 0 0 0; font-size: 14px;">${messageLabel}</p>
           </td>
         </tr>
       </table>
@@ -111,7 +111,7 @@ export function generateEmailHtml(
     ? `${HOCKIA_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
     : `${HOCKIA_BASE_URL}/messages`
 
-  const ctaLabel = isSingle ? 'View Conversation' : 'Open Messages'
+  const ctaLabel = isSingle ? 'View conversation' : 'Open messages'
 
   const conversationCards = conversations.map(buildConversationCardHtml).join('\n')
 
@@ -122,31 +122,31 @@ export function generateEmailHtml(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you have unread messages on HOCKIA.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you have unread messages on Hockia.</p>
 
     <div style="margin-bottom: 24px;">
       ${conversationCards}
     </div>
 
     <p style="margin: 0;">
-      <a href="${escapeHtml(ctaUrl)}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
+      <a href="${escapeHtml(ctaUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
     </p>
 
   </div>
 
-  <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you have a HOCKIA account.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+  <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
+    <p style="color: #73707c; font-size: 12px; margin: 0;">
+      You're receiving this because you have a Hockia account.<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 
@@ -164,7 +164,7 @@ export function generateEmailText(
   const lines = [
     isSingle
       ? `New message from ${conversations[0].sender_name}`
-      : 'You have new messages on HOCKIA',
+      : 'You have new messages on Hockia',
     '',
     `Hi ${firstName},`,
     '',
@@ -187,7 +187,7 @@ export function generateEmailText(
     ctaUrl,
     '',
     '---',
-    "You're receiving this because you're on HOCKIA.",
+    "You're receiving this because you're on Hockia.",
     `Manage preferences: ${UNSUBSCRIBE_URL}`
   )
 

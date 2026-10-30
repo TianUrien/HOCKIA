@@ -298,7 +298,7 @@ function applicantItem(r: CandidateRow, tz: string): ApplicantItem {
   return {
     applicationId: r.application_id,
     opportunityId: r.opportunity_id,
-    roleTitle: r.role_title?.trim() || positionText(r.role_position) || 'your role',
+    roleTitle: r.role_title?.trim() || positionText(r.role_position) || 'your opportunity',
     orgName: r.org_name?.trim() || null,
     applicantId: r.applicant_id,
     applicantName: r.applicant_full_name?.trim() || 'An applicant',
@@ -545,7 +545,7 @@ export function waitingLine(n: number, allPlayers = true): string {
   return `${n} ${peopleNoun(n, allPlayers)} ${plural(n, 'is', 'are')} waiting for your answer`
 }
 
-export const DECLINE_HINT = 'Not the right fit? Declining takes one tap, and Hockia AI drafts a kind note you can edit.'
+export const DECLINE_HINT = 'Not the right fit? Marking it "Not a fit" takes one tap, and Hockia AI drafts a kind note you can edit.'
 export const SETTINGS_FOOTER = 'Change emails in Settings → Notifications.'
 /** The footer opens the Notifications screen itself, not the settings hub. */
 export const SETTINGS_FOOTER_PATH = '/settings/notifications'
@@ -557,7 +557,7 @@ export function newApplicationsSubject(items: Pick<ApplicantItem, 'firstName' | 
     const i = items[0]
     return `${i.firstName ?? 'Someone'} applied for ${i.roleTitle}`
   }
-  return roles.size === 1 ? `${items.length} new applicants for ${items[0].roleTitle}` : `${items.length} new applicants for your roles`
+  return roles.size === 1 ? `${items.length} new applicants for ${items[0].roleTitle}` : `${items.length} new applicants for your opportunities`
 }
 
 // ── Links (in-app paths; the email prefixes the site URL) ────────────────────

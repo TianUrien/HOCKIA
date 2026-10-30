@@ -272,7 +272,7 @@ Deno.serve(async (req: Request) => {
       // and a warm verb ("vouched for you") instead of the generic
       // "accepted your reference request" — references are a trust/scouting
       // signal on HOCKIA, the email should reflect that.
-      subject = `${endorserName} vouched for you on HOCKIA`
+      subject = `${endorserName} vouched for you on Hockia`
       logger.info('Falling back to hardcoded template')
     }
 

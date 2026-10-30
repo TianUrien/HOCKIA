@@ -177,7 +177,9 @@ Deno.test('template renderer escapes headings, is_html values and avatars', asyn
     true,
   )
   const para = renderBlock({ type: 'paragraph', is_html: true, text: '<a href="https://x.test">{{name}}</a>' }, vars)
-  assert(para.includes('<a href="https://x.test">&lt;i&gt;Ana&lt;/i&gt;</a>'))
+  assert(para.includes('<a style="color: #6c2bd9;" href="https://x.test">&lt;i&gt;Ana&lt;/i&gt;</a>'))
+  // a template link that sets its own style keeps it
+  assert(renderBlock({ type: 'paragraph', is_html: true, text: '<a style="color: red;" href="https://x.test">x</a>' }, vars).includes('<a style="color: red;" href'))
   assertEquals(renderBlock({ type: 'button', text: 'Go', url: '{{url}}' }, vars), '')
   assertFalse(renderAvatarHtml('http://insecure.test/a.png', 'Ana').includes('<img'))
   assert(renderAvatarHtml('https://secure.test/a.png', 'Ana').includes('<img src="https://secure.test/a.png"'))

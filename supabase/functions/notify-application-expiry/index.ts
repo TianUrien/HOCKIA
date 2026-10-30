@@ -164,31 +164,31 @@ Deno.serve(async (req: Request) => {
       : `${entries.length} of your applications have closed`
 
     const listHtml = entries
-      .map((e) => `<li style="margin:4px 0;color:#374151;font-size:14px;"><strong>${escapeHtml(e.title)}</strong> · ${escapeHtml(e.publisher)}</li>`)
+      .map((e) => `<li style="margin:4px 0;color:#3f3c4d;font-size:14px;"><strong>${escapeHtml(e.title)}</strong> · ${escapeHtml(e.publisher)}</li>`)
       .join('')
 
     const html = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f6f6f8;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#5b21b6;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
-        <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
-        <p style="font-size:15px;color:#374151;line-height:1.55;">
+        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#7c3aed;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <p style="font-size:15px;color:#3f3c4d;line-height:1.55;">
           ${single
-            ? `Your application for <strong>${escapeHtml(entries[0].title)}</strong> is no longer active on HOCKIA.`
-            : `These applications are no longer active on HOCKIA:`}
+            ? `Your application for <strong>${escapeHtml(entries[0].title)}</strong> is no longer active on Hockia.`
+            : `These applications are no longer active on Hockia:`}
         </p>
         ${single ? '' : `<ul style="padding-left:18px;margin:8px 0;">${listHtml}</ul>`}
-        <p style="font-size:14px;color:#374151;line-height:1.55;">
-          Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:
+        <p style="font-size:14px;color:#3f3c4d;line-height:1.55;">
+          Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         <div style="margin-top:20px;">
-          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#6d28d9;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Browse open opportunities</a>
+          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Browse open opportunities</a>
         </div>
-        <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
+        <p style="font-size:12px;color:#73707c;margin-top:24px;">
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Notification settings</a>
         </p>
       </td></tr>
     </table>
@@ -199,11 +199,11 @@ Deno.serve(async (req: Request) => {
       `Hi ${firstName},`,
       '',
       single
-        ? `Your application for "${entries[0].title}" is no longer active on HOCKIA.`
-        : `These applications are no longer active on HOCKIA:`,
+        ? `Your application for "${entries[0].title}" is no longer active on Hockia.`
+        : `These applications are no longer active on Hockia:`,
       ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
       '',
-      "Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting. Some conversations simply continue elsewhere.",
+      "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere.",
       suggestionsText(suggestions, HOCKIA_BASE_URL),
       '',
       `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,

@@ -45,11 +45,11 @@ export interface RenderedEmail {
 export const MAX_ROWS = 10
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
-const INK_1 = '#111827'
-const INK_2 = '#4b5563'
-const INK_3 = '#6b7280'
-const BRAND = '#6d28d9'
-const LINE = '#eef0f3'
+const INK_1 = '#0e0b1a'
+const INK_2 = '#5a5766'
+const INK_3 = '#6b6878'
+const BRAND = '#6c2bd9'
+const LINE = '#e6e3ee'
 
 function url(baseUrl: string, path: string): string {
   return `${baseUrl.replace(/\/+$/, '')}${path}`
@@ -61,17 +61,17 @@ function href(baseUrl: string, path: string): string {
 
 function fitBadge(fit: ApplicantItem['fit']): string {
   if (fit === 'strong') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#ecfdf3;color:#067647;font-size:12px;font-weight:600;line-height:18px;">Strong fit</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:600;line-height:18px;">Strong fit</span>`
   }
   if (fit === 'possible') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#f4f4f7;color:#5b5b6b;font-size:12px;font-weight:600;line-height:18px;">Possible fit</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#f1eff6;color:#6b6878;font-size:12px;font-weight:600;line-height:18px;">Possible fit</span>`
   }
   return ''
 }
 
 function closesChipHtml(item: ReminderItem): string {
   const amber = chipIsAmber(item.daysLeft)
-  const style = amber ? 'background:#fffaeb;color:#b54708;' : 'background:#f2f4f7;color:#475467;'
+  const style = amber ? 'background:#fdf1e4;color:#b45309;' : 'background:#f1eff6;color:#6b6878;'
   return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;${style}font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">${escapeHtml(closesChip(item.daysLeft, item.closesLocal))}</span>`
 }
 
@@ -99,7 +99,7 @@ function personTable(items: (ApplicantItem | ReminderItem)[], opts: { showRole: 
   const more = items.length - shown.length
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${shown.map((i) => personRow(i, opts)).join('')}
-    </table>${more > 0 ? `\n    <p style="margin:10px 0 0;font-size:13px;color:${INK_3};">+ ${more} more waiting in HOCKIA.</p>` : ''}`
+    </table>${more > 0 ? `\n    <p style="margin:10px 0 0;font-size:13px;color:${INK_3};">+ ${more} more waiting in Hockia.</p>` : ''}`
 }
 
 function primaryButton(link: string, label: string): string {
@@ -124,17 +124,17 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
 </head>
-<body style="margin:0;padding:0;background:#f6f6f8;font-family:${FONT};color:${INK_1};">
+<body style="margin:0;padding:0;background:#f1eff6;font-family:${FONT};color:${INK_1};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;">
       <tr><td style="padding:24px 22px 8px;">
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#5b21b6;padding:8px 12px;border-radius:6px;" />
+        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#7c3aed;padding:8px 12px;border-radius:6px;" />
       </td></tr>
       <tr><td style="padding:12px 22px 8px;">${body}
       </td></tr>
       <tr><td style="padding:16px 22px 22px;border-top:1px solid ${LINE};">
         ${extraFooter ? `<p style="margin:0 0 6px;font-size:12px;color:${INK_3};line-height:18px;">${escapeHtml(extraFooter)}</p>` : ''}
-        <p style="margin:0;font-size:12px;color:#9ca3af;line-height:18px;"><a href="${href(baseUrl, SETTINGS_FOOTER_PATH)}" style="color:${BRAND};text-decoration:none;">${escapeHtml(SETTINGS_FOOTER)}</a></p>
+        <p style="margin:0;font-size:12px;color:#73707c;line-height:18px;"><a href="${href(baseUrl, SETTINGS_FOOTER_PATH)}" style="color:${BRAND};text-decoration:none;">${escapeHtml(SETTINGS_FOOTER)}</a></p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -172,7 +172,7 @@ export function renderNewApplicationsEmail(input: { items: ApplicantItem[]; base
     ? `${items[0].firstName ?? 'A new applicant'} applied for ${items[0].roleTitle}.`
     : roles.size === 1
       ? `${items.length} people applied for ${items[0].roleTitle} since the last email.`
-      : `${items.length} people applied for your roles since the last email.`
+      : `${items.length} people applied for your opportunities since the last email.`
   const body = `
         ${eyebrow(org)}
         ${heading(subject)}
@@ -186,7 +186,7 @@ export function renderNewApplicationsEmail(input: { items: ApplicantItem[]; base
     intro,
     '',
     ...items.slice(0, MAX_ROWS).map((i) => textRow(i, roles.size > 1)),
-    items.length > MAX_ROWS ? `+ ${items.length - MAX_ROWS} more waiting in HOCKIA.` : '',
+    items.length > MAX_ROWS ? `+ ${items.length - MAX_ROWS} more waiting in Hockia.` : '',
     '',
     `Review: ${url(baseUrl, target)}`,
     ...textFooter(baseUrl),
@@ -221,7 +221,7 @@ function lastCallBlock(item: ReminderItem, baseUrl: string, isFirst: boolean): s
           </tr></table>
           <p style="margin:14px 0 16px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(lastCallBody(item))}</p>
           <div>${primaryButton(href(baseUrl, reviewPath(item.opportunityId, item.applicationId)), `Review ${name}`)}</div>
-          <div style="padding-top:12px;"><a href="${href(baseUrl, declinePath(item.opportunityId, item.applicationId))}" style="font-size:14px;font-weight:600;color:${BRAND};text-decoration:none;">Decline with a kind note</a></div>
+          <div style="padding-top:12px;"><a href="${href(baseUrl, declinePath(item.opportunityId, item.applicationId))}" style="font-size:14px;font-weight:600;color:${BRAND};text-decoration:none;">Not a fit, with a kind note</a></div>
         </div>`
 }
 
@@ -240,8 +240,8 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
     if (combined) {
       const allPlayers = others.every((i) => i.isPlayer)
       tail = `
-        <div style="border-top:8px solid #f6f6f8;margin:24px -22px 0;padding:22px 22px 0;">
-          <div style="font-size:13px;font-weight:600;color:#b54708;margin:0 0 6px;">Closing soon</div>
+        <div style="border-top:8px solid #f1eff6;margin:24px -22px 0;padding:22px 22px 0;">
+          <div style="font-size:13px;font-weight:600;color:#b45309;margin:0 0 6px;">Closing soon</div>
           ${heading(waitingLine(others.length, allPlayers))}
           ${personTable(others, { showRole: new Set(others.map((i) => i.opportunityId)).size > 1 })}
           <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, reviewTarget(others)), reviewLabel(others))}</div>
@@ -265,7 +265,7 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
         `${i.applicantName} (${i.roleLine} · ${i.roleTitle})`,
         lastCallBody(i),
         `Review ${i.firstName ?? 'the application'}: ${url(baseUrl, reviewPath(i.opportunityId, i.applicationId))}`,
-        `Decline with a kind note: ${url(baseUrl, declinePath(i.opportunityId, i.applicationId))}`,
+        `Not a fit, with a kind note: ${url(baseUrl, declinePath(i.opportunityId, i.applicationId))}`,
       ]),
       ...tailText,
       ...textFooter(baseUrl, lastFooter),
@@ -290,7 +290,7 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
     pending.length > 1 ? '' : `${waitingLine(1, allPlayers)}.`,
     '',
     ...pending.slice(0, MAX_ROWS).map((i) => textRow(i, showRole)),
-    pending.length > MAX_ROWS ? `+ ${pending.length - MAX_ROWS} more waiting in HOCKIA.` : '',
+    pending.length > MAX_ROWS ? `+ ${pending.length - MAX_ROWS} more waiting in Hockia.` : '',
     '',
     `${reviewLabel(pending)}: ${url(baseUrl, target)}`,
     DECLINE_HINT,

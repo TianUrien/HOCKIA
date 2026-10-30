@@ -256,7 +256,7 @@ Deno.serve(async (req: Request) => {
         .map(c => `${c.sender_name}: ${c.message_count} new message${c.message_count === 1 ? '' : 's'}`)
         .join('\n'),
       cta_url: `${HOCKIA_BASE_URL}/messages`,
-      cta_label: 'View Messages',
+      cta_label: 'View messages',
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
@@ -275,8 +275,8 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(recipient as RecipientData, conversations)
       emailText = generateEmailText(recipient as RecipientData, conversations)
       subject = conversations.length === 1
-        ? `New message from ${conversations[0].sender_name} on HOCKIA`
-        : 'You have new messages on HOCKIA'
+        ? `New message from ${conversations[0].sender_name} on Hockia`
+        : 'You have new messages on Hockia'
       logger.info('Falling back to hardcoded template')
     }
 
