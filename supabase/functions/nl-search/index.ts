@@ -28,7 +28,8 @@
  * `kind: 'cap_reached'` like every other question.
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { goalSummary } from '../_shared/member-goal.ts'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
@@ -2762,6 +2763,20 @@ async function handleRequest(req: Request): Promise<Response> {
           // Computed
           profile_completion_pct: profileCompletionPct,
           missing_fields: missingFields,
+        }
+
+        // Private goal (founder 2026-10-30), unless the member removed it from
+        // this chat with the context chip's ✕ (use_goal: false). A failed read
+        // just leaves it out.
+        if (body?.use_goal !== false) {
+          // member_goals is newer than the generated Database types.
+          const { data: goalRow } = await (adminClient as SupabaseClient<any, any, any>)
+            .from('member_goals')
+            .select('options, other_text')
+            .eq('profile_id', user.id)
+            .maybeSingle()
+          const goal = goalRow as { options?: string[] | null; other_text?: string | null } | null
+          userContext.goal = goalSummary(goal?.options, goal?.other_text)
         }
       }
     } catch (ctxError) {

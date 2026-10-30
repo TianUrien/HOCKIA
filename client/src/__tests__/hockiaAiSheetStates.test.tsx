@@ -19,6 +19,9 @@ vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar"
 vi.mock('@/components/FeedbackModal', () => ({ default: () => <div data-testid="feedback-modal" /> }))
 vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: null, reload: vi.fn() }) }))
 vi.mock('@/hooks/useRecruitingContext', () => ({ useRecruitingContext: () => ({ active: null }) }))
+// The context chip's reads (goal, counts) are covered in hockiaAiContextChip.test.tsx.
+let chipValue: import('@/lib/hockiaAiContext').AiContextChip | null = null
+vi.mock('@/components/hockiaAi/useAiContextChip', () => ({ useAiContextChip: () => chipValue }))
 
 type Viewer = { user: { id: string } | null; profile: { id: string; role: string; full_name: string; coach_recruits_for_team?: boolean } | null }
 const authState: Viewer = {
@@ -92,6 +95,8 @@ beforeEach(() => {
   HTMLMediaElement.prototype.load = vi.fn()
   HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve())
   authState.profile = { id: 'p1', role: 'player', full_name: 'Alex Rivera' }
+  chipValue = null
+  useDiscoverChat.setState({ contextOff: false })
   setChat([])
 })
 
@@ -248,5 +253,32 @@ describe('lib/hockiaAi', () => {
     expect(roleResultTitle({ organization: null, position_label: null, title: 'Open opportunity' })).toBe('Open opportunity')
     expect(roleResultMeta({ ...roles[0], league_label: 'Serie A1' })).toBe('Serie A1 · Housing, Paid')
     expect(roleResultMeta({ league_label: null, location_label: null, benefit_labels: [] })).toBeNull()
+  })
+})
+
+describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
+  it('goal chip under the greeting; ✕ removes it for this chat, drops "and your goal" and stops sending the goal', () => {
+    chipValue = { kind: 'goal', topic: 'Your goal', fact: 'Play abroad' }
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
+    render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
+    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Your goal · Play abroad')
+    expect(screen.getByTestId('hockia-ai-intro')).toHaveTextContent('I can see your profile and your goal.')
+    fireEvent.click(screen.getByRole('button', { name: 'Remove context' }))
+    expect(screen.queryByTestId('hockia-ai-context-chip')).toBeNull()
+    expect(screen.getByTestId('hockia-ai-intro')).toHaveTextContent(/^Ask me anything about your hockey\. I can see your profile\.$/)
+    expect(useDiscoverChat.getState().contextOff).toBe(true)
+  })
+
+  it('a new chat brings the context back', () => {
+    useDiscoverChat.setState({ contextOff: true })
+    useDiscoverChat.getState().clearChat()
+    expect(useDiscoverChat.getState().contextOff).toBe(false)
+  })
+
+  it('no chip on a role chat (the role chip says it)', () => {
+    chipValue = { kind: 'screen', topic: 'Opportunities', fact: '128 open' }
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', seed: null, roleContext: { id: 'o1', title: 'Goalkeeper', organization: 'HC Bra', logoUrl: null, city: 'Bra', label: 'HC Bra · Goalkeeper' } })
+    render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
+    expect(screen.queryByTestId('hockia-ai-context-chip')).toBeNull()
   })
 })
