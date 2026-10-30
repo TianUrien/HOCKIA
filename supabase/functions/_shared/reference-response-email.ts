@@ -1,6 +1,7 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 declare const Deno: { env: { get(key: string): string | undefined } }
-import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
+import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
 
 /**
  * Reference Response Email Helpers
@@ -75,15 +76,6 @@ export function buildEndorserProfileUrl(
     : `${baseUrl}/${slug}/id/${endorser.id}`
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
 
 /** Excerpt the endorsement to a sane preview length. The DB CHECK now
  *  caps endorsement_text at 800 chars (post-Phase 4 references-bug-bundle
@@ -104,16 +96,8 @@ export function generateAcceptedEmailHtml(
 ): string {
   const displayName = endorser.full_name?.trim() || 'A Hockia member'
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
-  const initials = getInitials(displayName)
 
-  const avatarSrc = safeHttpsUrl(endorser.avatar_url)
-  const avatarHtml = avatarSrc
-    ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6c2bd9 0%, #7c3aed 100%);">
-        <tr>
-          <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
-        </tr>
-      </table>`
+  const avatarHtml = emailAvatarHtml(endorser.avatar_url, displayName, endorser.role)
 
   const preview = endorsementPreview(endorsementText)
   const endorsementHtml = preview
@@ -139,7 +123,7 @@ export function generateAcceptedEmailHtml(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <div style="padding: 0 0 24px 0;">

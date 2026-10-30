@@ -54,7 +54,7 @@ Deno.test('every member value is escaped in the HTML (names, role, organisation,
   assertStringIncludes(html, '&lt;b&gt;Role&lt;/b&gt; &quot;quoted&quot;')
 })
 
-Deno.test('avatars render only from https URLs; anything else falls back to initials', () => {
+Deno.test('avatars render only from https URLs; anything else is the role placeholder, never initials', () => {
   const items = toApplicantItems([
     row({ applicant_avatar_url: 'https://cdn.example.com/a.png' }),
     row({ applicant_full_name: 'Ben Ito', applicant_avatar_url: 'http://insecure.example.com/b.png' }),
@@ -64,7 +64,8 @@ Deno.test('avatars render only from https URLs; anything else falls back to init
   assertStringIncludes(html, 'src="https://cdn.example.com/a.png"')
   assertFalse(html.includes('insecure.example.com'))
   assertFalse(html.includes('javascript:'))
-  assertStringIncludes(html, '>BI<') // initials
+  assertStringIncludes(html, '/brand/email/placeholder-player-144.png')
+  assertFalse(html.includes('>BI<'))
 })
 
 Deno.test('Last call email: founder copy, Review + Not a fit deep link, footer', () => {

@@ -14,7 +14,8 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
+import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
 
 const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
@@ -45,6 +46,8 @@ export interface ContentBlock {
   // user_card specific
   name_var?: string
   avatar_var?: string
+  /** Variable holding the person's role, for the no-photo placeholder. Defaults to `avatar_role`. */
+  role_var?: string
   detail_vars?: string[]
   // note block
   // conversation_list
@@ -148,30 +151,9 @@ function brandLinks(html: string): string {
   return html.replace(/<a (?![^>]*\bstyle=)/g, '<a style="color: #6c2bd9;" ')
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-export function renderAvatarHtml(avatarUrl: string | null, name: string, size = 48): string {
-  // Only https images are embedded; anything else falls back to initials.
-  const src = safeHttpsUrl(avatarUrl)
-  if (src) {
-    const r = Math.floor(size / 2)
-    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(name)}" style="width: ${size}px; height: ${size}px; border-radius: ${r}px;" />`
-  }
-  const initials = escapeHtml(getInitials(name))
-  const r = Math.floor(size / 2)
-  const fontSize = size > 40 ? 16 : 14
-  return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #6c2bd9 0%, #7c3aed 100%);">
-    <tr>
-      <td align="center" valign="middle" style="width: ${size}px; height: ${size}px; color: white; font-weight: bold; font-size: ${fontSize}px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
-    </tr>
-  </table>`
+/** A person's avatar: their https photo, otherwise the role placeholder (never initials). */
+export function renderAvatarHtml(avatarUrl: string | null, name: string, size = 48, role: string | null = null): string {
+  return emailAvatarHtml(avatarUrl, name, role, size)
 }
 
 function renderPill(text: string): string {
@@ -238,7 +220,7 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
         .filter(Boolean)
         .join('')
 
-      const avatarHtml = renderAvatarHtml(avatarUrl, name)
+      const avatarHtml = renderAvatarHtml(avatarUrl, name, 48, vars[block.role_var || 'avatar_role'] || null)
 
       return `
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
@@ -463,7 +445,7 @@ export function renderContentBlocks(
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <!-- Main Content -->

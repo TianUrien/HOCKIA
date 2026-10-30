@@ -1,6 +1,7 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 import { positionLabel } from './display-labels.ts'
 import { escapeHtml } from './html-escape.ts'
+import { EMAIL_LOGO_HTML } from './email-brand.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -78,7 +79,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
+    ${EMAIL_LOGO_HTML}
   </div>
 
   <!-- Main Content -->
