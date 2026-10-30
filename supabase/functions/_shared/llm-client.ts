@@ -287,6 +287,9 @@ export interface UserContext {
   // Computed
   profile_completion_pct: number
   missing_fields: string[]
+  /** The member's private goal ("Play abroad · Get a sponsor"); absent when
+   *  unset or when the member removed it from this chat (context chip ✕). */
+  goal?: string | null
 }
 
 /** Build the CURRENT USER CONTEXT block injected at the end of SYSTEM_PROMPT.
@@ -415,6 +418,11 @@ function buildUserContextBlock(ctx: UserContext): string {
     lines.push(`- Bio (truncated): "${safe}"`)
   } else {
     lines.push(`- Bio: not added yet.`)
+  }
+
+  // Private goal (founder 2026-10-30): tailors this member's answers only.
+  if (ctx.goal) {
+    lines.push(`- Their goal on HOCKIA (private, from their Home goal card): "${ctx.goal}". Use it to choose which suggestions come first when it is relevant; it is not their only interest, and never repeat it as something other people can see.`)
   }
 
   // Missing fields — single source of truth for improvement suggestions

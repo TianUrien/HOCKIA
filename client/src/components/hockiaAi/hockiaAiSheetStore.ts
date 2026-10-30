@@ -31,6 +31,9 @@ interface HockiaAiSheetState {
   roleContext: RoleContext | null
   step: HockiaAiStep | null
   seed: HockiaAiSeed | null
+  /** What Opportunities shows ("N open opportunities") for the context chip; null while unknown. */
+  openOpportunities: number | null
+  setOpenOpportunities: (n: number | null) => void
   /** The sheet takes the seed once it has used it. */
   takeSeed: () => HockiaAiSeed | null
   /** Do a next step: photo, bio and links here; clubs, position and passports in Fill my profile. */
@@ -57,6 +60,8 @@ export const useHockiaAiSheet = create<HockiaAiSheetState>((set, get) => ({
   roleContext: null,
   step: null,
   seed: null,
+  openOpportunities: null,
+  setOpenOpportunities: (openOpportunities) => set({ openOpportunities }),
   takeSeed: () => { const seed = get().seed; if (seed) set({ seed: null }); return seed },
   startStep: (step) => set({ open: true, detent: 'large', step, mode: ['photo', 'bio', 'links', 'video'].includes(step) ? 'steps' : 'builder' }),
   // The builder needs room for the review card: it always opens large.

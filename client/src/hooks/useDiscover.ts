@@ -346,6 +346,10 @@ interface DiscoverChatStore {
    */
   loadMore: (messageId: string) => Promise<void>
   clearChat: () => void
+  /** The context chip's ✕ (rebrand page 17): this conversation stops using
+   *  the screen or goal context; the goal is no longer read server-side. */
+  contextOff: boolean
+  setContextOff: (off: boolean) => void
 }
 
 /** Serialised saves so a fast second answer never creates a second row. */
@@ -379,6 +383,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   revealId: null,
   chatId: null,
   chatRoleLabel: null,
+  contextOff: false,
+  setContextOff: (contextOff) => set({ contextOff }),
   finishReveal: () => set({ revealId: null }),
 
   sendMessage: async (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => {
@@ -444,7 +450,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       // Live steps over Server-Sent Events (2026-10-17); a function without
       // the stream mode answers plain JSON and the same envelope is read.
       const { data, error } = await streamNlSearch(
-        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...(extra ?? {}) },
+        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...(get().contextOff ? { use_goal: false } : {}), ...(extra ?? {}) },
         (e) => set(s => ({ steps: applyStep(s.steps, e) })),
       )
 
@@ -614,8 +620,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   openChat: async (id: string, roleLabel: string | null = null) => {
     if (get().isPending) return
     const messages = await loadChat(id)
-    set({ messages, chatId: id, chatRoleLabel: roleLabel, steps: [], revealId: null, isPending: false })
+    set({ messages, chatId: id, chatRoleLabel: roleLabel, steps: [], revealId: null, isPending: false, contextOff: false })
   },
 
-  clearChat: () => set({ messages: [], isPending: false, chatId: null, chatRoleLabel: null, steps: [], revealId: null }),
+  clearChat: () => set({ messages: [], isPending: false, chatId: null, chatRoleLabel: null, steps: [], revealId: null, contextOff: false }),
 }))
