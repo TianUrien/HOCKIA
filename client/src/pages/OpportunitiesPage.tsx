@@ -481,6 +481,9 @@ export default function OpportunitiesPage() {
     [candidateCoach, filteredOpportunities],
   )
   const mobileList = useMemo(() => applyRoleFilters(phoneBase, roleFilters, viewerIsEuEligible), [phoneBase, roleFilters, viewerIsEuEligible])
+  // Hockia AI's context chip says what this screen says: "Opportunities · N open".
+  const setAiOpenCount = useHockiaAiSheet((st) => st.setOpenOpportunities)
+  useEffect(() => { setAiOpenCount(isLoading || fetchError ? null : mobileList.length) }, [setAiOpenCount, isLoading, fetchError, mobileList.length])
   // No coaching role open at all (before any phone filter): the D6.2 empty state.
   const coachEmpty = candidateCoach && !isLoading && !fetchError && filters.applied !== 'mine' && phoneBase.length === 0
 

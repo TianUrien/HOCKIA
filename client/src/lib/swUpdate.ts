@@ -148,8 +148,31 @@ export function registerServiceWorker({
   return wb
 }
 
-/** Shared with lazyWithRetry: at most one automatic recovery per tab session. */
+/** Shared with lazyWithRetry: when the last automatic recovery started (ms). */
 export const STALE_CHUNK_KEY = 'chunk-reload'
+
+/** A second recovery inside this window means the reload didn't help: stop
+ *  there instead of looping. Outside it, a later deploy in the same tab
+ *  recovers again (the old "once per tab session" guard left every later
+ *  deploy on "Something went wrong", prod 2026-10-30). */
+export const STALE_RETRY_WINDOW_MS = 60_000
+
+let recovering = false
+
+/** True once a recovery has started; the page reloads at its end. */
+export function isStaleChunkRecoveryRunning(): boolean {
+  return recovering
+}
+
+/** Claims an automatic recovery unless one started within the retry window. */
+export function claimStaleChunkRecovery(now = Date.now()): boolean {
+  try {
+    const last = Number(sessionStorage.getItem(STALE_CHUNK_KEY))
+    if (last && now - last < STALE_RETRY_WINDOW_MS) return false
+    sessionStorage.setItem(STALE_CHUNK_KEY, String(now))
+  } catch { /* storage blocked: still recover */ }
+  return true
+}
 
 function waitForWaiting(reg: ServiceWorkerRegistration, timeoutMs: number): Promise<ServiceWorker | null> {
   if (reg.waiting) return Promise.resolve(reg.waiting)
@@ -178,6 +201,7 @@ export async function recoverFromStaleChunk({
   reload = () => window.location.reload(),
   timeoutMs = 8000,
 }: { reload?: () => void; timeoutMs?: number } = {}): Promise<void> {
+  recovering = true
   try {
     const reg = typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined
     if (reg) {

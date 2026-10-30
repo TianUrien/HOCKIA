@@ -22,6 +22,8 @@ import { ApplyFlow } from './ApplyFlow'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
+import { useAiContextChip } from './useAiContextChip'
+import { aiContextChipLabel, goalIntro } from '@/lib/hockiaAiContext'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
@@ -52,7 +54,7 @@ function eyebrowFor(q: string): 'LEARN' | 'FIND' {
  */
 export function HockiaAiSheet() {
   const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep, seed, takeSeed } = useHockiaAiSheet()
-  const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal } = useDiscoverChat()
+  const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal, contextOff, setContextOff } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const navigate = useNavigate()
@@ -104,6 +106,8 @@ export function HockiaAiSheet() {
   const special = builder || applying || history || stepping
   const startBuilder = () => { void hapticSelection(); setMode('builder') }
   const hasMessages = messages.length > 0
+  // Context chip (rebrand page 17): what Hockia AI is looking at; ✕ = this chat only.
+  const contextChip = useAiContextChip(open && signedIn)
 
   useEffect(() => { if (open) void hapticLight() }, [open])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
@@ -179,6 +183,19 @@ export function HockiaAiSheet() {
       <img src={roleContext.logoUrl ?? undefined} alt="" className={cn('h-6 w-6 rounded-full object-contain', !roleContext.logoUrl && 'hidden')} />
       <span className="truncate text-secondary font-semibold text-ink-1">{roleContext.label}</span>
       <button type="button" onClick={clearRole} aria-label="Stop asking about this opportunity" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3"><X className="h-3.5 w-3.5" /></button>
+    </span>
+  ) : null
+  const goalChip = contextChip?.kind === 'goal'
+  const intro = roleContext ? 'Ask me anything about this opportunity. I already have it open.'
+    : plan ? 'I can finish your profile with you. I do the work; you choose.'
+    : goalChip ? goalIntro(!contextOff)
+    : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)
+  const chip = contextChip && !contextOff && !roleContext ? (
+    <span className="flex max-w-full items-center gap-2 self-start rounded-full border border-line bg-white py-1.5 pl-3 pr-2.5 lg:self-center" data-testid="hockia-ai-context-chip">
+      <span className="truncate text-caption text-ink-1">{aiContextChipLabel(contextChip)}</span>
+      <button type="button" onClick={() => { void hapticSelection(); setContextOff(true) }} aria-label="Remove context" className="relative flex h-4 w-4 shrink-0 items-center justify-center text-ink-3 before:absolute before:-inset-3.5 before:content-['']" data-testid="hockia-ai-context-chip-remove">
+        <X className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
     </span>
   ) : null
   const roleSuggestion = (r: { eyebrow: string; label: string; run: () => void }) => (
@@ -269,9 +286,10 @@ export function HockiaAiSheet() {
                 <MascotHello height={96} className="-ml-1 shrink-0" />
                 <div className="min-w-0 flex-1 pt-3">
                   <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{roleContext ? 'Ask me anything about this opportunity. I already have it open.' : plan ? 'I can finish your profile with you. I do the work; you choose.' : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)}</p>
+                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{intro}</p>
                 </div>
               </div>
+              {chip}
               {roleContext ? (
                 <>
                   {roleChip}
@@ -291,6 +309,7 @@ export function HockiaAiSheet() {
               <MascotHello height={200} />
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? `Hi ${firstName}, I’m Hockia AI` : 'Hi, I’m Hockia AI'}</h2>
               <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about opportunities, clubs, players or the game.</p>
+              {chip && <div className="mt-4 flex justify-center">{chip}</div>}
               {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
               {!roleContext && (planCard ?? buildChip) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
               <div className={cn('grid w-full grid-cols-2 gap-2.5', roleContext && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
@@ -317,6 +336,7 @@ export function HockiaAiSheet() {
 
         <div className="shrink-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2">
           {roleContext && large && hasMessages && <div className="mb-2 flex">{roleChip}</div>}
+          {chip && large && hasMessages && <div className="mb-2 flex">{chip}</div>}
           <div className="flex items-end gap-2 rounded-[28px] border border-line bg-white p-1.5 pl-4 shadow-[0_2px_10px_rgba(15,15,20,0.06)]">
             <label className="min-w-0 flex-1">
               <span className="sr-only">Ask Hockia AI</span>
