@@ -8,7 +8,7 @@
  *      day (Last call first; one email per publisher per local day)
  *
  * Every member-supplied value goes through escapeHtml; avatars only from
- * https URLs (renderAvatarHtml falls back to initials). The layout mirrors the
+ * https URLs (renderAvatarHtml falls back to the role placeholder). The layout mirrors the
  * branded shell of email-renderer.ts (wordmark header, grey footer).
  */
 
@@ -34,6 +34,7 @@ import {
   closingSoonHeadline,
   waitingLine,
 } from './club-reminders.ts'
+import { EMAIL_LOGO_HTML } from './email-brand.ts'
 
 export interface RenderedEmail {
   subject: string
@@ -128,7 +129,7 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;">
       <tr><td style="padding:24px 22px 8px;">
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#7c3aed;padding:8px 12px;border-radius:6px;" />
+        ${EMAIL_LOGO_HTML}
       </td></tr>
       <tr><td style="padding:12px 22px 8px;">${body}
       </td></tr>

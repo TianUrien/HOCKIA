@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
+import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
 
 /**
  * ============================================================================
@@ -283,7 +284,7 @@ Deno.serve(async (req: Request) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;background:#7c3aed;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        ${EMAIL_LOGO_HTML}
         <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
           You have <strong>${rows.length} application${rows.length === 1 ? '' : 's'}</strong> waiting for your response.
