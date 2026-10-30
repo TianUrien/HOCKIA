@@ -379,7 +379,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Generate email content — try DB template first, fall back to hardcoded
-    const clubName = clubProfile.full_name || 'Unknown Club'
+    const clubName = clubProfile.full_name || 'A club'
     // "head_coach" → "Head coach" (the app's label), never the raw token.
     const position = positionLabel(vacancy.position) ?? ''
     const city = vacancy.location_city?.trim() || ''
@@ -414,7 +414,7 @@ Deno.serve(async (req: Request) => {
       baseText = rendered.text
       logger.info('Using DB template for vacancy_notification')
     } else {
-      baseSubject = `New opportunity on HOCKIA: ${vacancy.title}`
+      baseSubject = `New opportunity on Hockia: ${vacancy.title}`
       baseHtml = generateEmailHtml(vacancy, clubName)
       baseText = generateEmailText(vacancy, clubName)
       logger.info('Falling back to hardcoded template')

@@ -143,6 +143,11 @@ function safeHref(url: string): string {
   return ''
 }
 
+/** Links written into template HTML without a style get the brand link colour (brand/text #6C2BD9, 7:1 on white) instead of the mail client's default blue. */
+function brandLinks(html: string): string {
+  return html.replace(/<a (?![^>]*\bstyle=)/g, '<a style="color: #6c2bd9;" ')
+}
+
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -162,7 +167,7 @@ export function renderAvatarHtml(avatarUrl: string | null, name: string, size = 
   const initials = escapeHtml(getInitials(name))
   const r = Math.floor(size / 2)
   const fontSize = size > 40 ? 16 : 14
-  return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
+  return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #6c2bd9 0%, #7c3aed 100%);">
     <tr>
       <td align="center" valign="middle" style="width: ${size}px; height: ${size}px; color: white; font-weight: bold; font-size: ${fontSize}px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
     </tr>
@@ -170,7 +175,7 @@ export function renderAvatarHtml(avatarUrl: string | null, name: string, size = 
 }
 
 function renderPill(text: string): string {
-  return `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(text)}</span>`
+  return `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(text)}</span>`
 }
 
 export function renderBlock(block: ContentBlock, vars: Record<string, string>): string {
@@ -185,7 +190,7 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
       if (!text) return ''
       const tag = block.level === 2 ? 'h2' : 'h1'
       const fontSize = block.level === 2 ? '20px' : '24px'
-      return `<${tag} style="color: #1f2937; margin: 0 0 8px 0; font-size: ${fontSize}; font-weight: 700;">${escapeHtml(text)}</${tag}>`
+      return `<${tag} style="color: #0e0b1a; margin: 0 0 8px 0; font-size: ${fontSize}; font-weight: 700;">${escapeHtml(text)}</${tag}>`
     }
 
     case 'paragraph': {
@@ -193,9 +198,9 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
       if (!text && block.conditional) return ''
       const align = block.align || 'left'
       const fontSize = block.size === 'small' ? '13px' : '16px'
-      const color = block.color === 'muted' ? '#9ca3af' : '#6b7280'
+      const color = block.color === 'muted' ? '#73707c' : '#6b6878'
       // Allow controlled HTML for links (template markup only; values escaped)
-      const content = block.is_html ? interpolateHtml(block.text) : escapeHtml(text)
+      const content = block.is_html ? brandLinks(interpolateHtml(block.text)) : escapeHtml(text)
       return `<p style="color: ${color}; margin: 0 0 24px 0; font-size: ${fontSize}; text-align: ${align};">${content}</p>`
     }
 
@@ -213,10 +218,10 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
         .join('')
 
       return `
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
-      ${label ? `<p style="color: #6b7280; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
-      ${title ? `<h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(title)}</h2>` : ''}
-      ${subtitle ? `<p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(subtitle)}</p>` : ''}
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
+      ${label ? `<p style="color: #6b6878; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
+      ${title ? `<h2 style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(title)}</h2>` : ''}
+      ${subtitle ? `<p style="color: #6c2bd9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(subtitle)}</p>` : ''}
       ${fields ? `<div style="margin-top: 8px;">${fields}</div>` : ''}
     </div>`
     }
@@ -236,15 +241,15 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
       const avatarHtml = renderAvatarHtml(avatarUrl, name)
 
       return `
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
-      ${label ? `<p style="color: #6b7280; margin: 0 0 12px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+      ${label ? `<p style="color: #6b6878; margin: 0 0 12px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="56" valign="top">
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(name)}</p>
+            <p style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(name)}</p>
             ${detailPills ? `<div>${detailPills}</div>` : ''}
           </td>
         </tr>
@@ -258,31 +263,31 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
       if (!text) return ''
       const label = interpolate(block.label)
       return `
-    <div style="background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-top: -12px; margin-bottom: 24px;">
-      ${label ? `<p style="color: #92400e; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
-      <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(text)}</p>
+    <div style="background: #f1eff6; border: 1px solid #e6e3ee; border-radius: 8px; padding: 12px 16px; margin-top: -12px; margin-bottom: 24px;">
+      ${label ? `<p style="color: #6b6878; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
+      <p style="color: #0e0b1a; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(text)}</p>
     </div>`
     }
 
     case 'button': {
-      const text = interpolate(block.text) || 'Learn More'
+      const text = interpolate(block.text) || 'Learn more'
       const url = safeHref(interpolate(block.url))
       if (!url) return ''
       return `
     <p style="margin: 0 0 24px 0;">
-      <a href="${url}" style="color: #6d28d9; font-weight: 600; font-size: 16px; text-decoration: none;">
+      <a href="${url}" style="color: #6c2bd9; font-weight: 600; font-size: 16px; text-decoration: none;">
         ${escapeHtml(text)} &rarr;
       </a>
     </p>`
     }
 
     case 'divider':
-      return `<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />`
+      return `<hr style="border: none; border-top: 1px solid #e6e3ee; margin: 24px 0;" />`
 
     case 'footnote': {
       const text = interpolate(block.text)
       if (!text) return ''
-      return `<p style="color: #9ca3af; font-size: 13px; margin: 24px 0 0 0; text-align: center;">${escapeHtml(text)}</p>`
+      return `<p style="color: #73707c; font-size: 13px; margin: 24px 0 0 0; text-align: center;">${escapeHtml(text)}</p>`
     }
 
     case 'conversation_list': {
@@ -305,15 +310,15 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
           : `${conv.message_count} new messages`
 
         return `
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="48" valign="middle">
             ${avatar}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0; font-size: 16px; font-weight: 600;">${escapeHtml(conv.sender_name)}</p>
-            <p style="color: #6b7280; margin: 2px 0 0 0; font-size: 14px;">${messageLabel}</p>
+            <p style="color: #0e0b1a; margin: 0; font-size: 16px; font-weight: 600;">${escapeHtml(conv.sender_name)}</p>
+            <p style="color: #6b6878; margin: 2px 0 0 0; font-size: 14px;">${messageLabel}</p>
           </td>
         </tr>
       </table>
@@ -350,7 +355,7 @@ function renderPlainOutreach(
       case 'heading': {
         const text = interpolate(block.text)
         if (text) {
-          paragraphs.push(`<p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #1f2937;">${escapeHtml(text)}</p>`)
+          paragraphs.push(`<p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #0e0b1a;">${escapeHtml(text)}</p>`)
           textLines.push(text, '')
         }
         break
@@ -358,17 +363,17 @@ function renderPlainOutreach(
       case 'paragraph': {
         const text = interpolate(block.text)
         if (!text && block.conditional) break
-        const content = block.is_html ? interpolateVariables(block.text ?? '', escapeVars(variables)) : escapeHtml(text)
-        paragraphs.push(`<p style="margin: 0 0 16px 0; color: #333;">${content}</p>`)
+        const content = block.is_html ? brandLinks(interpolateVariables(block.text ?? '', escapeVars(variables))) : escapeHtml(text)
+        paragraphs.push(`<p style="margin: 0 0 16px 0; color: #0e0b1a;">${content}</p>`)
         textLines.push(text, '')
         break
       }
       case 'button': {
-        const text = interpolate(block.text) || 'Learn More'
+        const text = interpolate(block.text) || 'Learn more'
         const url = interpolate(block.url)
         const href = safeHref(url)
         if (href) {
-          paragraphs.push(`<p style="margin: 0 0 16px 0;"><a href="${href}" style="color: #1a73e8;">${escapeHtml(text)}</a></p>`)
+          paragraphs.push(`<p style="margin: 0 0 16px 0;"><a href="${href}" style="color: #6c2bd9;">${escapeHtml(text)}</a></p>`)
           textLines.push(`${text}: ${url}`, '')
         }
         break
@@ -376,7 +381,7 @@ function renderPlainOutreach(
       case 'footnote': {
         const text = interpolate(block.text)
         if (text) {
-          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #666; font-size: 14px;">${escapeHtml(text)}</p>`)
+          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #6b6878; font-size: 14px;">${escapeHtml(text)}</p>`)
           textLines.push(text, '')
         }
         break
@@ -386,7 +391,7 @@ function renderPlainOutreach(
       case 'note': {
         const text = interpolate(block.text)
         if (text) {
-          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #333;">${escapeHtml(text)}</p>`)
+          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #0e0b1a;">${escapeHtml(text)}</p>`)
           textLines.push(text, '')
         }
         break
@@ -406,10 +411,10 @@ function renderPlainOutreach(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; margin: 0; padding: 0;">
 <div style="max-width: 600px; padding: 8px 0;">
 ${bodyContent}
-<p style="margin: 24px 0 0 0; color: #999; font-size: 12px;">If you'd rather not hear from us, <a href="mailto:team@inhockia.com?subject=Unsubscribe" style="color: #999;">let us know</a>.</p>
+<p style="margin: 24px 0 0 0; color: #73707c; font-size: 12px;">If you'd rather not hear from us, <a href="mailto:team@inhockia.com?subject=Unsubscribe" style="color: #73707c;">let us know</a>.</p>
 </div>
 </body>
 </html>`.trim()
@@ -442,9 +447,9 @@ export function renderContentBlocks(
 
   const settingsUrl = variables.settings_url || `${HOCKIA_BASE_URL}/settings`
 
-  const footerHtml = `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you have a HOCKIA account.<br>
-      <a href="${safeHref(settingsUrl)}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+  const footerHtml = `<p style="color: #73707c; font-size: 12px; margin: 0;">
+      You're receiving this because you have a Hockia account.<br>
+      <a href="${safeHref(settingsUrl)}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
     </p>`
 
   const html = `
@@ -454,11 +459,11 @@ export function renderContentBlocks(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <!-- Main Content -->
@@ -467,7 +472,7 @@ export function renderContentBlocks(
   </div>
 
   <!-- Footer -->
-  <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
+  <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     ${footerHtml}
   </div>
 

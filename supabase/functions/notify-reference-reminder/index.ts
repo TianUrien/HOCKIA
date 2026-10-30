@@ -292,7 +292,7 @@ Deno.serve(async (req: Request) => {
       role: friend.role,
     }
 
-    const subject = 'Add trust to your HOCKIA profile'
+    const subject = 'Add trust to your Hockia profile'
     const html = generateReminderEmailHtml(reminderRecipient, reminderFriend)
     const text = generateReminderEmailText(reminderRecipient, reminderFriend)
 

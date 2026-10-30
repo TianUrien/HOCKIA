@@ -46,25 +46,25 @@ interface ReminderContent {
 
 const REMINDER_CONTENT: Record<number, ReminderContent> = {
   1: {
-    subject: 'Finish setting up your HOCKIA profile',
+    subject: 'Finish setting up your Hockia profile',
     heading: 'Your profile is waiting for you',
     bodyText:
       "You're one step away from joining the field hockey community. Complete your profile to discover opportunities, connect with the community, and showcase your skills.",
-    ctaLabel: 'Complete My Profile',
+    ctaLabel: 'Complete my profile',
   },
   2: {
-    subject: 'Your HOCKIA profile is almost ready',
+    subject: 'Your Hockia profile is almost ready',
     heading: 'Pick up where you left off',
     bodyText:
-      "Members across HOCKIA are connecting and finding opportunities. Finish setting up your profile to get started.",
-    ctaLabel: 'Finish Setup',
+      "Members across Hockia are connecting and finding opportunities. Finish setting up your profile to get started.",
+    ctaLabel: 'Finish setup',
   },
   3: {
-    subject: 'Your HOCKIA profile is still incomplete',
+    subject: 'Your Hockia profile is still incomplete',
     heading: 'Quick reminder about your profile',
     bodyText:
-      "We noticed you haven't finished setting up your HOCKIA profile yet. Complete it to start receiving opportunity notifications and connect with the community.",
-    ctaLabel: 'Complete Profile',
+      "We noticed you haven't finished setting up your Hockia profile yet. Complete it to start receiving opportunity notifications and connect with the community.",
+    ctaLabel: 'Complete profile',
   },
 }
 
@@ -249,17 +249,17 @@ Deno.serve(async (req: Request) => {
       subject = content.subject
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #6d28d9;">${content.heading}</h1>
+          <h1 style="color: #6c2bd9;">${content.heading}</h1>
           <p>Hi ${escapeHtml(firstName)},</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
             <a href="${templateVars.cta_url}"
-               style="background: #6d28d9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+               style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
               ${content.ctaLabel}
             </a>
           </p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-          <p style="font-size: 12px; color: #999;">
+          <hr style="border: none; border-top: 1px solid #e6e3ee; margin: 30px 0;">
+          <p style="font-size: 12px; color: #73707c;">
             If you didn't create this account, you can safely ignore this email.
           </p>
         </div>

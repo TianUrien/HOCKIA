@@ -246,7 +246,7 @@ Deno.serve(async (req: Request) => {
         reference.relationship_type,
         reference.request_note
       )
-      subject = `${requesterName} requested a reference on HOCKIA`
+      subject = `${requesterName} requested a reference on Hockia`
       logger.info('Falling back to hardcoded template')
     }
 

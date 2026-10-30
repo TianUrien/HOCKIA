@@ -102,14 +102,14 @@ export function generateAcceptedEmailHtml(
   relationshipType: string,
   endorsementText: string | null,
 ): string {
-  const displayName = endorser.full_name?.trim() || 'A HOCKIA member'
+  const displayName = endorser.full_name?.trim() || 'A Hockia member'
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
   const initials = getInitials(displayName)
 
   const avatarSrc = safeHttpsUrl(endorser.avatar_url)
   const avatarHtml = avatarSrc
     ? `<img src="${escapeHtml(avatarSrc)}" alt="${escapeHtml(displayName)}" style="width: 48px; height: 48px; border-radius: 24px;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
+    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #6c2bd9 0%, #7c3aed 100%);">
         <tr>
           <td align="center" valign="middle" style="width: 48px; height: 48px; color: white; font-weight: bold; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${escapeHtml(initials)}</td>
         </tr>
@@ -118,15 +118,15 @@ export function generateAcceptedEmailHtml(
   const preview = endorsementPreview(endorsementText)
   const endorsementHtml = preview
     ? `
-    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
-      <p style="color: #14532d; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">What ${escapeHtml(displayName)} wrote</p>
-      <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(preview)}</p>
+    <div style="background: #fbf4dc; border: 1px solid #c9a227; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
+      <p style="color: #8a6300; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">What ${escapeHtml(displayName)} wrote</p>
+      <p style="color: #8a6300; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(preview)}</p>
     </div>`
     : `
-    <p style="color: #6b7280; margin: 12px 0 0 0; font-size: 14px;">They didn't add a written endorsement, but the trust signal is live on your profile.</p>`
+    <p style="color: #6b6878; margin: 12px 0 0 0; font-size: 14px;">They didn't add a written endorsement, but the trust signal is live on your profile.</p>`
 
   const relationshipPill = relationshipType
-    ? `<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
+    ? `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
     : ''
 
   return `
@@ -136,25 +136,25 @@ export function generateAcceptedEmailHtml(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #0e0b1a; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #7c3aed; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(displayName)} vouched for you on HOCKIA</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Their reference is now live on your profile.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(displayName)} vouched for you on Hockia</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Their reference is now live on your profile.</p>
 
-    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+    <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <tr>
           <td width="56" valign="top">
             ${avatarHtml}
           </td>
           <td style="padding-left: 12px;" valign="middle">
-            <p style="color: #1f2937; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
+            <p style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(displayName)}</p>
             <div>${relationshipPill}</div>
           </td>
         </tr>
@@ -163,18 +163,18 @@ export function generateAcceptedEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile/references" style="color: #6d28d9; font-weight: 600; text-decoration: none;">See it on your profile &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile/references" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">See it on your profile &rarr;</a>
     </p>
 
-    <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-      <a href="${escapeHtml(profileUrl)}" style="color: #6d28d9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
+    <p style="color: #73707c; font-size: 14px; margin: 0;">
+      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
     </p>
   </div>
 
-  <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
-    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because someone vouched for you on HOCKIA.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
+  <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
+    <p style="color: #73707c; font-size: 12px; margin: 0;">
+      You're receiving this because someone vouched for you on Hockia.<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 
@@ -187,12 +187,12 @@ export function generateAcceptedEmailText(
   relationshipType: string,
   endorsementText: string | null,
 ): string {
-  const displayName = endorser.full_name?.trim() || 'A HOCKIA member'
+  const displayName = endorser.full_name?.trim() || 'A Hockia member'
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
   const preview = endorsementPreview(endorsementText)
 
   const lines = [
-    `${displayName} vouched for you on HOCKIA`,
+    `${displayName} vouched for you on Hockia`,
     '',
     `Their reference is now live on your profile.`,
   ]
@@ -216,7 +216,7 @@ export function generateAcceptedEmailText(
     profileUrl,
     '',
     '---',
-    "You're receiving this because someone vouched for you on HOCKIA.",
+    "You're receiving this because someone vouched for you on Hockia.",
     `Manage preferences: ${UNSUBSCRIBE_URL}`,
   )
 

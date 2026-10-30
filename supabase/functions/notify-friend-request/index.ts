@@ -238,7 +238,7 @@ Deno.serve(async (req: Request) => {
     } else {
       emailHtml = generateEmailHtml(requester as RequesterData)
       emailText = generateEmailText(requester as RequesterData)
-      subject = `${requesterName} sent you a friend request on HOCKIA`
+      subject = `${requesterName} sent you a friend request on Hockia`
       logger.info('Falling back to hardcoded template')
     }
 

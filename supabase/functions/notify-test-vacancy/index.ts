@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
     })
 
     // Generate email content (using shared template - identical to production)
-    const clubName = clubProfile.full_name || 'Unknown Club'
+    const clubName = clubProfile.full_name || 'A club'
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     const city = vacancy.location_city?.trim() || ''
@@ -203,7 +203,7 @@ Deno.serve(async (req: Request) => {
       text = rendered.text
       logger.info('Using DB template for vacancy_notification (test mode)')
     } else {
-      subject = `New opportunity on HOCKIA: ${vacancy.title}`
+      subject = `New opportunity on Hockia: ${vacancy.title}`
       html = generateEmailHtml(vacancy, clubName)
       text = generateEmailText(vacancy, clubName)
       logger.info('Falling back to hardcoded template (test mode)')

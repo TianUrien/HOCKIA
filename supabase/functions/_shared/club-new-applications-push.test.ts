@@ -97,7 +97,7 @@ Deno.test('several roles: one push for all of them, tap opens Opportunities', ()
     row({ applicant_full_name: 'Ben Ito', opportunity_id: ROLE_B, role_title: 'Goalkeeper' }),
   ], TZ)
   const push = buildNewApplicationsPush(PUB, items)
-  assertEquals(push.title, '2 new applicants for your roles')
+  assertEquals(push.title, '2 new applicants for your opportunities')
   assertEquals(push.summary, 'Ana and Ben applied.')
   assertEquals(push.target_url, '/opportunities')
   assertEquals(push.record.metadata.opportunity_id, undefined)
