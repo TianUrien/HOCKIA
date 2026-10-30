@@ -3,7 +3,9 @@
  * role and entry, real counts only, never "0 open", umpires never see
  * "appointments".
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import { aiContextChip, aiContextChipLabel, goalChipLabel, type AiChipInput } from '@/lib/hockiaAiContext'
 
 const base: AiChipInput = { role: 'player', recruiter: false, entry: 'header', goalLabel: null }
