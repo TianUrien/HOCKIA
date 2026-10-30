@@ -54,7 +54,7 @@ function eyebrowFor(q: string): 'LEARN' | 'FIND' {
  */
 export function HockiaAiSheet() {
   const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep, seed, takeSeed } = useHockiaAiSheet()
-  const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal, contextOff, setContextOff } = useDiscoverChat()
+  const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal, contextOff, setContextOff, setGoalOn } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const navigate = useNavigate()
@@ -108,6 +108,9 @@ export function HockiaAiSheet() {
   const hasMessages = messages.length > 0
   // Context chip (rebrand page 17): what Hockia AI is looking at; ✕ = this chat only.
   const contextChip = useAiContextChip(open && signedIn)
+  // The server reads the private goal only while the goal chip shows.
+  const goalInUse = contextChip?.kind === 'goal' && !contextOff && !roleContext
+  useEffect(() => { setGoalOn(goalInUse) }, [goalInUse, setGoalOn])
 
   useEffect(() => { if (open) void hapticLight() }, [open])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])

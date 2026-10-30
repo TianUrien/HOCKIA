@@ -350,6 +350,17 @@ interface DiscoverChatStore {
    *  the screen or goal context; the goal is no longer read server-side. */
   contextOff: boolean
   setContextOff: (off: boolean) => void
+  /** The goal chip is showing (set by the sheet). The server reads the
+   *  member's private goal only then: a goal the member can't see never
+   *  shapes their answers, and ✕ turns it off for every request of the chat. */
+  goalOn: boolean
+  setGoalOn: (on: boolean) => void
+}
+
+/** Request field for the member's goal: absent means "use it" (older native
+ *  clients never send it), so every other chat says use_goal: false. */
+export function goalField(goalOn: boolean): { use_goal?: false } {
+  return goalOn ? {} : { use_goal: false }
 }
 
 /** Serialised saves so a fast second answer never creates a second row. */
@@ -385,6 +396,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   chatRoleLabel: null,
   contextOff: false,
   setContextOff: (contextOff) => set({ contextOff }),
+  goalOn: false,
+  setGoalOn: (goalOn) => set({ goalOn }),
   finishReveal: () => set({ revealId: null }),
 
   sendMessage: async (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => {
@@ -450,7 +463,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       // Live steps over Server-Sent Events (2026-10-17); a function without
       // the stream mode answers plain JSON and the same envelope is read.
       const { data, error } = await streamNlSearch(
-        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...(get().contextOff ? { use_goal: false } : {}), ...(extra ?? {}) },
+        { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds, ...goalField(get().goalOn), ...(extra ?? {}) },
         (e) => set(s => ({ steps: applyStep(s.steps, e) })),
       )
 
@@ -574,6 +587,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
         recovery_context: { user_role: userRole },
         offset,
         excluded_ids: excludedIds,
+        ...goalField(get().goalOn),
       })
       if (error) throw new Error(error.message || 'Failed to load more results')
 
