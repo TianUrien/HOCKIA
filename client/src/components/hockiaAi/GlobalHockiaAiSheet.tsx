@@ -1,8 +1,10 @@
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
+import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
 
-// Its own chunk, loaded on the first open.
-const HockiaAiSheet = lazy(() => import('./HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
+// Its own chunk, loaded on the first open; a stale chunk after a deploy
+// recovers like the routes do instead of flashing the error screen.
+const HockiaAiSheet = lazyWithRetry(() => import('./HockiaAiSheet').then((m) => ({ default: m.HockiaAiSheet })))
 
 /**
  * Hockia AI is one sheet for the whole app (founder ruling 2026-10-22,
