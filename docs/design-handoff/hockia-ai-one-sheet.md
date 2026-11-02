@@ -37,6 +37,8 @@ One removable pill under the greeting, above the choices: what Hockia AI is look
 ## The goal and the AI (founder 2026-10-30)
 The goal chip is true: `nl-search` reads the member's private goal (`member_goals`, service role, `_shared/member-goal.ts`) and adds it to that member's own context, so answers can put the relevant suggestions first. It is never shown to anyone else. With the goal chip on, the greeting reads "Ask me anything about your hockey. I can see your profile and your goal." After ✕ it reads "… I can see your profile." and the client sends `use_goal: false`, so the server skips the goal for the rest of that chat.
 
+When the member's profile is incomplete, the profile-completion greeting ("I can finish your profile with you…") wins over the goal greeting; the goal chip still shows (design review 2026-10-30: a complete profile helps the member more, and the chip already names the goal).
+
 ## First three choices by role (design target)
 Built today: role-aware examples from `exampleQueriesFor` (lib/hockiaAi) and, on an opportunity, Check my profile / Prepare my application / a LEARN question. The page 17 per-role sets below are the target for a later pass.
 
@@ -51,3 +53,8 @@ Built today: role-aware examples from `exampleQueriesFor` (lib/hockiaAi) and, on
 Rules for every answer: facts, never a fit verdict or a score; no invented numbers; people results apply the hidden-profile predicate and never include under-18s.
 
 Native note: installed apps keep their bundled JS until the next store release, so the chip reaches phones with the next store builds. The server change is additive (an older client never sends `use_goal`, so its chats use the goal).
+
+## Follow-ups (design review 2026-10-30)
+- Web container: the spec is a 440 px side panel on the right edge with the page still visible, so a screen chip sits next to the page it describes. Today the web sheet is a centred 560 px dialog. Move it to the side panel after the store builds, unless it turns out small. Inside the panel the chip is left-aligned, as on mobile; while the dialog is centred, a centred chip under the centred intro is fine.
+- Dark mode: the web app has no dark theme today (Tailwind `darkMode: 'class'`, never set). Not in rebrand phase-1 scope; don't add one for the chip.
+- Check the chip at 390 px in the iOS simulator (staging checks so far: web 1382 px and 500 px).
