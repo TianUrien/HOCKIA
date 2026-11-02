@@ -263,10 +263,21 @@ describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
     render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
     expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Your goal · Play abroad')
     expect(screen.getByTestId('hockia-ai-intro')).toHaveTextContent('I can see your profile and your goal.')
+    expect(useDiscoverChat.getState().goalOn).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Remove context' }))
     expect(screen.queryByTestId('hockia-ai-context-chip')).toBeNull()
     expect(screen.getByTestId('hockia-ai-intro')).toHaveTextContent(/^Ask me anything about your hockey\. I can see your profile\.$/)
     expect(useDiscoverChat.getState().contextOff).toBe(true)
+    expect(useDiscoverChat.getState().goalOn).toBe(false)
+  })
+
+  it('a screen chip never lets the server read the hidden goal', () => {
+    chipValue = { kind: 'screen', topic: 'Opportunities', fact: '24 open' }
+    useDiscoverChat.setState({ goalOn: true })
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
+    render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
+    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Opportunities · 24 open')
+    expect(useDiscoverChat.getState().goalOn).toBe(false)
   })
 
   it('a new chat brings the context back', () => {

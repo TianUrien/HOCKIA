@@ -35,7 +35,9 @@ One removable pill under the greeting, above the choices: what Hockia AI is look
 - ✕ removes the context for this conversation only; a new chat or an old chat from history starts with it again.
 
 ## The goal and the AI (founder 2026-10-30)
-The goal chip is true: `nl-search` reads the member's private goal (`member_goals`, service role, `_shared/member-goal.ts`) and adds it to that member's own context, so answers can put the relevant suggestions first. It is never shown to anyone else. With the goal chip on, the greeting reads "Ask me anything about your hockey. I can see your profile and your goal." After ✕ it reads "… I can see your profile." and the client sends `use_goal: false`, so the server skips the goal for the rest of that chat.
+The goal chip is true: `nl-search` reads the member's private goal (`member_goals`, service role, `_shared/member-goal.ts`) and adds it to that member's own context, so answers can put the relevant suggestions first. It is never shown to anyone else. With the goal chip on, the greeting reads "Ask me anything about your hockey. I can see your profile and your goal." After ✕ it reads "… I can see your profile." and the client sends `use_goal: false`, so the server skips the goal for the rest of that chat, "Show more" included.
+
+The goal is read only while the goal chip shows (release audit 2026-10-30): with a screen chip ("Opportunities · N open", "Your offers", …), a role chat or no chip, the client sends `use_goal: false`, so a goal the member can't see never shapes their answers. Only older native clients, which never send the field, still use it silently until they update.
 
 When the member's profile is incomplete, the profile-completion greeting ("I can finish your profile with you…") wins over the goal greeting; the goal chip still shows (design review 2026-10-30: a complete profile helps the member more, and the chip already names the goal).
 
