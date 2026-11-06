@@ -383,7 +383,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 optionRows ? (
                   <>
                     {planCard}
-                    {optionRows.slice(0, planCard ? 1 : 3).map(optionRow)}
+                    {optionRows.slice(0, 3).map(optionRow)}
                   </>
                 ) : (
                   <>
