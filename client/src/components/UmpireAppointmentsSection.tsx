@@ -46,6 +46,8 @@ interface UmpireAppointmentsSectionProps {
    * view in readOnly mode. Swaps the empty-state copy from a neutral
    * "this umpire hasn't logged anything" to a self-directed nudge. */
   isOwnProfile?: boolean
+  /** Open the "Add" editor on arrival (Hockia AI "Add my latest match"). Owner only. */
+  startAdding?: boolean
 }
 
 const MATCH_FORMAT_LABELS: Record<string, string> = {
@@ -121,12 +123,13 @@ export default function UmpireAppointmentsSection({
   userId,
   readOnly = false,
   isOwnProfile = false,
+  startAdding = false,
 }: UmpireAppointmentsSectionProps) {
   const navigate = useNavigate()
   const { appointments, loading, error, create, update, remove } = useUmpireAppointments({
     userId,
   })
-  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(startAdding && !readOnly)
   const [editingAppointment, setEditingAppointment] = useState<UmpireAppointment | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 

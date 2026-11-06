@@ -41,16 +41,18 @@ The goal is read only while the goal chip shows (release audit 2026-10-30): with
 
 When the member's profile is incomplete, the profile-completion greeting ("I can finish your profile with you…") wins over the goal greeting; the goal chip still shows (design review 2026-10-30: a complete profile helps the member more, and the chip already names the goal).
 
-## First three choices by role (design target)
-Built today: role-aware examples from `exampleQueriesFor` (lib/hockiaAi) and, on an opportunity, Check my profile / Prepare my application / a LEARN question. The page 17 per-role sets below are the target for a later pass.
+## First three choices by role (built 2026-11-06)
+Signed-in members see their role's three choices under the greeting (`roleOptionsFor` in lib/hockiaAi; visitors keep the examples). Hockia AI answers what it can from real data; what it can't opens the screen where it happens, with the eyebrow OPEN (founder 2026-11-06), so no answer invents numbers.
 
-| Role | Choices |
+| Role | Choices (eyebrow → what it does) |
 |---|---|
-| Player | Find opportunities that fit me · Check my profile against an opportunity · Fill my profile from my files |
-| Coach (candidate) | Find coaching opportunities for me · Check my profile against an opportunity · Prepare my application |
-| Club or recruiting coach | Find available players for <opportunity> · Summarise my applicants · Draft a new opportunity |
-| Brand | Find ambassador candidates in my countries · How did my offers do this month? · Write a new offer for members |
-| Umpire | Add my latest match · What is missing from my record? · Who are the umpires based in my country? |
+| Player | FIND Find opportunities that fit me → asks · OPEN Check my profile against an opportunity → Opportunities (the check runs on an opportunity) · DO IT FOR ME Fill my profile from my files → the builder |
+| Coach (candidate) | FIND Find coaching opportunities for me → asks · OPEN Check my profile against an opportunity → Opportunities · OPEN Prepare my application → Opportunities |
+| Club or recruiting coach | FIND Find available players for <opportunity> → asks · ASK Summarise my applicants → asks · DO IT FOR ME Draft a new opportunity → asks |
+| Brand | FIND Find ambassador candidates → asks · OPEN How did my offers do this month? → My offers · OPEN Write a new offer for members → new offer |
+| Umpire | OPEN Add my latest match → Officiating with the Add editor open (`?add=match`) · LEARN What is missing from my record? → asks · FIND Who are the umpires based in my country? → asks |
+
+Differences from the page 17 target: brands lose "in my countries" (the server has no per-brand country list yet); "How did my offers do", "Write a new offer", "Add my latest match", and the profile check / application without an opportunity open screens instead of AI answers. Making those AI answers needs server work (offer stats, drafts the member confirms).
 
 Rules for every answer: facts, never a fit verdict or a score; no invented numbers; people results apply the hidden-profile predicate and never include under-18s.
 

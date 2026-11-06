@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BetaPill } from './BetaPill'
-import { ArrowUp, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
@@ -9,7 +9,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useAuthStore } from '@/lib/auth'
 import { greetingName } from '@/lib/profile'
-import { CHECK_PROFILE_AGAINST_ROLE, COMPOSER_MAX_LENGTH, HOCKIA_AI_TITLE, aiIntroFor, exampleQueriesFor, isRecruiterProfile } from '@/lib/hockiaAi'
+import { CHECK_PROFILE_AGAINST_ROLE, COMPOSER_MAX_LENGTH, HOCKIA_AI_TITLE, aiIntroFor, exampleQueriesFor, isRecruiterProfile, roleOptionsFor, type RoleOption } from '@/lib/hockiaAi'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { SPRING, cssSpring, prefersReducedMotion } from '@/lib/spring'
 import { hapticLight, hapticSelection } from '@/lib/haptics'
@@ -91,6 +91,8 @@ export function HockiaAiSheet() {
   const recruiter = isRecruiterProfile(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)
   const activeRoleTitle = recruiter ? recruitingRole?.label ?? null : null
   const examples = useMemo(() => exampleQueriesFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null, activeRoleTitle), [profile, activeRoleTitle])
+  // Signed-in members get their role's three choices (rebrand page 17); visitors keep the examples.
+  const roleOptions = useMemo(() => (signedIn && profile ? roleOptionsFor({ role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team }, activeRoleTitle) : null), [signedIn, profile, activeRoleTitle])
   const firstName = greetingName(profile)
   // "Fill my profile for me" (handoff P0–P3): players and coaches (ruling 2026-10-18).
   const canBuild = profile?.role === 'player' || profile?.role === 'coach'
@@ -216,6 +218,24 @@ export function HockiaAiSheet() {
     </button>
   )
 
+  const runOption = (o: RoleOption) => {
+    if (o.action.type === 'ask') send(o.action.query)
+    else if (o.action.type === 'builder') startBuilder()
+    else { close(); navigate(o.action.to) }
+  }
+  const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
+  // OPEN rows leave the chat for a screen: arrow-up-right instead of the chevron (design 2026-11-06).
+  const optionRow = (r: { eyebrow: string; label: string; run: () => void }, i: number) => {
+    const Trail = r.eyebrow === 'OPEN' ? ArrowUpRight : ChevronRight
+    return (
+      <button key={r.label} type="button" onClick={() => { void hapticSelection(); r.run() }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-option" data-index={i}>
+        <span className={cn('shrink-0 text-caption font-semibold tracking-[0.04em]', r.eyebrow === 'DO IT FOR ME' ? 'text-brand-primary' : 'text-ink-3')}>{r.eyebrow}</span>
+        <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{r.label}</span>
+        <Trail className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} data-testid={r.eyebrow === 'OPEN' ? 'hockia-ai-option-leaves' : undefined} />
+      </button>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[70]" data-testid="hockia-ai-sheet-root">
       {/* Dim behind the sheet; a tap closes it (the X and Escape do too). */}
@@ -299,10 +319,17 @@ export function HockiaAiSheet() {
                   {roleSuggestions.map(roleSuggestion)}
                 </>
               ) : (
-                <>
-                  {planCard ?? buildChip}
-                  {examples.slice(0, planCard ? 1 : canBuild ? 2 : 3).map(suggestion)}
-                </>
+                optionRows ? (
+                  <>
+                    {planCard}
+                    {optionRows.slice(0, planCard ? 1 : 3).map(optionRow)}
+                  </>
+                ) : (
+                  <>
+                    {planCard ?? buildChip}
+                    {examples.slice(0, planCard ? 1 : canBuild ? 2 : 3).map(suggestion)}
+                  </>
+                )
               )}
             </div>
           )}
@@ -314,8 +341,9 @@ export function HockiaAiSheet() {
               <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">Your field hockey teammate. Ask me anything about opportunities, clubs, players or the game.</p>
               {chip && <div className="mt-4 flex justify-center">{chip}</div>}
               {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
-              {!roleContext && (planCard ?? buildChip) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
-              <div className={cn('grid w-full grid-cols-2 gap-2.5', roleContext && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
+              {!roleContext && (planCard ?? (optionRows ? null : buildChip)) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
+              {!roleContext && optionRows && <div className={cn('flex w-full flex-col gap-2.5 text-left', planCard ? 'mt-2.5' : 'mt-5')} data-testid="hockia-ai-options">{optionRows.map(optionRow)}</div>}
+              <div className={cn('grid w-full grid-cols-2 gap-2.5', (roleContext || optionRows) && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
                 {examples.slice(0, 4).map((q, i, all) => (
                   <button key={q} type="button" onClick={() => { void hapticSelection(); send(q) }} className={cn('flex min-h-[96px] flex-col items-start rounded-[16px] border border-line bg-white p-3.5 text-left transition-colors hover:bg-surface-subtle', all.length % 2 === 1 && i === all.length - 1 && 'col-span-2')} data-testid="hockia-ai-card">
                     <span className="text-caption font-semibold tracking-[0.04em] text-ink-3">{eyebrowFor(q)}</span>
