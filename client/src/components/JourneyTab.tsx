@@ -67,8 +67,8 @@ const getJourneyDraftKey = (context: JourneyDraftContext, userId: string) =>
 const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
   club: {
     label: 'Club',
-    dotClass: 'bg-blue-500/95 text-white',
-    badgeClass: 'bg-blue-50 text-blue-700',
+    dotClass: 'bg-role-club-ink/95 text-white',
+    badgeClass: 'bg-role-club-bg text-role-club-ink',
     icon: Building2,
   },
   national_team: {

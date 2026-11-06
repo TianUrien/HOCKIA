@@ -233,7 +233,7 @@ export default function InstallPrompt() {
         <div className="mt-3 pt-3 border-t border-gray-100">
           <p className="text-xs text-gray-600 flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-100 rounded text-[10px] font-medium">1</span>
-            Tap <Share className="w-4 h-4 text-blue-500 inline mx-1" /> Share
+            Tap <Share className="w-4 h-4 text-accent-blue inline mx-1" /> Share
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-2 mt-2">
             <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-100 rounded text-[10px] font-medium">2</span>

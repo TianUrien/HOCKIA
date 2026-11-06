@@ -4,7 +4,7 @@
  * must act). Asia uses brand purple, so Europe is rose, not purple.
  */
 export const REGION_COLORS: Record<string, string> = {
-  'South America': 'bg-blue-100 text-blue-700',
+  'South America': 'bg-accent-blue-soft text-accent-blue-ink',
   'Europe': 'bg-rose-100 text-rose-700',
   'Oceania': 'bg-cyan-100 text-cyan-700',
   'North America': 'bg-green-100 text-green-700',
