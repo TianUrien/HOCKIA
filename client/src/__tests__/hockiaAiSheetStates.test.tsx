@@ -17,7 +17,8 @@ vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } 
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar" /> }))
 vi.mock('@/components/FeedbackModal', () => ({ default: () => <div data-testid="feedback-modal" /> }))
-vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: null, reload: vi.fn() }) }))
+let stepsValue: import('@/lib/nextSteps').NextStep[] | null = null
+vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: stepsValue, reload: vi.fn() }) }))
 vi.mock('@/hooks/useRecruitingContext', () => ({ useRecruitingContext: () => ({ active: null }) }))
 // The context chip's reads (goal, counts) are covered in hockiaAiContextChip.test.tsx.
 let chipValue: import('@/lib/hockiaAiContext').AiContextChip | null = null
@@ -312,6 +313,17 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     expect(labels()).toEqual(['FINDFind opportunities that fit me', 'OPENCheck my profile against an opportunity', 'DO IT FOR MEFill my profile from my files'])
     fireEvent.click(screen.getByText('Find opportunities that fit me'))
     expect(sendMessage).toHaveBeenCalledWith('Find opportunities that fit me', undefined, undefined)
+  })
+
+  it('the next-steps plan never takes the role choices: all three still show under it (iOS audit 2026-11-06)', () => {
+    stepsValue = [{ key: 'bio', label: 'Write my bio', description: 'I draft it from your profile' }]
+    try {
+      openMedium()
+      expect(screen.getByText('Where should we start?')).toBeInTheDocument()
+      expect(labels()).toHaveLength(3)
+    } finally {
+      stepsValue = null
+    }
   })
 
   it('an OPEN choice goes to its screen instead of asking (no invented answers)', () => {

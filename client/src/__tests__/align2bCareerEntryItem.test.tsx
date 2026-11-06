@@ -66,10 +66,11 @@ describe('CareerEntryItem', () => {
     expect(screen.queryByTestId('career-entry-placeholder')).toBeNull()
   })
 
-  it('an entry without a crest shows a muted placeholder: no image, no initials', () => {
+  it('an entry without a crest shows the club placeholder shield: no grey tile, no image, no initials', () => {
     renderItem({ entry: entry({ crestUrl: null }) })
     const placeholder = screen.getByTestId('career-entry-placeholder')
-    expect(placeholder.className).toContain('bg-surface-muted')
+    expect(placeholder.querySelector('[data-testid="role-placeholder"]')?.getAttribute('data-role')).toBe('club')
+    expect(placeholder.innerHTML).not.toContain('bg-surface-muted')
     expect(placeholder.textContent).toBe('')
     expect(screen.getByTestId('career-entry-item').querySelector('img')).toBeNull()
   })
