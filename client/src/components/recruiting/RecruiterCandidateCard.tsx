@@ -25,6 +25,8 @@ import { fitStateFromVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdi
 import { FitBadge } from '@/components/ui/FitBadge'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { useAuthStore } from '@/lib/auth'
+import RolePlaceholder from '@/components/RolePlaceholder'
+import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -181,22 +183,6 @@ function locationLine(member: RecruiterCardMember): string | null {
   }
 }
 
-/** Soft, deterministic, non-purple initials tint (purple is reserved for the
- *  match zone). */
-const AVATAR_TINTS = [
-  'bg-sky-50 text-sky-600',
-  'bg-rose-50 text-rose-500',
-  'bg-teal-50 text-teal-600',
-  'bg-hockia-soft text-hockia-primary',
-  'bg-emerald-50 text-emerald-600',
-  'bg-blue-50 text-blue-500',
-]
-function tintFor(name: string): string {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
-  return AVATAR_TINTS[h % AVATAR_TINTS.length]
-}
-
 /** Role noun for the tile's second line: "Player", "Coach", "Club"… */
 function roleNoun(member: RecruiterCardMember): string {
   switch (member.role) {
@@ -252,7 +238,7 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
   const verdict = viewerIsPlayer ? null : verdictProp
   const fitState = viewerIsPlayer ? null : fitStateProp
   const name = member.full_name?.trim() || 'Unknown'
-  const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
+  const placeholderRole = isRoleAvatarRole(member.role) ? member.role : 'player'
 
   const isBrand = member.role === 'brand'
 
@@ -261,8 +247,8 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
   const rawHero = isBrand ? member.brand_logo_url ?? member.avatar_url : member.avatar_url
   // A URL that 404s (e.g. a profile row still pointing at a replaced file)
   // used to render the browser's broken-image glyph here, while a NULL url
-  // fell back to initials — so a broken avatar looked worse than no avatar.
-  // Treat a failed load as "no image" and take the same initials path.
+  // fell back to the placeholder — so a broken avatar looked worse than no
+  // avatar. Treat a failed load as "no image" and take the same path.
   const [heroFailed, setHeroFailed] = useState(false)
   const heroImageUrl = rawHero && !heroFailed ? getImageUrl(rawHero, 'avatar-md') : null
 
@@ -301,9 +287,8 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
             onError={() => setHeroFailed(true)}
           />
         ) : (
-          <div className={`flex h-full w-full items-center justify-center text-3xl font-semibold ${tintFor(name)}`}>
-            {initials}
-          </div>
+          // Never initials (founder 2026-10-26): Avatar / Placeholder for the role.
+          <RolePlaceholder role={placeholderRole} label="" className="h-full w-full" />
         )}
       </div>
 
