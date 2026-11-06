@@ -49,6 +49,13 @@ const config: CapacitorConfig = {
     preferredContentMode: 'mobile',
   },
   plugins: {
+    Keyboard: {
+      // The web view shrinks to the space above the keyboard, so fields in
+      // bottom sheets and composers stay in view and iOS doesn't pan the
+      // whole page (founder 2026-11-06: "Other…" goal field was hidden).
+      resize: 'native',
+      resizeOnFullScreen: true,
+    },
     SplashScreen: {
       // The native launch artwork (01-E · Violet editorial) stays up until the
       // web app reports its first frame is painted (src/lib/launchSplash.ts) —

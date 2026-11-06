@@ -41,22 +41,24 @@ The goal is read only while the goal chip shows (release audit 2026-10-30): with
 
 When the member's profile is incomplete, the profile-completion greeting ("I can finish your profile with you…") wins over the goal greeting; the goal chip still shows (design review 2026-10-30: a complete profile helps the member more, and the chip already names the goal).
 
-## First three choices by role (design target)
-Built today: role-aware examples from `exampleQueriesFor` (lib/hockiaAi) and, on an opportunity, Check my profile / Prepare my application / a LEARN question. The page 17 per-role sets below are the target for a later pass.
+## First three choices by role (built 2026-11-06)
+Signed-in members see their role's three choices under the greeting (`roleOptionsFor` in lib/hockiaAi; visitors keep the examples). Hockia AI answers what it can from real data; what it can't opens the screen where it happens, with the eyebrow OPEN (founder 2026-11-06), so no answer invents numbers.
 
-| Role | Choices |
+| Role | Choices (eyebrow → what it does) |
 |---|---|
-| Player | Find opportunities that fit me · Check my profile against an opportunity · Fill my profile from my files |
-| Coach (candidate) | Find coaching opportunities for me · Check my profile against an opportunity · Prepare my application |
-| Club or recruiting coach | Find available players for <opportunity> · Summarise my applicants · Draft a new opportunity |
-| Brand | Find ambassador candidates in my countries · How did my offers do this month? · Write a new offer for members |
-| Umpire | Add my latest match · What is missing from my record? · Who are the umpires based in my country? |
+| Player | FIND Find opportunities that fit me → asks · OPEN Check my profile against an opportunity → Opportunities (the check runs on an opportunity) · DO IT FOR ME Fill my profile from my files → the builder |
+| Coach (candidate) | FIND Find coaching opportunities for me → asks · OPEN Check my profile against an opportunity → Opportunities · OPEN Prepare my application → Opportunities |
+| Club or recruiting coach | FIND Find available players for <opportunity> → asks · ASK Summarise my applicants → asks · DO IT FOR ME Draft a new opportunity → asks |
+| Brand | FIND Find ambassador candidates → asks · OPEN How did my offers do this month? → My offers · OPEN Write a new offer for members → new offer |
+| Umpire | OPEN Add my latest match → Officiating with the Add editor open (`?add=match`) · LEARN What is missing from my record? → asks · FIND Who are the umpires based in my country? → asks |
+
+Differences from the page 17 target: brands lose "in my countries" (the server has no per-brand country list yet); "How did my offers do", "Write a new offer", "Add my latest match", and the profile check / application without an opportunity open screens instead of AI answers. Making those AI answers needs server work (offer stats, drafts the member confirms).
 
 Rules for every answer: facts, never a fit verdict or a score; no invented numbers; people results apply the hidden-profile predicate and never include under-18s.
 
 Native note: installed apps keep their bundled JS until the next store release, so the chip reaches phones with the next store builds. The server change is additive (an older client never sends `use_goal`, so its chats use the goal).
 
 ## Follow-ups (design review 2026-10-30)
-- Web container: the spec is a 440 px side panel on the right edge with the page still visible, so a screen chip sits next to the page it describes. Today the web sheet is a centred 560 px dialog. Move it to the side panel after the store builds, unless it turns out small. Inside the panel the chip is left-aligned, as on mobile; while the dialog is centred, a centred chip under the centred intro is fine.
+- Web container (built 2026-11-06): at ≥1024 px Hockia AI is a 440 px side panel on the right edge, from under the app header to the bottom. No dim and no scroll lock: the page stays visible and usable. Header: mascot 32, "Hockia AI", Beta, then More and ✕. Below: the intro, the chip left-aligned, the choices, the conversation; the composer is pinned at the bottom (24 px side padding). It slides in from the right (240 ms, ease-out, 120 ms fade; fade only with reduced motion), Esc closes it, focus moves in on open and back to the trigger on close. The conversation stays while navigating (one global chat store) until closed. Below 1024 the bottom sheet is unchanged. Closing doesn't animate yet.
 - Dark mode: the web app has no dark theme today (Tailwind `darkMode: 'class'`, never set). Not in rebrand phase-1 scope; don't add one for the chip.
 - Check the chip at 390 px in the iOS simulator (staging checks so far: web 1382 px and 500 px).

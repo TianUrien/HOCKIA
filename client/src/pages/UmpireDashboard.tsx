@@ -162,6 +162,16 @@ export default function UmpireDashboard({
   // Deep-link scroll for ?tab=X notification URLs.
   useTabDeepLinkScroll({ activeTab, tabParam })
 
+  // ?add=match (Hockia AI "Add my latest match") opens the Add editor once,
+  // then leaves the URL so a refresh doesn't reopen it.
+  const [startAdding] = useState(() => !readOnly && searchParams.get('add') === 'match')
+  useEffect(() => {
+    if (!searchParams.has('add')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
     const next = new URLSearchParams(searchParams)
@@ -740,6 +750,7 @@ export default function UmpireDashboard({
                   userId={profile.id}
                   readOnly={readOnly}
                   isOwnProfile={isOwnProfile}
+                  startAdding={startAdding}
                 />
               </div>
             )}

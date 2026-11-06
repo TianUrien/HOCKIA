@@ -103,6 +103,66 @@ const CANDIDATE_COACH_EXAMPLES = ['What should I add to my profile?', 'Show me c
 
 type AiViewer = { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined
 
+/** What a role option does: ask Hockia AI, open the profile builder, or open the screen where it happens. */
+export type RoleOptionAction = { type: 'ask'; query: string } | { type: 'builder' } | { type: 'go'; to: string }
+export interface RoleOption {
+  /** FIND / LEARN / ASK: Hockia AI answers. DO IT FOR ME: the builder. OPEN: a screen, no AI answer. */
+  eyebrow: 'FIND' | 'LEARN' | 'ASK' | 'DO IT FOR ME' | 'OPEN'
+  label: string
+  action: RoleOptionAction
+}
+
+const ask = (eyebrow: RoleOption['eyebrow'], label: string, query = label): RoleOption => ({ eyebrow, label, action: { type: 'ask', query } })
+const go = (label: string, to: string): RoleOption => ({ eyebrow: 'OPEN', label, action: { type: 'go', to } })
+/** Checking a profile or preparing an application needs an opportunity: pick one first. */
+const PICK_OPPORTUNITY = '/opportunities'
+
+/**
+ * The first three choices per role (rebrand page 17, design target in
+ * docs/design-handoff/hockia-ai-one-sheet.md). Hockia AI answers what it can
+ * from real data; the rest open the screen where it happens (founder
+ * 2026-11-06), so no answer invents numbers. Null for visitors without a role.
+ */
+export function roleOptionsFor(profile: AiViewer, activeRoleTitle?: string | null): RoleOption[] | null {
+  if (isRecruiterProfile(profile)) {
+    const role = activeRoleTitle?.trim()
+    return [
+      ask('FIND', role ? `Find available players for ${role}` : 'Find available players for my open opportunity'),
+      ask('ASK', 'Summarise my applicants'),
+      ask('DO IT FOR ME', 'Draft a new opportunity', 'Draft an opportunity'),
+    ]
+  }
+  switch (profile?.role) {
+    case 'player':
+      return [
+        ask('FIND', 'Find opportunities that fit me'),
+        go('Check my profile against an opportunity', PICK_OPPORTUNITY),
+        { eyebrow: 'DO IT FOR ME', label: 'Fill my profile from my files', action: { type: 'builder' } },
+      ]
+    case 'coach':
+      return [
+        ask('FIND', 'Find coaching opportunities for me'),
+        go('Check my profile against an opportunity', PICK_OPPORTUNITY),
+        go('Prepare my application', PICK_OPPORTUNITY),
+      ]
+    case 'brand':
+      // Ambassadors: no per-brand country list on the server yet, so no "in my countries".
+      return [
+        ask('FIND', 'Find ambassador candidates', 'Find player ambassadors'),
+        go('How did my offers do this month?', '/dashboard/offers'),
+        go('Write a new offer for members', '/dashboard/offers/new'),
+      ]
+    case 'umpire':
+      return [
+        go('Add my latest match', '/dashboard/profile?tab=officiating&add=match'),
+        ask('LEARN', 'What is missing from my record?'),
+        ask('FIND', 'Who are the umpires based in my country?'),
+      ]
+    default:
+      return null
+  }
+}
+
 export function isRecruiterProfile(profile: AiViewer): boolean {
   return profile?.role === 'club' || (profile?.role === 'coach' && Boolean(profile.coach_recruits_for_team))
 }

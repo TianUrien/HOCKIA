@@ -9,7 +9,10 @@
  *
  * Cause: this card renders a raw <img> with no onError handler, bypassing the
  * shared Avatar component's fallback. Fix: a failed load is treated as "no
- * image" and takes the same initials path.
+ * image" and takes the same fallback path.
+ *
+ * 2026-11-06: the fallback is Avatar / Placeholder for the member's role, never
+ * initials (founder 2026-10-26).
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -69,7 +72,7 @@ function renderCard(overrides: Partial<RecruiterCardMember> = {}) {
 }
 
 describe('RecruiterCandidateCard avatar fallback', () => {
-  it('falls back to initials when the avatar URL fails to load', () => {
+  it('falls back to the role placeholder when the avatar URL fails to load', () => {
     const { container } = renderCard()
 
     // Before the error the <img> is present…
@@ -77,18 +80,25 @@ describe('RecruiterCandidateCard avatar fallback', () => {
     expect(img).not.toBeNull()
     expect(screen.queryByText('OP')).not.toBeInTheDocument()
 
-    // …a dead URL fires onError, and the card must show initials, NOT a
-    // broken-image glyph (i.e. no <img> left in the DOM).
+    // …a dead URL fires onError, and the card must show the placeholder, NOT
+    // a broken-image glyph (i.e. no <img> left in the DOM) or initials.
     fireEvent.error(img!)
 
-    expect(screen.getByText('OP')).toBeInTheDocument()
+    expect(screen.getByTestId('role-placeholder')).toHaveAttribute('data-role', 'player')
+    expect(screen.queryByText('OP')).not.toBeInTheDocument()
     expect(container.querySelector('img')).toBeNull()
   })
 
-  it('shows initials directly when there is no avatar at all', () => {
+  it('shows the role placeholder, never initials, when there is no avatar at all', () => {
     const { container } = renderCard({ avatar_url: null })
-    expect(screen.getByText('OP')).toBeInTheDocument()
+    expect(screen.getByTestId('role-placeholder')).toHaveAttribute('data-role', 'player')
+    expect(screen.queryByText('OP')).not.toBeInTheDocument()
     expect(container.querySelector('img')).toBeNull()
+  })
+
+  it('uses the member role for the placeholder (a coach gets the coach one)', () => {
+    renderCard({ avatar_url: null, role: 'coach' })
+    expect(screen.getByTestId('role-placeholder')).toHaveAttribute('data-role', 'coach')
   })
 
   it('keeps rendering the image while it loads fine', () => {

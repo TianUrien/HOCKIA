@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Bug, HelpCircle, Sparkles, Heart, MessageSquare, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useFeedback, type FeedbackCategory } from '@/hooks/useFeedback'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 interface FeedbackModalProps {
   open: boolean
@@ -38,6 +39,8 @@ const MIN_BODY_LENGTH = 50
 const MAX_BODY_LENGTH = 2000
 
 export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
+  // Bottom sheet on phones: lift it above the iOS keyboard.
+  const kb = useKeyboardInset(open)
   const { status, submitFeedback, reset } = useFeedback()
   const [category, setCategory] = useState<FeedbackCategory | null>(null)
   const [body, setBody] = useState('')
@@ -112,10 +115,12 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
       className="fixed inset-0 z-[9999] flex items-end justify-center bg-gray-900/40 sm:items-center"
+      style={kb.inset ? { paddingBottom: kb.inset } : undefined}
     >
       <div
         ref={dialogRef}
         className="w-full max-w-lg bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto animate-fade-in"
+        style={kb.inset ? { maxHeight: `calc(${kb.visible}px - env(safe-area-inset-top) - 12px)` } : undefined}
         data-testid="feedback-modal"
       >
         {/* Header */}

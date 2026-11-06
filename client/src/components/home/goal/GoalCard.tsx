@@ -219,7 +219,7 @@ function OtherSheet({ open, initial, onClose, onSave }: { open: boolean; initial
           <span>{text.length}/{GOAL_TEXT_MAX}</span>
         </div>
         <Button block className="mt-4 rounded-full" onClick={() => onSave(text.trim())} disabled={!text.trim() && !initial} data-testid="goal-other-add">
-          {text.trim() ? 'Add to my goal' : 'Remove from my goal'}
+          {text.trim() || !initial ? 'Add to my goal' : 'Remove from my goal'}
         </Button>
       </div>
     </BottomSheet>
