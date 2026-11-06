@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BetaPill } from './BetaPill'
-import { ArrowUp, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
@@ -224,13 +224,17 @@ export function HockiaAiSheet() {
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
-  const optionRow = (r: { eyebrow: string; label: string; run: () => void }, i: number) => (
-    <button key={r.label} type="button" onClick={() => { void hapticSelection(); r.run() }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-option" data-index={i}>
-      <span className={cn('shrink-0 text-caption font-semibold tracking-[0.04em]', r.eyebrow === 'DO IT FOR ME' ? 'text-brand-primary' : 'text-ink-3')}>{r.eyebrow}</span>
-      <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{r.label}</span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
-    </button>
-  )
+  // OPEN rows leave the chat for a screen: arrow-up-right instead of the chevron (design 2026-11-06).
+  const optionRow = (r: { eyebrow: string; label: string; run: () => void }, i: number) => {
+    const Trail = r.eyebrow === 'OPEN' ? ArrowUpRight : ChevronRight
+    return (
+      <button key={r.label} type="button" onClick={() => { void hapticSelection(); r.run() }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-option" data-index={i}>
+        <span className={cn('shrink-0 text-caption font-semibold tracking-[0.04em]', r.eyebrow === 'DO IT FOR ME' ? 'text-brand-primary' : 'text-ink-3')}>{r.eyebrow}</span>
+        <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{r.label}</span>
+        <Trail className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} data-testid={r.eyebrow === 'OPEN' ? 'hockia-ai-option-leaves' : undefined} />
+      </button>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[70]" data-testid="hockia-ai-sheet-root">
