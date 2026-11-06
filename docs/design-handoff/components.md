@@ -89,6 +89,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Card / Reference ask | `532:461` | Title, Detail, Action | New friend can write a reference | — |
 | List item / Activity | `531:469` | Leading: Avatar, Icon · Text, When, Icon | What happened (all grey) | `pulse/WhatHappened.tsx` |
 | List item / Role result | `534:2448` | Title, Meta | Roles inside a Hockia AI answer | discover result cards |
+| Hockia AI side panel (web) | page 17 | Open, Leaving | Hockia AI at ≥1024 px: 440 px on the right edge, under the header; no dim. Shadow: the sheet shadow turned to face left (`-12px 0 40px rgba(15,15,20,0.12)`), approved in design review 2026-11-06. Top violet wash as on mobile | `hockiaAi/HockiaAiSheet.tsx` (panel mode), `GlobalHockiaAiSheet.tsx` (200 ms slide-out) |
 | List item / Member result | `521:387` | Name, Meta, Flag, Show flag | Search rows | `search/SearchV2Screen.tsx` |
 | Role badge | `518:7691` | Role: Player, Coach, Club, Brand, Umpire | Member role pill | `RoleBadge.tsx` |
 | Button / Social | `535:8381` | Provider: Apple, Google · Label | Sign in with Apple / Google | `ui/SocialButton.tsx` via `auth/OAuthButtons.tsx` |

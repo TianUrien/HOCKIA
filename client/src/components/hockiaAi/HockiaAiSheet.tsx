@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BetaPill } from './BetaPill'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { ArrowUp, ArrowUpRight, Check, ChevronRight, Flag, History, Loader2, MessageSquare, MoreHorizontal, SquarePen, UserRoundPen, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDiscoverChat } from '@/hooks/useDiscover'
@@ -53,7 +54,7 @@ function eyebrowFor(q: string): 'LEARN' | 'FIND' {
  * streaming, no action drafts, no attachments yet, so no "Do it for me"
  * suggestions and no "+" in the composer. Beta everywhere.
  */
-export function HockiaAiSheet() {
+export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep, seed, takeSeed } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal, contextOff, setContextOff, setGoalOn } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
@@ -83,9 +84,16 @@ export function HockiaAiSheet() {
   const [drag, setDrag] = useState(0)
   const dragStart = useRef<number | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLElement>(null)
+  const [entered, setEntered] = useState(false)
+  // The panel starts where the app's fixed header ends (its height changes with the safe area).
+  const [panelTop, setPanelTop] = useState(73)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const reduced = prefersReducedMotion()
-  useBodyScrollLock(open)
+  // Web ≥1024: a 440 px side panel on the right edge, the page stays visible
+  // and usable (HANDOFF-phase1 "Hockia AI", rebrand page 17, 2026-11-06).
+  const panel = useMediaQuery('(min-width: 1024px)')
+  useBodyScrollLock(open && !panel)
 
   // Recruiters: "Find available players for <role>" names the active recruiting role (audit A7).
   const { active: recruitingRole } = useRecruitingContext()
@@ -118,6 +126,15 @@ export function HockiaAiSheet() {
   useEffect(() => { setGoalOn(goalInUse) }, [goalInUse, setGoalOn])
 
   useEffect(() => { if (open) void hapticLight() }, [open])
+  // Side panel: slide in from the right, focus moves in, and back to the trigger on close.
+  useEffect(() => {
+    if (!open || !panel) return
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const headerBottom = document.querySelector('header.fixed')?.getBoundingClientRect().bottom
+    if (headerBottom) setPanelTop(Math.round(headerBottom))
+    const frame = requestAnimationFrame(() => { setEntered(true); panelRef.current?.focus({ preventScroll: true }) })
+    return () => { cancelAnimationFrame(frame); setEntered(false); trigger?.focus({ preventScroll: true }) }
+  }, [open, panel])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
   useEffect(() => {
@@ -165,8 +182,8 @@ export function HockiaAiSheet() {
     else if (Math.abs(dy) < 6) setDetent(detent === 'large' ? 'medium' : 'large')
   }
 
-  if (!open) return null
-  const large = detent === 'large'
+  if (!open && !leaving) return null
+  const large = panel || detent === 'large'
   const askFromPlan = (text: string) => { setMode('chat'); setTimeout(() => send(text), 0) }
   const planCard = plan ? <NextStepPlan steps={plan} question="Where should we start?" onPick={startStep} onOther={askFromPlan} /> : null
   const canSend = input.trim().length > 0 && !isPending
@@ -199,7 +216,7 @@ export function HockiaAiSheet() {
     : goalChip ? goalIntro(!contextOff)
     : aiIntroFor(profile ? { role: profile.role, coach_recruits_for_team: profile.coach_recruits_for_team } : null)
   const chip = contextChip && !contextOff && !roleContext ? (
-    <span className="flex max-w-full items-center gap-2 self-start rounded-full border border-line bg-white py-1.5 pl-3 pr-2.5 lg:self-center" data-testid="hockia-ai-context-chip">
+    <span className="flex max-w-full items-center gap-2 self-start rounded-full border border-line bg-white py-1.5 pl-3 pr-2.5" data-testid="hockia-ai-context-chip">
       <span className="truncate text-caption text-ink-1">{aiContextChipLabel(contextChip)}</span>
       <button type="button" onClick={() => { void hapticSelection(); setContextOff(true) }} aria-label="Remove context" className="relative flex h-4 w-4 shrink-0 items-center justify-center text-ink-3 before:absolute before:-inset-3.5 before:content-['']" data-testid="hockia-ai-context-chip-remove">
         <X className="h-3.5 w-3.5" strokeWidth={2} />
@@ -240,15 +257,31 @@ export function HockiaAiSheet() {
   }
 
   return (
-    <div className="fixed inset-0 z-[70]" data-testid="hockia-ai-sheet-root">
+    <div className={cn('fixed inset-0 z-[70]', panel && 'pointer-events-none')} data-testid="hockia-ai-sheet-root">
       {/* Dim behind the sheet; a tap closes it (the X and Escape do too). */}
-      <div aria-hidden="true" onClick={close} className="absolute inset-0" style={{ backgroundColor: 'rgba(15,15,20,0.4)' }} data-testid="hockia-ai-dim" />
+      {!panel && <div aria-hidden="true" onClick={close} className="absolute inset-0" style={{ backgroundColor: 'rgba(15,15,20,0.4)' }} data-testid="hockia-ai-dim" />}
       <section
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
-        aria-modal="true"
+        aria-modal={panel ? undefined : true}
         aria-label={`${HOCKIA_AI_TITLE}, beta`}
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-w-[560px] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(15,15,20,0.18)] lg:bottom-4 lg:rounded-[28px]"
-        style={{
+        className={cn(
+          'absolute flex flex-col overflow-hidden bg-white focus:outline-none',
+          panel
+            ? 'pointer-events-auto bottom-0 right-0 w-[440px] border-l border-line shadow-[-12px_0_40px_rgba(15,15,20,0.12)]'
+            : 'inset-x-0 bottom-0 mx-auto max-w-[560px] rounded-t-[28px] shadow-[0_-12px_40px_rgba(15,15,20,0.18)]',
+        )}
+        style={panel ? {
+          top: panelTop,
+          // In: 240 ms ease-out + 120 ms fade. Out: 200 ms ease-in + fade. Reduced motion: fade only.
+          transform: (entered && !leaving) || reduced ? 'none' : 'translateX(100%)',
+          opacity: entered && !leaving ? 1 : 0,
+          transition: leaving
+            ? (reduced ? 'opacity 200ms ease-in' : 'transform 200ms cubic-bezier(0.4, 0, 1, 1), opacity 200ms ease-in')
+            : (reduced ? 'opacity 120ms ease-out' : 'transform 240ms cubic-bezier(0.2, 0, 0, 1), opacity 120ms ease-out'),
+          backgroundImage: history ? 'none' : 'linear-gradient(180deg, rgba(241,234,253,0.9) 0%, rgba(255,255,255,1) 34%)',
+        } : {
           height: large ? 'calc(100dvh - env(safe-area-inset-top) - 12px)' : '62dvh',
           maxHeight: kb.inset ? `calc(${kb.visible}px - env(safe-area-inset-top) - 12px)` : 'calc(100dvh - env(safe-area-inset-top) - 12px)',
           ...(kb.inset ? { bottom: kb.inset } : {}),
@@ -260,11 +293,30 @@ export function HockiaAiSheet() {
         data-testid="hockia-ai-sheet"
         data-detent={detent}
       >
-        <div className="flex h-6 shrink-0 cursor-grab touch-none items-center justify-center" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} data-testid="hockia-ai-grabber" aria-hidden="true">
+        <div className={cn('flex h-6 shrink-0 cursor-grab touch-none items-center justify-center', panel && 'hidden')} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} data-testid="hockia-ai-grabber" aria-hidden="true">
           <span className="h-[5px] w-10 rounded-full bg-ink-4/60 lg:hidden" />
         </div>
 
-        {large && !history ? (
+        {panel && !history ? (
+          // Side panel header: mascot, name and Beta; More and close on the right.
+          <div className="flex shrink-0 items-center gap-3 px-6 pb-3 pt-4" data-testid="hockia-ai-panel-header">
+            {special && (
+                <button type="button" onClick={() => setMode('chat')} aria-label="Back to the chat" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
+                <MessageSquare className="h-5 w-5" strokeWidth={2} />
+              </button>
+            )}
+            <MascotAvatar size={32} />
+            <span className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></span>
+            {!special && (
+                <button type="button" onClick={() => setMoreOpen(true)} aria-label="More" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-more">
+                <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
+              </button>
+            )}
+            <button type="button" onClick={close} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-close">
+              <X className="h-5 w-5" strokeWidth={2} />
+            </button>
+          </div>
+        ) : large && !history ? (
           <div className="flex shrink-0 items-center justify-between px-4 pb-2">
             {special ? (
               <button type="button" onClick={() => setMode('chat')} aria-label="Back to the chat" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
@@ -306,16 +358,21 @@ export function HockiaAiSheet() {
             onFindSimilar={(q) => { setMode('chat'); setTimeout(() => send(q), 0) }}
           />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
-          {!large && (
+        <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
+          {(!large || (panel && !hasMessages)) && (
             <div className="flex flex-col gap-3 pb-3" data-testid="hockia-ai-medium">
-              <div className="flex items-start gap-3">
-                <MascotHello height={96} className="-ml-1 shrink-0" />
-                <div className="min-w-0 flex-1 pt-3">
-                  <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
-                  <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{intro}</p>
+              {panel ? (
+                // The panel header already names Hockia AI: the intro leads.
+                <p className="text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{intro}</p>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <MascotHello height={96} className="-ml-1 shrink-0" />
+                  <div className="min-w-0 flex-1 pt-3">
+                    <p className="flex items-center gap-2 text-[22px] font-bold leading-7 text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></p>
+                    <p className="mt-1 text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-intro">{intro}</p>
+                  </div>
                 </div>
-              </div>
+              )}
               {chip}
               {roleContext ? (
                 <>
@@ -338,7 +395,7 @@ export function HockiaAiSheet() {
             </div>
           )}
 
-          {large && !hasMessages && (
+          {large && !panel && !hasMessages && (
             <div className="flex flex-col items-center pb-4 text-center" data-testid="hockia-ai-home">
               <MascotHello height={200} />
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? `Hi ${firstName}, I’m Hockia AI` : 'Hi, I’m Hockia AI'}</h2>
@@ -369,7 +426,7 @@ export function HockiaAiSheet() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2" style={kb.inset ? { paddingBottom: 12 } : undefined}>
+        <div className={cn('shrink-0 pt-2', panel ? 'px-6 pb-4' : 'px-4 pb-[max(env(safe-area-inset-bottom),12px)]')} style={kb.inset ? { paddingBottom: 12 } : undefined}>
           {roleContext && large && hasMessages && <div className="mb-2 flex">{roleChip}</div>}
           {chip && large && hasMessages && <div className="mb-2 flex">{chip}</div>}
           <div className="flex items-end gap-2 rounded-[28px] border border-line bg-white p-1.5 pl-4 shadow-[0_2px_10px_rgba(15,15,20,0.06)]">
