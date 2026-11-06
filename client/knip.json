@@ -22,5 +22,8 @@
   ],
   "ignore": [
     "src/lib/polyfills.ts"
+  ],
+  "ignoreDependencies": [
+    "@capacitor/keyboard"
   ]
 }
