@@ -68,6 +68,9 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
   const inboxDot = inboxTabDot(segmentDots)
   const showHockiaAi = useHockiaAiSheet((s) => s.show)
   const openHockiaAi = () => showHockiaAi('header')
+  // Web: the Ask Hockia AI pill reads as on while the side panel is open and closes it.
+  const hockiaAiOpen = useHockiaAiSheet((s) => s.open)
+  const closeHockiaAi = useHockiaAiSheet((s) => s.close)
   const authLoading = useAuthStore((s) => s.loading)
   const headerRef = useRef<HTMLElement>(null)
 
@@ -263,8 +266,9 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                     the header, always with the mascot (cyan never alone). */}
                 <button
                   type="button"
-                  onClick={openHockiaAi}
-                  className="relative ml-2 flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-ai-accent/60 bg-ai-bg text-[14px] font-semibold text-ai-text transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:border-ai-accent min-[1440px]:w-auto min-[1440px]:justify-start min-[1440px]:pl-1 min-[1440px]:pr-3.5"
+                  onClick={hockiaAiOpen ? closeHockiaAi : openHockiaAi}
+                  aria-pressed={hockiaAiOpen}
+                  className={`relative ml-2 flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border text-[14px] font-semibold text-ai-text transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:border-ai-accent min-[1440px]:w-auto min-[1440px]:justify-start min-[1440px]:pl-1 min-[1440px]:pr-3.5 ${hockiaAiOpen ? 'border-ai-accent bg-ai-accent/20 ring-2 ring-ai-accent/30' : 'border-ai-accent/60 bg-ai-bg'}`}
                   aria-label="Ask Hockia AI"
                   title="Ask Hockia AI"
                   data-testid="header-hockia-ai-desktop"

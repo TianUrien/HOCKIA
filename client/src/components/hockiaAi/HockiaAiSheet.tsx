@@ -54,7 +54,7 @@ function eyebrowFor(q: string): 'LEARN' | 'FIND' {
  * streaming, no action drafts, no attachments yet, so no "Do it for me"
  * suggestions and no "+" in the composer. Beta everywhere.
  */
-export function HockiaAiSheet() {
+export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const { open, detent, setDetent, close, mode, setMode, applyTarget, prepareApplication, roleContext, clearRole, step, startStep, seed, takeSeed } = useHockiaAiSheet()
   const { messages, sendMessage, clearChat, openChat, isPending, steps, revealId, finishReveal, contextOff, setContextOff, setGoalOn } = useDiscoverChat()
   const profile = useAuthStore((s) => s.profile)
@@ -182,7 +182,7 @@ export function HockiaAiSheet() {
     else if (Math.abs(dy) < 6) setDetent(detent === 'large' ? 'medium' : 'large')
   }
 
-  if (!open) return null
+  if (!open && !leaving) return null
   const large = panel || detent === 'large'
   const askFromPlan = (text: string) => { setMode('chat'); setTimeout(() => send(text), 0) }
   const planCard = plan ? <NextStepPlan steps={plan} question="Where should we start?" onPick={startStep} onOther={askFromPlan} /> : null
@@ -274,9 +274,12 @@ export function HockiaAiSheet() {
         )}
         style={panel ? {
           top: panelTop,
-          transform: entered || reduced ? 'none' : 'translateX(100%)',
-          opacity: entered ? 1 : 0,
-          transition: reduced ? 'opacity 120ms ease-out' : 'transform 240ms cubic-bezier(0.2, 0, 0, 1), opacity 120ms ease-out',
+          // In: 240 ms ease-out + 120 ms fade. Out: 200 ms ease-in + fade. Reduced motion: fade only.
+          transform: (entered && !leaving) || reduced ? 'none' : 'translateX(100%)',
+          opacity: entered && !leaving ? 1 : 0,
+          transition: leaving
+            ? (reduced ? 'opacity 200ms ease-in' : 'transform 200ms cubic-bezier(0.4, 0, 1, 1), opacity 200ms ease-in')
+            : (reduced ? 'opacity 120ms ease-out' : 'transform 240ms cubic-bezier(0.2, 0, 0, 1), opacity 120ms ease-out'),
           backgroundImage: history ? 'none' : 'linear-gradient(180deg, rgba(241,234,253,0.9) 0%, rgba(255,255,255,1) 34%)',
         } : {
           height: large ? 'calc(100dvh - env(safe-area-inset-top) - 12px)' : '62dvh',

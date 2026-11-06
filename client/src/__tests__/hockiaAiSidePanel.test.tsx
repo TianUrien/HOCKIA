@@ -55,3 +55,18 @@ describe('Hockia AI on web ≥1024: the side panel (rebrand page 17, 2026-11-06)
     expect(useHockiaAiSheet.getState().open).toBe(false)
   })
 })
+
+describe('Hockia AI side panel closing (design review 2026-11-06)', () => {
+  it('slides out before it unmounts', async () => {
+    const { GlobalHockiaAiSheet } = await import('@/components/hockiaAi/GlobalHockiaAiSheet')
+    const { act, waitFor } = await import('@testing-library/react')
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
+    render(<MemoryRouter><GlobalHockiaAiSheet /></MemoryRouter>)
+    expect(await screen.findByTestId('hockia-ai-sheet')).toBeInTheDocument()
+    act(() => { useHockiaAiSheet.getState().close() })
+    // Still there, sliding out…
+    expect(screen.getByTestId('hockia-ai-sheet').style.opacity).toBe('0')
+    // …then gone.
+    await waitFor(() => expect(screen.queryByTestId('hockia-ai-sheet')).toBeNull(), { timeout: 1000 })
+  })
+})
