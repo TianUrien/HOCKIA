@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { DiscoverChatMessage, OpportunityResultItem } from '@/hooks/useDiscover'
 
 vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } }))
@@ -291,5 +291,44 @@ describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
     useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', seed: null, roleContext: { id: 'o1', title: 'Goalkeeper', organization: 'HC Bra', logoUrl: null, city: 'Bra', label: 'HC Bra · Goalkeeper' } })
     render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
     expect(screen.queryByTestId('hockia-ai-context-chip')).toBeNull()
+  })
+})
+
+describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
+  function Where() {
+    const loc = useLocation()
+    return <span data-testid="where">{loc.pathname + loc.search}</span>
+  }
+  const openMedium = () => {
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
+    render(<MemoryRouter initialEntries={['/home']}><HockiaAiSheet /><Where /></MemoryRouter>)
+  }
+  const labels = () => screen.getAllByTestId('hockia-ai-option').map((el) => el.textContent)
+
+  it('a player gets find, check and fill; "Find" asks Hockia AI', () => {
+    const sendMessage = vi.fn()
+    useDiscoverChat.setState({ sendMessage })
+    openMedium()
+    expect(labels()).toEqual(['FINDFind opportunities that fit me', 'OPENCheck my profile against an opportunity', 'DO IT FOR MEFill my profile from my files'])
+    fireEvent.click(screen.getByText('Find opportunities that fit me'))
+    expect(sendMessage).toHaveBeenCalledWith('Find opportunities that fit me', undefined, undefined)
+  })
+
+  it('an OPEN choice goes to its screen instead of asking (no invented answers)', () => {
+    const sendMessage = vi.fn()
+    useDiscoverChat.setState({ sendMessage })
+    authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
+    openMedium()
+    fireEvent.click(screen.getByText('How did my offers do this month?'))
+    expect(sendMessage).not.toHaveBeenCalled()
+    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/offers')
+  })
+
+  it('an umpire starts with "Add my latest match", which opens the Add editor', () => {
+    authState.profile = { id: 'u1', role: 'umpire', full_name: 'Ana Torres' }
+    openMedium()
+    expect(labels()[0]).toBe('OPENAdd my latest match')
+    fireEvent.click(screen.getByText('Add my latest match'))
+    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/profile?tab=officiating&add=match')
   })
 })
