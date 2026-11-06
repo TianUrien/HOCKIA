@@ -503,7 +503,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                   <button type="button" onClick={removeCover} className="mt-1 h-9 text-secondary font-semibold text-status-danger" data-testid="post-role-cover-remove">Remove photo</button>
                 </>
               ) : (
-                <p className="mt-2 text-secondary text-ink-2">No photo? We build a cover from your crest in your club colours. It already looks finished.</p>
+                <p className="mt-2 text-secondary text-ink-2">{isCoachPublisher ? 'No photo? We build a cover for you. It already looks finished.' : 'No photo? We build a cover from your crest in your club colours. It already looks finished.'}</p>
               )}
             </section>
             <div className="px-5 pt-5">
