@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/auth'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
 import { validateFullMatchUrl } from '@/lib/videoUrlValidator'
 import type { FullGameVideo, FullGameVideoVisibility } from '@/hooks/useFullGameVideos'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 /**
  * FullGameVideoFormModal — add or edit a single full match video.
@@ -59,6 +60,8 @@ export default function FullGameVideoFormModal({
   initialValue,
   onSubmit,
 }: FullGameVideoFormModalProps) {
+  // Bottom sheet on phones: lift it above the iOS keyboard.
+  const kb = useKeyboardInset(isOpen)
   const { addToast } = useToastStore()
   const dialogRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -193,6 +196,7 @@ export default function FullGameVideoFormModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
+      style={kb.inset ? { paddingBottom: kb.inset } : undefined}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -200,6 +204,7 @@ export default function FullGameVideoFormModal({
       <div
         ref={dialogRef}
         className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl"
+        style={kb.inset ? { maxHeight: `calc(${kb.visible}px - env(safe-area-inset-top) - 12px)` } : undefined}
       >
         <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 sm:px-6">
           <div>

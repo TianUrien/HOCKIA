@@ -29,6 +29,7 @@ import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
 import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
 import { hockiaAiOfferTopic } from '@/lib/memberOffers'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -110,6 +111,8 @@ export function HockiaAiSheet() {
   const hasMessages = messages.length > 0
   // Context chip (rebrand page 17): what Hockia AI is looking at; ✕ = this chat only.
   const contextChip = useAiContextChip(open && signedIn)
+  // iOS lays the keyboard over the page: lift the sheet so the composer stays in view.
+  const kb = useKeyboardInset(open)
   // The server reads the private goal only while the goal chip shows.
   const goalInUse = contextChip?.kind === 'goal' && !contextOff && !roleContext
   useEffect(() => { setGoalOn(goalInUse) }, [goalInUse, setGoalOn])
@@ -247,7 +250,8 @@ export function HockiaAiSheet() {
         className="absolute inset-x-0 bottom-0 mx-auto flex max-w-[560px] flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-12px_40px_rgba(15,15,20,0.18)] lg:bottom-4 lg:rounded-[28px]"
         style={{
           height: large ? 'calc(100dvh - env(safe-area-inset-top) - 12px)' : '62dvh',
-          maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 12px)',
+          maxHeight: kb.inset ? `calc(${kb.visible}px - env(safe-area-inset-top) - 12px)` : 'calc(100dvh - env(safe-area-inset-top) - 12px)',
+          ...(kb.inset ? { bottom: kb.inset } : {}),
           transform: `translateY(${Math.max(0, drag)}px)`,
           transition: dragStart.current !== null || reduced ? 'none' : `height 480ms ${OPEN_EASE}, transform 420ms ${OPEN_EASE}`,
           // Chats (C2) is a plain surface; the chat has the mind-light wash.
@@ -365,7 +369,7 @@ export function HockiaAiSheet() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2">
+        <div className="shrink-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2" style={kb.inset ? { paddingBottom: 12 } : undefined}>
           {roleContext && large && hasMessages && <div className="mb-2 flex">{roleChip}</div>}
           {chip && large && hasMessages && <div className="mb-2 flex">{chip}</div>}
           <div className="flex items-end gap-2 rounded-[28px] border border-line bg-white p-1.5 pl-4 shadow-[0_2px_10px_rgba(15,15,20,0.06)]">
