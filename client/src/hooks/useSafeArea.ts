@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 // A software keyboard is always taller than this. Smaller viewport
 // deltas (Safari's collapsing URL bar, safe-area noise) must NOT be
 // mistaken for a keyboard, or the composer lifts off the bottom edge.
-const KEYBOARD_MIN_PX = 120
+export const KEYBOARD_MIN_PX = 120
 
 // A sane visual-viewport offsetTop is roughly a browser URL-bar height.
 // A larger value is the documented iOS "offsetTop fails to reset" bug;

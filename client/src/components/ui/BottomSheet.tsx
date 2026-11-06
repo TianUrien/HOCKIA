@@ -6,6 +6,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSquircle } from '@/lib/squircle'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 interface BottomSheetProps {
   open: boolean
@@ -32,6 +33,8 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className, ini
   useBodyScrollLock(open)
   // Continuous corners: top only on phones, all four where it floats centred.
   const floating = useMediaQuery('(min-width: 640px)')
+  // iOS lays the keyboard over the page: lift the sheet so a text field in it stays in view.
+  const kb = useKeyboardInset(open)
   useSquircle(panelRef, floating ? 28 : { tl: 28, tr: 28 }, 0.6, open)
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className, ini
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center" role="presentation">
+    <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center" role="presentation" style={kb.inset ? { paddingBottom: kb.inset } : undefined} data-keyboard-inset={kb.inset || undefined}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
@@ -60,6 +63,8 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className, ini
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
+        // With the keyboard up: fit what's visible and drop the home-indicator padding.
+        style={kb.inset ? { maxHeight: `calc(${kb.visible}px - env(safe-area-inset-top) - 12px)`, paddingBottom: 8 } : undefined}
         className={cn(
           'relative flex max-h-[88dvh] w-full flex-col rounded-t-sheet bg-white pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] focus:outline-none sm:max-w-md sm:rounded-sheet sm:pb-2',
           className,

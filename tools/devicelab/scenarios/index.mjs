@@ -393,7 +393,7 @@ export const scenarios = {
     await lab.waitFor('[data-testid="hockia-ai-sheet"]', 15000)
     await sleep(1500)
     await ctx.shot('sheet-medium')
-    const medium = await lab.eval(() => ({ detent: document.querySelector('[data-testid="hockia-ai-sheet"]')?.getAttribute('data-detent'), suggestions: document.querySelectorAll('[data-testid="hockia-ai-suggestion"]').length, beta: !!document.querySelector('[data-testid="hockia-ai-beta"]') }))
+    const medium = await lab.eval(() => ({ detent: document.querySelector('[data-testid="hockia-ai-sheet"]')?.getAttribute('data-detent'), suggestions: document.querySelectorAll('[data-testid="hockia-ai-suggestion"], [data-testid="hockia-ai-option"]').length, beta: !!document.querySelector('[data-testid="hockia-ai-beta"]') }))
     if (medium.detent !== 'medium' || medium.suggestions < 1 || !medium.beta) throw new Error(`medium sheet wrong: ${JSON.stringify(medium)}`)
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-grabber"]')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 100 })))
     await lab.eval(() => document.querySelector('[data-testid="hockia-ai-grabber"]')?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 100 })))
@@ -413,9 +413,9 @@ export const scenarios = {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
     await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
-    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"], [data-testid="hockia-ai-option"]', 15000)
     await sleep(800)
-    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-suggestion"]')?.click())
+    await lab.eval(() => document.querySelector('[data-testid="hockia-ai-suggestion"], [data-testid="hockia-ai-option"]')?.click())
     let sawSteps = 0
     for (let i = 0; i < 90; i++) {
       await sleep(300)
@@ -439,9 +439,9 @@ export const scenarios = {
     await lab.go('/opportunities')
     await lab.waitFor('[data-testid="hockia-ai-button"]', 20000)
     await lab.eval(() => { localStorage.setItem('hockia-ai-tip-seen', '1'); document.querySelector('[data-testid="hockia-ai-button"]')?.click() })
-    await lab.waitFor('[data-testid="hockia-ai-suggestion"]', 15000)
+    await lab.waitFor('[data-testid="hockia-ai-suggestion"], [data-testid="hockia-ai-option"]', 15000)
     await sleep(800)
-    const asked = await lab.eval(() => { const b = document.querySelector('[data-testid="hockia-ai-suggestion"]'); const q = b?.querySelector('span:nth-child(2)')?.textContent || ''; b?.click(); return q })
+    const asked = await lab.eval(() => { const b = document.querySelector('[data-testid="hockia-ai-suggestion"], [data-testid="hockia-ai-option"]'); const q = b?.querySelector('span:nth-child(2)')?.textContent || ''; b?.click(); return q })
     for (let i = 0; i < 100; i++) {
       await sleep(300)
       if (i > 3 && !(await lab.eval(() => !!document.querySelector('[data-testid="hockia-ai-thinking"]')))) break

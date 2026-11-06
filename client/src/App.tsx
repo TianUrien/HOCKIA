@@ -45,6 +45,7 @@ import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
 import { loadOpportunityDetail } from '@/lib/prefetchRole'
+import { useRevealFocusedField } from '@/hooks/useKeyboardInset'
 
 // Lazy load heavy components
 // Neither is on a first-paint path: Settings sits behind the profile gear,
@@ -333,6 +334,7 @@ function KeyboardShortcutsManager() {
 
 function App() {
   const initRef = useRef(false)
+  useRevealFocusedField()
 
   useEffect(() => {
     // Initialize Google Analytics

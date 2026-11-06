@@ -10,6 +10,7 @@ import {
   submitRating,
   type RatingDecision,
 } from '@/lib/appRating'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 /**
  * Internal app rating prompt (Slice 1). A small, dismissible card — never a
@@ -30,6 +31,8 @@ function isCalmSurface(pathname: string): boolean {
 }
 
 export default function AppRatingPrompt() {
+  // The comment field sits low on the screen: rise above the iOS keyboard while typing.
+  const kb = useKeyboardInset(true)
   const location = useLocation()
   const calm = isCalmSurface(location.pathname)
 
@@ -99,7 +102,7 @@ export default function AppRatingPrompt() {
   const display = hover || rating
 
   return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl animate-slide-up md:bottom-6 md:left-auto md:right-4 md:w-96">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl animate-slide-up md:bottom-6 md:left-auto md:right-4 md:w-96" style={kb.inset ? { bottom: kb.inset + 12 } : undefined}>
       <button
         type="button"
         onClick={handleDismiss}

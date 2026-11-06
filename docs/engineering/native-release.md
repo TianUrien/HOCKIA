@@ -146,6 +146,13 @@ continue past a failure.
      right screen; signing out stops pushes;
    - safe areas and keyboard on the sign-in screen and in chat (top bar,
      back chevron, password field above the keyboard);
+   - keyboard over sheets (since 1.3.24 / 1.25, 2026-11-06): the goal card's
+     "Other…", Hockia AI's composer and "Fill my profile", Edit profile ›
+     About, Settings › Send feedback. The field, its button and the sheet's
+     header stay in view. `@capacitor/keyboard` with `resize: 'native'`
+     shrinks the web view to the space above the keyboard; on the web,
+     `useKeyboardInset` lifts bottom sheets and `useRevealFocusedField`
+     (App) scrolls a covered field into view;
    - deep link into the app;
    - report and block a member;
    - delete account;

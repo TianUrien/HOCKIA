@@ -27,6 +27,7 @@ import {
   type RoleSuggestion,
 } from '@/lib/roleSuggestions'
 import { monthYear } from '@/lib/suggestionReasons'
+import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 
 const InviteSheet = lazy(() => import('./InviteSheet'))
 
@@ -47,6 +48,8 @@ function factsLine(s: RoleSuggestion): string | null {
  * card. Counts toward the same daily question cap. Club-side only; phone.
  */
 export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
+  // The composer is the last row of a 100dvh screen: keep it above the iOS keyboard.
+  const kb = useKeyboardInset(true)
   const navigate = useNavigate()
   const location = useLocation()
   const seed = (location.state as { question?: string | null } | null)?.question ?? null
@@ -79,7 +82,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
 
   return (
     // Full screen above the tab bar, Figma D5.2 has no tab bar.
-    <div className="fixed inset-x-0 top-0 z-30 flex h-[100dvh] flex-col bg-white lg:hidden" data-testid="suggest-refine-screen">
+    <div className="fixed inset-x-0 top-0 z-30 flex h-[100dvh] flex-col bg-white lg:hidden" style={kb.inset ? { paddingBottom: kb.inset } : undefined} data-testid="suggest-refine-screen">
       <div className="shrink-0 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
       <DetailNavBar parent={REFINE_BACK} title={REFINE_TITLE} showParent fallbackPath={`/dashboard/opportunities/${roleId}/suggested`} />
       </div>
