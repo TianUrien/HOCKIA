@@ -11,6 +11,7 @@ const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen')
 const ApplicantsDesktop = lazy(() => import('@/components/club/ApplicantsDesktop'))
 const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
 const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
+const RecruitConfirmScreen = lazy(() => import('@/components/club/RecruitConfirmScreen'))
 const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen'))
 const FindPlayersScreen = lazy(() => import('@/components/club/FindPlayersScreen'))
 const ShortlistScreen = lazy(() => import('@/components/club/ShortlistScreen'))
@@ -81,9 +82,12 @@ export function ApplicantReviewEntry() {
  *  coaches (who recruit on behalf of a club or academy), on every width.
  *  `/:id/edit` continues a draft or edits a live role. */
 export function PostRoleEntry() {
-  const role = useAuthStore((s) => s.profile?.role)
+  const profile = useAuthStore((s) => s.profile)
+  const role = profile?.role
   const { opportunityId } = useParams<{ opportunityId?: string }>()
   if (role && role !== 'club' && role !== 'coach') return <Navigate to="/opportunities" replace />
+  // A coach who only looks for a role confirms they recruit before posting (iOS audit 2026-11-06).
+  if (role === 'coach' && !opportunityId && !isRecruitingViewer(profile)) return <Screen><RecruitConfirmScreen /></Screen>
   return <Screen><PostRoleScreen key={opportunityId ?? 'new'} draftId={opportunityId ?? null} /></Screen>
 }
 
