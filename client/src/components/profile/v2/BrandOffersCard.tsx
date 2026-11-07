@@ -9,6 +9,8 @@ interface OffersCardProps {
   totals: OfferTotals | null
   onCreate: () => void
   onOpen: () => void
+  /** Results screen (2026-11-07); the link shows when set. */
+  onResults?: () => void
   /** Desktop dashboard (rebrand page 27): its own white card, Satoshi title, "Open offers ›". */
   desktop?: boolean
 }
@@ -23,7 +25,7 @@ interface OffersCardProps {
  * for your reply" row needs contact replies to be tracked, and "See results"
  * needs the Results panel (Phase 3). Neither is shown as a guess.
  */
-export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }: OffersCardProps) {
+export function OffersCard({ offers, totals, onCreate, onOpen, onResults, desktop = false }: OffersCardProps) {
   const wrap = desktop ? '' : 'px-4'
   const box = desktop ? 'rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line' : 'rounded-[24px] border border-line bg-white p-4'
   const title = desktop ? 'block font-display text-[24px] font-bold leading-[1.2] text-ink-1' : 'block text-[17px] font-semibold leading-[22px] text-ink-1'
@@ -92,6 +94,9 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
             </button>
             <p className="mt-2 text-secondary text-ink-3">Last 30 days</p>
           </>
+        ) : null}
+        {onResults ? (
+          <button type="button" onClick={onResults} className="mt-2 flex h-11 w-full items-center justify-end text-row font-semibold text-brand-primary" data-testid="brand-offers-results">See results</button>
         ) : null}
       </div>
     </div>

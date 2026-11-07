@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { EyeOff, Info, MessageCircle, X } from 'lucide-react'
+import { Check, Copy, EyeOff, Info, MessageCircle, X } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -155,8 +155,11 @@ export default function OfferDetailPage() {
           </button>
         ) : null}
       </div>
-      <h1 className="mt-4 text-title-xl text-ink-1">{offer.title}</h1>
+      {offer.perk ? <span className="mt-4 inline-block rounded-full bg-brand-soft px-3 py-1 text-row font-semibold text-brand-primary" data-testid="offer-detail-perk">{offer.perk}</span> : null}
+      <h1 className={cn(offer.perk ? 'mt-2' : 'mt-4', 'text-title-xl text-ink-1')}>{offer.title}</h1>
       <p className="mt-3 whitespace-pre-line text-body text-ink-2">{offer.body}</p>
+
+      {offer.promo_code ? <PromoCode code={offer.promo_code} onCopied={() => trackOffer('brand_offer_code_copy', offer.id, surface)} /> : null}
 
       <dl className="mt-5 grid grid-cols-[72px_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[20px] bg-white p-4 text-row shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
         <dt className="text-ink-2">For</dt>
@@ -242,6 +245,33 @@ export default function OfferDetailPage() {
         ) : null}
       </div>
       {report.sheet}
+    </div>
+  )
+}
+
+/** The offer's code: one tap copies it; "Use it at checkout on <store>" (2026-11-07). */
+function PromoCode({ code, onCopied }: { code: string; onCopied: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      onCopied()
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+  return (
+    <div className="mt-5 flex items-center gap-3 rounded-[20px] border border-dashed border-brand-primary/40 bg-brand-soft/60 p-4" data-testid="offer-detail-code">
+      <div className="min-w-0 flex-1">
+        <p className="text-secondary text-ink-2">Your code</p>
+        <p className="truncate font-mono text-title tracking-wide text-ink-1 select-all">{code}</p>
+      </div>
+      <button type="button" onClick={() => void copy()} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-row font-semibold text-brand-primary" data-testid="offer-detail-copy-code">
+        {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+        {copied ? 'Copied' : 'Copy'}
+      </button>
     </div>
   )
 }

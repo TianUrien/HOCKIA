@@ -40,7 +40,14 @@ export interface OfferFields {
   everywhere?: boolean
   /** Whole regions (countries.region): members based anywhere in them. */
   regions?: string[]
+  /** "15% off": what members get, at a glance (24 max; 2026-11-07). */
+  perk?: string | null
+  /** A code members copy on the offer page, so the brand counts sales (2026-11-07). */
+  promo_code?: string | null
 }
+
+export const OFFER_PERK_MAX = 24
+export const PROMO_CODE_RE = /^[A-Za-z0-9_-]{2,30}$/
 
 /** The regions a brand can pick (countries.region values), largest hockey markets first. */
 export const OFFER_REGIONS: string[] = ['Europe', 'South America', 'Oceania', 'Asia', 'Africa', 'North America', 'Central America', 'Caribbean']
@@ -62,6 +69,8 @@ export interface BrandOffer extends OfferFields {
   not_useful: number
   /** Members who went to the store from the offer (Go to store). */
   store_visits: number
+  /** Members who copied the offer's code. */
+  code_copies?: number
 }
 
 export interface AdminBrandOffer extends OfferFields {
@@ -126,11 +135,12 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
 }
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful'>>): string {
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
   return [
     `${o.shown} shown`,
     `${o.opened} opened`,
     `${o.store_visits ?? 0} went to your store`,
+    (o.code_copies ?? 0) > 0 ? `${o.code_copies} copied the code` : null,
     `${o.contacted} contacted`,
     (o.not_useful ?? 0) > 0 ? `${o.not_useful} not useful` : null,
   ].filter(Boolean).join(' · ')
@@ -173,12 +183,12 @@ function pickFields(o: OfferFields): OfferFields {
   return {
     title: o.title, body: o.body, image_url: o.image_url, link_url: o.link_url,
     country_ids: o.country_ids ?? [], area: o.area, roles: o.roles ?? [], starts_at: o.starts_at, ends_at: o.ends_at,
-    everywhere: o.everywhere ?? false, regions: o.regions ?? [],
+    everywhere: o.everywhere ?? false, regions: o.regions ?? [], perk: o.perk ?? null, promo_code: o.promo_code ?? null,
   }
 }
 
 export const EMPTY_OFFER: OfferFields = {
-  title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null, everywhere: false, regions: [],
+  title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null, everywhere: false, regions: [], perk: '', promo_code: '',
 }
 
 // ── Content rules (B2) ──────────────────────────────────────────────────────
@@ -207,10 +217,14 @@ export function unprovableClaim(text: string | null | undefined): string | null 
 
 /** What still blocks "Publish", in the editor's order, or null. */
 export function offerMissing(f: OfferFields): string | null {
+  // A real photo makes offers look trustworthy; required to publish (2026-11-07, client-side so old apps keep working).
+  if (!f.image_url) return 'Add a photo'
   if (!f.title?.trim()) return 'Add a title'
   if (f.title.trim().length > OFFER_TITLE_MAX) return `Keep the title under ${OFFER_TITLE_MAX} characters`
   if (!f.body?.trim()) return 'Say what members get'
   if (f.body.trim().length > OFFER_BODY_MAX) return `Keep it under ${OFFER_BODY_MAX} characters`
+  if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return `Keep the perk under ${OFFER_PERK_MAX} characters`
+  if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return 'Use letters, numbers, - or _ in the code'
   if (!normalizeOfferLink(f.link_url)) return 'Add a link that starts with https'
   if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return 'Choose where members live'
   if (f.roles.length === 0) return 'Choose who it is for'
@@ -303,6 +317,8 @@ export async function saveOffer(offerId: string | null, f: OfferFields, submit: 
     p_submit: submit,
     p_everywhere: f.everywhere ?? false,
     p_regions: f.regions ?? [],
+    p_perk: (f.perk ?? '').trim(),
+    p_promo_code: (f.promo_code ?? '').trim(),
   })
   if (error) throw error
   return data as string

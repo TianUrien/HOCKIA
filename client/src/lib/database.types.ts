@@ -1043,6 +1043,8 @@ export type Database = {
           live_at: string | null
           pending: Json | null
           pending_status: string | null
+          perk: string | null
+          promo_code: string | null
           regions: string[]
           review_note: string | null
           reviewed_at: string | null
@@ -1069,6 +1071,8 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          perk?: string | null
+          promo_code?: string | null
           regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
@@ -1095,6 +1099,8 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          perk?: string | null
+          promo_code?: string | null
           regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
@@ -7730,6 +7736,21 @@ export type Database = {
         }
         Returns: Json
       }
+      get_ambassador_candidates: {
+        Args: { p_country_id?: number }
+        Returns: {
+          base_city: string
+          base_country_id: number
+          full_name: string
+          avatar_url: string
+          instagram_followers: number
+          instagram_handle: string
+          invited: boolean
+          player_position: string
+          playing_category: string
+          profile_id: string
+        }[]
+      }
       get_brand_offer_detail: {
         Args: { p_offer_id: string }
         Returns: {
@@ -7749,6 +7770,8 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
+          promo_code: string
           regions: string[]
           member_country_id: number
           roles: string[]
@@ -7775,6 +7798,7 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
           regions: string[]
           member_country_id: number
           roles: string[]
@@ -7802,6 +7826,7 @@ export type Database = {
           image_url: string
           kind: string
           link_url: string
+          perk: string
           member_country_id: number
           title: string
         }[]
@@ -7818,6 +7843,10 @@ export type Database = {
       }
       get_my_goal_actions: { Args: never; Returns: Json }
       goal_later: { Args: never; Returns: number }
+      set_my_brand_partnership: {
+        Args: { p_instagram_followers?: number; p_instagram_handle?: string; p_open: boolean; p_open_to_other_brands: boolean }
+        Returns: Json
+      }
       set_my_goal: {
         Args: { p_options: string[]; p_other_text?: string }
         Returns: undefined
@@ -7840,6 +7869,7 @@ export type Database = {
           image_url: string
           kind: string
           link_url: string
+          perk: string
           need: string
           title: string
         }[]
@@ -7854,6 +7884,8 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: { brand_name: string; country_id: number; created_at: string; id: string; link: string; note: string; suggested_by: string }[]
       }
+      get_my_brand_partnership: { Args: never; Returns: Json }
+      get_my_brand_results: { Args: { p_days?: number }; Returns: Json }
       get_my_brand_offer_totals: {
         Args: { p_days?: number }
         Returns: {
@@ -7877,6 +7909,9 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
+          promo_code: string
+          code_copies: number
           regions: string[]
           live_at: string
           not_useful: number
@@ -7902,6 +7937,8 @@ export type Database = {
           p_country_ids: number[]
           p_ends_at: string
           p_everywhere?: boolean
+          p_perk?: string
+          p_promo_code?: string
           p_regions?: string[]
           p_image_url: string
           p_link_url: string

@@ -110,3 +110,9 @@ Principles: Pro buys reach and tools, never a better position than relevance all
 - Reach: Everywhere / regions / countries (`brand_offers.everywhere`, `brand_offers.regions`), the UK as one family, and "Who you could reach" as a live line in the editor (`get_brand_offer_reach`, 5-member threshold).
 - Members without a country: Home card to confirm it (`CountryConfirmCard`).
 Still to build: the Results screen, offer price/code fields, a brand Home, ambassador candidates.
+
+## Built 2026-11-07 (brand evaluation P1)
+- Offer perk and promo code (`brand_offers.perk`, `brand_offers.promo_code`; "codes copied" per offer); photo required to publish.
+- Results screen `/dashboard/results` (`get_my_brand_results`): waiting replies, contacted vs previous period, funnel, next step, per-offer table, people who contacted the brand, market, who saw the offers (country / role / surface, 5+ only), products, ambassadors and followers. Not yet: the weekly "Did your change work?" chart.
+- Brand Home summary (`BrandHomeSummary`) above the feed.
+- Ambassador candidates `/dashboard/ambassadors` (`get_ambassador_candidates`) and the player opt-in `/settings/brand-partnerships` (`brand_partnership_prefs`, declared Instagram followers).

@@ -58,6 +58,7 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
   it('writes the status line for each state', () => {
     expect(offerStatusLine(offer(), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted')
     expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted · 2 not useful')
+    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 3 copied the code · 5 contacted')
     expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")
@@ -95,8 +96,12 @@ describe('brand offers: content rules (Figma B2)', () => {
   })
 
   it('names the first thing missing before Send for review', () => {
-    const base = offerShownFields(offer())
+    const base = offerShownFields(offer({ image_url: 'https://cdn.example.com/kit.jpg' }))
     expect(offerMissing(base)).toBeNull()
+    expect(offerMissing({ ...base, image_url: null })).toBe('Add a photo')
+    expect(offerMissing({ ...base, perk: 'x'.repeat(25) })).toBe('Keep the perk under 24 characters')
+    expect(offerMissing({ ...base, promo_code: 'HOCKIA 15!' })).toBe('Use letters, numbers, - or _ in the code')
+    expect(offerMissing({ ...base, perk: '15% off', promo_code: 'HOCKIA15' })).toBeNull()
     expect(offerMissing({ ...base, title: ' ' })).toBe('Add a title')
     expect(offerMissing({ ...base, link_url: 'http://x.com' })).toBe('Add a link that starts with https')
     expect(offerMissing({ ...base, country_ids: [] })).toBe('Choose where members live')

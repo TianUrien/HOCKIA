@@ -6,7 +6,7 @@ import { EMPTY_OFFER, audienceLine, offerMissing, offerReasonLine, reachLine } f
 import { detailReasonLine, offerForLine } from '@/lib/memberOffers'
 
 // Brand evaluation 2026-11-07, P0: Everywhere, regions and the reach line.
-const base = { ...EMPTY_OFFER, title: 'Kit', body: '15% off', link_url: 'https://shop.example.com', roles: ['player' as const] }
+const base = { ...EMPTY_OFFER, image_url: 'https://cdn.example.com/kit.jpg', title: 'Kit', body: '15% off', link_url: 'https://shop.example.com', roles: ['player' as const] }
 
 describe('where an offer reaches', () => {
   it('needs a place: Everywhere, a region or a country', () => {

@@ -180,6 +180,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         )}
         <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about opportunities." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
         <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} opportunities` : 'Not set'} onClick={() => setLookingFor(true)} />
+        {/* Players only, off by default: brands that sell where you live can invite you (2026-11-07). */}
+        {isPlayer && <SettingsRow title="Brand partnerships" subtitle="Let brands find you and invite you as an ambassador." onClick={() => navigate('/settings/brand-partnerships')} />}
       </SettingsGroup>
       )}
 
