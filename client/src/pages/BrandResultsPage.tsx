@@ -54,7 +54,7 @@ export default function BrandResultsPage() {
           <h1 className="hidden font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1 lg:block">Results</h1>
           <SegmentedControl<string>
             ariaLabel="Period"
-            className="ml-auto"
+            className="ml-auto w-[216px] shrink-0"
             value={String(days)}
             onChange={(v) => setDays(Number(v) as ResultPeriod)}
             options={RESULT_PERIODS.map((d) => ({ value: String(d), label: `${d}d` }))}
@@ -257,7 +257,7 @@ function Breakdown({ total, tabs }: { total: number; tabs: { key: string; label:
   const counted = rows.reduce((s, x) => s + x.n, 0)
   return (
     <div className="mt-3">
-      <SegmentedControl<string> ariaLabel="Breakdown" value={tab} onChange={setTab} options={tabs.map((t) => ({ value: t.key, label: t.label }))} className="w-fit" />
+      <SegmentedControl<string> ariaLabel="Breakdown" value={tab} onChange={setTab} options={tabs.map((t) => ({ value: t.key, label: t.label }))} className="w-full max-w-[300px]" />
       {total === 0 ? (
         <p className="mt-3 text-row text-ink-2">Nobody has seen your offers in this period yet.</p>
       ) : (
