@@ -1340,6 +1340,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   ].join(' · ')
 
   const isBusy = isLoading || isSearching || authLoading
+  // A brand never lists itself, so on the Brands tab "No members yet" reads as broken (iOS audit 2026-11-06).
+  const brandSeesOnlyItself = roleFilter === 'brand' && currentUserProfile?.role === 'brand'
   const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
 
@@ -1374,11 +1376,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
             <Search className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
           </span>
-          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed || scopeHasNarrowing ? 'No members match' : 'No members yet'}</h3>
+          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed || scopeHasNarrowing ? 'No members match' : brandSeesOnlyItself ? 'No other brands yet' : 'No members yet'}</h3>
           <p className="mt-2 text-row text-ink-2">
             {scopeHasNarrowing
               ? 'No players match your recruiting context yet. Tap “Show everyone” to widen, or change the context.'
-              : isNarrowed ? 'Try a different search or fewer filters. New members join every week.' : 'New members join every week.'}
+              : isNarrowed ? 'Try a different search or fewer filters. New members join every week.'
+              : brandSeesOnlyItself ? 'Other brands show up here when they join Hockia.' : 'New members join every week.'}
           </p>
           {isNarrowed && (
             <button type="button" onClick={clearFilters} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-line bg-white px-6 text-row font-semibold text-ink-1">

@@ -43,6 +43,7 @@ import { RecruiterRoles } from '@/components/club/ClubOpportunitiesScreen'
 import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
+import { isActiveApplication } from '@/hooks/useMyApplicationsAll'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
@@ -104,6 +105,7 @@ export default function OpportunitiesPage() {
   // The viewer's own status per applied role — the preview shows the real
   // status (No reply, Shortlisted…) instead of a generic "submitted".
   const [applicationStatuses, setApplicationStatuses] = useState<Record<string, string>>({})
+  const [activeApplicationCount, setActiveApplicationCount] = useState(0)
   // Clubs and coaches post, edit and post again in the three-step flow
   // (PostRoleScreen) on every width; the old create modal is gone from here.
   const postNew = () => navigate('/dashboard/opportunities/new')
@@ -364,13 +366,15 @@ export default function OpportunitiesPage() {
           queryFn: async () => {
             const { data, error } = await supabase
               .from('opportunity_applications')
-              .select('opportunity_id, status')
+              .select('opportunity_id, status, opportunities(status)')
               .eq('applicant_id', user.id)
             if (error) throw error
-            return (data as { opportunity_id: string; status: string | null }[]) ?? []
+            return (data as unknown as { opportunity_id: string; status: string | null; opportunities: { status: string | null } | null }[]) ?? []
           },
         })
         setUserApplications(appliedRows.map((app) => app.opportunity_id))
+        // The Applied tab opens My applications on Active: count what it shows there, not the archive too.
+        setActiveApplicationCount(appliedRows.filter((a) => isActiveApplication(a.status, a.opportunities?.status === 'open')).length)
         setApplicationStatuses(Object.fromEntries(appliedRows.filter((a) => a.status).map((a) => [a.opportunity_id, a.status as string])))
       } catch (error) {
         logger.error('Error fetching user applications:', error)
@@ -609,7 +613,7 @@ export default function OpportunitiesPage() {
                   }}
                   options={[
                     { value: 'roles', label: 'Opportunities' },
-                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
                     ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
                   ]}
                 />
@@ -626,7 +630,7 @@ export default function OpportunitiesPage() {
                   onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
                   options={[
                     { value: 'open', label: 'Open opportunities', shortLabel: 'Open', count: mobileList.length },
-                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
                   ]}
                 />
               </div>
@@ -687,7 +691,7 @@ export default function OpportunitiesPage() {
                   }}
                   options={[
                     { value: 'open', label: profile.role === 'coach' ? 'Opportunities' : 'Open opportunities', shortLabel: profile.role === 'coach' ? undefined : 'Open', count: mobileList.length },
-                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
                     ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
                   ]}
                 />
