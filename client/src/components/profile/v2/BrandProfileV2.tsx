@@ -281,6 +281,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 <button type="button" onClick={props.onInvite} className={cn('flex h-11 flex-1 items-center justify-center rounded-full text-[16px] font-semibold', invitesPrimary ? 'bg-hockia-primary text-white' : 'border border-line bg-white text-hockia-primary')}>+ Invite athletes</button>
                 {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">View invites</button>}
               </div>
+              {/* Players who said yes to brand partnerships, where the brand sells (2026-11-07). */}
+              <button type="button" onClick={() => navigate('/dashboard/ambassadors')} className="flex h-11 w-full items-center justify-center text-[15px] font-semibold text-hockia-primary" data-testid="brand-find-candidates">Find candidates ›</button>
             </div>
   )
   const reachStats = (

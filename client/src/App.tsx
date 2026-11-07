@@ -100,6 +100,8 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 const NeedPage = lazyWithRetry(() => import('@/pages/NeedPage'))
 const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
 const BrandResultsPage = lazyWithRetry(() => import('@/pages/BrandResultsPage'))
+const BrandAmbassadorsPage = lazyWithRetry(() => import('@/pages/BrandAmbassadorsPage'))
+const BrandPartnershipsPage = lazyWithRetry(() => import('@/pages/BrandPartnershipsPage'))
 const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
 
 // Lazy load admin components (code splitting)
@@ -453,6 +455,7 @@ function App() {
                 <Route path="/offers/:offerId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OfferDetailPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage /></ErrorBoundary>} />
                 <Route path="/dashboard/results" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandResultsPage /></ErrorBoundary>} />
+                <Route path="/dashboard/ambassadors" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandAmbassadorsPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />
 
@@ -500,6 +503,7 @@ function App() {
                     to /home so the URL has a real destination. */}
                 <Route path="/notifications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NotificationsRedirect /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
+                <Route path="/settings/brand-partnerships" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandPartnershipsPage /></ErrorBoundary>} />
                 <Route path="/settings/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
                 {/* Bare /dashboard 404'd in production — the bottom-nav
                     label is "Dashboard" and users typed it directly. Redirect

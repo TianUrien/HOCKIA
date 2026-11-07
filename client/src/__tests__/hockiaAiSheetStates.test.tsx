@@ -332,7 +332,7 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
     openMedium()
     // OPEN rows show they leave the chat (design 2026-11-06).
-    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(2)
+    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(3)
     fireEvent.click(screen.getByText('How did my offers do this month?'))
     expect(sendMessage).not.toHaveBeenCalled()
     expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/results')
