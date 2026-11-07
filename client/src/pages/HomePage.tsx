@@ -10,6 +10,7 @@ import { NextStepCard } from '@/components/home/v1/NextStepCard'
 import { PeopleRow } from '@/components/home/v1/PeopleRow'
 import { GoalCard } from '@/components/home/goal/GoalCard'
 import { GearRail } from '@/components/offers/GearRail'
+import { CountryConfirmCard } from '@/components/home/CountryConfirmCard'
 import { SigningPromptSheet } from '@/components/home/v1/SigningPromptSheet'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -77,6 +78,8 @@ export default function HomePage() {
             header={
               <>
                 {/* Goal first, then the roles card, then gear and deals (Figma YG G1 / HR1, founder 2026-10-25). */}
+                {/* No country on the profile: ask first, everything below picks by place (2026-11-07). */}
+                <CountryConfirmCard />
                 <GoalCard />
                 <NextStepCard onCompose={openComposer} />
                 <GearRail />

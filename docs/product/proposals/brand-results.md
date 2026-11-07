@@ -103,3 +103,10 @@ Principles: Pro buys reach and tools, never a better position than relevance all
 - [Evidence] Brands today get views, search appearances and store taps (code, 2026-10-22).
 - [Hypothesis] Seeing contacts and "Not useful" makes brands improve offers instead of leaving.
 - [Hypothesis] Brands will pay monthly once contacts arrive every month. To test: interviews with active brands (`hockia-member-interviews`).
+
+## Built 2026-11-07 (brand evaluation P0)
+- Store visits: "went to your store" per offer and "To your store" in the 30-day tiles (`brand_offer_store_tap`, same fences).
+- UTM tags on every offer and product store link (`lib/outboundLink.ts`): utm_source=hockia, utm_medium offer/product, utm_campaign from the title, utm_content = surface; the brand's own tags win.
+- Reach: Everywhere / regions / countries (`brand_offers.everywhere`, `brand_offers.regions`), the UK as one family, and "Who you could reach" as a live line in the editor (`get_brand_offer_reach`, 5-member threshold).
+- Members without a country: Home card to confirm it (`CountryConfirmCard`).
+Still to build: the Results screen, offer price/code fields, a brand Home, ambassador candidates.
