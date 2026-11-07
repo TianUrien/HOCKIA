@@ -99,7 +99,7 @@ describe('brand offers: content rules (Figma B2)', () => {
     expect(offerMissing(base)).toBeNull()
     expect(offerMissing({ ...base, title: ' ' })).toBe('Add a title')
     expect(offerMissing({ ...base, link_url: 'http://x.com' })).toBe('Add a link that starts with https')
-    expect(offerMissing({ ...base, country_ids: [] })).toBe('Choose at least one country')
+    expect(offerMissing({ ...base, country_ids: [] })).toBe('Choose where members live')
     expect(offerMissing({ ...base, roles: [] })).toBe('Choose who it is for')
   })
 

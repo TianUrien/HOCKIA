@@ -101,7 +101,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
     )
   }
 
-  const reasonText = aiTopic ? hockiaAiReasonLine(aiTopic, country) : offerReasonLine(country, role)
+  const reasonText = aiTopic ? hockiaAiReasonLine(aiTopic, country) : offerReasonLine(country, role, offer.everywhere ?? false)
   const reasonBox = (
     <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-row text-ink-2">
       <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
