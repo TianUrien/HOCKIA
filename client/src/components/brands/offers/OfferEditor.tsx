@@ -393,7 +393,7 @@ function PlaceField({ everywhere, regions, countryIds, names, onEverywhere, onRe
       <p className="mt-1.5 text-caption text-ink-3">
         {everywhere
           ? 'Every member it is for, wherever they live, including members who have not added their country yet.'
-          : 'Offers reach members by where they live, never by nationality. England, Scotland, Wales and Northern Ireland count as the United Kingdom.'}
+          : 'Offers reach members by where they live, never by nationality. An offer for the United Kingdom also reaches England, Scotland, Wales and Northern Ireland, and an offer for one of them reaches members who just say United Kingdom.'}
       </p>
 
       <BottomSheet open={open === 'region'} onClose={close} ariaLabel="Add region">
