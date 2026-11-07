@@ -396,7 +396,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           <div className="mt-6 grid grid-cols-[minmax(0,1fr)_360px] items-start gap-6 min-[1440px]:grid-cols-[minmax(0,1fr)_416px]">
             <div className="flex min-w-0 flex-col gap-6">
               {!myOffers.isLoading && (
-                <OffersCard desktop offers={myOffers.offers} totals={offerTotals} onCreate={() => navigate('/dashboard/offers/new')} onOpen={() => navigate('/dashboard/offers')} />
+                <OffersCard desktop offers={myOffers.offers} totals={offerTotals} onCreate={() => navigate('/dashboard/offers/new')} onOpen={() => navigate('/dashboard/offers')} onResults={() => navigate('/dashboard/results')} />
               )}
               {showInvites && invitesCard}
               <div className={card}>
@@ -527,6 +527,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               totals={offerTotals}
               onCreate={() => navigate('/dashboard/offers/new')}
               onOpen={() => navigate('/dashboard/offers')}
+              onResults={() => navigate('/dashboard/results')}
             />
           )}
           {stepCopy && step && <PrimaryCard role="brand" stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={() => (stepCopy.action.kind === 'route' ? navigate(stepCopy.action.to) : props.onEdit?.())} secondary={invitesPrimary || offersPrimary} />}

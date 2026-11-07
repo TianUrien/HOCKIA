@@ -149,7 +149,7 @@ export function roleOptionsFor(profile: AiViewer, activeRoleTitle?: string | nul
       // Ambassadors: no per-brand country list on the server yet, so no "in my countries".
       return [
         ask('FIND', 'Find ambassador candidates', 'Find player ambassadors'),
-        go('How did my offers do this month?', '/dashboard/offers'),
+        go('How did my offers do this month?', '/dashboard/results'),
         go('Write a new offer for members', '/dashboard/offers/new'),
       ]
     case 'umpire':

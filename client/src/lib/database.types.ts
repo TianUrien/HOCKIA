@@ -7865,6 +7865,7 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: { brand_name: string; country_id: number; created_at: string; id: string; link: string; note: string; suggested_by: string }[]
       }
+      get_my_brand_results: { Args: { p_days?: number }; Returns: Json }
       get_my_brand_offer_totals: {
         Args: { p_days?: number }
         Returns: {
