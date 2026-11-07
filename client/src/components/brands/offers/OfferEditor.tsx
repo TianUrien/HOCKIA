@@ -13,6 +13,7 @@ import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import {
   OFFER_BODY_MAX,
+  OFFER_PERK_MAX,
   OFFER_REGIONS,
   OFFER_ROLES,
   OFFER_TITLE_MAX,
@@ -132,6 +133,19 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
             ? `"${claim}" is a claim members can't check. Say exactly what a member gets instead.`
             : 'Say exactly what a member gets. No claims you can’t back up, like "best" or "cheapest".'}
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <div className={fieldLabelRow}><label htmlFor="offer-perk">Perk</label><span className={fieldOptionalTag}>Optional</span></div>
+          <input id="offer-perk" value={f.perk ?? ''} maxLength={OFFER_PERK_MAX} onChange={(e) => set('perk', e.target.value)} placeholder="15% off" className={fieldInput} data-testid="offer-perk-input" />
+          <p className="mt-1.5 text-caption text-ink-3">Shown on the card, so members see the deal at a glance.</p>
+        </div>
+        <div>
+          <div className={fieldLabelRow}><label htmlFor="offer-code">Code</label><span className={fieldOptionalTag}>Optional</span></div>
+          <input id="offer-code" value={f.promo_code ?? ''} maxLength={30} autoCapitalize="characters" autoCorrect="off" spellCheck={false} onChange={(e) => set('promo_code', e.target.value.replace(/\s+/g, '').toUpperCase())} placeholder="HOCKIA15" className={fieldInput} data-testid="offer-code-input" />
+          <p className="mt-1.5 text-caption text-ink-3">Members copy it on the offer page. Use a code only for Hockia to count sales in your store.</p>
+        </div>
       </div>
 
       <div>

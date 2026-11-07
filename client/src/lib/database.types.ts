@@ -1043,6 +1043,8 @@ export type Database = {
           live_at: string | null
           pending: Json | null
           pending_status: string | null
+          perk: string | null
+          promo_code: string | null
           regions: string[]
           review_note: string | null
           reviewed_at: string | null
@@ -1069,6 +1071,8 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          perk?: string | null
+          promo_code?: string | null
           regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
@@ -1095,6 +1099,8 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          perk?: string | null
+          promo_code?: string | null
           regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
@@ -7749,6 +7755,8 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
+          promo_code: string
           regions: string[]
           member_country_id: number
           roles: string[]
@@ -7775,6 +7783,7 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
           regions: string[]
           member_country_id: number
           roles: string[]
@@ -7802,6 +7811,7 @@ export type Database = {
           image_url: string
           kind: string
           link_url: string
+          perk: string
           member_country_id: number
           title: string
         }[]
@@ -7840,6 +7850,7 @@ export type Database = {
           image_url: string
           kind: string
           link_url: string
+          perk: string
           need: string
           title: string
         }[]
@@ -7877,6 +7888,9 @@ export type Database = {
           id: string
           image_url: string
           link_url: string
+          perk: string
+          promo_code: string
+          code_copies: number
           regions: string[]
           live_at: string
           not_useful: number
@@ -7902,6 +7916,8 @@ export type Database = {
           p_country_ids: number[]
           p_ends_at: string
           p_everywhere?: boolean
+          p_perk?: string
+          p_promo_code?: string
           p_regions?: string[]
           p_image_url: string
           p_link_url: string

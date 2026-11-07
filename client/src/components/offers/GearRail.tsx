@@ -16,7 +16,7 @@ import { MoreMenu } from '@/components/safety/MoreMenu'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { SectionHeader } from '@/components/home/v1/primitives'
 import { MemberOfferCard } from './MemberOfferCard'
-import { BrandLogo, OfferHero } from './OfferVisuals'
+import { BrandLogo, OfferHero, PerkPill } from './OfferVisuals'
 
 /**
  * "Gear and deals near you" on Home (Figma page 02, YG: HR1; founder
@@ -39,6 +39,7 @@ interface RailTile {
   image_url: string | null
   link_url: string | null
   member_country_id: number | null
+  perk?: string | null
 }
 
 const HIDE_KEY = 'hockia-home-rail-hidden-until'
@@ -215,7 +216,7 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
             </span>
           ) : null}
           {tile.kind === 'offer' ? (
-            <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary">Offer</span>
+            <PerkPill perk={tile.perk} className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary" />
           ) : null}
         </span>
         <span className="block p-2.5">

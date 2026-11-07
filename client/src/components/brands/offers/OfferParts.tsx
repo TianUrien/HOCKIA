@@ -108,6 +108,7 @@ export function OfferPreviewCard({ fields, brandName, reasonCountry, reasonRole,
       </div>
       <div className="p-4">
         <p className="text-secondary text-ink-2">{brandName}</p>
+        {fields.perk?.trim() ? <span className="mt-1 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary">{fields.perk.trim()}</span> : null}
         <p className="mt-0.5 text-body font-semibold text-ink-1">{fields.title?.trim() || 'Your title'}</p>
         <p className="mt-1 text-row text-ink-2">{fields.body?.trim() || 'What members get'}</p>
         <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-secondary text-ink-2">

@@ -32,10 +32,13 @@ export interface MemberOffer {
   /** Reach (2026-11-07); absent from servers before it. */
   everywhere?: boolean
   regions?: string[]
+  perk?: string | null
 }
 
 export interface MemberOfferDetail extends MemberOffer {
   eligible: boolean
+  /** Signed-in members only. */
+  promo_code?: string | null
 }
 
 export type OfferSurface = 'home' | 'home_rail' | 'hockia_ai' | 'brands_tab' | 'offer_detail' | 'marketplace' | 'need_page' | 'moment_sheet'
@@ -81,7 +84,7 @@ export async function hideBrandOffers(brandId: string): Promise<void> {
 
 // ── Events (aggregates only for brands) ─────────────────────────────────────
 
-export type OfferEvent = 'brand_offer_impression' | 'brand_offer_open' | 'brand_offer_store_tap' | 'brand_offer_contact' | 'brand_offer_dismiss'
+export type OfferEvent = 'brand_offer_impression' | 'brand_offer_open' | 'brand_offer_store_tap' | 'brand_offer_contact' | 'brand_offer_dismiss' | 'brand_offer_code_copy'
 
 export function trackOffer(event: OfferEvent, offerId: string, surface: OfferSurface, extra?: Record<string, unknown>): void {
   trackDbEvent(event, 'brand_offer', offerId, { offer_id: offerId, surface, ...extra })
