@@ -64,7 +64,7 @@ export function OfferRow({ offer, onOpen, onMenu, selected = false }: OfferRowPr
           <OfferThumb url={shown.image_url} className="h-14 w-14 shrink-0 rounded-[14px]" />
           <span className="min-w-0 flex-1 pt-0.5">
             <span className="block truncate text-body font-semibold text-ink-1">{shown.title || 'Untitled offer'}</span>
-            <span className="mt-0.5 block text-row text-ink-2">{audienceLine(names(shown.country_ids), shown.roles) || 'No audience yet'}</span>
+            <span className="mt-0.5 block text-row text-ink-2">{audienceLine(names(shown.country_ids), shown.roles, { everywhere: shown.everywhere, regions: shown.regions }) || 'No audience yet'}</span>
           </span>
         </button>
         <button
@@ -112,7 +112,7 @@ export function OfferPreviewCard({ fields, brandName, reasonCountry, reasonRole,
         <p className="mt-1 text-row text-ink-2">{fields.body?.trim() || 'What members get'}</p>
         <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-secondary text-ink-2">
           <Info className="mt-px h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
-          {offerReasonLine(reasonCountry ?? null, reasonRole)}
+          {offerReasonLine(reasonCountry ?? null, reasonRole, fields.everywhere ?? false)}
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span className="inline-flex h-9 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary">See offer</span>

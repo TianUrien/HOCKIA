@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Camera, Check, ChevronRight, Lock, MessageCircle, Package, Plus, Settings, Share, UserPlus } from 'lucide-react'
@@ -190,7 +191,8 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
     // Only a tap that actually opens the store counts (QA F7).
     if (!p.external_url) return
     if (hasAnalyticsConsent()) trackDbEvent('brand_product_click', 'brand_product', p.id, { brand_id: brand.id })
-    window.open(/^https?:\/\//i.test(p.external_url) ? p.external_url : `https://${p.external_url}`, '_blank', 'noopener,noreferrer')
+    const url = /^https?:\/\//i.test(p.external_url) ? p.external_url : `https://${p.external_url}`
+    void openOutbound(tagOutboundLink(url, 'product', p.name, 'brand_profile'))
   }
 
   // ── Own: next step, stats, taps ─────────────────────────────────────────

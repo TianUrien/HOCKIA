@@ -29,6 +29,9 @@ export interface MemberOffer {
   brand_profile_id: string
   brand_open_to_partners: boolean
   member_country_id: number | null
+  /** Reach (2026-11-07); absent from servers before it. */
+  everywhere?: boolean
+  regions?: string[]
 }
 
 export interface MemberOfferDetail extends MemberOffer {
@@ -117,13 +120,14 @@ export function reportOfferContactIfPending(recipientId: string | null | undefin
 // ── Copy ────────────────────────────────────────────────────────────────────
 
 /** "Players and coaches who live in England or the Netherlands" (OD1 For row). */
-export function offerForLine(roles: OfferRole[], countryNames: string[]): string {
+export function offerForLine(roles: OfferRole[], countryNames: string[], place?: { everywhere?: boolean; regions?: string[] }): string {
   const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
   const lower = who.map((w, i) => (i === 0 ? w : w.toLowerCase()))
   // Every role targeted reads as "Members" (design review 2026-10-25); a subset keeps the list.
   const everyone = OFFER_ROLES.every((x) => roles.includes(x.value))
   const whoText = everyone || lower.length === 0 ? 'Members' : lower.length === 1 ? lower[0] : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
-  const named = countryNames.map(countryInSentence)
+  if (place?.everywhere) return `${whoText} everywhere`
+  const named = [...(place?.regions ?? []), ...countryNames.map(countryInSentence)]
   const where = named.length > 1 ? `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}` : named[0] ?? ''
   return where ? `${whoText} who live in ${where}` : whoText
 }
@@ -139,7 +143,8 @@ export function storeLabel(link: string): string {
 }
 
 /** OD1 reason line (no approval step since 2026-10-25, so no "checked" claim). */
-export function detailReasonLine(countryName: string | null): string | null {
+export function detailReasonLine(countryName: string | null, everywhere = false): string | null {
+  if (everywhere) return 'You see this because it is for members everywhere.'
   return countryName ? `You see this because you live in ${countryInSentence(countryName)}.` : null
 }
 

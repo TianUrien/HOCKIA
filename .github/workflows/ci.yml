@@ -331,16 +331,19 @@ jobs:
           # Budget bumped 5200KB → 5400KB on 2026-10-18 (founder-approved) — Hockia AI
           # (apply, role entry, chat history) took raw to 5198KB; next steps need room.
           # First-load gate is unchanged (483KB).
+          # Budget bumped 5400KB → 5500KB on 2026-11-07 (founder-approved) — brand
+          # offers reach (Everywhere/regions, reach preview, store visits) and the
+          # member country card took raw to 5406KB. First-load gate is unchanged (508KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5427200 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5400KB ($(( TOTAL_KB * 100 / 5400 ))%)"
+          if [ "$TOTAL_JS" -gt 5529600 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5500KB ($(( TOTAL_KB * 100 / 5500 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.4MB
-          if [ "$TOTAL_JS" -gt 5529600 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5400KB"
+          # Secondary gate: raw total must stay under 5.5MB
+          if [ "$TOTAL_JS" -gt 5632000 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5500KB"
             exit 1
           fi
 

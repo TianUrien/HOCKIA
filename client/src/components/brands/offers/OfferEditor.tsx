@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Loader2, Plus, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -12,9 +13,12 @@ import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import {
   OFFER_BODY_MAX,
+  OFFER_REGIONS,
   OFFER_ROLES,
   OFFER_TITLE_MAX,
+  fetchOfferReach,
   offerMissing,
+  reachLine,
   unprovableClaim,
   type BrandOffer,
   type OfferFields,
@@ -145,15 +149,25 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         <p className="mt-1.5 text-caption text-ink-3">Members open this page from the offer.</p>
       </div>
 
-      <CountriesField value={f.country_ids} onChange={(ids) => set('country_ids', ids)} names={countryNames} />
-      <input
-        aria-label="Region or city (optional)"
-        value={f.area ?? ''}
-        maxLength={80}
-        onChange={(e) => set('area', e.target.value)}
-        placeholder="Optional: region or city"
-        className={cn(fieldInput, '-mt-3')}
+      <PlaceField
+        everywhere={f.everywhere ?? false}
+        regions={f.regions ?? []}
+        countryIds={f.country_ids}
+        names={countryNames}
+        onEverywhere={(on) => setF((prev) => ({ ...prev, everywhere: on, ...(on ? { regions: [], country_ids: [], area: '' } : {}) }))}
+        onRegions={(r) => set('regions', r)}
+        onCountries={(ids) => set('country_ids', ids)}
       />
+      {f.everywhere ? null : (
+        <input
+          aria-label="Region or city (optional)"
+          value={f.area ?? ''}
+          maxLength={80}
+          onChange={(e) => set('area', e.target.value)}
+          placeholder="Optional: region or city"
+          className={cn(fieldInput, '-mt-3')}
+        />
+      )}
 
       <fieldset>
         <legend className={fieldLabel}>Who it&rsquo;s for</legend>
@@ -174,6 +188,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           })}
         </div>
       </fieldset>
+      <ReachLine fields={f} />
 
       <div className="space-y-4">
         <div>
@@ -319,33 +334,82 @@ function PhotoField({ url, userId, onChange }: { url: string | null; userId: str
   )
 }
 
-function CountriesField({ value, onChange, names }: { value: number[]; onChange: (ids: number[]) => void; names: string[] }) {
+/** "Where members live" (2026-11-07): Everywhere, whole regions, or countries. */
+function PlaceField({ everywhere, regions, countryIds, names, onEverywhere, onRegions, onCountries }: {
+  everywhere: boolean
+  regions: string[]
+  countryIds: number[]
+  names: string[]
+  onEverywhere: (on: boolean) => void
+  onRegions: (regions: string[]) => void
+  onCountries: (ids: number[]) => void
+}) {
   const { countries } = useCountries()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState<'country' | 'region' | null>(null)
   const [q, setQ] = useState('')
-  const results = useMemo(() => searchCountries(countries, q).filter((c) => !value.includes(c.id)).slice(0, 80), [countries, q, value])
+  const results = useMemo(() => searchCountries(countries, q).filter((c) => !countryIds.includes(c.id)).slice(0, 80), [countries, q, countryIds])
+  const close = () => { setOpen(null); setQ('') }
+  const removable = 'inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-soft pl-4 pr-2 text-row font-semibold text-brand-primary'
+  const addChip = cn('inline-flex h-9 items-center gap-1 rounded-full px-4 text-row font-semibold', chipTone(false))
 
   return (
     <div>
       <p className={fieldLabel}>Where members live</p>
       <div className="flex flex-wrap gap-2">
-        {value.map((id, i) => (
-          <span key={id} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-soft pl-4 pr-2 text-row font-semibold text-brand-primary">
-            {names[i] ?? '…'}
-            <button type="button" aria-label={`Remove ${names[i] ?? 'country'}`} onClick={() => onChange(value.filter((v) => v !== id))} className="flex h-7 w-7 items-center justify-center rounded-full">
-              <X className="h-4 w-4" />
-            </button>
-          </span>
-        ))}
-        {value.length < MAX_COUNTRIES ? (
-          <button type="button" onClick={() => setOpen(true)} className={cn('inline-flex h-9 items-center gap-1 rounded-full px-4 text-row font-semibold', chipTone(false))} data-testid="offer-add-country">
-            <Plus className="h-4 w-4" /> Add country
-          </button>
-        ) : null}
+        <button type="button" aria-pressed={everywhere} onClick={() => onEverywhere(!everywhere)} className={cn('h-9 rounded-full px-4 text-row font-semibold', chipTone(everywhere))} data-testid="offer-everywhere">
+          Everywhere
+        </button>
+        {everywhere ? null : (
+          <>
+            {regions.map((r) => (
+              <span key={r} className={removable}>
+                {r}
+                <button type="button" aria-label={`Remove ${r}`} onClick={() => onRegions(regions.filter((x) => x !== r))} className="flex h-7 w-7 items-center justify-center rounded-full">
+                  <X className="h-4 w-4" />
+                </button>
+              </span>
+            ))}
+            {countryIds.map((id, i) => (
+              <span key={id} className={removable}>
+                {names[i] ?? '…'}
+                <button type="button" aria-label={`Remove ${names[i] ?? 'country'}`} onClick={() => onCountries(countryIds.filter((v) => v !== id))} className="flex h-7 w-7 items-center justify-center rounded-full">
+                  <X className="h-4 w-4" />
+                </button>
+              </span>
+            ))}
+            {regions.length < OFFER_REGIONS.length ? (
+              <button type="button" onClick={() => setOpen('region')} className={addChip} data-testid="offer-add-region">
+                <Plus className="h-4 w-4" /> Add region
+              </button>
+            ) : null}
+            {countryIds.length < MAX_COUNTRIES ? (
+              <button type="button" onClick={() => setOpen('country')} className={addChip} data-testid="offer-add-country">
+                <Plus className="h-4 w-4" /> Add country
+              </button>
+            ) : null}
+          </>
+        )}
       </div>
-      <p className="mt-1.5 text-caption text-ink-3">Offers reach members by where they live, never by nationality.</p>
+      <p className="mt-1.5 text-caption text-ink-3">
+        {everywhere
+          ? 'Every member it is for, wherever they live, including members who have not added their country yet.'
+          : 'Offers reach members by where they live, never by nationality. An offer for the United Kingdom also reaches England, Scotland, Wales and Northern Ireland, and an offer for one of them reaches members who just say United Kingdom.'}
+      </p>
 
-      <BottomSheet open={open} onClose={() => { setOpen(false); setQ('') }} ariaLabel="Add country">
+      <BottomSheet open={open === 'region'} onClose={close} ariaLabel="Add region">
+        <div className="px-5 pb-3 pt-1"><h2 className="text-title text-ink-1">Add region</h2></div>
+        <ul className="max-h-[50dvh] overflow-y-auto px-2 pb-3">
+          {OFFER_REGIONS.filter((r) => !regions.includes(r)).map((r) => (
+            <li key={r}>
+              <button type="button" onClick={() => { onRegions([...regions, r]); close() }} className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted">
+                {r}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </BottomSheet>
+
+      <BottomSheet open={open === 'country'} onClose={close} ariaLabel="Add country">
         <div className="px-5 pb-3 pt-1">
           <h2 className="text-title text-ink-1">Add country</h2>
           <div className="relative mt-3">
@@ -358,7 +422,7 @@ function CountriesField({ value, onChange, names }: { value: number[]; onChange:
             <li key={c.id}>
               <button
                 type="button"
-                onClick={() => { onChange([...value, c.id]); setOpen(false); setQ('') }}
+                onClick={() => { onCountries([...countryIds, c.id]); close() }}
                 className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
               >
                 {c.common_name || c.name}
@@ -368,5 +432,37 @@ function CountriesField({ value, onChange, names }: { value: number[]; onChange:
         </ul>
       </BottomSheet>
     </div>
+  )
+}
+
+/** How many members the offer reaches today, before publishing (counts under 5 hidden). */
+function ReachLine({ fields }: { fields: OfferFields }) {
+  const key = {
+    everywhere: fields.everywhere ?? false,
+    regions: [...(fields.regions ?? [])].sort(),
+    country_ids: [...fields.country_ids].sort((a, b) => a - b),
+    roles: [...fields.roles].sort(),
+    area: (fields.area ?? '').trim().toLowerCase(),
+  }
+  const [debounced, setDebounced] = useState(key)
+  const keyText = JSON.stringify(key)
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebounced(JSON.parse(keyText) as typeof key), 400)
+    return () => window.clearTimeout(t)
+  }, [keyText])
+  const ready = debounced.roles.length > 0 && (debounced.everywhere || debounced.regions.length > 0 || debounced.country_ids.length > 0)
+  const q = useQuery({
+    queryKey: ['brand-offer-reach', debounced],
+    enabled: ready,
+    staleTime: 60_000,
+    retry: false,
+    queryFn: () => fetchOfferReach(debounced),
+  })
+  if (!ready) return null
+  const text = q.isError ? null : reachLine(q.data ?? null, debounced.roles as OfferRole[])
+  return (
+    <p className="-mt-2 rounded-[12px] bg-surface-subtle px-3.5 py-2.5 text-row text-ink-1" aria-live="polite" data-testid="offer-reach">
+      {q.isLoading ? 'Counting members…' : text ?? 'Reach is not available right now.'}
+    </p>
   )
 }

@@ -1035,6 +1035,7 @@ export type Database = {
           country_ids: number[]
           created_at: string
           ended_at: string | null
+          everywhere: boolean
           ends_at: string | null
           id: string
           image_url: string | null
@@ -1042,6 +1043,7 @@ export type Database = {
           live_at: string | null
           pending: Json | null
           pending_status: string | null
+          regions: string[]
           review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1059,6 +1061,7 @@ export type Database = {
           country_ids?: number[]
           created_at?: string
           ended_at?: string | null
+          everywhere?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null
@@ -1066,6 +1069,7 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1083,6 +1087,7 @@ export type Database = {
           country_ids?: number[]
           created_at?: string
           ended_at?: string | null
+          everywhere?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null
@@ -1090,6 +1095,7 @@ export type Database = {
           live_at?: string | null
           pending?: Json | null
           pending_status?: string | null
+          regions?: string[]
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -7714,6 +7720,16 @@ export type Database = {
         Args: { p_offer_id: string; p_reason?: string }
         Returns: undefined
       }
+      get_brand_offer_reach: {
+        Args: {
+          p_area?: string
+          p_country_ids: number[]
+          p_everywhere: boolean
+          p_regions: string[]
+          p_roles: string[]
+        }
+        Returns: Json
+      }
       get_brand_offer_detail: {
         Args: { p_offer_id: string }
         Returns: {
@@ -7729,9 +7745,11 @@ export type Database = {
           brand_slug: string
           country_ids: number[]
           ends_at: string
+          everywhere: boolean
           id: string
           image_url: string
           link_url: string
+          regions: string[]
           member_country_id: number
           roles: string[]
           title: string
@@ -7753,9 +7771,11 @@ export type Database = {
           brand_slug: string
           country_ids: number[]
           ends_at: string
+          everywhere: boolean
           id: string
           image_url: string
           link_url: string
+          regions: string[]
           member_country_id: number
           roles: string[]
           title: string
@@ -7840,6 +7860,7 @@ export type Database = {
           contacted: number
           opened: number
           shown: number
+          store_visits: number
         }[]
       }
       get_my_brand_offers: {
@@ -7852,11 +7873,14 @@ export type Database = {
           created_at: string
           ended_at: string
           ends_at: string
+          everywhere: boolean
           id: string
           image_url: string
           link_url: string
+          regions: string[]
           live_at: string
           not_useful: number
+          store_visits: number
           opened: number
           pending: Json
           pending_status: string
@@ -7877,6 +7901,8 @@ export type Database = {
           p_body: string
           p_country_ids: number[]
           p_ends_at: string
+          p_everywhere?: boolean
+          p_regions?: string[]
           p_image_url: string
           p_link_url: string
           p_offer_id: string

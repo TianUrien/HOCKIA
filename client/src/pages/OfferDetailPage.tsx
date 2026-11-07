@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Browser } from '@capacitor/browser'
 import { EyeOff, Info, MessageCircle, X } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
-import { IS_NATIVE } from '@/lib/isNative'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { cn } from '@/lib/utils'
 import { normalizeOfferLink, shortDate } from '@/lib/brandOffers'
 import { brandCategoryLabel } from '@/lib/identity'
@@ -78,14 +77,13 @@ export default function OfferDetailPage() {
   const countries = names(offer.country_ids)
   const memberCountry = names(offer.member_country_id != null ? [offer.member_country_id] : [])[0] ?? null
   const brandCountry = names(offer.brand_country_id != null ? [offer.brand_country_id] : [])[0] ?? null
-  const reasonLine = detailReasonLine(offer.eligible ? memberCountry : null)
+  const reasonLine = detailReasonLine(offer.eligible ? memberCountry : null, offer.everywhere ?? false)
   const showAmbassador = offer.brand_open_to_partners && profile?.role === 'player'
 
   const goToStore = async () => {
     if (!link) return
     trackOffer('brand_offer_store_tap', offer.id, surface)
-    if (IS_NATIVE) await Browser.open({ url: link })
-    else window.open(link, '_blank', 'noopener,noreferrer')
+    await openOutbound(tagOutboundLink(link, 'offer', offer.title, surface))
   }
 
   const message = async (draft: string) => {
@@ -162,7 +160,7 @@ export default function OfferDetailPage() {
 
       <dl className="mt-5 grid grid-cols-[72px_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[20px] bg-white p-4 text-row shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
         <dt className="text-ink-2">For</dt>
-        <dd className="text-ink-1">{offerForLine(offer.roles, countries)}{offer.area ? ` (${offer.area})` : ''}</dd>
+        <dd className="text-ink-1">{offerForLine(offer.roles, countries, { everywhere: offer.everywhere, regions: offer.regions })}{offer.area ? ` (${offer.area})` : ''}</dd>
         {offer.ends_at ? (<><dt className="text-ink-2">Until</dt><dd className="text-ink-1">{shortDate(offer.ends_at)} {new Date(offer.ends_at).getUTCFullYear()}</dd></>) : null}
         {link ? (<><dt className="text-ink-2">Store</dt><dd className="min-w-0 break-all text-ink-1">{storeLabel(link)}</dd></>) : null}
       </dl>
