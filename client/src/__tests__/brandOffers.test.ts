@@ -32,7 +32,7 @@ function offer(over: Partial<BrandOffer> = {}): BrandOffer {
     link_url: 'https://northlinehockey.com/hockia', country_ids: [1], area: null, roles: ['player'],
     starts_at: null, ends_at: null, submitted_at: '2026-10-23T08:00:00Z', live_at: null, ended_at: null,
     created_at: '2026-10-20T00:00:00Z', updated_at: '2026-10-20T10:00:00Z',
-    shown: 158, opened: 31, contacted: 5, not_useful: 0,
+    shown: 158, opened: 31, contacted: 5, not_useful: 0, store_visits: 12,
     ...over,
   }
 }
@@ -56,13 +56,14 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
   })
 
   it('writes the status line for each state', () => {
-    expect(offerStatusLine(offer(), NOW)).toBe('158 shown · 31 opened · 5 contacted')
+    expect(offerStatusLine(offer(), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted')
+    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted · 2 not useful')
     expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")
     expect(offerStatusLine(offer({ status: 'not_approved', review_note: 'remove "best price in Spain".' }), NOW)).toBe('Taken down: remove "best price in Spain". Edit and publish again.')
     expect(shortDate('2027-07-31T23:59:59Z')).toBe('31 Jul')
-    expect(offerStatusLine(offer({ status: 'ended', ended_at: '2026-09-30T10:00:00Z', shown: 212, contacted: 9 }), NOW)).toBe('Ended 30 Sep · 212 shown · 9 contacted')
+    expect(offerStatusLine(offer({ status: 'ended', ended_at: '2026-09-30T10:00:00Z', shown: 212, contacted: 9 }), NOW)).toBe('Ended 30 Sep · 212 shown · 12 went to your store · 9 contacted')
   })
 
   it('counts live offers against the free limit', () => {

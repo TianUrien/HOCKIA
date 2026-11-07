@@ -58,10 +58,11 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
     live === 0 && drafts > 0 ? `${drafts} ${drafts === 1 ? 'draft' : 'drafts'}` : null,
   ].filter(Boolean).join(' · ')
 
-  const tiles = totals && (totals.shown > 0 || totals.opened > 0 || totals.contacted > 0)
+  const tiles = totals && (totals.shown > 0 || totals.opened > 0 || totals.contacted > 0 || totals.store_visits > 0)
     ? [
         { value: totals.shown, label: 'Shown to' },
         { value: totals.opened, label: 'Opened' },
+        { value: totals.store_visits, label: 'To your store' },
         { value: totals.contacted, label: 'Contacted' },
       ]
     : null
@@ -81,7 +82,7 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
         </button>
         {tiles ? (
           <>
-            <button type="button" onClick={onOpen} className="mt-3 grid w-full grid-cols-3 gap-2 text-left" aria-label="Offer results, last 30 days" data-testid="brand-offers-tiles">
+            <button type="button" onClick={onOpen} className="mt-3 grid w-full grid-cols-2 gap-2 text-left sm:grid-cols-4" aria-label="Offer results, last 30 days" data-testid="brand-offers-tiles">
               {tiles.map((t) => (
                 <span key={t.label} className="rounded-[14px] bg-surface-subtle px-3 py-2.5">
                   <span className="block text-title tabular-nums text-ink-1">{t.value}</span>

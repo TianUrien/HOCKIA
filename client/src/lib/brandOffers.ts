@@ -53,6 +53,8 @@ export interface BrandOffer extends OfferFields {
   opened: number
   contacted: number
   not_useful: number
+  /** Members who went to the store from the offer (Go to store). */
+  store_visits: number
 }
 
 export interface AdminBrandOffer extends OfferFields {
@@ -116,9 +118,15 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
   return `${liveCount(offers)} of ${OFFER_LIVE_LIMIT} live · free for every brand for now`
 }
 
-/** "158 shown · 31 opened · 5 contacted" (live and paused rows only). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'>): string {
-  return `${o.shown} shown · ${o.opened} opened · ${o.contacted} contacted`
+/** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful'>>): string {
+  return [
+    `${o.shown} shown`,
+    `${o.opened} opened`,
+    `${o.store_visits ?? 0} went to your store`,
+    `${o.contacted} contacted`,
+    (o.not_useful ?? 0) > 0 ? `${o.not_useful} not useful` : null,
+  ].filter(Boolean).join(' · ')
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
@@ -145,7 +153,7 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
     case 'in_review':
     case 'draft': return 'Not published yet'
     case 'paused': return `Paused ${daysAgoWord(o.updated_at, now)}. Members don't see it.`
-    default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.contacted} contacted`
+    default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.store_visits ?? 0} went to your store · ${o.contacted} contacted`
   }
 }
 

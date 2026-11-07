@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Browser } from '@capacitor/browser'
 import { EyeOff, Info, MessageCircle, X } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
-import { IS_NATIVE } from '@/lib/isNative'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { cn } from '@/lib/utils'
 import { normalizeOfferLink, shortDate } from '@/lib/brandOffers'
 import { brandCategoryLabel } from '@/lib/identity'
@@ -84,8 +83,7 @@ export default function OfferDetailPage() {
   const goToStore = async () => {
     if (!link) return
     trackOffer('brand_offer_store_tap', offer.id, surface)
-    if (IS_NATIVE) await Browser.open({ url: link })
-    else window.open(link, '_blank', 'noopener,noreferrer')
+    await openOutbound(tagOutboundLink(link, 'offer', offer.title, surface))
   }
 
   const message = async (draft: string) => {

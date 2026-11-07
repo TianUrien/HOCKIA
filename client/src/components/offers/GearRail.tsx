@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Browser } from '@capacitor/browser'
 import { EyeOff, HelpCircle, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { IS_NATIVE } from '@/lib/isNative'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { countryInSentence, normalizeOfferLink } from '@/lib/brandOffers'
 import { dismissOffer, hideBrandOffers, trackImpressionOnce, trackOffer } from '@/lib/memberOffers'
@@ -192,8 +191,7 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
     trackDbEvent('brand_product_click', 'brand_product', tile.id, { brand_id: tile.brand_id, surface: 'home_rail' })
     const link = normalizeOfferLink(tile.link_url)
     if (!link) { navigate(`/brands/${tile.brand_slug}`); return }
-    if (IS_NATIVE) await Browser.open({ url: link })
-    else window.open(link, '_blank', 'noopener,noreferrer')
+    await openOutbound(tagOutboundLink(link, 'product', tile.title, 'home_rail'))
   }
 
   return (

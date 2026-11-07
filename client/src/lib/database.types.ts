@@ -7840,6 +7840,7 @@ export type Database = {
           contacted: number
           opened: number
           shown: number
+          store_visits: number
         }[]
       }
       get_my_brand_offers: {
@@ -7857,6 +7858,7 @@ export type Database = {
           link_url: string
           live_at: string
           not_useful: number
+          store_visits: number
           opened: number
           pending: Json
           pending_status: string
