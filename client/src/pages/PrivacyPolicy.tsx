@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
             </div>
             <div>
               <h1 className="mb-2 text-title text-ink-1">Privacy Policy</h1>
-              <p className="text-gray-600">Effective date: March 2026</p>
+              <p className="text-gray-600">Effective date: November 2026</p>
             </div>
           </div>
         </div>
@@ -55,9 +55,14 @@ export default function PrivacyPolicy() {
               <ul className="list-none space-y-2 ml-4">
                 <li>- Email address</li>
                 <li>- Password (securely hashed; never stored in plain text)</li>
-                <li>- Selected role (player, coach, club, or brand)</li>
-                <li>- Authentication provider (email, Google, or Apple)</li>
+                <li>- Selected role (player, coach, club, brand, or umpire)</li>
+                <li>- Authentication provider (email, Google, Apple, or Facebook)</li>
               </ul>
+
+              <h3 className="text-lg font-semibold text-gray-800 mt-4">2.1.1 Information From Sign-In Providers</h3>
+              <p>
+                If you sign in with Google, Apple, or Facebook, the provider shares your email address, your name, an account identifier for that provider and, for Google and Facebook, the address of your profile picture. We store this with your account only to sign you in and to contact you about your account. We do not copy your name or picture from the provider into your Hockia profile, we never post to your accounts, and we do not request your friends list or any other data from these providers.
+              </p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.2 Profile Information</h3>
               <ul className="list-none space-y-2 ml-4">
@@ -143,7 +148,13 @@ export default function PrivacyPolicy() {
                 <li>- Track aggregate trends and usage patterns.</li>
               </ul>
 
-              <h3 className="text-lg font-semibold text-gray-800 mt-4">3.4 Safety and Compliance</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mt-4">3.4 Hockia AI</h3>
+              <ul className="list-none space-y-2 ml-4">
+                <li>- When you use Hockia AI, the text you send and the profile and opportunity information it needs to answer are processed by our AI model provider to generate the reply.</li>
+                <li>- Hockia AI only uses information already on the Platform. It does not use data received from sign-in providers.</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-gray-800 mt-4">3.5 Safety and Compliance</h3>
               <ul className="list-none space-y-2 ml-4">
                 <li>- Detect and prevent fraud, abuse, and violations of our Terms.</li>
                 <li>- Enforce our community standards and content policies.</li>
@@ -162,17 +173,22 @@ export default function PrivacyPolicy() {
                 We use trusted third-party services to operate and improve the Platform. These services process data on our behalf and are contractually obligated to protect your information:
               </p>
               <ul className="list-none space-y-3 ml-4">
-                <li><strong>Supabase:</strong> Database hosting, user authentication, and file storage. Your data is stored in encrypted databases hosted in the European Union.</li>
+                <li><strong>Supabase:</strong> Database hosting, user authentication, and file storage. Your data is stored in encrypted databases hosted in the European Union (Sweden).</li>
+                <li><strong>Vercel:</strong> Hosting of the website and web app. Vercel processes technical request data, such as IP addresses, to serve the Platform.</li>
                 <li><strong>Google Analytics (GA4):</strong> Anonymous usage analytics to understand how the Platform is used. We track page views, feature usage, and aggregate trends. Your user ID is associated with analytics data to provide personalized insights.</li>
+                <li><strong>PostHog:</strong> Product analytics on the website, hosted in the European Union. It runs only after you accept analytics cookies, never in the mobile apps, and does not record the text you type or read on the Platform. Your Hockia user ID is associated with analytics data.</li>
                 <li><strong>Sentry:</strong> Error monitoring and crash reporting. When errors occur, diagnostic data (including device type, browser, and error details) is sent to Sentry to help us identify and fix issues.</li>
                 <li><strong>Resend:</strong> Transactional and notification email delivery. Your email address and name are shared with Resend solely for the purpose of delivering emails from Hockia.</li>
+                <li><strong>Cloudflare Turnstile:</strong> Bot protection on email sign-in, sign-up, and password reset. It receives technical data from your browser to tell people from automated traffic.</li>
+                <li><strong>AI model provider (Google Gemini, Anthropic Claude, or OpenAI):</strong> Generates Hockia AI replies from the text you send and the Platform information needed to answer. Data is used only to produce the reply.</li>
+                <li><strong>Sign-in providers (Google, Apple, Meta):</strong> Authenticate you when you choose to sign in with them, as described in section 2.1.1.</li>
                 <li><strong>Web Push Services:</strong> Push notification delivery through browser APIs. Your push subscription token is stored to deliver notifications.</li>
               </ul>
               <p className="font-medium mt-4">
                 We do not sell, rent, or trade your personal data to any third party. We do not share your data with advertisers.
               </p>
               <p>
-                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of Hockia, its users, or the public.
+                We may disclose your information if required by law, legal process, or government request, or if necessary to protect the rights, safety, or property of Hockia, its users, or the public. When a public authority asks for user data, we review whether the request is lawful before answering, disclose only the minimum information the request legally requires, and keep a record of each request, our response, and the legal reasoning behind it.
               </p>
             </div>
           </section>
@@ -212,7 +228,7 @@ export default function PrivacyPolicy() {
                 <li>- Device tracking session flag (to avoid duplicate tracking).</li>
               </ul>
               <p>
-                Google Analytics uses cookies to collect anonymous usage data. You can opt out of Google Analytics by using browser extensions or privacy settings.
+                Google Analytics and PostHog run only on the website and only after you accept analytics cookies in the cookie banner. If you decline, neither is loaded. The mobile apps do not use them.
               </p>
               <p>
                 We do not use advertising cookies or third-party tracking pixels.
@@ -233,6 +249,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Deletion:</strong> You can permanently delete your account and all associated data through the Settings page. Upon deletion, we remove your profile, messages, applications, media files, career history, notifications, connections, references, push subscriptions, and stored files.</li>
                 <li><strong>Notification preferences:</strong> You can control which notifications you receive (opportunities, applications, friend requests, references, messages, profile views) and how you receive them (email, push) through the Settings page.</li>
                 <li><strong>Browse anonymously:</strong> You can enable anonymous browsing in Settings to hide your profile visits from other users' analytics.</li>
+                <li><strong>Sign-in providers:</strong> If you signed in with Facebook, you can remove Hockia from your Facebook settings (Settings &amp; privacy &gt; Apps and websites). This stops future sharing; to delete the data Hockia already holds, delete your account in Settings or email us.</li>
                 <li><strong>Data portability:</strong> You may request a copy of your personal data by contacting us at team@inhockia.com.</li>
               </ul>
               <p>
@@ -310,6 +327,9 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">12. Contact</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
+              <p>
+                Hockia is operated by its founder, an individual based in Argentina, who is responsible for your personal data (the data controller). Hockia is not a registered company.
+              </p>
               <p>If you have any questions, concerns, or requests regarding your privacy or this policy, please contact us at:</p>
               <p className="flex items-center gap-2">
                 <span>📧</span>
@@ -325,7 +345,7 @@ export default function PrivacyPolicy() {
 
           {/* Last Updated */}
           <div className="pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500 text-center">Last updated: March 21, 2026</p>
+            <p className="text-sm text-gray-500 text-center">Last updated: November 8, 2026</p>
           </div>
         </div>
       </div>
