@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
+import { applyRoleMismatch } from '@/lib/applyRoleMatch'
 import { submitApplication } from '@/lib/submitApplication'
 import { recordAiAction } from '@/lib/aiChats'
 import { AVAILABILITY_LABELS, loadApplyDraft, type ApplyDraft } from '@/lib/applyDraft'
@@ -60,7 +61,12 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
   }, [target.id])
 
   const vacancy = draft?.kind === 'draft' ? draft.vacancy : null
-  const eligibility = useMemo(() => (vacancy ? checkOpportunityEligibility(vacancy, profile, countries) : null), [vacancy, profile, countries])
+  const eligibility = useMemo(() => {
+    if (!vacancy) return null
+    // Search results don't carry the role type: a player role offered to a coach stops here, not at the server.
+    const mismatch = applyRoleMismatch(vacancy.opportunity_type, profile?.role)
+    return mismatch ? { eligible: false, reason: mismatch } : checkOpportunityEligibility(vacancy, profile, countries)
+  }, [vacancy, profile, countries])
   const passports = useMemo(() => [profile?.nationality_country_id, profile?.nationality2_country_id]
     .map((id) => countries.find((c) => c.id === id)).filter(Boolean)
     .map((c) => `${c!.common_name || c!.name}${isEuCountryCode(c!.code) ? ' (EU)' : ''}`), [profile, countries])

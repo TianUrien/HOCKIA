@@ -196,7 +196,7 @@ export function ProductImageUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".jpg,.jpeg,.png"
+        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
         onChange={handleFileChange}
         className="hidden"
         aria-label="Upload product image"

@@ -134,9 +134,11 @@ export async function optimizeImage(
     }
     
     // Create new file from blob
+    // The name carries the extension of what we encoded: pickers can hand
+    // over names without one ("1000012345"), and uploads build paths from it.
     const optimizedFile = new File(
       [finalBlob],
-      file.name,
+      withImageExtension(file.name, opts.mimeType),
       { type: opts.mimeType }
     )
     
@@ -453,6 +455,21 @@ function canvasToBlob(
   })
 }
 
+/** "photo.heic" / "1000012345" → "photo.jpg" / "1000012345.jpg" for the encoded type. */
+export function withImageExtension(name: string, mimeType: string): string {
+  const ext = mimeType === 'image/png' ? 'png' : 'jpg'
+  const base = (name || 'photo').replace(/\.[a-z0-9]{1,5}$/i, '') || 'photo'
+  return `${base}.${ext}`
+}
+
+/** Storage path extension for an image about to be uploaded: from its type, then its name. */
+export function imageFileExtension(file: File): 'jpg' | 'png' {
+  const mime = (file.type || '').toLowerCase()
+  if (mime === 'image/png') return 'png'
+  if (mime === 'image/jpeg' || mime === 'image/jpg') return 'jpg'
+  return /\.png$/i.test(file.name || '') ? 'png' : 'jpg'
+}
+
 /**
  * Validate image file before upload
  */
@@ -468,9 +485,14 @@ export function validateImage(file: File, options: ImageValidationOptions): { va
 
   const normalizedName = file.name?.toLowerCase() ?? ''
   const hasValidExtension = normalizedName.endsWith('.jpg') || normalizedName.endsWith('.jpeg') || normalizedName.endsWith('.png')
-  const hasValidMime = allowedMimeTypes.includes(file.type.toLowerCase())
+  const mime = (file.type || '').toLowerCase()
+  // The MIME type decides when the picker gives one: Android galleries often
+  // hand over "1000012345" with image/jpeg and no extension (Sentry
+  // JAVASCRIPT-REACT-E6). Without a usable type, fall back to the extension.
+  const genericMime = mime === '' || mime === 'application/octet-stream'
+  const allowed = genericMime ? hasValidExtension : allowedMimeTypes.includes(mime)
 
-  if (!hasValidExtension || !hasValidMime) {
+  if (!allowed) {
     return { valid: false, error: 'Only JPG/JPEG or PNG images are allowed.' }
   }
 

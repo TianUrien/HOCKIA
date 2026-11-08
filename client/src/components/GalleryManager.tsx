@@ -10,7 +10,7 @@ import MediaLightbox from './MediaLightbox'
 import Skeleton from './Skeleton'
 import StorageImage from './StorageImage'
 import { deleteStorageObject } from '@/lib/storage'
-import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull } from '@/lib/imageOptimization'
+import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull, imageFileExtension } from '@/lib/imageOptimization'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 
@@ -360,7 +360,7 @@ export default function GalleryManager({
           ? await optimizeImage(file, config.optimizeOptions)
           : file
 
-        const fileExt = file.name.split('.').pop() || 'jpg'
+        const fileExt = imageFileExtension(processedFile)
         const fileName = `${targetEntityId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt.toLowerCase()}`
 
         const { error: uploadError } = await supabase.storage
