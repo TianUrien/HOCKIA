@@ -20,7 +20,7 @@ import { differenceInMonths } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
-import { optimizeImage, generateThumbnail, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, generateThumbnail, validateImage, imageFileExtension } from '@/lib/imageOptimization'
 import type { CareerHistory } from '@/lib/supabase'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
@@ -598,7 +598,7 @@ export default function JourneyTab({
         mimeType,
       })
 
-      const extension = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const extension = imageFileExtension(optimizedFile)
       const baseName = `${Date.now()}_${Math.random().toString(36).slice(2)}`
       const fileName = `${user.id}/journey/${baseName}.${extension}`
       const thumbName = `${user.id}/journey/${baseName}_thumb.${extension}`

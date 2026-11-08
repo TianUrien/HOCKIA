@@ -422,7 +422,7 @@ export function EditWorldClubModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleFileSelect}
                 className="hidden"
                 aria-label="Upload club logo"

@@ -121,7 +121,7 @@ export function PostMediaUploader({
       <input
         ref={imageInputRef}
         type="file"
-        accept=".jpg,.jpeg,.png"
+        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
         onChange={handleImageChange}
         className="hidden"
         aria-label="Select image file"
