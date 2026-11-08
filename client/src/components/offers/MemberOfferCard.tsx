@@ -18,7 +18,7 @@ import {
 import { useOfferImpression } from '@/hooks/useMemberOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { chipTone } from '@/components/ui/chipClasses'
-import { BrandLogo, OfferHero } from './OfferVisuals'
+import { BrandLogo, OfferHero, PerkPill } from './OfferVisuals'
 
 /**
  * Member-facing offer cards (Figma "08 · Brands", P2): H1 / H1-no-image on
@@ -101,7 +101,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
     )
   }
 
-  const reasonText = aiTopic ? hockiaAiReasonLine(aiTopic, country) : offerReasonLine(country, role)
+  const reasonText = aiTopic ? hockiaAiReasonLine(aiTopic, country) : offerReasonLine(country, role, offer.everywhere ?? false)
   const reasonBox = (
     <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-row text-ink-2">
       <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
@@ -122,6 +122,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
           <OfferHero url={offer.image_url} className="h-16 w-16 shrink-0 rounded-[14px]" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-secondary font-semibold text-ink-2">From brands · {offer.brand_name}</span>
+            {offer.perk ? <PerkPill perk={offer.perk} className="mt-1 inline-block rounded-full bg-brand-soft px-2 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
             <span className="mt-0.5 block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</span>
             <span className="mt-0.5 block truncate text-row text-ink-2">{offer.body}</span>
           </span>
@@ -147,6 +148,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
               <BrandLogo name={offer.brand_name} url={offer.brand_logo_url} className="h-[22px] w-[22px] rounded-[6px]" initialsClassName="text-[9px]" />
               <span className="truncate text-row text-ink-2">{offer.brand_name}</span>
             </div>
+            {offer.perk ? <PerkPill perk={offer.perk} className="mt-2 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
             <button type="button" onClick={open} className="mt-2 block text-left text-[17px] font-bold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</button>
           </>
         ) : (
@@ -155,6 +157,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
               <BrandLogo name={offer.brand_name} url={offer.brand_logo_url} className="h-10 w-10 shrink-0 rounded-[12px]" initialsClassName="text-[14px]" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-secondary font-semibold text-ink-2">From brands · {offer.brand_name}</span>
+                {offer.perk ? <PerkPill perk={offer.perk} className="mt-1 inline-block rounded-full bg-brand-soft px-2 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
                 <span className="mt-0.5 block text-[17px] font-bold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</span>
               </span>
             </button>

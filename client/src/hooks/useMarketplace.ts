@@ -1,9 +1,8 @@
 import { useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Browser } from '@capacitor/browser'
 import { useAuthStore } from '@/lib/auth'
-import { IS_NATIVE } from '@/lib/isNative'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { normalizeOfferLink } from '@/lib/brandOffers'
 import { fetchMarketplace, trackItemOpen, type MarketItem, type MarketSurface } from '@/lib/marketplace'
 
@@ -42,7 +41,6 @@ export function useOpenMarketItem(surface: MarketSurface) {
     if (item.kind === 'offer') { navigate(`/offers/${item.id}`, { state: { surface } }); return }
     const link = normalizeOfferLink(item.link_url)
     if (!link) { navigate(`/brands/${item.brand_slug}`); return }
-    if (IS_NATIVE) await Browser.open({ url: link })
-    else window.open(link, '_blank', 'noopener,noreferrer')
+    await openOutbound(tagOutboundLink(link, 'product', item.title, surface))
   }, [navigate, surface])
 }

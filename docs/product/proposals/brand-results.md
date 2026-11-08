@@ -103,3 +103,16 @@ Principles: Pro buys reach and tools, never a better position than relevance all
 - [Evidence] Brands today get views, search appearances and store taps (code, 2026-10-22).
 - [Hypothesis] Seeing contacts and "Not useful" makes brands improve offers instead of leaving.
 - [Hypothesis] Brands will pay monthly once contacts arrive every month. To test: interviews with active brands (`hockia-member-interviews`).
+
+## Built 2026-11-07 (brand evaluation P0)
+- Store visits: "went to your store" per offer and "To your store" in the 30-day tiles (`brand_offer_store_tap`, same fences).
+- UTM tags on every offer and product store link (`lib/outboundLink.ts`): utm_source=hockia, utm_medium offer/product, utm_campaign from the title, utm_content = surface; the brand's own tags win.
+- Reach: Everywhere / regions / countries (`brand_offers.everywhere`, `brand_offers.regions`), the UK as one family, and "Who you could reach" as a live line in the editor (`get_brand_offer_reach`, 5-member threshold).
+- Members without a country: Home card to confirm it (`CountryConfirmCard`).
+Still to build: the Results screen, offer price/code fields, a brand Home, ambassador candidates.
+
+## Built 2026-11-07 (brand evaluation P1)
+- Offer perk and promo code (`brand_offers.perk`, `brand_offers.promo_code`; "codes copied" per offer); photo required to publish.
+- Results screen `/dashboard/results` (`get_my_brand_results`): waiting replies, contacted vs previous period, funnel, next step, per-offer table, people who contacted the brand, market, who saw the offers (country / role / surface, 5+ only), products, ambassadors and followers. Not yet: the weekly "Did your change work?" chart.
+- Brand Home summary (`BrandHomeSummary`) above the feed.
+- Ambassador candidates `/dashboard/ambassadors` (`get_ambassador_candidates`) and the player opt-in `/settings/brand-partnerships` (`brand_partnership_prefs`, declared Instagram followers).

@@ -9,6 +9,8 @@ interface OffersCardProps {
   totals: OfferTotals | null
   onCreate: () => void
   onOpen: () => void
+  /** Results screen (2026-11-07); the link shows when set. */
+  onResults?: () => void
   /** Desktop dashboard (rebrand page 27): its own white card, Satoshi title, "Open offers ›". */
   desktop?: boolean
 }
@@ -23,7 +25,7 @@ interface OffersCardProps {
  * for your reply" row needs contact replies to be tracked, and "See results"
  * needs the Results panel (Phase 3). Neither is shown as a guess.
  */
-export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }: OffersCardProps) {
+export function OffersCard({ offers, totals, onCreate, onOpen, onResults, desktop = false }: OffersCardProps) {
   const wrap = desktop ? '' : 'px-4'
   const box = desktop ? 'rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line' : 'rounded-[24px] border border-line bg-white p-4'
   const title = desktop ? 'block font-display text-[24px] font-bold leading-[1.2] text-ink-1' : 'block text-[17px] font-semibold leading-[22px] text-ink-1'
@@ -58,10 +60,11 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
     live === 0 && drafts > 0 ? `${drafts} ${drafts === 1 ? 'draft' : 'drafts'}` : null,
   ].filter(Boolean).join(' · ')
 
-  const tiles = totals && (totals.shown > 0 || totals.opened > 0 || totals.contacted > 0)
+  const tiles = totals && (totals.shown > 0 || totals.opened > 0 || totals.contacted > 0 || totals.store_visits > 0)
     ? [
         { value: totals.shown, label: 'Shown to' },
         { value: totals.opened, label: 'Opened' },
+        { value: totals.store_visits, label: 'To your store' },
         { value: totals.contacted, label: 'Contacted' },
       ]
     : null
@@ -81,7 +84,7 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
         </button>
         {tiles ? (
           <>
-            <button type="button" onClick={onOpen} className="mt-3 grid w-full grid-cols-3 gap-2 text-left" aria-label="Offer results, last 30 days" data-testid="brand-offers-tiles">
+            <button type="button" onClick={onOpen} className="mt-3 grid w-full grid-cols-2 gap-2 text-left sm:grid-cols-4" aria-label="Offer results, last 30 days" data-testid="brand-offers-tiles">
               {tiles.map((t) => (
                 <span key={t.label} className="rounded-[14px] bg-surface-subtle px-3 py-2.5">
                   <span className="block text-title tabular-nums text-ink-1">{t.value}</span>
@@ -91,6 +94,9 @@ export function OffersCard({ offers, totals, onCreate, onOpen, desktop = false }
             </button>
             <p className="mt-2 text-secondary text-ink-3">Last 30 days</p>
           </>
+        ) : null}
+        {onResults ? (
+          <button type="button" onClick={onResults} className="mt-2 flex h-11 w-full items-center justify-end text-row font-semibold text-brand-primary" data-testid="brand-offers-results">See results</button>
         ) : null}
       </div>
     </div>

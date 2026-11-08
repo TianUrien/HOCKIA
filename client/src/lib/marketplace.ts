@@ -42,6 +42,7 @@ export interface MarketItem {
   created_at: string
   country_id: number
   base_country_id: number | null
+  perk?: string | null
 }
 
 export async function fetchMarketplace(countryId: number | null): Promise<MarketItem[]> {
