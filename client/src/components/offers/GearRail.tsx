@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Browser } from '@capacitor/browser'
 import { EyeOff, HelpCircle, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { IS_NATIVE } from '@/lib/isNative'
+import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { countryInSentence, normalizeOfferLink } from '@/lib/brandOffers'
 import { dismissOffer, hideBrandOffers, trackImpressionOnce, trackOffer } from '@/lib/memberOffers'
@@ -17,7 +16,7 @@ import { MoreMenu } from '@/components/safety/MoreMenu'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { SectionHeader } from '@/components/home/v1/primitives'
 import { MemberOfferCard } from './MemberOfferCard'
-import { BrandLogo, OfferHero } from './OfferVisuals'
+import { BrandLogo, OfferHero, PerkPill } from './OfferVisuals'
 
 /**
  * "Gear and deals near you" on Home (Figma page 02, YG: HR1; founder
@@ -40,6 +39,7 @@ interface RailTile {
   image_url: string | null
   link_url: string | null
   member_country_id: number | null
+  perk?: string | null
 }
 
 const HIDE_KEY = 'hockia-home-rail-hidden-until'
@@ -192,8 +192,7 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
     trackDbEvent('brand_product_click', 'brand_product', tile.id, { brand_id: tile.brand_id, surface: 'home_rail' })
     const link = normalizeOfferLink(tile.link_url)
     if (!link) { navigate(`/brands/${tile.brand_slug}`); return }
-    if (IS_NATIVE) await Browser.open({ url: link })
-    else window.open(link, '_blank', 'noopener,noreferrer')
+    await openOutbound(tagOutboundLink(link, 'product', tile.title, 'home_rail'))
   }
 
   return (
@@ -217,7 +216,7 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
             </span>
           ) : null}
           {tile.kind === 'offer' ? (
-            <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary">Offer</span>
+            <PerkPill perk={tile.perk} className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary" />
           ) : null}
         </span>
         <span className="block p-2.5">

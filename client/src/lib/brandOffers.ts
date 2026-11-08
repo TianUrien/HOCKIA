@@ -36,7 +36,21 @@ export interface OfferFields {
   roles: OfferRole[]
   starts_at: string | null
   ends_at: string | null
+  /** Every eligible member, with or without a country (2026-11-07). */
+  everywhere?: boolean
+  /** Whole regions (countries.region): members based anywhere in them. */
+  regions?: string[]
+  /** "15% off": what members get, at a glance (24 max; 2026-11-07). */
+  perk?: string | null
+  /** A code members copy on the offer page, so the brand counts sales (2026-11-07). */
+  promo_code?: string | null
 }
+
+export const OFFER_PERK_MAX = 24
+export const PROMO_CODE_RE = /^[A-Za-z0-9_-]{2,30}$/
+
+/** The regions a brand can pick (countries.region values), largest hockey markets first. */
+export const OFFER_REGIONS: string[] = ['Europe', 'South America', 'Oceania', 'Asia', 'Africa', 'North America', 'Central America', 'Caribbean']
 
 export interface BrandOffer extends OfferFields {
   id: string
@@ -53,6 +67,10 @@ export interface BrandOffer extends OfferFields {
   opened: number
   contacted: number
   not_useful: number
+  /** Members who went to the store from the offer (Go to store). */
+  store_visits: number
+  /** Members who copied the offer's code. */
+  code_copies?: number
 }
 
 export interface AdminBrandOffer extends OfferFields {
@@ -116,9 +134,16 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
   return `${liveCount(offers)} of ${OFFER_LIVE_LIMIT} live · free for every brand for now`
 }
 
-/** "158 shown · 31 opened · 5 contacted" (live and paused rows only). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'>): string {
-  return `${o.shown} shown · ${o.opened} opened · ${o.contacted} contacted`
+/** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
+  return [
+    `${o.shown} shown`,
+    `${o.opened} opened`,
+    `${o.store_visits ?? 0} went to your store`,
+    (o.code_copies ?? 0) > 0 ? `${o.code_copies} copied the code` : null,
+    `${o.contacted} contacted`,
+    (o.not_useful ?? 0) > 0 ? `${o.not_useful} not useful` : null,
+  ].filter(Boolean).join(' · ')
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
@@ -145,7 +170,7 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
     case 'in_review':
     case 'draft': return 'Not published yet'
     case 'paused': return `Paused ${daysAgoWord(o.updated_at, now)}. Members don't see it.`
-    default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.contacted} contacted`
+    default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.store_visits ?? 0} went to your store · ${o.contacted} contacted`
   }
 }
 
@@ -158,11 +183,12 @@ function pickFields(o: OfferFields): OfferFields {
   return {
     title: o.title, body: o.body, image_url: o.image_url, link_url: o.link_url,
     country_ids: o.country_ids ?? [], area: o.area, roles: o.roles ?? [], starts_at: o.starts_at, ends_at: o.ends_at,
+    everywhere: o.everywhere ?? false, regions: o.regions ?? [], perk: o.perk ?? null, promo_code: o.promo_code ?? null,
   }
 }
 
 export const EMPTY_OFFER: OfferFields = {
-  title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null,
+  title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null, everywhere: false, regions: [], perk: '', promo_code: '',
 }
 
 // ── Content rules (B2) ──────────────────────────────────────────────────────
@@ -191,12 +217,16 @@ export function unprovableClaim(text: string | null | undefined): string | null 
 
 /** What still blocks "Publish", in the editor's order, or null. */
 export function offerMissing(f: OfferFields): string | null {
+  // A real photo makes offers look trustworthy; required to publish (2026-11-07, client-side so old apps keep working).
+  if (!f.image_url) return 'Add a photo'
   if (!f.title?.trim()) return 'Add a title'
   if (f.title.trim().length > OFFER_TITLE_MAX) return `Keep the title under ${OFFER_TITLE_MAX} characters`
   if (!f.body?.trim()) return 'Say what members get'
   if (f.body.trim().length > OFFER_BODY_MAX) return `Keep it under ${OFFER_BODY_MAX} characters`
+  if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return `Keep the perk under ${OFFER_PERK_MAX} characters`
+  if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return 'Use letters, numbers, - or _ in the code'
   if (!normalizeOfferLink(f.link_url)) return 'Add a link that starts with https'
-  if (f.country_ids.length === 0) return 'Choose at least one country'
+  if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return 'Choose where members live'
   if (f.roles.length === 0) return 'Choose who it is for'
   if (f.ends_at && new Date(f.ends_at).getTime() <= Date.now()) return 'Choose an end date in the future'
   return null
@@ -223,19 +253,45 @@ export function countryInSentence(name: string): string {
   return TAKES_THE.has(name.trim().toLowerCase()) ? `the ${name.trim()}` : name.trim()
 }
 
-export function offerReasonLine(countryName: string | null, role: string | null | undefined): string {
+export function offerReasonLine(countryName: string | null, role: string | null | undefined, everywhere = false): string {
   const verb = role && role in ROLE_VERB ? ROLE_VERB[role as OfferRole] : null
+  // An Everywhere offer is about the role only, never where the member lives.
+  if (everywhere) return verb ? `You see this because you ${verb}. It is for members everywhere.` : 'It is for members everywhere.'
   const where = countryName ? countryInSentence(countryName) : null
   if (where && verb) return `You see this because you live in ${where} and ${verb}.`
   if (where) return `You see this because you live in ${where}.`
   return 'You see this because of where you live.'
 }
 
-/** "England, Netherlands · Players, coaches" for list rows. */
-export function audienceLine(countryNames: string[], roles: OfferRole[]): string {
+/** "England, Netherlands · Players, coaches" for list rows ("Everywhere · …", regions first). */
+export function audienceLine(countryNames: string[], roles: OfferRole[], place?: { everywhere?: boolean; regions?: string[] }): string {
   const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
   const whoText = who.length ? who[0] + (who.length > 1 ? ', ' + who.slice(1).map((w) => w.toLowerCase()).join(', ') : '') : ''
-  return [countryNames.join(', '), whoText].filter(Boolean).join(' · ')
+  const where = place?.everywhere ? 'Everywhere' : [...(place?.regions ?? []), ...countryNames].join(', ')
+  return [where, whoText].filter(Boolean).join(' · ')
+}
+
+/** The editor's reach line from get_brand_offer_reach (counts under 5 come back as null). */
+export interface OfferReach { total: number | null; without_country: number | null; by_role: Record<string, number | null>; by_country: { country_id: number; n: number | null }[] }
+export function reachLine(r: OfferReach | null, roles: OfferRole[]): string | null {
+  if (!r) return null
+  if (r.total == null) return 'Fewer than 5 members match this today.'
+  const parts = OFFER_ROLES.filter((x) => roles.includes(x.value))
+    .map((x) => { const n = r.by_role[x.value]; return n == null ? null : `${n} ${x.label.toLowerCase()}` })
+    .filter(Boolean)
+  return `Reaches ${r.total} members today${parts.length > 1 ? ` (${parts.join(', ')})` : ''}.`
+}
+
+export async function fetchOfferReach(f: Pick<OfferFields, 'everywhere' | 'regions' | 'country_ids' | 'roles' | 'area'>): Promise<OfferReach | null> {
+  const { data, error } = await supabase.rpc('get_brand_offer_reach', {
+    p_everywhere: f.everywhere ?? false,
+    p_country_ids: f.country_ids,
+    p_regions: f.regions ?? [],
+    p_roles: f.roles,
+    p_area: (f.area ?? '').trim() || undefined,
+  })
+  if (error) throw error
+  return (data ?? null) as unknown as OfferReach | null
 }
 
 // ── Server calls ────────────────────────────────────────────────────────────
@@ -259,6 +315,10 @@ export async function saveOffer(offerId: string | null, f: OfferFields, submit: 
     p_starts_at: f.starts_at as string,
     p_ends_at: f.ends_at as string,
     p_submit: submit,
+    p_everywhere: f.everywhere ?? false,
+    p_regions: f.regions ?? [],
+    p_perk: (f.perk ?? '').trim(),
+    p_promo_code: (f.promo_code ?? '').trim(),
   })
   if (error) throw error
   return data as string

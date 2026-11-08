@@ -70,9 +70,11 @@ const isRule = (errcode: string | null) => errcode === 'P0001' || errcode === '2
 
 describe('A · SQL source of truth is the release under audit', () => {
   it('the functions this release redefines are read from 20261004200000', () => {
-    for (const name of ['send_invite', 'make_offer', 'withdraw_offer', 'mark_signed', 'undo_mark_signed', 'confirm_signing']) {
+    for (const name of ['send_invite', 'make_offer', 'withdraw_offer', 'mark_signed', 'undo_mark_signed']) {
       expect(newestFunction(name).file, name).toBe('20261004200000_role_organisation_name.sql')
     }
+    // 2026-11-06: a new signing closes the open stint at the same club (refusals unchanged).
+    expect(newestFunction('confirm_signing').file).toBe('20261106230000_signing_closes_open_stint.sql')
     expect(newestFunction('_enforce_new_conversation_limit').file).toBe('20261004300000_new_conversation_limits.sql')
   })
 })

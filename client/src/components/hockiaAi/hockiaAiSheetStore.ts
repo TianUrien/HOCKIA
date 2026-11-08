@@ -20,7 +20,7 @@ export type HockiaAiStep = 'photo' | 'bio' | 'video' | 'career' | 'links' | 'pos
 export interface ApplyTarget { id: string; title: string; organization: string | null; logoUrl: string | null }
 
 /** The role the sheet was opened on (handoff B3/B4): questions go to nl-search's role_ask mode. */
-export interface RoleContext extends ApplyTarget { city: string | null; label: string }
+export interface RoleContext extends ApplyTarget { city: string | null; label: string; /** player | coach: hides "Prepare my application" when it isn't the viewer's role. */ opportunityType?: string | null }
 
 interface HockiaAiSheetState {
   open: boolean

@@ -19,6 +19,8 @@ import type { FitState } from '@/lib/clubRecruiting'
 import type { Profile } from '../PeopleListView'
 import { MemberPhotoCard } from './MemberPhotoCard'
 import { ClubWideCard } from './ClubWideCard'
+import { packWideCards } from '@/lib/communityGridPack'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const MemberFullPreview = lazy(() => import('./MemberFullPreview'))
 
@@ -59,6 +61,12 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
   const positions = useOpenRolePositions()
+  // Same column counts as the grid classes below: 2, lg 4, ≥1440 px 5.
+  const lg = useMediaQuery('(min-width: 1024px)')
+  const xl = useMediaQuery('(min-width: 1440px)')
+  const columns = xl ? 5 : lg ? 4 : 2
+  // Clubs span the row: keep them from leaving a hole beside a lone person card.
+  const ordered = useMemo(() => packWideCards(members, (m) => m.role === 'club', columns), [members, columns])
   const ids = useMemo(() => members.map((m) => m.id), [members])
   const personIds = useMemo(() => members.filter((m) => m.role !== 'club' && m.role !== 'brand').map((m) => m.id), [members])
   const photoIds = useMemo(() => members.filter((m) => m.role !== 'brand').map((m) => m.id), [members])
@@ -111,8 +119,8 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
 
   return (
     <>
-      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 min-[1440px]:grid-cols-5" data-testid="community-photo-grid" data-count={ids.length}>
-        {members.map((m, i) => {
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4 min-[1440px]:grid-cols-5" data-testid="community-photo-grid" data-count={ids.length}>
+        {ordered.map((m, i) => {
           if (m.role === 'club') {
             const cover = batch.photos.get(m.id)?.[0] ?? null
             const recruiting = (m.open_role_count ?? 0) > 0

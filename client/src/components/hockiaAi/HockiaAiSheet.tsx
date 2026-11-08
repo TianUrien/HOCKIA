@@ -26,6 +26,7 @@ import { useNextSteps } from './useNextSteps'
 import { useAiContextChip } from './useAiContextChip'
 import { aiContextChipLabel, goalIntro } from '@/lib/hockiaAiContext'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
+import { applyRoleMismatch } from '@/lib/applyRoleMatch'
 import type { DiscoverChatMessage } from '@/hooks/useDiscover'
 import type { AiStep } from '@/lib/aiStream'
 import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
@@ -200,7 +201,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   // Figma B4 178:603: three suggestions for the open role.
   const roleSuggestions = roleContext ? [
     { eyebrow: 'ASK', label: CHECK_PROFILE_AGAINST_ROLE, run: () => send(CHECK_PROFILE_AGAINST_ROLE) },
-    ...(canBuild ? [{ eyebrow: 'DO IT FOR ME', label: 'Prepare my application', run: () => prepareApplication(roleContext) }] : []),
+    ...(canBuild && !applyRoleMismatch(roleContext.opportunityType, profile?.role) ? [{ eyebrow: 'DO IT FOR ME', label: 'Prepare my application', run: () => prepareApplication(roleContext) }] : []),
     { eyebrow: 'LEARN', label: roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club?', run: () => send(roleContext.city ? `What is life in ${roleContext.city} like for a player?` : 'What should I ask the club about this opportunity?') },
   ] : []
   const roleChip = roleContext ? (
@@ -383,7 +384,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 optionRows ? (
                   <>
                     {planCard}
-                    {optionRows.slice(0, planCard ? 1 : 3).map(optionRow)}
+                    {optionRows.slice(0, 3).map(optionRow)}
                   </>
                 ) : (
                   <>

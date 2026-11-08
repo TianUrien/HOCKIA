@@ -7,6 +7,7 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { tagOutboundLink } from '@/lib/outboundLink'
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
 import { useImpressionOnce, recordProductView } from '@/lib/homeInstrumentation'
@@ -174,7 +175,7 @@ export function ProductCard({
 
         {externalUrl && (
           <a
-            href={externalUrl}
+            href={tagOutboundLink(externalUrl, 'product', product.name, 'brand_page')}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"

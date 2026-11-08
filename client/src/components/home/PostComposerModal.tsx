@@ -1308,7 +1308,7 @@ export function PostComposerModal({
                           <span>Add club logo (optional)</span>
                           <input
                             type="file"
-                            accept=".jpg,.jpeg,.png"
+                            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                             onChange={handleLogoUpload}
                             className="hidden"
                             disabled={isUploadingLogo}

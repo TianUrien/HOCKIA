@@ -12,8 +12,9 @@ import { cn } from '@/lib/utils'
  * a timeline line down to the next entry (hidden on the last), the team,
  * "role · league", "flag place · from – to" and up to two highlights with
  * checks. Mode Own = a chevron and the row opens the entry; Mode Public =
- * read-only, no chevron. An entry without a crest shows a muted placeholder
- * tile — never initials, and never another club's crest.
+ * read-only, no chevron. An entry without a crest shows the club placeholder
+ * shield (Avatar / Placeholder) — never a grey tile, never initials, and
+ * never another club's crest.
  */
 export const CAREER_ITEM_HIGHLIGHTS = 2
 
@@ -62,11 +63,9 @@ export function CareerEntryItem({ entry, last, flag, locationFlag = null, onOpen
   return (
     <li className="flex gap-3" data-testid="career-entry-item" data-mode={onOpen ? 'own' : 'public'}>
       <div className="flex w-10 shrink-0 flex-col items-center">
-        {crest ? (
+        <span className="contents" data-testid={crest ? undefined : 'career-entry-placeholder'}>
           <EntityAvatar src={crest} name={entry.clubName} role="club" size={40} />
-        ) : (
-          <span className="block h-10 w-10 shrink-0 rounded-[10px] border border-line bg-surface-muted" aria-hidden="true" data-testid="career-entry-placeholder" />
-        )}
+        </span>
         {!last && <span className="mt-1 w-px flex-1 bg-line" data-testid="career-entry-line" />}
       </div>
       {onOpen ? (

@@ -23,6 +23,11 @@ import { useKeyboardInset } from '@/hooks/useKeyboardInset'
  * optional one-line comment -> submit. No App Store routing in this slice.
  */
 const COMMENT_MAX = 500
+// Never right after opening the app (iOS audit 2026-11-06: it covered Home within
+// seconds of signing in). Ask once the member has been here a while and moved on
+// from the first screen.
+export const RATING_SESSION_DELAY_MS = 60_000
+export const RATING_MIN_SCREENS = 2
 
 // Calm browse/feed surfaces only. Everything else (messages, dashboard editing,
 // opportunity apply, onboarding) is intentionally excluded.
@@ -46,17 +51,26 @@ export default function AppRatingPrompt() {
   const [closed, setClosed] = useState(false)
   const queriedRef = useRef(false)
   const shownRef = useRef(false)
+  const [settled, setSettled] = useState(false)
+  const [screens, setScreens] = useState(0)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setSettled(true), RATING_SESSION_DELAY_MS)
+    return () => window.clearTimeout(t)
+  }, [])
+  useEffect(() => { setScreens((n) => n + 1) }, [location.pathname])
+  const ready = settled && screens >= RATING_MIN_SCREENS
 
   // Lowest-priority bottom prompt: claim a slot while the card wants to show, so the
   // AI FAB and other bottom prompts defer to it; we defer while a higher prompt is up.
   const wantsToShow = Boolean(decision?.show) && !closed && calm
   const otherActive = useBottomPrompt('rating', wantsToShow)
 
-  // Ask the server once per session, on the first calm surface. Stacking with other
+  // Ask the server once per session, on a calm surface once the session has settled. Stacking with other
   // bottom prompts is handled reactively by the coordinator (otherActive), so the
   // query itself isn't gated on it.
   useEffect(() => {
-    if (!APP_RATING_ENABLED || !calm || closed || queriedRef.current) return
+    if (!APP_RATING_ENABLED || !ready || !calm || closed || queriedRef.current) return
     queriedRef.current = true
     let cancelled = false
     void (async () => {
@@ -66,7 +80,7 @@ export default function AppRatingPrompt() {
     return () => {
       cancelled = true
     }
-  }, [calm, closed])
+  }, [ready, calm, closed])
 
   // Record "shown" exactly once, when the card actually renders (not while deferred
   // behind another prompt).

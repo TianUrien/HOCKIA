@@ -17,7 +17,8 @@ vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } 
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar" /> }))
 vi.mock('@/components/FeedbackModal', () => ({ default: () => <div data-testid="feedback-modal" /> }))
-vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: null, reload: vi.fn() }) }))
+let stepsValue: import('@/lib/nextSteps').NextStep[] | null = null
+vi.mock('@/components/hockiaAi/useNextSteps', () => ({ useNextSteps: () => ({ facts: null, steps: stepsValue, reload: vi.fn() }) }))
 vi.mock('@/hooks/useRecruitingContext', () => ({ useRecruitingContext: () => ({ active: null }) }))
 // The context chip's reads (goal, counts) are covered in hockiaAiContextChip.test.tsx.
 let chipValue: import('@/lib/hockiaAiContext').AiContextChip | null = null
@@ -314,16 +315,27 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     expect(sendMessage).toHaveBeenCalledWith('Find opportunities that fit me', undefined, undefined)
   })
 
+  it('the next-steps plan never takes the role choices: all three still show under it (iOS audit 2026-11-06)', () => {
+    stepsValue = [{ key: 'bio', label: 'Write my bio', description: 'I draft it from your profile' }]
+    try {
+      openMedium()
+      expect(screen.getByText('Where should we start?')).toBeInTheDocument()
+      expect(labels()).toHaveLength(3)
+    } finally {
+      stepsValue = null
+    }
+  })
+
   it('an OPEN choice goes to its screen instead of asking (no invented answers)', () => {
     const sendMessage = vi.fn()
     useDiscoverChat.setState({ sendMessage })
     authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
     openMedium()
     // OPEN rows show they leave the chat (design 2026-11-06).
-    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(2)
+    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(3)
     fireEvent.click(screen.getByText('How did my offers do this month?'))
     expect(sendMessage).not.toHaveBeenCalled()
-    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/offers')
+    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/results')
   })
 
   it('an umpire starts with "Add my latest match", which opens the Add editor', () => {

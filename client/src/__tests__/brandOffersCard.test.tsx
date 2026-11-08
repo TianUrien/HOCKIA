@@ -28,16 +28,18 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
   })
 
   it('hides the 30-day tiles while every number is zero or unknown', () => {
-    const { rerender } = render(<OffersCard offers={[{ status: 'live' }]} totals={{ shown: 0, opened: 0, contacted: 0 }} onCreate={vi.fn()} onOpen={vi.fn()} />)
+    const { rerender } = render(<OffersCard offers={[{ status: 'live' }]} totals={{ shown: 0, opened: 0, contacted: 0, store_visits: 0 }} onCreate={vi.fn()} onOpen={vi.fn()} />)
     expect(screen.queryByTestId('brand-offers-tiles')).toBeNull()
     rerender(<OffersCard offers={[{ status: 'live' }]} totals={null} onCreate={vi.fn()} onOpen={vi.fn()} />)
     expect(screen.queryByTestId('brand-offers-tiles')).toBeNull()
   })
 
   it('shows the tiles once any number is above zero, without a reply row or See results yet', () => {
-    render(<OffersCard offers={[{ status: 'live' }]} totals={{ shown: 158, opened: 31, contacted: 0 }} onCreate={vi.fn()} onOpen={vi.fn()} />)
+    render(<OffersCard offers={[{ status: 'live' }]} totals={{ shown: 158, opened: 31, contacted: 0, store_visits: 7 }} onCreate={vi.fn()} onOpen={vi.fn()} />)
     expect(screen.getByText('158')).toBeInTheDocument()
     expect(screen.getByText('Shown to')).toBeInTheDocument()
+    expect(screen.getByText('To your store')).toBeInTheDocument()
+    expect(screen.getByText('7')).toBeInTheDocument()
     expect(screen.getByText('Last 30 days')).toBeInTheDocument()
     expect(screen.queryByText(/waiting for your reply/)).toBeNull()
     expect(screen.queryByText('See results')).toBeNull()

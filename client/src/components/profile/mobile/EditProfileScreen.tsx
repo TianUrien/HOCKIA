@@ -195,6 +195,8 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       }
       case 'base': {
         if (!d<string>('base_location').trim()) return setError('Location is required.')
+        // Without a country members miss opportunities and offers picked by place (2026-11-07).
+        if (!d<number | null>('base_country_id')) return setError('Choose your location from the list so we know your country.')
         return persist({ base_location: d<string>('base_location'), base_city: d<string>('base_city') || null, base_country_id: d<number | null>('base_country_id') || null })
       }
       case 'club': {

@@ -8,7 +8,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
 import { fieldInput } from '@/components/ui/fieldClasses'
-import { BrandLogo, OfferHero } from '@/components/offers/OfferVisuals'
+import { BrandLogo, OfferHero, PerkPill } from '@/components/offers/OfferVisuals'
 import { dismissOffer, hideBrandOffers } from '@/lib/memberOffers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { suggestBrand, trackItemImpression, trackMarket, type MarketItem, type MarketSurface } from '@/lib/marketplace'
@@ -48,8 +48,8 @@ function ItemImage({ item, className, logoClassName, eager }: { item: MarketItem
   )
 }
 
-export function OfferPill({ className }: { className?: string }) {
-  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)}>Offer</span>
+export function OfferPill({ className, perk }: { className?: string; perk?: string | null }) {
+  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)}>{(perk ?? '').trim() || 'Offer'}</span>
 }
 
 /** Rail tile (MK1): 200 pt for offers, 160 pt for the need rails. */
@@ -60,7 +60,7 @@ export function MarketTile({ item, wide = false, surface, onOpen, onMenu }: { it
       <button type="button" onClick={onOpen} className="block w-full text-left">
         <span className="relative block">
           <ItemImage item={item} className={wide ? 'h-[150px] w-full' : 'h-[120px] w-full'} logoClassName="h-12 w-12 rounded-[12px] shadow-[0_2px_10px_rgba(15,15,20,0.18)]" />
-          {item.kind === 'offer' ? <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary">Offer</span> : null}
+          {item.kind === 'offer' ? <PerkPill perk={item.perk} className="absolute left-2 top-2 rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
         </span>
         <span className="block p-2.5">
           <span className="block truncate text-caption text-ink-2">{item.brand_name}</span>
@@ -87,7 +87,7 @@ export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: Mar
           <span className="mt-0.5 block text-row text-ink-2 line-clamp-2">{line}</span>
         </span>
       </button>
-      {item.kind === 'offer' ? <OfferPill className="shrink-0" /> : null}
+      {item.kind === 'offer' ? <OfferPill className="shrink-0" perk={item.perk} /> : null}
       <button type="button" onClick={onMenu} aria-label={`Options for ${item.title}`} className="-mr-1 flex h-11 w-9 shrink-0 items-center justify-center text-ink-3">
         <MoreHorizontal className="h-4 w-4" />
       </button>

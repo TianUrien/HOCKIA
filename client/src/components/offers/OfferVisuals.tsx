@@ -17,3 +17,9 @@ export function OfferHero({ url, className }: { url: string | null; className?: 
   if (url) return <img src={url} alt="" loading="lazy" className={cn('object-cover', className)} />
   return <span className={cn('block bg-gradient-to-br from-brand-primary to-brand-primary-pressed', className)} aria-hidden="true" />
 }
+
+/** The offer's perk ("15% off") as a small pill; falls back to "Offer" (2026-11-07). */
+export function PerkPill({ perk, className }: { perk?: string | null; className?: string }) {
+  const text = (perk ?? '').trim() || 'Offer'
+  return <span className={className ?? 'rounded-full bg-white px-2 py-0.5 text-caption font-semibold text-brand-primary'} data-testid="offer-perk">{text}</span>
+}

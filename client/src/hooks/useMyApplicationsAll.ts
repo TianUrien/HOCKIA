@@ -6,6 +6,11 @@ import { logger } from '@/lib/logger'
 // D4: the road after Shortlist stays active until it is signed or closed.
 const ACTIVE_STATUSES = new Set(['pending', 'shortlisted', 'maybe', 'offered', 'accepted', 'signed_pending_confirmation'])
 
+/** Active = the club can still answer: an open role and a status still on the road. */
+export function isActiveApplication(status: string | null | undefined, roleOpen: boolean): boolean {
+  return roleOpen && !!status && ACTIVE_STATUSES.has(status)
+}
+
 export interface MyApplicationRow {
   id: string
   opportunityId: string
@@ -69,7 +74,7 @@ export function useMyApplicationsAll() {
         roleOpen,
         country: opp?.location_country ?? null,
         club: opp?.profiles ? { id: opp.profiles.id, name: opp.profiles.full_name ?? 'Club', avatarUrl: opp.profiles.avatar_url, role: opp.profiles.role } : null,
-        active: roleOpen && ACTIVE_STATUSES.has(status),
+        active: isActiveApplication(status, roleOpen),
         hasClubNote: (() => {
           const fb = (r as { ai_feedback?: unknown }).ai_feedback
           if (!fb || typeof fb !== 'object' || Array.isArray(fb)) return false
