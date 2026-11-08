@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
-import { optimizeImage, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, validateImage, imageFileExtension } from '@/lib/imageOptimization'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
@@ -108,7 +108,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
     try {
       const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
       const optimized = await optimizeImage(file, { maxWidth: 800, maxHeight: 800, maxSizeMB: 1, mimeType })
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const ext = imageFileExtension(optimized)
       const path = `${user.id}/journey/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
       const { error } = await supabase.storage.from(BUCKET).upload(path, optimized, { upsert: true, cacheControl: '31536000' })
       if (error) throw error

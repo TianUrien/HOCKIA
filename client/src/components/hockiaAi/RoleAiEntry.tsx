@@ -4,6 +4,7 @@ import type { Vacancy } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { positionLabel } from '@/lib/identity'
 import { CHECK_PROFILE_AGAINST_ROLE } from '@/lib/hockiaAi'
+import { applyRoleMismatch } from '@/lib/applyRoleMatch'
 import { MascotAvatar } from './mascot'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
 
@@ -20,17 +21,18 @@ export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacanc
   const position = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || null
   const label = [position ?? vacancy.title, clubName].filter(Boolean).join(' · ')
+  const canApply = !applyRoleMismatch(vacancy.opportunity_type, role)
   return (
       <button
         type="button"
-        onClick={() => askAboutRole({ id: vacancy.id, title: vacancy.title, organization: clubName, logoUrl: clubLogo, city, label })}
+        onClick={() => askAboutRole({ id: vacancy.id, title: vacancy.title, organization: clubName, logoUrl: clubLogo, city, label, opportunityType: vacancy.opportunity_type })}
         className={className ?? 'flex w-full items-center gap-3 rounded-[16px] border border-brand-primary/25 bg-brand-soft px-3.5 py-2.5 text-left'}
         data-testid="role-ask-ai"
       >
         <MascotAvatar size={36} />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-ink-1">Ask Hockia AI about this opportunity <BetaPill onSoft testId="role-ask-ai-beta" /></span>
-          <span className="block truncate text-caption text-ink-2">{[CHECK_PROFILE_AGAINST_ROLE, 'Prepare my application', city ? `Life in ${city}` : null].filter(Boolean).join(' · ')}</span>
+          <span className="block truncate text-caption text-ink-2">{[CHECK_PROFILE_AGAINST_ROLE, canApply ? 'Prepare my application' : null, city ? `Life in ${city}` : null].filter(Boolean).join(' · ')}</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-brand-primary" strokeWidth={2} />
       </button>

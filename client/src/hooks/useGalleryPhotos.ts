@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { optimizeImage, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, validateImage, imageFileExtension } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
 import { clearCoverPhotoCache } from './useCoverPhoto'
 import { clearProfileScrollCache } from './useProfileScrollData'
@@ -58,7 +58,7 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
         if (!check.valid) { failed.push(`${file.name}: ${check.error ?? 'invalid image'}`); continue }
         try {
           const optimized = await optimizeImage(file, OPTIMIZE)
-          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+          const ext = imageFileExtension(optimized)
           const path = `${profileId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
           const { error: upErr } = await supabase.storage.from('gallery').upload(path, optimized, { cacheControl: '31536000' })
           if (upErr) throw upErr

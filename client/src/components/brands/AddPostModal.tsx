@@ -276,7 +276,7 @@ export function AddPostModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleImageUpload}
                 className="hidden"
                 aria-label="Upload post image"
