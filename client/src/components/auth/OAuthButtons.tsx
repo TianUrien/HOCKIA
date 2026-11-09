@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { oauthErrorMessage } from '@/lib/oauthErrorMessage'
 import { startOAuthSignIn, type OAuthProvider } from '@/lib/oauthSignIn'
 import { detectInAppBrowser, supportsOAuthProvider } from '@/lib/inAppBrowser'
 import { useFacebookLoginEnabled } from '@/hooks/useFacebookLoginEnabled'
@@ -59,7 +60,7 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       // still opening) is not a failure — the newer attempt is in flight.
       if (err instanceof Error && err.name === 'OAuthCancelled') return
       logger.error(`${provider} OAuth error:`, err)
-      onError('Sign-in failed. Please try again.')
+      onError(oauthErrorMessage(err instanceof Error && err.name === 'OAuthProviderError' ? err.message : null, 'Sign-in failed. Please try again.'))
     })
   }
 
