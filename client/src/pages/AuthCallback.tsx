@@ -5,6 +5,7 @@ import { supabase, AUTH_STORAGE_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { oauthErrorMessage, NO_EMAIL_MESSAGE } from '@/lib/oauthErrorMessage'
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
 import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
 
@@ -66,7 +67,7 @@ export default function AuthCallback() {
     const hash = window.location.hash
     const hashParams = new URLSearchParams(hash.substring(1))
     const hasAccessToken = hashParams.has('access_token')
-    const hasError = hashParams.has('error')
+    const hasError = hashParams.has('error') || queryParams.has('error')
     
     logger.debug('[AUTH_CALLBACK] Initialized')
     logger.debug('[AUTH_CALLBACK] PKCE code present:', !!pkceCode)
@@ -87,9 +88,10 @@ export default function AuthCallback() {
 
     // Check for immediate errors in URL
     if (hasError) {
-      const errorParam = hashParams.get('error')
+      const errorParam = hashParams.get('error') || queryParams.get('error')
+      const errorDescription = hashParams.get('error_description') || queryParams.get('error_description')
       logger.error('[AUTH_CALLBACK] Error in URL:', errorParam)
-      setError('Verification failed. Please try again.')
+      setError(oauthErrorMessage(errorDescription, 'Verification failed. Please try again.'))
       return
     }
 
@@ -444,6 +446,32 @@ export default function AuthCallback() {
   // Check for in-app browser issues
   const browserInfo = detectInAppBrowser()
   const isInAppBrowserIssue = browserInfo.isInAppBrowser && error
+
+  if (error === NO_EMAIL_MESSAGE) {
+    // Facebook account without an email: retrying never helps, so offer email sign-up.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4" data-testid="auth-no-email">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Couldn’t sign you in</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/signup/email')}
+              className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+            >
+              Sign up with email
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (error) {
     return (
