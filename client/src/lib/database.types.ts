@@ -9948,7 +9948,7 @@ export type Database = {
       }
       get_home_feed_new_count: { Args: { p_since: string }; Returns: number }
       get_home_feed_v2: {
-        Args: { p_limit?: number; p_offset?: number }
+        Args: { p_limit?: number; p_offset?: number; p_open_to_play?: boolean }
         Returns: Json
       }
       get_landing_stats: {

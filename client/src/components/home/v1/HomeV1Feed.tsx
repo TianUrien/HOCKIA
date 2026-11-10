@@ -9,7 +9,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { FeedAuthorContext, useFeedAuthorContext } from '@/hooks/useFeedAuthorContext'
 import { HomeFeedItemCard } from '@/components/home/HomeFeedItemCard'
-import { HOME_V1_MODULES, recordCardImpression, recordModuleImpression, recordPostImpression, scrollMilestonesCrossed, trackFeedScroll, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { HOME_V1_MODULES, recordCardImpression, recordModuleImpression, recordPostImpression, scrollMilestonesCrossed, trackCardLinkClick, trackFeedScroll, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { UserPostCard } from '@/components/home/cards'
 import type { Profile } from '@/components/community/PeopleListView'
 import type { HomeFeedItem, SigningMetadata } from '@/types/homeFeed'
@@ -21,7 +21,7 @@ import { VideoCard } from './cards/VideoCards'
 import { PhotosCard } from './cards/PhotosCard'
 import { ReferenceCard } from './cards/ReferenceCard'
 import { OpportunityCard } from './cards/OpportunityCard'
-import { DigestCard } from './cards/DigestCard'
+import { DigestCard, OpenToPlayWeekCard } from './cards/DigestCard'
 import { RolesRail } from './RolesRail'
 import { EndOfFeed } from './EndOfFeed'
 import { CommentsSheet } from './CommentsSheet'
@@ -171,7 +171,11 @@ export function HomeV1Feed({ prependItemRef, header }: {
             {idx > 0 && <FeedBand />}
             <ItemBoundary>
               <FeedCardSentinel index={idx} onVisible={onCardVisible}>
-                <FeedItem item={item} onLikeUpdate={updateItemLike} onDelete={removeItem} />
+                {/* Any in-app link inside the card counts as a Home click (cards
+                    with their own buttons report themselves). */}
+                <div onClickCapture={(e) => trackCardLinkClick(item.feed_item_id, item.item_type, (e.target as HTMLElement).closest?.('a[href]')?.getAttribute('href'))}>
+                  <FeedItem item={item} onLikeUpdate={updateItemLike} onDelete={removeItem} />
+                </div>
               </FeedCardSentinel>
             </ItemBoundary>
             {idx === RAIL_AFTER - 1 && (
@@ -253,6 +257,8 @@ function FeedItem({ item, onLikeUpdate, onDelete }: {
       return <OpportunityCard item={item} />
     case 'members_digest':
       return <DigestCard item={item} />
+    case 'open_to_play_week':
+      return <OpenToPlayWeekCard item={item} />
     default:
       return <HomeFeedItemCard item={item} onLikeUpdate={onLikeUpdate} onDelete={onDelete} />
   }
