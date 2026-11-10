@@ -285,7 +285,7 @@ export default function OpportunityDetailPage() {
     // Cleanup: restore defaults when leaving page
     return () => {
       document.title = 'Hockia | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
+      const defaultDesc = 'Hockia is the field hockey network: player and coach profiles, clubs recruiting worldwide and open field hockey jobs. Join free.'
 
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
       if (ogTitle) ogTitle.setAttribute('content', 'Hockia | Field Hockey Community')

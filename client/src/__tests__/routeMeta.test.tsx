@@ -12,7 +12,7 @@ describe('routeMeta', () => {
 
   it('static pages get a title; dynamic pages keep theirs; private routes are noindex', () => {
     expect(resolveRouteMeta('/terms')).toMatchObject({ title: 'Terms & Conditions | Hockia', index: true })
-    expect(resolveRouteMeta('/opportunities').title).toMatch(/Field Hockey Opportunities/)
+    expect(resolveRouteMeta('/opportunities').title).toMatch(/Field Hockey Jobs & Opportunities/)
     expect(resolveRouteMeta('/opportunities/123e4567-e89b-12d3-a456-426614174000')).toMatchObject({ title: null, index: true })
     expect(resolveRouteMeta('/members/juan')).toMatchObject({ title: null, index: true })
     expect(resolveRouteMeta('/members/id/abc').index).toBe(false) // duplicate of the slug URL
@@ -95,7 +95,7 @@ describe('fromPublicApi', () => {
 describe('renderStaticHtml', () => {
   it('gives /opportunities its own title, description and self canonical', () => {
     const html = renderStaticHtml(shell, '/opportunities', 'https://inhockia.com')
-    expect(html).toContain('<title>Field Hockey Opportunities – Players &amp; Coaches Worldwide | Hockia</title>')
+    expect(html).toContain('<title>Field Hockey Jobs &amp; Opportunities – Players &amp; Coaches Worldwide | Hockia</title>')
     expect(html).toContain('<link rel="canonical" href="https://inhockia.com/opportunities" />')
     expect(html).toContain('<meta property="og:url" content="https://inhockia.com/opportunities" />')
     expect(html).not.toContain('href="https://inhockia.com/"')

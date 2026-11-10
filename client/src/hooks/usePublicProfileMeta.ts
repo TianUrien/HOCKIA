@@ -15,7 +15,7 @@ interface PublicProfileMetaInput {
 }
 
 const DEFAULT_TITLE = 'Hockia | Field Hockey Community'
-const DEFAULT_DESC = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
+const DEFAULT_DESC = 'Hockia is the field hockey network: player and coach profiles, clubs recruiting worldwide and open field hockey jobs. Join free.'
 
 /**
  * Mutates document.title + og/twitter meta tags for a public profile page.
