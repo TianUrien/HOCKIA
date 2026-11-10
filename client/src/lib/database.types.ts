@@ -8724,6 +8724,10 @@ export type Database = {
           total_signups: number
         }[]
       }
+      admin_get_member_blocks: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       admin_get_spam_signals: {
         Args: { p_days?: number; p_limit?: number; p_offset?: number }
         Returns: Json
