@@ -122,6 +122,20 @@ that returns or counts people must apply it explicitly** (46 migration files
 do). A 2026-07 audit found eight surfaces that leaked by omission; the
 invariant is restated in the root `CLAUDE.md`.
 
+**Ban evasion (2026-11-10, migration `20261110150000_ban_evasion_guard`).**
+An admin block also records the account's email in `banned_emails`
+(normalised: lower-case, `+tag` removed, Gmail dots removed) and an unblock
+removes it; the table is server-only (RLS on, no policies, no client grants).
+A `BEFORE INSERT` guard on `profiles` refuses a new profile whose email, or
+whose auth account's email, normalises to a banned one (`42501`,
+`email_banned`). The entry has no foreign key, so it survives the account
+being deleted. A new mailbox is not stopped by this:
+`admin_get_ban_evasion_suspects()` (admin-only, shown on Admin › Member
+blocks) lists unblocked accounts that share `events.anonymous_id` (strong) or
+`events.ip_hash` (weak) with a blocked account. It never blocks by itself.
+Not covered: the auth account of a blocked member is not banned in
+`auth.users`, so they can still sign in and see their own hidden profile.
+
 ### 3.5 Age gate and 18+ rules
 
 - DOB is captured once and immutable; minors are blocked at signup and

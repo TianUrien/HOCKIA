@@ -5,14 +5,19 @@
  * private safety action. Each row links to the member in the User Directory
  * and offers the existing admin block action.
  * Data: admin_get_member_blocks / blockUser.
+ *
+ * Below it (founder 2026-11-10): accounts that are not blocked but used the
+ * same device or network as an account an admin blocked — someone coming
+ * back with a new email. A list to review; nothing is blocked automatically.
+ * Data: admin_get_ban_evasion_suspects.
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Ban, RefreshCw, UserX } from 'lucide-react'
 import { ConfirmDialog, DataTable } from '../components'
 import type { Action, Column } from '../components'
-import { blockUser, getMemberBlocks } from '../api/adminApi'
-import type { MemberBlockRow } from '../api/adminApi'
+import { blockUser, getBanEvasionSuspects, getMemberBlocks } from '../api/adminApi'
+import type { BanEvasionSuspect, MemberBlockRow } from '../api/adminApi'
 import { formatAdminDate, formatAdminDateTime } from '../utils/formatDate'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
 import { logger } from '@/lib/logger'
@@ -26,7 +31,21 @@ export function AdminMemberBlocks() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [confirm, setConfirm] = useState<MemberBlockRow | null>(null)
+  const [confirm, setConfirm] = useState<{ profile_id: string; full_name: string | null; reason: string } | null>(null)
+  const [suspects, setSuspects] = useState<BanEvasionSuspect[]>([])
+  const [suspectsLoading, setSuspectsLoading] = useState(true)
+
+  const fetchSuspects = useCallback(async () => {
+    setSuspectsLoading(true)
+    try {
+      setSuspects(await getBanEvasionSuspects())
+    } catch (err) {
+      logger.error('[AdminMemberBlocks] related accounts fetch failed', err)
+      setError(err instanceof Error ? err.message : 'Failed to load related accounts')
+    } finally {
+      setSuspectsLoading(false)
+    }
+  }, [])
 
   const fetchBlocks = useCallback(async () => {
     setIsLoading(true)
@@ -45,12 +64,13 @@ export function AdminMemberBlocks() {
 
   useEffect(() => { document.title = 'Member blocks | Hockia Admin' }, [])
   useEffect(() => { void fetchBlocks() }, [fetchBlocks])
+  useEffect(() => { void fetchSuspects() }, [fetchSuspects])
 
   const handleBlock = async () => {
     if (!confirm) return
     try {
-      await blockUser(confirm.profile_id, `Blocked by ${members(confirm.block_count)}`)
-      await fetchBlocks()
+      await blockUser(confirm.profile_id, confirm.reason)
+      await Promise.all([fetchBlocks(), fetchSuspects()])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to block this account')
       throw err
@@ -113,7 +133,65 @@ export function AdminMemberBlocks() {
       icon: <Ban className="h-4 w-4" />,
       variant: 'danger',
       disabled: (row) => row.is_blocked,
-      onClick: (row) => setConfirm(row),
+      onClick: (row) => setConfirm({ profile_id: row.profile_id, full_name: row.full_name, reason: `Blocked by ${members(row.block_count)}` }),
+    },
+  ]
+
+  const suspectColumns: Column<BanEvasionSuspect>[] = [
+    {
+      key: 'full_name',
+      label: 'Who',
+      render: (_, row) => (
+        <div className="min-w-[180px]">
+          <Link to={`/admin/directory?profile=${row.profile_id}`} className="font-medium text-purple-700 hover:underline">
+            {row.full_name || 'No name'}
+          </Link>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+            {row.role && <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${getRoleBadgeClasses(row.role)}`}>{row.role}</span>}
+            <span>Joined {formatAdminDate(row.account_created_at)}</span>
+            {row.created_after_block && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800">Joined after the block</span>}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'match',
+      label: 'Shares',
+      render: (_, row) => (
+        <span className="font-medium text-gray-900" data-testid={`match-${row.profile_id}`}>
+          {row.match === 'device' ? 'Same device' : 'Same network'}
+        </span>
+      ),
+    },
+    {
+      key: 'blocked_full_name',
+      label: 'With blocked account',
+      render: (_, row) => (
+        <div>
+          <Link to={`/admin/directory?profile=${row.blocked_profile_id}`} className="text-purple-700 hover:underline">
+            {row.blocked_full_name || 'No name'}
+          </Link>
+          {row.blocked_at && <div className="text-xs text-gray-500">blocked {formatAdminDate(row.blocked_at)}</div>}
+        </div>
+      ),
+    },
+    {
+      key: 'last_seen',
+      label: 'Last seen there',
+      render: (_, row) => <span className="whitespace-nowrap">{formatAdminDateTime(row.last_seen)}</span>,
+    },
+  ]
+
+  const suspectActions: Action<BanEvasionSuspect>[] = [
+    {
+      label: 'Block user',
+      icon: <Ban className="h-4 w-4" />,
+      variant: 'danger',
+      onClick: (row) => setConfirm({
+        profile_id: row.profile_id,
+        full_name: row.full_name,
+        reason: `Same ${row.match} as blocked account ${row.blocked_full_name || row.blocked_profile_id}`,
+      }),
     },
   ]
 
@@ -131,7 +209,7 @@ export function AdminMemberBlocks() {
         </div>
         <button
           type="button"
-          onClick={() => void fetchBlocks()}
+          onClick={() => { void fetchBlocks(); void fetchSuspects() }}
           disabled={isLoading}
           className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
@@ -156,6 +234,23 @@ export function AdminMemberBlocks() {
         emptyMessage="No member has blocked anyone yet."
         pagination={total > PAGE_SIZE ? { page, pageSize: PAGE_SIZE, totalCount: total, onPageChange: setPage } : undefined}
       />
+
+      <section className="space-y-3" aria-labelledby="related-accounts-title">
+        <div>
+          <h2 id="related-accounts-title" className="text-lg font-semibold text-gray-900">Possibly the same person as a blocked account</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Accounts that are not blocked but used the same device or network as an account you blocked. Same device is a strong sign; same network is weak (clubs, families and mobile carriers share one). Nothing is blocked automatically.
+          </p>
+        </div>
+        <DataTable
+          data={suspects}
+          columns={suspectColumns}
+          actions={suspectActions}
+          keyField="profile_id"
+          loading={suspectsLoading}
+          emptyMessage="No account shares a device or network with a blocked account."
+        />
+      </section>
 
       <ConfirmDialog
         isOpen={confirm !== null}
