@@ -61,18 +61,23 @@ async function country(slugRaw: string, shell: string, siteUrl: string): Promise
   const slug = slugRaw.trim().toLowerCase()
   if (!/^[a-z][a-z-]{1,60}$/.test(slug)) return { kind: 'noindex', why: 'bad-slug' }
 
-  if (slug.length > 2) {
-    const named = await rest<{ code: string }>(`countries?select=code&name=ilike.${encodeURIComponent(slug.replace(/-/g, ' '))}&limit=1`)
-    return named?.[0]?.code ? { kind: 'redirect', to: `/world/${named[0].code.toLowerCase()}` } : { kind: 'noindex', why: 'unknown-name' }
-  }
-
-  const code = slug.toUpperCase()
-  const dir = await rest<{ country_id: number; country_code: string; country_name: string; total_clubs: number | null; total_leagues: number | null }>(
-    `world_countries_with_directory?select=country_id,country_code,country_name,total_clubs,total_leagues&country_code=eq.${code}&limit=1`,
-  )
+  // Codes first: ISO-2 (ar) and the home nations (gb-eng, gb-sct, gb-nir).
+  const looksLikeCode = /^[a-z]{2}(-[a-z]{2,3})?$/.test(slug)
+  const dir = looksLikeCode
+    ? await rest<{ country_id: number; country_code: string; country_name: string; total_clubs: number | null; total_leagues: number | null }>(
+      `world_countries_with_directory?select=country_id,country_code,country_name,total_clubs,total_leagues&country_code=eq.${slug.toUpperCase()}&limit=1`,
+    )
+    : []
   if (dir === null) return { kind: 'noindex', why: 'lookup-failed' }
   const row = dir[0]
-  if (!row) return { kind: 'noindex', why: 'not-in-directory' }
+  if (!row) {
+    // Not a code in the directory: maybe a country name (/world/argentina).
+    if (slug.length > 2) {
+      const named = await rest<{ code: string }>(`countries?select=code&name=ilike.${encodeURIComponent(slug.replace(/-/g, ' '))}&limit=1`)
+      if (named?.[0]?.code) return { kind: 'redirect', to: `/world/${named[0].code.toLowerCase()}` }
+    }
+    return { kind: 'noindex', why: looksLikeCode ? 'not-in-directory' : 'unknown-name' }
+  }
 
   const clubs = await rest<{ id: string; club_name: string }>(
     `world_clubs?select=id,club_name&country_id=eq.${row.country_id}&order=is_claimed.desc,club_name.asc&limit=${ITEM_LIST_MAX}`,
