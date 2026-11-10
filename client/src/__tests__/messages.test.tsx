@@ -13,10 +13,12 @@ vi.mock('@/lib/supabase', () => ({
       eq: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-    })
+    }),
+    rpc: (...args: unknown[]) => mockRpc(...args)
   }
 }))
 
+const mockRpc = vi.fn().mockResolvedValue({ data: null, error: null })
 const mockUseChat = vi.fn()
 const mockUseMediaQuery = vi.fn(() => false)
 const mockUseSafeArea = vi.fn()
@@ -157,6 +159,24 @@ function renderChatWindow(overrides?: Partial<ChatConversation>) {
 }
 
 describe('Messages flows', () => {
+  it('opening a chat clears the "unread" reminder and tells the list once the server has', async () => {
+    mockRpc.mockClear()
+    const onConversationRead = vi.fn()
+    render(
+      <MemoryRouter>
+        <ChatWindowV2
+          conversation={chatConversationBase}
+          currentUserId="viewer-1"
+          onBack={vi.fn()}
+          onConversationCreated={vi.fn()}
+          onConversationRead={onConversationRead}
+        />
+      </MemoryRouter>
+    )
+    expect(mockRpc).toHaveBeenCalledWith('set_conversation_marked_unread', { p_conversation_id: chatConversationBase.id, p_unread: false })
+    await waitFor(() => expect(onConversationRead).toHaveBeenCalledWith(chatConversationBase.id))
+  })
+
   it('keeps the conversation list visible when navigating back from a chat', async () => {
     const conversations = [
       listConversationBase,
