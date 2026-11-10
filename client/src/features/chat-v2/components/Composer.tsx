@@ -86,7 +86,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             onFocus={onFocus}
             onKeyDown={handleKeyDown}
             onChange={event => onChange(event.target.value)}
-            className={`chat-textarea w-full resize-none rounded-[20px] bg-surface-grouped py-2.5 text-[15px] leading-5 text-ink-1 outline-none transition-colors placeholder:text-ink-3 focus-visible:outline-none focus:bg-[#ebebf0] ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
+            className={`chat-textarea w-full resize-none rounded-[20px] bg-surface-grouped py-2.5 text-[15px] leading-5 text-ink-1 outline-none transition-colors placeholder:text-ink-3 appearance-none focus-visible:rounded-[20px] focus-visible:outline-none focus:bg-[#ebebf0] ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
           />
           {/* Counter only appears near the limit — a clean, native-feeling
               input the rest of the time instead of an always-on form field. */}
@@ -99,6 +99,11 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
         <button
           type="submit"
           disabled={disabled}
+          // Keep the keyboard up after sending (Messages/WhatsApp): the tap on
+          // Send must not move focus out of the field. On iOS the focus change
+          // rides on the synthesized mousedown, so cancelling it is enough.
+          onMouseDown={event => event.preventDefault()}
+          onPointerDown={event => { if (event.pointerType !== 'mouse') event.preventDefault() }}
           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hockia-primary disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send message"
         >

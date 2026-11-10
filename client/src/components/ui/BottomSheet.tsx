@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useSquircle } from '@/lib/squircle'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { SPRING, animateSpring, springValue, stopSpring } from '@/lib/spring'
 
 interface BottomSheetProps {
   open: boolean
@@ -52,11 +53,34 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className, ini
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // Open with the sheet spring (Motion spec: response 0.48, damping 0.86):
+  // the panel rises from below its own height while the scrim fades in.
+  // Reduce Motion lands instantly (lib/spring).
+  const scrimRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (!open) return
+    const panel = panelRef.current
+    const scrim = scrimRef.current
+    if (!panel) return
+    const from = panel.getBoundingClientRect().height || 320
+    const value = springValue(1, (p) => {
+      panel.style.transform = p <= 0.0005 ? '' : `translate3d(0, ${(p * from).toFixed(2)}px, 0)`
+      if (scrim) scrim.style.opacity = String(1 - Math.min(1, Math.max(0, p)))
+    })
+    value.onUpdate(1)
+    animateSpring(value, 0, SPRING.sheetOpen)
+    return () => {
+      stopSpring(value)
+      panel.style.transform = ''
+      if (scrim) scrim.style.opacity = ''
+    }
+  }, [open])
+
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center" role="presentation" style={kb.inset ? { paddingBottom: kb.inset } : undefined} data-keyboard-inset={kb.inset || undefined}>
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div ref={scrimRef} className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"

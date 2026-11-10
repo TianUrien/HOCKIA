@@ -101,9 +101,18 @@ test.describe('@smoke player', () => {
     const rowFor = (text: string) => messageList.locator('.chat-message-wrapper', { hasText: text })
     const edited = `${original} UPDATED`
 
+    // The message menu opens on press and hold (phones) or right-click
+    // (desktop); both run the same handler, so right-click covers both.
+    // Edit/Delete exist once the message is delivered (not while sending).
+    const openMenu = async (text: string) => {
+      const bubble = rowFor(text).getByTestId('message-bubble')
+      await expect(bubble).toHaveAttribute('data-status', 'delivered', { timeout: 20000 })
+      await bubble.click({ button: 'right' })
+    }
+
     // EDIT
-    await rowFor(original).getByTestId('message-options-trigger').click()
-    await page.getByTestId('message-edit-action').click()
+    await openMenu(original)
+    await page.getByTestId('message-sheet-edit-action').click()
     await page.getByTestId('message-edit-editor').getByLabel('Edit message').fill(edited)
     await page.getByTestId('message-edit-save').click()
 
@@ -113,11 +122,11 @@ test.describe('@smoke player', () => {
     await expect(rowFor(edited).getByText('edited', { exact: true })).toBeVisible({ timeout: 20000 })
 
     // DELETE — confirm, then assert the tombstone (also cleans up the row).
-    await rowFor(edited).getByTestId('message-options-trigger').click()
-    await page.getByTestId('message-delete-action').click()
+    await openMenu(edited)
+    await page.getByTestId('message-sheet-delete-action').click()
     const confirm = page.getByTestId('message-delete-confirm')
     await expect(confirm).toBeVisible()
-    await confirm.getByRole('button', { name: 'Delete' }).click()
+    await confirm.getByTestId('message-delete-everyone').click()
     await expect(confirm).toBeHidden()
 
     await expect(rowFor(edited)).toHaveCount(0)

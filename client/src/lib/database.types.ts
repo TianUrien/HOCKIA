@@ -10349,6 +10349,15 @@ export type Database = {
         Args: { p_before?: string; p_conversation_id: string }
         Returns: number
       }
+      delete_conversation_for_me: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
+      hide_message_for_me: { Args: { p_message_id: string }; Returns: undefined }
+      set_conversation_marked_unread: {
+        Args: { p_conversation_id: string; p_unread: boolean }
+        Returns: undefined
+      }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean

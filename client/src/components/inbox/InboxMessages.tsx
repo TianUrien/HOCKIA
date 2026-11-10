@@ -13,6 +13,8 @@ import { useClubInboxMeta } from '@/hooks/useClubInbox'
 import { clubInboxRoleLine, inboxWaitingNotice } from '@/lib/clubInbox'
 import { firstNameOf } from '@/lib/invites'
 import { recruitingPreview } from '@/lib/signing'
+import { useConversationActions } from '@/lib/conversationActions'
+import { ConversationActionsSheet, type ConversationActionTarget } from './ConversationActionsSheet'
 
 interface ConversationRpcRow {
   conversation_id: string
@@ -59,6 +61,9 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const clubV2 = role === 'club' && isPhone
+  const { setUnread, deleteConversation } = useConversationActions(userId)
+  // Press and hold → the actions menu; swipe → Delete goes straight to the confirmation.
+  const [actionTarget, setActionTarget] = useState<{ target: ConversationActionTarget; deleteOnly: boolean } | null>(null)
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: inboxConversationsKey(userId ?? 'anon'),
@@ -183,12 +188,24 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
                   unread={unread}
                   waiting={Boolean(m?.waiting)}
                   onSelect={() => navigate(`/messages/${row.conversation_id}`)}
+                  conversationId={row.conversation_id}
+                  onToggleUnread={() => void setUnread(row.conversation_id, !unread)}
+                  onDelete={() => setActionTarget({ target: { id: row.conversation_id, name, unread }, deleteOnly: true })}
+                  onLongPress={() => setActionTarget({ target: { id: row.conversation_id, name, unread }, deleteOnly: false })}
                 />
               </li>
             )
           })}
         </ul>
       )}
+
+      <ConversationActionsSheet
+        target={actionTarget?.target ?? null}
+        confirmDeleteOnly={actionTarget?.deleteOnly ?? false}
+        onClose={() => setActionTarget(null)}
+        onToggleUnread={setUnread}
+        onDelete={deleteConversation}
+      />
     </section>
   )
 }
