@@ -600,6 +600,12 @@ html {
 *:focus-visible {
   outline: 2px solid var(--color-hockia-primary);
   outline-offset: 2px;
+}
+
+/* Rounded focus ring for bare controls. Text fields keep their own shape:
+   every focused input/textarea matches :focus-visible, and this radius
+   squared off pill fields like the chat composer (simulator 2026-11-10). */
+*:focus-visible:not(input):not(textarea):not(select) {
   border-radius: 0.375rem;
 }
 

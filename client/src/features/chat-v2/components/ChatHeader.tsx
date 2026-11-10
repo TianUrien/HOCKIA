@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, UserRound } from 'lucide-react'
+import { ArrowLeft, Mail, Trash2, UserRound } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -25,6 +25,10 @@ interface ChatHeaderProps {
   isMobile: boolean
   /** The conversation, so a Report from the "…" says which chat it was. */
   conversationId?: string
+  /** "Mark as unread" (a reminder; leaves the thread). */
+  onMarkUnread?: () => void
+  /** "Delete conversation" (asks first; for this member only). */
+  onDeleteConversation?: () => void
 }
 
 const fallbackName = 'Hockia Member'
@@ -66,18 +70,21 @@ function useParticipantDetail(participant: ConversationParticipant | undefined):
   return detail
 }
 
-export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId }: ChatHeaderProps) {
+export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId, onMarkUnread, onDeleteConversation }: ChatHeaderProps) {
   const participantName = participant?.full_name || participant?.username || fallbackName
   const initials = participant?.full_name?.charAt(0).toUpperCase() || 'P'
   const detail = useParticipantDetail(participant)
   const navigate = useNavigate()
   const report = useReportAction({ targetId: participant?.id, subject: 'chat', contentId: conversationId })
 
-  // "…" top right (Figma Chat): View profile · Report — same wording and
-  // place as every other "…" menu. The other person is never told.
+  // "…" top right (Figma Chat): View profile · Mark as unread · Report ·
+  // Delete conversation — same wording and place as every other "…" menu.
+  // The other person is never told about any of them.
   const menuItems: MoreMenuItem[] = participant?.id ? [
     ...(profilePath ? [{ key: 'profile', label: 'View profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(profilePath) }] : []),
+    ...(onMarkUnread ? [{ key: 'unread', label: 'Mark as unread', icon: <Mail className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onMarkUnread }] : []),
     report.item,
+    ...(onDeleteConversation ? [{ key: 'delete', label: 'Delete conversation', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onDeleteConversation, destructive: true }] : []),
   ] : []
   const menu = menuItems.length > 0 ? (
     <>

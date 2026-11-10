@@ -15,6 +15,8 @@ interface MessageListProps {
   deleteFailedMessage: (id: string) => void
   editMessage: (id: string, content: string) => Promise<boolean>
   deleteMessage: (id: string) => Promise<boolean>
+  /** "Delete for me": hide a message for this member only. */
+  hideMessage?: (id: string) => Promise<boolean>
   isLoadingMore: boolean
   unreadMetadata: {
     firstUnreadId: string | null
@@ -34,6 +36,7 @@ export function MessageList({
   deleteFailedMessage,
   editMessage,
   deleteMessage,
+  hideMessage,
   isLoadingMore,
   unreadMetadata,
   hideReceipts = false,
@@ -136,6 +139,7 @@ export function MessageList({
             onDeleteFailed={deleteFailedMessage}
             onEditSave={editMessage}
             onDelete={deleteMessage}
+            onHideForMe={hideMessage}
             hideReceipts={hideReceipts}
             otherParticipantName={otherParticipantName}
           />

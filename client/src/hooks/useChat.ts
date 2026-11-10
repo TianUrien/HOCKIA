@@ -587,6 +587,38 @@ export function useChat({
     }
   }, [addToast, conversation.id, syncMessagesState])
 
+  // "Delete for me" (founder 2026-11-10): hide one message for this member
+  // only — any message, theirs or the other person's. Optimistic removal;
+  // the row comes back if the server refuses.
+  const hideMessageForMe = useCallback(async (messageId: string) => {
+    const index = messagesRef.current.findIndex(msg => msg.id === messageId)
+    if (index === -1) return false
+    const previous = messagesRef.current[index]
+    syncMessagesState(prev => prev.filter(msg => msg.id !== messageId))
+    try {
+      const { error } = await supabase.rpc('hide_message_for_me', { p_message_id: messageId })
+      if (error) throw error
+      return true
+    } catch (error) {
+      logger.error('Error hiding message:', error)
+      reportSupabaseError('messaging_chat.hide_message_for_me', error, {
+        conversationId: conversation.id,
+        messageId
+      }, {
+        feature: 'messaging_chat',
+        operation: 'hide_message_for_me'
+      })
+      syncMessagesState(prev => {
+        if (prev.some(msg => msg.id === messageId)) return prev
+        const next = [...prev]
+        next.splice(Math.min(index, next.length), 0, previous)
+        return next
+      })
+      addToast(extractErrorMessage(error, 'Could not delete the message. Try again.'), 'error')
+      return false
+    }
+  }, [addToast, conversation.id, syncMessagesState])
+
   const sendMessage = useCallback(async (content: string, options?: { reuseOptimisticId?: string; metadata?: MessageMetadata | null }) => {
     if (!content.trim() || sendingRef.current) return false
 
@@ -1067,6 +1099,7 @@ export function useChat({
     deleteFailedMessage,
     editMessage,
     deleteMessage,
+    hideMessageForMe,
     loadOlderMessages,
     queueReadReceipt,
     markConversationAsRead
