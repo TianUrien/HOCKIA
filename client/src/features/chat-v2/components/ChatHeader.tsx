@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, Trash2, UserRound } from 'lucide-react'
+import { ArrowLeft, Ban, Mail, Trash2, UserRound } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -29,6 +29,8 @@ interface ChatHeaderProps {
   onMarkUnread?: () => void
   /** "Delete conversation" (asks first; for this member only). */
   onDeleteConversation?: () => void
+  /** "Block <name>" (asks first). Also offered after a report from this menu. */
+  onBlock?: () => void
 }
 
 const fallbackName = 'Hockia Member'
@@ -70,20 +72,28 @@ function useParticipantDetail(participant: ConversationParticipant | undefined):
   return detail
 }
 
-export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId, onMarkUnread, onDeleteConversation }: ChatHeaderProps) {
+export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId, onMarkUnread, onDeleteConversation, onBlock }: ChatHeaderProps) {
   const participantName = participant?.full_name || participant?.username || fallbackName
   const initials = participant?.full_name?.charAt(0).toUpperCase() || 'P'
   const detail = useParticipantDetail(participant)
   const navigate = useNavigate()
-  const report = useReportAction({ targetId: participant?.id, subject: 'chat', contentId: conversationId })
+  // People by first name; a club or brand by its full name ("Block E2E" read wrong).
+  const firstName = participant?.role === 'club' || participant?.role === 'brand' ? participantName : participantName.split(' ')[0] || participantName
+  const report = useReportAction({
+    targetId: participant?.id,
+    subject: 'chat',
+    contentId: conversationId,
+    offerBlock: onBlock ? { name: firstName, onBlock } : undefined,
+  })
 
   // "…" top right (Figma Chat): View profile · Mark as unread · Report ·
-  // Delete conversation — same wording and place as every other "…" menu.
+  // Block · Delete conversation — same wording and place as every other "…" menu.
   // The other person is never told about any of them.
   const menuItems: MoreMenuItem[] = participant?.id ? [
     ...(profilePath ? [{ key: 'profile', label: 'View profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(profilePath) }] : []),
     ...(onMarkUnread ? [{ key: 'unread', label: 'Mark as unread', icon: <Mail className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onMarkUnread }] : []),
     report.item,
+    ...(onBlock ? [{ key: 'block', label: `Block ${firstName}`, icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onBlock, destructive: true }] : []),
     ...(onDeleteConversation ? [{ key: 'delete', label: 'Delete conversation', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onDeleteConversation, destructive: true }] : []),
   ] : []
   const menu = menuItems.length > 0 ? (

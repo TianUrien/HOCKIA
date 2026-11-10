@@ -39,7 +39,7 @@ interface ConversationListProps {
   clubMeta?: Map<string, ClubInboxRowMeta>
   /** Row actions (swipe / press and hold / right-click). */
   onToggleUnread?: (conversationId: string, unread: boolean) => void
-  onRequestActions?: (target: { id: string; name: string; unread: boolean }, deleteOnly: boolean) => void
+  onRequestActions?: (target: { id: string; name: string; unread: boolean; otherId?: string | null }, deleteOnly: boolean) => void
 }
 
 export default function ConversationList({
@@ -123,7 +123,7 @@ export default function ConversationList({
                 conversationId={conversation.id}
                 onToggleUnread={onToggleUnread ? () => onToggleUnread(conversation.id, !isUnread) : undefined}
                 onDelete={onRequestActions ? () => onRequestActions({ id: conversation.id, name: participantName, unread: isUnread }, true) : undefined}
-                onLongPress={onRequestActions ? () => onRequestActions({ id: conversation.id, name: participantName, unread: isUnread }, false) : undefined}
+                onLongPress={onRequestActions ? () => onRequestActions({ id: conversation.id, name: participantName, unread: isUnread, otherId: conversation.otherParticipant?.id ?? null }, false) : undefined}
               />
             </div>
           )

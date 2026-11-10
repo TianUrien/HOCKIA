@@ -21,6 +21,12 @@ interface ReportSheetProps {
   subject: ReportSubject
   /** post / comment / conversation / opportunity id, when the report is about one. */
   contentId?: string | null
+  /**
+   * After the report is sent, offer to block the person too (founder
+   * 2026-11-10: someone reporting a chat usually also wants it to stop).
+   * The caller blocks; the sheet only asks.
+   */
+  offerBlock?: { name: string; onBlock: () => void }
 }
 
 const TITLES: Record<ReportSubject, string> = {
@@ -39,14 +45,15 @@ const TITLES: Record<ReportSubject, string> = {
  * The one report sheet: a reason, an optional note, send → toast
  * "Thanks. We'll review it." The reported person is never told.
  */
-export function ReportSheet({ open, onClose, targetId, subject, contentId }: ReportSheetProps) {
+export function ReportSheet({ open, onClose, targetId, subject, contentId, offerBlock }: ReportSheetProps) {
   const addToast = useToastStore((s) => s.addToast)
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [note, setNote] = useState('')
   const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
 
   useEffect(() => {
-    if (!open) { setReason(null); setNote(''); setSending(false) }
+    if (!open) { setReason(null); setNote(''); setSending(false); setSent(false) }
   }, [open])
 
   const submit = async () => {
@@ -58,13 +65,38 @@ export function ReportSheet({ open, onClose, targetId, subject, contentId }: Rep
       const { error } = await (supabase as any).rpc('report_user', payload)
       if (error) throw error
       addToast(REPORT_THANKS, 'success')
-      onClose()
+      if (offerBlock) setSent(true)
+      else onClose()
     } catch (err) {
       logger.error('[ReportSheet] report failed', err)
       const msg = err && typeof err === 'object' && typeof (err as { message?: unknown }).message === 'string' ? (err as { message: string }).message : ''
       addToast(/rate limit/i.test(msg) ? "You've sent a lot of reports today. Try again tomorrow." : 'Could not send the report. Please try again.', 'error')
       setSending(false)
     }
+  }
+
+  if (sent && offerBlock) {
+    return (
+      <BottomSheet open={open} onClose={onClose} ariaLabel={`Block ${offerBlock.name}?`}>
+        <div className="px-5 pb-2 pt-2 text-center" data-testid="report-block-offer">
+          <h2 className="text-title text-ink-1">Report sent</h2>
+          <p className="mt-2 text-row leading-[21px] text-ink-2">
+            We&apos;ll review it. Do you also want to block {offerBlock.name}? They won&apos;t be able to message you, and they aren&apos;t told.
+          </p>
+          <button
+            type="button"
+            onClick={() => { onClose(); offerBlock.onBlock() }}
+            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong"
+            data-testid="report-block-offer-yes"
+          >
+            Block {offerBlock.name}
+          </button>
+          <button type="button" onClick={onClose} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">
+            Not now
+          </button>
+        </div>
+      </BottomSheet>
+    )
   }
 
   return (

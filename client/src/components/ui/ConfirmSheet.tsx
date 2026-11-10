@@ -31,9 +31,15 @@ interface ConfirmSheetProps {
   /** Label while the action runs; defaults to "Working…". */
   busyLabel?: string
   testId?: string
+  /**
+   * 'panel' when the sheet opens right after another sheet or menu: focus
+   * goes to the sheet, not to the solid confirm button (no focus ring on a
+   * destructive action, and Enter cannot confirm it by accident).
+   */
+  initialFocus?: 'first' | 'panel'
 }
 
-export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, tone = 'danger', cancelLabel = 'Cancel', busyLabel = 'Working…', testId }: ConfirmSheetProps) {
+export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, tone = 'danger', cancelLabel = 'Cancel', busyLabel = 'Working…', testId, initialFocus = 'first' }: ConfirmSheetProps) {
   const [busy, setBusy] = useState(false)
 
   const confirm = async () => {
@@ -49,7 +55,7 @@ export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirm
   }
 
   return (
-    <BottomSheet open={open} onClose={() => { if (!busy) onClose() }} ariaLabel={title}>
+    <BottomSheet open={open} onClose={() => { if (!busy) onClose() }} ariaLabel={title} initialFocus={initialFocus}>
       <div className="px-5 pb-2 pt-2 text-center" data-testid={testId}>
         <h2 className="text-title text-ink-1">{title}</h2>
         <p className="mt-2 text-row leading-[21px] text-ink-2">{message}</p>
