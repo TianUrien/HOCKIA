@@ -44,6 +44,8 @@ interface ChatWindowV2Props {
   onMarkUnread?: () => void
   /** Header "…" → Delete conversation (asks first). */
   onDeleteConversation?: () => void
+  /** Header "…" → Block the other person (asks first). */
+  onBlockMember?: () => void
 }
 
 const ANCHOR_HIGHLIGHT = ['ring-2', 'ring-hockia-primary', 'ring-offset-2', 'rounded-[20px]', 'transition-shadow', 'duration-700']
@@ -64,6 +66,7 @@ export default function ChatWindowV2({
   anchorApplicationId = null,
   onMarkUnread,
   onDeleteConversation,
+  onBlockMember,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -411,6 +414,7 @@ export default function ChatWindowV2({
         conversationId={conversation.id}
         onMarkUnread={onMarkUnread}
         onDeleteConversation={onDeleteConversation}
+        onBlock={onBlockMember}
       />
       {topSlot}
       <RemovedAccountNotice

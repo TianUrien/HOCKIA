@@ -15,6 +15,7 @@ import { firstNameOf } from '@/lib/invites'
 import { recruitingPreview } from '@/lib/signing'
 import { useConversationActions } from '@/lib/conversationActions'
 import { ConversationActionsSheet, type ConversationActionTarget } from './ConversationActionsSheet'
+import { BlockMemberSheet, type BlockTarget } from '@/components/safety/BlockMemberSheet'
 
 interface ConversationRpcRow {
   conversation_id: string
@@ -62,6 +63,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const clubV2 = role === 'club' && isPhone
   const { setUnread, deleteConversation } = useConversationActions(userId)
+  const [blockTarget, setBlockTarget] = useState<BlockTarget | null>(null)
   // Press and hold → the actions menu; swipe → Delete goes straight to the confirmation.
   const [actionTarget, setActionTarget] = useState<{ target: ConversationActionTarget; deleteOnly: boolean } | null>(null)
 
@@ -191,7 +193,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
                   conversationId={row.conversation_id}
                   onToggleUnread={() => void setUnread(row.conversation_id, !unread)}
                   onDelete={() => setActionTarget({ target: { id: row.conversation_id, name, unread }, deleteOnly: true })}
-                  onLongPress={() => setActionTarget({ target: { id: row.conversation_id, name, unread }, deleteOnly: false })}
+                  onLongPress={() => setActionTarget({ target: { id: row.conversation_id, name, unread, otherId: row.other_participant_id }, deleteOnly: false })}
                 />
               </li>
             )
@@ -205,7 +207,10 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         onClose={() => setActionTarget(null)}
         onToggleUnread={setUnread}
         onDelete={deleteConversation}
+        onBlock={(t) => { if (t.otherId) setBlockTarget({ id: t.otherId, name: t.name }) }}
       />
+      {/* A blocked person's conversation leaves the list (server filter): refetch. */}
+      <BlockMemberSheet target={blockTarget} onClose={() => setBlockTarget(null)} onBlocked={() => void refetch()} />
     </section>
   )
 }

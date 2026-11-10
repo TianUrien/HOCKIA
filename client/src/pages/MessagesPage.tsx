@@ -27,8 +27,9 @@ import { inboxSegmentFromPath, inboxSegmentPath, useRefreshInboxEdges, type Inbo
 import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
 import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
 import { ThreadSkeleton } from '@/components/ScreenSkeletons'
-import { useConversationActions } from '@/lib/conversationActions'
+import { invalidateConversationCaches, useConversationActions } from '@/lib/conversationActions'
 import { ConversationActionsSheet, type ConversationActionTarget } from '@/components/inbox/ConversationActionsSheet'
+import { BlockMemberSheet, type BlockTarget } from '@/components/safety/BlockMemberSheet'
 
 interface ConversationDBRow {
   id: string
@@ -799,6 +800,16 @@ export default function MessagesPage() {
     return ok
   }, [deleteConversation, handleBackToList, selectedConversationId])
 
+  // Block from the chat "…" or a row's menu: the conversation leaves the list
+  // (the server hides blocked pairs) and an open thread closes.
+  const [blockTarget, setBlockTarget] = useState<BlockTarget | null>(null)
+  const handleBlocked = useCallback((target: BlockTarget) => {
+    const gone = conversations.find(conv => conv.otherParticipant?.id === target.id)
+    setConversations(prev => prev.filter(conv => conv.otherParticipant?.id !== target.id))
+    invalidateConversationCaches(user?.id ?? null)
+    if (gone ? selectedConversationId === gone.id : Boolean(selectedConversationId)) handleBackToList()
+  }, [conversations, handleBackToList, selectedConversationId, user?.id])
+
   const handleRequestActions = useCallback((target: ConversationActionTarget, deleteOnly: boolean) => {
     setActionTarget({ target, deleteOnly })
   }, [])
@@ -1285,6 +1296,10 @@ export default function MessagesPage() {
                   name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || 'Hockia member',
                   unread: false,
                 }, true)}
+                onBlockMember={selectedConversation.otherParticipant?.id ? () => setBlockTarget({
+                  id: selectedConversation.otherParticipant!.id,
+                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || 'this member',
+                }) : undefined}
               />
             ) : selectedConversationId ? (
               <ThreadSkeleton onBack={handleBackToList} />
@@ -1309,7 +1324,9 @@ export default function MessagesPage() {
         onClose={() => setActionTarget(null)}
         onToggleUnread={handleToggleUnread}
         onDelete={handleDeleteConversation}
+        onBlock={(t) => { if (t.otherId) setBlockTarget({ id: t.otherId, name: t.name }) }}
       />
+      <BlockMemberSheet target={blockTarget} onClose={() => setBlockTarget(null)} onBlocked={handleBlocked} />
 
       {/* New Message Modal */}
       <NewMessageModal
