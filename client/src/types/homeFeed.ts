@@ -17,6 +17,7 @@ export type FeedItemType =
   | 'role_filled'
   | 'career_move'
   | 'members_digest'
+  | 'open_to_play_week'
 
 export type MilestoneType =
   | 'first_gallery_image'
@@ -303,8 +304,21 @@ export interface MembersDigestFeedItem extends BaseFeedItem {
   members: Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>
 }
 
+/** Players who confirmed in the last 7 days that they are open to play and
+ *  still are (get_home_feed_v2 with p_open_to_play; founder 2026-11-10). ONE
+ *  rolling card, from 3 players up; `members` newest confirmation first (up
+ *  to 24); `week_start` is the first day of the 7-day window. The type name
+ *  keeps "week" from the first, per-calendar-week version. */
+export interface OpenToPlayWeekFeedItem extends BaseFeedItem {
+  item_type: 'open_to_play_week'
+  week_start: string
+  member_count: number
+  members: Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string; position: string | null }>
+}
+
 // Union type for all feed items
 export type HomeFeedItem =
+  | OpenToPlayWeekFeedItem
   | MemberJoinedFeedItem
   | OpportunityPostedFeedItem
   | MilestoneAchievedFeedItem

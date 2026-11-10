@@ -134,6 +134,29 @@ export function trackCardClick(feedItemId: string, itemType: string, destination
   })
 }
 
+/**
+ * Where a link inside a feed card leads, without naming anyone: the first
+ * path segment plus ":id" when there is more ("/players/ana" → "/players/:id",
+ * "/post/<uuid>" → "/post/:id"). Null for anything that is not an in-app path.
+ */
+export function linkDestination(href: string | null | undefined): string | null {
+  if (!href || !href.startsWith('/') || href.startsWith('//')) return null
+  const [first, ...rest] = href.replace(/[?#].*$/, '').split('/').filter(Boolean)
+  if (!first) return '/'
+  return rest.length > 0 ? `/${first}/:id` : `/${first}`
+}
+
+/**
+ * A tap on any in-app link inside a feed card (founder 2026-11-10): the
+ * author's name or photo, "View profile", a shared post. Before this only the
+ * opportunity and digest cards reported clicks, so Home → profile was
+ * invisible and the feed's click rate was undercounted.
+ */
+export function trackCardLinkClick(feedItemId: string, itemType: string, href: string | null | undefined): void {
+  const destination = linkDestination(href)
+  if (destination) trackCardClick(feedItemId, itemType, destination)
+}
+
 /** `quiet:<uuid>` / `checkin:<pulse id>` → the step family only; never an id. */
 export function nextStepKind(key: string): string {
   return key.split(':')[0]
