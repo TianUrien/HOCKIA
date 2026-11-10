@@ -2659,6 +2659,33 @@ export async function getMemberBlocks(opts: { limit?: number; offset?: number } 
   return { rows: page.rows ?? [], total: page.total ?? 0 }
 }
 
+export interface BanEvasionSuspect {
+  profile_id: string
+  full_name: string | null
+  role: string | null
+  avatar_url: string | null
+  account_created_at: string | null
+  /** The account was created after the related account was blocked. */
+  created_after_block: boolean
+  /** 'device': same browser or app install (strong). 'network': same network (weak). */
+  match: 'device' | 'network'
+  last_seen: string
+  blocked_profile_id: string
+  blocked_full_name: string | null
+  blocked_at: string | null
+}
+
+/**
+ * Accounts that are not blocked but used the same device or network as a
+ * blocked account (founder 2026-11-10). A list to review, never an automatic
+ * block: a shared network is common (clubs, families, mobile carriers).
+ */
+export async function getBanEvasionSuspects(): Promise<BanEvasionSuspect[]> {
+  const { data, error } = await adminRpc('admin_get_ban_evasion_suspects')
+  if (error) throw new Error(`Failed to get related accounts: ${error.message}`)
+  return ((data ?? {}) as { rows?: BanEvasionSuspect[] }).rows ?? []
+}
+
 /**
  * Mark an account as removed for spam and send the safety notice to everyone
  * it had a conversation with. Safe to repeat: nobody is notified twice.
