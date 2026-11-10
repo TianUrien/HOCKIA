@@ -37,6 +37,9 @@ interface ConversationListProps {
   variant?: 'default' | 'compact'
   /** Clubs: the applicant context line and the amber "owes a first reply" dot per conversation. */
   clubMeta?: Map<string, ClubInboxRowMeta>
+  /** Row actions (swipe / press and hold / right-click). */
+  onToggleUnread?: (conversationId: string, unread: boolean) => void
+  onRequestActions?: (target: { id: string; name: string; unread: boolean }, deleteOnly: boolean) => void
 }
 
 export default function ConversationList({
@@ -46,6 +49,8 @@ export default function ConversationList({
   currentUserId,
   variant = 'default',
   clubMeta,
+  onToggleUnread,
+  onRequestActions,
 }: ConversationListProps) {
   const isCompact = variant === 'compact'
   const parentRef = useRef<HTMLDivElement>(null)
@@ -116,6 +121,9 @@ export default function ConversationList({
                 onSelect={() => onSelectConversation(conversation.id)}
                 testId="conversation-item"
                 conversationId={conversation.id}
+                onToggleUnread={onToggleUnread ? () => onToggleUnread(conversation.id, !isUnread) : undefined}
+                onDelete={onRequestActions ? () => onRequestActions({ id: conversation.id, name: participantName, unread: isUnread }, true) : undefined}
+                onLongPress={onRequestActions ? () => onRequestActions({ id: conversation.id, name: participantName, unread: isUnread }, false) : undefined}
               />
             </div>
           )

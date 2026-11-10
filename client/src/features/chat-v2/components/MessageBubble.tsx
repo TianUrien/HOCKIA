@@ -9,13 +9,18 @@ function dayLabel(d: Date): string {
   if (isYesterday(d)) return 'Yesterday'
   return `${format(d, 'EEEE')}, ${dayFirst(d)}`
 }
-import { AlertCircle, Ban, Check, CheckCheck, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { AlertCircle, Ban, Check, CheckCheck, Copy, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
 import { cn } from '@/lib/utils'
 import { firstNameOf } from '@/lib/invites'
 import { recruitingEventLine } from '@/lib/signing'
-import ConfirmDialog from '@/components/ConfirmDialog'
 import { SharedPostCard } from './SharedPostCard'
+import { ActionSheet, type ActionSheetItem } from '@/components/ui/ActionSheet'
+import { BottomSheet } from '@/components/ui/BottomSheet'
+import { useLongPress } from '@/hooks/useLongPress'
+import { hapticLight } from '@/lib/haptics'
+import { useToastStore } from '@/lib/toast'
+import { logger } from '@/lib/logger'
 
 // D3.3 invite card: its own chunk, loaded only when a thread has one.
 const InviteCard = lazy(() => import('./InviteCard'))
@@ -35,8 +40,10 @@ interface MessageBubbleProps {
   onDeleteFailed: (id: string) => void
   /** Persist an edit. Resolves true on success; the bubble exits edit mode then. */
   onEditSave: (id: string, content: string) => Promise<boolean>
-  /** Soft-delete the message. Resolves true on success. */
+  /** Soft-delete the message for everyone (author only). Resolves true on success. */
   onDelete: (id: string) => Promise<boolean>
+  /** "Delete for me": hide the message for this member only. Resolves true on success. */
+  onHideForMe?: (id: string) => Promise<boolean>
   /** Club v2 chat (DEV NOTE 355:919): no read receipts — sending / failed still show. */
   hideReceipts?: boolean
   /** The other side's name: a server-posted step line is reworded for its viewer (lib/signing recruitingEventLine). */
@@ -84,6 +91,7 @@ export function MessageBubble({
   onDeleteFailed,
   onEditSave,
   onDelete,
+  onHideForMe,
   hideReceipts = false,
   otherParticipantName = null
 }: MessageBubbleProps) {
@@ -109,12 +117,36 @@ export function MessageBubble({
   // can be deleted but not edited (they aren't free text).
   const canManage = isMine && isPersisted && !isDeleted && !invite && !offer && !isRecruitingEvent
   const canEdit = canManage && !isSharedPost
+  // "Delete for me" (founder 2026-11-10): any delivered message, either side,
+  // tombstones included. Recruiting cards and step lines stay: they are the
+  // record of an application.
+  const canHide = Boolean(onHideForMe) && isPersisted && !invite && !offer && !isRecruitingEvent
+  const canCopy = !isDeleted && !invite && !offer && !isRecruitingEvent && !isSharedPost && message.content.trim().length > 0
+  const canDelete = canManage || canHide
+  const addToast = useToastStore(state => state.addToast)
 
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(message.content)
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState<'everyone' | 'me' | null>(null)
+  // Press and hold (touch) / right-click (desktop): the message menu as a sheet.
+  const [showActions, setShowActions] = useState(false)
+  const hasActions = canCopy || canEdit || canDelete
+  const longPress = useLongPress(hasActions ? () => {
+    void hapticLight()
+    // With the keyboard up, let it close before the sheet lays out: opening
+    // mid-animation left the sheet floating above a grey band on iOS
+    // (simulator 2026-11-10). iOS dismisses the keyboard for menus too.
+    const active = document.activeElement
+    if (active instanceof HTMLElement && active.matches('input, textarea, [contenteditable="true"]')) {
+      active.blur()
+      window.setTimeout(() => setShowActions(true), 300)
+    } else {
+      setShowActions(true)
+    }
+  } : null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   // The options menu is rendered in a portal with fixed positioning: the chat
@@ -207,6 +239,30 @@ export function MessageBubble({
     }
   }
 
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      addToast('Copied', 'success')
+    } catch (error) {
+      logger.error('Copy message failed:', error)
+      addToast('Could not copy the message.', 'error')
+    }
+  }
+
+  const runDelete = async (scope: 'everyone' | 'me') => {
+    setDeleting(scope)
+    const ok = scope === 'everyone' ? await onDelete(message.id) : await (onHideForMe?.(message.id) ?? Promise.resolve(false))
+    setDeleting(null)
+    // On failure the hook already toasted the reason; the sheet stays.
+    if (ok) setShowDeleteConfirm(false)
+  }
+
+  const actionItems: ActionSheetItem[] = [
+    ...(canCopy ? [{ key: 'copy', label: 'Copy', icon: <Copy className="h-5 w-5" />, onSelect: () => void copyMessage(), testId: 'message-copy-action' }] : []),
+    ...(canEdit ? [{ key: 'edit', label: 'Edit', icon: <Pencil className="h-5 w-5" />, onSelect: startEdit, testId: 'message-sheet-edit-action' }] : []),
+    ...(canDelete ? [{ key: 'delete', label: 'Delete', icon: <Trash2 className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => setShowDeleteConfirm(true), testId: 'message-sheet-delete-action' }] : []),
+  ]
+
   const trimmedDraft = draft.trim()
   const canSubmitEdit = trimmedDraft.length > 0 && trimmedDraft.length <= MAX_LENGTH && !saving
 
@@ -233,7 +289,8 @@ export function MessageBubble({
       {isDeleted ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div
-            className="inline-flex max-w-[75%] items-center gap-1.5 rounded-card px-3.5 py-2 text-[13px] italic text-ink-3 ring-1 ring-line sm:max-w-[65%] lg:rounded-[18px]"
+            {...longPress}
+            className="inline-flex max-w-[75%] select-none items-center gap-1.5 rounded-card px-3.5 py-2 text-[13px] italic text-ink-3 ring-1 ring-line [-webkit-touch-callout:none] sm:max-w-[65%] lg:rounded-[18px]"
             data-testid="message-deleted"
           >
             <Ban className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
@@ -309,7 +366,7 @@ export function MessageBubble({
         </div>
       ) : (
         <div className={cn('group/msg flex items-center gap-1', isMine ? 'justify-end' : 'justify-start')}>
-          {canManage && (
+          {canDelete && (
             <button
               ref={triggerRef}
               type="button"
@@ -318,8 +375,10 @@ export function MessageBubble({
               onClick={() => (showMenu ? setShowMenu(false) : openMenu())}
               className={cn(
                 'flex-shrink-0 rounded-full p-1 text-ink-4 transition hover:bg-surface-muted hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary',
-                // Always reachable on touch; hover-revealed on desktop to keep the thread clean.
-                'opacity-60 md:opacity-0 md:group-hover/msg:opacity-100 focus-visible:opacity-100',
+                // Desktop only, hover-revealed to keep the thread clean. Phones
+                // press and hold the bubble instead (founder 2026-11-10: the
+                // always-on dots read as clutter).
+                'hidden md:flex md:opacity-0 md:group-hover/msg:opacity-100 focus-visible:opacity-100',
                 showMenu && 'opacity-100'
               )}
             >
@@ -334,6 +393,19 @@ export function MessageBubble({
                 className="fixed z-[61] w-36 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg"
                 style={{ top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right }}
               >
+                {canCopy && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false)
+                      void copyMessage()
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-subtle"
+                  >
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                    Copy
+                  </button>
+                )}
                 {canEdit && (
                   <button
                     type="button"
@@ -363,9 +435,14 @@ export function MessageBubble({
           )}
 
           <div
+            {...longPress}
             data-testid="message-bubble"
             data-mine={isMine ? 'true' : 'false'}
+            data-status={status}
             className={cn(
+              // Press and hold opens the menu: no iOS text-selection callout,
+              // and a small press-in so the hold feels physical.
+              hasActions && 'select-none transition-transform duration-200 [-webkit-touch-callout:none] active:scale-[0.97]',
               // Figma Chat 100:636: radius 16 on phones (decision 2026-10-02),
               // incoming grey left, outgoing SOLID brand right — no gradient.
               // Desktop keeps its 18.
@@ -435,27 +512,64 @@ export function MessageBubble({
         </div>
       )}
 
-      {/* Portaled to body: the bubble wrapper's `contain: layout paint` would
-          otherwise become the containing block for the dialog's fixed overlay
-          and clip it inside the bubble. */}
-      {createPortal(
-        <ConfirmDialog
-          isOpen={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={async () => {
-            const ok = await onDelete(message.id)
-            // Throw on failure so ConfirmDialog stays open; the hook already
-            // surfaced a toast. Success closes the dialog.
-            if (!ok) throw new Error('Failed to delete message')
-          }}
-          title="Delete this message?"
-          message="This will remove the message from the conversation. This can't be undone."
-          confirmLabel="Delete"
-          variant="danger"
-          testId="message-delete-confirm"
-        />,
-        document.body
-      )}
+      {/* Both sheets portal to body (BottomSheet): the bubble wrapper's
+          `contain: layout paint` would otherwise clip a fixed overlay. */}
+      <ActionSheet
+        open={showActions}
+        onClose={() => setShowActions(false)}
+        subtitle={canCopy ? message.content : undefined}
+        items={actionItems}
+        testId="message-actions"
+      />
+      <BottomSheet
+        open={showDeleteConfirm}
+        onClose={() => { if (!deleting) setShowDeleteConfirm(false) }}
+        ariaLabel="Delete this message?"
+      >
+        <div className="px-5 pb-2 pt-2 text-center" data-testid="message-delete-confirm">
+          <h2 className="text-title text-ink-1">Delete this message?</h2>
+          <p className="mt-2 text-row leading-[21px] text-ink-2">
+            {canManage && canHide
+              ? '"Delete for everyone" removes it for both of you. "Delete for me" removes it only from your chat.'
+              : canManage
+                ? 'This removes the message for both of you. This can\'t be undone.'
+                : 'This removes the message only from your chat. The other person still has it.'}
+          </p>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => void runDelete('everyone')}
+              disabled={deleting !== null}
+              className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60"
+              data-testid="message-delete-everyone"
+            >
+              {deleting === 'everyone' ? 'Deleting…' : canHide ? 'Delete for everyone' : 'Delete'}
+            </button>
+          )}
+          {canHide && (
+            <button
+              type="button"
+              onClick={() => void runDelete('me')}
+              disabled={deleting !== null}
+              className={cn(
+                'flex h-12 w-full items-center justify-center rounded-full text-[16px] font-semibold disabled:opacity-60',
+                canManage ? 'mt-2 bg-accent-red-soft text-status-danger' : 'mt-5 bg-status-danger text-white active:bg-status-danger-strong',
+              )}
+              data-testid="message-delete-me"
+            >
+              {deleting === 'me' ? 'Deleting…' : 'Delete for me'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(false)}
+            disabled={deleting !== null}
+            className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

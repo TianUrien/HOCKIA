@@ -12,6 +12,7 @@ import { Composer } from './components/Composer'
 import { EmptyState } from './components/EmptyState'
 import { RemovedAccountNotice } from './components/RemovedAccountNotice'
 import type { Conversation, ChatMessageEvent } from '@/types/chat'
+import { invalidateConversationCaches, setConversationMarkedUnread } from '@/lib/conversationActions'
 
 const NEW_MESSAGE_DISTANCE_THRESHOLD = 120
 const MAX_PENDING_BADGE = 9
@@ -39,6 +40,10 @@ interface ChatWindowV2Props {
    * edits post a new card). Without it: the newest offer card in the thread.
    */
   anchorApplicationId?: string | null
+  /** Header "…" → Mark as unread (founder 2026-11-10). */
+  onMarkUnread?: () => void
+  /** Header "…" → Delete conversation (asks first). */
+  onDeleteConversation?: () => void
 }
 
 const ANCHOR_HIGHLIGHT = ['ring-2', 'ring-hockia-primary', 'ring-offset-2', 'rounded-[20px]', 'transition-shadow', 'duration-700']
@@ -57,6 +62,8 @@ export default function ChatWindowV2({
   hideReceipts = false,
   anchor,
   anchorApplicationId = null,
+  onMarkUnread,
+  onDeleteConversation,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -72,6 +79,7 @@ export default function ChatWindowV2({
     deleteFailedMessage,
     editMessage,
     deleteMessage,
+    hideMessageForMe,
     queueReadReceipt,
     markConversationAsRead
   } = useChat({
@@ -240,6 +248,39 @@ export default function ChatWindowV2({
     return () => window.clearTimeout(timer)
   }, [anchor, anchorApplicationId, threadMounted, messages, conversation.id])
 
+  // The keyboard (native resize on iOS/Android) and the composer growing
+  // shrink the message list from below without a scroll event, so the
+  // cached distance can't see it: the newest message slid under the
+  // composer (simulator check 2026-11-10). Watch the list's own height and,
+  // when it shrinks, keep the reader where they were relative to the bottom
+  // — pinned to the newest message if they were at the bottom.
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!threadMounted || !container || typeof ResizeObserver === 'undefined') return
+    let lastHeight = container.clientHeight
+    const observer = new ResizeObserver(() => {
+      const height = container.clientHeight
+      if (height === lastHeight) return
+      const previousHeight = lastHeight
+      lastHeight = height
+      const distanceBefore = container.scrollHeight - container.scrollTop - previousHeight
+      if (height < previousHeight) {
+        if (distanceBefore <= NEW_MESSAGE_DISTANCE_THRESHOLD) container.scrollTop = container.scrollHeight
+        else container.scrollTop += previousHeight - height
+      }
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [conversation.id, threadMounted])
+
+  // Opening a conversation clears the member's own "Mark as unread" reminder.
+  useEffect(() => {
+    if (conversation.isPending || !conversation.id || conversation.id.startsWith('pending-')) return
+    void setConversationMarkedUnread(conversation.id, false)
+      .then(() => invalidateConversationCaches(currentUserId))
+      .catch(() => { /* the reminder just stays; opening again retries */ })
+  }, [conversation.id, conversation.isPending, currentUserId])
+
   // Keep the newest messages visible across keyboard open/close. The
   // visual-viewport resize shrinks (or restores) the message list; if the
   // user was already near the bottom, follow the viewport down to the
@@ -368,6 +409,8 @@ export default function ChatWindowV2({
         profilePath={profilePath}
         isMobile={isMobile}
         conversationId={conversation.id}
+        onMarkUnread={onMarkUnread}
+        onDeleteConversation={onDeleteConversation}
       />
       {topSlot}
       <RemovedAccountNotice
@@ -393,6 +436,7 @@ export default function ChatWindowV2({
               deleteFailedMessage={deleteFailedMessage}
               editMessage={editMessage}
               deleteMessage={deleteMessage}
+              hideMessage={hideMessageForMe}
               isLoadingMore={isLoadingMore}
               unreadMetadata={unreadMetadata}
               hideReceipts={hideReceipts}

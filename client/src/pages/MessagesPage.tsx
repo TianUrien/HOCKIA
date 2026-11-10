@@ -27,6 +27,8 @@ import { inboxSegmentFromPath, inboxSegmentPath, useRefreshInboxEdges, type Inbo
 import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
 import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
 import { ThreadSkeleton } from '@/components/ScreenSkeletons'
+import { useConversationActions } from '@/lib/conversationActions'
+import { ConversationActionsSheet, type ConversationActionTarget } from '@/components/inbox/ConversationActionsSheet'
 
 interface ConversationDBRow {
   id: string
@@ -774,6 +776,33 @@ export default function MessagesPage() {
     [user?.id]
   )
 
+  // Row and thread actions (founder 2026-11-10): mark unread/read, delete for me.
+  const { setUnread, deleteConversation } = useConversationActions(user?.id ?? null)
+  const [actionTarget, setActionTarget] = useState<{ target: ConversationActionTarget; deleteOnly: boolean } | null>(null)
+
+  const handleToggleUnread = useCallback(async (conversationId: string, unread: boolean) => {
+    setConversations(prev => prev.map(conv => (
+      conv.id === conversationId ? { ...conv, unreadCount: unread ? Math.max(1, conv.unreadCount ?? 0) : 0 } : conv
+    )))
+    const ok = await setUnread(conversationId, unread)
+    // From an open thread, "Mark as unread" means "come back to it later".
+    if (ok && unread && selectedConversationId === conversationId) handleBackToList()
+    return ok
+  }, [handleBackToList, selectedConversationId, setUnread])
+
+  const handleDeleteConversation = useCallback(async (conversationId: string) => {
+    const ok = await deleteConversation(conversationId)
+    if (ok) {
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId))
+      if (selectedConversationId === conversationId) handleBackToList()
+    }
+    return ok
+  }, [deleteConversation, handleBackToList, selectedConversationId])
+
+  const handleRequestActions = useCallback((target: ConversationActionTarget, deleteOnly: boolean) => {
+    setActionTarget({ target, deleteOnly })
+  }, [])
+
   const handleConversationMessageEvent = useCallback(
     (event: ChatMessageEvent) => {
       if (event.type === 'sent' || event.type === 'received') {
@@ -1213,6 +1242,8 @@ export default function MessagesPage() {
                     currentUserId={user?.id || ''}
                     variant={isMobile ? 'compact' : 'default'}
                     clubMeta={clubMeta}
+                    onToggleUnread={(id, unread) => void handleToggleUnread(id, unread)}
+                    onRequestActions={handleRequestActions}
                   />
                   {hasMoreConversations && !searchQuery && (
                     <div className="border-t border-gray-100 p-3">
@@ -1248,6 +1279,12 @@ export default function MessagesPage() {
                 onConversationCreated={handleConversationCreated}
                 onConversationRead={handleConversationRead}
                 isImmersiveMobile={shouldHideGlobalHeader}
+                onMarkUnread={selectedConversation.isPending ? undefined : () => void handleToggleUnread(selectedConversation.id, true)}
+                onDeleteConversation={selectedConversation.isPending ? undefined : () => handleRequestActions({
+                  id: selectedConversation.id,
+                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || 'Hockia member',
+                  unread: false,
+                }, true)}
               />
             ) : selectedConversationId ? (
               <ThreadSkeleton onBack={handleBackToList} />
@@ -1265,6 +1302,14 @@ export default function MessagesPage() {
           </div>
         </div>
       </main>
+
+      <ConversationActionsSheet
+        target={actionTarget?.target ?? null}
+        confirmDeleteOnly={actionTarget?.deleteOnly ?? false}
+        onClose={() => setActionTarget(null)}
+        onToggleUnread={handleToggleUnread}
+        onDelete={handleDeleteConversation}
+      />
 
       {/* New Message Modal */}
       <NewMessageModal
