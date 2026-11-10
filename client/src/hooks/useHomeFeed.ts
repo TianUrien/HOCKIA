@@ -104,6 +104,9 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
         p_limit: DEFAULT_LIMIT,
         p_offset: offset,
       }
+      // Home v1 knows the weekly "open to play" card; older bundled clients
+      // don't send this and the server leaves the card out for them.
+      if (filters?.v2) rpcParams.p_open_to_play = true
       if (hasFilters && !filters?.v2) {
         rpcParams.p_country_ids = rpcCountryIds
         rpcParams.p_roles = rpcRoles
