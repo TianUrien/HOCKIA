@@ -277,10 +277,20 @@ export default function ChatWindowV2({
   }, [conversation.id, threadMounted])
 
   // Opening a conversation clears the member's own "Mark as unread" reminder.
+  // The list is told once the server has cleared it: the desktop list keeps
+  // its own rows and can refetch between the click and this call, which
+  // brought the unread dot back on the open conversation until a reload
+  // (seen in production, 2026-11-10).
+  const onConversationReadRef = useRef(onConversationRead)
+  useEffect(() => { onConversationReadRef.current = onConversationRead }, [onConversationRead])
   useEffect(() => {
     if (conversation.isPending || !conversation.id || conversation.id.startsWith('pending-')) return
-    void setConversationMarkedUnread(conversation.id, false)
-      .then(() => invalidateConversationCaches(currentUserId))
+    const conversationId = conversation.id
+    void setConversationMarkedUnread(conversationId, false)
+      .then(() => {
+        invalidateConversationCaches(currentUserId)
+        onConversationReadRef.current?.(conversationId)
+      })
       .catch(() => { /* the reminder just stays; opening again retries */ })
   }, [conversation.id, conversation.isPending, currentUserId])
 
