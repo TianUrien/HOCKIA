@@ -40,6 +40,7 @@ import {
   Share2,
   Flag,
   ShieldAlert,
+  UserX,
   ChevronRight,
   Tag,
 } from 'lucide-react'
@@ -128,6 +129,7 @@ const NAV_SECTIONS: NavSection[] = [
       { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
       { path: '/admin/offers', icon: Tag, label: 'Brand offers' },
       { path: '/admin/spam-signals', icon: ShieldAlert, label: 'Spam signals' },
+      { path: '/admin/member-blocks', icon: UserX, label: 'Member blocks' },
       { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
       { path: '/admin/email', icon: Mail, label: 'Email' },
       { path: '/admin/outreach', icon: Megaphone, label: 'Outreach' },

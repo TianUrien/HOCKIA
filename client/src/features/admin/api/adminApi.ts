@@ -2625,6 +2625,40 @@ export async function getSpamSignals(opts: { days?: number; limit?: number; offs
   return { rows: page.rows ?? [], total: page.total ?? 0 }
 }
 
+/** One member that other members blocked (admin_get_member_blocks). Who blocked them is never returned. */
+export interface MemberBlockRow {
+  profile_id: string
+  full_name: string | null
+  role: string | null
+  avatar_url: string | null
+  account_created_at: string | null
+  /** How many different members blocked this account. */
+  block_count: number
+  first_blocked_at: string
+  last_blocked_at: string
+  /** Blocked by an admin (account suspended). */
+  is_blocked: boolean
+  blocked_at: string | null
+  report_count: number
+  signal_count: number
+}
+
+export interface MemberBlocksPage {
+  rows: MemberBlockRow[]
+  total: number
+}
+
+/** Members blocked by other members, most-blocked first (founder 2026-11-09). */
+export async function getMemberBlocks(opts: { limit?: number; offset?: number } = {}): Promise<MemberBlocksPage> {
+  const { data, error } = await adminRpc('admin_get_member_blocks', {
+    p_limit: opts.limit ?? 50,
+    p_offset: opts.offset ?? 0,
+  })
+  if (error) throw new Error(`Failed to get member blocks: ${error.message}`)
+  const page = (data ?? {}) as Partial<MemberBlocksPage>
+  return { rows: page.rows ?? [], total: page.total ?? 0 }
+}
+
 /**
  * Mark an account as removed for spam and send the safety notice to everyone
  * it had a conversation with. Safe to repeat: nobody is notified twice.

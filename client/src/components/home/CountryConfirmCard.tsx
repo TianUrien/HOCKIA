@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { MapPin, Search } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { useCountries } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import { guessCountry } from '@/lib/countryGuess'
+import { countryForCode, fetchConnectionCountryCode } from '@/lib/connectionCountry'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { fieldInput } from '@/components/ui/fieldClasses'
@@ -26,7 +28,8 @@ function snoozed(id: string): boolean {
 /**
  * Home card for members with no country on their profile (59% of members on
  * 2026-11-07): without one they never see opportunities, clubs or brand offers
- * picked by place. Proposes the country read from their location text; the
+ * picked by place. Proposes the country read from their location text, or,
+ * when there is none, the country of their connection (2026-11-09); the
  * member confirms or picks another. Nothing is saved without the member
  * (founder ruling 2026-11-07).
  */
@@ -42,7 +45,17 @@ export function CountryConfirmCard() {
 
   const eligible = Boolean(profile?.id) && profile?.base_country_id == null
     && ['player', 'coach', 'club', 'umpire'].includes(profile?.role ?? '')
-  const guess = useMemo(() => (eligible ? guessCountry(profile?.base_location, countries) : null), [eligible, profile?.base_location, countries])
+  const textGuess = useMemo(() => (eligible ? guessCountry(profile?.base_location, countries) : null), [eligible, profile?.base_location, countries])
+  // What the member wrote wins; the connection's country is the fallback hint.
+  const connection = useQuery({
+    queryKey: ['connection-country'],
+    queryFn: () => fetchConnectionCountryCode(),
+    enabled: eligible && !textGuess,
+    staleTime: Infinity,
+    retry: false,
+  })
+  const connectionGuess = useMemo(() => (textGuess ? null : countryForCode(connection.data ?? null, countries)), [textGuess, connection.data, countries])
+  const guess = textGuess ?? connectionGuess
   const results = useMemo(() => searchCountries(countries, q).slice(0, 80), [countries, q])
 
   if (!eligible || hidden || !profile || snoozed(profile.id)) return null
@@ -76,7 +89,7 @@ export function CountryConfirmCard() {
         <div className="min-w-0 flex-1">
           <h2 id="country-confirm-title" className="text-body font-semibold text-ink-1">Which country are you based in?</h2>
           <p className="mt-0.5 text-row text-ink-2">
-            {place ? `Your profile says ${place}. ` : ''}Add your country so opportunities, clubs and offers near you can find you.
+            {place ? `Your profile says ${place}. ` : connectionGuess ? `It looks like you’re in ${connectionGuess.common_name || connectionGuess.name}. ` : ''}Add your country so opportunities, clubs and offers near you can find you.
           </p>
         </div>
       </div>

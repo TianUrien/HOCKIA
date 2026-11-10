@@ -36,7 +36,7 @@ const explicitSiteUrl = (() => {
 })()
 
 /** Detect if running inside a Capacitor native shell (iOS/Android). */
-const isNativeApp = (): boolean => {
+export const isNativeApp = (): boolean => {
   if (typeof window === 'undefined') return false
   // Capacitor sets window.Capacitor when running natively
   const cap = (window as unknown as Record<string, unknown>).Capacitor as { isNativePlatform?: () => boolean } | undefined
