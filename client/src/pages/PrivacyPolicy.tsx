@@ -105,6 +105,7 @@ export default function PrivacyPolicy() {
                 <li>- Push notification subscription status</li>
                 <li>- Profile view analytics (who viewed your profile)</li>
                 <li>- Error and crash reports</li>
+                <li>- Approximate country of your connection, read from your IP address when you open the Home screen without a country on your profile. It is used only to suggest your country, and nothing is saved unless you confirm it.</li>
               </ul>
 
               <p className="font-medium mt-4">
@@ -345,7 +346,7 @@ export default function PrivacyPolicy() {
 
           {/* Last Updated */}
           <div className="pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500 text-center">Last updated: November 8, 2026</p>
+            <p className="text-sm text-gray-500 text-center">Last updated: November 9, 2026</p>
           </div>
         </div>
       </div>
