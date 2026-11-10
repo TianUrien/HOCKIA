@@ -13,8 +13,8 @@ interface MosaicMember { id: string; full_name: string | null; avatar_url: strin
 /**
  * "N …" and a 3×2 photo mosaic (tiles 16 r); the 6th tile is the next face
  * blurred under a 42 % veil with "+N". Tap → the Community deck with those
- * members. Shared by the weekly new-members digest and the weekly "open to
- * play" card. No author → no comments, no ⋯ (spec rulings 11 Oct).
+ * members. Shared by the weekly new-members digest and the "open to play"
+ * card. No author → no comments, no ⋯ (spec rulings 11 Oct).
  */
 function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceLabel, moreLabel, members, memberCount, testId }: {
   feedItemId: string
@@ -93,10 +93,10 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
 }
 
 /**
- * Open to play, by week (founder 2026-11-10): the players who confirmed they
- * are available that week and still are — a fact a club would act on, where
- * single per-player cards were never shown on Home. Server-side: from 3
- * visible players up; the card moves up as players confirm.
+ * Open to play (founder 2026-11-10): the players who confirmed in the last 7
+ * days that they are available and still are — a fact a club would act on,
+ * where single per-player cards were never shown on Home. One rolling card:
+ * server-side from 3 visible players up, and it moves up as players confirm.
  */
 export function OpenToPlayWeekCard({ item }: { item: OpenToPlayWeekFeedItem }) {
   const title = `${item.member_count} players are open to play`
