@@ -8724,6 +8724,7 @@ export type Database = {
           total_signups: number
         }[]
       }
+      admin_get_ban_evasion_suspects: { Args: never; Returns: Json }
       admin_get_member_blocks: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
