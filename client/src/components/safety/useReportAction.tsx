@@ -8,7 +8,7 @@ import { MENU_ICON_CLASS, REPORT_MENU_LABEL, type ReportSubject } from '@/lib/re
  * The "Report" item for a "…" menu plus the sheet it opens. Callers put
  * `item` in their menu and render `sheet` once.
  */
-export function useReportAction(o: { targetId: string | null | undefined; subject: ReportSubject; contentId?: string | null }) {
+export function useReportAction(o: { targetId: string | null | undefined; subject: ReportSubject; contentId?: string | null; offerBlock?: { name: string; onBlock: () => void } }) {
   const [open, setOpen] = useState(false)
   const item: MoreMenuItem = {
     key: 'report',
@@ -17,7 +17,7 @@ export function useReportAction(o: { targetId: string | null | undefined; subjec
     onSelect: () => setOpen(true),
   }
   const sheet = o.targetId ? (
-    <ReportSheet open={open} onClose={() => setOpen(false)} targetId={o.targetId} subject={o.subject} contentId={o.contentId} />
+    <ReportSheet open={open} onClose={() => setOpen(false)} targetId={o.targetId} subject={o.subject} contentId={o.contentId} offerBlock={o.offerBlock} />
   ) : null
   return { item, sheet, open: () => setOpen(true) }
 }

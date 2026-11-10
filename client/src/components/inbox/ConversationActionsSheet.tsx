@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MailOpen, Mail, Trash2 } from 'lucide-react'
+import { Ban, MailOpen, Mail, Trash2 } from 'lucide-react'
 import { ActionSheet } from '@/components/ui/ActionSheet'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { hapticLight } from '@/lib/haptics'
@@ -9,6 +9,8 @@ export interface ConversationActionTarget {
   id: string
   name: string
   unread: boolean
+  /** The other person, when the menu may offer to block them. */
+  otherId?: string | null
 }
 
 interface ConversationActionsSheetProps {
@@ -18,6 +20,8 @@ interface ConversationActionsSheetProps {
   onDelete: (id: string) => Promise<unknown>
   /** Open straight on the delete confirmation (swipe → Delete). */
   confirmDeleteOnly?: boolean
+  /** "Block <name>": the caller shows the confirmation (BlockMemberSheet). */
+  onBlock?: (target: ConversationActionTarget) => void
 }
 
 /**
@@ -25,7 +29,7 @@ interface ConversationActionsSheetProps {
  * header): Mark as unread / Mark as read, and Delete conversation behind a
  * confirmation that says exactly what happens on each side.
  */
-export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDelete, confirmDeleteOnly = false }: ConversationActionsSheetProps) {
+export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDelete, confirmDeleteOnly = false, onBlock }: ConversationActionsSheetProps) {
   const [confirming, setConfirming] = useState<ConversationActionTarget | null>(null)
 
   useEffect(() => {
@@ -49,6 +53,7 @@ export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDe
           target.unread
             ? { key: 'read', label: 'Mark as read', icon: <MailOpen className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, false), testId: 'conversation-mark-read' }
             : { key: 'unread', label: 'Mark as unread', icon: <Mail className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, true), testId: 'conversation-mark-unread' },
+          ...(onBlock && target.otherId ? [{ key: 'block', label: `Block ${target.name}`, icon: <Ban className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => onBlock(target), testId: 'conversation-block' }] : []),
           { key: 'delete', label: 'Delete conversation', icon: <Trash2 className="h-5 w-5" />, tone: 'danger', onSelect: () => setConfirming(target), testId: 'conversation-delete' },
         ] : []}
       />
@@ -68,6 +73,7 @@ export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDe
         confirmLabel="Delete"
         busyLabel="Deleting…"
         testId="conversation-delete-confirm"
+        initialFocus="panel"
       />
     </>
   )
