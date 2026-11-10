@@ -13,7 +13,7 @@
 
 export const SITE_URL = 'https://inhockia.com'
 export const DEFAULT_TITLE = 'Hockia – Where field hockey sticks together.'
-export const DEFAULT_DESCRIPTION = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
+export const DEFAULT_DESCRIPTION = 'Hockia is the field hockey network: player and coach profiles, clubs recruiting worldwide and open field hockey jobs. Join free.'
 
 export interface RouteMetaEntry {
   /** Exact path, or a RegExp tested against the pathname. */
@@ -23,6 +23,12 @@ export interface RouteMetaEntry {
   description?: string
   /** false → <meta name="robots" content="noindex, nofollow">. Default true. */
   index?: boolean
+  /**
+   * The server renders this page's head from data (api/world-page.ts,
+   * api/opportunity-page.ts): the client keeps the description it shipped
+   * with instead of writing the default over it.
+   */
+  dynamic?: boolean
 }
 
 /** Routes that are private, transactional or duplicates: never indexed. */
@@ -38,9 +44,12 @@ const NOINDEX: RegExp[] = [
 
 export const ROUTE_META: RouteMetaEntry[] = [
   { match: '/', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION },
-  { match: '/opportunities', title: 'Field Hockey Opportunities – Players & Coaches Worldwide | Hockia', description: 'Open field hockey opportunities for players and coaches: clubs across Europe, the Americas, Asia and Oceania recruiting on Hockia. Apply directly.' },
+  { match: '/opportunities', title: 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia', description: 'Open field hockey jobs for players and coaches: clubs across Europe, the Americas, Africa, Asia and Oceania recruiting on Hockia. Apply directly, free.' },
   { match: '/community', title: 'Field Hockey Community – Players, Coaches & Clubs | Hockia', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on Hockia.' },
   { match: /^\/community\/[^/]+$/, title: 'Field Hockey Community | Hockia', description: 'Meet field hockey players, coaches, clubs and umpires from around the world on Hockia.' },
+  { match: /^\/world\/clubs\/[^/]+$/, dynamic: true },
+  { match: /^\/world\/[^/]+$/, dynamic: true },
+  { match: /^\/opportunities\/[0-9a-f-]{36}$/i, dynamic: true },
   { match: '/world', title: 'Field Hockey Clubs by Country – World Directory | Hockia', description: 'Browse field hockey clubs and leagues by country, region and division in the Hockia world directory.' },
   { match: '/marketplace', title: 'Field Hockey Brands & Gear | Hockia', description: 'Field hockey brands, sticks, equipment and offers for the Hockia community.' },
   { match: '/developers', title: 'Hockia for Developers – Public API & Data', description: 'Build on Hockia: public opportunities feed, sitemap and structured data for field hockey.' },
@@ -57,6 +66,7 @@ export interface ResolvedRouteMeta {
   description: string
   canonical: string
   index: boolean
+  dynamic: boolean
 }
 
 /** Canonical URL for a pathname: apex site, no query, no trailing slash (except the root). */
@@ -74,5 +84,6 @@ export function resolveRouteMeta(pathname: string): ResolvedRouteMeta {
     description: entry?.description ?? DEFAULT_DESCRIPTION,
     canonical: canonicalFor(path),
     index: !noindex,
+    dynamic: entry?.dynamic === true,
   }
 }

@@ -250,7 +250,7 @@ export default function WorldCountryPage() {
     const friendlySlug = countrySlug
       .replace(/-/g, ' ')
       .replace(/\b\p{L}/gu, c => c.toUpperCase())
-    document.title = `${friendlySlug} | World | Hockia`
+    document.title = `Field Hockey Clubs in ${friendlySlug} – Leagues & Clubs | Hockia`
 
     const fetchCountryData = async () => {
       try {
@@ -331,7 +331,7 @@ export default function WorldCountryPage() {
         }
         setCountry(countryData)
         setHasRegions(data.has_regions ?? false)
-        document.title = `${countryData.name} | World | Hockia`
+        document.title = `Field Hockey Clubs in ${countryData.name} – Leagues & Clubs | Hockia`
 
         if (data.has_regions) {
           const { data: provinceData, error: provinceError } = await supabase

@@ -20,8 +20,10 @@ export function applyRouteMeta(pathname: string): void {
   upsert('link[rel="canonical"]', () => Object.assign(document.createElement('link'), { rel: 'canonical' }), 'href', meta.canonical)
   upsert('meta[property="og:url"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:url'); return m }, 'content', meta.canonical)
   upsert('meta[name="twitter:url"]', () => Object.assign(document.createElement('meta'), { name: 'twitter:url' }), 'content', meta.canonical)
-  upsert('meta[name="description"]', () => Object.assign(document.createElement('meta'), { name: 'description' }), 'content', meta.description)
-  upsert('meta[property="og:description"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:description'); return m }, 'content', meta.description)
+  if (!meta.dynamic) {
+    upsert('meta[name="description"]', () => Object.assign(document.createElement('meta'), { name: 'description' }), 'content', meta.description)
+    upsert('meta[property="og:description"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:description'); return m }, 'content', meta.description)
+  }
   if (meta.title) {
     upsert('meta[property="og:title"]', () => { const m = document.createElement('meta'); m.setAttribute('property', 'og:title'); return m }, 'content', meta.title)
     upsert('meta[name="twitter:title"]', () => Object.assign(document.createElement('meta'), { name: 'twitter:title' }), 'content', meta.title)

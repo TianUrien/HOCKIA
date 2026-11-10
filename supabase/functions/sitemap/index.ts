@@ -146,8 +146,12 @@ Deno.serve(async (req: Request) => {
       ))
     }
 
-    // World directory: countries that have clubs, and claimed clubs (the
-    // ones with a real page behind them). Unclaimed directory rows are thin.
+    // World directory: countries that have clubs; claimed clubs; and
+    // unclaimed clubs placed in a league. Since 2026-11-10 every club page
+    // is served with its own field hockey title, description and
+    // SportsOrganization JSON-LD (client/api/world-page.ts), and Search
+    // Console shows people searching clubs by name. Clubs with no league
+    // and no claim stay out: name and country only is too thin to rank.
     const { data: countries } = await supabase
       .from('world_countries_with_directory')
       .select('country_code, total_clubs')
@@ -158,11 +162,11 @@ Deno.serve(async (req: Request) => {
     }
     const { data: clubs } = await supabase
       .from('world_clubs')
-      .select('id, updated_at, created_at')
-      .eq('is_claimed', true)
+      .select('id, updated_at, created_at, is_claimed')
+      .or('is_claimed.eq.true,men_league_id.not.is.null,women_league_id.not.is.null')
     for (const club of clubs ?? []) {
       const lastmod = formatDate(new Date(club.updated_at ?? club.created_at))
-      urlEntries.push(generateUrlEntry(`${SITE_URL}/world/clubs/${club.id}`, lastmod, 'weekly', '0.5'))
+      urlEntries.push(generateUrlEntry(`${SITE_URL}/world/clubs/${club.id}`, lastmod, 'weekly', club.is_claimed ? '0.5' : '0.4'))
     }
 
     // Generate the complete sitemap XML

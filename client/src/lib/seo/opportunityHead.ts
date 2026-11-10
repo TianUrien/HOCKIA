@@ -198,7 +198,7 @@ export function buildJobPosting(row: PublicOpportunityRow, siteUrl: string): Rec
   }
 }
 
-function setMeta(html: string, attr: 'name' | 'property', key: string, content: string): string {
+export function setMeta(html: string, attr: 'name' | 'property', key: string, content: string): string {
   const re = new RegExp(`<meta\\s+${attr}="${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\s+content="[^"]*"\\s*/?>`)
   const tag = `<meta ${attr}="${key}" content="${escapeHtml(content)}" />`
   return re.test(html) ? html.replace(re, tag) : html.replace('</head>', `${tag}\n</head>`)
