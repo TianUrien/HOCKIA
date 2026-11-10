@@ -2743,3 +2743,79 @@ export async function getSignupsByChannelWeek(days = 91): Promise<ChannelWeekRow
     measured: Number(r.measured) || 0,
   }))
 }
+
+export interface EcosystemCountry {
+  country_code: string
+  country_name: string
+  flag_emoji: string | null
+  players: number
+  coaches: number
+  club_accounts: number
+  umpires: number
+  brands: number
+  members: number
+  active_30d: number
+  known_clubs: number
+  claimed_clubs: number
+  leagues_known: number
+}
+
+export interface EcosystemTraffic {
+  member: number
+  visitor_hockey_intent: number
+  unclear: number
+  not_relevant: number
+}
+
+export interface EcosystemReach {
+  window_days: number
+  window_start: string
+  window_end: string
+  countries: EcosystemCountry[]
+  totals: {
+    members: number
+    members_no_country: number
+    players: number
+    coaches: number
+    club_accounts: number
+    umpires: number
+    brands: number
+    active_30d: number
+    countries_with_members: number
+    known_clubs: number
+    claimed_clubs: number
+    countries_in_directory: number
+  }
+  traffic: EcosystemTraffic
+  weekly: Array<EcosystemTraffic & { week: string }>
+}
+
+/**
+ * How much of the field hockey world is on HOCKIA: members by country and
+ * role against the clubs known in the world directory, and sessions split
+ * into relevant / unclear / not relevant. `days` (traffic window) is clamped
+ * server-side to 1–180.
+ */
+export async function getEcosystemReach(days = 28): Promise<EcosystemReach> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('admin_get_ecosystem_reach', { p_days: days })
+  if (error) throw new Error(error.message)
+  const raw = (data ?? {}) as Partial<EcosystemReach>
+  const n = (v: unknown) => Number(v) || 0
+  const traffic = (t: Partial<EcosystemTraffic> | undefined): EcosystemTraffic => ({
+    member: n(t?.member), visitor_hockey_intent: n(t?.visitor_hockey_intent), unclear: n(t?.unclear), not_relevant: n(t?.not_relevant),
+  })
+  return {
+    window_days: n(raw.window_days),
+    window_start: String(raw.window_start ?? ''),
+    window_end: String(raw.window_end ?? ''),
+    countries: (raw.countries ?? []).map((c) => ({
+      ...c,
+      players: n(c.players), coaches: n(c.coaches), club_accounts: n(c.club_accounts), umpires: n(c.umpires), brands: n(c.brands),
+      members: n(c.members), active_30d: n(c.active_30d), known_clubs: n(c.known_clubs), claimed_clubs: n(c.claimed_clubs), leagues_known: n(c.leagues_known),
+    })),
+    totals: Object.fromEntries(Object.entries(raw.totals ?? {}).map(([k, v]) => [k, n(v)])) as EcosystemReach['totals'],
+    traffic: traffic(raw.traffic),
+    weekly: (raw.weekly ?? []).map((w) => ({ week: String(w.week), ...traffic(w) })),
+  }
+}
