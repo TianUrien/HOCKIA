@@ -63,13 +63,13 @@ export function getActiveFilterChips(
     chips.push({ id: `officiating:${off}`, label: titleCase(off), onRemove: () => update('officiatingSpecializations', filters.officiatingSpecializations.filter((o) => o !== off)) })
   }
   for (const id of filters.locationCountryIds) {
-    chips.push({ id: `loc:${id}`, label: countryName(id), onRemove: () => update('locationCountryIds', filters.locationCountryIds.filter((x) => x !== id)) })
+    chips.push({ id: `loc:${id}`, label: `Based in ${countryName(id)}`, onRemove: () => update('locationCountryIds', filters.locationCountryIds.filter((x) => x !== id)) })
   }
   if (filters.location.trim()) {
     chips.push({ id: 'locationText', label: filters.location.trim(), onRemove: () => update('location', '') })
   }
   for (const id of filters.nationalityCountryIds) {
-    chips.push({ id: `nat:${id}`, label: countryName(id), onRemove: () => update('nationalityCountryIds', filters.nationalityCountryIds.filter((x) => x !== id)) })
+    chips.push({ id: `nat:${id}`, label: `${countryName(id)} nationality`, onRemove: () => update('nationalityCountryIds', filters.nationalityCountryIds.filter((x) => x !== id)) })
   }
   if (filters.euOnly) {
     chips.push({ id: 'eu', label: 'EU-eligible', onRemove: () => update('euOnly', false) })

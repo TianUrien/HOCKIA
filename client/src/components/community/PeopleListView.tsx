@@ -91,6 +91,8 @@ export interface Profile {
   coach_specialization_custom?: string | null
   // Matching Increment #2.2 — candidate intent for the Interested lens.
   base_country_id?: number | null
+  /** Where the member is: base country, a club's own country, or a brand's (search RPC, 2026-11-09). */
+  place_country_id?: number | null
   relocation_willingness?: string | null
   relocation_countries_open?: number[] | null
   relocation_countries_excluded?: number[] | null
@@ -817,10 +819,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         .filter((c) => idSet.has(c.id))
         .flatMap((c) => [c.name, c.common_name].filter((n): n is string => Boolean(n)))
         .map((n) => n.toLowerCase())
-      result = result.filter(m =>
-        (typeof m.base_country_id === 'number' && idSet.has(m.base_country_id)) ||
-        (!!m.base_location && names.some((n) => m.base_location!.toLowerCase().includes(n)))
-      )
+      // Clubs without a base country match on their own country, as the RPC does.
+      const placeOf = (m: Profile) =>
+        m.place_country_id ?? m.base_country_id ?? (m.role === 'club' ? m.nationality_country_id ?? null : null)
+      result = result.filter(m => {
+        const place = placeOf(m)
+        return (typeof place === 'number' && idSet.has(place)) ||
+          (!!m.base_location && names.some((n) => m.base_location!.toLowerCase().includes(n)))
+      })
     }
     if (filters.location.trim()) {
       const loc = filters.location.toLowerCase()
