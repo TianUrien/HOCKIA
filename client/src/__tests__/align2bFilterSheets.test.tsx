@@ -21,6 +21,13 @@ vi.mock('@/lib/supabase', () => ({
   SUPABASE_ANON_KEY: 'test-anon-key',
 }))
 
+// The Community sheet's "Based in" / "Nationality" pickers read the country list.
+vi.mock('@/hooks/useCountries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/useCountries')>()
+  const countries = [{ id: 1, code: 'NZ', code_alpha3: 'NZL', name: 'New Zealand', common_name: null, nationality_name: 'New Zealander', region: 'Oceania', flag_emoji: null }]
+  return { ...actual, useCountries: () => ({ countries, loading: false, error: null, getCountryById: (id: number | null) => countries.find((c) => c.id === id) }) }
+})
+
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
 import { CommunityFiltersDrawer } from '@/components/community/CommunityFiltersDrawer'
 import { defaultFilters, type CommunityFiltersState } from '@/components/community/communityFilters'
@@ -110,6 +117,24 @@ describe('CommunityFiltersDrawer', () => {
     expect(screen.getByRole('button', { name: 'Open to play' }).className).toContain('border-line')
     expect(screen.getByRole('button', { name: 'Women’s' }).getAttribute('aria-pressed')).toBe('false')
     expect(screen.queryByRole('button', { name: 'Clubs' })).toBeNull()
+  })
+
+  // Founder 2026-11-09: "Based in" (where they live) and "Nationality" (passport) are separate filters.
+  it('Based in and Nationality are separate country filters; picking a country updates Based in', () => {
+    const s = state()
+    render(<CommunityFiltersDrawer state={s} resultCount={118} onSelectRole={vi.fn()} />)
+    expect(screen.getByTestId('community-filter-based-in')).toBeTruthy()
+    expect(screen.getByTestId('community-filter-nationality')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('community-filter-based-in-add'))
+    fireEvent.change(screen.getByTestId('community-filter-based-in-search'), { target: { value: 'new' } })
+    fireEvent.click(screen.getByRole('button', { name: 'New Zealand' }))
+    expect(s.updateFilter).toHaveBeenCalledWith('locationCountryIds', [1])
+  })
+
+  it('clubs and brands get Based in only: they have a country, not a passport', () => {
+    render(<CommunityFiltersDrawer state={state({ filters: { ...defaultFilters('club') } })} resultCount={12} onSelectRole={vi.fn()} />)
+    expect(screen.getByTestId('community-filter-based-in')).toBeTruthy()
+    expect(screen.queryByTestId('community-filter-nationality')).toBeNull()
   })
 
   it('the Primary button shows the live member count and closes the sheet', () => {

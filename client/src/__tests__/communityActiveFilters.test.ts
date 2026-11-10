@@ -24,10 +24,10 @@ describe('getActiveFilterChips', () => {
     expect(chips.map((c) => c.label)).toEqual(['Goalkeeper', 'Forward'])
   })
 
-  it('resolves nationality/location country ids to names', () => {
+  it('resolves nationality/location country ids to names, saying which is which', () => {
     const filters = { ...defaultFilters('player'), nationalityCountryIds: [11], locationCountryIds: [46] }
     const chips = getActiveFilterChips(filters, COUNTRIES, noop)
-    expect(chips.map((c) => c.label).sort()).toEqual(['Argentina', 'United Kingdom'])
+    expect(chips.map((c) => c.label).sort()).toEqual(['Argentina nationality', 'Based in United Kingdom'])
   })
 
   it('emits chips for EU, availability (role-aware), city text, and brand category', () => {

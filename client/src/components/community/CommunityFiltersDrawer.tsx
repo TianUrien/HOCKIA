@@ -5,6 +5,7 @@ import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { PlayingCategory } from '@/lib/hockeyCategories'
+import { CountryFilterField } from './CountryFilterField'
 import type { AvailabilityFilter, CommunityFiltersState, RoleFilter } from './communityFilters'
 
 interface CommunityFiltersDrawerProps {
@@ -68,9 +69,12 @@ function GroupLabel({ children }: { children: string }) {
 /**
  * Community filters (Figma 116:631): Position, Role (incl. Brands and
  * Umpires), Open to (Play · Coach · Recruiting · Opportunities), and the EU
- * passport toggle as a first-class row. No geography, no appointments, no
- * level, no match scores. Live count on the button. Every option is the
- * shared Chip (selected = soft purple).
+ * passport toggle as a first-class row. Geography is back (founder
+ * 2026-11-09): "Based in" (where members live; a club's or brand's own
+ * country) and "Nationality" (passport, either one), kept apart because a
+ * New Zealander can live in England. No appointments, no level, no match
+ * scores. Live count on the button. Every option is the shared Chip
+ * (selected = soft purple).
  */
 export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onSelectRole }: CommunityFiltersDrawerProps) {
   const { filters, updateFilter, clearFilters, togglePosition, showFilters, setShowFilters } = state
@@ -84,6 +88,34 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
     updateFilter('categories', filters.categories.includes(value) ? filters.categories.filter((c) => c !== value) : [...filters.categories, value])
   const showTeams = filters.role !== 'club' && filters.role !== 'brand'
   const showEu = filters.role !== 'club' && filters.role !== 'brand'
+  // Clubs and brands have a country, not a passport.
+  const showNationality = filters.role !== 'club' && filters.role !== 'brand'
+  const basedInCaption = filters.role === 'club' || filters.role === 'brand'
+    ? 'Where they are.'
+    : filters.role === 'all'
+      ? 'Where they live now, not their passport. Clubs and brands: their own country.'
+      : 'Where they live now, not their passport.'
+  const countryFields = (
+    <>
+      <CountryFilterField
+        label="Based in"
+        caption={basedInCaption}
+        value={filters.locationCountryIds}
+        onChange={(ids) => updateFilter('locationCountryIds', ids)}
+        testId="community-filter-based-in"
+      />
+      {showNationality && (
+        <CountryFilterField
+          label="Nationality"
+          caption="Either nationality counts, dual passports included."
+          value={filters.nationalityCountryIds}
+          onChange={(ids) => updateFilter('nationalityCountryIds', ids)}
+          withFlags
+          testId="community-filter-nationality"
+        />
+      )}
+    </>
+  )
   // Brands / clubs tabs count brands / clubs, not members (QA copy nit).
   const noun = filters.role === 'brand' ? ['brand', 'brands'] : filters.role === 'club' ? ['club', 'clubs'] : ['member', 'members']
   const showLabel = count === null ? `Show ${noun[1]}` : count === 1 ? `Show 1 ${noun[0]}` : `Show ${count.toLocaleString()} ${noun[1]}`
@@ -131,6 +163,8 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
               </div>
             </section>
           )}
+
+          {countryFields}
 
           {filters.role === 'brand' && (
             <SwitchCardRow
@@ -198,6 +232,8 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
             ))}
           </div>
         </section>
+
+        {countryFields}
 
         {filters.role !== 'club' && filters.role !== 'brand' && (
           <button
