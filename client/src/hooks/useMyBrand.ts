@@ -5,6 +5,7 @@
  * Used on the Brand dashboard and onboarding pages.
  */
 
+import type { TablesUpdate } from '@/lib/database.types'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -151,7 +152,7 @@ export function useMyBrand(): UseMyBrandResult {
 
       // Sync brand identity to profile so it stays consistent everywhere
       if (user) {
-        const profileUpdate: Record<string, string> = {}
+        const profileUpdate: TablesUpdate<'profiles'> = {}
         if (data.name) profileUpdate.full_name = data.name
         if (data.logo_url) profileUpdate.avatar_url = data.logo_url
         if (Object.keys(profileUpdate).length > 0) {

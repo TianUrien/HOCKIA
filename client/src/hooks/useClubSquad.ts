@@ -175,7 +175,8 @@ export function useClubSquad(clubId: string | null) {
     if (current) return { token: current.token }
     const res = await createClubInviteLink()
     if (!res.success || !res.token) return { error: res.error ?? 'Could not create the invite link.' }
-    queryClient.setQueryData<InviteLink | null>(qk.clubInviteLink(clubId), { id: res.id ?? '', token: res.token, join_count: 0 })
+    const created: InviteLink = { id: res.id ?? '', token: res.token, join_count: 0 }
+    queryClient.setQueryData<InviteLink | null>(qk.clubInviteLink(clubId), created)
     return { token: res.token }
   }, [linkQuery.data, queryClient, clubId])
 

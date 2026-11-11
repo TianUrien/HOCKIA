@@ -1,3 +1,4 @@
+import type { TablesUpdate } from '@/lib/database.types'
 import { useEffect, useRef, useState } from 'react'
 import { Camera, Check, Lock } from 'lucide-react'
 import * as Sentry from '@sentry/react'
@@ -304,7 +305,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       if (refreshError) logger.warn('[CoachSetup] session refresh failed', refreshError)
       await ensureRow()
       const adult = offersOpenToPlay(profile?.date_of_birth ?? draft.dateOfBirth)
-      let patch: Record<string, unknown>
+      let patch: TablesUpdate<'profiles'>
       if (mode === 'save') {
         patch = {
           onboarding_completed: true,

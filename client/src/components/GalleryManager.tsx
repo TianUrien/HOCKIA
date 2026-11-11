@@ -241,12 +241,13 @@ export default function GalleryManager({
     if (!targetEntityId) return
     setIsLoading(true)
     try {
-      const ownerColumn = config.ownerColumn
-
-      const photoPromise = supabase
-        .from(config.table)
-        .select('*')
-        .eq(ownerColumn, targetEntityId)
+      // One literal table + owner column per mode: the typed client checks the
+      // column against the table, which a union of the two cannot satisfy.
+      const photoPromise = (
+        config.table === 'club_media'
+          ? supabase.from('club_media').select('*').eq('club_id', targetEntityId)
+          : supabase.from('gallery_photos').select('*').eq('user_id', targetEntityId)
+      )
         .order('order_index', { ascending: false })
         .order('created_at', { ascending: false })
 
@@ -300,7 +301,7 @@ export default function GalleryManager({
     } finally {
       setIsLoading(false)
     }
-  }, [config.ownerColumn, config.table, config.supportsVideo, mode, readOnly, targetEntityId, addToast])
+  }, [config.table, config.supportsVideo, mode, readOnly, targetEntityId, addToast])
 
   useEffect(() => {
     if (targetEntityId) {
