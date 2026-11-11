@@ -82,6 +82,28 @@ Principles the code follows:
     turning it on. Thresholds can be changed without a deploy
     (`auth_limit_device_max`, `auth_limit_ip_max`, `auth_limit_window_seconds`,
     `auth_limit_signups_per_hour`).
+  - Which address `auth-guard` trusts (2026-11-11, source: measurement on the
+    staging project with the deployed `age-gate` function, its `rate_limits`
+    rows and the `function_edge_logs` of the same requests; Supabase's
+    documentation does not state it). `clientIp()` in `_shared/auth-guard.ts`
+    takes `cf-connecting-ip` first, then the first `x-forwarded-for` entry.
+    Measured: (a) 13 requests, each with a different forged `X-Forwarded-For`
+    and `X-Real-IP`, were all counted by the function under one identifier,
+    equal to the `cf-connecting-ip` Cloudflare logged, and the limit tripped
+    on the 11th; the forged value is visible in the gateway log but never
+    reached the function. (b) The same held for a forged two-entry
+    `X-Forwarded-For`. (c) A request that carries its own `CF-Connecting-IP`
+    is refused at the edge with HTTP 403. So a caller cannot rotate addresses
+    or spend another network's ceiling through these headers. Not observed:
+    the value of `cf-connecting-ip` as seen inside the function (no deployed
+    function reads it first); if the platform does not pass it, the code falls
+    back to the measured `x-forwarded-for` entry. Condition for turning
+    `auth_rate_limit_enabled` on: after `auth-guard` is deployed, repeat (a)
+    against it and confirm on Admin > Sign-in traffic that the forged
+    requests appear as one network. `age-gate`, `application-action` and
+    `public-opportunities` read the first `x-forwarded-for` entry, which the
+    same measurement covers; this is platform behaviour, not a documented
+    guarantee, so re-measure if Supabase changes its gateway.
   - Limits of this design: `auth-guard` binds only clients that call it. Store
     builds from before 2026-11-11 do not, so it cannot lock them out and it
     cannot limit them either; a script that talks to Supabase Auth directly

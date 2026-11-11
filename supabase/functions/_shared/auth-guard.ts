@@ -51,10 +51,21 @@ export function parseGuardRequest(body: unknown): GuardRequest | null {
   }
 }
 
-/** The caller's address as the platform reports it (never stored; hashed in the database). */
+/**
+ * The caller's address as the platform reports it (never stored; hashed in
+ * the database).
+ *
+ * Prefers `cf-connecting-ip`: Cloudflare sets it at the edge and refuses a
+ * request that arrives with its own copy (measured on staging 2026-11-11:
+ * HTTP 403). Falls back to the first `x-forwarded-for` entry, which the
+ * platform rewrites to that same address before the function runs (same
+ * measurement: 13 requests with 13 different forged leading entries were all
+ * counted under the one real address). See docs/engineering/security.md.
+ */
 export function clientIp(headers: Headers): string | null {
-  const forwarded = headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-  return forwarded || headers.get('cf-connecting-ip') || null
+  const cloudflare = headers.get('cf-connecting-ip')?.trim()
+  if (cloudflare) return cloudflare
+  return headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
 }
 
 /**

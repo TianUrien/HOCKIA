@@ -32,9 +32,29 @@ Deno.test('parseGuardRequest caps long values', () => {
   assertEquals(r?.appVersion?.length, 20)
 })
 
-Deno.test('clientIp takes the first forwarded address', () => {
-  assertEquals(clientIp(new Headers({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' })), '203.0.113.7')
+Deno.test('clientIp prefers the address Cloudflare sets', () => {
   assertEquals(clientIp(new Headers({ 'cf-connecting-ip': '203.0.113.8' })), '203.0.113.8')
+  assertEquals(
+    clientIp(new Headers({ 'cf-connecting-ip': '203.0.113.8', 'x-forwarded-for': '203.0.113.8' })),
+    '203.0.113.8',
+  )
+})
+
+Deno.test('clientIp ignores a forged leading forwarded entry', () => {
+  // A caller-supplied entry in front of the real one must not become the identity.
+  assertEquals(
+    clientIp(new Headers({ 'cf-connecting-ip': '203.0.113.8', 'x-forwarded-for': '198.51.100.99, 203.0.113.8' })),
+    '203.0.113.8',
+  )
+  assertEquals(
+    clientIp(new Headers({ 'cf-connecting-ip': '203.0.113.8', 'x-forwarded-for': '198.51.100.99' })),
+    '203.0.113.8',
+  )
+})
+
+Deno.test('clientIp falls back to the first forwarded address, then to none', () => {
+  assertEquals(clientIp(new Headers({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' })), '203.0.113.7')
+  assertEquals(clientIp(new Headers({ 'cf-connecting-ip': '  ', 'x-forwarded-for': '203.0.113.7' })), '203.0.113.7')
   assertEquals(clientIp(new Headers()), null)
 })
 
