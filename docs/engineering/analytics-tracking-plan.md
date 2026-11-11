@@ -180,6 +180,31 @@ keeps its GA4 events (`community_deck_swipe`, `community_preview_open`).
 Questions these answer: how many members a phone visitor sees per open, whether "More" is
 used, and which surface (photo or details) starts a message or a friend request.
 
+### 4.8 Ecosystem reach and relevant traffic (added 2026-11-10)
+
+Source: founder 2026-11-10 ("HOCKIA is only for the field hockey ecosystem"). Admin page
+`/admin/ecosystem`, RPC `admin_get_ecosystem_reach(p_days)` (admin-only, counts only).
+
+- **Reach by country**: members by role (country = base country, else nationality) against
+  the clubs in the world directory (`world_clubs`: total and claimed) and leagues known.
+  The directory is what HOCKIA knows, not every club that exists; England and the United
+  Kingdom are separate rows in `countries`.
+- **Traffic by relevance** (sessions from `analytics_events`, 13 weeks):
+  - `member`: a signed-in member was in the session.
+  - `visitor_hockey_intent`: a visitor opened roles, profiles, Community, the world
+    directory, sign-up or a tagged link, or took an action (CTA, search, registration).
+  - `not_relevant`: crawler paths (`/apple-app-site-association`, `.well-known`, broken
+    sitemap URLs) or a single legal-page view (store review, crawlers).
+  - `unclear`: everything else (home only, one page and no action).
+- First read (prod, 13 Oct to 9 Nov): 1,905 member sessions, 416 visitor sessions with
+  field hockey intent, 444 unclear, 128 not relevant.
+
+SEO for the same audience (same date): `/world/:code` and `/world/clubs/:id` are served by
+`client/api/world-page.ts` with field hockey titles, descriptions and JSON-LD
+(CollectionPage, SportsOrganization, BreadcrumbList); `/opportunities` leads with "Field
+Hockey Jobs" (the top non-brand query in Search Console); the sitemap lists claimed clubs
+and unclaimed clubs placed in a league.
+
 ## 5. Conventions and QA
 - Names: `object_action`, lowercase, underscores; context in properties, not in the name.
 - Every new event lands in this file with the decision it informs; an event nobody reads is

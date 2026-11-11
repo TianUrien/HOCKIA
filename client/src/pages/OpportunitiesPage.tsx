@@ -390,19 +390,19 @@ export default function OpportunitiesPage() {
 
   // SEO meta tags
   useEffect(() => {
-    document.title = 'Field Hockey Opportunities • Hockia'
-    const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on Hockia.'
+    document.title = 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia'
+    const metaDescription = 'Open field hockey jobs for players and coaches: clubs across Europe, the Americas, Africa, Asia and Oceania recruiting on Hockia. Apply directly, free.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
     const ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities • Hockia')
+    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
     const ogUrl = document.querySelector('meta[property="og:url"]')
     if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com/opportunities')
     return () => {
       document.title = 'Hockia | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join Hockia.'
+      const defaultDesc = 'Hockia is the field hockey network: player and coach profiles, clubs recruiting worldwide and open field hockey jobs. Join free.'
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
       if (ogTitle) ogTitle.setAttribute('content', 'Hockia | Field Hockey Community')
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)

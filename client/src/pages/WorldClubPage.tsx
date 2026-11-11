@@ -83,7 +83,7 @@ export default function WorldClubPage() {
           return
         }
         setClub(clubData)
-        document.title = `${clubData.club_name} | Hockia`
+        document.title = `${clubData.club_name} – Field Hockey Club | Hockia`
 
         // Fan out lookups sequentially. Each is a small single-row read
         // and the user-perceived load time is dominated by the initial
@@ -97,6 +97,7 @@ export default function WorldClubPage() {
             .maybeSingle()
           if (cancelled) return
           setCountry(data as CountryRow | null)
+          if (data?.name) document.title = `${clubData.club_name} – Field Hockey Club in ${data.name} | Hockia`
         }
         if (clubData.province_id) {
           const { data } = await supabase

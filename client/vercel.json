@@ -98,6 +98,14 @@
       "destination": "/api/page-head?path=/world"
     },
     {
+      "source": "/world/clubs/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+      "destination": "/api/world-page?club=:id"
+    },
+    {
+      "source": "/world/:slug([a-zA-Z][a-zA-Z-]{1,60})",
+      "destination": "/api/world-page?country=:slug"
+    },
+    {
       "source": "/marketplace",
       "destination": "/api/page-head?path=/marketplace"
     },

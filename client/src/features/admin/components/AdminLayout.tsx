@@ -21,6 +21,7 @@ import {
   UserCheck,
   Activity,
   Globe2,
+  Radar,
   Mail,
   Megaphone,
   BarChart3,
@@ -117,6 +118,7 @@ const NAV_SECTIONS: NavSection[] = [
       { path: '/admin/app-ratings', icon: Star, label: 'App Ratings' },
       { path: '/admin/product-health', icon: GitBranch, label: 'Funnels & Retention' },
       { path: '/admin/attribution', icon: Share2, label: 'Attribution' },
+      { path: '/admin/ecosystem', icon: Radar, label: 'Ecosystem reach' },
     ],
   },
   {
