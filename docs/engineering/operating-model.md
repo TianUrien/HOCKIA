@@ -89,7 +89,6 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 | 1 | Store build with the native changes of 2026-11-10 (messaging gestures, keyboard fixes, block from chat, open-to-play card, link click tracking) | Installed builds iOS 1.3.24, Android 1.25 predate them | S + founder signing | Yes: signing |
 | 2 | Bot protection on sign-in and sign-up: rate limit first, then enforce Turnstile | 225 automated "Continue with Apple" starts in two hours on 2026-11-10 from 4 networks with one device signature; 28 Oct surge | M | Yes: when to enforce |
 | 3 | An admin block should also end the session (ban in auth) | A blocked member can still sign in (security.md §3.4) | S | No |
-| 4 | Review and release #530 (field hockey SEO, sitemap, Ecosystem reach) | Merged into staging by the Data session; not reviewed by the lead; needs a migration and an edge function deploy | S | Yes: production |
 | 5 | Database alerts: CPU, connections, email volume | capacity.md §8.5: metrics exist without alerts | S | No |
 
 ### P1: product quality
