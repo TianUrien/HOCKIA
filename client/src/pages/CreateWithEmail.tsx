@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { getAttributionSnapshot } from '@/lib/attribution'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
+import { guardCheck } from '@/lib/authGuard'
 import { trackSignUp, trackSignUpStart } from '@/lib/analytics'
 import { POST_AUTH_NEXT_KEY, pendingRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
@@ -61,9 +62,13 @@ export default function CreateWithEmail() {
     }
     setLoading(true)
     try {
-      const rateLimit = await checkSignupRateLimit(trimmed)
+      const [rateLimit, guard] = await Promise.all([checkSignupRateLimit(trimmed), guardCheck('signup')])
       if (rateLimit && !rateLimit.allowed) {
         setError(formatRateLimitError(rateLimit))
+        return
+      }
+      if (!guard.allowed) {
+        setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
         return
       }
       trackSignUpStart('email')

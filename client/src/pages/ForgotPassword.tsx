@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLimit'
+import { guardCheck } from '@/lib/authGuard'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
 
 /**
@@ -35,9 +36,14 @@ export default function ForgotPassword() {
 
     try {
       // Check rate limit before sending password reset email
-      const rateLimit = await checkPasswordResetRateLimit(email)
+      const [rateLimit, guard] = await Promise.all([checkPasswordResetRateLimit(email), guardCheck('password_reset')])
       if (rateLimit && !rateLimit.allowed) {
         setError(formatRateLimitError(rateLimit))
+        setLoading(false)
+        return
+      }
+      if (!guard.allowed) {
+        setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
         setLoading(false)
         return
       }

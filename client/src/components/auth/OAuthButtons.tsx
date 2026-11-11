@@ -59,6 +59,8 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       // A superseded attempt (user tapped again while the first one was
       // still opening) is not a failure — the newer attempt is in flight.
       if (err instanceof Error && err.name === 'OAuthCancelled') return
+      // The sign-in guard refused (too many attempts, or the bot check failed): its message is the copy.
+      if (err instanceof Error && err.name === 'AuthGuardRefused') { onError(err.message); return }
       logger.error(`${provider} OAuth error:`, err)
       onError(oauthErrorMessage(err instanceof Error && err.name === 'OAuthProviderError' ? err.message : null, 'Sign-in failed. Please try again.'))
     })

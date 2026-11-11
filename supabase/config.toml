@@ -429,6 +429,11 @@ verify_jwt = false
 # only after an explicit founder OK, never the other way round by habit.
 
 # Public read, anonymous by design.
+# auth-guard: called before sign-in / sign-up, so the caller has no session.
+# Records attempts and answers allowed / refused; fails open.
+[functions.auth-guard]
+verify_jwt = false
+
 [functions.health]
 verify_jwt = false
 [functions.sitemap]

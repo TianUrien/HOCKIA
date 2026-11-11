@@ -58,6 +58,35 @@ Principles the code follows:
   Captcha is NOT enforced in production yet. The 2026-10-28 sign-in surge was
   automated: 79 identical password attempts in 4 minutes from two emulated
   Android devices (Turnstile error 200100), and none succeeded.
+- Sign-in protection (2026-11-11, source: this repository, Supabase Auth docs
+  "Rate limits" and "Before User Created Hook", production auth logs of
+  2026-11-10): Supabase Auth has no per-address limit on the OAuth start
+  (`/auth/v1/authorize`), and the project has nothing in front of it, so the
+  app measures and limits its own attempts:
+  - `auth-guard` (edge function, no session needed, fails open) is called by
+    the app before an OAuth start, a password sign-in, a sign-up, a magic link
+    and a password reset, and after a failed password sign-in
+    (`client/src/lib/authGuard.ts`). Each attempt is a row in `auth_attempts`
+    (server-only) with the network and the device as keyed hashes; the address
+    and the user agent are never stored. Rows are kept 30 days.
+  - `hook_before_user_created` is a Supabase Auth hook that counts new
+    accounts per network for every client, old store builds included. It runs
+    only once it is selected in the dashboard (Authentication > Hooks).
+  - Two switches in `app_settings`, both OFF (absent row):
+    `auth_rate_limit_enabled` (10 attempts per device and 40 per network per
+    kind every 5 minutes in `auth-guard`; 30 new accounts per network per hour
+    in the hook) and `auth_turnstile_enforced` (`auth-guard` asks for a
+    Turnstile token of its own and verifies it with the function secret
+    `TURNSTILE_SECRET_KEY`). With the limit off, attempts over a threshold are
+    recorded as `would_limit`; read that on Admin > Sign-in traffic before
+    turning it on. Thresholds can be changed without a deploy
+    (`auth_limit_device_max`, `auth_limit_ip_max`, `auth_limit_window_seconds`,
+    `auth_limit_signups_per_hour`).
+  - Limits of this design: `auth-guard` binds only clients that call it. Store
+    builds from before 2026-11-11 do not, so it cannot lock them out and it
+    cannot limit them either; a script that talks to Supabase Auth directly
+    skips it too. What binds every caller is Supabase Auth's own limits and
+    captcha setting (dashboard) and the hook's new-account ceiling.
 - Admin access is a JWT `app_metadata` claim checked server-side by
   `is_platform_admin()`; the client only hides UI (`features/admin/README.md`).
 - Native apps are first-party clients identified by their WebView origin

@@ -2819,3 +2819,50 @@ export async function getEcosystemReach(days = 28): Promise<EcosystemReach> {
     weekly: (raw.weekly ?? []).map((w) => ({ week: String(w.week), ...traffic(w) })),
   }
 }
+
+export interface AuthAttemptTotal {
+  kind: string
+  outcome: string
+  attempts: number
+}
+
+export interface AuthAttemptSource {
+  /** Short tag of the network's hash: tells two networks apart, never an address. */
+  network: string | null
+  device: string | null
+  device_label: string | null
+  platform: string | null
+  app_version: string | null
+  country: string | null
+  attempts: number
+  oauth_starts: number
+  failed_signins: number
+  new_accounts: number
+  /** Attempts over the limit while the limit was off (would have been refused). */
+  would_limit: number
+  refused: number
+  first_seen: string
+  last_seen: string
+}
+
+export interface AuthAttemptsSummary {
+  hours: number
+  rate_limit_enabled: boolean
+  turnstile_enforced: boolean
+  device_max: number
+  ip_max: number
+  window_seconds: number
+  signups_per_hour: number
+  totals: AuthAttemptTotal[]
+  sources: AuthAttemptSource[]
+}
+
+/**
+ * Sign-in and sign-up attempts per network and device (brief 2026-11-11).
+ * Networks and devices are hashes; no address is stored or shown.
+ */
+export async function getAuthAttempts(hours: number): Promise<AuthAttemptsSummary> {
+  const { data, error } = await adminRpc('admin_get_auth_attempts', { p_hours: hours })
+  if (error) throw new Error(`Failed to get sign-in traffic: ${error.message}`)
+  return data as AuthAttemptsSummary
+}
