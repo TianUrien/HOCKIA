@@ -2,7 +2,9 @@
 
 Verified on 2026-10-02 from `client/package.json`, `client/playwright.config.ts`,
 `client/vitest.db.config.ts`, `client/vite.config.ts`, `.github/workflows/ci.yml`
-and the test directories.
+and the test directories. E2E rows, section 3a and the E2E flakes re-verified
+on 2026-11-11 by running the full Playwright suite against staging (source:
+local full and smoke runs, same day).
 
 ## 1. Suites
 
@@ -10,7 +12,7 @@ and the test directories.
 |---|---|---|---|---|
 | Unit | `client/src/__tests__/**` and co-located `*.test.ts(x)` | 225 files, about 2,300 cases | Vitest 4 + jsdom + Testing Library (`src/test/setup.ts` polyfills ResizeObserver, IntersectionObserver, matchMedia, scrollTo) | nothing external |
 | DB integration | `client/src/__tests__/db/*.test.ts` | 7 files: `rls`, `triggers`, `state-machines`, `attribution`, `club-members`, `retention`, `shortLinks` | Vitest with `vitest.db.config.ts` (serial, 30 s timeout) | staging Supabase + E2E accounts |
-| E2E | `client/e2e/*.spec.ts` | 36 spec files, 24 `@smoke`-tagged tests | Playwright 1.57, Chromium (WebKit optional with `PLAYWRIGHT_WEBKIT=1`) | staging Supabase + E2E accounts + dev server or `PLAYWRIGHT_BASE_URL` |
+| E2E | `client/e2e/*.spec.ts` | 29 spec files; 223 test runs across the projects in the full suite, 109 in the smoke suite (2026-11-11) | Playwright 1.57, Chromium (WebKit optional with `PLAYWRIGHT_WEBKIT=1`) | staging Supabase + E2E accounts + dev server or `PLAYWRIGHT_BASE_URL` |
 | Edge function unit | `supabase/functions/_shared/*.test.ts` | 17 files, 165 `Deno.test` cases (two are structural: `webhook-auth.test.ts` reads the function sources, `function-config.test.ts` reads `supabase/config.toml`) | `deno test --allow-env --allow-read .` | Deno 2 |
 | SQL security probes | `supabase/tests/security/*.probe.sql` | 16 probes | Run by hand on staging via SQL; each rolls itself back | staging |
 
@@ -28,7 +30,7 @@ npm run test:unit:coverage   # vitest run --coverage --reporter=verbose
 npm run test:db              # DB integration tests against staging
 npm run test:e2e:smoke       # @smoke across setup, chromium, player, club, coach, brand, mobile-player
 npm run test:e2e             # chromium project only (public pages)
-npm run test:e2e:all         # every project
+npm run test:e2e:all         # every project (about 5 minutes locally, see 3a)
 npm run test:e2e:staging     # E2E_STAGING_MODE=1: accounts behave as real users
 npm run test:all             # lint, typecheck, unit, build, e2e smoke (run before pushing client code)
 
@@ -77,6 +79,74 @@ functions and triggers route their notifications to the test-mode notifiers.
 `E2E_STAGING_MODE=1` flips them to real-user behaviour for notification
 end-to-end specs.
 
+## 3a. Full E2E suite status (2026-11-11)
+
+The full suite (`npm run test:e2e:all`) is trustworthy again. Before the
+2026-11-11 repair it failed 137 of 371 runs for reasons unrelated to the
+release (specs written for the pre-rebrand UI, removed screens, a sign-in
+setup waiting on selectors that no longer exist); only `@smoke` could be
+trusted. After the repair: **199 passed, 0 failed, 24 skipped** of 223, in
+about 5 minutes (two consecutive clean full runs; the second had 198 passed
+and 25 skipped because one skip depends on staging data). A failure in the
+full suite now means something: read it before a release instead of diffing
+against a baseline.
+
+CI still gates on the smoke suite only (97 passed, 12 skipped of 109 on a
+quiet machine; see the two smoke flakes under load in section 5). The
+full suite is run by hand before a release and after changes to shared
+screens.
+
+What the 24 skips are (none is a hidden failure):
+
+| Skips | Spec | Why |
+|---|---|---|
+| 8 | `notifications.staging.spec.ts` | Runs only with `npm run test:e2e:staging` (`E2E_STAGING_MODE=1`, accounts behave as real users) |
+| 7 | `public-profile-share.spec.ts` | Needs `E2E_PUBLIC_*_USERNAME` / `E2E_PUBLIC_BRAND_SLUG`, not set locally or in CI |
+| 5 | `ugc-safety.player.spec.ts` | Two `test.fixme` (report submit, block and unblock) on both player projects, one data-dependent skip |
+| 3 | `dashboard-menu`, `notifications-drawer` | Desktop-only or phone-only halves of a pair; the other half runs |
+| 1 | `onboarding.spec.ts` | The E2E brand is already onboarded |
+
+Harness settings that matter (`client/playwright.config.ts`):
+
+- `timeout: 60s`, `expect.timeout: 15s`. The suite talks to remote staging;
+  the Playwright defaults (30s, 5s) assume a local backend and produced
+  timeouts that looked like failures.
+- `workers: 2` locally, 1 on CI. All workers share one IP against staging: at
+  the default (half the cores) requests took 2 to 6s and some returned 429.
+- `auth.setup.ts` has a 90s timeout and waits for the dashboard H1.
+- A worktree needs the three env files copied from the main checkout:
+  `client/.env`, `client/.env.local` and the repository-root `.env.local`.
+  Without the root file the dev server has no Supabase URL and every page
+  renders blank (`process.env.SUPABASE_URL` is defined as an empty string and
+  wins over `VITE_SUPABASE_URL` in `lib/supabase.ts`).
+
+What the suite leaves on staging per run (unchanged by the repair unless
+noted):
+
+- Messages sent as the E2E accounts. Removed by `global.teardown.ts` only when
+  `E2E_SERVICE_ROLE_KEY` is set (CI); a local run leaves them.
+- One "E2E test post" per player project from `home-feed.player.spec.ts`.
+- One application to the seeded E2E vacancy, the first time only.
+- No offers: `qa-brand-offers.brand.spec.ts` now deletes the draft it creates
+  and no longer publishes (it used to leave a live or ended offer). No
+  rate-limit rows from `signup.spec.ts` (the checks are answered locally).
+- Hand-off screenshots outside the repository are written only with
+  `QA_PROBE=1`.
+
+Not covered by E2E after the repair (the specs were deleted because the
+screen is gone, or could not run unattended):
+
+- Member-facing brand offers (Home offer card, offer detail, Community ›
+  Brands offers rail, the Home gear rail) and the marketplace need chips:
+  they need a standing live `[QA]` offer on staging, which does not exist.
+- Publishing a brand offer and ending it (needs an uploaded photo and leaves
+  an undeletable Ended offer per run; the SQL probe covers the RPC).
+- The "Recruiters only" highlight-video toggle (the old spec never found the
+  video on the profile v2 dashboard and skipped itself).
+- Questions as a post kind in Home (the `/community/questions` list and its
+  three specs were removed with the screen on 2026-09-20).
+- The filter sheet on Opportunities (the quick chips are covered).
+
 ## 4. CI (`.github/workflows/ci.yml`)
 
 Triggers: push to `main` or `staging`, and pull requests targeting them.
@@ -112,7 +182,13 @@ Cloudflare Worker instead; see operations.md.
 | Symptom | Cause | Mitigation in place |
 |---|---|---|
 | `duplicate key ... profile_friendships_pair_unique` or similar in DB tests | Two CI runs mutating the same staging fixtures at once | Constant concurrency groups serialize DB and E2E jobs across main, staging and PR runs; `cancel-in-progress: false` so both complete |
-| E2E timing failures on CI | Shared staging data, cold edge functions | `retries: 2`, `workers: 1` on CI, traces retained on failure |
+| E2E timing failures on CI | Shared staging data, cold edge functions | `retries: 2`, `workers: 1` on CI, traces retained on failure; 60s test and 15s assertion timeouts since 2026-11-11 |
+| `messaging.player.spec.ts` › "a wheel tick up stays up" fails with offset 0 in a full run (2026-11-11) | Every messaging spec writes to the same E2E Test FC thread as the same player; a message from another worker lands during the 1s wait and the thread follows it to the bottom | One retry on that describe block (passes 8 of 8 alone). A second consecutive failure is a real regression |
+| `signup.spec.ts` › "signup form submits" stays on `/signup/email` (seen 2026-11-11) | The spec submitted the same address every run and staging's per-email signup rate limit refused it after a few runs | The rate-limit RPCs are answered locally in that spec |
+| `a11y.player.spec.ts` › `/community` reports `aria-prohibited-attr` on `.grid` (seen once, 2026-11-11, machine load 20) | The scan ran while the Community loading skeleton was still up; the skeleton grids carry `aria-label` on a `div` with no role (`CommunitySkeletons.tsx`), a real defect that is only visible while loading | None yet: fix the skeleton markup (product bug, reported 2026-11-11) |
+| `onboarding.spec.ts` › `/dashboard/brand` redirect times out at 10s (seen once, 2026-11-11, machine load 20) | Its own 10s `waitForURL` is shorter than a cold route load on a busy machine | None: rerun; passes on a quiet machine |
+| Every page blank, 200+ failures | Worktree without the repository-root `.env.local` (see 3a) | Copy the three env files |
+| `auth.setup.ts` club or brand sign-in times out | Before 2026-11-11 the setup waited 15s on pre-rebrand selectors, then ran into the 30s limit under load | Waits for the dashboard H1; 90s setup timeout |
 | "Remote migration versions not found" on `main` | `main` is behind `staging` by design | The `main` branch uses the tolerant check |
 | Setup CLI rate limit | `supabase/setup-cli@latest` hit the GitHub API limit | CLI pinned to 2.67.1 |
 | PostHog events missing in automated runs | posthog-js drops captures in headless browsers | Documented in `lib/posthog.ts`; not a test failure |
