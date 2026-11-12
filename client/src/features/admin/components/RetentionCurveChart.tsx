@@ -77,8 +77,7 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
           />
           <Tooltip
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Recharts Formatter type mismatch
-            formatter={(value: number | undefined) => [`${value?.toFixed(1) ?? '—'}%`] as any}
+            formatter={(value) => [`${typeof value === 'number' ? value.toFixed(1) : '—'}%`]}
           />
           {/* itemSorter null: keep the oldest-first line order (recharts 3 sorts the legend alphabetically by default). */}
           <Legend wrapperStyle={{ fontSize: '12px' }} itemSorter={null} />

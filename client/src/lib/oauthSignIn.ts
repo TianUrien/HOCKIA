@@ -11,6 +11,7 @@ import { supabase } from './supabase'
 import { getAuthRedirectUrl } from './siteUrl'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
+import { AuthGuardRefused, guardCheck } from './authGuard'
 
 export type OAuthProvider = 'apple' | 'google' | 'facebook'
 
@@ -49,6 +50,10 @@ export async function startOAuthSignIn(provider: OAuthProvider): Promise<void> {
     message: `oauth.start.${provider}`,
     data: { provider, platform },
   })
+
+  // Measured, and refused only when a server switch is on (lib/authGuard).
+  const guard = await guardCheck('oauth_start', provider)
+  if (!guard.allowed) throw new AuthGuardRefused(guard.message ?? 'Too many attempts. Please try again in a minute.')
 
   try {
     if (platform === 'native') {

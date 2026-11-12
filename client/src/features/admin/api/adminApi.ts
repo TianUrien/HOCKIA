@@ -9,6 +9,7 @@
  * regenerating types with `supabase gen types typescript`, these can be simplified.
  */
 
+import type { TablesUpdate } from '@/lib/database.types'
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { normalizeEmailCampaign } from '../utils/campaigns'
@@ -809,7 +810,7 @@ export async function updateWorldClub(
   clubId: string,
   payload: WorldClubUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_clubs'> = {}
 
   if (payload.club_name !== undefined) {
     updates.club_name = payload.club_name.trim()
@@ -1243,7 +1244,7 @@ export async function updateWorldLeague(
   leagueId: number,
   payload: WorldLeagueUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_leagues'> = {}
 
   if (payload.name !== undefined) {
     updates.name = payload.name.trim()
@@ -1371,7 +1372,7 @@ export async function updateWorldProvince(
   provinceId: number,
   payload: WorldProvinceUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_provinces'> = {}
 
   if (payload.name !== undefined) {
     updates.name = payload.name.trim()
@@ -2818,4 +2819,51 @@ export async function getEcosystemReach(days = 28): Promise<EcosystemReach> {
     traffic: traffic(raw.traffic),
     weekly: (raw.weekly ?? []).map((w) => ({ week: String(w.week), ...traffic(w) })),
   }
+}
+
+export interface AuthAttemptTotal {
+  kind: string
+  outcome: string
+  attempts: number
+}
+
+export interface AuthAttemptSource {
+  /** Short tag of the network's hash: tells two networks apart, never an address. */
+  network: string | null
+  device: string | null
+  device_label: string | null
+  platform: string | null
+  app_version: string | null
+  country: string | null
+  attempts: number
+  oauth_starts: number
+  failed_signins: number
+  new_accounts: number
+  /** Attempts over the limit while the limit was off (would have been refused). */
+  would_limit: number
+  refused: number
+  first_seen: string
+  last_seen: string
+}
+
+export interface AuthAttemptsSummary {
+  hours: number
+  rate_limit_enabled: boolean
+  turnstile_enforced: boolean
+  device_max: number
+  ip_max: number
+  window_seconds: number
+  signups_per_hour: number
+  totals: AuthAttemptTotal[]
+  sources: AuthAttemptSource[]
+}
+
+/**
+ * Sign-in and sign-up attempts per network and device (brief 2026-11-11).
+ * Networks and devices are hashes; no address is stored or shown.
+ */
+export async function getAuthAttempts(hours: number): Promise<AuthAttemptsSummary> {
+  const { data, error } = await adminRpc('admin_get_auth_attempts', { p_hours: hours })
+  if (error) throw new Error(`Failed to get sign-in traffic: ${error.message}`)
+  return data as AuthAttemptsSummary
 }

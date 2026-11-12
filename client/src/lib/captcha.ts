@@ -34,7 +34,7 @@ type TurnstileApi = {
 }
 declare global { interface Window { turnstile?: TurnstileApi } }
 
-export type CaptchaAction = 'login' | 'signup' | 'reset' | 'magic_link' | 'resend' | 'reverify'
+export type CaptchaAction = 'login' | 'signup' | 'reset' | 'magic_link' | 'resend' | 'reverify' | 'guard'
 
 /** Outcome of asking for a token: the token, or why there is none, and how many widgets were tried. */
 export type CaptchaResult = { token?: string; reason?: string; attempts: number }

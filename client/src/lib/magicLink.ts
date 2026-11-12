@@ -16,6 +16,7 @@ import * as Sentry from '@sentry/react'
 import { supabase } from './supabase'
 import { getAuthRedirectUrl } from './siteUrl'
 import { checkLoginRateLimit, checkSignupRateLimit, formatRateLimitError } from './rateLimit'
+import { guardCheck } from './authGuard'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
@@ -84,11 +85,17 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
   // on Landing), signup intent → signup rate-limit bucket (shared with
   // email+password signup). Sharing buckets per-intent prevents an
   // attacker from using one auth method to bypass the other's limits.
-  const rateLimit = intent === 'signin'
-    ? await checkLoginRateLimit(email)
-    : await checkSignupRateLimit(email)
+  const [rateLimit, guard] = await Promise.all([
+    intent === 'signin' ? checkLoginRateLimit(email) : checkSignupRateLimit(email),
+    guardCheck('magic_link'),
+  ])
   if (rateLimit && !rateLimit.allowed) {
     return { ok: false, rateLimited: true, error: formatRateLimitError(rateLimit) }
+  }
+  if (!guard.allowed) {
+    return guard.reason === 'captcha_failed'
+      ? { ok: false, captchaFailed: true, error: guard.message }
+      : { ok: false, rateLimited: true, error: guard.message }
   }
 
   try {

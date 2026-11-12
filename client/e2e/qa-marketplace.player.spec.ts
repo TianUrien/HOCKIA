@@ -1,14 +1,21 @@
 import { test, expect, type Page } from './fixtures'
 
 /**
- * QA screenshots for the Marketplace by need and place (Figma 08 · Brands P6:
- * MK1, MK2, MK3). Not part of @smoke. Runs on staging as the E2E player
- * against labelled sample offers and products (created for the run, removed
- * after). Screenshots go to ../handoff-marketplace/built.
+ * Marketplace by need and place (Figma 08 · Brands P6: MK1, MK2, MK3). Not
+ * part of @smoke. Runs on staging as the E2E player and reads only.
+ *
+ * Staging has no standing sample offers, so the hub shows the "little supply"
+ * state and a need page may be empty: the tests accept rows or the empty
+ * state, and assert the parts that do not depend on supply (redirect, need
+ * page, country switch, Suggest a brand). The need chips on the hub (MK1) only
+ * render when the country has supply and are not covered.
+ *
+ * QA_PROBE=1 also writes the hand-off screenshots to ../handoff-marketplace/built.
  */
 
 const OUT = '../../handoff-marketplace/built'
 const PHONE = { width: 393, height: 852 }
+const QA_PROBE = Boolean(process.env.QA_PROBE)
 
 async function settle(page: Page) {
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined)
@@ -17,34 +24,38 @@ async function settle(page: Page) {
   await page.waitForTimeout(400)
 }
 
-test.describe('marketplace QA', () => {
-  test.skip(!process.env.E2E_ALLOW_WRITES, 'needs staging samples')
+/** Hand-off screenshots are only written on an explicit QA run. */
+async function shot(page: Page, name: string, fullPage = false) {
+  if (QA_PROBE) await page.screenshot({ path: `${OUT}/${name}`, fullPage })
+}
 
+test.describe('marketplace QA', () => {
   test('phone: /marketplace redirects to the hub; need page; country switch', async ({ page }) => {
     await page.setViewportSize(PHONE)
     await page.goto('/marketplace')
     await expect(page).toHaveURL(/\/community\/brands$/)
-    const hub = page.getByTestId('marketplace-hub')
-    await expect(hub).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByTestId('market-rail-offers')).toBeVisible()
+    await expect(page.getByTestId('marketplace-hub')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByTestId('market-country-chip')).toBeVisible()
     await settle(page)
-    await page.screenshot({ path: `${OUT}/phone-MK1-hub.png` })
-    await page.screenshot({ path: `${OUT}/phone-MK1-hub-full.png`, fullPage: true })
+    await shot(page, 'phone-MK1-hub.png')
+    await shot(page, 'phone-MK1-hub-full.png', true)
 
-    await page.getByTestId('market-need-chip-moving_abroad').click()
-    await expect(page).toHaveURL(/\/community\/brands\/need\/moving_abroad/)
-    await expect(page.getByTestId('need-page')).toBeVisible()
-    await expect(page.getByTestId('market-row').first()).toBeVisible({ timeout: 20_000 })
+    await page.goto('/community/brands/need/moving_abroad')
+    await expect(page.getByTestId('need-page')).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('heading', { level: 1, name: 'Moving abroad' })).toBeVisible()
+    const rowsOrEmpty = page.getByTestId('market-row').first().or(page.getByTestId('need-page-empty'))
+    await expect(rowsOrEmpty).toBeVisible({ timeout: 20_000 })
     await settle(page)
-    await page.screenshot({ path: `${OUT}/phone-MK2-need-uk.png` })
+    await shot(page, 'phone-MK2-need-uk.png')
 
     await page.getByTestId('market-country-chip').click()
     await page.getByLabel('Search countries').fill('Germ')
     await page.getByRole('button', { name: 'Germany' }).first().click()
     await expect(page).toHaveURL(/near=\d+/)
-    await expect(page.getByTestId('market-row').first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('market-country-chip')).toHaveText(/Germany/)
+    await expect(rowsOrEmpty).toBeVisible({ timeout: 20_000 })
     await settle(page)
-    await page.screenshot({ path: `${OUT}/phone-MK2-need-germany.png` })
+    await shot(page, 'phone-MK2-need-germany.png')
     await expect(page.getByTestId('need-page-ask-ai')).toHaveText(/Germany/)
   })
 
@@ -57,9 +68,9 @@ test.describe('marketplace QA', () => {
     await page.getByRole('button', { name: 'Germany' }).first().click()
     await expect(page.getByTestId('market-low-supply')).toBeVisible({ timeout: 20_000 })
     await settle(page)
-    await page.screenshot({ path: `${OUT}/phone-MK3-low-supply.png` })
+    await shot(page, 'phone-MK3-low-supply.png')
     await page.getByTestId('market-suggest-brand').click()
     await expect(page.getByTestId('suggest-brand-sheet')).toBeVisible()
-    await page.screenshot({ path: `${OUT}/phone-MK3-suggest.png` })
+    await shot(page, 'phone-MK3-suggest.png')
   })
 })
