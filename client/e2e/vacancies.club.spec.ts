@@ -26,14 +26,21 @@ test.describe('Vacancy Management - Club', () => {
 
     await page.goto(`/dashboard/opportunities/${seeded.id}/applicants`)
 
-    // ApplicantsList page
-    await expect(page.getByRole('heading', { level: 1, name: new RegExp(`Applicants for ${seeded.title}`, 'i') }))
-      .toBeVisible({ timeout: 20000 })
+    // Applicants screen (club redesign): the role header names the role, the
+    // actions button carries the full opportunity title.
+    const header = page.getByTestId('applicants-role-header')
+    await expect(header.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: `More actions for ${seeded.title}` })).toBeVisible()
 
-    // Either there are no applicants yet, or some exist (depending on whether player test ran)
-    const emptyState = page.getByRole('heading', { level: 3, name: 'No Applicants Yet' })
-    const applicantsCountText = page.getByText(/^\s*\d+\s+applicant(s)?\s*$/i).first()
+    const statuses = page.getByRole('tablist', { name: 'Application status' })
+    await expect(statuses.getByRole('tab', { name: /^To review/ })).toHaveAttribute('aria-selected', 'true')
+    for (const name of [/^Shortlisted/, /^Maybe/, /^Not a fit/, /^Closed/]) {
+      await expect(statuses.getByRole('tab', { name })).toBeVisible()
+    }
 
-    await expect(emptyState.or(applicantsCountText)).toBeVisible({ timeout: 20000 })
+    // Either nobody is waiting, or applicant rows exist (depending on whether
+    // the player spec has applied and where the club left that application).
+    const emptyState = page.getByText('Nobody waiting. New applicants show up here.')
+    await expect(emptyState.or(page.getByTestId('applicant-row').first())).toBeVisible({ timeout: 20000 })
   })
 })

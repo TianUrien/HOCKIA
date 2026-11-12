@@ -450,14 +450,12 @@ async function authenticateUser(
   // Wait for the app to recognize the authenticated state
   // The page should either show the profile or redirect to onboarding
   try {
-    // Wait for signs of authentication - either dashboard content or not being on landing page
-    await Promise.race([
-      page.waitForSelector('header:has-text("Profile")', { timeout: 15000 }),
-      page.waitForSelector('[data-testid="dashboard"]', { timeout: 15000 }),
-      page.waitForSelector('nav:has-text("Messages")', { timeout: 15000 }),
-      page.waitForSelector('button:has-text("Sign Out")', { timeout: 15000 }),
-      page.waitForSelector('a[href*="/dashboard"]', { timeout: 15000 }),
-    ])
+    // Wait for signs of authentication. Every role's dashboard renders the
+    // member's name as the page H1 once the profile fetch resolves (the same
+    // signal the smoke specs assert on). The pre-rebrand selectors that used
+    // to live here matched nothing, so every sign-in burned the full 15s and
+    // the club and brand setups ran into the 30s test timeout under load.
+    await page.getByRole('heading', { level: 1 }).first().waitFor({ state: 'visible', timeout: 15000 })
     console.log('[Auth Setup] Authentication confirmed - found authenticated UI elements')
   } catch {
     // Check current URL - if not on landing, we might be authenticated
@@ -494,6 +492,11 @@ async function authenticateUser(
   await page.context().storageState({ path: storagePath })
   console.log(`[Auth Setup] Saved storage state to ${storagePath}`)
 }
+
+// Each sign-in makes 6 to 12 sequential staging API calls (auth, profile
+// repair, vacancy and brand seed) before the browser part starts. At 0.5 to
+// 1.5s per call the default 30s test timeout is too tight for club and brand.
+setup.setTimeout(90_000)
 
 /**
  * Setup: Authenticate Player user

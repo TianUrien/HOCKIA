@@ -276,115 +276,6 @@ export class CommunityPage extends HockiaPage {
 }
 
 /**
- * Page Object for Questions (Q&A) Feature
- */
-export class QuestionsPage extends HockiaPage {
-  async openQuestionsPage() {
-    await this.page.goto('/community/questions')
-    await this.waitForLoadingToComplete()
-  }
-
-  async openQuestionDetail(questionId: string) {
-    await this.page.goto(`/community/questions/${questionId}`)
-    await this.waitForLoadingToComplete()
-  }
-
-  async switchToQuestionsMode() {
-    await this.page.goto('/community')
-    await this.waitForLoadingToComplete()
-    await this.page.getByRole('button', { name: /questions/i }).click()
-    await this.waitForLoadingToComplete()
-  }
-
-  async switchToPeopleMode() {
-    await this.page.getByRole('button', { name: /people/i }).click()
-    await this.waitForLoadingToComplete()
-  }
-
-  async clickAskQuestion() {
-    await this.page.getByRole('button', { name: /ask a question/i }).click()
-  }
-
-  async fillQuestionForm(title: string, category: string, body?: string) {
-    await this.page.getByLabel(/title/i).fill(title)
-    await this.page.getByLabel(/category/i).selectOption({ label: category })
-    if (body) {
-      await this.page.getByLabel(/details|body/i).fill(body)
-    }
-  }
-
-  async submitQuestion() {
-    await this.page.getByRole('button', { name: /post question|submit/i }).click()
-  }
-
-  async filterByCategory(category: string) {
-    await this.page.locator('select').filter({ hasText: /all categories/i }).first().selectOption({ label: category })
-    await this.waitForLoadingToComplete()
-  }
-
-  async sortBy(option: 'Latest' | 'Most Answered') {
-    await this.page.locator('select').filter({ hasText: /latest|most answered/i }).first().selectOption({ label: option })
-    await this.waitForLoadingToComplete()
-  }
-
-  async clickQuestion(title: string) {
-    await this.page.getByRole('link').filter({ hasText: title }).click()
-    await this.waitForLoadingToComplete()
-  }
-
-  async fillAnswerForm(body: string) {
-    await this.page.getByPlaceholder(/write your answer|share your knowledge/i).fill(body)
-  }
-
-  async submitAnswer() {
-    await this.page.getByRole('button', { name: /post answer|submit answer/i }).click()
-  }
-
-  async expectQuestionInList(title: string) {
-    await expect(this.page.getByRole('heading', { level: 3, name: title })).toBeVisible({ timeout: 10000 })
-  }
-
-  async expectQuestionNotInList(title: string) {
-    await expect(this.page.getByRole('heading', { level: 3, name: title })).not.toBeVisible({ timeout: 5000 })
-  }
-
-  async expectAnswerVisible(body: string) {
-    await expect(this.page.getByText(body)).toBeVisible({ timeout: 10000 })
-  }
-
-  async expectAnswerCount(title: string, count: number) {
-    const card = this.page.locator('a').filter({ hasText: title })
-    const answerText = count === 1 ? '1 answer' : `${count} answers`
-    await expect(card.getByText(answerText)).toBeVisible({ timeout: 10000 })
-  }
-
-  async deleteQuestion() {
-    await this.page.getByRole('button', { name: /question options/i }).click()
-    await this.page.getByRole('button', { name: /delete question/i }).click()
-  }
-
-  async editAnswer(oldBody: string, newBody: string) {
-    const answerCard = this.page.locator('div').filter({ hasText: oldBody }).first()
-    await answerCard.getByRole('button', { name: /answer options/i }).click()
-    await this.page.getByRole('button', { name: /edit/i }).click()
-    await this.page.getByRole('textbox').fill(newBody)
-    await this.page.getByRole('button', { name: /save/i }).click()
-  }
-
-  async deleteAnswer(body: string) {
-    const answerCard = this.page.locator('div').filter({ hasText: body }).first()
-    await answerCard.getByRole('button', { name: /answer options/i }).click()
-    await this.page.getByRole('button', { name: /delete/i }).click()
-  }
-
-  async getQuestionIdFromUrl(): Promise<string> {
-    const url = this.page.url()
-    const match = url.match(/\/community\/questions\/([a-f0-9-]+)/)
-    return match ? match[1] : ''
-  }
-}
-
-/**
  * Page Object for Home Feed
  */
 export class HomeFeedPage extends HockiaPage {
@@ -585,7 +476,6 @@ export const test = base.extend<{
   messagesPage: MessagesPage
   opportunitiesPage: OpportunitiesPage
   communityPage: CommunityPage
-  questionsPage: QuestionsPage
   brandsPage: BrandsPage
   homeFeedPage: HomeFeedPage
   notificationsPage: NotificationsPage
@@ -604,9 +494,6 @@ export const test = base.extend<{
   },
   communityPage: async ({ page }, use) => {
     await use(new CommunityPage(page))
-  },
-  questionsPage: async ({ page }, use) => {
-    await use(new QuestionsPage(page))
   },
   brandsPage: async ({ page }, use) => {
     await use(new BrandsPage(page))

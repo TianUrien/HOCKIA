@@ -58,14 +58,20 @@ test.describe('Vacancy Application Flow - Player', () => {
     const card = getE2EVacancyCard(page)
     await expect(card).toBeVisible({ timeout: 20000 })
 
-    // Already applied on a previous run: the card carries the Applied tag.
-    if (await card.getByTestId('applied-tag').isVisible().catch(() => false)) return
-
     await card.getByTestId('role-card-open').click()
     await page.waitForURL(/\/opportunities\/[0-9a-f-]{36}/, { timeout: 20000 })
-    await expect(async () => {
-      await page.getByTestId('role-apply').click({ timeout: 5000 })
-    }).toPass({ timeout: 15000, intervals: [500, 1000, 2000] })
+
+    // The role page settles into exactly one of two states. Reading the
+    // card's Applied tag before opening raced the applications query: the
+    // tag renders a moment after the card, so an already-applied player was
+    // sent looking for an Apply button that is not there.
+    const apply = page.getByTestId('role-apply')
+    const applied = page.getByTestId('applied-state')
+    await expect(apply.or(applied)).toBeVisible({ timeout: 20000 })
+    // Already applied on a previous run: nothing to send.
+    if (await applied.isVisible()) return
+
+    await apply.click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByTestId('apply-role-summary')).toBeVisible({ timeout: 10000 })

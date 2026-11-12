@@ -39,8 +39,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* One worker on CI. Two locally: every worker shares one IP against
+     staging, and at the default (half the cores) requests take 2 to 6s and
+     some return 429, which turns into 30s timeouts unrelated to the app.
+     Override with --workers when you need to. */
+  workers: process.env.CI ? 1 : 2,
+  /* The suite runs against remote staging, not a local stack: the Playwright
+     defaults (30s per test, 5s per assertion) assume a local backend. */
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   /* Reporter to use */
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
