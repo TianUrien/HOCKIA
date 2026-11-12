@@ -13,6 +13,7 @@ The repository is public.
 
 | Document | What it covers |
 |---|---|
+| [operating-model.md](operating-model.md) | Who does what (engineering lead and the design, data, content and community sessions), what a request must carry, the quality gates in one place, the release train and the prioritised backlog (added 2026-11-11) |
 | [architecture.md](architecture.md) | Responsibilities and boundaries of each layer, data flows, where business rules live, the recruiting pipeline D1-D4 |
 | [standards.md](standards.md) | Conventions that are enforced or visible in the code: typecheck, lint, copy rules, budgets, migration conventions, commit text |
 | [testing.md](testing.md) | Test suites, commands, what each CI job does, where test credentials come from, known flakes |
