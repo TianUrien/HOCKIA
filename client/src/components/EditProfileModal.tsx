@@ -1,3 +1,4 @@
+import type { TablesUpdate } from '@/lib/database.types'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { X, Upload, Loader2, Trophy, MapPin } from 'lucide-react'
 import * as Sentry from '@sentry/react'
@@ -344,7 +345,7 @@ const segmentedClass = (active: boolean) =>
 
 /** Candidate-intent fields (Matching Increment #2) shared by player +
  *  coach saves. Empty strings map to null; country arrays pass through. */
-function candidateIntentUpdate(formData: ProfileFormData): Record<string, unknown> {
+function candidateIntentUpdate(formData: ProfileFormData): TablesUpdate<'profiles'> {
   return {
     relocation_willingness: formData.relocation_willingness || null,
     relocation_countries_open: formData.relocation_countries_open,
@@ -699,7 +700,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     const normalizedContactEmail = trimmedContactEmail ? trimmedContactEmail : null
 
     // Create optimistic update object
-    const optimisticUpdate: Record<string, unknown> = {
+    const optimisticUpdate: TablesUpdate<'profiles'> = {
       full_name: formData.full_name,
       base_location: formData.base_location,
       base_city: formData.base_city || null,

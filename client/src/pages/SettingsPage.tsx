@@ -340,14 +340,9 @@ export default function SettingsPage() {
     setToggleLoading('last-active', true)
 
     try {
-      // Cast the update payload because show_last_active was added in
-      // migration 20260508800000 and the generated database.types.ts
-      // doesn't yet include it on the client until `npx supabase gen
-      // types` runs after the migration is applied. Behaviour is
-      // correct either way — the column exists on the row.
       const { error } = await supabase
         .from('profiles')
-        .update({ show_last_active: newValue } as Record<string, unknown>)
+        .update({ show_last_active: newValue })
         .eq('id', user.id)
 
       if (error) throw error

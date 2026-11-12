@@ -475,8 +475,8 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     // Strip undefined keys so we never accidentally clobber columns
     // the caller didn't mean to touch. Null is preserved — callers
     // use null to explicitly clear a field.
-    const patch: Record<string, unknown> = {}
-    for (const key of UPDATE_KEYS) if (key in input) patch[key] = input[key]
+    const patch: Database['public']['Tables']['recruiting_context']['Update'] = {}
+    for (const key of UPDATE_KEYS) if (key in input) Object.assign(patch, { [key]: input[key] })
     if (Object.keys(patch).length === 0) return
 
     const { error: updateError } = await supabase
