@@ -19,6 +19,19 @@ async function dismissOverlays(page: import('@playwright/test').Page) {
   }
 }
 
+/**
+ * Answer the auth rate-limit checks locally. The real RPCs count every attempt
+ * per email on staging, so a spec that submits the same test address on every
+ * run locks itself out after a few runs (and leaves counter rows behind).
+ */
+async function allowRateLimitChecks(page: import('@playwright/test').Page) {
+  await page.route('**/rest/v1/rpc/check_*_rate_limit', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ allowed: true, remaining: 5, reset_at: new Date(Date.now() + 3600_000).toISOString(), limit: 5 }),
+  }))
+}
+
 test.describe('Signup Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Clear all storage to ensure a fully unauthenticated state — prevents
@@ -32,45 +45,33 @@ test.describe('Signup Flow', () => {
     await page.goto('/')
   })
 
-  test('displays landing page with sign in form', async ({ page }) => {
-    // Verify landing page loads correctly
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    // Sign in form heading says "Sign In"
-    await expect(page.getByRole('heading', { name: /^sign in$/i })).toBeVisible()
-    // Email input should be present in the visible sign-in card
-    await expect(page.locator('input[type="email"]').last()).toBeVisible()
+  // Rebrand (2026-10): the landing no longer embeds a sign-in card. It leads
+  // with "Create a profile" and "Explore without an account"; signing in is
+  // its own screen at /signin.
+  test('landing shows the hero and no sign-in form', async ({ page }) => {
+    await expect(page.getByTestId('hero').getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(page.locator('input[type="email"]')).toHaveCount(0)
+    await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 
-  test('shows Create account link on mobile', async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('/')
-
-    // Mobile sign-in card shows a "Create account" button
-    await expect(page.getByRole('button', { name: /create account/i })).toBeVisible()
-  })
-
-  test('navigates to signup page from mobile sign-in card', async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('/')
-
-    // Click the "Create account" button in the mobile sign-in card
-    await page.getByRole('button', { name: /create account/i }).click()
-
-    // Should be on signup page
-    await expect(page).toHaveURL(/\/signup/)
-
-    // Role selection should be visible
+  test('landing "Create a profile" opens the first-run screen', async ({ page }) => {
+    await page.getByTestId('hero').getByRole('link', { name: /create a profile/i }).click()
+    await expect(page).toHaveURL(/\/signup$/)
     await expect(page.getByRole('heading', { name: /join hockia/i })).toBeVisible()
   })
 
-  test('navigates to signup from sign-in card link', async ({ page }) => {
-    // Desktop sign-in card has "Join HOCKIA" button inside "New here?" text
-    await page.locator('[data-signin-card]').last().getByRole('button', { name: /join hockia/i }).click()
+  test('landing "Create a profile" is reachable on a phone viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 })
+    await page.goto('/')
+    await page.getByTestId('hero').getByRole('link', { name: /create a profile/i }).click()
+    await expect(page).toHaveURL(/\/signup$/)
+    await expect(page.getByRole('heading', { name: /join hockia/i })).toBeVisible()
+  })
 
-    // Should be on signup page
-    await expect(page).toHaveURL(/\/signup/)
+  test('landing "Log in" opens the sign-in screen', async ({ page }) => {
+    await page.getByTestId('nav-bar').getByRole('link', { name: /^log in$/i }).click()
+    await expect(page).toHaveURL(/\/signin$/)
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
   })
 
   // Account-first onboarding (2026-10-03): /signup is the First run screen
@@ -102,6 +103,7 @@ test.describe('Signup Flow', () => {
     await page.goto('/signup/email')
     await dismissOverlays(page)
     // Never create an account: the sign-up call is intercepted.
+    await allowRateLimitChecks(page)
     await page.route('**/auth/v1/signup**', (route) => route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ msg: 'Unable to validate email address: invalid format' }) }))
 
     await page.getByPlaceholder(/you@example\.com/i).fill('invalid-email')
@@ -118,7 +120,9 @@ test.describe('Signup Flow', () => {
     await page.goto('/signup/email')
     await dismissOverlays(page)
 
-    // Intercept the API call so no account is created and no email is sent.
+    // Intercept the API calls so no account is created, no email is sent and
+    // no attempt is counted.
+    await allowRateLimitChecks(page)
     await page.route('**/auth/v1/signup**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -137,7 +141,9 @@ test.describe('Signup Flow', () => {
 
     // The mocked success lands on the verify-email screen.
     await expect(page).toHaveURL(/\/verify-email/, { timeout: 10000 })
-    await expect(page.getByText(/we've sent a verification/i)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(/we sent a confirmation link to/i)).toBeVisible()
+    await expect(page.getByText('test-signup@example.com')).toBeVisible()
   })
 
   test('signup page is accessible', async ({ page }) => {
@@ -160,54 +166,56 @@ test.describe('Signup Flow', () => {
 })
 
 test.describe('Sign In Flow', () => {
-  test('displays sign in form on landing page', async ({ page }) => {
-    await page.goto('/')
+  // /signin (rebrand page 26 · Log in): providers first, then email and
+  // password, with "Email me a sign-in link instead" as the alternative.
+  test('sign-in screen shows providers, email and password', async ({ page }) => {
+    await page.goto('/signin')
 
-    // Sign in form heading says "Sign In"
-    await expect(page.getByRole('heading', { name: /^sign in$/i })).toBeVisible()
-    // Email and password inputs should be present in the visible desktop sign-in card
-    await expect(page.locator('input[type="email"]').last()).toBeVisible()
-    await expect(page.locator('input[type="password"]').last()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible()
+    await expect(page.getByLabel('Email')).toBeVisible()
+    await expect(page.locator('#auth-password')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible()
+
+    // The magic-link alternative replaces the password field.
+    await page.getByRole('button', { name: 'Email me a sign-in link instead' }).click()
+    await expect(page.locator('#auth-password')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Email me a sign-in link', exact: true })).toBeVisible()
   })
 
   test('shows error for invalid credentials', async ({ page }) => {
-    await page.goto('/')
+    // The token call is intercepted with Supabase's own bad-credentials
+    // response, so no failed login is recorded against staging.
+    await allowRateLimitChecks(page)
+    await page.route('**/auth/v1/token**', (route) => route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 400, error_code: 'invalid_credentials', msg: 'Invalid login credentials' }),
+    }))
+    await page.goto('/signin')
 
-    // Scope to the visible desktop sign-in card (last in DOM; first is hidden mobile card)
-    const signInCard = page.locator('[data-signin-card]').last()
+    await page.getByLabel('Email').fill('nonexistent-user-12345@example.com')
+    await page.locator('#auth-password').fill('wrongpassword')
+    await page.getByRole('button', { name: 'Log in', exact: true }).click()
 
-    // Enter invalid credentials
-    await signInCard.locator('input[type="email"]').fill('nonexistent-user-12345@gmail.com')
-    await signInCard.locator('input[type="password"]').fill('wrongpassword')
-    await signInCard.getByRole('button', { name: /sign in/i }).click()
-
-    // Should show error message (scoped to visible desktop card)
-    await expect(signInCard.getByText(/invalid|incorrect|failed|error/i)).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Incorrect email or password.')).toBeVisible()
+    await expect(page).toHaveURL(/\/signin$/)
   })
 
   test('has password visibility toggle', async ({ page }) => {
-    // Password toggle only exists on mobile layout
     await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('/')
+    await page.goto('/signin')
 
-    // Scope to the visible mobile sign-in card
-    const signInCard = page.locator('[data-signin-card]').first()
-
-    // Find the password input
-    const passwordInput = signInCard.locator('input[type="password"]')
+    const passwordInput = page.locator('#auth-password')
     await passwordInput.fill('testpassword')
-
-    // The toggle button has class "absolute" and contains an SVG (Eye icon)
-    const toggleButton = signInCard.locator('button.absolute').filter({ has: page.locator('svg') })
-
-    // Password should be hidden by default
     await expect(passwordInput).toHaveAttribute('type', 'password')
 
-    // Click toggle to show password
-    await toggleButton.click()
+    await page.getByRole('button', { name: 'Show password' }).click()
+    await expect(passwordInput).toHaveAttribute('type', 'text')
+    await expect(passwordInput).toHaveValue('testpassword')
 
-    // After clicking, the type changes from "password" to "text"
-    await expect(signInCard.locator('input[value="testpassword"]')).toHaveAttribute('type', 'text')
+    await page.getByRole('button', { name: 'Hide password' }).click()
+    await expect(passwordInput).toHaveAttribute('type', 'password')
   })
 })
 
@@ -235,11 +243,12 @@ test.describe('Public Pages Access', () => {
   test('landing page loads without errors', async ({ page }) => {
     await page.goto('/')
 
-    // Main content should be visible
-    await expect(page.getByRole('main')).toBeVisible()
+    // The hero is the landing's main content. (getByRole('main') is ambiguous
+    // here: the page nests two <main> landmarks, reported as a product bug.)
+    await expect(page.getByTestId('hero')).toBeVisible()
 
-    // HOCKIA logo in the main content area (scoped to avoid matching hidden PublicNav logo)
-    await expect(page.locator('main img[alt="HOCKIA"]').last()).toBeVisible()
+    // HOCKIA wordmark in the top navigation
+    await expect(page.getByTestId('nav-bar').getByRole('img', { name: 'HOCKIA' })).toBeVisible()
   })
 
   test('privacy policy page loads', async ({ page }) => {
@@ -284,7 +293,7 @@ test.describe('Navigation', () => {
 
     // Hero heading and HOCKIA logo should be visible on desktop
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.locator('main img[alt="HOCKIA"]').last()).toBeVisible()
+    await expect(page.getByTestId('nav-bar').getByRole('img', { name: 'HOCKIA' })).toBeVisible()
   })
 
   test('mobile view hides desktop navigation', async ({ page }) => {

@@ -9,6 +9,7 @@
  * regenerating types with `supabase gen types typescript`, these can be simplified.
  */
 
+import type { TablesUpdate } from '@/lib/database.types'
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { normalizeEmailCampaign } from '../utils/campaigns'
@@ -809,7 +810,7 @@ export async function updateWorldClub(
   clubId: string,
   payload: WorldClubUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_clubs'> = {}
 
   if (payload.club_name !== undefined) {
     updates.club_name = payload.club_name.trim()
@@ -1243,7 +1244,7 @@ export async function updateWorldLeague(
   leagueId: number,
   payload: WorldLeagueUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_leagues'> = {}
 
   if (payload.name !== undefined) {
     updates.name = payload.name.trim()
@@ -1371,7 +1372,7 @@ export async function updateWorldProvince(
   provinceId: number,
   payload: WorldProvinceUpdatePayload
 ): Promise<void> {
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'world_provinces'> = {}
 
   if (payload.name !== undefined) {
     updates.name = payload.name.trim()

@@ -42,7 +42,8 @@ For CI or staging, prefer `E2E_ALLOWED_SUPABASE_URL` (exact match) instead of a 
 
 ## Suite size and projects
 
-The current counts (36 spec files, 24 `@smoke`-tagged tests) and the full
+The current counts (29 spec files, 223 test runs in the full suite as of
+2026-11-11), the status of the full suite and what it leaves on staging, and the full
 Playwright project table (`setup`, `chromium`, `chromium-player`,
 `chromium-club`, `chromium-coach`, `chromium-brand`, `mobile-player`,
 `staging`) are maintained in
