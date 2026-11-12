@@ -334,16 +334,19 @@ jobs:
           # Budget bumped 5400KB → 5500KB on 2026-11-07 (founder-approved) — brand
           # offers reach (Everywhere/regions, reach preview, store visits) and the
           # member country card took raw to 5406KB. First-load gate is unchanged (508KB).
+          # Budget bumped 5500KB → 5800KB on 2026-11-11 (founder-approved) — library
+          # updates that load on demand only (posthog-js, recharts; about +165KB raw).
+          # First-load gate is unchanged (511KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5529600 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5500KB ($(( TOTAL_KB * 100 / 5500 ))%)"
+          if [ "$TOTAL_JS" -gt 5836800 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5800KB ($(( TOTAL_KB * 100 / 5800 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.5MB
-          if [ "$TOTAL_JS" -gt 5632000 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5500KB"
+          # Secondary gate: raw total must stay under 5.8MB
+          if [ "$TOTAL_JS" -gt 5939200 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5800KB"
             exit 1
           fi
 
