@@ -46,13 +46,16 @@ test.describe('Messaging - Full Flow', () => {
       page.getByRole('heading', { name: 'Inbox', exact: true })
     ).toBeVisible({ timeout: 20000 })
 
-    // After previous test has sent messages, the E2E club should appear in conversations
-    // Scope to conversation-item elements to avoid matching notification text elsewhere on page
-    const conversationItem = page.getByTestId('conversation-item').filter({ hasText: /e2e test fc/i }).first()
-    const hasConversation = await conversationItem.isVisible({ timeout: 10000 }).catch(() => false)
+    // Rows are `conversation-item` on the desktop master-detail inbox and
+    // `conversation-row` on the phone list (/inbox).
+    const rows = page.getByTestId('conversation-item').or(page.getByTestId('conversation-row'))
+    const emptyState = page.getByText('No messages yet', { exact: true }).first()
+    await expect(rows.first().or(emptyState)).toBeVisible({ timeout: 20000 })
 
-    if (hasConversation) {
-      // Click the conversation to open it
+    // The E2E club conversation exists once any messaging spec has run
+    // against this account; on a pristine account the empty state is correct.
+    const conversationItem = rows.filter({ hasText: /e2e test fc/i }).first()
+    if (await conversationItem.isVisible()) {
       await conversationItem.click()
 
       // Chat window should open with the composer
@@ -60,10 +63,7 @@ test.describe('Messaging - Full Flow', () => {
         page.getByPlaceholder(/^message$|type a message/i)
       ).toBeVisible({ timeout: 20000 })
     } else {
-      // If no conversation exists yet, the empty state should show
-      const emptyState = page.getByRole('heading', { name: /no messages/i })
-      const hasEmptyState = await emptyState.isVisible({ timeout: 5000 }).catch(() => false)
-      expect(hasConversation || hasEmptyState).toBeTruthy()
+      await expect(emptyState).toBeVisible()
     }
   })
 
@@ -164,6 +164,13 @@ async function openLongThread(page: import('@playwright/test').Page) {
 }
 
 test.describe('Messaging - Thread scrolling', () => {
+  // Known flake (2026-11-11): every messaging spec writes to this same thread
+  // as the same player. When another worker's message lands during the 1s
+  // "stays up" window, the thread follows the reader's own new message to the
+  // bottom, which is correct behaviour but fails the check. It passes 8 of 8
+  // when run alone, so one retry separates that collision from a regression.
+  test.describe.configure({ retries: process.env.CI ? 2 : 1 })
+
   test('a wheel tick up stays up (no snap back to the newest message)', async ({ page }) => {
     const list = await openLongThread(page)
     const box = await list.boundingBox()
@@ -189,7 +196,12 @@ test.describe('Messaging - Thread scrolling', () => {
       return row ? row.getBoundingClientRect().top - el.getBoundingClientRect().top : null
     }, firstId)
     // The message that was first is still near the top edge, not a page further down.
+    // Its offset is 20 to 24px when nothing sits above it and about 64px when
+    // a date divider does, which depends on where the page boundary falls in
+    // the thread. The old window (24 to 104px) assumed a divider and failed by
+    // 0 to 4px once the boundary moved; the upper bound is unchanged.
     expect(y).not.toBeNull()
-    expect(Math.abs((y as number) - 64)).toBeLessThan(40)
+    expect(y as number).toBeGreaterThanOrEqual(0)
+    expect(y as number).toBeLessThan(104)
   })
 })

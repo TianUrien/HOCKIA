@@ -1,51 +1,49 @@
-import { test, expect } from './fixtures'
+import { test, expect, type Page } from './fixtures'
 
 /**
- * Authenticated tests for the Messages page
- * 
- * These tests run with a pre-authenticated player session.
- * The session is set up via auth.setup.ts and saved to storageState.
+ * Authenticated tests for the Inbox (Messages segment).
+ *
+ * These run with a pre-authenticated player session (auth.setup.ts).
+ * Desktop renders the master-detail inbox at /messages; phone widths are
+ * redirected to /inbox. Rows carry `conversation-item` on desktop and
+ * `conversation-row` on the phone list.
  */
+
+const conversationRows = (page: Page) =>
+  page.getByTestId('conversation-item').or(page.getByTestId('conversation-row'))
+
+/** The list has settled when it shows either a row or the empty state. */
+async function expectListOrEmptyState(page: Page) {
+  await expect(
+    conversationRows(page).first().or(page.getByText('No messages yet', { exact: true }).first()),
+  ).toBeVisible({ timeout: 20000 })
+}
 
 test.describe('Messages Page - Authenticated', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/messages')
-    await page.waitForLoadState('networkidle')
   })
 
-  test('displays messages page', async ({ page }) => {
-    // Should see the messages page heading
-    await expect(
-      page.getByRole('heading', { name: 'Inbox', exact: true })
-    ).toBeVisible({ timeout: 10000 })
+  test('displays the inbox with its three segments', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible({ timeout: 20000 })
+
+    const segments = page.getByRole('tablist', { name: 'Inbox sections' })
+    await expect(segments.getByRole('tab', { name: 'Messages' })).toHaveAttribute('aria-selected', 'true')
+    await expect(segments.getByRole('tab', { name: 'Requests' })).toBeVisible()
+    await expect(segments.getByRole('tab', { name: /^Activity/ })).toBeVisible()
   })
 
   test('shows empty state or conversation list', async ({ page }) => {
-    // Either shows conversations or empty state
-    const hasConversations = (await page.locator('[data-testid="conversation-item"]').count()) > 0
-    
-    if (hasConversations) {
-      // Should show conversation list
-      await expect(page.locator('[data-testid="conversation-item"]').first()).toBeVisible({ timeout: 10000 })
-    } else {
-      // Should show empty state heading
-      await expect(
-        page.getByRole('heading', { name: /no messages/i })
-      ).toBeVisible({ timeout: 10000 })
-    }
+    await expectListOrEmptyState(page)
   })
 
-  test('has message composer area', async ({ page }) => {
-    // If there's a selected conversation or the composer is always visible
-    const composer = page.getByPlaceholder(/^message$|type a message|write a message/i)
-      .or(page.locator('[data-testid="message-composer"]'))
-    
-    // Composer might not be visible until a conversation is selected
-    // This is okay - the test verifies the page loaded correctly
-    const isVisible = await composer.isVisible().catch(() => false)
-    
-    // Log for debugging
-    console.log('Composer visible:', isVisible)
+  test('search narrows the conversation list', async ({ page }) => {
+    await expectListOrEmptyState(page)
+    const before = await conversationRows(page).count()
+    test.skip(before === 0, 'the E2E player has no conversations yet')
+
+    await page.getByRole('searchbox', { name: 'Search conversations' }).fill('zz-no-such-conversation-zz')
+    await expect(conversationRows(page)).toHaveCount(0)
   })
 })
 
@@ -53,48 +51,29 @@ test.describe('Messages Page - Mobile', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 })
     await page.goto('/messages')
-    await page.waitForLoadState('networkidle')
   })
 
-  test('mobile messages page loads', async ({ page }) => {
-    // Should see the messages page heading
-    await expect(
-      page.getByRole('heading', { name: 'Inbox', exact: true })
-    ).toBeVisible({ timeout: 10000 })
+  test('phone widths land on /inbox', async ({ page }) => {
+    await expect(page).toHaveURL(/\/inbox$/, { timeout: 20000 })
+    await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible({ timeout: 20000 })
   })
 
   test('mobile view shows conversation list', async ({ page }) => {
-    // On mobile, should see the messages heading and either empty state or conversations
-    await expect(
-      page.getByRole('heading', { name: 'Inbox', exact: true })
-    ).toBeVisible({ timeout: 10000 })
-    
-    // Should also show either conversations or empty state
-    const hasEmptyState = await page.getByRole('heading', { name: /no messages/i }).isVisible().catch(() => false)
-    const hasConversations = (await page.locator('[data-testid="conversation-item"]').count()) > 0
-    
-    expect(hasEmptyState || hasConversations).toBeTruthy()
+    await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible({ timeout: 20000 })
+    await expectListOrEmptyState(page)
   })
 })
 
 test.describe('Messages Navigation', () => {
-  test('can navigate to messages from header', async ({ page }) => {
+  test('can navigate to the inbox from the app navigation', async ({ page }) => {
     await page.goto('/dashboard/profile')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('profile-hero-name')).toBeVisible({ timeout: 20000 })
 
-    // Dismiss the notifications drawer if it's truly open (not just rendered off-screen)
-    // When open, aria-modal="true" blocks all Playwright role queries outside the dialog
-    const notifDialog = page.locator('[role="dialog"][aria-label="Notifications"]')
-    if (await notifDialog.count() > 0 && await notifDialog.getAttribute('aria-modal') === 'true') {
-      await page.getByRole('button', { name: 'Close notifications' }).click()
-      await expect(notifDialog).not.toHaveAttribute('aria-modal', 'true', { timeout: 5000 })
-    }
+    // Desktop: "Inbox" in the top bar. Phone: "Inbox" in the bottom tab bar.
+    // (It was a header button labelled "Messages" before the 2026-10 inbox.)
+    await page.getByRole('navigation').getByRole('button', { name: /^Inbox/ }).first().click()
 
-    // The header messages button is a <button> with aria-label="Messages"
-    const messagesButton = page.getByRole('button', { name: 'Messages', exact: true }).first()
-    await expect(messagesButton).toBeVisible({ timeout: 10000 })
-
-    await messagesButton.click()
-    await expect(page).toHaveURL(/\/messages/, { timeout: 20000 })
+    await expect(page).toHaveURL(/\/(inbox|messages)$/, { timeout: 20000 })
+    await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible({ timeout: 20000 })
   })
 })
