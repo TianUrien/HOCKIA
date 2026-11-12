@@ -67,17 +67,15 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
     expect(finalUrl.searchParams.get('tab')).toBeNull()
   })
 
-  test('Community: clicking "View Profile" on a coach member routes to /coaches/...', async ({ page }) => {
+  test('Community: opening a coach from the preview routes to /coaches/...', async ({ page }) => {
     await page.goto('/community')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
     await page.waitForTimeout(1500) // let infinite-scroll first batch settle
 
-    // Filter by Coaches role
-    const coachChip = page.getByRole('button', { name: /^Coaches$/ }).first()
-    if (await coachChip.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await coachChip.click()
-      await page.waitForTimeout(800)
-    }
+    // Filter by Coaches (a tab in the "Member type" tablist since the 2026-09
+    // Community redesign; it was a chip button before).
+    await page.getByRole('tablist', { name: 'Member type' }).getByRole('tab', { name: 'Coaches', exact: true }).click()
+    await expect(page).toHaveURL(/\/community\/coaches$/)
 
     // Dismiss the cookie banner if it overlays the page (it covers tiles
     // at the bottom of the viewport on mobile).
@@ -86,14 +84,10 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
       await cookieAccept.click().catch(() => {})
     }
 
-    // Each tile is a <button aria-label="View [Name]'s profile"> containing
-    // the role badge text "Coach". Filter to those tiles whose visible text
-    // includes "Coach" (the role badge).
-    const coachTile = page
-      .locator('button[aria-label*="profile"]')
-      .filter({ hasText: /Coach/ })
-      .first()
-    await expect(coachTile).toBeVisible({ timeout: 5000 })
+    // Each tile is a button labelled "[Name], Coach · [specialism], ….
+    // Tap to preview."
+    const coachTile = page.getByTestId('member-tile').filter({ hasText: /Coach/ }).first()
+    await expect(coachTile).toBeVisible({ timeout: 20000 })
     await coachTile.scrollIntoViewIfNeeded().catch(() => {})
     await coachTile.click()
 
@@ -103,19 +97,25 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
     const modalText = (await modal.textContent()) ?? ''
     console.log(`opened preview modal — first 100 chars: ${modalText.slice(0, 100)}`)
 
-    // Click "View Profile" in the modal — it's a button, not a link, so we
-    // observe URL change after click.
-    const viewProfileBtn = modal.getByRole('button', { name: /view profile/i }).first()
-    await expect(viewProfileBtn).toBeVisible({ timeout: 5000 })
-    await Promise.all([
-      page.waitForURL(/\/(coaches|players)\/id\//, { timeout: 5000 }),
-      viewProfileBtn.click(),
-    ])
-    const finalUrl = page.url()
-    console.log(`coach preview "View Profile" landed on: ${finalUrl}`)
+    // Open the full profile from the preview (it was "View Profile" before
+    // the preview redesign). Desktop offers "See full profile" directly; the
+    // phone sheet first expands with "More about [first name]".
+    const seeFullProfile = page.getByRole('button', { name: /^see full profile/i }).first()
+    const moreAbout = modal.getByRole('button', { name: /^more about .+/i })
+    await expect(seeFullProfile.or(moreAbout).first()).toBeVisible({ timeout: 5000 })
+    if (!(await seeFullProfile.isVisible())) {
+      await moreAbout.click()
+      await expect(seeFullProfile).toBeVisible({ timeout: 10000 })
+    }
+    await seeFullProfile.click()
+    await expect(page).toHaveURL(/\/(coaches|players)\/[^/]+/, { timeout: 15000 })
+    const finalPath = new URL(page.url()).pathname
+    console.log(`coach preview landed on: ${finalPath}`)
 
-    expect(finalUrl, 'Coach View Profile should route to /coaches/id/...').toMatch(/\/coaches\/id\//)
-    expect(finalUrl, 'Coach View Profile must NOT route to /players/id/...').not.toMatch(/\/players\/id\//)
+    // Role-aware route: /coaches/<username> when the coach has a username,
+    // /coaches/id/<uuid> otherwise (lib/profileNavigation.ts). Never /players/.
+    expect(finalPath, 'A coach profile should open under /coaches/').toMatch(/^\/coaches\/(id\/[0-9a-f-]{36}|[^/]+)$/)
+    expect(finalPath, 'A coach profile must NOT open under /players/').not.toMatch(/^\/players\//)
   })
 
 })
