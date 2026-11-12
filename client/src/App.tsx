@@ -123,6 +123,7 @@ const AdminFeedback = lazyWithRetry(() => import('@/features/admin/pages/AdminFe
 const AdminAppRatings = lazyWithRetry(() => import('@/features/admin/pages/AdminAppRatings').then(m => ({ default: m.AdminAppRatings })))
 const AdminSpamSignals = lazyWithRetry(() => import('@/features/admin/pages/AdminSpamSignals').then(m => ({ default: m.AdminSpamSignals })))
 const AdminMemberBlocks = lazyWithRetry(() => import('@/features/admin/pages/AdminMemberBlocks').then(m => ({ default: m.AdminMemberBlocks })))
+const AdminSignInTraffic = lazyWithRetry(() => import('@/features/admin/pages/AdminSignInTraffic').then(m => ({ default: m.AdminSignInTraffic })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
 const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
@@ -634,6 +635,7 @@ function App() {
                   <Route path="reports" element={<AdminReports />} />
                   <Route path="spam-signals" element={<AdminSpamSignals />} />
                   <Route path="member-blocks" element={<AdminMemberBlocks />} />
+                  <Route path="sign-in-traffic" element={<AdminSignInTraffic />} />
                   <Route path="audit-log" element={<AdminAuditLog />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>

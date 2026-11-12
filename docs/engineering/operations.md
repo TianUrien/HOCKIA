@@ -96,9 +96,11 @@ read the root file and refuse an unpinned function, and
 CLI also reads the root entry on `functions deploy`; passing the flag as well
 is harmless and keeps the intent visible in shell history.
 
-Off (`--no-verify-jwt`, 10): `health`, `sitemap`, `nl-search`,
+Off (`--no-verify-jwt`, 11): `health`, `sitemap`, `nl-search`,
 `resend-webhook`, `video-create-upload`, `video-webhook`,
-`video-playback-token`, `application-action`, `age-gate`, `video-delete`.
+`video-playback-token`, `application-action`, `age-gate`, `video-delete`,
+`auth-guard` (added 2026-11-11; not live on production until it is deployed
+there).
 On (29): everything else, including `delete-account`, `admin-actions`,
 `admin-send-campaign`, `admin-send-test-email`, `ga4-funnel`,
 `public-opportunities` and `notify-feedback-submitted` (whose removed
@@ -179,6 +181,7 @@ redeployed.
 | Older migration | Write a reverse migration by hand (forward fix) | varies |
 | Data damage | Supabase point-in-time recovery, or the 2026-08-28 pattern: "Restore to new project" into a temporary copy, read the good values, write them back with the trigger disabled, delete the copy | 30-90 minutes |
 | Feature flags | `video_posts_enabled`, `VITE_ENABLE_AI_OPINION`, `LLM_PROVIDER` (unset to return to the default provider) | immediate |
+| Sign-in protection switches | `app_settings` rows `auth_rate_limit_enabled`, `auth_turnstile_enforced`: delete the row (or set any value other than `true`) to turn one off; no deploy. The Auth hook is turned off in the dashboard (Authentication > Hooks) | immediate |
 | Native | No rollback; ship a new build or raise `min_version` to force an update | days |
 
 ## 4. Backups

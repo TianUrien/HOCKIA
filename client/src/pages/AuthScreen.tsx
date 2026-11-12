@@ -26,6 +26,7 @@ import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
+import { guardCheck, guardReportFailedSignIn } from '@/lib/authGuard'
 import { useAuthStore } from '@/lib/auth'
 import { trackLogin, trackLoginFailed } from '@/lib/analytics'
 import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
@@ -136,9 +137,15 @@ export default function AuthScreen() {
     setCaptchaFailed(false)
     setLoading(true)
     try {
-      const rateLimit = await checkLoginRateLimit(email)
+      const [rateLimit, guard] = await Promise.all([checkLoginRateLimit(email), guardCheck('password_signin')])
       if (rateLimit && !rateLimit.allowed) {
         setError(formatRateLimitError(rateLimit))
+        return
+      }
+      if (!guard.allowed) {
+        trackLoginFailed('password', guard.reason === 'captcha_failed' ? 'captcha' : 'rate_limited')
+        if (guard.reason === 'captcha_failed') setCaptchaFailed(true)
+        else setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
         return
       }
       const captchaToken = await getCaptchaToken('login')
@@ -165,6 +172,7 @@ export default function AuthScreen() {
           return
         }
         trackLoginFailed('password', 'bad_credentials')
+        guardReportFailedSignIn()
         setError('Incorrect email or password.')
         return
       }
