@@ -1,16 +1,23 @@
 import { test, expect } from '@playwright/test'
 
 /**
- * Mobile-viewport pass for the Home V2 Pulse tab (the founder's QA agent could not
- * hold a stable ~390px viewport — this covers the render half of that gap;
- * pull-to-refresh needs a real device). Runs meaningfully under the
+ * Phone-width pass for Home and the activity screen. Home no longer has
+ * pulse/feed tabs: the Pulse card moved to /pulse ("Your activity") and the
+ * old /home?tab=pulse deep link redirects there. Runs meaningfully under the
  * mobile-player project (Pixel 5, 393×851, touch); on desktop projects it
  * still guards against horizontal overflow.
  */
-test.describe('Pulse tab @ mobile viewport', () => {
-  test('renders without horizontal overflow; tabs + modules mobile-clean', async ({ page }, testInfo) => {
+async function overflow(page: import('@playwright/test').Page) {
+  return page.evaluate(() => ({
+    scrollW: document.documentElement.scrollWidth,
+    clientW: document.documentElement.clientWidth,
+  }))
+}
+
+test.describe('Home + activity @ mobile viewport', () => {
+  test('legacy pulse link lands on /pulse; both screens render without horizontal overflow', async ({ page }, testInfo) => {
     // Impression telemetry must actually land (prod QA caught every upsert
-    // 403ing silently — the client swallows the error by design, so only a
+    // 403ing silently: the client swallows the error by design, so only a
     // network-level assertion can guard it).
     const failedImpressionWrites: number[] = []
     page.on('response', (res) => {
@@ -19,43 +26,25 @@ test.describe('Pulse tab @ mobile viewport', () => {
       }
     })
 
-    // ?tab=pulse is explicit since Feed became the default tab (2026-07-27):
-    // bare /home now lands on the feed, and this spec is about Pulse.
     await page.goto('/home?tab=pulse')
-    await expect(page.getByRole('button', { name: 'pulse', exact: true })).toBeVisible({ timeout: 15_000 })
+    await expect(page).toHaveURL(/\/pulse$/, { timeout: 20_000 })
+    await expect(page.getByTestId('activity-screen')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { level: 1, name: 'Your activity' })).toBeVisible()
+    await page.waitForLoadState('networkidle').catch(() => {})
 
-    // Let the async modules land before measuring — the horizontal
-    // opportunities rail is the most overflow-prone element on the page, so
-    // asserting before it mounts would prove nothing. (Soft wait: modules
-    // legitimately collapse when their data is empty.)
-    await page
-      .getByText(/Opportunities for you|Your applications/)
-      .first()
-      .waitFor({ timeout: 8_000 })
-      .catch(() => {})
+    const activity = await overflow(page)
+    expect(activity.scrollW, 'no horizontal overflow on Your activity').toBeLessThanOrEqual(activity.clientW + 1)
+    await page.screenshot({ path: testInfo.outputPath('activity-mobile.png'), fullPage: true })
 
-    // The page body must never scroll horizontally on a phone.
-    const overflow = await page.evaluate(() => ({
-      scrollW: document.documentElement.scrollWidth,
-      clientW: document.documentElement.clientWidth,
-    }))
-    expect(overflow.scrollW, 'no horizontal overflow on Pulse').toBeLessThanOrEqual(overflow.clientW + 1)
+    // Home: wait for the feed so the horizontal rails (the most
+    // overflow-prone elements) are mounted before measuring.
+    await page.goto('/home')
+    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('user-post-card').first()).toBeVisible({ timeout: 30_000 })
+    await page.waitForLoadState('networkidle').catch(() => {})
 
-    // Hero renders one of its two variants (never a blank tab).
-    await expect(
-      page.getByText(/Your week on HOCKIA/i).first(),
-    ).toBeVisible()
-
-    await page.screenshot({ path: testInfo.outputPath('pulse-mobile.png'), fullPage: true })
-
-    // Feed tab also overflow-clean.
-    await page.getByRole('button', { name: 'feed', exact: true }).click()
-    await expect(page).toHaveURL(/tab=feed/)
-    const feedOverflow = await page.evaluate(() => ({
-      scrollW: document.documentElement.scrollWidth,
-      clientW: document.documentElement.clientWidth,
-    }))
-    expect(feedOverflow.scrollW, 'no horizontal overflow on Feed').toBeLessThanOrEqual(feedOverflow.clientW + 1)
+    const home = await overflow(page)
+    expect(home.scrollW, 'no horizontal overflow on Home').toBeLessThanOrEqual(home.clientW + 1)
 
     expect(failedImpressionWrites, 'impression upserts must not 4xx (silent telemetry loss)').toEqual([])
   })
