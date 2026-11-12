@@ -91,3 +91,16 @@ Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
   configurable: true,
   value: 320
 })
+
+// @tanstack/virtual-core >= 3.14 measures the scroll element with
+// clientWidth/clientHeight (it used offsetWidth/offsetHeight before); jsdom
+// reports 0 for both, which leaves every virtual list empty.
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  value: 80
+})
+
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  value: 320
+})

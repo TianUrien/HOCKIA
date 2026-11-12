@@ -5,6 +5,7 @@
  * Handles fetching, creating, updating, and deleting questions and answers.
  */
 
+import type { TablesUpdate } from '@/lib/database.types'
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -230,7 +231,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
     input: UpdateQuestionInput
   ): Promise<boolean> => {
     try {
-      const updates: Record<string, unknown> = {}
+      const updates: TablesUpdate<'community_questions'> = {}
       if (input.title !== undefined) updates.title = input.title.trim()
       if (input.body !== undefined) updates.body = input.body?.trim() || null
       if (input.category !== undefined) updates.category = input.category
@@ -500,7 +501,7 @@ export function useQuestionDetail(questionId: string | undefined) {
     if (!questionId) return false
 
     try {
-      const updates: Record<string, unknown> = {}
+      const updates: TablesUpdate<'community_questions'> = {}
       if (input.title !== undefined) updates.title = input.title.trim()
       if (input.body !== undefined) updates.body = input.body?.trim() || null
       if (input.category !== undefined) updates.category = input.category

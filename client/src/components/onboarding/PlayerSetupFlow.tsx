@@ -1,3 +1,4 @@
+import type { TablesUpdate } from '@/lib/database.types'
 import { useEffect, useRef, useState } from 'react'
 import { Lock, Plus } from 'lucide-react'
 import { AuthShell, FormError } from '@/components/auth/authUi'
@@ -283,7 +284,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       const { error: refreshError } = await supabase.auth.refreshSession()
       if (refreshError) logger.warn('[PlayerSetup] session refresh failed', refreshError)
       await ensureRow()
-      let patch: Record<string, unknown> = { onboarding_completed: true }
+      let patch: TablesUpdate<'profiles'> = { onboarding_completed: true }
       if (mode === 'save') {
         const first = draft.passport1 ? getCountryById(draft.passport1) : undefined
         patch = {

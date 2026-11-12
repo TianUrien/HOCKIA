@@ -1,11 +1,19 @@
 import { useState } from 'react'
 import { Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import type { TablesUpdate } from '@/lib/database.types'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import InfoTooltip from './InfoTooltip'
+
+/** The profile columns this strip can flip. */
+type AvailabilityField =
+  | 'available_for_appointments'
+  | 'open_to_opportunities'
+  | 'open_to_play'
+  | 'open_to_coach'
 
 interface AvailabilityToggleStripProps {
   role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
@@ -33,7 +41,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
   if (!profile) return null
 
   type Toggle = {
-    id: string
+    id: AvailabilityField
     label: string
     active: boolean
     activeGradient: string
@@ -94,15 +102,17 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
     ]
   }
 
-  const handleToggle = async (field: string, currentValue: boolean) => {
+  const handleToggle = async (field: AvailabilityField, currentValue: boolean) => {
     if (saving) return
     setSaving(field)
 
     const newValue = !currentValue
+    const patch: TablesUpdate<'profiles'> = {}
+    patch[field] = newValue
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ [field]: newValue })
+        .update(patch)
         .eq('id', profile.id)
 
       if (error) throw error

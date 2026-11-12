@@ -1,3 +1,4 @@
+import type { TablesUpdate } from '@/lib/database.types'
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, MapPin, Calendar, Building2, Camera, X, Check } from 'lucide-react'
@@ -872,7 +873,7 @@ export default function CompleteProfile() {
         ? (selectedCountry?.name || '')
         : (selectedCountry?.nationality_name || '')
 
-      let updateData: Record<string, unknown> = {
+      let updateData: TablesUpdate<'profiles'> = {
         role: userRole, // IMPORTANT: Always include role in update
         full_name: formData.fullName || formData.clubName || '',
         base_location: formData.city || '',
