@@ -78,7 +78,7 @@ are read-only unless the founder approves a write.
   Server-decided behaviour reaches installed apps at once, which is why new
   response shapes are opt-in (see `get_home_feed_v2`'s `p_open_to_play`).
 
-## 6. Backlog, prioritised (state on 2026-11-11)
+## 6. Backlog, prioritised (state on 2026-11-12)
 
 Order follows section 1. "Evidence" is what was observed, with its date.
 
@@ -95,8 +95,8 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 
 | # | Item | Evidence | Size |
 |---|---|---|---|
-| 6 | Dependency upgrades | 6 open Dependabot PRs: 37 minor/patch updates and 4 majors (`@sentry/react` 11, `vite-plugin-pwa` 2, `web-vitals` 6, `@vitest/coverage-v8` 5) | M |
-| 7 | Repair or delete the stale E2E specs | ~117 pre-rebrand failures in the full suite; only smoke is trusted | M |
+| 6 | Dependency upgrades still held: Supabase, React and react-query (after Sentry replay and tracing leave first load); `@sentry/react` 11 and `@vitest/coverage-v8` 5 (incompatible today); Capacitor set (with the next store build). Then review the open Dependabot alerts | Merged on 2026-11-12: #534–#537 and #541 (raw limit 5,800 KB; CI measures 5,663 KB). The held set would take first load from 511 to about 538 KB gzip. 79 Dependabot alerts on `main` on 2026-11-12, not yet triaged | M |
+| 7 | E2E coverage lost when the stale specs were retired: question detail (no edit/delete on others' questions and answers; answering requires sign-in), Hockia AI chat history not leaking across users after sign-out, brand offers (member view and publish), Opportunities filter sheet | PR review of #542–#546, merged 2026-11-12. The removed tests already failed or skipped themselves. Full suite: 223 tests, 0 failed in the author's local runs; not rerun on current staging | M |
 | 8 | Two unit tests depend on the machine's timezone | `clubProfileScreen`, `lib.clubRecruiting` fail outside UTC | S |
 | 9 | Sign-in screen: content scrolls under the status bar when the keyboard opens | iOS simulator, 2026-11-10 | S |
 | 10 | App icon badge and push badge count notifications, not unread messages | messaging code review, 2026-11-10; to verify | S–M |
@@ -119,6 +119,7 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 |---|---|---|
 | 18 | 41 local worktrees, 31 with branches already in `staging`; 341 remote branches | `git worktree list`, 2026-11-11 |
 | 19 | Test messages left in staging conversations by E2E runs | 2026-11-10 |
+| 20 | `/sitemap.xml` on the production domain is an old static file with 4 `www.` URLs; `robots.txt` points to `/api/sitemap.xml` (298 URLs) | Seen on 2026-11-11 after the SEO release |
 
 ## 7. How this document is kept
 
