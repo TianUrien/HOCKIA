@@ -23,7 +23,8 @@ export const BRAND_VIEWERS_PATH = '/dashboard/profile?viewers=1'
  * Next step (Figma H5 64:326; spec 65:329): the viewer's Pulse actions in
  * priority order, one card at a time. Agreed order (Home v1 review):
  *   player / open coach : profile photo (new user, H12a) > availability
- *                         check-in > clubs replied > roles match > who viewed > tip
+ *                         check-in > clubs replied > roles match > who viewed >
+ *                         clubs from a CV (no career yet, 2026-11-15) > tip
  *   club / recruiting coach : applicants > a role with no applicants > available now > tip
  *   brand  : logo (no logo yet) > profile views + Community search appearances
  *   umpire : umpiring level
@@ -33,7 +34,7 @@ export const BRAND_VIEWERS_PATH = '/dashboard/profile?viewers=1'
 export type NextStepVisual =
   | { kind: 'crests'; urls: Array<string | null> }
   | { kind: 'faces'; people: Array<{ url: string | null; name: string | null; role: string | null }> }
-  | { kind: 'icon'; icon: 'camera' | 'check' | 'chart' | 'stick' | 'user' }
+  | { kind: 'icon'; icon: 'camera' | 'check' | 'chart' | 'stick' | 'user' | 'file' }
   /** No photo yet: the owner's Avatar / Placeholder (founder 2026-10-26). */
   | { kind: 'placeholder'; role: string }
 
@@ -45,8 +46,8 @@ export interface NextStep {
   visual: NextStepVisual
   /** Navigate here on the CTA… */
   to?: string
-  /** …or run this (check-in "Yes", brand "Post"). */
-  action?: 'confirm_availability' | 'compose'
+  /** …or run this (check-in "Yes", brand "Post", Hockia AI's "Fill my profile"). */
+  action?: 'confirm_availability' | 'compose' | 'fill_profile'
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
@@ -121,6 +122,11 @@ export function useNextStep() {
       if (views > 0) {
         // A views card opens who viewed you (ruling 2026-10-16): "View", never another action.
         out.push({ key: 'views', title: plural(views, 'profile view', 'profile views'), subtitle: 'This week', cta: 'View', visual: { kind: 'icon', icon: 'chart' }, to: VIEWERS_PATH })
+      }
+      // No clubs on the profile yet: Hockia AI reads a CV or a few lines (founder 2026-11-15:
+      // 22% of players and coaches had a career; the reader had 5 users in three weeks).
+      if ((profile.career_entry_count ?? 0) === 0) {
+        out.push({ key: 'career', title: 'Add your clubs', subtitle: 'From your CV or a few lines', cta: 'Start', visual: { kind: 'icon', icon: 'file' }, action: 'fill_profile' })
       }
       const pct = profile.profile_completeness_pct ?? 100
       if (hasPhoto && pct < 80) {

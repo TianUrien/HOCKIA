@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Check, LineChart, User } from 'lucide-react'
+import { Camera, Check, FileText, LineChart, User } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
 import { hapticLight } from '@/lib/haptics'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,7 @@ import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
 import { HOME_V1_MODULES, recordModuleImpression, recordNextStepImpression, trackModuleClick, trackNextStepAction, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { navState } from '@/lib/navSource'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 /**
  * Next step (Figma 60:140 / H5 64:326): ONE purple card, the highest-priority
@@ -21,6 +22,7 @@ import { navState } from '@/lib/navSource'
 export function NextStepCard({ onCompose }: { onCompose: () => void }) {
   const { steps, loading, run, markDone } = useNextStep()
   const navigate = useNavigate()
+  const showAi = useHockiaAiSheet((st) => st.show)
   const trackRef = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
   const [busy, setBusy] = useState<string | null>(null)
@@ -44,6 +46,12 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
       trackNextStepAction(step.key, 'compose', 'home_v1')
       trackModuleClick(HOME_V1_MODULES.nextStep.id, HOME_V1_MODULES.nextStep.position, 'compose')
       onCompose()
+      return
+    }
+    if (step.action === 'fill_profile') {
+      trackNextStepAction(step.key, 'open', 'home_v1')
+      trackModuleClick(HOME_V1_MODULES.nextStep.id, HOME_V1_MODULES.nextStep.position, 'hockia_ai_builder')
+      showAi('home', 'builder')
       return
     }
     if (step.action === 'confirm_availability') {
@@ -117,7 +125,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
   )
 }
 
-const ICONS = { camera: Camera, check: Check, chart: LineChart, stick: Check, user: User }
+const ICONS = { camera: Camera, check: Check, chart: LineChart, stick: Check, user: User, file: FileText }
 
 function Visual({ visual }: { visual: NextStepVisual }) {
   if (visual.kind === 'placeholder') {

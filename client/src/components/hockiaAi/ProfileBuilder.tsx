@@ -13,6 +13,7 @@ import {
 } from '@/lib/profileBuilder'
 import { profileSavedSummary, recordAiAction } from '@/lib/aiChats'
 import { MascotAvatar } from './mascot'
+import { useHockiaAiSheet } from './hockiaAiSheetStore'
 
 /**
  * "Fill my profile for me" (handoff P0–P3): the member writes their career in
@@ -61,6 +62,17 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
   const photoInput = useRef<HTMLInputElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
 
+  // Funnel (2026-11-15): opened > attached > read > proposed > saved, with where it was opened from.
+  const entry = useHockiaAiSheet((st) => st.entry)
+  const profileId = profile?.id
+  const opened = useRef(false)
+  useEffect(() => {
+    if (!profileId || opened.current) return
+    opened.current = true
+    trackDbEvent('profile_builder_open', 'profile', profileId, { entry })
+  }, [profileId, entry])
+  const trackAttach = (kind: 'cv' | 'photos' | 'link', count = 1) => { if (profileId) trackDbEvent('profile_builder_attach', 'profile', profileId, { kind, count }) }
+
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [phase, draft])
   const urls = useMemo(() => (sent?.att.photos ?? []).map((f) => URL.createObjectURL(f)), [sent])
   const trayUrls = useMemo(() => att.photos.map((f) => URL.createObjectURL(f)), [att.photos])
@@ -77,7 +89,12 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
     setSent(payload); setText(''); setAtt(EMPTY); setDraft(null); setError(null); setOutcome(null); setPhase('reading')
     trackDbEvent('profile_builder_read', 'profile', profile.id, { has_text: Boolean(payload.text), cv: Boolean(payload.att.cv), photos: payload.att.photos.length, links: payload.att.links.length + linksInText(payload.text).length })
     const res = await readForProfile(payload.text, payload.att)
-    if (!res.ok) { setError(builderErrorCopy(res.reason)); setRetryable(res.reason !== 'limit'); setPhase('error'); return }
+    if (!res.ok) {
+      trackDbEvent('profile_builder_read_failed', 'profile', profile.id, { reason: res.reason, cv: Boolean(payload.att.cv) })
+      setError(builderErrorCopy(res.reason)); setRetryable(res.reason !== 'limit'); setPhase('error'); return
+    }
+    const okPhotos = res.draft.photos.filter((x) => x.ok).length
+    trackDbEvent('profile_builder_proposed', 'profile', profile.id, { items: draftItemCount(res.draft, okPhotos), career: res.draft.career.length, career_matched: res.draft.career.filter((c) => c.matched).length, cv: Boolean(payload.att.cv) })
     setDraft(res.draft); setSteps(res.steps)
     setKeptPhotos(res.draft.photos.filter((x) => x.ok).map((x) => x.index))
     setPhase('review')
@@ -85,16 +102,18 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
 
   const retry = () => { if (!sent) return; setText(sent.text); setAtt(sent.att); setPhase('intro'); setError(null) }
 
-  const pickCv = (f?: File) => { if (!f) return; const p = cvProblem(f); if (p) { addToast(p, 'error'); return } setAtt((a) => ({ ...a, cv: f })) }
+  const pickCv = (f?: File) => { if (!f) return; const p = cvProblem(f); if (p) { addToast(p, 'error'); return } setAtt((a) => ({ ...a, cv: f })); trackAttach('cv') }
   const pickPhotos = (files: FileList | null) => {
     const ok = [...(files ?? [])].filter((f) => { const p = photoProblem(f); if (p) addToast(p, 'error'); return !p })
     setAtt((a) => ({ ...a, photos: [...a.photos, ...ok].slice(0, PHOTOS_MAX) }))
+    if (ok.length) trackAttach('photos', ok.length)
   }
   const addLink = () => {
     const l = linkDraft.trim()
     if (!l) return
     setAtt((a) => ({ ...a, links: [...new Set([...a.links, l])].slice(0, LINKS_MAX) }))
     setLinkDraft(''); setMenu(false)
+    trackAttach('link')
   }
 
   // Review-card edits.
@@ -107,7 +126,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
     setPhase('saving')
     const photos = (sent?.att.photos ?? []).filter((_, i) => keptPhotos.includes(i))
     const res = await saveProfileDraft(profile.id, draft, photos)
-    trackDbEvent('profile_builder_saved', 'profile', profile.id, { saved: res.saved, failed: res.failed.length })
+    trackDbEvent('profile_builder_saved', 'profile', profile.id, { saved: res.saved, failed: res.failed.length, career: draft.career.length })
     setOutcome(res)
     // Chats (handoff C2): "Finish my profile · Added career + video".
     if (res.saved > 0) {
