@@ -4,6 +4,7 @@ import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
 import { supabase } from '@/lib/supabase'
@@ -126,6 +127,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   // builder from a thin Career section; after "Save all" the list reloads.
   const showAi = useHockiaAiSheet((st) => st.show)
   const refreshScroll = data.refresh
+  const openBuilder = () => { trackDbEvent('profile_builder_entry_click', 'profile', profile.id ?? undefined, { surface: 'profile_career' }); showAi('profile', 'builder') }
   useEffect(() => {
     const onUpdated = () => refreshScroll()
     window.addEventListener('hockia:profile-updated', onUpdated)
@@ -595,7 +597,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           {careerCount === 0 && !data.loading && dashed('Add your first club', () => props.onOpenSection('journey'))}
           {owner && careerCount < 2 && !data.loading && (
             <div className="px-4 pt-2">
-              <button type="button" onClick={() => showAi('profile', 'builder')} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
+              <button type="button" onClick={openBuilder} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI <BetaPill onSoft testId="profile-fill-with-ai-beta" /></span>

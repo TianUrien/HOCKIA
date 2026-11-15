@@ -78,7 +78,7 @@ are read-only unless the founder approves a write.
   Server-decided behaviour reaches installed apps at once, which is why new
   response shapes are opt-in (see `get_home_feed_v2`'s `p_open_to_play`).
 
-## 6. Backlog, prioritised (state on 2026-11-12)
+## 6. Backlog, prioritised (state on 2026-11-15)
 
 Order follows section 1. "Evidence" is what was observed, with its date.
 
@@ -87,7 +87,7 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 | # | Item | Evidence | Size | Needs founder |
 |---|---|---|---|---|
 | 1 | Store build with the native changes of 2026-11-10 (messaging gestures, keyboard fixes, block from chat, open-to-play card, link click tracking) | Installed builds iOS 1.3.24, Android 1.25 predate them | S + founder signing | Yes: signing |
-| 2 | Bot protection on sign-in and sign-up: rate limit first, then enforce Turnstile | 225 automated "Continue with Apple" starts in two hours on 2026-11-10 from 4 networks with one device signature; 28 Oct surge | M | Yes: when to enforce |
+| 2 | Bot protection on sign-in and sign-up: measuring since v2026.11.12 (web only until the next store build); still to do: select the Auth hook, then turn on the rate limit and Turnstile | 225 automated "Continue with Apple" starts in two hours on 2026-11-10 from 4 networks with one device signature; 28 Oct surge. 2026-11-15: 31 attempts recorded in production, none refused; 5 of 5 real members passed the check | S | Yes: when to enforce |
 | 3 | An admin block should also end the session (ban in auth) | A blocked member can still sign in (security.md §3.4) | S | No |
 | 5 | Database alerts: CPU, connections, email volume | capacity.md §8.5: metrics exist without alerts | S | No |
 
@@ -104,6 +104,8 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 | 12 | Device lab: WebView attach on iPhone 17e and iPad; WebDriverAgent build missing | device-lab.md; build log 2026-11-10 | M |
 | 13 | Session and screen duration are not tracked | Home analysis 2026-11-10 | S |
 | 14 | Load test on staging (k6 plan) and top-20 query review | capacity.md §6, §8: not run | M |
+
+| 21 | Hockia AI CV reader. Stage 1 (find it, measure it): Home card and funnel events. Stage 2: read more from the CV (national team, achievements, base location, languages, coach role, links inside the PDF, an editable bio draft). Stage 3: accept a photo of the CV | 2026-11-15: 77 of 349 onboarded players and coaches have a career; 7 reads by 5 members in three weeks, 6 saved. Founder chose the order and the bio draft | M |
 
 ### P2: product, waiting for data or a decision
 
