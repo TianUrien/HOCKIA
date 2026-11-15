@@ -75,7 +75,7 @@ import {
   type SuggestedAction,
 } from '../_shared/suggested-actions.ts'
 import { detectRecoveryQuery } from '../_shared/recovery.ts'
-import { ROLE_ASK_MODE, ROLE_ASK_SYSTEM, stripClaims } from '../_shared/role-ask.ts'
+import { ROLE_ASK_MODE, ROLE_ASK_SYSTEM, SHORT_ANSWER_MAX_TOKENS, SHORT_ANSWER_OUTPUT, readShortAnswer } from '../_shared/role-ask.ts'
 import { SUMMARY_MODE, SUMMARY_SYSTEM, sanitizeApplicants, summaryFacts } from '../_shared/applicants-summary.ts'
 import { loadMemberRoleFacts } from '../_shared/member-role-facts.ts'
 import { factLines } from '../_shared/apply-note.ts'
@@ -1846,16 +1846,18 @@ async function handleRoleAsk(params: {
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model,
-        max_tokens: 400,
+        max_tokens: SHORT_ANSWER_MAX_TOKENS,
+        output_config: SHORT_ANSWER_OUTPUT,
         system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: ROLE_ASK_SYSTEM }, { type: 'text', text: `Facts:\n${lines.join('\n')}` }],
         messages: [...turns, { role: 'user', content: question.slice(0, 500) }],
       }),
       signal: AbortSignal.timeout(25_000),
     })
     if (!res.ok) throw new Error(`anthropic ${res.status}`)
-    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; stop_reason?: string | null; usage?: typeof meter.usage }
     meter.usage = data.usage ?? null
-    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    const { text: answer, cutOff } = readShortAnswer(data)
+    if (cutOff) throw new Error('anthropic reply cut off before any text (max_tokens)')
     step('write', 'Wrote the answer', 'done')
     return text(answer || 'I’m not sure about that one. The club can tell you best.')
   } catch (err) {
@@ -1894,13 +1896,14 @@ async function handleApplicantsSummary(params: {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens: 250, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: SUMMARY_SYSTEM }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
+      body: JSON.stringify({ model, max_tokens: SHORT_ANSWER_MAX_TOKENS, output_config: SHORT_ANSWER_OUTPUT, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: SUMMARY_SYSTEM }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
       signal: AbortSignal.timeout(20_000),
     })
     if (!res.ok) throw new Error(`anthropic ${res.status}`)
-    const data = await res.json() as { content: Array<{ type: string; text?: string }>; usage?: typeof meter.usage }
+    const data = await res.json() as { content: Array<{ type: string; text?: string }>; stop_reason?: string | null; usage?: typeof meter.usage }
     meter.usage = data.usage ?? null
-    const answer = stripClaims(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(''))
+    const { text: answer, cutOff } = readShortAnswer(data)
+    if (cutOff) throw new Error('anthropic reply cut off before any text (max_tokens)')
     return text(answer || `${list.length} applicants are waiting for your reply.`)
   } catch (err) {
     captureException(err instanceof Error ? err : new Error(String(err)), { functionName: 'nl-search', correlationId, extra: { phase: 'applicants_summary' } })
