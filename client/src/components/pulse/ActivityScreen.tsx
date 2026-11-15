@@ -18,11 +18,13 @@ import { WhoLookedAtYou } from './WhoLookedAtYou'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { AVAILABLE_RING } from '@/lib/homeEngagement'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { trackNextStepAction } from '@/lib/homeInstrumentation'
+import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
-const TIP_KEYS = new Set(['photo', 'complete', 'crest', 'umpire'])
+const TIP_KEYS = new Set(['photo', 'career', 'complete', 'crest', 'umpire'])
 
 /**
  * Your activity (Figma H3 61:247; founder ruling 11 Oct: replaces "Your week"
@@ -37,6 +39,7 @@ export function ActivityScreen() {
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
   const { steps, loading, run, dismiss, markDone } = useNextStep()
+  const showAi = useHockiaAiSheet((st) => st.show)
   const vis = useWeeklyVisibility(Boolean(profile), false)
   const viewers = useWeekViewers(profile?.role === 'player' || profile?.role === 'coach')
   const refs = useTrustedReferences(profile?.id ?? '')
@@ -62,6 +65,7 @@ export function ActivityScreen() {
 
   const go = (s: NextStep) => {
     void hapticLight()
+    if (s.action === 'fill_profile') { trackNextStepAction(s.key, 'open', 'pulse'); showAi('home', 'builder'); return }
     if (s.to) navigate(s.to)
   }
   const confirm = async (s: NextStep) => {

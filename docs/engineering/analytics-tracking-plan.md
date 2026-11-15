@@ -205,6 +205,29 @@ SEO for the same audience (same date): `/world/:code` and `/world/clubs/:id` are
 Hockey Jobs" (the top non-brand query in Search Console); the sitemap lists claimed clubs
 and unclaimed clubs placed in a league.
 
+### 4.9 Hockia AI profile builder ("Fill my profile") funnel (added 2026-11-15)
+
+Source: production on 2026-11-15 (read-only). Since 2026-10-24 the builder had 7 reads by
+5 members (5 with a CV) and 6 saves; 77 of 349 onboarded players and coaches had a career
+on their profile. Reads and saves were tracked; how many members saw or opened the builder
+was not. The founder chose to work on discovery and measurement first.
+
+| Step | Event | Properties |
+|---|---|---|
+| Home / Your activity card on screen | `next_step_impression` | `key` = `career` |
+| Card tapped | `next_step_action` | `key` = `career`, `action` = `open`, `surface` = `home_v1` or `pulse` |
+| Own-profile Career card tapped | `profile_builder_entry_click` | `surface` = `profile_career` |
+| Builder opened | `profile_builder_open` | `entry` (`home`, `profile`, or the surface Hockia AI was opened from) |
+| Something attached | `profile_builder_attach` | `kind` ∈ `cv`, `photos`, `link`; `count` |
+| Sent to be read | `profile_builder_read` (existing) | `has_text`, `cv`, `photos`, `links` |
+| Proposal shown | `profile_builder_proposed` | `items`, `career`, `career_matched`, `cv` |
+| Read failed | `profile_builder_read_failed` | `reason` ∈ `limit`, `unavailable`, `cv_too_large`, `nothing`, `error`; `cv` |
+| Saved | `profile_builder_saved` (existing) | `saved`, `failed`, `career` (new) |
+
+The Home card ("Add your clubs", "From your CV or a few lines") shows to players and
+non-recruiting coaches whose `career_entry_count` is 0, after the views card and before the
+"Complete your profile" tip. No file name, text or extracted content is ever sent as a property.
+
 ## 5. Conventions and QA
 - Names: `object_action`, lowercase, underscores; context in properties, not in the name.
 - Every new event lands in this file with the decision it informs; an event nobody reads is
