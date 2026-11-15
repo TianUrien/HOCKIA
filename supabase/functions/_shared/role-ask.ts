@@ -26,3 +26,21 @@ export function stripClaims(text: string): string {
   const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/)
   return sentences.filter((s) => !SCORE_RE.test(s)).join(' ').trim()
 }
+
+// Newer Claude models reason before they write unless told otherwise, and that
+// reasoning counts toward max_tokens. A cap sized for the answer alone (400)
+// could be used up before any text came back, so the member got the "not
+// sure" fallback to a question the app itself suggested (found 2026-11-15).
+// The cap now leaves room for both, and effort stays low: these are short
+// answers from facts already in the prompt.
+export const SHORT_ANSWER_MAX_TOKENS = 2000
+export const SHORT_ANSWER_OUTPUT = { effort: 'low' } as const
+
+type AnswerPayload = { content?: Array<{ type: string; text?: string }>; stop_reason?: string | null }
+
+/** The model's text with claims stripped. `cutOff` is true when the token cap
+ *  ended the reply before any text: a failure to report, never "I don't know". */
+export function readShortAnswer(data: AnswerPayload): { text: string; cutOff: boolean } {
+  const raw = (data.content ?? []).filter((c) => c.type === 'text').map((c) => c.text ?? '').join('')
+  return { text: stripClaims(raw), cutOff: data.stop_reason === 'max_tokens' && raw.trim() === '' }
+}
