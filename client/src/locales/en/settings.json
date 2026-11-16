@@ -227,5 +227,171 @@
   "blocked": {
     "parent": "Privacy",
     "title": "Blocked members"
+  },
+  "aboutApp": {
+    "version": "Version",
+    "platform": "Platform",
+    "environment": "Environment",
+    "webLatest": "Web — always latest",
+    "envProduction": "Production",
+    "envStaging": "Staging",
+    "envDevelopment": "Development"
+  },
+  "deleteAccount": {
+    "confirmWord": "DELETE",
+    "close": "Close modal",
+    "title": "Delete your account?",
+    "body": "This action is <strong>irreversible</strong>. All your profile data, messages, and uploaded media will be permanently deleted.",
+    "loseAccess": "⚠️ You will lose access to:",
+    "loseProfile": "• Your profile and all personal information",
+    "loseMessages": "• All messages and conversations",
+    "loseMedia": "• All uploaded photos and media",
+    "loseApplications": "• Applications and opportunities",
+    "loseCareer": "• Career history and records",
+    "typeToConfirm": "Type <word>{{word}}</word> to confirm:",
+    "placeholder": "Type {{word}}",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "confirm": "Delete Permanently",
+    "signedInAs": "Signed in as: <email>{{email}}</email>",
+    "deleted": "Account deleted successfully",
+    "errors": {
+      "noSession": "No active session. Please sign in again.",
+      "server": "Server error ({{status}}). Please try again.",
+      "failedStatus": "Failed (status {{status}})",
+      "failed": "Failed to delete account",
+      "failedRetry": "Failed to delete account. Please try again."
+    }
+  },
+  "feedbackModal": {
+    "title": "Send feedback",
+    "subtitle": "Help us make Hockia better. We read every message.",
+    "close": "Close feedback",
+    "successTitle": "Thanks, we got it.",
+    "successBody": "We'll follow up if we have questions.",
+    "done": "Done",
+    "categoryQuestion": "What's this about?",
+    "categories": {
+      "bug": {
+        "label": "Something is broken",
+        "description": "A bug or error"
+      },
+      "confusing": {
+        "label": "Something is confusing",
+        "description": "Unclear UX or copy"
+      },
+      "idea": {
+        "label": "Idea or feature request",
+        "description": "Something missing"
+      },
+      "praise": {
+        "label": "Love it",
+        "description": "Tell us what works"
+      },
+      "other": {
+        "label": "Other",
+        "description": "Anything else"
+      }
+    },
+    "bodyLabel": "Tell us more",
+    "bodyPlaceholder": "What happened, what you expected, anything that would help us understand…",
+    "charsNeeded_one": "{{count}} more characters needed",
+    "charsNeeded_other": "{{count}} more characters needed",
+    "charCount": "{{length}}/{{max}}",
+    "urgentLabel": "This is urgent (affecting my work)",
+    "urgentHint": "Use sparingly so the urgent label keeps its signal.",
+    "disclosure": "We'll include with your message: your role, the page you're on, and the time. We will <strong>not</strong> capture a screenshot or your console.",
+    "cancel": "Cancel",
+    "sending": "Sending…",
+    "send": "Send feedback",
+    "rateLimited": "You’ve submitted a lot recently. Try again in an hour.",
+    "sendFailed": "Couldn’t send feedback. Please try again."
+  },
+  "ratingPrompt": {
+    "dismiss": "Dismiss",
+    "thanksTitle": "Thank you!",
+    "thanksBody": "Your feedback helps us improve Hockia.",
+    "title": "Enjoying Hockia?",
+    "body": "Your feedback helps us improve the field hockey community.",
+    "starsLabel": "Rate Hockia from 1 to 5 stars",
+    "star_one": "{{count}} star",
+    "star_other": "{{count}} stars",
+    "positiveQuestion": "Thanks! 🎉 Anything you love or want more of?",
+    "negativeQuestion": "Thanks for the honesty. What can we improve?",
+    "optional": " (optional)",
+    "positivePlaceholder": "What stood out for you?",
+    "negativePlaceholder": "Tell us what would make it better…",
+    "submitting": "Submitting…",
+    "submit": "Submit feedback",
+    "notNow": "Not now",
+    "notNowEarly": "Not now",
+    "failed": "Couldn’t send your feedback. Please try again."
+  },
+  "emailAction": {
+    "renewing": "Renewing your opportunity…",
+    "recording": "Recording your response…",
+    "checking": "Checking your link…",
+    "confirmReject": {
+      "title": "Mark {{name}} as Not a fit?",
+      "titleNoName": "Mark this applicant as Not a fit?",
+      "body": "For {{title}}. They'll be notified honestly. A clear answer beats silence.",
+      "bodyNoTitle": "For your opportunity. They'll be notified honestly. A clear answer beats silence.",
+      "confirm": "Yes, mark as Not a fit",
+      "review": "Review in Hockia instead"
+    },
+    "applicantFallback": "The applicant",
+    "reviewApplicants": "Review applicants in Hockia",
+    "openIn": "Open in Hockia",
+    "openHockia": "Open Hockia",
+    "renewed": {
+      "title": "Opportunity renewed",
+      "body": "{{title}} is open again.",
+      "bodyUntil": "{{title}} is open again and accepting applications until {{date}}.",
+      "bodyNoTitle": "Your opportunity is open again.",
+      "bodyNoTitleUntil": "Your opportunity is open again and accepting applications until {{date}}."
+    },
+    "closed": {
+      "title": "This opportunity stays closed",
+      "body": "{{title}} was closed from the app, so this link didn't change anything. You can reopen it anytime from your dashboard.",
+      "bodyNoTitle": "This opportunity was closed from the app, so this link didn't change anything. You can reopen it anytime from your dashboard."
+    },
+    "shortlisted": {
+      "title": "{{name}} added to your shortlist",
+      "body": "They'll see they're on your shortlist for {{title}}.",
+      "bodyNoTitle": "They'll see they're on your shortlist for your opportunity."
+    },
+    "maybe": {
+      "title": "{{name}} marked as Maybe",
+      "body": "You can revisit them anytime. They see their application as under review."
+    },
+    "rejected": {
+      "title": "{{name}} marked as Not a fit",
+      "body": "They'll be notified honestly. A clear answer beats silence."
+    },
+    "alreadyHandled": {
+      "title": "This application was already handled",
+      "body": "{{name}}'s application isn't pending anymore. It was already responded to. Nothing was changed."
+    },
+    "used": {
+      "title": "This link was already used",
+      "bodyRenew": "This opportunity was already renewed with this link. Nothing was changed.",
+      "body": "Your response was recorded the first time. Nothing was changed."
+    },
+    "expired": {
+      "title": "This link has expired",
+      "body": "Action links work for 14 days. You can still respond from your dashboard."
+    },
+    "rateLimited": {
+      "title": "Too many requests",
+      "body": "Please wait a minute and open the link again."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "Your response was not recorded. Please try the link again, or respond from your dashboard."
+    },
+    "invalid": {
+      "title": "This link isn't valid",
+      "body": "It may have been truncated by your email client. You can respond from your dashboard instead."
+    }
   }
 }

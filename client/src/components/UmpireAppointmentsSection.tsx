@@ -35,6 +35,7 @@ import {
 } from '@/hooks/useUmpireAppointments'
 import { deleteStorageObject } from '@/lib/storage'
 import { dayFirst } from '@/lib/dayFirst'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import UmpireAppointmentEditor from './UmpireAppointmentEditor'
 
 const JOURNEY_BUCKET = 'journey'
@@ -50,12 +51,15 @@ interface UmpireAppointmentsSectionProps {
   startAdding?: boolean
 }
 
-const MATCH_FORMAT_LABELS: Record<string, string> = {
-  outdoor_11v11: 'Outdoor 11v11',
+type ProfileEditT = ReturnType<typeof useProfileEditT>
+
+/** Built at render time so the copy follows the interface language. */
+const getMatchFormatLabels = (t: ProfileEditT): Record<string, string> => ({
+  outdoor_11v11: t('umpireSection.formatOutdoor'),
   hockey5s: 'Hockey5s',
-  indoor_5v5: 'Indoor',
-  other: 'Other format',
-}
+  indoor_5v5: t('umpireSection.formatIndoor'),
+  other: t('umpireSection.formatOther'),
+})
 
 type EntryTypeKey = 'appointment' | 'milestone' | 'certification' | 'panel'
 
@@ -66,38 +70,41 @@ interface EntryTypeVisual {
   borderClass: string
 }
 
-const ENTRY_TYPE_VISUALS: Record<EntryTypeKey, EntryTypeVisual> = {
+const getEntryTypeVisuals = (t: ProfileEditT): Record<EntryTypeKey, EntryTypeVisual> => ({
   appointment: {
-    label: 'Match',
+    label: t('umpireSection.typeAppointment'),
     Icon: CalendarIcon,
     badgeClass: 'bg-emerald-50 text-emerald-800',
     borderClass: 'border-l-emerald-400',
   },
   milestone: {
-    label: 'Milestone',
+    label: t('umpireSection.typeMilestone'),
     Icon: Trophy,
     badgeClass: 'bg-purple-50 text-hockia-primary',
     borderClass: 'border-l-hockia-primary',
   },
   certification: {
-    label: 'Certification',
+    label: t('umpireSection.typeCertification'),
     Icon: Shield,
     badgeClass: 'bg-surface-grouped text-ink-2',
     borderClass: 'border-l-ink-4',
   },
   panel: {
-    label: 'Panel',
+    label: t('umpireSection.typePanel'),
     Icon: Users,
     badgeClass: 'bg-surface-muted text-ink-2',
     borderClass: 'border-l-line-strong',
   },
-}
+})
 
-const visualFor = (raw: string | null | undefined): EntryTypeVisual => {
-  if (raw && raw in ENTRY_TYPE_VISUALS) {
-    return ENTRY_TYPE_VISUALS[raw as EntryTypeKey]
+const visualFor = (
+  visuals: Record<EntryTypeKey, EntryTypeVisual>,
+  raw: string | null | undefined,
+): EntryTypeVisual => {
+  if (raw && raw in visuals) {
+    return visuals[raw as EntryTypeKey]
   }
-  return ENTRY_TYPE_VISUALS.appointment
+  return visuals.appointment
 }
 
 /** "3 Oct 2026" — day first (lib/dayFirst); a date-only value is read as a local calendar day. */
@@ -125,7 +132,10 @@ export default function UmpireAppointmentsSection({
   isOwnProfile = false,
   startAdding = false,
 }: UmpireAppointmentsSectionProps) {
+  const t = useProfileEditT()
   const navigate = useNavigate()
+  const entryTypeVisuals = getEntryTypeVisuals(t)
+  const matchFormatLabels = getMatchFormatLabels(t)
   const { appointments, loading, error, create, update, remove } = useUmpireAppointments({
     userId,
   })
@@ -171,7 +181,7 @@ export default function UmpireAppointmentsSection({
       <div className="flex items-center justify-between gap-3 mb-5">
         <h2 className="text-2xl font-bold text-gray-900 inline-flex items-center gap-2">
           <Award className="w-6 h-6 text-ink-2" />
-          Officiating Journey
+          {t('umpireSection.title')}
           {appointments.length > 0 && (
             <span className="text-base font-normal text-gray-400">
               · {appointments.length}
@@ -185,13 +195,13 @@ export default function UmpireAppointmentsSection({
             className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add
+            {t('umpireSection.add')}
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="text-sm text-gray-400">Loading…</div>
+        <div className="text-sm text-gray-400">{t('umpireSection.loading')}</div>
       ) : error ? (
         <div className="text-sm text-red-600">{error}</div>
       ) : appointments.length === 0 ? (
@@ -199,12 +209,12 @@ export default function UmpireAppointmentsSection({
           <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center">
             <Award className="w-10 h-10 text-gray-500 mx-auto mb-3" />
             <p className="text-base font-semibold text-gray-900 mb-1">
-              {isOwnProfile ? 'No journey entries yet' : 'No journey entries shared yet'}
+              {isOwnProfile ? t('umpireSection.emptyOwnTitle') : t('umpireSection.emptyOtherTitle')}
             </p>
             <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
               {isOwnProfile
-                ? 'Matches officiated, milestones, certifications and panel inductions live here. Add your first one from your dashboard.'
-                : 'When this umpire adds matches officiated, milestones, certifications or panel inductions, they will appear here.'}
+                ? t('umpireSection.emptyOwnBody')
+                : t('umpireSection.emptyOtherBody')}
             </p>
             {isOwnProfile && (
               <button
@@ -213,16 +223,15 @@ export default function UmpireAppointmentsSection({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-3.5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add your first entry
+                {t('umpireSection.addFirstPublic')}
               </button>
             )}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-gray-200 p-5 text-center">
-            <p className="text-sm font-medium text-gray-900 mb-1">Start your journey</p>
+            <p className="text-sm font-medium text-gray-900 mb-1">{t('umpireSection.startTitle')}</p>
             <p className="text-sm text-gray-500 mb-3">
-              Log appointments, milestones, certifications, and panel inductions
-              to tell the story of your officiating career.
+              {t('umpireSection.startBody')}
             </p>
             <button
               type="button"
@@ -230,20 +239,20 @@ export default function UmpireAppointmentsSection({
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-3.5 py-1.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add your first entry
+              {t('umpireSection.addFirst')}
             </button>
           </div>
         )
       ) : (
         <ul className="space-y-3">
           {appointments.map((a) => {
-            const visual = visualFor(a.entry_type)
+            const visual = visualFor(entryTypeVisuals, a.entry_type)
             const { Icon } = visual
             const isAppointment = a.entry_type === 'appointment' || !a.entry_type
             const dateRange = formatDateRange(a.start_date, a.end_date)
             const location = formatLocation(a.location_city, a.location_country)
             const formatLabel =
-              isAppointment && a.match_format ? MATCH_FORMAT_LABELS[a.match_format] : null
+              isAppointment && a.match_format ? matchFormatLabels[a.match_format] : null
             const isPendingDelete = pendingDeleteId === a.id
 
             return (
@@ -323,8 +332,8 @@ export default function UmpireAppointmentsSection({
                           type="button"
                           onClick={() => openEdit(a)}
                           className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                          aria-label="Edit entry"
-                          title="Edit"
+                          aria-label={t('umpireSection.editLabel')}
+                          title={t('umpireSection.editTitle')}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -336,8 +345,8 @@ export default function UmpireAppointmentsSection({
                               ? 'text-red-600 bg-red-50'
                               : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
                           }`}
-                          aria-label={isPendingDelete ? 'Cancel delete' : 'Delete entry'}
-                          title={isPendingDelete ? 'Cancel' : 'Delete'}
+                          aria-label={isPendingDelete ? t('umpireSection.cancelDeleteLabel') : t('umpireSection.deleteLabel')}
+                          title={isPendingDelete ? t('umpireSection.cancelTitle') : t('umpireSection.deleteTitle')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -348,7 +357,7 @@ export default function UmpireAppointmentsSection({
                   {!readOnly && isPendingDelete && (
                     <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
                       <span className="text-xs font-medium text-red-800">
-                        Delete this entry? This can't be undone.
+                        {t('umpireSection.deleteConfirm')}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
@@ -356,14 +365,14 @@ export default function UmpireAppointmentsSection({
                           onClick={() => setPendingDeleteId(null)}
                           className="px-2.5 py-1 rounded-md text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50"
                         >
-                          Cancel
+                          {t('umpireSection.cancel')}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteConfirm(a.id)}
                           className="px-2.5 py-1 rounded-md text-xs font-medium text-white bg-red-600 hover:bg-red-700"
                         >
-                          Delete
+                          {t('umpireSection.delete')}
                         </button>
                       </div>
                     </div>

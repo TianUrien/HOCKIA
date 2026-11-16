@@ -12,6 +12,8 @@
  * the clubs that answer') was an invented claim and is withdrawn (design
  * audit 2026-10-21, A6): the detail states the fact only.
  */
+import { tCommunity } from '@/i18n/ns/community'
+
 export const YOUR_REPLIES_DAYS = 30
 export const YOUR_REPLIES_MIN = 5
 
@@ -33,7 +35,7 @@ export function yourReplies(statuses: string[]): YourReplies | null {
 
 export function yourRepliesCopy(r: YourReplies): { title: string; detail: string | null } {
   return {
-    title: `You answered ${r.answered} of ${r.total} applicants`,
-    detail: r.unanswered === 0 ? null : `${r.unanswered === 1 ? '1 closed' : `${r.unanswered} closed`} without a reply.`,
+    title: tCommunity('pulse.replies.title', { answered: r.answered, total: r.total }),
+    detail: r.unanswered === 0 ? null : tCommunity('pulse.replies.closed', { count: r.unanswered }),
   }
 }

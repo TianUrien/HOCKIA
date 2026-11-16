@@ -1,6 +1,8 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { Video, Trash2, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Trans } from 'react-i18next'
+import { useMediaT } from '@/i18n/ns/media'
 import { supabase } from '@/lib/supabase'
 import { isRecruiterProfile } from '@/lib/recruiter'
 import { logger } from '@/lib/logger'
@@ -47,6 +49,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
   void isOwnProfile
   const { user, profile: authProfile } = useAuthStore()
   const targetUserId = profileId || user?.id
+  const t = useMediaT()
   const { addToast } = useToastStore()
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [targetProfile, setTargetProfile] = useState<Profile | null>(null)
@@ -102,14 +105,14 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
       await invalidateProfile({ userId: user.id, reason: 'highlight-visibility-changed' })
       addToast(
         newVisibility === 'recruiters'
-          ? 'Highlight video restricted to recruiters.'
-          : 'Highlight video visible to everyone.',
+          ? t('mediaTab.toastRestricted')
+          : t('mediaTab.toastPublic'),
         'success'
       )
     } catch (error) {
       setVisibility(prevVisibility)
       logger.error('Error updating highlight visibility:', error)
-      addToast('Failed to update visibility. Please try again.', 'error')
+      addToast(t('mediaTab.visibilityFailed'), 'error')
     } finally {
       setSavingVisibility(false)
     }
@@ -185,11 +188,11 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 
       setTargetProfile(prev => (prev ? { ...prev, highlight_video_url: null } : prev))
       await invalidateProfile({ userId: user.id, reason: 'highlight-video-removed' })
-      addToast('Highlight video removed.', 'success')
+      addToast(t('mediaTab.removed'), 'success')
       setShowVideoDeleteModal(false)
     } catch (error) {
       logger.error('Error deleting video:', error)
-      addToast('Failed to remove video. Please try again.', 'error')
+      addToast(t('mediaTab.removeFailed'), 'error')
     } finally {
       setDeletingVideo(false)
     }
@@ -197,8 +200,8 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 
   const canManageGallery = Boolean(!readOnly && targetUserId && targetUserId === user?.id)
   const galleryEmptyCopy = canManageGallery
-    ? 'No photos or videos yet. Start building your gallery!'
-    : 'Nothing in the gallery yet.'
+    ? t('mediaTab.galleryEmptyOwn')
+    : t('mediaTab.galleryEmptyPublic')
 
   return (
     <div className="space-y-8">
@@ -211,7 +214,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
               : canManageHighlightVideo && (
                   <div className="flex items-center justify-end">
                     <Button variant="outline" onClick={openManageModal}>
-                      Manage
+                      {t('mediaTab.manage')}
                     </Button>
                   </div>
                 )
@@ -247,7 +250,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
                   <div className="space-y-2">
                     <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
                       <Video className="h-4 w-4 flex-shrink-0 text-hockia-primary" />
-                      Linked highlight
+                      {t('mediaTab.linkedHighlight')}
                     </h3>
                     <div className="relative">
                       <VideoEmbed url={displayProfile.highlight_video_url} />
@@ -256,8 +259,8 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
                           onClick={() => setShowVideoDeleteModal(true)}
                           disabled={deletingVideo}
                           className="absolute right-4 top-4 rounded-lg bg-red-500 p-2 text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Remove video"
-                          aria-label="Remove video"
+                          title={t('mediaTab.removeVideo')}
+                          aria-label={t('mediaTab.removeVideo')}
                           type="button"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -296,10 +299,10 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           mode="profile"
           entityId={targetUserId}
           readOnly={!canManageGallery}
-          title="Gallery"
-          description="Share photos and videos from matches, training, and your career"
+          title={t('mediaTab.galleryTitle')}
+          description={t('mediaTab.galleryDescription')}
           emptyStateDescription={galleryEmptyCopy}
-          addButtonLabel="Add Photo"
+          addButtonLabel={t('mediaTab.galleryAdd')}
           previewLimit={9}
         />
       )}
@@ -315,12 +318,12 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
         isOpen={showVideoDeleteModal}
         onClose={() => setShowVideoDeleteModal(false)}
         onConfirm={confirmVideoDelete}
-        confirmLabel="Remove Video"
+        confirmLabel={t('mediaTab.confirmRemove')}
         confirmTone="danger"
         confirmLoading={deletingVideo}
-        loadingLabel="Removing..."
-        title="Remove highlight video?"
-        description="Your profile will no longer display a highlight reel until you add a new link."
+        loadingLabel={t('mediaTab.removing')}
+        title={t('mediaTab.confirmTitle')}
+        description={t('mediaTab.confirmBody')}
         icon={<Video className="h-6 w-6" />}
       />
 
@@ -333,6 +336,7 @@ function VideoEmbed({ url }: { url: string }) {
   // Only real YouTube / Vimeo / Drive links are embedded or linked: the link is
   // the member's own text, so anything else (e.g. a `javascript:` value written
   // outside the app) renders nothing (CodeQL 2026-10-23).
+  const t = useMediaT()
   const canonical = validateAndNormalizeVideoUrl(url)
   const platform = videoPlatformLabel(url)
   const isYouTube = platform === 'YouTube'
@@ -344,7 +348,7 @@ function VideoEmbed({ url }: { url: string }) {
   // YouTube video id — reused for the poster thumbnail.
   const youTubeId = isYouTube && canonical ? new URL(canonical).searchParams.get('v') : null
 
-  const externalLabel = isYouTube ? 'Watch on YouTube' : isVimeo ? 'Watch on Vimeo' : isGoogleDrive ? 'Open in Drive' : 'Watch externally'
+  const troubleLabel = isYouTube ? t('mediaTab.embed.troubleYouTube') : isVimeo ? t('mediaTab.embed.troubleVimeo') : isGoogleDrive ? t('mediaTab.embed.troubleDrive') : t('mediaTab.embed.troubleExternal')
 
   // Click-to-load façade for YouTube + Google Drive.
   //   Why a façade: a cross-origin iframe renders the provider's own
@@ -377,7 +381,7 @@ function VideoEmbed({ url }: { url: string }) {
           <button
             type="button"
             onClick={() => setActivated(true)}
-            aria-label="Play highlight video"
+            aria-label={t('mediaTab.embed.play')}
             className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40 text-white"
           >
             {/* Real YouTube thumbnail when available; object-cover crops it
@@ -398,9 +402,9 @@ function VideoEmbed({ url }: { url: string }) {
             </span>
             {!showYtThumb && (
               <>
-                <span className="relative text-sm font-semibold">Watch highlight video</span>
+                <span className="relative text-sm font-semibold">{t('mediaTab.embed.watch')}</span>
                 <span className="relative text-[11px] text-white/70">
-                  Tap to play · opens in {isGoogleDrive ? 'Google Drive' : 'YouTube'} player
+                  {isGoogleDrive ? t('mediaTab.embed.tapDrive') : t('mediaTab.embed.tapYouTube')}
                 </span>
               </>
             )}
@@ -413,7 +417,7 @@ function VideoEmbed({ url }: { url: string }) {
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
-            title="Highlight video player"
+            title={t('mediaTab.embed.frameTitle')}
           />
         )}
       </div>
@@ -431,7 +435,7 @@ function VideoEmbed({ url }: { url: string }) {
             rel="noopener noreferrer"
             className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
           >
-            Trouble loading? {externalLabel} →
+            {troubleLabel}
           </a>
         </div>
       )}
@@ -448,6 +452,7 @@ function VisibilityToggle({
   saving: boolean
   onChange: (v: HighlightVisibility) => void
 }) {
+  const t = useMediaT()
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 mt-4">
       <label className="flex items-start gap-3 cursor-pointer">
@@ -459,11 +464,11 @@ function VisibilityToggle({
           className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
         />
         <div>
-          <span className="text-sm font-medium text-gray-900">Recruiters only</span>
+          <span className="text-sm font-medium text-gray-900">{t('mediaTab.visibility.label')}</span>
           <p className="text-xs text-gray-500 mt-0.5">
             {visibility === 'recruiters'
-              ? 'Only clubs and coaches can see your highlight video.'
-              : 'Your highlight video is visible to everyone.'}
+              ? t('mediaTab.visibility.recruiters')
+              : t('mediaTab.visibility.public')}
           </p>
         </div>
       </label>
@@ -472,6 +477,7 @@ function VisibilityToggle({
 }
 
 function RestrictedVideoState({ showSignIn }: { showSignIn: boolean }) {
+  const t = useMediaT()
   return (
     <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center sm:p-12">
       <div className="mb-4 flex justify-center">
@@ -479,16 +485,17 @@ function RestrictedVideoState({ showSignIn }: { showSignIn: boolean }) {
           <Lock className="h-10 w-10 text-gray-400" />
         </div>
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-gray-900">Highlight Video Restricted</h3>
+      <h3 className="mb-2 text-lg font-semibold text-gray-900">{t('mediaTab.restricted.title')}</h3>
       <p className="text-gray-600">
-        This player&apos;s highlight video is only visible to clubs and coaches.
+        {t('mediaTab.restricted.body')}
       </p>
       {showSignIn && (
         <p className="mt-3 text-sm text-gray-500">
-          <Link to={`/signin?next=${encodeURIComponent(window.location.pathname)}`} className="text-indigo-600 hover:text-indigo-700 font-medium">
-            Sign in
-          </Link>{' '}
-          as a club or coach to view.
+          <Trans
+            t={t}
+            i18nKey="mediaTab.restricted.signIn"
+            components={{ a: <Link to={`/signin?next=${encodeURIComponent(window.location.pathname)}`} className="text-indigo-600 hover:text-indigo-700 font-medium" /> }}
+          />
         </p>
       )}
     </div>

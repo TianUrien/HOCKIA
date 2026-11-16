@@ -14,6 +14,8 @@ import { getNotificationConfig, resolveNotificationRoute } from './notifications
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
 import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
+import { useNotificationsT } from '@/i18n/ns/notifications'
+import { getDateFnsLocale } from '@/i18n/format'
 
 const FRIEND_REQUEST_KINDS = new Set<NotificationKind>(['friend_request_received'])
 const AMBASSADOR_REQUEST_KINDS = new Set<NotificationKind>(['ambassador_request_received'])
@@ -24,16 +26,17 @@ const CLUB_INVITE_KINDS = new Set<NotificationKind>(['club_invitation_received']
 const staysNew = (notification: NotificationRecord) =>
   !notification.readAt || CLUB_INVITE_KINDS.has(notification.kind)
 const QUICK_FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'unread', label: 'Unread' },
+  { id: 'all', labelKey: 'drawer.filters.all' },
+  { id: 'unread', labelKey: 'drawer.filters.unread' },
 ] as const
 
 type QuickFilter = (typeof QUICK_FILTERS)[number]['id']
 
 const formatRelativeTime = (timestamp: string) =>
-  formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+  formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: getDateFnsLocale() })
 
 export default function NotificationsDrawer() {
+  const t = useNotificationsT()
   const navigate = useNavigate()
   const location = useLocation()
   const locationKey = `${location.pathname}${location.search}`
@@ -76,17 +79,18 @@ export default function NotificationsDrawer() {
     if (activeFilter === 'unread') {
       return [
         {
-          title: 'New',
+          id: 'new',
+          title: t('drawer.sections.new'),
           data: unreadNotifications,
         },
       ]
     }
 
     return [
-      { title: 'New', data: unreadNotifications },
-      { title: 'Earlier', data: earlierNotifications },
+      { id: 'new', title: t('drawer.sections.new'), data: unreadNotifications },
+      { id: 'earlier', title: t('drawer.sections.earlier'), data: earlierNotifications },
     ]
-  }, [activeFilter, unreadNotifications, earlierNotifications])
+  }, [activeFilter, unreadNotifications, earlierNotifications, t])
 
   useEffect(() => {
     if (lastLocationKey.current !== locationKey) {
@@ -122,12 +126,12 @@ export default function NotificationsDrawer() {
   const handleFriendRequest = async (friendshipId: string, action: 'accept' | 'decline') => {
     const result = await respondToFriendRequest({ friendshipId, action })
     if (result !== true) {
-      { const msg = typeof result === 'string' ? result : 'Could not update the friend request. Please try again.'; addToast(msg, friendRequestToastType(msg)) }
+      { const msg = typeof result === 'string' ? result : t('drawer.toasts.friendRequestFailed'); addToast(msg, friendRequestToastType(msg)) }
       return
     }
 
     addToast(
-      action === 'accept' ? 'Friend request accepted.' : 'Friend request declined.',
+      action === 'accept' ? t('drawer.toasts.friendRequestAccepted') : t('drawer.toasts.friendRequestDeclined'),
       'success'
     )
   }
@@ -135,12 +139,12 @@ export default function NotificationsDrawer() {
   const handleAmbassadorRequest = async (ambassadorId: string, action: 'accept' | 'decline') => {
     const success = await respondToAmbassadorRequest({ ambassadorId, action })
     if (!success) {
-      addToast('Could not update the ambassador request. Please try again.', 'error')
+      addToast(t('drawer.toasts.ambassadorFailed'), 'error')
       return
     }
 
     addToast(
-      action === 'accept' ? 'Ambassador invitation accepted.' : 'Ambassador invitation declined.',
+      action === 'accept' ? t('drawer.toasts.ambassadorAccepted') : t('drawer.toasts.ambassadorDeclined'),
       'success'
     )
   }
@@ -202,7 +206,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full bg-[#0866FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0a58d0] disabled:opacity-60 sm:flex-none"
         >
-          Confirm
+          {t('drawer.friendRequest.confirm')}
         </button>
         <button
           type="button"
@@ -210,7 +214,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 sm:flex-none"
         >
-          Remove
+          {t('drawer.friendRequest.remove')}
         </button>
       </div>
     )
@@ -240,7 +244,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full bg-[#0866FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0a58d0] disabled:opacity-60 sm:flex-none"
         >
-          Accept
+          {t('drawer.ambassador.accept')}
         </button>
         <button
           type="button"
@@ -248,7 +252,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 sm:flex-none"
         >
-          Decline
+          {t('drawer.ambassador.decline')}
         </button>
       </div>
     )
@@ -278,7 +282,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full bg-[#0866FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0a58d0] disabled:opacity-60 sm:flex-none"
         >
-          Accept
+          {t('drawer.clubInvite.accept')}
         </button>
         <button
           type="button"
@@ -286,7 +290,7 @@ export default function NotificationsDrawer() {
           disabled={disabled}
           className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 sm:flex-none"
         >
-          Decline
+          {t('drawer.clubInvite.decline')}
         </button>
       </div>
     )
@@ -296,7 +300,7 @@ export default function NotificationsDrawer() {
     const config = getNotificationConfig(notification)
     const Icon = config.icon
     const actor = notification.actor
-    const fullName = actor.fullName || actor.username || 'Hockia member'
+    const fullName = actor.fullName || actor.username || t('drawer.memberFallback')
     const initials = fullName.slice(0, 2).toUpperCase()
     const displayTime = formatRelativeTime(notification.createdAt)
     const description = config.getDescription?.(notification)
@@ -346,7 +350,7 @@ export default function NotificationsDrawer() {
           onClick={profileRoute ? onAvatarClick : undefined}
           disabled={!profileRoute}
           className="relative h-fit focus-visible:outline-none"
-          aria-label={profileRoute ? `View ${fullName}'s profile` : undefined}
+          aria-label={profileRoute ? t('drawer.viewProfile', { name: fullName }) : undefined}
         >
           <Avatar src={actor.avatarUrl ?? undefined} initials={initials} size="lg" className="shadow-sm" role={actor.role ?? undefined} />
           <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[#0866FF] shadow-md">
@@ -372,7 +376,7 @@ export default function NotificationsDrawer() {
                 type="button"
                 onClick={(event) => event.stopPropagation()}
                 className="rounded-full min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                aria-label="More options"
+                aria-label={t('drawer.moreOptions')}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
@@ -424,14 +428,14 @@ export default function NotificationsDrawer() {
           <header className="border-b border-gray-100 bg-white px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p id="notifications-drawer-title" className="text-2xl font-semibold text-gray-900">Notifications</p>
-                <p className="text-sm text-gray-600">Stay on top of your network.</p>
+                <p id="notifications-drawer-title" className="text-2xl font-semibold text-gray-900">{t('drawer.title')}</p>
+                <p className="text-sm text-gray-600">{t('drawer.subtitle')}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
-                  aria-label="Search notifications"
+                  aria-label={t('drawer.search')}
                   onClick={(event) => event.stopPropagation()}
                 >
                   <Search className="h-5 w-5" />
@@ -439,7 +443,7 @@ export default function NotificationsDrawer() {
                 <button
                   type="button"
                   className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
-                  aria-label="Notification settings"
+                  aria-label={t('drawer.settings')}
                   onClick={(event) => event.stopPropagation()}
                 >
                   <Bell className="h-5 w-5" />
@@ -448,7 +452,7 @@ export default function NotificationsDrawer() {
                   type="button"
                   onClick={() => toggleDrawer(false)}
                   className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
-                  aria-label="Close notifications"
+                  aria-label={t('drawer.close')}
                 >
                   ✕
                 </button>
@@ -467,7 +471,7 @@ export default function NotificationsDrawer() {
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   )}
                 >
-                  {filter.label}
+                  {t(filter.labelKey)}
                 </button>
               ))}
               {unreadCount > 0 && (
@@ -477,14 +481,14 @@ export default function NotificationsDrawer() {
                   className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 min-h-[44px] text-sm font-medium text-brand-text transition hover:bg-hockia-soft"
                 >
                   <CheckCheck className="h-4 w-4" />
-                  Mark all as read
+                  {t('drawer.markAllRead')}
                 </button>
               )}
             </div>
           </header>
           <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
             {sectionedNotifications.map((section) => (
-              <div key={section.title} className="mb-6 last:mb-0">
+              <div key={section.id} className="mb-6 last:mb-0">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   {section.title}
                 </p>
@@ -495,15 +499,15 @@ export default function NotificationsDrawer() {
                 ) : (
                   <div className="rounded-3xl bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
                     {activeFilter === 'unread'
-                      ? 'You have no new notifications right now.'
-                      : "You're all caught up. We'll let you know when something new arrives."}
+                      ? t('drawer.emptyUnread')
+                      : t('drawer.emptySection')}
                   </div>
                 )}
               </div>
             ))}
             {sortedNotifications.length === 0 && (
               <div className="rounded-3xl bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
-                You're all caught up. We'll let you know when something happens.
+                {t('drawer.emptyAll')}
               </div>
             )}
           </div>

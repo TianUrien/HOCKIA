@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { useMediaT } from '@/i18n/ns/media'
 
 interface PublicReferencesSectionProps {
   profileId: string
@@ -15,6 +16,7 @@ interface PublicReferencesSectionProps {
 }
 
 export default function PublicReferencesSection({ profileId, profileName }: PublicReferencesSectionProps) {
+  const t = useMediaT()
   const { acceptedReferences, loading } = useTrustedReferences(profileId)
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
@@ -87,7 +89,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
     if (!targetId) return
 
     if (!user) {
-      addToast('Sign in to message Hockia members.', 'info')
+      addToast(t('references.public.signInToMessage'), 'info')
       navigate('/')
       return
     }
@@ -114,7 +116,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       }
     } catch (error) {
       logger.error('Failed to open messages', error)
-      addToast('Unable to start conversation. Please try again.', 'error')
+      addToast(t('references.public.messageFailed'), 'error')
     } finally {
       setMessageTarget(null)
     }
@@ -149,11 +151,11 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
     // even on profiles that don't have references yet — and is more likely
     // to weight a profile that DOES have them next time.
     <div className="rounded-2xl border border-dashed border-gray-200 bg-white/80 p-6 text-center">
-      <p className="text-sm font-medium text-gray-700">No vouches yet</p>
+      <p className="text-sm font-medium text-gray-700">{t('references.public.emptyTitle')}</p>
       <p className="mt-1 text-xs text-gray-500">
         {primaryName
-          ? `${primaryName} hasn't received any trusted references yet. These are vouches from coaches, teammates, or clubs that verify a member's hockey on Hockia.`
-          : 'Trusted references are vouches from coaches, teammates, or clubs that verify a member\'s hockey on Hockia.'}
+          ? t('references.public.emptyBodyNamed', { name: primaryName })
+          : t('references.public.emptyBody')}
       </p>
     </div>
   )
@@ -166,7 +168,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
           type="button"
           onClick={() => scroll('left')}
           className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 shadow-lg transition hover:bg-gray-50 md:flex"
-          aria-label="Scroll left"
+          aria-label={t('references.public.scrollLeft')}
         >
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </button>
@@ -176,7 +178,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
           type="button"
           onClick={() => scroll('right')}
           className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 shadow-lg transition hover:bg-gray-50 md:flex"
-          aria-label="Scroll right"
+          aria-label={t('references.public.scrollRight')}
         >
           <ChevronRight className="h-5 w-5 text-gray-600" />
         </button>
@@ -219,7 +221,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
             <button
               key={idx}
               type="button"
-              aria-label={`Go to card ${idx + 1}`}
+              aria-label={t('references.public.goToCard', { index: idx + 1 })}
               onClick={() => {
                 const container = scrollContainerRef.current
                 const card = container?.children[idx] as HTMLElement | undefined
@@ -249,9 +251,9 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       className="scroll-mt-[88px] space-y-4 rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-sm sm:p-5"
     >
       <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
-        <h3 className="text-xl font-bold text-gray-900">Trusted by</h3>
-        <p className="text-sm text-gray-600">{primaryName ? `Key people who vouch for ${primaryName}.` : 'Key people who vouch for this profile.'}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-gold">{t('references.public.kicker')}</p>
+        <h3 className="text-xl font-bold text-gray-900">{t('references.public.title')}</h3>
+        <p className="text-sm text-gray-600">{primaryName ? t('references.public.subtitleNamed', { name: primaryName }) : t('references.public.subtitle')}</p>
       </header>
 
       {loading ? renderSkeleton() : acceptedReferences.length === 0 ? renderEmpty() : renderReferences()}

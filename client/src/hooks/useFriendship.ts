@@ -15,6 +15,7 @@ import { useNotificationStore } from '@/lib/notifications'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { tProfile } from '@/i18n/ns/profile'
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
 
@@ -81,27 +82,27 @@ export function useFriendship(profileId: string): FriendshipState {
 
   const sendRequest = useCallback(async () => {
     if (!viewerId) {
-      addToast('Sign in to connect with other members.', 'error')
+      addToast(tProfile('useFriendship.toasts.signInToConnect'), 'error')
       return
     }
 
     if (viewerId === profileId) {
-      addToast('You cannot send a friend request to yourself.', 'error')
+      addToast(tProfile('useFriendship.toasts.cannotRequestSelf'), 'error')
       return
     }
 
     if (isFriend) {
-      addToast('You are already friends.', 'info')
+      addToast(tProfile('useFriendship.toasts.alreadyFriends'), 'info')
       return
     }
 
     if (isOutgoingRequest) {
-      addToast('Friend request already sent.', 'info')
+      addToast(tProfile('useFriendship.toasts.alreadySent'), 'info')
       return
     }
 
     if (isIncomingRequest) {
-      addToast('This member already sent you a request. Check your notifications.', 'info')
+      addToast(tProfile('useFriendship.toasts.alreadyReceived'), 'info')
       return
     }
 
@@ -128,7 +129,7 @@ export function useFriendship(profileId: string): FriendshipState {
 
       if (error) throw error
       trackDbEvent('friend_request_send', 'friendship', profileId)
-      addToast('Friend request sent.', 'success')
+      addToast(tProfile('useFriendship.toasts.requestSent'), 'success')
       await fetchRelationship()
     } catch (error) {
       logger.error('Failed to send friend request', error)
@@ -136,7 +137,7 @@ export function useFriendship(profileId: string): FriendshipState {
         feature: 'friends',
         operation: 'send_request'
       })
-      const msg = friendRequestErrorMessage(error, 'Unable to send friend request. Please try again.')
+      const msg = friendRequestErrorMessage(error, tProfile('useFriendship.toasts.sendFailed'))
       addToast(msg, friendRequestToastType(msg))
     } finally {
       setMutating(false)
@@ -146,12 +147,12 @@ export function useFriendship(profileId: string): FriendshipState {
   const updateStatus = useCallback(
     async (nextStatus: FriendStatus, successMessage: string) => {
       if (!viewerId) {
-        addToast('Sign in to manage connections.', 'error')
+        addToast(tProfile('useFriendship.toasts.signInToManage'), 'error')
         return
       }
 
       if (!relationship || !relationship.id) {
-        addToast('Friendship state not found.', 'error')
+        addToast(tProfile('useFriendship.toasts.stateNotFound'), 'error')
         return
       }
 
@@ -180,7 +181,7 @@ export function useFriendship(profileId: string): FriendshipState {
           feature: 'friends',
           operation: 'update_friendship'
         })
-        const msg = friendRequestErrorMessage(error, 'Unable to update friendship. Please try again.')
+        const msg = friendRequestErrorMessage(error, tProfile('useFriendship.toasts.updateFailed'))
         addToast(msg, friendRequestToastType(msg))
         // A rejected transition usually means the cached edge is stale
         // (accepted from the notifications panel, another device...) —
@@ -195,38 +196,38 @@ export function useFriendship(profileId: string): FriendshipState {
 
   const acceptRequest = useCallback(async () => {
     if (!isIncomingRequest) {
-      addToast('No incoming request to accept.', 'info')
+      addToast(tProfile('useFriendship.toasts.noIncomingToAccept'), 'info')
       return
     }
 
-    await updateStatus('accepted', 'Friend request accepted.')
+    await updateStatus('accepted', tProfile('useFriendship.toasts.accepted'))
   }, [isIncomingRequest, updateStatus, addToast])
 
   const rejectRequest = useCallback(async () => {
     if (!isIncomingRequest) {
-      addToast('No incoming request to reject.', 'info')
+      addToast(tProfile('useFriendship.toasts.noIncomingToReject'), 'info')
       return
     }
 
-    await updateStatus('rejected', 'Friend request declined.')
+    await updateStatus('rejected', tProfile('useFriendship.toasts.declined'))
   }, [isIncomingRequest, updateStatus, addToast])
 
   const cancelRequest = useCallback(async () => {
     if (!isOutgoingRequest) {
-      addToast('No pending request to cancel.', 'info')
+      addToast(tProfile('useFriendship.toasts.noPendingToCancel'), 'info')
       return
     }
 
-    await updateStatus('cancelled', 'Friend request cancelled.')
+    await updateStatus('cancelled', tProfile('useFriendship.toasts.cancelled'))
   }, [isOutgoingRequest, updateStatus, addToast])
 
   const removeFriend = useCallback(async () => {
     if (!isFriend) {
-      addToast('You are not connected yet.', 'info')
+      addToast(tProfile('useFriendship.toasts.notConnected'), 'info')
       return
     }
 
-    await updateStatus('cancelled', 'Friend removed.')
+    await updateStatus('cancelled', tProfile('useFriendship.toasts.removed'))
   }, [isFriend, updateStatus, addToast])
 
   return useMemo(

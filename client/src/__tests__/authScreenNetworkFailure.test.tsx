@@ -43,6 +43,7 @@ vi.mock('@/lib/captcha', () => ({
   warmCaptcha: vi.fn(),
   resetCaptcha: mocks.resetCaptcha,
   CAPTCHA_FAILED_COPY: 'We couldn’t finish the security check. Check your connection and try again.',
+  captchaFailedCopy: () => 'We couldn’t finish the security check. Check your connection and try again.',
   captchaErrorMessage: (m?: string) => (m && /captcha/i.test(m) ? 'captcha' : null),
 }))
 vi.mock('@/lib/supabase', () => ({

@@ -4,6 +4,8 @@
  */
 
 import { closesLabel } from '@/lib/opportunityCopy'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { tProfile } from '@/i18n/ns/profile'
 
 export interface CompletenessPart {
   key: string
@@ -33,39 +35,47 @@ export type NextStepAction =
   | { kind: 'leaf'; section: string }
   | { kind: 'route'; to: string }
 
-/** Copy + where the CTA goes, per part key. */
+/** Copy + where the CTA goes, per part key. The text is read in the interface language on every access. */
+function step(key: string, action: NextStepAction): { title: string; subtitle: string; cta: string; action: NextStepAction } {
+  return withLazyText({ action }, {
+    title: () => tProfile(`profileV2.nextStep.${key}Title` as never) as string,
+    subtitle: () => tProfile(`profileV2.nextStep.${key}Subtitle` as never) as string,
+    cta: () => tProfile(`profileV2.nextStep.${key}Cta` as never) as string,
+  })
+}
+
 export const NEXT_STEP_COPY: Record<string, { title: string; subtitle: string; cta: string; action: NextStepAction }> = {
-  photo: { title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
-  crest: { title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', action: { kind: 'edit' } },
-  logo: { title: 'Add your logo', subtitle: 'Athletes recognise brands by it', cta: 'Add', action: { kind: 'edit' } },
-  position: { title: 'Add your position', subtitle: 'Clubs search by position', cta: 'Add', action: { kind: 'edit', field: 'position' } },
-  current_club: { title: 'Add your current club', subtitle: 'Shown as “Plays at”', cta: 'Add', action: { kind: 'edit', field: 'club' } },
-  league: { title: 'Add your league', subtitle: 'Clubs read the level first', cta: 'Add', action: { kind: 'edit', field: 'club' } },
-  passport: { title: 'Add your passport', subtitle: 'Clubs check eligibility', cta: 'Add', action: { kind: 'leaf', section: 'passports' } },
-  base_location: { title: 'Add where you’re based', subtitle: 'Clubs near you find you', cta: 'Add', action: { kind: 'edit', field: 'base' } },
-  video: { title: 'Add a highlight video', subtitle: 'Show clubs how you play', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
-  open_to_play: { title: 'Set Open to play', subtitle: 'Clubs filter by it', cta: 'Set', action: { kind: 'leaf', section: 'open-to-play' } },
-  availability: { title: 'Add when you’re available', subtitle: 'Clubs plan seasons ahead', cta: 'Add', action: { kind: 'leaf', section: 'open-to-play' } },
-  bio: { title: 'Write a short bio', subtitle: 'Three lines about you', cta: 'Write', action: { kind: 'edit', field: 'about' } },
-  career: { title: 'Add your first club', subtitle: 'Your career at a glance', cta: 'Add', action: { kind: 'leaf', section: 'journey' } },
-  references: { title: 'Ask for a reference', subtitle: 'Friends on Hockia can write one', cta: 'Ask', action: { kind: 'leaf', section: 'references' } },
-  work_permit: { title: 'Add a work permit', subtitle: 'Opens more countries', cta: 'Add', action: { kind: 'leaf', section: 'passports' } },
-  nationality_base: { title: 'Add nationality and base', subtitle: 'Clubs check eligibility', cta: 'Add', action: { kind: 'edit' } },
-  specialization: { title: 'Add your specialization', subtitle: 'Clubs search by it', cta: 'Add', action: { kind: 'edit' } },
-  gallery: { title: 'Add photos', subtitle: 'A few action shots', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
-  friends: { title: 'Add your first friend', subtitle: 'Friends can write references', cta: 'Find', action: { kind: 'route', to: '/community' } },
-  open_to_coach: { title: 'Set Open to coach', subtitle: 'Clubs filter by it', cta: 'Set', action: { kind: 'edit' } },
-  level: { title: 'Add your umpire level', subtitle: 'Clubs and leagues look for it', cta: 'Add', action: { kind: 'edit' } },
-  federation: { title: 'Add your federation', subtitle: 'Shown on your profile', cta: 'Add', action: { kind: 'edit' } },
-  available: { title: 'Say you’re open to umpire', subtitle: 'Leagues filter by it', cta: 'Set', action: { kind: 'edit' } },
-  appointments: { title: 'Add your latest match', subtitle: 'Your officiating record', cta: 'Add', action: { kind: 'edit' } },
-  country: { title: 'Add your country', subtitle: 'Shown on your profile', cta: 'Add', action: { kind: 'edit' } },
-  year_founded: { title: 'Add the year founded', subtitle: 'Shown in About', cta: 'Add', action: { kind: 'edit' } },
-  contact: { title: 'Add a website or email', subtitle: 'So players can reach you', cta: 'Add', action: { kind: 'edit' } },
-  media: { title: 'Add club photos', subtitle: 'Players look at the club first', cta: 'Add', action: { kind: 'leaf', section: 'media' } },
-  posts: { title: 'Write your first post', subtitle: 'Share club news', cta: 'Post', action: { kind: 'route', to: '/home' } },
-  links: { title: 'Add your website or Instagram', subtitle: 'Where athletes find you', cta: 'Add', action: { kind: 'edit' } },
-  ambassadors: { title: 'Invite your first athlete', subtitle: 'Ambassadors show on your profile', cta: 'Invite', action: { kind: 'route', to: '/dashboard/profile?tab=ambassadors' } },
+  photo: step('photo', { kind: 'leaf', section: 'media' }),
+  crest: step('crest', { kind: 'edit' }),
+  logo: step('logo', { kind: 'edit' }),
+  position: step('position', { kind: 'edit', field: 'position' }),
+  current_club: step('currentClub', { kind: 'edit', field: 'club' }),
+  league: step('league', { kind: 'edit', field: 'club' }),
+  passport: step('passport', { kind: 'leaf', section: 'passports' }),
+  base_location: step('baseLocation', { kind: 'edit', field: 'base' }),
+  video: step('video', { kind: 'leaf', section: 'media' }),
+  open_to_play: step('openToPlay', { kind: 'leaf', section: 'open-to-play' }),
+  availability: step('availability', { kind: 'leaf', section: 'open-to-play' }),
+  bio: step('bio', { kind: 'edit', field: 'about' }),
+  career: step('career', { kind: 'leaf', section: 'journey' }),
+  references: step('references', { kind: 'leaf', section: 'references' }),
+  work_permit: step('workPermit', { kind: 'leaf', section: 'passports' }),
+  nationality_base: step('nationalityBase', { kind: 'edit' }),
+  specialization: step('specialization', { kind: 'edit' }),
+  gallery: step('gallery', { kind: 'leaf', section: 'media' }),
+  friends: step('friends', { kind: 'route', to: '/community' }),
+  open_to_coach: step('openToCoach', { kind: 'edit' }),
+  level: step('level', { kind: 'edit' }),
+  federation: step('federation', { kind: 'edit' }),
+  available: step('available', { kind: 'edit' }),
+  appointments: step('appointments', { kind: 'edit' }),
+  country: step('country', { kind: 'edit' }),
+  year_founded: step('yearFounded', { kind: 'edit' }),
+  contact: step('contact', { kind: 'edit' }),
+  media: step('media', { kind: 'leaf', section: 'media' }),
+  posts: step('posts', { kind: 'route', to: '/home' }),
+  links: step('links', { kind: 'edit' }),
+  ambassadors: step('ambassadors', { kind: 'route', to: '/dashboard/profile?tab=ambassadors' }),
 }
 
 /** Instagram handle from social_links (URL or bare handle), without the @. */
@@ -88,7 +98,7 @@ export function sameBrandName(a: string | null | undefined, b: string | null | u
 /** Self-declared sponsor as typed; " player" only when the text doesn't already say player / athlete. */
 export function sponsorLabel(text: string): string {
   const t = text.trim()
-  return /\b(player|athlete)$/i.test(t) ? t : `${t} player`
+  return /\b(player|athlete)$/i.test(t) ? t : tProfile('profileV2.sponsorPlayer', { brand: t })
 }
 
 /** Open-role status line: the shared deadline label (closesLabel, audit A5), else "New" (≤ 7 days old). */
@@ -96,7 +106,7 @@ export function roleStatusLine(deadline: string | null | undefined, createdAt: s
   const day = 86_400_000
   const closes = deadline ? closesLabel(deadline.slice(0, 10), now) : null
   if (closes) return closes
-  if (createdAt && now.getTime() - new Date(createdAt).getTime() <= 7 * day) return 'New'
+  if (createdAt && now.getTime() - new Date(createdAt).getTime() <= 7 * day) return tProfile('profileV2.roleNew')
   return null
 }
 

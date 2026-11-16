@@ -26,10 +26,13 @@ import {
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { formatRelationshipType } from '@/lib/utils'
 import { positionLabel } from '@/lib/identity'
+import { tNotifications } from '@/i18n/ns/notifications'
 
-/** "comment" / "post" / "video" for the content_removed notice. */
-const removedLabel = (type: string | null): string =>
-  type === 'post' || type === 'feed_item' ? 'post' : type === 'video' ? 'video' : 'comment'
+/** The content_removed notice names a comment, a post or a video. */
+const removedTitle = (type: string | null): string =>
+  type === 'post' || type === 'feed_item'
+    ? tNotifications('kinds.contentRemoved.titlePost')
+    : type === 'video' ? tNotifications('kinds.contentRemoved.titleVideo') : tNotifications('kinds.contentRemoved.titleComment')
 
 export type NotificationRenderConfig = {
   icon: LucideIcon
@@ -42,7 +45,7 @@ export type NotificationRenderConfig = {
 }
 
 const getActorName = (notification: NotificationRecord) =>
-  notification.actor?.fullName || notification.actor?.username || 'A Hockia member'
+  notification.actor?.fullName || notification.actor?.username || tNotifications('actorFallback')
 
 const getMetadataString = (notification: NotificationRecord, key: string): string | null => {
   const value = notification.metadata?.[key]
@@ -76,31 +79,31 @@ export const isGeneratedHeadline = (title: string, humanPosition: string | null)
  *  (the push body) — keep both in sync. */
 const applicationStatusCopy = (notification: NotificationRecord): { title: string; body: string } => {
   const status = getMetadataString(notification, 'status')
-  const club = getMetadataString(notification, 'club_name') ?? 'The club'
+  const club = getMetadataString(notification, 'club_name') ?? tNotifications('applicationStatus.clubFallback')
   const vacancyTitle = getMetadataString(notification, 'vacancy_title')
   // Prefer the structured position enum; the title split is a last resort and only
   // when the title actually has a "Position — Club" separator (else: neutral phrase).
   const humanPos = humanizePosition(getMetadataString(notification, 'position'))
-  const position = humanPos ?? titleHeadPosition(vacancyTitle) ?? 'the opportunity'
+  const position = humanPos ?? titleHeadPosition(vacancyTitle) ?? tNotifications('applicationStatus.positionFallback')
   // The role is named by its typed title (QA 2 Oct: "considered for Midfielder"
   // named no role); a generated headline yields the bare position (round 9).
   const typedTitle = vacancyTitle && !isGeneratedHeadline(vacancyTitle, humanPos) ? vacancyTitle.trim() : null
   const role = typedTitle || position
   switch (status) {
     case 'shortlisted':
-      return { title: `${club} shortlisted you`, body: `You're being considered for ${role}.` }
+      return { title: tNotifications('applicationStatus.shortlistedTitle', { club }), body: tNotifications('applicationStatus.shortlistedBody', { role }) }
     case 'maybe':
-      return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
+      return { title: tNotifications('applicationStatus.maybeTitle', { club }), body: tNotifications('applicationStatus.maybeBody', { position }) }
     case 'rejected':
-      return { title: `${club} updated your application`, body: `Not this time for ${position}.` }
+      return { title: tNotifications('applicationStatus.rejectedTitle', { club }), body: tNotifications('applicationStatus.rejectedBody', { position }) }
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
-      const role = typedTitle ?? humanPos ?? 'The opportunity'
-      return { title: `${club} filled the opportunity`, body: `${role} has been filled. Thanks for applying. New opportunities are open.` }
+      const role = typedTitle ?? humanPos ?? tNotifications('applicationStatus.filledRoleFallback')
+      return { title: tNotifications('applicationStatus.filledTitle', { club }), body: tNotifications('applicationStatus.filledBody', { role }) }
     }
     default:
-      return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
+      return { title: tNotifications('applicationStatus.updatedTitle', { club }), body: tNotifications('applicationStatus.updatedBody', { position }) }
   }
 }
 
@@ -148,9 +151,9 @@ export const clubReminderRoute = (notification: NotificationRecord): string => {
 
 const defaultConfig: NotificationRenderConfig = {
   icon: Bell,
-  badgeText: 'Notification',
+  get badgeText() { return tNotifications('kinds.default.badge') },
   accentClassName: 'bg-gray-100 text-gray-600',
-  getTitle: () => 'You have a new update',
+  getTitle: () => tNotifications('kinds.default.title'),
   getDescription: (notification) => getMetadataString(notification, 'summary'),
   getRoute: (notification) => {
     const targetUrl = typeof notification.targetUrl === 'string' ? notification.targetUrl : null
@@ -161,96 +164,96 @@ const defaultConfig: NotificationRenderConfig = {
 const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderConfig>> = {
   friend_request_received: {
     icon: UserPlus,
-    badgeText: 'Friend request',
+    get badgeText() { return tNotifications('kinds.friendRequestReceived.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} sent you a friend request`,
+    getTitle: (notification) => tNotifications('kinds.friendRequestReceived.title', { name: getActorName(notification) }),
     getDescription: (notification) => notification.actor?.baseLocation ?? null,
     getRoute: () => friendRequestsRoute,
   },
   friend_request_accepted: {
     icon: UserCheck,
-    badgeText: 'Friendship update',
+    get badgeText() { return tNotifications('kinds.friendRequestAccepted.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} accepted your friend request`,
-    getDescription: () => "You can now view each other's activity.",
+    getTitle: (notification) => tNotifications('kinds.friendRequestAccepted.title', { name: getActorName(notification) }),
+    getDescription: () => tNotifications('kinds.friendRequestAccepted.description'),
     getRoute: () => friendsRoute,
   },
   profile_comment_created: {
     icon: MessageCircle,
-    badgeText: 'Profile comment',
+    get badgeText() { return tNotifications('kinds.profileCommentCreated.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} commented on your profile`,
+    getTitle: (notification) => tNotifications('kinds.profileCommentCreated.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
   },
   user_post_comment_received: {
     icon: MessageCircle,
-    badgeText: 'Post comment',
+    get badgeText() { return tNotifications('kinds.userPostCommentReceived.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} commented on your post`,
+    getTitle: (notification) => tNotifications('kinds.userPostCommentReceived.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => '/home',
   },
   feed_item_comment_received: {
     icon: MessageCircle,
-    badgeText: 'Reference comment',
+    get badgeText() { return tNotifications('kinds.feedItemCommentReceived.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} commented on your reference`,
+    getTitle: (notification) => tNotifications('kinds.feedItemCommentReceived.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => '/home',
   },
   congrats_received: {
     icon: PartyPopper,
-    badgeText: 'Congrats',
+    get badgeText() { return tNotifications('kinds.congratsReceived.badge') },
     accentClassName: 'bg-gold-soft text-gold',
     getTitle: (notification) => {
       const count = Number((notification.metadata as Record<string, unknown> | null)?.count ?? 1)
       const others = count - 1
       return others > 0
-        ? `${getActorName(notification)} and ${others} ${others === 1 ? 'other' : 'others'} congratulated you`
-        : `${getActorName(notification)} congratulated you`
+        ? tNotifications('kinds.congratsReceived.titleWithOthers', { name: getActorName(notification), count: others })
+        : tNotifications('kinds.congratsReceived.title', { name: getActorName(notification) })
     },
     getDescription: () => null,
     getRoute: () => '/home',
   },
   signing_tagged: {
     icon: PartyPopper,
-    badgeText: 'New signing',
+    get badgeText() { return tNotifications('kinds.signingTagged.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
-    getTitle: (notification) => `${getMetadataString(notification, 'club_name') ?? getActorName(notification)} posted your signing 🎉`,
-    getDescription: () => 'Tap to see the post. You can remove your tag from its ⋯ menu.',
+    getTitle: (notification) => tNotifications('kinds.signingTagged.title', { name: getMetadataString(notification, 'club_name') ?? getActorName(notification) }),
+    getDescription: () => tNotifications('kinds.signingTagged.description'),
     getRoute: () => '/home',
   },
   content_removed: {
     icon: ShieldAlert,
-    badgeText: 'Community rules',
+    get badgeText() { return tNotifications('kinds.contentRemoved.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
     // Neutral notice (Figma A1): never the reporter, never the admin.
-    getTitle: (notification) => `Your ${removedLabel(getMetadataString(notification, 'content_type'))} was removed for breaking the community rules`,
+    getTitle: (notification) => removedTitle(getMetadataString(notification, 'content_type')),
     getDescription: () => null,
     getRoute: () => '/home',
   },
   profile_comment_reply: {
     icon: MessageCircle,
-    badgeText: 'Comment reply',
+    get badgeText() { return tNotifications('kinds.profileCommentReply.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} replied to a profile comment`,
+    getTitle: (notification) => tNotifications('kinds.profileCommentReply.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
   },
   profile_comment_like: {
     icon: Heart,
-    badgeText: 'Comment like',
+    get badgeText() { return tNotifications('kinds.profileCommentLike.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} liked your profile comment`,
-    getDescription: () => 'Keep the conversation going!',
+    getTitle: (notification) => tNotifications('kinds.profileCommentLike.title', { name: getActorName(notification) }),
+    getDescription: () => tNotifications('kinds.profileCommentLike.description'),
     getRoute: () => commentRoute,
   },
   reference_request_received: {
     icon: Handshake,
-    badgeText: 'Reference request',
+    get badgeText() { return tNotifications('kinds.referenceRequestReceived.badge') },
     accentClassName: 'bg-gold-soft text-gold',
-    getTitle: (notification) => `${getActorName(notification)} requested a reference`,
+    getTitle: (notification) => tNotifications('kinds.referenceRequestReceived.title', { name: getActorName(notification) }),
     getDescription: (notification) => formatRelationshipType(getMetadataString(notification, 'relationship_type')) || null,
     // Reference requests are accepted/declined inside TrustedReferencesSection
     // which now lives on the dedicated /references tab (split from /friends
@@ -260,61 +263,61 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   },
   reference_request_accepted: {
     icon: ShieldCheck,
-    badgeText: 'Reference accepted',
+    get badgeText() { return tNotifications('kinds.referenceRequestAccepted.badge') },
     accentClassName: 'bg-gold-soft text-gold',
-    getTitle: (notification) => `${getActorName(notification)} accepted your reference request`,
+    getTitle: (notification) => tNotifications('kinds.referenceRequestAccepted.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'endorsement_text'),
     getRoute: () => referenceAcceptedRoute,
   },
   reference_request_rejected: {
     icon: UserX,
-    badgeText: 'Reference update',
+    get badgeText() { return tNotifications('kinds.referenceRequestRejected.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} declined your reference request`,
+    getTitle: (notification) => tNotifications('kinds.referenceRequestRejected.title', { name: getActorName(notification) }),
     getDescription: (notification) => formatRelationshipType(getMetadataString(notification, 'relationship_type')) || null,
     getRoute: () => referencesRoute,
   },
   reference_updated: {
     icon: RefreshCcw,
-    badgeText: 'Reference updated',
+    get badgeText() { return tNotifications('kinds.referenceUpdated.badge') },
     accentClassName: 'bg-gold-soft text-gold',
-    getTitle: (notification) => `${getActorName(notification)} updated their reference`,
+    getTitle: (notification) => tNotifications('kinds.referenceUpdated.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'endorsement_text'),
     getRoute: () => referencesRoute,
   },
   message_received: {
     icon: MessageSquare,
-    badgeText: 'Message',
+    get badgeText() { return tNotifications('kinds.messageReceived.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => {
       const messageCount = notification.metadata?.message_count
       const count = typeof messageCount === 'number' ? messageCount : 1
       if (count > 1) {
-        return `${getActorName(notification)} sent ${count} new messages`
+        return tNotifications('kinds.messageReceived.titleMany', { name: getActorName(notification), count })
       }
-      return `${getActorName(notification)} sent you a message`
+      return tNotifications('kinds.messageReceived.title', { name: getActorName(notification) })
     },
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: conversationRoute,
   },
   conversation_started: {
     icon: MessageSquare,
-    badgeText: 'Conversation',
+    get badgeText() { return tNotifications('kinds.conversationStarted.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} started a conversation`,
+    getTitle: (notification) => tNotifications('kinds.conversationStarted.title', { name: getActorName(notification) }),
     getDescription: (notification) => getMetadataString(notification, 'subject'),
     getRoute: conversationRoute,
   },
   opportunity_published: {
     icon: Briefcase,
-    badgeText: 'New opportunity',
+    get badgeText() { return tNotifications('kinds.opportunityPublished.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => {
       const title = getMetadataString(notification, 'opportunity_title')
       const clubName = getMetadataString(notification, 'club_name')
       return title
-        ? `${clubName || 'A club'} published: ${title}`
-        : 'A new opportunity was published'
+        ? tNotifications('kinds.opportunityPublished.title', { club: clubName || tNotifications('kinds.opportunityPublished.clubFallback'), title })
+        : tNotifications('kinds.opportunityPublished.titleNoRole')
     },
     getDescription: (notification) => {
       const position = getMetadataString(notification, 'position')
@@ -330,7 +333,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   },
   vacancy_application_received: {
     icon: Briefcase,
-    badgeText: 'New applicant',
+    get badgeText() { return tNotifications('kinds.vacancyApplicationReceived.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
     // Producer emits 'opportunity_title' (NOT 'vacancy_title' — that key
     // belongs to vacancy_application_status), and no applicant_name: the
@@ -339,7 +342,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     // "New opportunity applicant" with an empty description.
     getTitle: (notification) => {
       const vacancyTitle = getMetadataString(notification, 'opportunity_title')
-      return vacancyTitle ? `New applicant for ${vacancyTitle}` : 'New opportunity applicant'
+      return vacancyTitle ? tNotifications('kinds.vacancyApplicationReceived.title', { title: vacancyTitle }) : tNotifications('kinds.vacancyApplicationReceived.titleNoRole')
     },
     getDescription: (notification) =>
       notification.actor?.fullName || notification.actor?.username || null,
@@ -347,7 +350,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   },
   vacancy_application_status: {
     icon: ClipboardCheck,
-    badgeText: 'Application update',
+    get badgeText() { return tNotifications('kinds.vacancyApplicationStatus.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => applicationStatusCopy(notification).title,
     getDescription: (notification) => applicationStatusCopy(notification).body,
@@ -359,7 +362,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   },
   applications_expired: {
     icon: Hourglass,
-    badgeText: 'Application update',
+    get badgeText() { return tNotifications('kinds.applicationsExpired.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
     // Per-player AGGREGATE from the auto-expiry sweep (Task 3b): one
     // notification covering every application that closed that day. Copy is
@@ -367,12 +370,10 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     // either side); route to open opportunities to redirect the energy forward.
     getTitle: (notification) => {
       const count = Number(notification.metadata?.count ?? 1)
-      return count === 1
-        ? 'An application is no longer active'
-        : `${count} applications are no longer active`
+      return tNotifications('kinds.applicationsExpired.title', { count })
     },
     getDescription: () =>
-      "Applications close automatically after a while without an update on Hockia. It’s never a reflection on you. Fresh opportunities are open now.",
+      tNotifications('kinds.applicationsExpired.description'),
     getRoute: () => '/opportunities',
   },
   // B2 · publisher reminders. The server writes the copy (first names only,
@@ -380,123 +381,121 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   // row readable without metadata. Amber: the publisher is the one to act.
   applicant_last_call: {
     icon: Hourglass,
-    badgeText: 'Last call',
+    get badgeText() { return tNotifications('kinds.applicantLastCall.badge') },
     accentClassName: 'bg-status-warning-soft text-status-warning',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'Last day to answer an applicant',
-    getDescription: (notification) => getMetadataString(notification, 'summary') || 'An application closes tomorrow.',
+    getTitle: (notification) => getMetadataString(notification, 'title') || tNotifications('kinds.applicantLastCall.title'),
+    getDescription: (notification) => getMetadataString(notification, 'summary') || tNotifications('kinds.applicantLastCall.description'),
     getRoute: clubReminderRoute,
   },
   applicants_closing_soon: {
     icon: Hourglass,
-    badgeText: 'Closing soon',
+    get badgeText() { return tNotifications('kinds.applicantsClosingSoon.badge') },
     accentClassName: 'bg-status-warning-soft text-status-warning',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'Players are waiting for your answer',
-    getDescription: (notification) => getMetadataString(notification, 'summary') || 'Some applications close soon.',
+    getTitle: (notification) => getMetadataString(notification, 'title') || tNotifications('kinds.applicantsClosingSoon.title'),
+    getDescription: (notification) => getMetadataString(notification, 'summary') || tNotifications('kinds.applicantsClosingSoon.description'),
     getRoute: clubReminderRoute,
   },
   profile_completed: {
     icon: CheckCircle2,
-    badgeText: 'Profile milestone',
+    get badgeText() { return tNotifications('kinds.profileCompleted.badge') },
     accentClassName: 'bg-status-positive-soft text-status-positive',
-    getTitle: () => 'Your profile is complete',
+    getTitle: () => tNotifications('kinds.profileCompleted.title'),
     // Role-agnostic copy. The notification fires for every role (player,
     // coach, club, brand, umpire); "so scouts can find you" implied a
     // recruitment relationship that doesn't apply to brand or umpire.
-    getDescription: () => 'Great work. Keep it fresh so the right people find you.',
+    getDescription: () => tNotifications('kinds.profileCompleted.description'),
     getRoute: () => '/dashboard/profile',
   },
   account_verified: {
     icon: BadgeCheck,
-    badgeText: 'Account verified',
+    get badgeText() { return tNotifications('kinds.accountVerified.badge') },
     accentClassName: 'bg-status-positive-soft text-status-positive',
-    getTitle: () => 'Your account has been verified',
-    getDescription: () => 'You now have full access to the Hockia platform.',
+    getTitle: () => tNotifications('kinds.accountVerified.title'),
+    getDescription: () => tNotifications('kinds.accountVerified.description'),
     getRoute: () => '/settings',
   },
   ambassador_request_received: {
     icon: Award,
-    badgeText: 'Ambassador invite',
+    get badgeText() { return tNotifications('kinds.ambassadorRequestReceived.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => {
       const brandName = getMetadataString(notification, 'brand_name')
-      return brandName
-        ? `${brandName} invited you to become a brand ambassador`
-        : `${getActorName(notification)} invited you to become a brand ambassador`
+      return tNotifications('kinds.ambassadorRequestReceived.title', { name: brandName || getActorName(notification) })
     },
-    getDescription: () => 'Review and respond to this invitation.',
+    getDescription: () => tNotifications('kinds.ambassadorRequestReceived.description'),
     getRoute: () => '/dashboard/profile',
   },
   ambassador_request_accepted: {
     icon: Award,
-    badgeText: 'Ambassador update',
+    get badgeText() { return tNotifications('kinds.ambassadorRequestAccepted.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
-    getDescription: () => 'They now appear on your brand profile.',
+    getTitle: (notification) => tNotifications('kinds.ambassadorRequestAccepted.title', { name: getActorName(notification) }),
+    getDescription: () => tNotifications('kinds.ambassadorRequestAccepted.description'),
     getRoute: () => '/dashboard/profile?tab=ambassadors',
   },
   // Brand offers (Phase 1): the admin's review of an offer or a change to one.
   // MIRRORED in supabase/functions/send-push/push-payload.ts.
   brand_offer_approved: {
     icon: CheckCircle2,
-    badgeText: 'Offer live',
+    get badgeText() { return tNotifications('kinds.brandOfferApproved.badge') },
     accentClassName: 'bg-status-positive-soft text-status-positive',
-    getTitle: (notification) => (notification.metadata?.change === true ? 'Your changes are live' : 'Your offer is live'),
+    getTitle: (notification) => (notification.metadata?.change === true ? tNotifications('kinds.brandOfferApproved.titleChange') : tNotifications('kinds.brandOfferApproved.title')),
     getDescription: (notification) => {
       const title = getMetadataString(notification, 'offer_title')
-      return title ? `"${title}" is now shown to members.` : 'It is now shown to members.'
+      return title ? tNotifications('kinds.brandOfferApproved.description', { title }) : tNotifications('kinds.brandOfferApproved.descriptionNoTitle')
     },
     getRoute: () => '/dashboard/offers',
   },
   brand_offer_not_approved: {
     icon: AlertCircle,
-    badgeText: 'Offer taken down',
+    get badgeText() { return tNotifications('kinds.brandOfferNotApproved.badge') },
     accentClassName: 'bg-status-warning-soft text-status-warning',
     // Since 2026-10-25 offers publish at once; this notice is an admin take-down
     // (metadata.takedown). Older rows were review rejections.
-    getTitle: (notification) => (notification.metadata?.takedown === true ? 'Your offer was taken down' : 'Your offer needs a change'),
+    getTitle: (notification) => (notification.metadata?.takedown === true ? tNotifications('kinds.brandOfferNotApproved.titleTakedown') : tNotifications('kinds.brandOfferNotApproved.title')),
     getDescription: (notification) => {
       const title = getMetadataString(notification, 'offer_title')
       const reason = (getMetadataString(notification, 'reason') ?? '').trim().replace(/[.!]+$/, '')
       const takedown = notification.metadata?.takedown === true
       const head = takedown
-        ? (title ? `"${title}" was taken down.` : 'Your offer was taken down.')
-        : (title ? `"${title}" wasn’t approved.` : 'Your offer wasn’t approved.')
-      return reason ? `${head} Reason: ${reason}. Edit and publish again.` : head
+        ? (title ? tNotifications('kinds.brandOfferNotApproved.takedownHead', { title }) : tNotifications('kinds.brandOfferNotApproved.takedownHeadNoTitle'))
+        : (title ? tNotifications('kinds.brandOfferNotApproved.rejectedHead', { title }) : tNotifications('kinds.brandOfferNotApproved.rejectedHeadNoTitle'))
+      return reason ? tNotifications('kinds.brandOfferNotApproved.withReason', { head, reason }) : head
     },
     getRoute: () => '/dashboard/offers',
   },
   club_invitation_received: {
     icon: Users,
-    badgeText: 'Club invite',
+    get badgeText() { return tNotifications('kinds.clubInvitationReceived.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
-    getTitle: (notification) => `${getActorName(notification)} invited you to join their club`,
+    getTitle: (notification) => tNotifications('kinds.clubInvitationReceived.title', { name: getActorName(notification) }),
     getDescription: (notification) => notification.actor?.baseLocation ?? null,
     // Route to the inviting club's profile so the invitee can see who it is.
     getRoute: (notification) => (notification.actor?.id ? `/clubs/id/${notification.actor.id}` : null),
   },
   club_invitation_accepted: {
     icon: UserCheck,
-    badgeText: 'Club update',
+    get badgeText() { return tNotifications('kinds.clubInvitationAccepted.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
-    getTitle: (notification) => `${getActorName(notification)} joined your club`,
-    getDescription: () => 'They now appear in your Members.',
+    getTitle: (notification) => tNotifications('kinds.clubInvitationAccepted.title', { name: getActorName(notification) }),
+    getDescription: () => tNotifications('kinds.clubInvitationAccepted.description'),
     getRoute: () => '/dashboard/profile',
   },
   profile_viewed: {
     icon: Eye,
-    badgeText: 'Profile views',
+    get badgeText() { return tNotifications('kinds.profileViewed.badge') },
     accentClassName: 'bg-hockia-soft text-hockia-primary',
     getTitle: (notification) => {
       const uniqueViewers = notification.metadata?.unique_viewers
       const count = typeof uniqueViewers === 'number' ? uniqueViewers : 1
       return count === 1
-        ? `${getActorName(notification)} viewed your profile`
-        : `${count} people viewed your profile today`
+        ? tNotifications('kinds.profileViewed.title', { name: getActorName(notification) })
+        : tNotifications('kinds.profileViewed.titleMany', { count })
     },
     getDescription: (notification) => {
       const totalViews = notification.metadata?.total_views
       return typeof totalViews === 'number' && totalViews > 1
-        ? `${totalViews} total views`
+        ? tNotifications('kinds.profileViewed.totalViews', { count: totalViews })
         : null
     },
     getRoute: () => '/dashboard/profile?tab=profile&section=viewers',
@@ -506,17 +505,17 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   // clients that predate this kind still show the summary via defaultConfig.
   recruiting_update: {
     icon: Handshake,
-    badgeText: 'Recruiting',
+    get badgeText() { return tNotifications('kinds.recruitingUpdate.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'Recruiting update',
+    getTitle: (notification) => getMetadataString(notification, 'title') || tNotifications('kinds.recruitingUpdate.title'),
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     getRoute: defaultConfig.getRoute,
   },
   system_announcement: {
     icon: Megaphone,
-    badgeText: 'Announcement',
+    get badgeText() { return tNotifications('kinds.systemAnnouncement.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'Hockia update',
+    getTitle: (notification) => getMetadataString(notification, 'title') || tNotifications('kinds.systemAnnouncement.title'),
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     // The safety notice about a removed account is read in place when its
     // conversation is no longer listed (it would open an empty inbox).

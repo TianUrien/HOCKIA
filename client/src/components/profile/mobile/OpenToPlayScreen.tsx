@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Sparkles } from 'lucide-react'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
 import { CancelSaveBar, GroupCard, SectionLabel } from './formScreenUi'
@@ -11,7 +11,8 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { passportInputs } from '@/hooks/useProfileKeyFacts'
 import { AVAILABILITY_DURATIONS, AVAILABILITY_DURATION_LABELS, isAvailabilityDuration, type AvailabilityDuration } from '@/lib/openToPlay'
 import { formatDay } from '@/lib/keyFacts'
-import { DOB_REQUIRED_COPY, openToPlayChecklist, openToPlayConsent, UNDER_18_COPY, type ChecklistKey } from '@/lib/openToPlayScreen'
+import { getDobRequiredCopy, getUnder18Copy, openToPlayChecklist, openToPlayConsent, type ChecklistKey } from '@/lib/openToPlayScreen'
+import { tProfileEdit, useProfileEditT } from '@/i18n/ns/profileEdit'
 import { cn } from '@/lib/utils'
 
 /**
@@ -29,14 +30,19 @@ interface OpenToPlayScreenProps {
   onAdd: (key: ChecklistKey | 'dob') => void
 }
 
-const SAVE_ERROR: Record<string, string> = {
-  under_18: UNDER_18_COPY,
-  dob_required: DOB_REQUIRED_COPY,
-  invalid_date: 'That date doesn’t look right.',
-  invalid_duration: 'Choose how long you’re available for.',
+/** The message for a save outcome, in the interface language. */
+function saveErrorFor(outcome: string): string | undefined {
+  switch (outcome) {
+    case 'under_18': return getUnder18Copy()
+    case 'dob_required': return getDobRequiredCopy()
+    case 'invalid_date': return tProfileEdit('openToPlay.errors.invalidDate')
+    case 'invalid_duration': return tProfileEdit('openToPlay.errors.invalidDuration')
+    default: return undefined
+  }
 }
 
 export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProps) {
+  const t = useProfileEditT()
   const profile = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const addToast = useToastStore((s) => s.addToast)
@@ -57,12 +63,13 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
   const [error, setError] = useState<string | null>(null)
   useEffect(() => { setOpen(otp.openToPlay) }, [otp.openToPlay])
 
-  const checklist = useMemo(() => openToPlayChecklist({
+  // Not memoised: cheap, and the text must follow the interface language.
+  const checklist = openToPlayChecklist({
     passports: passportInputs([profile?.nationality_country_id, profile?.nationality2_country_id], countries),
     fullMatches: scroll.fullMatches.length + scroll.fullGameLinks.length,
     highlights: scroll.highlights.length + (profile?.highlight_video_url ? 1 : 0),
     league,
-  }), [profile?.nationality_country_id, profile?.nationality2_country_id, profile?.highlight_video_url, countries, scroll.fullMatches.length, scroll.fullGameLinks.length, scroll.highlights.length, league])
+  })
 
   if (!profile) return null
   // Under-18 / unknown age: no switch — except to turn off a legacy "on".
@@ -75,16 +82,16 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
     const result = await otp.save({ open, availableFrom: from || null, duration: duration || null })
     setSaving(false)
     if (!result.ok) {
-      setError(SAVE_ERROR[result.outcome] ?? 'Could not save that. Please try again.')
+      setError(saveErrorFor(result.outcome) ?? t('openToPlay.errors.saveFailed'))
       return
     }
-    addToast(open ? 'You’re open to play' : 'Open to play is off', 'success')
+    addToast(open ? t('openToPlay.screen.toastOn') : t('openToPlay.screen.toastOff'), 'success')
     onDone()
   }
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28" data-testid="open-to-play-screen">
-      <CancelSaveBar title="Open to play" onCancel={onDone} onSave={() => void save()} saving={saving} saveDisabled={!showSwitch} />
+      <CancelSaveBar title={t('openToPlay.screen.title')} onCancel={onDone} onSave={() => void save()} saving={saving} saveDisabled={!showSwitch} />
 
       <div className="flex flex-col gap-3 px-5 pt-3">
         {otp.canToggleLoading ? (
@@ -92,39 +99,39 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
         ) : showSwitch ? (
           <div className="flex items-center gap-3 rounded-card bg-surface-grouped p-4">
             <div className="min-w-0 flex-1">
-              <p className="text-[16px] font-semibold leading-[21px] text-ink-1">I’m open to play</p>
-              <p className="text-secondary text-ink-2">{onlyOff ? UNDER_18_COPY : 'Clubs can find you and invite you to apply.'}</p>
+              <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{t('openToPlay.screen.switchLabel')}</p>
+              <p className="text-secondary text-ink-2">{onlyOff ? getUnder18Copy() : t('openToPlay.screen.switchHint')}</p>
             </div>
-            <SettingsSwitch label="I’m open to play" checked={open} disabled={saving || (onlyOff && !open)} onChange={() => setOpen((v) => (onlyOff ? false : !v))} />
+            <SettingsSwitch label={t('openToPlay.screen.switchLabel')} checked={open} disabled={saving || (onlyOff && !open)} onChange={() => setOpen((v) => (onlyOff ? false : !v))} />
           </div>
         ) : otp.needsDob ? (
           <div className="flex flex-col gap-2 rounded-card bg-surface-grouped p-4" data-testid="open-to-play-dob">
-            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">Add your date of birth</p>
-            <p className="text-secondary text-ink-2">{DOB_REQUIRED_COPY}</p>
-            <button type="button" onClick={() => onAdd('dob')} className="self-start text-row font-semibold text-hockia-primary">Add date of birth</button>
+            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{t('openToPlay.screen.dobTitle')}</p>
+            <p className="text-secondary text-ink-2">{getDobRequiredCopy()}</p>
+            <button type="button" onClick={() => onAdd('dob')} className="self-start text-row font-semibold text-hockia-primary">{t('openToPlay.screen.dobButton')}</button>
           </div>
         ) : (
           <div className="rounded-card bg-surface-grouped p-4" data-testid="open-to-play-under-18">
-            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">Open to play</p>
-            <p className="mt-0.5 text-secondary text-ink-2">{UNDER_18_COPY}</p>
+            <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{t('openToPlay.screen.under18Title')}</p>
+            <p className="mt-0.5 text-secondary text-ink-2">{getUnder18Copy()}</p>
           </div>
         )}
 
         {showSwitch && open && !onlyOff && (
           <>
-            <SectionLabel>When</SectionLabel>
+            <SectionLabel>{t('openToPlay.screen.when')}</SectionLabel>
             <GroupCard>
               <label className="flex items-center gap-2.5 py-[13px]">
-                <span className="flex-1 text-[16px] leading-[21px] text-ink-1">From</span>
+                <span className="flex-1 text-[16px] leading-[21px] text-ink-1">{t('openToPlay.screen.from')}</span>
                 <span className="relative">
-                  <span className={cn('text-row', from ? 'text-ink-1' : 'text-ink-2')}>{formatDay(from) ?? 'Choose a date'}</span>
-                  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Available from" className="absolute inset-0 opacity-0" />
+                  <span className={cn('text-row', from ? 'text-ink-1' : 'text-ink-2')}>{formatDay(from) ?? t('openToPlay.screen.chooseDate')}</span>
+                  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={t('openToPlay.screen.availableFromLabel')} className="absolute inset-0 opacity-0" />
                 </span>
               </label>
               <label className="flex items-center gap-2.5 py-[13px]">
-                <span className="flex-1 text-[16px] leading-[21px] text-ink-1">For</span>
-                <select value={duration} onChange={(e) => setDuration(e.target.value as AvailabilityDuration | '')} aria-label="Available for" className="appearance-none bg-transparent text-right text-row text-ink-2 focus:outline-none">
-                  <option value="">Choose</option>
+                <span className="flex-1 text-[16px] leading-[21px] text-ink-1">{t('openToPlay.screen.for')}</span>
+                <select value={duration} onChange={(e) => setDuration(e.target.value as AvailabilityDuration | '')} aria-label={t('openToPlay.screen.availableForLabel')} className="appearance-none bg-transparent text-right text-row text-ink-2 focus:outline-none">
+                  <option value="">{t('openToPlay.screen.choose')}</option>
                   {AVAILABILITY_DURATIONS.map((d) => <option key={d} value={d}>{AVAILABILITY_DURATION_LABELS[d]}</option>)}
                 </select>
               </label>
@@ -132,7 +139,7 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
           </>
         )}
 
-        <SectionLabel>What clubs check first</SectionLabel>
+        <SectionLabel>{t('openToPlay.screen.checkTitle')}</SectionLabel>
         <GroupCard>
           {checklist.map((row) => (
             <div key={row.key} className="flex items-center gap-2.5 py-3" data-testid={`otp-check-${row.key}`}>
@@ -145,7 +152,7 @@ export default function OpenToPlayScreen({ onDone, onAdd }: OpenToPlayScreenProp
                 <span className="block text-row font-semibold text-ink-1">{row.label}</span>
                 <span className="block truncate text-secondary text-ink-2">{row.detail}</span>
               </span>
-              {!row.done && <button type="button" onClick={() => onAdd(row.key)} className="text-row font-semibold text-hockia-primary">Add</button>}
+              {!row.done && <button type="button" onClick={() => onAdd(row.key)} className="text-row font-semibold text-hockia-primary">{t('openToPlay.screen.add')}</button>}
             </div>
           ))}
         </GroupCard>

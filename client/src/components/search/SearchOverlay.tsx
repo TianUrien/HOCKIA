@@ -18,17 +18,16 @@ import { useSearch } from '@/hooks/useSearch'
 import { useRecentSearches } from '@/hooks/useRecentSearches'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useWorldT } from '@/i18n/ns/world'
 import type { SearchResult, SearchPostResult, SearchPersonResult, SearchClubResult, SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
+
+/** Separator between facts; punctuation, not copy. */
+const DOT = '·'
 
 type TabType = 'all' | 'posts' | 'people' | 'clubs' | 'opportunities'
 
-const TABS: { key: TabType; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'people', label: 'People' },
-  { key: 'clubs', label: 'Clubs' },
-  { key: 'posts', label: 'Posts' },
-  { key: 'opportunities', label: 'Opps' },
-]
+/** Tab labels: world catalog `searchOverlay.tabs.<key>`. */
+const TABS: TabType[] = ['all', 'people', 'clubs', 'posts', 'opportunities']
 
 function getFlagUrl(countryCode: string): string {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
@@ -37,6 +36,7 @@ function getFlagUrl(countryCode: string): string {
 // ── Compact result renderers ──────────────────────────────────────────
 
 function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; onSelect: () => void }) {
+  const t = useWorldT()
   const subtitle = [result.position, result.base_location, result.current_club]
     .filter(Boolean)
     .join(' · ')
@@ -56,7 +56,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-900 truncate">
-            {result.full_name || 'Unknown'}
+            {result.full_name || t('searchOverlay.unknown')}
           </span>
           <RoleBadge role={result.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
         </div>
@@ -70,6 +70,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
 }
 
 function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSelect: () => void }) {
+  const t = useWorldT()
   return (
     <button
       type="button"
@@ -97,7 +98,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
       </div>
       {result.is_claimed && (
         <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
-          On Hockia
+          {t('searchOverlay.onHockia')}
         </span>
       )}
       <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
@@ -106,6 +107,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
 }
 
 function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSelect: () => void }) {
+  const t = useWorldT()
   const preview = result.content.length > 80
     ? result.content.slice(0, 80) + '...'
     : result.content
@@ -125,7 +127,7 @@ function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSele
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-900 truncate">
-            {result.author_name || 'Unknown'}
+            {result.author_name || t('searchOverlay.unknown')}
           </span>
           <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
         </div>
@@ -158,7 +160,7 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
           <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
           {location && (
             <>
-              <span className="text-xs text-gray-500">&middot;</span>
+              <span className="text-xs text-gray-500">{DOT}</span>
               <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
                 {location}
@@ -176,6 +178,7 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
 
 export function SearchOverlay({ triggerClassName }: { triggerClassName?: string } = {}) {
   const navigate = useNavigate()
+  const t = useWorldT()
   const [isOpen, setIsOpen] = useState(false)
 
   // The header's search icon opens this overlay (lib/searchOverlayBus).
@@ -343,7 +346,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
       className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
     >
       <Search className="w-4 h-4 text-gray-400" />
-      <span>Search players, clubs, posts...</span>
+      <span>{t('searchOverlay.placeholder')}</span>
     </button>
   )
 
@@ -356,7 +359,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
           className="fixed inset-0 z-50 bg-white flex flex-col animate-fade-in"
           role="dialog"
           aria-modal="true"
-          aria-label="Search"
+          aria-label={t('searchOverlay.dialogLabel')}
           tabIndex={-1}
         >
           {/* Header bar */}
@@ -365,7 +368,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
               type="button"
               onClick={handleClose}
               className="p-1.5 text-gray-600 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
-              aria-label="Close search"
+              aria-label={t('searchOverlay.close')}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -377,7 +380,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search players, clubs, posts..."
+                placeholder={t('searchOverlay.placeholder')}
                 className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
                 autoComplete="off"
                 autoFocus
@@ -391,7 +394,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                   type="button"
                   onClick={handleClear}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label="Clear search"
+                  aria-label={t('searchOverlay.clear')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -404,23 +407,23 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
             <div className="flex gap-1 px-4 py-2 border-b border-gray-100 overflow-x-auto flex-shrink-0">
               {TABS.map((tab) => {
                 const count = typeCounts
-                  ? tab.key === 'all'
+                  ? tab === 'all'
                     ? typeCounts.posts + typeCounts.people + typeCounts.clubs + (typeCounts.opportunities ?? 0)
-                    : typeCounts[tab.key as keyof typeof typeCounts]
+                    : typeCounts[tab as keyof typeof typeCounts]
                   : null
 
                 return (
                   <button
-                    key={tab.key}
+                    key={tab}
                     type="button"
-                    onClick={() => setActiveTab(tab.key)}
+                    onClick={() => setActiveTab(tab)}
                     className={`px-3.5 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
-                      chipTone(activeTab === tab.key)
+                      chipTone(activeTab === tab)
                     }`}
                   >
-                    {tab.label}
+                    {t(`searchOverlay.tabs.${tab}`)}
                     {count != null && count > 0 && (
-                      <span className={`ml-1 ${activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}`}>
+                      <span className={`ml-1 ${activeTab === tab ? 'text-white/70' : 'text-gray-400'}`}>
                         {count}
                       </span>
                     )}
@@ -441,8 +444,8 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
               ) : results.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
                   <SearchX className="w-10 h-10 mx-auto mb-3 text-gray-500" />
-                  <p className="text-sm font-medium">No results found</p>
-                  <p className="text-xs mt-1 text-gray-400">Try different keywords or check the spelling</p>
+                  <p className="text-sm font-medium">{t('searchOverlay.noResults')}</p>
+                  <p className="text-xs mt-1 text-gray-400">{t('searchOverlay.noResultsHint')}</p>
                 </div>
               ) : (
                 <>
@@ -454,7 +457,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                     onClick={handleSeeAllResults}
                     className="w-full px-4 py-3.5 text-sm font-medium text-hockia-primary hover:bg-gray-50 transition-colors text-center"
                   >
-                    See all results for &ldquo;{debouncedQuery}&rdquo;
+                    {t('searchOverlay.seeAll', { query: debouncedQuery })}
                   </button>
                 </>
               )
@@ -466,14 +469,14 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide">
                         <Clock className="w-3.5 h-3.5" />
-                        Recent searches
+                        {t('searchOverlay.recent')}
                       </div>
                       <button
                         type="button"
                         onClick={clearAll}
                         className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        Clear
+                        {t('searchOverlay.clearRecent')}
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -492,7 +495,7 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
                 ) : (
                   <div className="text-center py-12 text-gray-400">
                     <Search className="w-10 h-10 mx-auto mb-3 text-gray-500" />
-                    <p className="text-sm">Start typing to search players, clubs, and posts</p>
+                    <p className="text-sm">{t('searchOverlay.startTyping')}</p>
                   </div>
                 )}
               </div>

@@ -39,6 +39,7 @@ type PublicClubProfile = Partial<Profile> &
 // in PublicPlayerProfile.tsx for rationale).
 import { PUBLIC_CLUB_FIELDS } from '@/lib/publicProfileFields'
 import { ProfileSkeleton } from '@/components/ScreenSkeletons'
+import { tWorld } from '@/i18n/ns/world'
 
 export default function PublicClubProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
@@ -77,7 +78,7 @@ export default function PublicClubProfile() {
     let cancelled = false
     const fetchProfile = async () => {
       if (!cacheKey) {
-        setError('Invalid profile URL')
+        setError(tWorld('club.public.invalidUrl'))
         setIsLoading(false)
         return
       }
@@ -122,14 +123,14 @@ export default function PublicClubProfile() {
 
         if (!typed) {
           setProfile(null)
-          setError('Club profile not found.')
+          setError(tWorld('club.public.notFound'))
           return
         }
 
         // Test-profile gating (per viewer)
         if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
           setProfile(null)
-          setError('Club profile not found.')
+          setError(tWorld('club.public.notFound'))
           return
         }
 
@@ -141,7 +142,7 @@ export default function PublicClubProfile() {
           rememberBlockedPair(currentUserProfile.id, typed.id, blocked)
           if (blocked) {
             setProfile(null)
-            setError('This profile is not available.')
+            setError(tWorld('club.public.unavailable'))
             return
           }
         }
@@ -150,7 +151,7 @@ export default function PublicClubProfile() {
       } catch (err) {
         if (cancelled) return
         logger.error('Error fetching club profile:', err)
-        setError('Failed to load club profile. Please try again.')
+        setError(tWorld('club.public.loadFailed'))
       } finally {
         if (!cancelled) setIsLoading(false)
       }

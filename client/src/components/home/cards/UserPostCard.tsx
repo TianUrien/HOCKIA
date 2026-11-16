@@ -13,7 +13,7 @@ import { PostComposerModal } from '../PostComposerModal'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import { Avatar } from '@/components'
 import ReportUserModal from '@/components/ReportUserModal'
-import { MENU_ICON_CLASS, REPORT_MENU_LABEL } from '@/lib/report'
+import { MENU_ICON_CLASS, reportMenuLabel } from '@/lib/report'
 import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { identityLine } from '@/lib/identity'
@@ -159,7 +159,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
         { key: 'edit', label: isQuestion ? t('cards.post.editQuestion') : t('cards.post.editPost'), icon: <Pencil className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setIsEditing(true) },
         { key: 'delete', label: isQuestion ? t('cards.post.deleteQuestion') : t('cards.post.deletePost'), icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: handleDeleteClick },
       ]
-    : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
+    : [{ key: 'report', label: reportMenuLabel(), icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
     <MoreMenu items={menuItems} label={t('cards.post.menuLabel')} title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-1" testId="post-more-menu" />
   ) : null

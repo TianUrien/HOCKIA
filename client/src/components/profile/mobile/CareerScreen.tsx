@@ -7,6 +7,7 @@ import { CareerEntryItem } from './CareerEntryItem'
 import { useCareerTimeline, type CareerHistoryRow } from '@/hooks/useCareerTimeline'
 import { useCountries } from '@/hooks/useCountries'
 import { flagForCountryName } from '@/lib/careerCopy'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 /**
  * Career — own / public (Figma 145:581 · 245:694): the complete timeline
@@ -22,6 +23,7 @@ interface CareerScreenProps {
 }
 
 export default function CareerScreen({ profileId, mode, onBack }: CareerScreenProps) {
+  const t = useProfileEditT()
   const own = mode === 'own'
   const { entries, loading, failed, refresh } = useCareerTimeline(profileId)
   const { countries } = useCountries()
@@ -44,7 +46,7 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
   return (
     <div className="min-h-screen bg-white pb-40 lg:hidden" data-testid={own ? 'career-screen-own' : 'career-screen-public'}>
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent="Profile" title="Career" onBack={onBack} />
+        <DetailNavBar parent={t('career.screen.parent')} title={t('career.screen.title')} onBack={onBack} />
       </div>
       <div className="px-5 pt-3">
         {loading ? (
@@ -54,11 +56,11 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
             ))}
           </ul>
         ) : failed ? (
-          <p className="py-10 text-center text-row text-ink-2">Career could not be loaded. Go back and try again.</p>
+          <p className="py-10 text-center text-row text-ink-2">{t('career.screen.loadFailed')}</p>
         ) : entries.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-row font-semibold text-ink-1">{own ? 'No career entries yet' : 'No career entries to show'}</p>
-            {own && <p className="mt-1 text-secondary text-ink-2">Add the clubs and teams you have played for.</p>}
+            <p className="text-row font-semibold text-ink-1">{own ? t('career.screen.emptyOwn') : t('career.screen.emptyPublic')}</p>
+            {own && <p className="mt-1 text-secondary text-ink-2">{t('career.screen.emptyHint')}</p>}
           </div>
         ) : (
           <>
@@ -74,14 +76,14 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
                 />
               ))}
             </ul>
-            <p className="pt-5 text-caption text-ink-3">{entries.length === 1 ? '1 entry' : `${entries.length} entries`} · newest first</p>
+            <p className="pt-5 text-caption text-ink-3">{t('career.screen.count', { count: entries.length })}</p>
           </>
         )}
       </div>
       {own && (
         <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-20 bg-gradient-to-t from-white via-white to-white/0 px-5 pb-3 pt-4 lg:hidden">
           <button type="button" onClick={() => setEditing(null)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="career-add-entry">
-            <Plus className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Add an entry
+            <Plus className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> {t('career.screen.addEntry')}
           </button>
         </div>
       )}

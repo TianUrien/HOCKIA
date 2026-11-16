@@ -8,9 +8,8 @@
  * coachSpecialization.*, category.*, brandCategory.*). A token the catalog
  * does not know falls back to the string manipulation in humanizeToken.
  */
-import i18n from '@/i18n'
 import { isEnglish } from '@/i18n/format'
-import { tEnums } from '@/i18n/ns/enums'
+import { hasEnumsKey, tEnums } from '@/i18n/ns/enums'
 
 export type RoleLike = 'player' | 'coach' | 'club' | 'umpire' | 'brand' | (string & {}) | null | undefined
 
@@ -28,7 +27,7 @@ function catalogLabel(groups: readonly string[], value: string): string | null {
   if (!key) return null
   for (const group of groups) {
     const id = `${group}.${key}`
-    if (i18n.exists(id, { ns: 'enums' })) return tEnums(id as never) as string
+    if (hasEnumsKey(id)) return tEnums(id as never) as string
   }
   return null
 }

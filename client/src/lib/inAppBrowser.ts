@@ -14,6 +14,7 @@
 import { Capacitor } from '@capacitor/core'
 import { REDIRECT_INTENT_KEY } from './redirectIntent'
 import { isSafeRedirectPath } from './safeRedirect'
+import { tCommon } from '@/i18n/ns/common'
 
 export interface InAppBrowserInfo {
   isInAppBrowser: boolean
@@ -180,19 +181,19 @@ export function getExternalBrowserInstructions(browserName: string | null): stri
   const menu = inAppPlatform() === 'android' ? '⋮' : '⋯'
 
   if (platform.includes('instagram') || platform.includes('facebook')) {
-    return `Tap ${menu} at the top right, then “Open in external browser”.`
+    return tCommon('inAppBrowser.metaSteps', { menu })
   }
   if (platform.includes('whatsapp')) {
-    return `Tap ${menu} at the top right, then “Open in browser”.`
+    return tCommon('inAppBrowser.whatsappSteps', { menu })
   }
   if (platform.includes('tiktok')) {
-    return 'Tap ⋯ at the top right, then “Open in browser”.'
+    return tCommon('inAppBrowser.tiktokSteps')
   }
   if (platform.includes('linkedin')) {
-    return `Tap ${menu}, then “Open in browser”.`
+    return tCommon('inAppBrowser.linkedinSteps', { menu })
   }
 
-  return 'Use the app’s menu to open this page in your browser, or copy the link and paste it into Safari or Chrome.'
+  return tCommon('inAppBrowser.genericSteps')
 }
 
 /**

@@ -22,6 +22,8 @@
  * open_to_play / open_to_coach drives the displayed label.
  */
 
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+
 export type AvailabilityRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire' | string | null | undefined
 
 export interface AvailabilityFlags {
@@ -49,15 +51,15 @@ export function availabilityDescriptor(
 ): AvailabilityDescriptor | null {
   switch (role) {
     case 'player':
-      return flags.open_to_play ? { label: 'Open to play', variant: 'play' } : null
+      return flags.open_to_play ? { label: tProfileEdit('availability.label.play'), variant: 'play' } : null
     case 'coach':
-      return flags.open_to_coach ? { label: 'Open to coach', variant: 'coach' } : null
+      return flags.open_to_coach ? { label: tProfileEdit('availability.label.coach'), variant: 'coach' } : null
     case 'umpire':
-      return flags.available_for_appointments ? { label: 'Open to umpire', variant: 'umpire' } : null
+      return flags.available_for_appointments ? { label: tProfileEdit('availability.label.umpire'), variant: 'umpire' } : null
     case 'brand':
-      return flags.open_to_opportunities ? { label: 'Open to partnerships', variant: 'partnerships' } : null
+      return flags.open_to_opportunities ? { label: tProfileEdit('availability.label.partnerships'), variant: 'partnerships' } : null
     case 'club':
-      return flags.open_to_opportunities ? { label: 'Recruiting', variant: 'recruiting' } : null
+      return flags.open_to_opportunities ? { label: tProfileEdit('availability.label.recruiting'), variant: 'recruiting' } : null
     default:
       return null
   }
@@ -76,12 +78,12 @@ export function availabilityLabel(role: AvailabilityRole, flags: AvailabilityFla
  */
 export function availabilityFilterLabel(role: AvailabilityRole): string {
   switch (role) {
-    case 'player': return 'Open to play'
-    case 'coach': return 'Open to coach'
-    case 'umpire': return 'Open to umpire'
-    case 'club': return 'Recruiting'
-    case 'brand': return 'Open to partnerships'
-    default: return 'Open to opportunities' // 'all' / mixed roles
+    case 'player': return tProfileEdit('availability.filter.play')
+    case 'coach': return tProfileEdit('availability.filter.coach')
+    case 'umpire': return tProfileEdit('availability.filter.umpire')
+    case 'club': return tProfileEdit('availability.filter.club')
+    case 'brand': return tProfileEdit('availability.filter.brand')
+    default: return tProfileEdit('availability.filter.all') // 'all' / mixed roles
   }
 }
 

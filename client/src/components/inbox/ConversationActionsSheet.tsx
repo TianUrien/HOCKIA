@@ -4,6 +4,7 @@ import { ActionSheet } from '@/components/ui/ActionSheet'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { hapticLight } from '@/lib/haptics'
 import { firstNameOf } from '@/lib/invites'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 export interface ConversationActionTarget {
   id: string
@@ -30,6 +31,7 @@ interface ConversationActionsSheetProps {
  * confirmation that says exactly what happens on each side.
  */
 export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDelete, confirmDeleteOnly = false, onBlock }: ConversationActionsSheetProps) {
+  const t = useInboxT()
   const [confirming, setConfirming] = useState<ConversationActionTarget | null>(null)
 
   useEffect(() => {
@@ -51,10 +53,10 @@ export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDe
         testId="conversation-actions"
         items={target ? [
           target.unread
-            ? { key: 'read', label: 'Mark as read', icon: <MailOpen className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, false), testId: 'conversation-mark-read' }
-            : { key: 'unread', label: 'Mark as unread', icon: <Mail className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, true), testId: 'conversation-mark-unread' },
-          ...(onBlock && target.otherId ? [{ key: 'block', label: `Block ${target.name}`, icon: <Ban className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => onBlock(target), testId: 'conversation-block' }] : []),
-          { key: 'delete', label: 'Delete conversation', icon: <Trash2 className="h-5 w-5" />, tone: 'danger', onSelect: () => setConfirming(target), testId: 'conversation-delete' },
+            ? { key: 'read', label: t('actions.markRead'), icon: <MailOpen className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, false), testId: 'conversation-mark-read' }
+            : { key: 'unread', label: t('actions.markUnread'), icon: <Mail className="h-5 w-5" />, onSelect: () => void onToggleUnread(target.id, true), testId: 'conversation-mark-unread' },
+          ...(onBlock && target.otherId ? [{ key: 'block', label: t('actions.block', { name: target.name }), icon: <Ban className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => onBlock(target), testId: 'conversation-block' }] : []),
+          { key: 'delete', label: t('actions.delete'), icon: <Trash2 className="h-5 w-5" />, tone: 'danger', onSelect: () => setConfirming(target), testId: 'conversation-delete' },
         ] : []}
       />
       <ConfirmSheet
@@ -68,10 +70,10 @@ export function ConversationActionsSheet({ target, onClose, onToggleUnread, onDe
           const ok = await onDelete(confirming.id)
           if (ok === false) throw new Error('delete failed')
         }}
-        title="Delete this conversation?"
-        message={`It's removed from your inbox and the messages are cleared for you. ${first} still has the conversation, and if they write again it comes back with only the new messages.`}
-        confirmLabel="Delete"
-        busyLabel="Deleting…"
+        title={t('actions.deleteConfirm.title')}
+        message={t('actions.deleteConfirm.message', { name: first })}
+        confirmLabel={t('actions.deleteConfirm.confirm')}
+        busyLabel={t('actions.deleteConfirm.busy')}
         testId="conversation-delete-confirm"
         initialFocus="panel"
       />

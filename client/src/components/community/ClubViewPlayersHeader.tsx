@@ -4,6 +4,7 @@ import { useScoutingContext } from '@/hooks/useScouting'
 import { contextFitTarget } from '@/lib/findPlayers'
 import { clubViewSortOptions } from '@/lib/communityClubView'
 import type { SortOption } from './communityFilters'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Community · club view header (Figma D1.17 352:995): "Players" with the sort
@@ -13,6 +14,7 @@ import type { SortOption } from './communityFilters'
  * the "Match for" context chip on this screen — same context, v2 styling.
  */
 export function ClubViewPlayersHeader({ sort, onSort }: { sort: SortOption; onSort: (s: SortOption) => void }) {
+  const t = useCommunityT()
   const scouting = useScoutingContext()
   const fitActive = !!contextFitTarget(scouting.ctx)
   const options = clubViewSortOptions(fitActive)
@@ -20,9 +22,9 @@ export function ClubViewPlayersHeader({ sort, onSort }: { sort: SortOption; onSo
   return (
     <div className="mb-3 lg:hidden" data-testid="club-view-players-header">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[22px] font-bold leading-7 text-ink-1">Players</h2>
+        <h2 className="text-[22px] font-bold leading-7 text-ink-1">{t('clubView.title')}</h2>
         <label className="relative flex shrink-0 items-center text-[15px] font-semibold text-hockia-primary">
-          <span className="sr-only">Sort by</span>
+          <span className="sr-only">{t('clubView.sortBy')}</span>
           <select
             value={sort}
             onChange={(e) => onSort(e.target.value as SortOption)}

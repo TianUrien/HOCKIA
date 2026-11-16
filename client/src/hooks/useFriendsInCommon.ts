@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
+import { tProfile } from '@/i18n/ns/profile'
 
 /**
  * "In common" — the friends the viewer shares with another member (Figma
@@ -80,6 +81,7 @@ export function useFriendsInCommon(memberId: string | null | undefined) {
 export function inCommonLabel(people: CommonFriend[]): string | null {
   if (people.length === 0) return null
   const names = people.slice(0, 2).map((p) => p.fullName?.trim().split(/\s+/)[0]).filter(Boolean).join(', ')
-  const head = people.length === 1 ? '1 friend' : `${people.length} friends`
-  return names ? `${head} · ${names}` : head
+  return names
+    ? tProfile('useFriendsInCommon.countWithNames', { count: people.length, names })
+    : tProfile('useFriendsInCommon.count', { count: people.length })
 }

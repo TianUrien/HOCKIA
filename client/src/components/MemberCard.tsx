@@ -13,6 +13,12 @@ import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
+import { useCommunityT } from '@/i18n/ns/community'
+import { useEnumsT } from '@/i18n/ns/enums'
+
+const POSITION_TOKENS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
+const BRAND_CATEGORY_TOKENS = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
+const isOneOf = <T extends string>(list: readonly T[], value: string): value is T => (list as readonly string[]).includes(value)
 
 interface MemberCardProps {
   id: string
@@ -77,6 +83,8 @@ export default function MemberCard({
   federation,
   lastOfficiatedAt,
 }: MemberCardProps) {
+  const t = useCommunityT()
+  const tEnums = useEnumsT()
   const umpireActivity = role === 'umpire' ? getUmpireActivity(lastOfficiatedAt) : null
   const navigate = useNavigate()
   const location = useLocation()
@@ -96,6 +104,7 @@ export default function MemberCard({
     if (!str) return ''
     return str.charAt(0).toUpperCase() + str.slice(1)
   }
+  const positionLabelOf = (pos: string) => (isOneOf(POSITION_TOKENS, pos) ? tEnums(`position.${pos}`) : capitalizeFirst(pos))
 
   // Handle Message button
   const handleMessage = async () => {
@@ -134,7 +143,7 @@ export default function MemberCard({
       }
     } catch (error) {
       logger.error('Error creating conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('memberCard.messageFailed'), 'error')
     } finally {
       setIsLoading(false)
     }
@@ -185,7 +194,7 @@ export default function MemberCard({
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <RoleBadge role={role} />
             {role === 'brand' && brandCategory && (
-              <span className="text-xs text-gray-500 capitalize">{brandCategory}</span>
+              <span className="text-xs text-gray-500 capitalize">{isOneOf(BRAND_CATEGORY_TOKENS, brandCategory) ? t(`memberCard.brandCategory.${brandCategory}`) : brandCategory}</span>
             )}
             <ConditionalAvailabilityPill
               role={role}
@@ -199,7 +208,7 @@ export default function MemberCard({
             {(accepted_reference_count ?? 0) > 0 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-soft text-gold text-[10px] font-medium">
                 <Shield className="w-2.5 h-2.5" />
-                Trusted by {accepted_reference_count}
+                {t('memberCard.trustedBy', { count: accepted_reference_count })}
               </span>
             )}
           </div>
@@ -211,7 +220,7 @@ export default function MemberCard({
         {(nationality_country_id || nationality) && (
           <div className="flex items-center gap-2.5">
             <Globe className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Nationality</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.nationality')}</span>
             <NationalityCardDisplay
               primaryCountryId={nationality_country_id}
               secondaryCountryId={nationality2_country_id}
@@ -224,7 +233,7 @@ export default function MemberCard({
         {base_location && (
           <div className="flex items-center gap-2.5">
             <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Location</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.location')}</span>
             <span className="text-gray-700">{base_location}</span>
           </div>
         )}
@@ -234,7 +243,7 @@ export default function MemberCard({
             {(umpireLevel || federation) && (
               <div className="flex items-center gap-2.5">
                 <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Level</span>
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.level')}</span>
                 <span className="text-gray-700">
                   {umpireLevel ?? ''}
                   {umpireLevel && federation ? ' · ' : ''}
@@ -245,7 +254,7 @@ export default function MemberCard({
             {umpireActivity && (
               <div className="flex items-center gap-2.5">
                 <Activity className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Activity</span>
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.activity')}</span>
                 <span
                   className={
                     umpireActivity.state === 'active'
@@ -261,14 +270,14 @@ export default function MemberCard({
         ) : role === 'coach' && coach_specialization ? (
           <div className="flex items-center gap-2.5">
             <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Role</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.role')}</span>
             <span className="text-gray-700">{getSpecializationLabel(coach_specialization, coach_specialization_custom)}</span>
           </div>
         ) : positions.length > 0 && (role === 'player' || role === 'coach') ? (
           <div className="flex items-center gap-2.5">
             <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Position</span>
-            <span className="text-gray-700">{positions.map(capitalizeFirst).join(' • ')}</span>
+            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.position')}</span>
+            <span className="text-gray-700">{positions.map(positionLabelOf).join(' • ')}</span>
           </div>
         ) : null}
 
@@ -276,7 +285,7 @@ export default function MemberCard({
           <div className="pt-1">
             <div className="flex items-center gap-2.5">
               <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Current Team</span>
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{t('memberCard.currentTeam')}</span>
             </div>
             <div className="flex items-center gap-2 mt-1.5 ml-[22px]">
               {clubLogo && (
@@ -296,14 +305,14 @@ export default function MemberCard({
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>Message</span>
+          <span>{t('memberCard.message')}</span>
         </button>
         <button
           onClick={handleViewProfile}
           className="flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-lg border border-gray-200 text-gray-500 text-sm font-medium hover:bg-gray-50 hover:text-gray-700 transition-colors"
         >
           <User className="w-4 h-4" />
-          <span>View Profile</span>
+          <span>{t('memberCard.viewProfile')}</span>
         </button>
       </div>
 
@@ -311,10 +320,10 @@ export default function MemberCard({
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title={signInAction === 'message' ? 'Sign in to message' : 'Sign in to view profile'}
+        title={signInAction === 'message' ? t('memberCard.signInMessageTitle') : t('memberCard.signInViewTitle')}
         message={signInAction === 'message' 
-          ? 'Sign in or create a free Hockia account to connect with this member.'
-          : 'Sign in or create a free Hockia account to view member profiles.'
+          ? t('memberCard.signInMessageBody')
+          : t('memberCard.signInViewBody')
         }
       />
     </div>

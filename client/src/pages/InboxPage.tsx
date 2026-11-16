@@ -12,6 +12,7 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { isInboxSegment, inboxSegmentPath, useRefreshInboxEdges, type InboxSegment } from '@/lib/inboxSegments'
 import MessagesPage from '@/pages/MessagesPage'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * /inbox — the fourth tab (Figma 03 Player, 00 Architecture decision 2).
@@ -29,8 +30,9 @@ export default function InboxPage() {
 }
 
 function PhoneInbox() {
+  const t = useInboxT()
   useScrollRestore()
-  useDocumentTitle('Inbox')
+  useDocumentTitle(t('page.documentTitle'))
   const navigate = useNavigate()
   const { segment } = useParams<{ segment?: string }>()
   const active: InboxSegment = isInboxSegment(segment) ? segment : 'messages'
@@ -42,7 +44,7 @@ function PhoneInbox() {
   }
 
   const newMessageButton = (
-    <IconButton label="New message" onClick={() => setComposeOpen(true)}>
+    <IconButton label={t('page.newMessage')} onClick={() => setComposeOpen(true)}>
       <Pencil className="h-[22px] w-[22px]" strokeWidth={1.8} />
     </IconButton>
   )
@@ -51,7 +53,7 @@ function PhoneInbox() {
     <div className="min-h-screen bg-white">
       <Header mobileHidden />
       <main className="mx-auto max-w-2xl pb-24 pt-[calc(env(safe-area-inset-top)+0.5rem)] lg:pt-24">
-        <LargeTitleBar title="Inbox" trailing={newMessageButton} />
+        <LargeTitleBar title={t('page.title')} trailing={newMessageButton} />
 
         <div className="px-5 pb-2 pt-0.5">
           <InboxSegmentControl value={active} onChange={setSegment} />

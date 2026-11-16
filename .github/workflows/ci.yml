@@ -343,16 +343,23 @@ jobs:
           # string now also carries its key). Raw is 5847KB. Spanish text itself
           # is JSON loaded on demand and is not counted. First-load gate is
           # unchanged (547KB of 560KB).
+          # Budget bumped 6000KB → 6300KB on 2026-11-16 (founder-approved) — Spanish
+          # stage 2: profile, community, inbox, notifications and World moved to
+          # catalogs (about +250KB raw of English catalogs and keys), and App.tsx
+          # stopped importing the components barrel, which kept every component
+          # with a top-level effect in the start-up chunk (about +100KB raw of
+          # chunk boundaries, -33KB first load). Raw is 6150KB. First-load gate
+          # is unchanged (514KB of 560KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 6041600 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 6000KB ($(( TOTAL_KB * 100 / 6000 ))%)"
+          if [ "$TOTAL_JS" -gt 6348800 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 6300KB ($(( TOTAL_KB * 100 / 6300 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 6.0MB
-          if [ "$TOTAL_JS" -gt 6144000 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 6000KB"
+          # Secondary gate: raw total must stay under 6.3MB
+          if [ "$TOTAL_JS" -gt 6451200 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 6300KB"
             exit 1
           fi
 

@@ -7,6 +7,7 @@ import PublicReferencesSection from '../PublicReferencesSection'
 import CommentsTab from '../CommentsTab'
 import ProfilePostsTab from '../ProfilePostsTab'
 import type { Profile } from '@/lib/supabase'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * PublicCommunityView — visitor-facing community page.
@@ -30,6 +31,7 @@ interface PublicCommunityViewProps {
 }
 
 export default function PublicCommunityView({ profile }: PublicCommunityViewProps) {
+  const t = useCommunityT()
   const navigate = useNavigate()
 
   const [commentCount, setCommentCount] = useState<number | null>(null)
@@ -55,7 +57,7 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
   }, [profile.id])
 
   const firstName = useMemo(
-    () => profile.full_name?.split(' ')[0]?.trim() || profile.username || 'this member',
+    () => profile.full_name?.split(' ')[0]?.trim() || profile.username || null,
     [profile.full_name, profile.username],
   )
 
@@ -65,9 +67,9 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
     // matching fix in PlayerCommunityHub.
     <div className="space-y-4 pb-32">
       <header>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Network</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('publicView.title')}</h1>
         <p className="mt-1 text-sm text-gray-600">
-          {firstName}'s trust signals, connections, and activity.
+          {firstName ? t('publicView.subtitle', { name: firstName }) : t('publicView.subtitleNoName')}
         </p>
       </header>
 
@@ -79,19 +81,19 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
         <div className="grid grid-cols-3 gap-2.5">
           <Stat
             icon={ShieldCheck}
-            label="References"
+            label={t('publicView.references')}
             value={(profile.accepted_reference_count ?? 0).toString()}
             accent="emerald"
           />
           <Stat
             icon={Users}
-            label="Connections"
+            label={t('publicView.connections')}
             value={(profile.accepted_friend_count ?? 0).toString()}
             accent="gray"
           />
           <Stat
             icon={FileText}
-            label="Posts"
+            label={t('publicView.posts')}
             value={(profile.post_count ?? 0).toString()}
             accent="purple"
           />
@@ -116,7 +118,7 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
       >
         <header className="flex items-center gap-2.5 mb-4">
           <MessageSquare className="h-5 w-5 text-hockia-primary" aria-hidden="true" />
-          <h2 className="text-base font-semibold text-gray-900">Comments</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t('publicView.comments')}</h2>
           {commentCount !== null && (
             <span className="ml-1 text-sm text-gray-500">({commentCount})</span>
           )}
@@ -143,7 +145,7 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
             }}
             className="ml-auto text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
-            View all
+            {t('publicView.viewAll')}
           </button>
         </header>
         <CommentsTab profileId={profile.id} profileRole={profile.role} forceVisitorMode />

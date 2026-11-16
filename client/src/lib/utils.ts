@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { dayFirst } from './dayFirst'
+import { tCommon } from '@/i18n/ns/common'
+import { intlLocale } from '@/i18n/format'
 
 /**
  * Utility function to merge class names
@@ -88,7 +90,7 @@ export function parseDateOnly(dateString: string | null | undefined): Date | nul
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? parseDateOnly(date) ?? new Date(date) : date
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(intlLocale(), {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -106,7 +108,7 @@ export function formatDateOfBirth(dateOfBirth: string | null | undefined): strin
   const date = parseDateOnly(dateOfBirth)
   if (!date) return null
   
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(intlLocale(), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -208,10 +210,10 @@ export function getTimeAgo(dateString: string, compact = false): string {
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
   if (compact) {
-    if (seconds < 60) return 'Just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
+    if (seconds < 60) return tCommon('timeAgo.justNow')
+    if (seconds < 3600) return tCommon('timeAgo.compactMinutes', { count: Math.floor(seconds / 60) })
+    if (seconds < 86400) return tCommon('timeAgo.compactHours', { count: Math.floor(seconds / 3600) })
+    if (seconds < 604800) return tCommon('timeAgo.compactDays', { count: Math.floor(seconds / 86400) })
     // Day first, like every date outside the signing road (lib/dayFirst).
     return dayFirst(date, { now }) ?? ''
   }
@@ -221,11 +223,11 @@ export function getTimeAgo(dateString: string, compact = false): string {
   const days = Math.floor(hours / 24)
   const weeks = Math.floor(days / 7)
 
-  if (minutes < 5) return 'Just now'
-  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
-  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
-  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`
-  if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+  if (minutes < 5) return tCommon('timeAgo.justNow')
+  if (minutes < 60) return tCommon('timeAgo.minutes', { count: minutes })
+  if (hours < 24) return tCommon('timeAgo.hours', { count: hours })
+  if (days < 7) return tCommon('timeAgo.days', { count: days })
+  if (weeks < 4) return tCommon('timeAgo.weeks', { count: weeks })
   return formatDate(dateString)
 }
 
@@ -237,22 +239,23 @@ export function getTimeAgo(dateString: string, compact = false): string {
  * Falls back to the provided default otherwise.
  */
 
-const TECHNICAL_ERROR_MAP: [RegExp, string][] = [
+/** The friendly message is a key in the common catalog (technicalErrors.*). */
+const TECHNICAL_ERROR_MAP = [
   // Friendship trigger refusals (blocked either way / uncontactable account):
   // one friendly line whoever blocked whom (founder ruling). Mirrors
   // lib/friendshipErrors, which the friend-request call sites use directly.
-  [/friend request to a user you have blocked|^This user is not available right now\.?$/i, "This person isn't accepting requests."],
-  [/row-level security/i, 'You don\'t have permission to do that.'],
-  [/duplicate key|unique.?constraint|already exists/i, 'This already exists. Try refreshing the page.'],
-  [/violates check constraint/i, 'Some of the data provided is invalid. Please review and try again.'],
-  [/violates foreign key/i, 'A related record is missing or was deleted.'],
-  [/not found|does not exist/i, 'The item was not found. It may have been deleted.'],
-  [/rate limit|too many requests|429/i, 'Too many requests. Please wait a moment and try again.'],
-  [/timeout|timed out|deadline exceeded/i, 'The request timed out. Please try again.'],
-  [/network|fetch|ERR_INTERNET|ECONNREFUSED|ENOTFOUND/i, 'Network error. Please check your connection and try again.'],
-  [/JWT|token.*expired|auth.*expired/i, 'Your session has expired. Please sign in again.'],
-  [/FetchError/i, 'Network error. Please check your connection and try again.'],
-]
+  [/friend request to a user you have blocked|^This user is not available right now\.?$/i, 'technicalErrors.notAccepting'],
+  [/row-level security/i, 'technicalErrors.permission'],
+  [/duplicate key|unique.?constraint|already exists/i, 'technicalErrors.duplicate'],
+  [/violates check constraint/i, 'technicalErrors.invalidData'],
+  [/violates foreign key/i, 'technicalErrors.missingRelated'],
+  [/not found|does not exist/i, 'technicalErrors.notFound'],
+  [/rate limit|too many requests|429/i, 'technicalErrors.rateLimit'],
+  [/timeout|timed out|deadline exceeded/i, 'technicalErrors.timeout'],
+  [/network|fetch|ERR_INTERNET|ECONNREFUSED|ENOTFOUND/i, 'technicalErrors.network'],
+  [/JWT|token.*expired|auth.*expired/i, 'technicalErrors.sessionExpired'],
+  [/FetchError/i, 'technicalErrors.network'],
+] as const
 
 export function extractErrorMessage(error: unknown, fallback: string): string {
   if (!error) return fallback
@@ -271,7 +274,7 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
 
   // Map known technical patterns to user-friendly messages
   for (const [pattern, friendly] of TECHNICAL_ERROR_MAP) {
-    if (pattern.test(raw)) return friendly
+    if (pattern.test(raw)) return tCommon(friendly)
   }
 
   // If the raw message is short and doesn't look like a stack trace or SQL,

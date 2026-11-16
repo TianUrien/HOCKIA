@@ -1,4 +1,5 @@
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { useInboxT } from '@/i18n/ns/inbox'
 import { InboxRequests } from '@/components/inbox/InboxRequests'
 import { useFriendRequests } from '@/hooks/useFriendRequests'
 import { useMyClubInvitations } from '@/hooks/useClubInvitations'
@@ -10,15 +11,16 @@ import type { InboxSegment } from '@/lib/inboxSegments'
 /** Messages · Requests · Activity with a red dot (never a number) on what's new. */
 export function InboxSegmentControl({ value, onChange }: { value: InboxSegment; onChange: (next: InboxSegment) => void }) {
   const dots = useInboxSegmentDots()
+  const t = useInboxT()
   return (
     <SegmentedControl<InboxSegment>
-      ariaLabel="Inbox sections"
+      ariaLabel={t('segments.ariaLabel')}
       value={value}
       onChange={onChange}
       options={[
-        { value: 'messages', label: 'Messages', dot: dots.messages },
-        { value: 'requests', label: 'Requests', dot: dots.requests },
-        { value: 'activity', label: 'Activity', dot: dots.activity },
+        { value: 'messages', label: t('segments.messages'), dot: dots.messages },
+        { value: 'requests', label: t('segments.requests'), dot: dots.requests },
+        { value: 'activity', label: t('segments.activity'), dot: dots.activity },
       ]}
     />
   )

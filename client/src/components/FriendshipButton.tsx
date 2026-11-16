@@ -3,6 +3,7 @@ import { Check, Loader2, Shield, UserMinus, UserPlus, UserX, ChevronDown } from 
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface FriendshipButtonProps {
   profileId: string
@@ -19,6 +20,7 @@ const BTN_BASE =
   'inline-flex h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm transition disabled:opacity-60'
 
 export default function FriendshipButton({ profileId, className }: FriendshipButtonProps) {
+  const t = useProfileT()
   const { addToast } = useToastStore()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -68,7 +70,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
   if (isOwnProfile) return null
 
   const handleAuthRequired = () => {
-    addToast('Sign in with your Hockia profile to manage connections.', 'error')
+    addToast(t('friendshipButton.signInToManage'), 'error')
   }
 
   const handleAction = async (action: () => Promise<void>) => {
@@ -85,7 +87,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
         className={cn(BTN_BASE, 'border border-gray-200 font-medium text-gray-600', className)}
       >
         <Loader2 className="h-4 w-4 animate-spin" />
-        Checking...
+        {t('friendshipButton.checking')}
       </button>
     )
   }
@@ -99,7 +101,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
         className={cn(BTN_BASE, 'border border-gray-200 bg-white font-semibold text-gray-700 hover:bg-gray-50', className)}
       >
         <UserPlus className="h-4 w-4 flex-shrink-0" />
-        Add Friend
+        {t('friendshipButton.addFriend')}
       </button>
     )
   }
@@ -109,7 +111,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
     return (
       <span className={cn(BTN_BASE, 'border border-red-200 bg-red-50 font-semibold text-red-700', className)}>
         <Shield className="h-4 w-4 flex-shrink-0" />
-        Blocked
+        {t('friendshipButton.blocked')}
       </span>
     )
   }
@@ -125,7 +127,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
           className={cn(BTN_BASE, 'bg-brand-primary font-semibold text-white shadow-sm')}
         >
           {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Accept
+          {t('friendshipButton.accept')}
         </button>
         <button
           type="button"
@@ -134,7 +136,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
           className={cn(BTN_BASE, 'border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50')}
         >
           {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserX className="h-4 w-4" />}
-          Decline
+          {t('friendshipButton.decline')}
         </button>
       </div>
     )
@@ -144,7 +146,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
   const getButtonConfig = () => {
     if (isFriend) {
       return {
-        label: 'Friends',
+        label: t('friendshipButton.friends'),
         icon: <Check className="h-4 w-4 flex-shrink-0" />,
         className: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
         hasDropdown: true,
@@ -155,7 +157,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
       return {
         // Grey "Requested" + check everywhere (founder ruling 2026-09-25) —
         // matches the phone surfaces (HeroIdentityCard, MemberPreviewSheet).
-        label: 'Requested',
+        label: t('friendshipButton.requested'),
         icon: <Check className="h-4 w-4 flex-shrink-0" />,
         className: 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100',
         hasDropdown: true,
@@ -164,7 +166,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
 
     // Default: no relationship
     return {
-      label: 'Add Friend',
+      label: t('friendshipButton.addFriend'),
       icon: <UserPlus className="h-4 w-4 flex-shrink-0" />,
       className: 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-sm hover:opacity-90',
       hasDropdown: false,
@@ -220,7 +222,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
             >
               <UserMinus className="h-4 w-4" />
-              Remove Friend
+              {t('friendshipButton.removeFriend')}
             </button>
           )}
 
@@ -231,7 +233,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             >
               <UserX className="h-4 w-4" />
-              Cancel Request
+              {t('friendshipButton.cancelRequest')}
             </button>
           )}
         </div>

@@ -113,29 +113,32 @@ export function useKeyboardShortcuts({ onShowHelp }: ShortcutConfig) {
   }, [navigate, clearGState])
 }
 
-/** Shortcut definitions for the help modal */
+/**
+ * Shortcut definitions for the help modal. `category` and `description` are
+ * keys in the common catalog (shortcuts.*); the modal translates them.
+ */
 export const KEYBOARD_SHORTCUTS = [
   {
-    category: 'Navigation',
+    category: 'shortcuts.groups.navigation',
     shortcuts: [
-      { keys: ['g', 'c'], description: 'Go to Community' },
-      { keys: ['g', 'o'], description: 'Go to Opportunities' },
-      { keys: ['g', 'w'], description: 'Go to World Directory' },
-      { keys: ['g', 'b'], description: 'Go to Marketplace' },
-      { keys: ['g', 'm'], description: 'Go to Messages' },
-      { keys: ['g', 'd'], description: 'Go to Dashboard' },
+      { keys: ['g', 'c'], description: 'shortcuts.goCommunity' },
+      { keys: ['g', 'o'], description: 'shortcuts.goOpportunities' },
+      { keys: ['g', 'w'], description: 'shortcuts.goWorld' },
+      { keys: ['g', 'b'], description: 'shortcuts.goMarketplace' },
+      { keys: ['g', 'm'], description: 'shortcuts.goMessages' },
+      { keys: ['g', 'd'], description: 'shortcuts.goDashboard' },
     ],
   },
   {
-    category: 'Search',
+    category: 'shortcuts.groups.search',
     shortcuts: [
-      { keys: ['/'], description: 'Focus search on current page' },
+      { keys: ['/'], description: 'shortcuts.focusSearch' },
     ],
   },
   {
-    category: 'Help',
+    category: 'shortcuts.groups.help',
     shortcuts: [
-      { keys: ['?'], description: 'Show keyboard shortcuts' },
+      { keys: ['?'], description: 'shortcuts.showHelp' },
     ],
   },
-]
+] as const

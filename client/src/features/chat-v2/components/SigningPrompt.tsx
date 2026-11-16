@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useOwnApplicationStatus } from '@/hooks/useSigning'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * Under the server's "<club> marked you as signed…" step line (D4.4 → D4.5):
@@ -7,6 +8,7 @@ import { useOwnApplicationStatus } from '@/hooks/useSigning'
  * Nothing once it is confirmed, undone or expired. Player only.
  */
 export default function SigningPrompt({ applicationId }: { applicationId: string }) {
+  const t = useInboxT()
   const status = useOwnApplicationStatus(applicationId, true)
   if (status !== 'signed_pending_confirmation') return null
   return (
@@ -16,7 +18,7 @@ export default function SigningPrompt({ applicationId }: { applicationId: string
         className="relative before:absolute before:-inset-1 before:content-[''] inline-flex h-9 items-center rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white"
         data-testid="signing-prompt"
       >
-        Confirm signing
+        {t('signing.prompt.confirm')}
       </Link>
     </div>
   )

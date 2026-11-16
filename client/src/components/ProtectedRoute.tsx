@@ -4,6 +4,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { IS_NATIVE } from '@/lib/isNative'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
+import { tCommon } from '@/i18n/ns/common'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -121,7 +122,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{tCommon('skeletons.page')}</p>
         </div>
       </div>
     )

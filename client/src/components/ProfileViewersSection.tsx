@@ -4,10 +4,12 @@ import { Eye, TrendingUp, TrendingDown, Users, EyeOff, ChevronDown, ChevronUp } 
 import { Avatar, RoleBadge } from '@/components'
 import { useProfileViewers } from '@/hooks/useProfileViewers'
 import { getTimeAgo } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 const COLLAPSED_COUNT = 3
 
 export function ProfileViewersSection() {
+  const t = useProfileT()
   const navigate = useNavigate()
   const { viewers, stats, isLoading } = useProfileViewers()
   // Outer collapse: hides the viewer list and anonymous note by default,
@@ -67,14 +69,14 @@ export function ProfileViewersSection() {
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <Eye className="w-5 h-5 text-hockia-primary" />
-        <h3 className="text-base font-semibold text-gray-900">Who viewed your profile</h3>
+        <h3 className="text-base font-semibold text-gray-900">{t('profileViewersSection.title')}</h3>
       </div>
 
       {/* Stats row */}
       {stats && (stats.total_views > 0 || stats.anonymous_viewers > 0) && (
         <div className="flex gap-3 mb-5">
           <div className="flex-1 bg-gray-50 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-0.5">Total Views</p>
+            <p className="text-xs text-gray-500 mb-0.5">{t('profileViewersSection.totalViews')}</p>
             <div className="flex items-baseline gap-1.5">
               <p className="text-xl font-bold text-gray-900">{stats.total_views}</p>
               {trendPct !== null && (
@@ -86,7 +88,7 @@ export function ProfileViewersSection() {
             </div>
           </div>
           <div className="flex-1 bg-gray-50 rounded-xl p-3">
-            <p className="text-xs text-gray-500 mb-0.5">Unique Viewers</p>
+            <p className="text-xs text-gray-500 mb-0.5">{t('profileViewersSection.uniqueViewers')}</p>
             <p className="text-xl font-bold text-gray-900">{stats.unique_viewers}</p>
           </div>
         </div>
@@ -103,7 +105,7 @@ export function ProfileViewersSection() {
           aria-controls="profile-viewers-list"
           className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-hockia-primary hover:bg-purple-50 rounded-xl transition-colors"
         >
-          {cardOpen ? 'Hide viewers' : 'Show viewers'}
+          {cardOpen ? t('profileViewersSection.hideViewers') : t('profileViewersSection.showViewers')}
           {cardOpen ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
         </button>
       )}
@@ -113,8 +115,8 @@ export function ProfileViewersSection() {
       {viewers.length === 0 && (
         <div className="text-center py-6">
           <Users className="w-10 h-10 text-gray-500 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">No profile views yet</p>
-          <p className="text-xs text-gray-400 mt-1">Share your profile to get discovered</p>
+          <p className="text-sm text-gray-500">{t('profileViewersSection.emptyTitle')}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('profileViewersSection.emptyBody')}</p>
         </div>
       )}
 
@@ -124,7 +126,7 @@ export function ProfileViewersSection() {
         <div id="profile-viewers-list" className="mt-3 pt-3 border-t border-gray-100">
           <div className="space-y-1">
             {(showAll ? viewers : viewers.slice(0, COLLAPSED_COUNT)).map((viewer) => {
-              const displayName = viewer.full_name ?? (viewer.role === 'brand' ? 'Brand' : '')
+              const displayName = viewer.full_name ?? (viewer.role === 'brand' ? t('profileViewersSection.brandFallback') : '')
               const initials = viewer.full_name
                 ? viewer.full_name.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2)
                 : '?'
@@ -150,7 +152,7 @@ export function ProfileViewersSection() {
                   <p className="text-xs text-gray-500 truncate">
                     {[
                       viewer.base_location,
-                      viewer.view_count > 1 ? `${viewer.view_count} views` : null,
+                      viewer.view_count > 1 ? t('profileViewersSection.viewCount', { count: viewer.view_count }) : null,
                     ].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -166,7 +168,7 @@ export function ProfileViewersSection() {
                 onClick={() => setShowAll(!showAll)}
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-hockia-primary hover:bg-purple-50 rounded-xl transition-colors"
               >
-                {showAll ? 'Show less' : `See all ${viewers.length} viewers`}
+                {showAll ? t('profileViewersSection.showLess') : t('profileViewersSection.seeAll', { count: viewers.length })}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />
               </button>
             )}
@@ -176,7 +178,7 @@ export function ProfileViewersSection() {
             <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
               <EyeOff className="w-3.5 h-3.5 text-gray-400" />
               <p className="text-xs text-gray-400">
-                +{stats.anonymous_viewers} anonymous {stats.anonymous_viewers === 1 ? 'viewer' : 'viewers'}
+                {t('profileViewersSection.anonymous', { count: stats.anonymous_viewers })}
               </p>
             </div>
           )}

@@ -29,6 +29,8 @@ import { coachSpecialtyLabel } from '@/lib/identity'
 import { AVAILABILITY_DURATION_LABELS, isAvailabilityDuration } from '@/lib/availabilityDuration'
 import { workPermitStatus, workPermitTypeLabel, type WorkPermitStatus } from '@/lib/workPermits'
 import { RELOCATION_LABEL } from '@/lib/candidateIntent'
+import { tProfile } from '@/i18n/ns/profile'
+import { formatDayMonth, intlLocale, isEnglish } from '@/i18n/format'
 
 export type KeyFactsViewer = 'owner' | 'recruiter' | 'public'
 
@@ -135,6 +137,10 @@ export interface KeyFactsOptions {
   today?: Date
 }
 
+/**
+ * The English forms, kept for callers and tests that compare against them.
+ * The tiles themselves read the catalog (profile: keyFacts.*) on every build.
+ */
 export const NOT_GIVEN = 'Not given'
 export const NOT_SET = 'Not set'
 export const SELF_REPORTED_LABEL = 'self-reported'
@@ -161,13 +167,17 @@ function parseIsoDay(iso: string | null | undefined): { y: number; m: number; d:
 /** 'YYYY-MM-DD' → "12 Jan 2027" (UTC calendar date, no timezone drift). */
 export function formatDay(iso: string | null | undefined): string | null {
   const p = parseIsoDay(iso)
-  return p ? `${p.d} ${MONTHS[p.m - 1]} ${p.y}` : null
+  if (!p) return null
+  if (!isEnglish()) return formatDayMonth(new Date(p.y, p.m - 1, p.d), true)
+  return `${p.d} ${MONTHS[p.m - 1]} ${p.y}`
 }
 
 /** 'YYYY-MM-DD' → "Mar 2027". */
 export function formatMonth(iso: string | null | undefined): string | null {
   const p = parseIsoDay(iso)
-  return p ? `${MONTHS[p.m - 1]} ${p.y}` : null
+  if (!p) return null
+  if (!isEnglish()) return new Intl.DateTimeFormat(intlLocale(), { month: 'short', year: 'numeric' }).format(new Date(p.y, p.m - 1, 1)).replace(/\./g, '')
+  return `${MONTHS[p.m - 1]} ${p.y}`
 }
 
 function isOnOrBeforeToday(iso: string, today: Date): boolean {
@@ -176,10 +186,6 @@ function isOnOrBeforeToday(iso: string, today: Date): boolean {
   const day = Date.UTC(p.y, p.m - 1, p.d)
   const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
   return day <= now
-}
-
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`
 }
 
 function withFlag(name: string, flag?: string | null): string {
@@ -204,7 +210,7 @@ function fact<Id extends string>(id: Id, label: string, partial: Partial<KeyFact
 function missingFact<Id extends string>(id: Id, label: string, viewer: KeyFactsViewer, action: KeyFactAction | null): KeyFact<Id> {
   const isOwner = viewer === 'owner'
   return fact(id, label, {
-    value: isOwner ? NOT_SET : NOT_GIVEN,
+    value: isOwner ? tProfile('keyFacts.notSet') : tProfile('keyFacts.notGiven'),
     missing: true,
     action: isOwner ? action : null,
   })
@@ -223,8 +229,8 @@ export function levelBandForFit(league: LeagueInput | null | undefined): number 
 function positionFact(input: PlayerKeyFactsInput, viewer: KeyFactsViewer): KeyFact<PlayerKeyFactId> {
   const parts = [clean(input.position), clean(input.secondaryPosition)].filter((p): p is string => p !== null)
   const unique = parts.filter((p, i) => parts.findIndex((q) => q.toLowerCase() === p.toLowerCase()) === i)
-  if (unique.length === 0) return missingFact('position', 'Position', viewer, 'add_position')
-  return fact('position', 'Position', { value: unique.join(' · ') })
+  if (unique.length === 0) return missingFact('position', tProfile('keyFacts.position'), viewer, 'add_position')
+  return fact('position', tProfile('keyFacts.position'), { value: unique.join(' · ') })
 }
 
 function playsAtFact(input: PlayerKeyFactsInput, viewer: KeyFactsViewer): KeyFact<PlayerKeyFactId> {
@@ -233,23 +239,23 @@ function playsAtFact(input: PlayerKeyFactsInput, viewer: KeyFactsViewer): KeyFac
   const leagueName = input.league ? clean(input.league.name) : null
   const selfReported = input.league?.source === 'self_reported' && leagueName !== null
 
-  if (!club && !leagueName) return missingFact('plays_at', 'Plays at', viewer, 'add_club')
+  if (!club && !leagueName) return missingFact('plays_at', tProfile('keyFacts.playsAt'), viewer, 'add_club')
 
   let detail: string
   let detailMissing = false
   let action: KeyFactAction | null = null
   if (leagueName) {
-    detail = selfReported ? `${leagueName} · ${SELF_REPORTED_LABEL}` : leagueName
+    detail = selfReported ? tProfile('keyFacts.leagueSelfReported', { league: leagueName }) : leagueName
   } else {
-    detail = isOwner ? 'League not set' : 'League not given'
+    detail = isOwner ? tProfile('keyFacts.leagueNotSet') : tProfile('keyFacts.leagueNotGiven')
     detailMissing = true
     action = isOwner ? 'add_league' : null
   }
 
-  return fact('plays_at', 'Plays at', {
+  return fact('plays_at', tProfile('keyFacts.playsAt'), {
     // A self-reported league with no club still shows: the league is the fact.
     value: club ?? leagueName ?? '',
-    detail: club ? detail : selfReported ? SELF_REPORTED_LABEL : null,
+    detail: club ? detail : selfReported ? tProfile('keyFacts.selfReported') : null,
     detailMissing,
     badge: selfReported ? 'self_reported' : null,
     action,
@@ -265,14 +271,14 @@ function availabilityLines(
   const isOwner = viewer === 'owner'
   const durationLabel = isAvailabilityDuration(duration) ? AVAILABILITY_DURATION_LABELS[duration] : null
   const day = formatDay(availableFrom)
-  const dateLine = day && availableFrom ? (isOnOrBeforeToday(availableFrom, today) ? 'Available now' : `From ${day}`) : null
+  const dateLine = day && availableFrom ? (isOnOrBeforeToday(availableFrom, today) ? tProfile('keyFacts.availableNow') : tProfile('keyFacts.fromDay', { day })) : null
 
   if (!durationLabel && !dateLine) return { value: null, detail: null, detailMissing: false, action: null }
   if (durationLabel && dateLine) return { value: durationLabel, detail: dateLine, detailMissing: false, action: null }
   if (durationLabel) {
     return {
       value: durationLabel,
-      detail: isOwner ? 'No start date' : 'Start date not given',
+      detail: isOwner ? tProfile('keyFacts.noStartDate') : tProfile('keyFacts.startDateNotGiven'),
       detailMissing: true,
       action: isOwner ? 'add_date' : null,
     }
@@ -303,8 +309,14 @@ function passportFact<Id extends string>(
       const until = formatMonth(permit.expiresOn)
       const from = status === 'not_yet_valid' ? formatMonth(permit.validFrom) : null
       const when = status === 'expired'
-        ? `expired ${until ?? ''}`.trim()
-        : [from ? `from ${from}` : null, until ? `until ${until}` : null].filter(Boolean).join(' ') || null
+        ? (until ? tProfile('keyFacts.permitExpiredOn', { date: until }) : tProfile('keyFacts.permitExpired'))
+        : from && until
+          ? tProfile('keyFacts.permitFromUntil', { from, until })
+          : from
+            ? tProfile('keyFacts.permitFrom', { date: from })
+            : until
+              ? tProfile('keyFacts.permitUntil', { date: until })
+              : null
       const text = [
         withFlag(permit.countryName, permit.flag),
         workPermitTypeLabel(permit.type),
@@ -315,16 +327,16 @@ function passportFact<Id extends string>(
   }
 
   if (list.length === 0) {
-    const base = missingFact(id, 'Passport', viewer, 'add_passport')
+    const base = missingFact(id, tProfile('keyFacts.passport'), viewer, 'add_passport')
     return { ...base, extraLines }
   }
 
   const anyEu = list.some((p) => p.isEu)
-  return fact(id, 'Passport', {
+  return fact(id, tProfile('keyFacts.passport'), {
     value: list.map((p) => withFlag(p.name.trim(), p.flag)).join(' · '),
     valueLines: list.map((p) => withFlag(p.name.trim(), p.flag)),
     euTag: anyEu,
-    detail: anyEu ? 'EU passport' : 'No EU passport',
+    detail: anyEu ? tProfile('keyFacts.euPassport') : tProfile('keyFacts.noEuPassport'),
     extraLines,
     // Owner with one passport: "Add another" (second passport field).
     action: isOwner && list.length < 2 ? 'add_passport' : null,
@@ -334,9 +346,9 @@ function passportFact<Id extends string>(
 function ageFact<Id extends string>(id: Id, age: number | null, viewer: KeyFactsViewer): KeyFact<Id> {
   if (typeof age !== 'number' || !Number.isFinite(age) || age <= 0) {
     // Date of birth is set once through the age gate; there is no Add action.
-    return missingFact(id, 'Age', viewer, null)
+    return missingFact(id, tProfile('keyFacts.age'), viewer, null)
   }
-  return fact(id, 'Age', { value: String(Math.floor(age)) })
+  return fact(id, tProfile('keyFacts.age'), { value: String(Math.floor(age)) })
 }
 
 /** The six player key facts, in display order. */
@@ -346,23 +358,23 @@ export function buildPlayerKeyFacts(input: PlayerKeyFactsInput, options: KeyFact
 
   const avail = availabilityLines(input.availableFrom, input.availabilityDuration, viewer, today)
   const available: KeyFact<PlayerKeyFactId> = avail.value
-    ? fact('available', 'Available', {
+    ? fact('available', tProfile('keyFacts.available'), {
         value: avail.value,
         detail: avail.detail,
         detailMissing: avail.detailMissing,
         action: avail.action,
       })
-    : missingFact('available', 'Available', viewer, 'add_availability')
+    : missingFact('available', tProfile('keyFacts.available'), viewer, 'add_availability')
 
   const fm = Math.max(0, Math.floor(input.fullMatchCount || 0))
   const hl = Math.max(0, Math.floor(input.highlightCount || 0))
   const videoParts = [
-    fm > 0 ? plural(fm, 'full match', 'full matches') : null,
-    hl > 0 ? plural(hl, 'highlight', 'highlights') : null,
+    fm > 0 ? tProfile('keyFacts.fullMatches', { count: fm }) : null,
+    hl > 0 ? tProfile('keyFacts.highlights', { count: hl }) : null,
   ].filter((p): p is string => p !== null)
   const video: KeyFact<PlayerKeyFactId> = videoParts.length > 0
-    ? fact('video', 'Video', { value: videoParts.join(' · ') })
-    : missingFact('video', 'Video', viewer, 'add_video')
+    ? fact('video', tProfile('keyFacts.video'), { value: videoParts.join(' · ') })
+    : missingFact('video', tProfile('keyFacts.video'), viewer, 'add_video')
 
   return [
     positionFact(input, viewer),
@@ -380,16 +392,16 @@ export function buildCoachKeyFacts(input: CoachKeyFactsInput, options: KeyFactsO
   const today = options.today ?? new Date()
 
   const specialization = clean(input.specialization)
-    ? fact('specialization', 'Specialization', {
-        value: coachSpecialtyLabel(input.specialization, input.specializationCustom) ?? 'Coach',
+    ? fact('specialization', tProfile('keyFacts.specialization'), {
+        value: coachSpecialtyLabel(input.specialization, input.specializationCustom) ?? tProfile('keyFacts.coachFallback'),
       })
-    : missingFact('specialization', 'Specialization', viewer, 'add_specialization')
+    : missingFact('specialization', tProfile('keyFacts.specialization'), viewer, 'add_specialization')
 
   // Categories: a coach with none picked coaches any category (the 'any'
   // sentinel reads the same), so the tile is never a gap. The owner can still
   // open the editor from it.
-  const categories = fact<CoachKeyFactId>('categories', 'Categories', {
-    value: categoriesToDisplay(input.categories) || ANY_CATEGORY_LABEL,
+  const categories = fact<CoachKeyFactId>('categories', tProfile('keyFacts.categories'), {
+    value: categoriesToDisplay(input.categories) || tProfile('keyFacts.anyCategory'),
     action: viewer === 'owner' && !(input.categories && input.categories.length > 0) ? 'add_categories' : null,
   })
 
@@ -397,41 +409,41 @@ export function buildCoachKeyFacts(input: CoachKeyFactsInput, options: KeyFactsO
   const role = clean(input.currentRole)
   const club = clean(input.currentClubName)
   const coachesAt = club
-    ? fact<CoachKeyFactId>('coaches_at', 'Coaches at', { value: club, detail: role ? `${role} · current role` : null })
+    ? fact<CoachKeyFactId>('coaches_at', tProfile('keyFacts.coachesAt'), { value: club, detail: role ? tProfile('keyFacts.currentRole', { role }) : null })
     : role
-      ? fact<CoachKeyFactId>('coaches_at', 'Coaches at', {
-          value: viewer === 'owner' ? NOT_SET : NOT_GIVEN,
+      ? fact<CoachKeyFactId>('coaches_at', tProfile('keyFacts.coachesAt'), {
+          value: viewer === 'owner' ? tProfile('keyFacts.notSet') : tProfile('keyFacts.notGiven'),
           missing: true,
-          detail: `${role} · current role`,
+          detail: tProfile('keyFacts.currentRole', { role }),
           action: viewer === 'owner' ? 'add_club' : null,
         })
-      : missingFact<CoachKeyFactId>('coaches_at', 'Coaches at', viewer, 'add_club')
+      : missingFact<CoachKeyFactId>('coaches_at', tProfile('keyFacts.coachesAt'), viewer, 'add_club')
 
   // Available: the start date leads; the relocation answer sits under it.
   const avail = availabilityLines(input.availableFrom, input.availabilityDuration ?? null, viewer, today)
   const relocation = clean(input.relocationWillingness)
   const relocationLine = relocation ? RELOCATION_LABEL[relocation] ?? null : null
   const day = formatDay(input.availableFrom)
-  const dateLine = day && input.availableFrom ? (isOnOrBeforeToday(input.availableFrom, today) ? 'Available now' : `From ${day}`) : null
+  const dateLine = day && input.availableFrom ? (isOnOrBeforeToday(input.availableFrom, today) ? tProfile('keyFacts.availableNow') : tProfile('keyFacts.fromDay', { day })) : null
   let available: KeyFact<CoachKeyFactId>
   if (dateLine) {
-    available = fact('available', 'Available', { value: dateLine, detail: relocationLine })
+    available = fact('available', tProfile('keyFacts.available'), { value: dateLine, detail: relocationLine })
   } else if (avail.value) {
-    available = fact('available', 'Available', {
+    available = fact('available', tProfile('keyFacts.available'), {
       value: avail.value,
       detail: relocationLine ?? avail.detail,
       detailMissing: relocationLine ? false : avail.detailMissing,
       action: avail.action,
     })
   } else if (input.openToCoach === true) {
-    available = fact('available', 'Available', {
-      value: 'Open to coach',
-      detail: relocationLine ?? (viewer === 'owner' ? 'No start date' : 'Start date not given'),
+    available = fact('available', tProfile('keyFacts.available'), {
+      value: tProfile('keyFacts.openToCoach'),
+      detail: relocationLine ?? (viewer === 'owner' ? tProfile('keyFacts.noStartDate') : tProfile('keyFacts.startDateNotGiven')),
       detailMissing: !relocationLine,
       action: viewer === 'owner' ? 'add_date' : null,
     })
   } else {
-    available = { ...missingFact<CoachKeyFactId>('available', 'Available', viewer, 'add_availability'), detail: relocationLine }
+    available = { ...missingFact<CoachKeyFactId>('available', tProfile('keyFacts.available'), viewer, 'add_availability'), detail: relocationLine }
   }
 
   return [

@@ -15,6 +15,8 @@ import type { ClubProfileShape } from '@/pages/ClubDashboard'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
+import { Trans } from 'react-i18next'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -48,6 +50,7 @@ type Side = 'men' | 'women'
 type Pick = { kind: 'existing'; match: Match } | { kind: 'new' } | null
 
 export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'default', onSkip, finishing = false }: LinkClubScreenProps) {
+  const t = useProfileEditT()
   const onboarding = mode === 'onboarding'
   const fetchProfile = useAuthStore((s) => s.fetchProfile)
   const addToast = useToastStore((s) => s.addToast)
@@ -67,7 +70,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
   const [error, setError] = useState<string | null>(null)
 
   const country = useMemo(() => countries.find((c) => c.id === countryId) ?? null, [countries, countryId])
-  const countryLabel = country ? [country.flag_emoji, country.common_name || country.name].filter(Boolean).join(' ') : 'Choose a country'
+  const countryLabel = country ? [country.flag_emoji, country.common_name || country.name].filter(Boolean).join(' ') : t('linkClub.search.chooseCountry')
   const countryName = country?.common_name || country?.name || ''
   const q = query.trim()
 
@@ -76,14 +79,14 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
     if (q.length < 2 || !countryId) { setMatches([]); return }
     let cancelled = false
     setSearching(true)
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const { matches: found, error: err } = await searchClubsInCountry(q, countryId)
       if (cancelled) return
       if (err) logger.debug('[LinkClubScreen] search failed', err)
       setMatches(found)
       setSearching(false)
     }, 250)
-    return () => { cancelled = true; clearTimeout(t) }
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [q, countryId])
 
   // The country's leagues (list-only v1).
@@ -142,7 +145,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
         if (err) throw err
         if (data && !data.success) {
           if (/already been claimed/i.test(data.error ?? '')) { setError('already_linked'); return }
-          throw new Error(data.error || 'Could not link the club')
+          throw new Error(data.error || t('linkClub.actions.linkFailedShort'))
         }
       } else {
         const provinceId = leagues.find((l) => l.id === menId)?.provinceId ?? leagues.find((l) => l.id === womenId)?.provinceId ?? null
@@ -155,14 +158,14 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
           p_women_league_id: womenId ?? undefined,
         }) as { data: { success: boolean; error?: string } | null; error: Error | null }
         if (err) throw err
-        if (data && !data.success) throw new Error(data.error || 'Could not add the club')
+        if (data && !data.success) throw new Error(data.error || t('linkClub.actions.addFailedShort'))
       }
       await fetchProfile(profile.id, { force: true })
-      addToast('Club linked', 'success')
+      addToast(t('linkClub.actions.toastLinked'), 'success')
       onLinked()
     } catch (err) {
       logger.error('[LinkClubScreen] link failed', err)
-      setError(err instanceof Error ? err.message : 'Could not link the club. Please try again.')
+      setError(err instanceof Error ? err.message : t('linkClub.actions.linkFailed'))
     } finally {
       setSaving(false)
     }
@@ -181,20 +184,20 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
     <div className="flex min-h-screen flex-col bg-white lg:hidden" data-testid="link-club-screen">
       <div className="flex h-11 items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
         {onboarding ? (
-          <button type="button" onClick={onCancel} disabled={saving || finishing} aria-label="Back to About your club" className="-ml-2 flex w-[120px] items-center text-left text-body text-hockia-primary disabled:opacity-60">
-            <BackGlyph className="h-6 w-6" strokeWidth={2} />{!ANDROID_CHROME && ' Back'}
+          <button type="button" onClick={onCancel} disabled={saving || finishing} aria-label={t('linkClub.header.backAria')} className="-ml-2 flex w-[120px] items-center text-left text-body text-hockia-primary disabled:opacity-60">
+            <BackGlyph className="h-6 w-6" strokeWidth={2} />{!ANDROID_CHROME && ` ${t('linkClub.header.back')}`}
           </button>
         ) : (
-          <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">Cancel</button>
+          <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">{t('linkClub.header.cancel')}</button>
         )}
-        <h1 className="text-body font-semibold text-ink-1">Link your club</h1>
+        <h1 className="text-body font-semibold text-ink-1">{t('linkClub.header.title')}</h1>
         {onboarding ? <div className="-mr-2 flex w-[120px] justify-end"><SetupSignOut /></div> : <span className="w-[120px]" />}
       </div>
 
       <div className={cn('flex-1 overflow-y-auto', onboarding ? 'pb-40' : 'pb-28')}>
         <div className="px-5 pb-2 pt-1.5">
-          <h2 className="text-title-xl text-ink-1">Find your club</h2>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">{onboarding ? 'Step 2 of 2 · ' : ''}Linking puts your league next to your name and lets fit compare levels.</p>
+          <h2 className="text-title-xl text-ink-1">{t('linkClub.search.heading')}</h2>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{onboarding ? t('linkClub.search.introOnboarding') : t('linkClub.search.intro')}</p>
         </div>
 
         <div className="px-5 pt-2.5">
@@ -203,12 +206,12 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
             <input
               value={query}
               onChange={(e) => { setQuery(e.target.value); setPick(null) }}
-              placeholder="Club name"
-              aria-label="Club name"
+              placeholder={t('linkClub.search.placeholder')}
+              aria-label={t('linkClub.search.label')}
               className="min-w-0 flex-1 bg-transparent text-body text-ink-1 outline-none placeholder:text-ink-3"
             />
             {query && (
-              <button type="button" onClick={() => { setQuery(''); setPick(null) }} aria-label="Clear" className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-4 text-white">
+              <button type="button" onClick={() => { setQuery(''); setPick(null) }} aria-label={t('linkClub.search.clear')} className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-4 text-white">
                 <X className="h-[11px] w-[11px]" strokeWidth={3} />
               </button>
             )}
@@ -216,7 +219,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
         </div>
 
         <div className="flex items-center gap-1.5 px-5 pt-2.5">
-          <span className="text-[14px] text-ink-2">In</span>
+          <span className="text-[14px] text-ink-2">{t('linkClub.search.in')}</span>
           <button type="button" onClick={() => setCountrySheet(true)} className="inline-flex items-center gap-1 rounded-full bg-surface-grouped py-1 pl-2.5 pr-2 text-[14px] font-semibold text-ink-1">
             {countryLabel}
             <ChevronDown className="h-3.5 w-3.5 text-ink-3" strokeWidth={2.2} />
@@ -225,7 +228,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
 
         {q.length >= 2 && countryId && (
           <>
-            {matches.length > 0 && sectionLabel(`Clubs in ${countryName}`)}
+            {matches.length > 0 && sectionLabel(t('linkClub.search.clubsIn', { country: countryName }))}
             {matches.length > 0 && (
               <div className="px-5">
                 <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" data-testid="link-club-matches">
@@ -244,17 +247,17 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[16px] font-medium leading-[21px] text-ink-1">{m.name}</span>
                         <span className="block truncate text-secondary text-ink-2">
-                          {m.isClaimed ? 'Already linked to another account' : [m.province, m.leagueName].filter(Boolean).join(' · ') || countryName}
+                          {m.isClaimed ? t('linkClub.search.alreadyLinkedRow') : [m.province, m.leagueName].filter(Boolean).join(' · ') || countryName}
                         </span>
                       </span>
-                      {m.isClaimed ? <span className="shrink-0 text-caption font-semibold text-ink-3">Linked</span> : radio(selected(m.id))}
+                      {m.isClaimed ? <span className="shrink-0 text-caption font-semibold text-ink-3">{t('linkClub.search.linked')}</span> : radio(selected(m.id))}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {showAdd && sectionLabel(matches.length ? 'Not listed?' : `No club called “${q}” in ${countryName} yet`)}
+            {showAdd && sectionLabel(matches.length ? t('linkClub.search.notListed') : t('linkClub.search.noClub', { query: q, country: countryName }))}
             {showAdd && (
               <div className="px-5">
                 <button
@@ -269,9 +272,9 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
                     {crestFor(profile.avatar_url ?? null) ? <img src={crestFor(profile.avatar_url ?? null) as string} alt="" className="h-[34px] w-[34px] object-contain" /> : <EntityAvatar src={null} name={q} role="club" size={34} />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[16px] font-medium leading-[21px] text-ink-1">Add {q}</span>
+                    <span className="block text-[16px] font-medium leading-[21px] text-ink-1">{t('linkClub.search.addClub', { name: q })}</span>
                     <span className="block truncate text-secondary text-ink-2">
-                      {[[country?.flag_emoji, (countryId === profile.nationality_country_id ? profile.base_location?.trim() : null) || countryName].filter(Boolean).join(' '), 'from your profile'].join(' · ')}
+                      {t('linkClub.search.fromProfile', { place: [country?.flag_emoji, (countryId === profile.nationality_country_id ? profile.base_location?.trim() : null) || countryName].filter(Boolean).join(' ') })}
                     </span>
                   </span>
                   {radio(selected('new'))}
@@ -284,20 +287,20 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
         {error === 'already_linked' && (
           <div className="mx-5 mt-3 flex items-start gap-2.5 rounded-card bg-surface-grouped px-3.5 py-3 text-secondary leading-[18px] text-ink-2" data-testid="link-club-already-linked">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
-            <span>This club is already linked to another account. <button type="button" onClick={() => setContact(true)} className="font-semibold text-hockia-primary">Contact us</button> and we’ll sort it out.</span>
+            <span><Trans t={t} i18nKey="linkClub.search.alreadyLinked" components={{ button: <button type="button" onClick={() => setContact(true)} className="font-semibold text-hockia-primary" /> }} /></span>
           </div>
         )}
 
         {pick && (
           <>
-            {sectionLabel('Leagues')}
+            {sectionLabel(t('linkClub.leagues.label'))}
             <div className="px-5">
               <div className="rounded-card bg-surface-grouped">
                 {(['men', 'women'] as Side[]).map((side, i) => (
                   <div key={side}>
                     <button type="button" onClick={() => setPicker(side)} disabled={leagues.length === 0} className="flex min-h-[45px] w-full items-center gap-3 py-3 pl-4 pr-3 text-left disabled:opacity-60">
-                      <span className="min-w-0 flex-1 text-[16px] leading-[21px] text-ink-1">{side === 'men' ? 'Men’s teams' : 'Women’s teams'}</span>
-                      <span className={cn('max-w-[55%] shrink-0 truncate text-[16px] leading-[21px]', (side === 'men' ? menId : womenId) === null ? 'text-ink-4' : 'text-ink-2')}>{leagueLabel(side === 'men' ? menId : womenId, 'Not set')}</span>
+                      <span className="min-w-0 flex-1 text-[16px] leading-[21px] text-ink-1">{side === 'men' ? t('linkClub.leagues.menTeams') : t('linkClub.leagues.womenTeams')}</span>
+                      <span className={cn('max-w-[55%] shrink-0 truncate text-[16px] leading-[21px]', (side === 'men' ? menId : womenId) === null ? 'text-ink-4' : 'text-ink-2')}>{leagueLabel(side === 'men' ? menId : womenId, t('linkClub.leagues.notSet'))}</span>
                       <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} />
                     </button>
                     {i === 0 && <div className="ml-4 h-[0.5px] bg-line" />}
@@ -308,11 +311,11 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
             {leagues.length === 0 && (
               <div className="mx-5 mt-3 flex items-start gap-2.5 rounded-card bg-surface-grouped px-3.5 py-3 text-secondary leading-[18px] text-ink-2" data-testid="link-club-no-leagues">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
-                <span>Hockia has no leagues for {countryName} yet. Your opportunities work in the meantime; fit just can’t compare levels until we add yours.</span>
+                <span>{t('linkClub.leagues.noLeagues', { country: countryName })}</span>
               </div>
             )}
             <div className="px-5 pt-4">
-              <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">Can’t find your league? Contact us</button>
+              <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">{t('linkClub.leagues.contact')}</button>
             </div>
           </>
         )}
@@ -327,39 +330,39 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
           disabled={!pick || saving || finishing}
           className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
         >
-          {saving ? 'Linking…' : pick?.kind === 'new' ? 'Add and link' : 'Link club'}
+          {saving ? t('linkClub.actions.linking') : pick?.kind === 'new' ? t('linkClub.actions.addAndLink') : t('linkClub.actions.linkClub')}
         </button>
         {onboarding && onSkip && (
           <button type="button" onClick={onSkip} disabled={saving || finishing} className="mt-1 flex h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary disabled:opacity-60">
-            {finishing ? 'Finishing…' : 'Skip for now'}
+            {finishing ? t('linkClub.actions.finishing') : t('linkClub.actions.skip')}
           </button>
         )}
       </div>
 
-      <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? 'Women’s teams league' : 'Men’s teams league'}>
+      <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? t('linkClub.leagues.womenLeagueAria') : t('linkClub.leagues.menLeagueAria')}>
         <div className="px-5 pb-6 pt-2">
-          <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">{picker === 'women' ? 'Women’s teams' : 'Men’s teams'}</h2>
-          <p className="mt-1 text-secondary text-ink-2">The league of your top {picker === 'women' ? 'women’s' : 'men’s'} team in {countryName}.</p>
+          <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">{picker === 'women' ? t('linkClub.leagues.womenTeams') : t('linkClub.leagues.menTeams')}</h2>
+          <p className="mt-1 text-secondary text-ink-2">{picker === 'women' ? t('linkClub.leagues.pickerWomen', { country: countryName }) : t('linkClub.leagues.pickerMen', { country: countryName })}</p>
           <div className="mt-4 divide-y divide-line rounded-card bg-surface-grouped">
-            {[...leagues.map((l) => ({ id: l.id as number | null, label: leagueLabel(l.id, l.name), tier: l.tier })), { id: null, label: 'Not set', tier: null }].map((opt) => {
+            {[...leagues.map((l) => ({ id: l.id as number | null, label: leagueLabel(l.id, l.name), tier: l.tier })), { id: null, label: t('linkClub.leagues.pickerNotSet'), tier: null }].map((opt) => {
               const current = picker === 'women' ? womenId : menId
               const on = current === opt.id
               return (
                 <button key={opt.id ?? 'none'} type="button" role="radio" aria-checked={on} onClick={() => { if (picker === 'women') setWomenId(opt.id); else setMenId(opt.id); setPicker(null) }} className="flex min-h-[50px] w-full items-center gap-3 px-4 py-3 text-left">
                   <span className={cn('min-w-0 flex-1 text-body', opt.id === null ? 'text-ink-2' : 'text-ink-1')}>{opt.label}</span>
-                  {opt.tier !== null && <span className="shrink-0 text-caption text-ink-3">Tier {opt.tier}</span>}
+                  {opt.tier !== null && <span className="shrink-0 text-caption text-ink-3">{t('linkClub.leagues.tier', { tier: opt.tier })}</span>}
                   {on && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.5} />}
                 </button>
               )
             })}
           </div>
-          <button type="button" onClick={() => { setPicker(null); setContact(true) }} className="mt-4 text-row font-semibold text-hockia-primary">Can’t find your league? Contact us</button>
+          <button type="button" onClick={() => { setPicker(null); setContact(true) }} className="mt-4 text-row font-semibold text-hockia-primary">{t('linkClub.leagues.pickerContact')}</button>
         </div>
       </BottomSheet>
 
-      <BottomSheet open={countrySheet} onClose={() => setCountrySheet(false)} ariaLabel="Country">
+      <BottomSheet open={countrySheet} onClose={() => setCountrySheet(false)} ariaLabel={t('linkClub.actions.countryAria')}>
         <div className="px-5 pb-6 pt-2">
-          <h2 className="mb-3 text-[20px] font-bold leading-[25px] text-ink-1">Country</h2>
+          <h2 className="mb-3 text-[20px] font-bold leading-[25px] text-ink-1">{t('linkClub.actions.countryTitle')}</h2>
           <CountrySelect value={countryId} onChange={(id) => { setCountryId(id); setCountrySheet(false) }} appearance="field" />
         </div>
       </BottomSheet>

@@ -2,12 +2,14 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 're
 import { createPortal } from 'react-dom'
 import { format, isToday, isYesterday } from 'date-fns'
 import { clockTime, dayFirst } from '@/lib/dayFirst'
+import { getDateFnsLocale } from '@/i18n/format'
+import { tInbox, useInboxT } from '@/i18n/ns/inbox'
 
 /** "Today" · "Yesterday" · "Monday, 12 Sep" — the day label above a group (day first, lib/dayFirst). */
 function dayLabel(d: Date): string {
-  if (isToday(d)) return 'Today'
-  if (isYesterday(d)) return 'Yesterday'
-  return `${format(d, 'EEEE')}, ${dayFirst(d)}`
+  if (isToday(d)) return tInbox('chat.bubble.today')
+  if (isYesterday(d)) return tInbox('chat.bubble.yesterday')
+  return tInbox('chat.bubble.dayLabel', { weekday: format(d, 'EEEE', { locale: getDateFnsLocale() }), date: dayFirst(d) })
 }
 import { AlertCircle, Ban, Check, CheckCheck, Copy, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
@@ -95,6 +97,7 @@ export function MessageBubble({
   hideReceipts = false,
   otherParticipantName = null
 }: MessageBubbleProps) {
+  const t = useInboxT()
   // The one clock in the app (lib/dayFirst clockTime); the inbox list reads the same.
   const timestampLabel = clockTime(message.sent_at)
 
@@ -242,10 +245,10 @@ export function MessageBubble({
   const copyMessage = async () => {
     try {
       await navigator.clipboard.writeText(message.content)
-      addToast('Copied', 'success')
+      addToast(t('chat.bubble.copied'), 'success')
     } catch (error) {
       logger.error('Copy message failed:', error)
-      addToast('Could not copy the message.', 'error')
+      addToast(t('chat.bubble.copyFailed'), 'error')
     }
   }
 
@@ -258,9 +261,9 @@ export function MessageBubble({
   }
 
   const actionItems: ActionSheetItem[] = [
-    ...(canCopy ? [{ key: 'copy', label: 'Copy', icon: <Copy className="h-5 w-5" />, onSelect: () => void copyMessage(), testId: 'message-copy-action' }] : []),
-    ...(canEdit ? [{ key: 'edit', label: 'Edit', icon: <Pencil className="h-5 w-5" />, onSelect: startEdit, testId: 'message-sheet-edit-action' }] : []),
-    ...(canDelete ? [{ key: 'delete', label: 'Delete', icon: <Trash2 className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => setShowDeleteConfirm(true), testId: 'message-sheet-delete-action' }] : []),
+    ...(canCopy ? [{ key: 'copy', label: t('chat.bubble.sheet.copy'), icon: <Copy className="h-5 w-5" />, onSelect: () => void copyMessage(), testId: 'message-copy-action' }] : []),
+    ...(canEdit ? [{ key: 'edit', label: t('chat.bubble.sheet.edit'), icon: <Pencil className="h-5 w-5" />, onSelect: startEdit, testId: 'message-sheet-edit-action' }] : []),
+    ...(canDelete ? [{ key: 'delete', label: t('chat.bubble.sheet.delete'), icon: <Trash2 className="h-5 w-5" />, tone: 'danger' as const, onSelect: () => setShowDeleteConfirm(true), testId: 'message-sheet-delete-action' }] : []),
   ]
 
   const trimmedDraft = draft.trim()
@@ -281,7 +284,7 @@ export function MessageBubble({
       {isUnreadMarker && (
         <div className="flex items-center gap-3 py-3">
           <div className="flex-1 h-px bg-hockia-soft" />
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-primary">New</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-primary">{t('chat.bubble.newMarker')}</span>
           <div className="flex-1 h-px bg-hockia-soft" />
         </div>
       )}
@@ -294,7 +297,7 @@ export function MessageBubble({
             data-testid="message-deleted"
           >
             <Ban className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-            Message deleted
+            {t('chat.bubble.deleted')}
           </div>
         </div>
       ) : invite ? (
@@ -340,7 +343,7 @@ export function MessageBubble({
               onKeyDown={handleEditorKeyDown}
               rows={1}
               className="w-full resize-none rounded-2xl border border-line bg-white px-3.5 py-2 text-[15px] leading-relaxed text-ink-1 shadow-sm outline-none focus:border-brand-primary focus-visible:ring-2 focus-visible:ring-hockia-soft"
-              aria-label="Edit message"
+              aria-label={t('chat.bubble.editLabel')}
             />
             <div className="mt-1.5 flex items-center justify-end gap-2">
               <button
@@ -349,7 +352,7 @@ export function MessageBubble({
                 disabled={saving}
                 className="rounded-full px-3 py-1 text-[13px] font-medium text-ink-2 transition hover:bg-surface-muted hover:text-ink-2 disabled:opacity-50"
               >
-                Cancel
+                {t('chat.bubble.editCancel')}
               </button>
               <button
                 type="button"
@@ -359,7 +362,7 @@ export function MessageBubble({
                 className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-3.5 py-1 text-[13px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
-                Save
+                {t('chat.bubble.editSave')}
               </button>
             </div>
           </div>
@@ -370,7 +373,7 @@ export function MessageBubble({
             <button
               ref={triggerRef}
               type="button"
-              aria-label="Message options"
+              aria-label={t('chat.bubble.options')}
               data-testid="message-options-trigger"
               onClick={() => (showMenu ? setShowMenu(false) : openMenu())}
               className={cn(
@@ -403,7 +406,7 @@ export function MessageBubble({
                     className="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-subtle"
                   >
                     <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                    Copy
+                    {t('chat.bubble.menu.copy')}
                   </button>
                 )}
                 {canEdit && (
@@ -414,7 +417,7 @@ export function MessageBubble({
                     className="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-subtle"
                   >
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                    Edit
+                    {t('chat.bubble.menu.edit')}
                   </button>
                 )}
                 <button
@@ -427,7 +430,7 @@ export function MessageBubble({
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-status-danger hover:bg-accent-red-soft"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Delete
+                  {t('chat.bubble.menu.delete')}
                 </button>
               </div>
             </>,
@@ -472,7 +475,7 @@ export function MessageBubble({
               isMine ? 'justify-end' : ''
             )}>
               {message.edited_at && (
-                <span className={isMine ? 'text-white/60' : 'text-ink-4'}>edited</span>
+                <span className={isMine ? 'text-white/60' : 'text-ink-4'}>{t('chat.bubble.edited')}</span>
               )}
               <span className={isMine ? 'text-white/70' : 'text-ink-4'}>{timestampLabel}</span>
               {isMine && (
@@ -482,7 +485,7 @@ export function MessageBubble({
                       type="button"
                       onClick={() => onRetry(message.id)}
                       className="rounded-full p-0.5 text-white/80 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
-                      aria-label="Retry sending message"
+                      aria-label={t('chat.bubble.retry')}
                     >
                       <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -490,7 +493,7 @@ export function MessageBubble({
                       type="button"
                       onClick={() => onDeleteFailed(message.id)}
                       className="rounded-full p-0.5 text-white/80 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
-                      aria-label="Delete failed message"
+                      aria-label={t('chat.bubble.deleteFailed')}
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -524,16 +527,16 @@ export function MessageBubble({
       <BottomSheet
         open={showDeleteConfirm}
         onClose={() => { if (!deleting) setShowDeleteConfirm(false) }}
-        ariaLabel="Delete this message?"
+        ariaLabel={t('chat.bubble.deleteConfirm.label')}
       >
         <div className="px-5 pb-2 pt-2 text-center" data-testid="message-delete-confirm">
-          <h2 className="text-title text-ink-1">Delete this message?</h2>
+          <h2 className="text-title text-ink-1">{t('chat.bubble.deleteConfirm.title')}</h2>
           <p className="mt-2 text-row leading-[21px] text-ink-2">
             {canManage && canHide
-              ? '"Delete for everyone" removes it for both of you. "Delete for me" removes it only from your chat.'
+              ? t('chat.bubble.deleteConfirm.bodyBoth')
               : canManage
-                ? 'This removes the message for both of you. This can\'t be undone.'
-                : 'This removes the message only from your chat. The other person still has it.'}
+                ? t('chat.bubble.deleteConfirm.bodyEveryone')
+                : t('chat.bubble.deleteConfirm.bodyMe')}
           </p>
           {canManage && (
             <button
@@ -543,7 +546,7 @@ export function MessageBubble({
               className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60"
               data-testid="message-delete-everyone"
             >
-              {deleting === 'everyone' ? 'Deleting…' : canHide ? 'Delete for everyone' : 'Delete'}
+              {deleting === 'everyone' ? t('chat.bubble.deleteConfirm.deleting') : canHide ? t('chat.bubble.deleteConfirm.forEveryone') : t('chat.bubble.deleteConfirm.delete')}
             </button>
           )}
           {canHide && (
@@ -557,7 +560,7 @@ export function MessageBubble({
               )}
               data-testid="message-delete-me"
             >
-              {deleting === 'me' ? 'Deleting…' : 'Delete for me'}
+              {deleting === 'me' ? t('chat.bubble.deleteConfirm.deletingMine') : t('chat.bubble.deleteConfirm.forMe')}
             </button>
           )}
           <button
@@ -566,7 +569,7 @@ export function MessageBubble({
             disabled={deleting !== null}
             className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1 disabled:opacity-60"
           >
-            Cancel
+            {t('chat.bubble.deleteConfirm.cancel')}
           </button>
         </div>
       </BottomSheet>

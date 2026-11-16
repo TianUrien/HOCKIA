@@ -13,6 +13,9 @@
  * is actively on a panel somewhere.
  */
 
+import { intlLocale } from '@/i18n/format'
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+
 export type UmpireActivityState = 'active' | 'recent' | 'distant'
 
 export interface UmpireActivity {
@@ -38,22 +41,24 @@ export function getUmpireActivity(
   const ageMs = now.getTime() - date.getTime()
 
   if (ageMs <= SIX_MONTHS_MS) {
-    return { state: 'active', label: 'Active this season' }
+    return { state: 'active', label: tProfileEdit('umpireActivity.active') }
   }
 
   if (ageMs <= TWENTY_FOUR_MONTHS_MS) {
     return {
       state: 'recent',
-      label: `Last officiated: ${date.toLocaleDateString(undefined, {
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      })}`,
+      label: tProfileEdit('umpireActivity.lastOfficiated', {
+        date: date.toLocaleDateString(intlLocale(), {
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }),
+      }),
     }
   }
 
   return {
     state: 'distant',
-    label: `Last officiated: ${date.getUTCFullYear()}`,
+    label: tProfileEdit('umpireActivity.lastOfficiated', { date: String(date.getUTCFullYear()) }),
   }
 }

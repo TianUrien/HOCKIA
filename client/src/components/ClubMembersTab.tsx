@@ -14,6 +14,7 @@ import { getClubInvitations, removeClubMember, type ClubInvitation } from '@/lib
 import type { Database } from '@/lib/database.types'
 import { STATUS_TONE_TEXT, invitationPendingTone } from '@/lib/statusTone'
 import { positionLabel } from '@/lib/identity'
+import { useWorldT } from '@/i18n/ns/world'
 
 type ClubMember = Database['public']['Functions']['get_club_members']['Returns'][number]
 
@@ -37,6 +38,7 @@ function buildMeta(member: ClubMember): string {
 
 export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembersTabProps) {
   const navigate = useNavigate()
+  const t = useWorldT()
   const { user, profile: currentUserProfile } = useAuthStore()
   const { addToast } = useToastStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
@@ -94,7 +96,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
     setError(null)
     const data = await fetchMembers(0)
     if (data === null) {
-      setError('Failed to load members. Please try again.')
+      setError(t('club.members.loadFailed'))
       setMembers([])
       setTotalCount(0)
     } else if (data.length > 0) {
@@ -105,7 +107,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
       setTotalCount(0)
     }
     setLoading(false)
-  }, [fetchMembers])
+  }, [fetchMembers, t])
 
   useEffect(() => {
     let cancelled = false
@@ -120,7 +122,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
     setLoadingMore(true)
     const data = await fetchMembers(members.length)
     if (data === null) {
-      addToast('Failed to load more members. Please try again.', 'error')
+      addToast(t('club.members.loadMoreFailed'), 'error')
     } else if (data.length > 0) {
       setMembers((prev) => [...prev, ...data])
       setTotalCount(data[0].total_count)
@@ -134,9 +136,9 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
     if (res.success) {
       setMembers((prev) => prev.filter((m) => m.id !== removeTarget.id))
       setTotalCount((c) => Math.max(0, c - 1))
-      addToast(`${removeTarget.full_name ?? 'Member'} removed from the club.`, 'success')
+      addToast(removeTarget.full_name ? t('club.members.removed', { name: removeTarget.full_name }) : t('club.members.removedNoName'), 'success')
     } else {
-      addToast(res.error ?? 'Could not remove the member.', 'error')
+      addToast(res.error ?? t('club.members.removeFailed'), 'error')
       throw new Error('remove failed') // keep ConfirmDialog open
     }
   }
@@ -146,7 +148,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
     if (res.success) {
       setPending((prev) => prev.filter((p) => p.club_member_id !== invite.club_member_id))
     } else {
-      addToast(res.error ?? 'Could not cancel the invitation.', 'error')
+      addToast(res.error ?? t('club.members.cancelInviteFailed'), 'error')
     }
   }
 
@@ -157,7 +159,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
 
   const heading = (
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-xl font-bold text-gray-900">Members</h2>
+      <h2 className="text-xl font-bold text-gray-900">{t('club.members.title')}</h2>
       {isOwner && (
         <button
           type="button"
@@ -166,7 +168,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
           data-testid="invite-members-button"
         >
           <UserPlus className="w-4 h-4" />
-          Invite
+          {t('club.members.invite')}
         </button>
       )}
     </div>
@@ -185,9 +187,9 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
       isOpen={Boolean(removeTarget)}
       onClose={() => setRemoveTarget(null)}
       onConfirm={handleConfirmRemove}
-      title="Remove this member?"
-      message={`${removeTarget?.full_name ?? 'This member'} will be removed from your club roster.`}
-      confirmLabel="Remove"
+      title={t('club.members.removeTitle')}
+      message={removeTarget?.full_name ? t('club.members.removeBody', { name: removeTarget.full_name }) : t('club.members.removeBodyNoName')}
+      confirmLabel={t('club.members.removeConfirm')}
       variant="danger"
       testId="remove-member-confirm"
     />
@@ -196,7 +198,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
   // Pending invites subsection (owner only)
   const pendingSection = isOwner && pending.length > 0 && (
     <div className="mb-6">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Pending invites</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">{t('club.members.pendingTitle')}</h3>
       <div className="divide-y divide-gray-100">
         {pending.map((inv) => (
           <div key={inv.club_member_id} className="flex items-center gap-3 py-2.5 px-1">
@@ -206,14 +208,14 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
                 <span className="font-semibold text-gray-900 text-sm truncate">{inv.full_name}</span>
                 <RoleBadge role={inv.role as 'player' | 'coach'} />
               </div>
-              <p className={`text-xs mt-0.5 ${STATUS_TONE_TEXT[invitationPendingTone()]}`}>Invitation pending{inv.invited_via === 'link' ? ' · via link' : ''}</p>
+              <p className={`text-xs mt-0.5 ${STATUS_TONE_TEXT[invitationPendingTone()]}`}>{inv.invited_via === 'link' ? t('club.members.pendingViaLink') : t('club.members.pending')}</p>
             </div>
             <button
               type="button"
               onClick={() => void handleCancelInvite(inv)}
               className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             >
-              Cancel
+              {t('club.members.cancelInvite')}
             </button>
           </div>
         ))}
@@ -254,7 +256,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
             onClick={() => void loadFirstPage()}
             className="mt-2 px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors"
           >
-            Try again
+            {t('club.members.tryAgain')}
           </button>
         </div>
         {inviteModal}
@@ -271,11 +273,11 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="w-8 h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No members yet</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('club.members.emptyTitle')}</h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto">
             {isOwner
-              ? 'Invite players and coaches to build your club’s roster. They’ll appear here once they accept.'
-              : 'Players and coaches who join this club will appear here.'}
+              ? t('club.members.emptyOwner')
+              : t('club.members.emptyVisitor')}
           </p>
           {isOwner && (
             <button
@@ -284,7 +286,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
               className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6B20D4]"
             >
               <UserPlus className="w-4 h-4" />
-              Invite members
+              {t('club.members.inviteMembers')}
             </button>
           )}
         </div>
@@ -334,7 +336,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
                 <button
                   type="button"
                   onClick={() => setRemoveTarget(member)}
-                  aria-label={`Remove ${member.full_name ?? 'member'}`}
+                  aria-label={member.full_name ? t('club.members.removeLabel', { name: member.full_name }) : t('club.members.removeLabelNoName')}
                   className="flex-shrink-0 p-2 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors md:opacity-0 md:group-hover:opacity-100"
                 >
                   <X className="w-4 h-4" />
@@ -353,7 +355,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
             disabled={loadingMore}
             className="px-8 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loadingMore ? 'Loading...' : 'Load More'}
+            {loadingMore ? t('club.members.loading') : t('club.members.loadMore')}
           </button>
         </div>
       )}

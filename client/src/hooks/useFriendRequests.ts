@@ -6,6 +6,7 @@ import { useToastStore } from '@/lib/toast'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import type { Database } from '@/lib/database.types'
 import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
+import { tProfile } from '@/i18n/ns/profile'
 
 type FriendEdge = Database['public']['Views']['profile_friend_edges']['Row']
 type FriendStatus = Database['public']['Enums']['friendship_status']
@@ -115,7 +116,7 @@ export function useFriendRequests() {
         return true
       } catch (err) {
         logger.error('[useFriendRequests] update failed', err)
-        const msg = friendRequestErrorMessage(err, 'Could not update the request. Please try again.')
+        const msg = friendRequestErrorMessage(err, tProfile('useFriendRequests.updateFailed'))
         addToast(msg, friendRequestToastType(msg))
         return false
       } finally {

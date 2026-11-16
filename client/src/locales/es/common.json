@@ -188,5 +188,130 @@
     "notGiven": "Sin datos",
     "addPassport": "Agregar pasaporte",
     "addAnother": "Agregar otro"
+  },
+  "documentTitle": {
+    "default": "Hockia – Donde el hockey sobre césped se mantiene unido."
+  },
+  "backLabel": {
+    "myApplications": "Mis postulaciones",
+    "opportunities": "Oportunidades",
+    "role": "Oportunidad",
+    "home": "Inicio",
+    "inbox": "Mensajes",
+    "community": "Comunidad",
+    "notifications": "Notificaciones",
+    "search": "Buscar",
+    "profile": "Perfil"
+  },
+  "appVersion": {
+    "platform": {
+      "iosNative": "App para iOS",
+      "androidNative": "App para Android",
+      "pwa": "App web (instalada)",
+      "web": "Web (navegador)"
+    }
+  },
+  "timeAgo": {
+    "justNow": "Recién",
+    "compactMinutes": "hace {{count}} min",
+    "compactHours": "hace {{count}} h",
+    "compactDays": "hace {{count}} d",
+    "minutes_one": "hace {{count}} minuto",
+    "minutes_other": "hace {{count}} minutos",
+    "minutes_many": "hace {{count}} minutos",
+    "hours_one": "hace {{count}} hora",
+    "hours_other": "hace {{count}} horas",
+    "hours_many": "hace {{count}} horas",
+    "days_one": "hace {{count}} día",
+    "days_other": "hace {{count}} días",
+    "days_many": "hace {{count}} días",
+    "weeks_one": "hace {{count}} semana",
+    "weeks_other": "hace {{count}} semanas",
+    "weeks_many": "hace {{count}} semanas"
+  },
+  "technicalErrors": {
+    "notAccepting": "Esta persona no acepta solicitudes.",
+    "permission": "No hay permiso para hacer esto.",
+    "duplicate": "Esto ya existe. Puede servir actualizar la página.",
+    "invalidData": "Algunos de los datos no son válidos. Revisarlos e intentar de nuevo.",
+    "missingRelated": "Falta un registro relacionado o se eliminó.",
+    "notFound": "No se encontró el elemento. Puede que se haya eliminado.",
+    "rateLimit": "Demasiadas solicitudes. Esperar un momento e intentar de nuevo.",
+    "timeout": "La solicitud tardó demasiado. Intentar de nuevo.",
+    "network": "Error de red. Revisar la conexión e intentar de nuevo.",
+    "sessionExpired": "La sesión expiró. Hay que iniciar sesión de nuevo."
+  },
+  "inAppBrowser": {
+    "metaSteps": "Tocar {{menu}} arriba a la derecha y después “Abrir en el navegador externo”.",
+    "whatsappSteps": "Tocar {{menu}} arriba a la derecha y después “Abrir en el navegador”.",
+    "tiktokSteps": "Tocar ⋯ arriba a la derecha y después “Abrir en el navegador”.",
+    "linkedinSteps": "Tocar {{menu}} y después “Abrir en el navegador”.",
+    "genericSteps": "Abrir esta página en el navegador desde el menú de la app, o copiar el enlace y pegarlo en Safari o Chrome."
+  },
+  "skeletons": {
+    "opportunity": "Cargando oportunidad",
+    "profile": "Cargando perfil",
+    "activity": "Cargando actividad",
+    "conversation": "Cargando conversación",
+    "applicants": "Cargando postulaciones",
+    "backToConversations": "Volver a las conversaciones",
+    "page": "Cargando..."
+  },
+  "storeBadges": {
+    "appStore": "Descargar Hockia en el App Store",
+    "googlePlay": "Descargar Hockia en Google Play"
+  },
+  "detailNav": {
+    "backTo": "Volver a {{parent}}"
+  },
+  "segmented": {
+    "withCount": "{{label}} · {{count}}",
+    "newLabel": "{{label}}, nuevo"
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "subtitle": "Para moverse por Hockia más rápido con el teclado",
+    "then": "y después",
+    "footer": "Los atajos no funcionan al escribir en un formulario ni con una ventana abierta",
+    "groups": {
+      "navigation": "Navegación",
+      "search": "Búsqueda",
+      "help": "Ayuda"
+    },
+    "goCommunity": "Ir a Comunidad",
+    "goOpportunities": "Ir a Oportunidades",
+    "goWorld": "Ir al directorio mundial",
+    "goMarketplace": "Ir a Marketplace",
+    "goMessages": "Ir a Mensajes",
+    "goDashboard": "Ir al panel",
+    "focusSearch": "Buscar en esta página",
+    "showHelp": "Ver los atajos de teclado"
+  },
+  "errors": {
+    "recruiterMinor": "Clubes y cuerpos técnicos no pueden contactar a este perfil."
+  },
+  "upload": {
+    "errors": {
+      "tooLarge100": "El archivo es demasiado pesado. Los videos tienen que pesar menos de 100 MB.",
+      "typeNotSupported": "Este tipo de archivo no es compatible. Formatos admitidos: MP4, MOV o WebM.",
+      "network": "Error de red. Revisar la conexión y volver a intentarlo.",
+      "unavailable": "La subida de videos no está disponible por el momento. Volver a intentarlo más tarde.",
+      "hourlyLimit": "Se iniciaron muchas subidas en la última hora. Volver a intentarlo un poco más tarde.",
+      "invalidVideo": "Video no válido",
+      "couldNotStart": "No se pudo iniciar la subida. Volver a intentarlo.",
+      "stillProcessing": "Todavía se está procesando. Puede estar listo en unos minutos.",
+      "processingFailed": "Cloudflare no pudo procesar este video. Probar con otro archivo.",
+      "failed": "La subida falló",
+      "nativeType": "El video tiene que ser MP4, MOV, WebM o M4V.",
+      "nativeTooLarge": "El video pesa más de 1 GB. Hay que recortarlo o comprimirlo antes de subirlo.",
+      "interrupted": "La subida se interrumpió. Volver a intentarlo.",
+      "invalidFileName": "Nombre de archivo no válido",
+      "videoTypes": "Solo se admiten videos MP4, MOV o WebM.",
+      "videoTooLarge": "El video es demasiado pesado. Máximo: {{maxMb}} MB.",
+      "videoTooLong": "El video puede durar hasta {{maxMinutes}} minutos. Duración actual: {{seconds}} s.",
+      "unreadableVideo": "No se pudieron leer los datos del video. Puede que el archivo esté dañado.",
+      "imageTypes": "Solo se admiten imágenes JPG/JPEG o PNG.",
+      "imageTooLarge": "La imagen tiene que pesar menos de {{maxMb}} MB."
+    }
   }
 }

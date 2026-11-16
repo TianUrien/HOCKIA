@@ -16,6 +16,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface SearchResult {
   id: string
@@ -37,6 +38,7 @@ interface NewMessageModalProps {
 }
 
 export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProps) {
+  const t = useInboxT()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
@@ -79,14 +81,14 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
         // Surface the failure so the empty state isn't confused with
         // "no recent contacts" — user gets a one-shot toast and can still
         // search by name (search is a separate, independent code path).
-        addToast('Could not load recent contacts. You can still search by name.', 'error')
+        addToast(t('newMessage.recentFailed'), 'error')
       } finally {
         setIsLoadingRecent(false)
       }
     }
 
     fetchRecentContacts()
-  }, [isOpen, user?.id, addToast])
+  }, [isOpen, user?.id, addToast, t])
 
   // Search users with debounce
   const searchUsers = useCallback(async (query: string) => {
@@ -155,8 +157,8 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">New message</h2>
-              <p className="text-sm text-gray-500">Start a conversation</p>
+              <h2 className="text-xl font-bold text-gray-900">{t('newMessage.title')}</h2>
+              <p className="text-sm text-gray-500">{t('newMessage.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -166,7 +168,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
-            placeholder="Search by name or club..."
+            placeholder={t('newMessage.searchPlaceholder')}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -186,7 +188,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
         {/* Section Label */}
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-          {searchTerm.trim() ? 'Search results' : 'Recent conversations'}
+          {searchTerm.trim() ? t('newMessage.searchResults') : t('newMessage.recent')}
         </p>
 
         {/* Results List */}
@@ -200,12 +202,12 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
             ) : showEmptyState ? (
               // Empty search results
               <div className="p-6 text-center text-sm text-gray-500">
-                No users found matching "{searchTerm}"
+                {t('newMessage.noResults', { term: searchTerm })}
               </div>
             ) : displayedUsers.length === 0 ? (
               // No recent contacts
               <div className="p-6 text-center text-sm text-gray-500">
-                Start typing to search for users
+                {t('newMessage.startTyping')}
               </div>
             ) : (
               displayedUsers.map((profile) => (
@@ -242,7 +244,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
         {/* Help text */}
         <p className="mt-4 text-xs text-gray-400 text-center">
-          Select a person to start a conversation
+          {t('newMessage.help')}
         </p>
       </div>
     </Modal>

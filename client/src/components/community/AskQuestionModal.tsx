@@ -9,6 +9,8 @@ import { X } from 'lucide-react'
 import { QUESTION_CATEGORIES, CATEGORY_LABELS } from '@/types/questions'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import type { QuestionCategory, CreateQuestionInput } from '@/types/questions'
+import { useCommunityT } from '@/i18n/ns/community'
+import { formatNumber } from '@/i18n/format'
 
 interface AskQuestionModalProps {
   isOpen: boolean
@@ -23,6 +25,7 @@ export function AskQuestionModal({
   onSubmit,
   isSubmitting = false,
 }: AskQuestionModalProps) {
+  const t = useCommunityT()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [category, setCategory] = useState<QuestionCategory>('other')
@@ -98,12 +101,12 @@ export function AskQuestionModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
-              Ask a Question
+              {t('questions.ask.title')}
             </h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Close"
+              aria-label={t('questions.ask.close')}
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
@@ -114,7 +117,7 @@ export function AskQuestionModal({
             {/* Title */}
             <div>
               <label htmlFor="question-title" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Your Question <span className="text-red-500">*</span>
+                {t('questions.ask.titleLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 ref={titleInputRef}
@@ -122,7 +125,7 @@ export function AskQuestionModal({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., How do I find trials abroad?"
+                placeholder={t('questions.ask.titlePlaceholder')}
                 maxLength={120}
                 autoCapitalize="sentences"
                 spellCheck
@@ -143,7 +146,7 @@ export function AskQuestionModal({
             {/* Category */}
             <div>
               <label htmlFor="question-category" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Category
+                {t('questions.ask.categoryLabel')}
               </label>
               <select
                 id="question-category"
@@ -162,13 +165,13 @@ export function AskQuestionModal({
             {/* Body (optional) */}
             <div>
               <label htmlFor="question-body" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Additional Details <span className="text-gray-400 font-normal">(optional)</span>
+                {t('questions.ask.bodyLabel')} <span className="text-gray-400 font-normal">{t('questions.ask.optional')}</span>
               </label>
               <textarea
                 id="question-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Add any context that might help others understand your question better..."
+                placeholder={t('questions.ask.bodyPlaceholder')}
                 rows={4}
                 maxLength={1500}
                 autoCapitalize="sentences"
@@ -181,7 +184,7 @@ export function AskQuestionModal({
               />
               <div className="flex justify-end mt-1">
                 <span className={`text-xs ${bodyLength > 1500 ? 'text-red-500' : 'text-gray-400'}`}>
-                  {bodyLength}/1,500
+                  {bodyLength}/{formatNumber(1500)}
                 </span>
               </div>
             </div>
@@ -194,7 +197,7 @@ export function AskQuestionModal({
                 className="px-5 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition-colors"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t('questions.ask.cancel')}
               </button>
               <button
                 type="submit"
@@ -204,10 +207,10 @@ export function AskQuestionModal({
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Posting...
+                    {t('questions.ask.posting')}
                   </>
                 ) : (
-                  'Post Question'
+                  t('questions.ask.submit')
                 )}
               </button>
             </div>

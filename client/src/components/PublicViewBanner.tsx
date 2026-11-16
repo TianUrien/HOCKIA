@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Eye, ArrowLeft } from 'lucide-react'
+import { Trans } from 'react-i18next'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * PublicViewBanner - Shows when a user is viewing their own profile in network mode
@@ -15,6 +17,7 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
   /** D2 "View as club": the phone bar says it's the club view. */
   clubView?: boolean } = {}) {
   const navigate = useNavigate()
+  const t = useProfileT()
 
   const handleReturnToDashboard = () => {
     navigate('/dashboard/profile')
@@ -26,9 +29,9 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
         <div className="flex items-center gap-2 bg-ink-1 px-5 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] text-white lg:hidden">
           <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate text-secondary">{clubView
-            ? <><span className="font-semibold">Club view</span> · how clubs see you</>
-            : <><span className="font-semibold">Public view</span> · how other members see you</>}</p>
-          <button type="button" onClick={handleReturnToDashboard} className="shrink-0 text-secondary font-semibold text-white underline-offset-2">Done</button>
+            ? <Trans t={t} i18nKey="publicViewBanner.clubView" components={{ strong: <span className="font-semibold" /> }} />
+            : <Trans t={t} i18nKey="publicViewBanner.publicView" components={{ strong: <span className="font-semibold" /> }} />}</p>
+          <button type="button" onClick={handleReturnToDashboard} className="shrink-0 text-secondary font-semibold text-white underline-offset-2">{t('publicViewBanner.done')}</button>
         </div>
       )}
       <div className={compactOnPhone ? 'hidden lg:block' : undefined}>
@@ -44,10 +47,10 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
               </div>
               <div className="text-left">
                 <p className="font-semibold text-sm md:text-base leading-tight">
-                  You are viewing your network profile.
+                  {t('publicViewBanner.title')}
                 </p>
                 <p className="text-white/80 text-xs md:text-sm leading-tight mt-0.5">
-                  This is how other Hockia members see you.
+                  {t('publicViewBanner.body')}
                 </p>
               </div>
             </div>
@@ -56,7 +59,7 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-hockia-primary rounded-lg hover:bg-white/90 transition-colors text-sm font-medium shadow-sm whitespace-nowrap w-full sm:w-auto"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to My Profile
+              {t('publicViewBanner.back')}
             </button>
           </div>
         </div>

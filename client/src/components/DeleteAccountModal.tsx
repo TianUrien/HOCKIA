@@ -5,6 +5,8 @@ import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { clearAllProfileDraftsForUser } from '@/lib/profileDrafts'
+import { Trans } from 'react-i18next'
+import { useSettingsT } from '@/i18n/ns/settings'
 
 interface DeleteAccountModalProps {
   isOpen: boolean
@@ -13,6 +15,7 @@ interface DeleteAccountModalProps {
 }
 
 export default function DeleteAccountModal({ isOpen, onClose, userEmail }: DeleteAccountModalProps) {
+  const t = useSettingsT()
   const { signOut, profile } = useAuthStore()
   const [confirmText, setConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
@@ -54,7 +57,9 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
 
   if (!isOpen) return null
 
-  const isConfirmed = confirmText.toUpperCase() === 'DELETE'
+  // The word to type is in the catalog ("DELETE" in English).
+  const confirmWord = t('deleteAccount.confirmWord')
+  const isConfirmed = confirmText.toUpperCase() === confirmWord.toUpperCase()
 
   const handleDelete = async () => {
     if (!isConfirmed) return
@@ -67,7 +72,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
 
       if (refreshError || !session) {
-        throw new Error('No active session. Please sign in again.')
+        throw new Error(t('deleteAccount.errors.noSession'))
       }
 
       // Call the delete-account edge function with fresh token
@@ -88,13 +93,13 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
       try {
         result = await response.json()
       } catch {
-        throw new Error(`Server error (${response.status}). Please try again.`)
+        throw new Error(t('deleteAccount.errors.server', { status: response.status }))
       }
 
       logger.debug('Delete account response:', { status: response.status, result })
 
       if (!response.ok) {
-        const errorMsg = result.error || result.message || result.msg || `Failed (status ${response.status})`
+        const errorMsg = result.error || result.message || result.msg || t('deleteAccount.errors.failedStatus', { status: response.status })
         throw new Error(String(errorMsg))
       }
 
@@ -104,7 +109,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
       // trust that field directly. (Do NOT let `status` override it — an error
       // response carrying a status must not read as success.)
       if (result && !result.success) {
-        throw new Error(String(result.error || 'Failed to delete account'))
+        throw new Error(String(result.error || t('deleteAccount.errors.failed')))
       }
 
       if (profile?.id) {
@@ -125,7 +130,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
       // Show success message
       const successToast = document.createElement('div')
       successToast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
-      successToast.textContent = 'Account deleted successfully'
+      successToast.textContent = t('deleteAccount.deleted')
       document.body.appendChild(successToast)
       
       setTimeout(() => {
@@ -137,7 +142,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
       
     } catch (err) {
       logger.error('Error deleting account:', err)
-      setError(err instanceof Error ? err.message : 'Failed to delete account. Please try again.')
+      setError(err instanceof Error ? err.message : t('deleteAccount.errors.failedRetry'))
       setIsDeleting(false)
     }
   }
@@ -158,7 +163,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Close modal"
+            aria-label={t('deleteAccount.close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,39 +176,39 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
 
         {/* Title */}
         <h2 id={titleId} className="text-2xl font-bold text-gray-900 text-center mb-2">
-          Delete your account?
+          {t('deleteAccount.title')}
         </h2>
 
         {/* Description */}
         <p id={descriptionId} className="text-gray-600 text-center mb-6">
-          This action is <strong>irreversible</strong>. All your profile data, messages, and uploaded media will be permanently deleted.
+          <Trans t={t} i18nKey="deleteAccount.body" components={{ strong: <strong /> }} />
         </p>
 
         {/* Warning box */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-red-800 font-medium mb-2">
-            ⚠️ You will lose access to:
+            {t('deleteAccount.loseAccess')}
           </p>
           <ul className="text-sm text-red-700 space-y-1 ml-4">
-            <li>• Your profile and all personal information</li>
-            <li>• All messages and conversations</li>
-            <li>• All uploaded photos and media</li>
-            <li>• Applications and opportunities</li>
-            <li>• Career history and records</li>
+            <li>{t('deleteAccount.loseProfile')}</li>
+            <li>{t('deleteAccount.loseMessages')}</li>
+            <li>{t('deleteAccount.loseMedia')}</li>
+            <li>{t('deleteAccount.loseApplications')}</li>
+            <li>{t('deleteAccount.loseCareer')}</li>
           </ul>
         </div>
 
         {/* Confirmation input */}
         <div className="mb-6">
           <label htmlFor={confirmationFieldId} className="block text-sm font-medium text-gray-700 mb-2">
-            Type <span className="font-bold text-red-600">DELETE</span> to confirm:
+            <Trans t={t} i18nKey="deleteAccount.typeToConfirm" values={{ word: confirmWord }} components={{ word: <span className="font-bold text-red-600" /> }} />
           </label>
           <input
             ref={inputRef}
             type="text"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="Type DELETE"
+            placeholder={t('deleteAccount.placeholder', { word: confirmWord })}
             disabled={isDeleting}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
             autoComplete="off"
@@ -225,7 +230,7 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
             disabled={isDeleting}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            {t('deleteAccount.cancel')}
           </button>
           <button
             onClick={handleDelete}
@@ -235,17 +240,17 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
             {isDeleting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Deleting...
+                {t('deleteAccount.deleting')}
               </>
             ) : (
-              'Delete Permanently'
+              t('deleteAccount.confirm')
             )}
           </button>
         </div>
 
         {/* Additional info */}
         <p className="text-xs text-gray-500 text-center mt-4">
-          Signed in as: <span className="font-medium">{userEmail}</span>
+          <Trans t={t} i18nKey="deleteAccount.signedInAs" values={{ email: userEmail }} components={{ email: <span className="font-medium" /> }} />
         </p>
       </div>
     </div>

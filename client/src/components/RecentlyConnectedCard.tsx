@@ -11,6 +11,7 @@ import {
   recordReferenceNudgeDismiss as recordDismiss,
 } from '@/lib/referenceNudgeDismissal'
 import type { ReferenceFriendOption } from './AddReferenceModal'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface RecentlyConnectedCardProps {
   /** Accepted-friendship options from useReferenceFriendOptions / FriendsTab. */
@@ -101,21 +102,16 @@ export default function RecentlyConnectedCard({
   onAsk,
   profileRole,
 }: RecentlyConnectedCardProps) {
+  const t = useProfileT()
   // Per-role rationale for the reference-ask. Default (player/coach) leans on
   // recruitment trust; umpire framing is peer/assigner trust; brand framing
   // is partnership trust. The card is owner-only so this is "what reads true
   // for me as I read it on my own dashboard."
-  const rationaleByRole: Record<string, string> = {
-    umpire:
-      'References from coaches, fellow umpires and clubs appear on your profile and help assigners and clubs trust your background.',
-    brand:
-      'References from athletes, clubs and partners appear on your profile and help the community trust your brand.',
-  }
-  const defaultRationale =
-    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on Hockia trust your background.'
-  const rationaleCopy = profileRole && rationaleByRole[profileRole]
-    ? rationaleByRole[profileRole]
-    : defaultRationale
+  const rationaleCopy = profileRole === 'umpire'
+    ? t('recentlyConnectedCard.rationale.umpire')
+    : profileRole === 'brand'
+      ? t('recentlyConnectedCard.rationale.brand')
+      : t('recentlyConnectedCard.rationale.default')
   // Track which friend ids have been dismissed in this session so the card
   // visibly drops off when the user taps the X (or Ask) without waiting for
   // a refetch. Reset only when the owner identity changes — resetting on
@@ -150,7 +146,7 @@ export default function RecentlyConnectedCard({
         // FriendsTab when full_name AND username are both null). The card
         // would otherwise read "Ask HOCKIA for a reference?" — confusing
         // and unbranded. These are rare orphan profiles; better to skip.
-        if (!f.fullName || f.fullName === 'Hockia Member') return false
+        if (!f.fullName || f.fullName === 'Hockia Member' || f.fullName === t('friendsTab.memberFallback')) return false
         if (excludeIds?.has(f.id)) return false
         if (sessionDismissed.has(f.id)) return false
         if (isDismissed(ownerProfileId, f.id)) return false
@@ -165,7 +161,7 @@ export default function RecentlyConnectedCard({
       })
 
     return eligible[0] ?? null
-  }, [friendOptions, ownerProfileId, excludeIds, acceptedReferenceCount, windowDays, sessionDismissed])
+  }, [friendOptions, ownerProfileId, excludeIds, acceptedReferenceCount, windowDays, sessionDismissed, t])
 
   if (!candidate) return null
 
@@ -200,7 +196,7 @@ export default function RecentlyConnectedCard({
     onAsk(candidate.id)
   }
 
-  const firstName = candidate.fullName?.split(' ')[0] || candidate.fullName || 'them'
+  const firstName = candidate.fullName?.split(' ')[0] || candidate.fullName || null
   const acceptedAtMs = candidate.acceptedAt ? Date.parse(candidate.acceptedAt) : null
   const daysSinceConnected =
     acceptedAtMs && !Number.isNaN(acceptedAtMs)
@@ -208,19 +204,19 @@ export default function RecentlyConnectedCard({
       : null
   const connectedLabel =
     daysSinceConnected === null
-      ? 'Recently connected'
+      ? t('recentlyConnectedCard.connected.recently')
       : daysSinceConnected === 0
-        ? 'Connected today'
+        ? t('recentlyConnectedCard.connected.today')
         : daysSinceConnected === 1
-          ? 'Connected yesterday'
-          : `Connected ${daysSinceConnected} days ago`
+          ? t('recentlyConnectedCard.connected.yesterday')
+          : t('recentlyConnectedCard.connected.daysAgo', { count: daysSinceConnected })
 
   return (
     <div className="relative rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/40 p-4 sm:p-5 shadow-sm">
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Dismiss this nudge"
+        aria-label={t('recentlyConnectedCard.dismiss')}
         // 44x44 minimum tap target (Apple HIG); icon stays visually small
         // via the inner span. p-1.5 alone gave ~28px which fails accessibility
         // and is hard to hit on mobile with a thumb.
@@ -238,7 +234,7 @@ export default function RecentlyConnectedCard({
             {connectedLabel}
           </p>
           <p className="mt-1 text-sm font-semibold text-gray-900">
-            Ask {firstName} for a reference?
+            {firstName ? t('recentlyConnectedCard.askNamed', { firstName }) : t('recentlyConnectedCard.askAnon')}
           </p>
           <p className="mt-1 text-xs text-gray-600">{rationaleCopy}</p>
 
@@ -264,7 +260,7 @@ export default function RecentlyConnectedCard({
               onClick={handleAsk}
               className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             >
-              Ask to vouch
+              {t('recentlyConnectedCard.askButton')}
               <ArrowRight className="h-3 w-3" />
             </button>
           </div>

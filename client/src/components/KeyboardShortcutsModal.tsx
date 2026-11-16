@@ -1,5 +1,6 @@
 import Modal from './Modal'
 import { KEYBOARD_SHORTCUTS } from '@/hooks/useKeyboardShortcuts'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean
@@ -7,21 +8,22 @@ interface KeyboardShortcutsModalProps {
 }
 
 export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsModalProps) {
+  const t = useCommonT()
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg">
       <div className="p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-1">
-          Keyboard Shortcuts
+          {t('shortcuts.title')}
         </h2>
         <p className="text-sm text-gray-500 mb-6">
-          Navigate Hockia faster with your keyboard
+          {t('shortcuts.subtitle')}
         </p>
 
         <div className="space-y-5">
           {KEYBOARD_SHORTCUTS.map((group) => (
             <div key={group.category}>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                {group.category}
+                {t(group.category)}
               </h3>
               <div className="space-y-1">
                 {group.shortcuts.map((shortcut, i) => (
@@ -29,7 +31,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
                     key={i}
                     className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50"
                   >
-                    <span className="text-sm text-gray-700">{shortcut.description}</span>
+                    <span className="text-sm text-gray-700">{t(shortcut.description)}</span>
                     <div className="flex items-center gap-1">
                       {shortcut.keys.map((key, ki) => (
                         <span key={ki} className="inline-flex items-center">
@@ -37,7 +39,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
                             {key}
                           </kbd>
                           {ki < shortcut.keys.length - 1 && (
-                            <span className="mx-1 text-xs text-gray-400">then</span>
+                            <span className="mx-1 text-xs text-gray-400">{t('shortcuts.then')}</span>
                           )}
                         </span>
                       ))}
@@ -50,7 +52,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
         </div>
 
         <p className="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 text-center">
-          Shortcuts are disabled when typing in forms or when modals are open
+          {t('shortcuts.footer')}
         </p>
       </div>
     </Modal>

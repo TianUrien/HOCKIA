@@ -1,5 +1,6 @@
 import { Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useMediaT } from '@/i18n/ns/media'
 
 /**
  * The one lock badge on a video thumbnail ("clubs & coaches only"). A
@@ -9,10 +10,11 @@ import { cn } from '@/lib/utils'
  * white lock. Position it from the host (absolute left-2 top-2 by default).
  */
 export function VideoLockBadge({ size = 'md', className }: { size?: 'sm' | 'md'; className?: string }) {
+  const t = useMediaT()
   return (
     <span
       data-testid="video-lock-badge"
-      aria-label="Clubs and coaches only"
+      aria-label={t('videoLockBadge.label')}
       role="img"
       className={cn(
         'pointer-events-none absolute flex items-center justify-center rounded-full bg-ink-1/90 text-white ring-1 ring-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.35)]',

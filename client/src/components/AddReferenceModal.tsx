@@ -3,7 +3,9 @@ import { Search, Shield, UserPlus, X, CheckCircle, ChevronDown } from 'lucide-re
 import Modal from './Modal'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
+import { Trans } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { tMedia, useMediaT } from '@/i18n/ns/media'
 
 export type ReferenceFriendOption = {
   id: string
@@ -91,6 +93,62 @@ const RELATIONSHIP_MAP: Record<string, Record<string, string[]>> = {
   },
 }
 
+/**
+ * The words shown for each stored relationship value (the values above stay
+ * English: they are saved on the reference). Built on each call so the text
+ * follows the interface language.
+ */
+function relationshipLabels(): Record<string, string> {
+  return {
+    'Teammate': tMedia('references.relationship.teammate'),
+    'Team Captain': tMedia('references.relationship.teamCaptain'),
+    'Former Teammate': tMedia('references.relationship.formerTeammate'),
+    'Former Captain': tMedia('references.relationship.formerCaptain'),
+    'Head Coach': tMedia('references.relationship.headCoach'),
+    'Assistant Coach': tMedia('references.relationship.assistantCoach'),
+    'Former Coach': tMedia('references.relationship.formerCoach'),
+    'Academy Coach': tMedia('references.relationship.academyCoach'),
+    'Club': tMedia('references.relationship.club'),
+    'Former Club': tMedia('references.relationship.formerClub'),
+    'Match Umpire': tMedia('references.relationship.matchUmpire'),
+    'Tournament Official': tMedia('references.relationship.tournamentOfficial'),
+    'Athlete I Coached': tMedia('references.relationship.athleteICoached'),
+    'Former Athlete': tMedia('references.relationship.formerAthlete'),
+    'Mentee': tMedia('references.relationship.mentee'),
+    'Player': tMedia('references.relationship.player'),
+    'Assistant Coach I Worked With': tMedia('references.relationship.assistantCoachIWorkedWith'),
+    'Colleague': tMedia('references.relationship.colleague'),
+    'Fellow Coach': tMedia('references.relationship.fellowCoach'),
+    'Former Colleague': tMedia('references.relationship.formerColleague'),
+    'Club Director': tMedia('references.relationship.clubDirector'),
+    'Club Member': tMedia('references.relationship.clubMember'),
+    'Former Member': tMedia('references.relationship.formerMember'),
+    'Club Captain': tMedia('references.relationship.clubCaptain'),
+    'Club Coach': tMedia('references.relationship.clubCoach'),
+    'Club Umpire': tMedia('references.relationship.clubUmpire'),
+    'Tournament Umpire': tMedia('references.relationship.tournamentUmpire'),
+    'Umpiring Partner': tMedia('references.relationship.umpiringPartner'),
+    'Fellow Umpire': tMedia('references.relationship.fellowUmpire'),
+    'Senior Umpire': tMedia('references.relationship.seniorUmpire'),
+    'Umpire Mentor': tMedia('references.relationship.umpireMentor'),
+    'Umpire Assessor': tMedia('references.relationship.umpireAssessor'),
+    'Panel Colleague': tMedia('references.relationship.panelColleague'),
+    'Coach at Matches I Officiated': tMedia('references.relationship.coachAtMatchesIOfficiated'),
+    'Tournament Coach': tMedia('references.relationship.tournamentCoach'),
+    'Development Panel Coach': tMedia('references.relationship.developmentPanelCoach'),
+    'Opposing Coach': tMedia('references.relationship.opposingCoach'),
+    'Home Club': tMedia('references.relationship.homeClub'),
+    'Club I Regularly Officiated For': tMedia('references.relationship.clubIRegularlyOfficiatedFor'),
+    'Tournament Host Club': tMedia('references.relationship.tournamentHostClub'),
+    'Team Captain I Officiated': tMedia('references.relationship.teamCaptainIOfficiated'),
+    'Senior National Player': tMedia('references.relationship.seniorNationalPlayer'),
+    'Sponsor': tMedia('references.relationship.sponsor'),
+    'Equipment Partner': tMedia('references.relationship.equipmentPartner'),
+    'Clinic / Academy Host': tMedia('references.relationship.clinicAcademyHost'),
+    'Mentor': tMedia('references.relationship.mentor'),
+  }
+}
+
 /** Flat fallback if role pair is unknown */
 const FALLBACK_OPTIONS = ['Teammate', 'Colleague', 'Mentor']
 
@@ -114,6 +172,7 @@ interface AddReferenceModalProps {
 }
 
 export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, isSubmitting, remainingSlots, requesterRole, preselectedFriendId }: AddReferenceModalProps) {
+  const t = useMediaT()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFriendId, setSelectedFriendId] = useState<string>('')
   const [relationshipType, setRelationshipType] = useState('')
@@ -136,6 +195,8 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
   }, [friends, searchTerm])
 
   const selectedFriend = friends.find((friend) => friend.id === selectedFriendId) ?? null
+  const labels = relationshipLabels()
+  const labelOf = (value: string) => labels[value] ?? value
 
   const relationshipOptions = useMemo(() => {
     const rRole = requesterRole?.toLowerCase()
@@ -246,23 +307,23 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle className="h-6 w-6 text-emerald-600" />
             </div>
-            <p className="mt-3 text-lg font-semibold text-gray-900">Requested</p>
+            <p className="mt-3 text-lg font-semibold text-gray-900">{t('references.add.successTitle')}</p>
             <p className="mt-1 text-sm text-gray-500">
-              {selectedFriend?.fullName} will be notified
+              {t('references.add.successBody', { name: selectedFriend?.fullName ?? '' })}
             </p>
           </div>
         ) : (
           <div className="space-y-5">
             {/* Header */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">Add Reference</p>
-              <h2 className="text-xl font-bold text-gray-900">Request a trusted reference</h2>
-              <p className="mt-1 text-sm text-gray-500">{5 - remainingSlots} of 5 references used</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">{t('references.add.kicker')}</p>
+              <h2 className="text-xl font-bold text-gray-900">{t('references.add.title')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('references.add.used', { used: 5 - remainingSlots, max: 5 })}</p>
             </div>
 
             {/* Person selector */}
             <div>
-              <label className="text-sm font-medium text-gray-700">Connection</label>
+              <label className="text-sm font-medium text-gray-700">{t('references.add.connection')}</label>
 
               {selectedFriend ? (
                 <div className="mt-2 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/50 px-3 py-2.5">
@@ -285,7 +346,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                     onClick={handleClearSelection}
                     // 44x44 minimum tap target (Apple HIG); icon stays small.
                     className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                    aria-label="Change selection"
+                    aria-label={t('references.add.changeSelection')}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -300,7 +361,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                       isDropdownOpen ? 'border-hockia-primary bg-white' : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
-                    <span className="text-gray-400">Search connections...</span>
+                    <span className="text-gray-400">{t('references.add.searchTrigger')}</span>
                     <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', isDropdownOpen && 'rotate-180')} />
                   </button>
 
@@ -312,11 +373,11 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                           <input
                             ref={searchInputRef}
                             type="search"
-                            placeholder="Search by name, club, or location"
+                            placeholder={t('references.add.searchPlaceholder')}
                             className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
-                            aria-label="Search connections"
+                            aria-label={t('references.add.searchLabel')}
                             autoComplete="off"
                             enterKeyHint="search"
                             autoCapitalize="none"
@@ -328,7 +389,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
 
                       <div className="max-h-48 overflow-y-auto">
                         {filteredFriends.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-gray-500">No matching connections.</div>
+                          <div className="p-4 text-center text-sm text-gray-500">{t('references.add.noMatches')}</div>
                         ) : (
                           filteredFriends.map((friend) => (
                             <button
@@ -364,13 +425,15 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
 
             {/* Relationship type */}
             <div>
-              <label htmlFor={relationshipSelectId} className="text-sm font-medium text-gray-700">Relationship</label>
+              <label htmlFor={relationshipSelectId} className="text-sm font-medium text-gray-700">{t('references.add.relationship')}</label>
               {/* Tell the user WHY the options here look different than they
                   might expect — relationship choices are filtered by the
                   selected friend's role (umpires get match/tournament
                   context, players get team/coach context, etc.). */}
               <p className="mt-1 text-xs text-gray-500">
-                Options reflect how {selectedFriend?.fullName?.split(' ')[0] || 'this person'} could vouch for you based on their role.
+                {selectedFriend?.fullName?.split(' ')[0]
+                  ? t('references.add.optionsHintNamed', { name: selectedFriend.fullName.split(' ')[0] })
+                  : t('references.add.optionsHint')}
               </p>
               <select
                 id={relationshipSelectId}
@@ -381,9 +444,9 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 value={relationshipType}
                 onChange={(event) => setRelationshipType(event.target.value)}
               >
-                <option value="" disabled>Select relationship...</option>
+                <option value="" disabled>{t('references.add.selectRelationship')}</option>
                 {relationshipOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>{labelOf(option)}</option>
                 ))}
               </select>
 
@@ -393,7 +456,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                   interest. Nudge toward stronger sources without blocking. */}
               {requesterRole?.toLowerCase() === 'umpire' && selectedFriend?.role?.toLowerCase() === 'player' && (
                 <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                  Umpires usually get stronger references from peer umpires, assessors, or coaches who've observed them at matches.
+                  {t('references.add.umpireHint')}
                 </p>
               )}
             </div>
@@ -401,12 +464,12 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             {/* Optional note */}
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Note <span className="font-normal text-gray-400">(optional)</span>
+                {t('references.add.note')} <span className="font-normal text-gray-400">{t('references.add.optional')}</span>
               </label>
               <textarea
                 value={requestNote}
                 onChange={(event) => setRequestNote(event.target.value.slice(0, MAX_NOTE_LENGTH))}
-                placeholder="Brief context for this request"
+                placeholder={t('references.add.notePlaceholder')}
                 rows={3}
                 autoCapitalize="sentences"
                 spellCheck
@@ -429,8 +492,12 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             {/* Confirmation summary */}
             {selectedFriend && relationshipType && (
               <p className="rounded-xl bg-gray-50 px-3 py-2.5 text-center text-sm text-gray-600">
-                Requesting <span className="font-semibold text-gray-900">{selectedFriend.fullName}</span>{' '}
-                as your <span className="font-semibold text-gray-900">{relationshipType}</span>
+                <Trans
+                  t={t}
+                  i18nKey="references.add.summary"
+                  values={{ name: selectedFriend.fullName, relationship: labelOf(relationshipType) }}
+                  components={{ b: <span className="font-semibold text-gray-900" /> }}
+                />
               </p>
             )}
 
@@ -447,12 +514,12 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
               <Shield className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
               <span>
                 {(() => {
-                  const trustTrailing = requesterRole?.toLowerCase() === 'umpire'
-                    ? 'helps assigners and clubs trust your background.'
-                    : 'helps clubs scouting on Hockia trust your background.'
-                  return selectedFriend
-                    ? `Once ${selectedFriend.fullName.split(' ')[0]} accepts, this reference appears on your profile and ${trustTrailing}`
-                    : `Once accepted, this reference appears on your profile and ${trustTrailing}`
+                  const umpire = requesterRole?.toLowerCase() === 'umpire'
+                  if (selectedFriend) {
+                    const name = selectedFriend.fullName.split(' ')[0]
+                    return umpire ? t('references.add.trustUmpireNamed', { name }) : t('references.add.trustNamed', { name })
+                  }
+                  return umpire ? t('references.add.trustUmpire') : t('references.add.trust')
                 })()}
               </span>
             </p>
@@ -471,17 +538,17 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-primary px-4 py-3 text-sm font-semibold text-white shadow-lg transition-opacity disabled:opacity-60"
               >
                 <UserPlus className="h-4 w-4" />
-                {isSubmitting ? 'Sending...' : 'Send Request'}
+                {isSubmitting ? t('references.add.sending') : t('references.add.send')}
               </button>
               {/* Helper text explaining why the button is disabled, so a
                   user staring at a greyed-out CTA knows what's missing. */}
               {!isSubmitting && (!selectedFriend || !relationshipType || requestNote.length > MAX_NOTE_LENGTH) && (
                 <p className="mt-2 text-center text-xs text-gray-500">
                   {!selectedFriend
-                    ? 'Select a connection to continue.'
+                    ? t('references.add.needConnection')
                     : !relationshipType
-                      ? 'Select a relationship to continue.'
-                      : 'Note exceeds the character limit.'}
+                      ? t('references.add.needRelationship')
+                      : t('references.add.noteTooLong')}
                 </p>
               )}
             </div>

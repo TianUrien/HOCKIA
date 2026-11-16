@@ -1,5 +1,6 @@
 import { ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 import { STATUS_TONE_PILL, pendingVerificationTone } from '@/lib/statusTone'
 
 interface PendingVerificationBadgeProps {
@@ -37,16 +38,17 @@ export default function PendingVerificationBadge({
   variant = 'full',
   viewerMustVerify = false,
 }: PendingVerificationBadgeProps) {
+  const t = useProfileT()
   // VerifiedBadge handles the verified=true state; this is purely the
   // "not yet verified" signal.
   if (verified) return null
 
-  const tooltip = "Hockia hasn't verified this club's claim yet."
+  const tooltip = t('pendingVerificationBadge.tooltip')
 
   return (
     <span
       role="img"
-      aria-label="Pending verification"
+      aria-label={t('pendingVerificationBadge.label')}
       title={tooltip}
       className={cn(
         // leading-none + whitespace-nowrap matter when the badge lives inside
@@ -60,7 +62,7 @@ export default function PendingVerificationBadge({
       )}
     >
       <ShieldAlert className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-      {variant === 'full' && <span>Pending verification</span>}
+      {variant === 'full' && <span>{t('pendingVerificationBadge.label')}</span>}
     </span>
   )
 }

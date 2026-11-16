@@ -1,4 +1,5 @@
 import GalleryManager from './GalleryManager'
+import { useWorldT } from '@/i18n/ns/world'
 
 interface ClubMediaTabProps {
   clubId?: string
@@ -12,15 +13,16 @@ interface ClubMediaTabProps {
 }
 
 export default function ClubMediaTab({ clubId, readOnly = false, onCountChange, previewLimit }: ClubMediaTabProps) {
+  const t = useWorldT()
   return (
     <GalleryManager
       mode="club"
       entityId={clubId}
       readOnly={readOnly}
-      title="Photo Gallery"
-      description="Manage your club photos"
-      emptyStateDescription="No photos yet"
-      addButtonLabel="Add Photos"
+      title={t('club.media.title')}
+      description={t('club.media.description')}
+      emptyStateDescription={t('club.media.empty')}
+      addButtonLabel={t('club.media.add')}
       onCountChange={onCountChange}
       previewLimit={previewLimit}
     />

@@ -12,6 +12,7 @@ import { useReportAction } from '@/components/safety/useReportAction'
 import { canReport } from '@/lib/report'
 import type { UserPostFeedItem, PostMediaItem, PostType, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 import type { Profile } from '@/lib/supabase'
+import { useCommunityT, tCommunity } from '@/i18n/ns/community'
 
 /**
  * PostPage — single-post detail view at /post/:postId.
@@ -49,6 +50,7 @@ type AuthorRow = Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'role'>
 export default function PostPage() {
   const { postId } = useParams<{ postId: string }>()
   const navigate = useNavigate()
+  const t = useCommunityT()
   const { user } = useAuthStore()
 
   const [item, setItem] = useState<UserPostFeedItem | null>(null)
@@ -130,7 +132,7 @@ export default function PostPage() {
           metadata: postData.metadata ?? null,
         }
         setItem(feedItem)
-        document.title = `${author.full_name ?? 'A post'} on Hockia`
+        document.title = tCommunity('post.documentTitle', { name: author.full_name ?? tCommunity('post.fallbackAuthor') })
       } catch (err) {
         logger.error('[PostPage] failed to load post', err)
         if (!cancelled) setLoadError(true)
@@ -152,7 +154,7 @@ export default function PostPage() {
       <>
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading post" />
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label={t('post.loading')} />
         </div>
       </>
     )
@@ -163,9 +165,9 @@ export default function PostPage() {
       <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-lg font-semibold text-gray-900">Couldn’t load this post</p>
+          <p className="text-lg font-semibold text-gray-900">{t('post.loadErrorTitle')}</p>
           <p className="max-w-md text-sm text-gray-500">
-            Something went wrong reaching the post. Check your connection and try again.
+            {t('post.loadErrorBody')}
           </p>
           <div className="flex gap-3">
             <button
@@ -173,14 +175,14 @@ export default function PostPage() {
               onClick={() => window.location.reload()}
               className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
             >
-              Try again
+              {t('post.tryAgain')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/home')}
               className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
-              Back to home
+              {t('post.backHome')}
             </button>
           </div>
         </div>
@@ -193,16 +195,16 @@ export default function PostPage() {
       <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-lg font-semibold text-gray-900">Post not found</p>
+          <p className="text-lg font-semibold text-gray-900">{t('post.notFoundTitle')}</p>
           <p className="max-w-md text-sm text-gray-500">
-            This post may have been deleted or made private.
+            {t('post.notFoundBody')}
           </p>
           <button
             type="button"
             onClick={() => navigate('/home')}
             className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
-            Go to home feed
+            {t('post.goFeed')}
           </button>
         </div>
       </>
@@ -230,10 +232,10 @@ export default function PostPage() {
       <div className="flex-1 bg-white pt-[env(safe-area-inset-top)] lg:bg-gray-50 lg:pt-[var(--app-header-offset)]">
         {/* Figma Post detail: chevron + "Home" on the left, more on the right */}
         <DetailNavBar
-          parent="Home"
+          parent={t('post.parent')}
           fallbackPath="/home"
           trailing={canReport(user?.id, item.author_id) ? (
-            <MoreMenu items={[report.item]} label="More options" triggerClassName="flex h-11 w-11 items-center justify-center text-ink-1" iconClassName="h-6 w-6" testId="post-more-menu" />
+            <MoreMenu items={[report.item]} label={t('post.moreOptions')} triggerClassName="flex h-11 w-11 items-center justify-center text-ink-1" iconClassName="h-6 w-6" testId="post-more-menu" />
           ) : undefined}
         />
         <div className="mx-auto max-w-2xl lg:px-4 lg:py-6">

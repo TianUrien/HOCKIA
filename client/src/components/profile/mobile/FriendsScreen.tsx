@@ -16,6 +16,7 @@ import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { getImageUrl } from '@/lib/imageUrl'
 import { coachSpecialtyLabel, humanizeToken, identityLine } from '@/lib/identity'
 import { profilePath } from '@/lib/profileNavigation'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * Friends / Friends — public (Figma 101:460 · 250:581): one screen, two
@@ -43,21 +44,23 @@ function detailFor(p: FriendPerson): string | null {
 
 /** Public list: the trailing state is the VIEWER's relationship with that person. */
 function PublicFriendRow({ person, meta, flags, vouched, onOpen }: { person: FriendPerson; meta: string; flags: string; vouched: boolean; onOpen: () => void }) {
+  const t = useProfileT()
   const f = useFriendship(person.id)
-  const name = person.fullName?.trim() || 'Hockia member'
+  const name = person.fullName?.trim() || t('friendsScreen.memberFallback')
   const trailing: FriendTrailing = f.isOwnProfile
     ? { kind: 'none' }
     : f.isFriend
       ? { kind: 'friends' }
       : f.isOutgoingRequest
         ? { kind: 'requested' }
-        : { kind: 'add', label: f.isIncomingRequest ? 'Accept' : 'Add', disabled: f.mutating, onClick: () => void (f.isIncomingRequest ? f.acceptRequest() : f.sendRequest()) }
+        : { kind: 'add', label: f.isIncomingRequest ? t('friendsScreen.accept') : t('friendsScreen.add'), disabled: f.mutating, onClick: () => void (f.isIncomingRequest ? f.acceptRequest() : f.sendRequest()) }
   return <FriendListItem name={name} avatarUrl={avatarOf(person)} role={person.role} meta={meta} flags={flags} showReference={vouched} trailing={trailing} onOpen={onOpen} />
 }
 
 const avatarOf = (p: FriendPerson) => (p.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null)
 
 export default function FriendsScreen({ profileId, profileName, profileRole, mode, onBack }: FriendsScreenProps) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const own = mode === 'own'
@@ -87,10 +90,10 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
 
   const friendOptions: ReferenceFriendOption[] = people
     .filter((p) => !wrote.has(p.id) && !asked.has(p.id))
-    .map((p) => ({ id: p.id, fullName: p.fullName ?? 'Hockia member', username: p.username, avatarUrl: p.avatarUrl, role: p.role, baseLocation: null, currentClub: null, acceptedAt: p.connectedAt }))
+    .map((p) => ({ id: p.id, fullName: p.fullName ?? t('friendsScreen.memberFallback'), username: p.username, avatarUrl: p.avatarUrl, role: p.role, baseLocation: null, currentClub: null, acceptedAt: p.connectedAt }))
 
   const row = (p: FriendPerson) => {
-    const name = p.fullName?.trim() || 'Hockia member'
+    const name = p.fullName?.trim() || t('friendsScreen.memberFallback')
     const vouched = wrote.has(p.id)
     const meta = identityLine(p.role, detailFor(p))
     const open = () => { const to = profilePath(p.role, p.username, p.id); if (to) navigate(to) }
@@ -106,17 +109,17 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
     return <FriendListItem key={p.id} name={name} avatarUrl={avatarOf(p)} role={p.role} meta={meta} flags={flags(p)} trailing={trailing} onOpen={open} />
   }
 
-  const title = own ? `Friends · ${people.length}` : firstName ? `${firstName}’s friends` : 'Friends'
+  const title = own ? t('friendsScreen.titleOwn', { total: people.length }) : firstName ? t('friendsScreen.titleNamed', { firstName }) : t('friendsScreen.title')
 
   return (
     <div className="min-h-screen bg-white pb-24 lg:hidden" data-testid={own ? 'friends-screen-own' : 'friends-screen-public'}>
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
         <DetailNavBar
-          parent="Profile"
-          title={loading && own ? 'Friends' : title}
+          parent={t('friendsScreen.parent')}
+          title={loading && own ? t('friendsScreen.title') : title}
           onBack={onBack}
           trailing={own ? (
-            <IconButton label="Add friends" onClick={() => navigate('/community')}>
+            <IconButton label={t('friendsScreen.addFriends')} onClick={() => navigate('/community')}>
               <UserPlus className="h-[22px] w-[22px]" strokeWidth={1.8} />
             </IconButton>
           ) : undefined}
@@ -128,7 +131,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={own ? 'Search friends' : firstName ? `Search ${firstName}’s friends` : 'Search friends'}
+                placeholder={own ? t('friendsScreen.search') : firstName ? t('friendsScreen.searchNamed', { firstName }) : t('friendsScreen.search')}
                 className="h-full min-w-0 flex-1 bg-transparent text-body text-ink-1 placeholder:text-ink-3 focus:outline-none"
               />
             </label>
@@ -139,9 +142,9 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
       <div className="px-5">
         {signedOut ? (
           <div className="mt-6 rounded-card bg-surface-grouped p-5">
-            <p className="text-row font-semibold text-ink-1">Join Hockia to see {firstName ? `${firstName}’s` : 'their'} friends</p>
-            <p className="mt-1 text-secondary text-ink-2">Friends lists are for members only.</p>
-            <button type="button" onClick={() => setJoin(true)} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-4' })}>Join Hockia</button>
+            <p className="text-row font-semibold text-ink-1">{firstName ? t('friendsScreen.joinToSeeNamed', { firstName }) : t('friendsScreen.joinToSee')}</p>
+            <p className="mt-1 text-secondary text-ink-2">{t('friendsScreen.membersOnly')}</p>
+            <button type="button" onClick={() => setJoin(true)} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-4' })}>{t('friendsScreen.join')}</button>
           </div>
         ) : loading ? (
           <ul aria-busy="true">
@@ -153,21 +156,21 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
             ))}
           </ul>
         ) : failed ? (
-          <p className="py-10 text-center text-row text-ink-2">Friends could not be loaded. Pull back and try again.</p>
+          <p className="py-10 text-center text-row text-ink-2">{t('friendsScreen.loadFailed')}</p>
         ) : people.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-row font-semibold text-ink-1">{own ? 'No friends yet' : 'No friends to show'}</p>
-            {own && <button type="button" onClick={() => navigate('/community')} className="mt-3 text-row font-semibold text-hockia-primary">Find people in Community</button>}
+            <p className="text-row font-semibold text-ink-1">{own ? t('friendsScreen.emptyOwn') : t('friendsScreen.emptyPublic')}</p>
+            {own && <button type="button" onClick={() => navigate('/community')} className="mt-3 text-row font-semibold text-hockia-primary">{t('friendsScreen.findPeople')}</button>}
           </div>
         ) : visible.length === 0 ? (
-          <p className="py-10 text-center text-row text-ink-2">No one matches “{query.trim()}”.</p>
+          <p className="py-10 text-center text-row text-ink-2">{t('friendsScreen.noMatch', { query: query.trim() })}</p>
         ) : (
           <>
             {inCommon.length > 0 && (
               <>
-                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">In common · {inCommon.length}</h2>
+                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.inCommon', { total: inCommon.length })}</h2>
                 <ul>{inCommon.map(row)}</ul>
-                {rest.length > 0 && <h2 className="pb-1 pt-5 text-[20px] font-semibold leading-6 text-ink-1">All friends</h2>}
+                {rest.length > 0 && <h2 className="pb-1 pt-5 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.allFriends')}</h2>}
               </>
             )}
             <ul>{rest.map(row)}</ul>
@@ -187,7 +190,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           preselectedFriendId={askFor}
         />
       )}
-      <SignInPromptModal isOpen={join} onClose={() => setJoin(false)} title="Sign in to see friends" action="view" />
+      <SignInPromptModal isOpen={join} onClose={() => setJoin(false)} title={t('friendsScreen.signInTitle')} action="view" />
     </div>
   )
 }

@@ -17,6 +17,7 @@ import {
   type NotificationMetadata,
 } from './api/notifications'
 import type { Tables } from './database.types'
+import { tNotifications } from '@/i18n/ns/notifications'
 
 const NOTIFICATION_LIMIT = 40
 const HEARTBEAT_INTERVAL_MS = 60_000
@@ -707,7 +708,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     },
 
     respondToFriendRequest: async ({ friendshipId, action }) => {
-      const failed = 'Could not update the friend request. Please try again.'
+      const failed = tNotifications('store.friendRequestFailed')
       if (!friendshipId) {
         return failed
       }

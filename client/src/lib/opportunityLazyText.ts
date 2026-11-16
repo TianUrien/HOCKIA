@@ -6,6 +6,7 @@
  */
 
 /** `base` plus enumerable, read-only properties whose text is computed on every read. */
+/* @__NO_SIDE_EFFECTS__ */
 export function withLazyText<B extends object, K extends string>(base: B, texts: Record<K, () => string>): B & Readonly<Record<K, string>> {
   for (const key of Object.keys(texts) as K[]) {
     Object.defineProperty(base, key, { enumerable: true, configurable: false, get: texts[key] })
@@ -14,6 +15,7 @@ export function withLazyText<B extends object, K extends string>(base: B, texts:
 }
 
 /** A record whose every value is computed on every read. */
+/* @__NO_SIDE_EFFECTS__ */
 export function lazyTextRecord<K extends string>(texts: Record<K, () => string>): Record<K, string> {
   return withLazyText({}, texts) as Record<K, string>
 }

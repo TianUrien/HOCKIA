@@ -3,6 +3,7 @@ import { blockMember } from '@/lib/blockMember'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 export interface BlockTarget {
   id: string
@@ -25,6 +26,7 @@ interface BlockMemberSheetProps {
  * never told.
  */
 export function BlockMemberSheet({ target, onClose, onBlocked }: BlockMemberSheetProps) {
+  const t = useInboxT()
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
 
@@ -36,18 +38,18 @@ export function BlockMemberSheet({ target, onClose, onBlocked }: BlockMemberShee
         if (!target || !viewerId) return
         try {
           await blockMember(viewerId, target.id)
-          addToast(`${target.name} has been blocked`, 'success')
+          addToast(t('safety.block.blocked', { name: target.name }), 'success')
           onBlocked?.(target)
         } catch (err) {
           logger.error('[BlockMemberSheet] block failed', err)
-          addToast('Could not block. Please try again.', 'error')
+          addToast(t('safety.block.failed'), 'error')
           throw err
         }
       }}
-      title={target ? `Block ${target.name}?` : 'Block'}
-      message="They can't message you or see your profile and posts, and you won't see theirs. Your conversation leaves your inbox. They aren't told. You can unblock them in Settings."
-      confirmLabel="Block"
-      busyLabel="Blocking…"
+      title={target ? t('safety.block.title', { name: target.name }) : t('safety.block.titleNoName')}
+      message={t('safety.block.message')}
+      confirmLabel={t('safety.block.confirm')}
+      busyLabel={t('safety.block.busy')}
       testId="block-member-confirm"
       initialFocus="panel"
     />

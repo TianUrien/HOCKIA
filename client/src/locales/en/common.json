@@ -188,5 +188,126 @@
     "notGiven": "Not given",
     "addPassport": "Add passport",
     "addAnother": "Add another"
+  },
+  "documentTitle": {
+    "default": "Hockia – Where field hockey sticks together."
+  },
+  "backLabel": {
+    "myApplications": "My applications",
+    "opportunities": "Opportunities",
+    "role": "Role",
+    "home": "Home",
+    "inbox": "Inbox",
+    "community": "Community",
+    "notifications": "Notifications",
+    "search": "Search",
+    "profile": "Profile"
+  },
+  "appVersion": {
+    "platform": {
+      "iosNative": "iOS app",
+      "androidNative": "Android app",
+      "pwa": "Web app (installed)",
+      "web": "Web (browser)"
+    }
+  },
+  "timeAgo": {
+    "justNow": "Just now",
+    "compactMinutes": "{{count}}m ago",
+    "compactHours": "{{count}}h ago",
+    "compactDays": "{{count}}d ago",
+    "minutes_one": "{{count}} minute ago",
+    "minutes_other": "{{count}} minutes ago",
+    "hours_one": "{{count}} hour ago",
+    "hours_other": "{{count}} hours ago",
+    "days_one": "{{count}} day ago",
+    "days_other": "{{count}} days ago",
+    "weeks_one": "{{count}} week ago",
+    "weeks_other": "{{count}} weeks ago"
+  },
+  "technicalErrors": {
+    "notAccepting": "This person isn't accepting requests.",
+    "permission": "You don't have permission to do that.",
+    "duplicate": "This already exists. Try refreshing the page.",
+    "invalidData": "Some of the data provided is invalid. Please review and try again.",
+    "missingRelated": "A related record is missing or was deleted.",
+    "notFound": "The item was not found. It may have been deleted.",
+    "rateLimit": "Too many requests. Please wait a moment and try again.",
+    "timeout": "The request timed out. Please try again.",
+    "network": "Network error. Please check your connection and try again.",
+    "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "inAppBrowser": {
+    "metaSteps": "Tap {{menu}} at the top right, then “Open in external browser”.",
+    "whatsappSteps": "Tap {{menu}} at the top right, then “Open in browser”.",
+    "tiktokSteps": "Tap ⋯ at the top right, then “Open in browser”.",
+    "linkedinSteps": "Tap {{menu}}, then “Open in browser”.",
+    "genericSteps": "Use the app’s menu to open this page in your browser, or copy the link and paste it into Safari or Chrome."
+  },
+  "skeletons": {
+    "opportunity": "Loading opportunity",
+    "profile": "Loading profile",
+    "activity": "Loading activity",
+    "conversation": "Loading conversation",
+    "applicants": "Loading applicants",
+    "backToConversations": "Back to conversations",
+    "page": "Loading..."
+  },
+  "storeBadges": {
+    "appStore": "Download Hockia on the App Store",
+    "googlePlay": "Get Hockia on Google Play"
+  },
+  "detailNav": {
+    "backTo": "Back to {{parent}}"
+  },
+  "segmented": {
+    "withCount": "{{label}} · {{count}}",
+    "newLabel": "{{label}}, new"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "subtitle": "Navigate Hockia faster with your keyboard",
+    "then": "then",
+    "footer": "Shortcuts are disabled when typing in forms or when modals are open",
+    "groups": {
+      "navigation": "Navigation",
+      "search": "Search",
+      "help": "Help"
+    },
+    "goCommunity": "Go to Community",
+    "goOpportunities": "Go to Opportunities",
+    "goWorld": "Go to World Directory",
+    "goMarketplace": "Go to Marketplace",
+    "goMessages": "Go to Messages",
+    "goDashboard": "Go to Dashboard",
+    "focusSearch": "Focus search on current page",
+    "showHelp": "Show keyboard shortcuts"
+  },
+  "errors": {
+    "recruiterMinor": "This member can't be contacted by clubs or coaches."
+  },
+  "upload": {
+    "errors": {
+      "tooLarge100": "This file is too large. Videos must be under 100 MB.",
+      "typeNotSupported": "This file type is not supported. Use MP4, MOV, or WebM.",
+      "network": "Network error. Please check your connection and try again.",
+      "unavailable": "Video uploads are temporarily unavailable. Please try again later.",
+      "hourlyLimit": "You’ve started a lot of uploads in the last hour. Please try again a little later.",
+      "invalidVideo": "Invalid video",
+      "couldNotStart": "Could not start the upload. Please try again.",
+      "stillProcessing": "Still processing. Check back in a few minutes.",
+      "processingFailed": "Cloudflare could not process this video. Try a different file.",
+      "failed": "Upload failed",
+      "nativeType": "Please upload an MP4, MOV, WebM or M4V video.",
+      "nativeTooLarge": "Video is larger than 1 GB. Please trim or compress it first.",
+      "interrupted": "The upload was interrupted. Please try again.",
+      "invalidFileName": "Invalid file name",
+      "videoTypes": "Only MP4, MOV, or WebM videos are allowed.",
+      "videoTooLarge": "Video is too large. Max {{maxMb}}MB.",
+      "videoTooLong": "Video must be {{maxMinutes}} minutes or less. Current: {{seconds}}s.",
+      "unreadableVideo": "Could not read video metadata. The file may be corrupted.",
+      "imageTypes": "Only JPG/JPEG or PNG images are allowed.",
+      "imageTooLarge": "Please upload an image smaller than {{maxMb}} MB."
+    }
   }
 }

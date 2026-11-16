@@ -4,7 +4,13 @@ import { initializeAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
 import * as Sentry from '@sentry/react'
-import { ProtectedRoute, ErrorBoundary, Layout, SentryTestButton } from '@/components'
+// Direct imports, not the '@/components' barrel: through the barrel the bundler
+// kept every component with a top-level effect in the start-up chunk
+// (EditProfileModal, JourneyTab, CommentsTab... and their catalogs).
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import Layout from '@/components/Layout'
+import SentryTestButton from '@/components/SentryTestButton'
 import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
@@ -45,6 +51,7 @@ import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import NativePushBridge from '@/components/NativePushBridge'
 import AgeGate from '@/components/AgeGate'
 import { loadOpportunityDetail } from '@/lib/prefetchRole'
+import { tCommon } from '@/i18n/ns/common'
 import { useRevealFocusedField } from '@/hooks/useKeyboardInset'
 
 // Lazy load heavy components
@@ -194,7 +201,7 @@ const PageLoader = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-gray-600 text-sm">Loading...</p>
+        <p className="text-gray-600 text-sm">{tCommon('skeletons.page')}</p>
       </div>
     </div>
   )

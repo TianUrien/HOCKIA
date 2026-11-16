@@ -4,6 +4,7 @@ import { useAuthStore } from '@/lib/auth'
 import { validateImage } from '@/lib/imageOptimization'
 import { profilePhotoFields, uploadProfilePhoto } from '@/lib/profilePhoto'
 import type { SocialPlatform } from '@/lib/socialLinks'
+import { tHome } from '@/i18n/ns/home'
 
 /**
  * Hockia AI next steps (founder, 2026-10-18): the agent looks at what a
@@ -36,18 +37,18 @@ export function nextStepsFrom(f: ProfileFacts): NextStep[] {
   const player = f.role === 'player'
   const out: NextStep[] = []
   if (!f.avatar_url) {
-    out.push({ key: 'photo', label: 'Add a profile photo', description: f.galleryPhotos.length ? 'Pick one of your photos or upload a new one' : 'Clubs look at the photo first' })
+    out.push({ key: 'photo', label: tHome('aiNextSteps.photo.label'), description: f.galleryPhotos.length ? tHome('aiNextSteps.photo.fromGallery') : tHome('aiNextSteps.photo.description') })
   }
   // Players: passports right after the photo — clubs filter on nationality and EU (founder, 2026-10-18).
-  const passport: NextStep = { key: 'passport', label: 'Add my passports', description: player ? 'Clubs filter on nationality and EU' : 'Just the countries, never a document' }
+  const passport: NextStep = { key: 'passport', label: tHome('aiNextSteps.passport.label'), description: player ? tHome('aiNextSteps.passport.descriptionPlayer') : tHome('aiNextSteps.passport.description') }
   if (player && !f.nationality_country_id) out.push(passport)
   const bio = (f.bio ?? '').trim()
-  if (!bio) out.push({ key: 'bio', label: 'Write my bio', description: 'I draft it from your profile; you choose and edit' })
-  else if (bio.length < BIO_SHORT) out.push({ key: 'bio', label: 'Improve my bio', description: 'Yours is short; I suggest a fuller one' })
-  if (player && !f.highlight_video_url) out.push({ key: 'video', label: 'Add a highlights video', description: 'Paste a YouTube or Vimeo link' })
-  if (f.careerCount === 0) out.push({ key: 'career', label: 'Add my clubs', description: 'From your CV or a few lines' })
-  if (!Object.values(f.social_links ?? {}).some((v) => typeof v === 'string' && v.trim())) out.push({ key: 'links', label: 'Add my links', description: 'Instagram, TikTok, LinkedIn…' })
-  if (player && !f.position) out.push({ key: 'position', label: 'Add my position', description: 'One line is enough' })
+  if (!bio) out.push({ key: 'bio', label: tHome('aiNextSteps.bio.label'), description: tHome('aiNextSteps.bio.description') })
+  else if (bio.length < BIO_SHORT) out.push({ key: 'bio', label: tHome('aiNextSteps.improveBio.label'), description: tHome('aiNextSteps.improveBio.description') })
+  if (player && !f.highlight_video_url) out.push({ key: 'video', label: tHome('aiNextSteps.video.label'), description: tHome('aiNextSteps.video.description') })
+  if (f.careerCount === 0) out.push({ key: 'career', label: tHome('aiNextSteps.career.label'), description: tHome('aiNextSteps.career.description') })
+  if (!Object.values(f.social_links ?? {}).some((v) => typeof v === 'string' && v.trim())) out.push({ key: 'links', label: tHome('aiNextSteps.links.label'), description: tHome('aiNextSteps.links.description') })
+  if (player && !f.position) out.push({ key: 'position', label: tHome('aiNextSteps.position.label'), description: tHome('aiNextSteps.position.description') })
   if (!player && !f.nationality_country_id) out.push(passport)
   return out
 }
@@ -84,7 +85,7 @@ async function afterSave(userId: string, reason: string) {
 /** Upload a photo as the profile photo. The old file is left for the nightly orphan sweep. */
 export async function setAvatarFromFile(userId: string, file: File): Promise<string> {
   const check = validateImage(file, { maxFileSizeMB: 10 })
-  if (!check.valid) throw new Error(check.error || 'Use a JPG or PNG photo')
+  if (!check.valid) throw new Error(check.error || tHome('aiNextSteps.photo.invalidFile'))
   const urls = await uploadProfilePhoto(userId, file)
   const { error } = await supabase.from('profiles').update(profilePhotoFields(urls)).eq('id', userId)
   if (error) throw error

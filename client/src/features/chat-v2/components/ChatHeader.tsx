@@ -15,6 +15,7 @@ import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { useReportAction } from '@/components/safety/useReportAction'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface ChatHeaderProps {
   participant?: ConversationParticipant
@@ -32,8 +33,6 @@ interface ChatHeaderProps {
   /** "Block <name>" (asks first). Also offered after a report from this menu. */
   onBlock?: () => void
 }
-
-const fallbackName = 'Hockia Member'
 
 type Detail = { line: string; active: boolean }
 const detailCache = new Map<string, Detail>()
@@ -72,8 +71,10 @@ function useParticipantDetail(participant: ConversationParticipant | undefined):
   return detail
 }
 
-export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId, onMarkUnread, onDeleteConversation, onBlock }: ChatHeaderProps) {
-  const participantName = participant?.full_name || participant?.username || fallbackName
+export function ChatHeader({ participant, onBack, backLabel: backLabelProp, profilePath, isMobile, conversationId, onMarkUnread, onDeleteConversation, onBlock }: ChatHeaderProps) {
+  const t = useInboxT()
+  const backLabel = backLabelProp ?? t('chat.header.backDefault')
+  const participantName = participant?.full_name || participant?.username || t('chat.header.memberFallback')
   const initials = participant?.full_name?.charAt(0).toUpperCase() || 'P'
   const detail = useParticipantDetail(participant)
   const navigate = useNavigate()
@@ -90,15 +91,15 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
   // Block · Delete conversation — same wording and place as every other "…" menu.
   // The other person is never told about any of them.
   const menuItems: MoreMenuItem[] = participant?.id ? [
-    ...(profilePath ? [{ key: 'profile', label: 'View profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(profilePath) }] : []),
-    ...(onMarkUnread ? [{ key: 'unread', label: 'Mark as unread', icon: <Mail className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onMarkUnread }] : []),
+    ...(profilePath ? [{ key: 'profile', label: t('chat.header.viewProfile'), icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(profilePath) }] : []),
+    ...(onMarkUnread ? [{ key: 'unread', label: t('chat.header.markUnread'), icon: <Mail className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onMarkUnread }] : []),
     report.item,
-    ...(onBlock ? [{ key: 'block', label: `Block ${firstName}`, icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onBlock, destructive: true }] : []),
-    ...(onDeleteConversation ? [{ key: 'delete', label: 'Delete conversation', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onDeleteConversation, destructive: true }] : []),
+    ...(onBlock ? [{ key: 'block', label: t('chat.header.block', { name: firstName }), icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onBlock, destructive: true }] : []),
+    ...(onDeleteConversation ? [{ key: 'delete', label: t('chat.header.deleteConversation'), icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: onDeleteConversation, destructive: true }] : []),
   ] : []
   const menu = menuItems.length > 0 ? (
     <>
-      <MoreMenu items={menuItems} title={participantName} label="Chat options" testId="chat-more-menu" triggerClassName={isMobile ? '-mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-ink-1' : undefined} iconClassName={isMobile ? 'h-6 w-6' : undefined} />
+      <MoreMenu items={menuItems} title={participantName} label={t('chat.header.options')} testId="chat-more-menu" triggerClassName={isMobile ? '-mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-ink-1' : undefined} iconClassName={isMobile ? 'h-6 w-6' : undefined} />
       {report.sheet}
     </>
   ) : null
@@ -106,7 +107,7 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
   if (isMobile) {
     // Figma Chat (100:636): "‹ Inbox" in purple, 32px avatar (clubs squared),
     // 15/semibold name, 12px role line, hairline below.
-    const roleLine = [detail?.line ?? identityLine(participant?.role), detail?.active ? 'active today' : null].filter(Boolean).join(' · ')
+    const roleLine = [detail?.line ?? identityLine(participant?.role), detail?.active ? t('chat.header.activeToday') : null].filter(Boolean).join(' · ')
     const avatar = participant?.avatar_url ? getImageUrl(participant.avatar_url, 'avatar-sm') ?? participant.avatar_url : null
     const identity = (
       <>
@@ -120,12 +121,12 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
     return (
       <header className="relative flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-line bg-white pl-2 pr-4" data-testid="chat-header">
         {/* iOS: chevron + where the chat was opened from. Android: the Material arrow alone, in ink. */}
-        <button type="button" onClick={onBack} aria-label={`Back to ${backLabel}`} className={cn('flex h-11 items-center pr-1 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}>
+        <button type="button" onClick={onBack} aria-label={t('chat.header.backTo', { label: backLabel })} className={cn('flex h-11 items-center pr-1 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}>
           <span className="flex h-11 w-9 items-center justify-center"><BackGlyph className="h-6 w-6" strokeWidth={2} /></span>
           {!ANDROID_CHROME && <span className="max-w-[72px] truncate">{backLabel}</span>}
         </button>
         {profilePath ? (
-          <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`View ${participantName} profile`}>{identity}</Link>
+          <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={t('chat.header.viewNamedProfile', { name: participantName })}>{identity}</Link>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
         )}
@@ -155,12 +156,12 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
   return (
     <header className={cn('relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-line bg-white py-3 text-left', 'px-4 md:px-5')}>
       {isMobile && (
-        <button type="button" onClick={onBack} className="-ml-1 rounded-full p-2 transition-colors hover:bg-surface-muted" aria-label="Back to conversations">
+        <button type="button" onClick={onBack} className="-ml-1 rounded-full p-2 transition-colors hover:bg-surface-muted" aria-label={t('chat.header.backToConversations')}>
           <ArrowLeft className="h-5 w-5 text-ink-2" />
         </button>
       )}
       {profilePath ? (
-        <Link to={profilePath} className="flex-shrink-0 rounded-full" aria-label={`View ${participantName} profile`}>
+        <Link to={profilePath} className="flex-shrink-0 rounded-full" aria-label={t('chat.header.viewNamedProfile', { name: participantName })}>
           <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-line" enablePreview={false} role={participant?.role} />
         </Link>
       ) : (

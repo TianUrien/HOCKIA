@@ -4,6 +4,7 @@ import { formatDay } from '@/lib/keyFacts'
 import { keyFactActionLabel } from '@/lib/profileD2'
 import { workPermitTypeLabel } from '@/lib/workPermits'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * The six key facts under the name (Figma D2.1 club view 395:308 · D2.2 owner
@@ -18,6 +19,7 @@ interface KeyFactsGridProps {
 }
 
 export function KeyFactsGrid({ facts, onAction, className }: KeyFactsGridProps) {
+  const t = useProfileT()
   return (
     <div className={cn('grid grid-cols-2 gap-2', className)} data-testid="key-facts">
       {facts.map((f) => {
@@ -36,7 +38,7 @@ export function KeyFactsGrid({ facts, onAction, className }: KeyFactsGridProps) 
               <span className={cn('break-words text-row font-semibold', f.missing ? 'text-ink-3' : 'text-ink-1')}>{f.value}</span>
             )}
             {f.euTag ? (
-              <span className="mt-0.5 self-start rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary" data-testid="passport-eu-tag">EU passport</span>
+              <span className="mt-0.5 self-start rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary" data-testid="passport-eu-tag">{t('keyFactsGrid.euTag')}</span>
             ) : f.detail && <span className="text-caption text-ink-2">{f.detail}</span>}
             {f.extraLines.map((line) => {
               const amber = line.status === 'expiring_soon' || line.status === 'expired'
@@ -71,11 +73,12 @@ export interface AttentionPermit {
  * (founder ruling 2026-09-26).
  */
 export function PermitAttentionRow({ permit, onClick }: { permit: AttentionPermit; onClick?: () => void }) {
-  const what = `${permit.flag ? `${permit.flag} ` : ''}${permit.countryName} ${workPermitTypeLabel(permit.type).toLowerCase()}`
+  const t = useProfileT()
+  const what = t('keyFactsGrid.permitName', { flag: permit.flag ? `${permit.flag} ` : '', country: permit.countryName, type: workPermitTypeLabel(permit.type).toLowerCase() })
   const day = formatDay(permit.expires_on)
   const text = permit.status === 'expired'
-    ? `Your ${what} expired${day ? ` on ${day}` : ''}. Clubs no longer see it.`
-    : `Your ${what} expires${day ? ` on ${day}` : ' soon'}. Update it so clubs keep seeing it.`
+    ? (day ? t('keyFactsGrid.permitExpiredOn', { what, day }) : t('keyFactsGrid.permitExpired', { what }))
+    : (day ? t('keyFactsGrid.permitExpiresOn', { what, day }) : t('keyFactsGrid.permitExpiresSoon', { what }))
   const body = (
     <>
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" strokeWidth={2.2} aria-hidden="true" />

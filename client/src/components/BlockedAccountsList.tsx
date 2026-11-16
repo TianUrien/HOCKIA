@@ -5,6 +5,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import Avatar from './Avatar'
+import { useInboxT } from '@/i18n/ns/inbox'
+import { humanizeToken } from '@/lib/identity'
 
 interface BlockedUser {
   blocked_id: string
@@ -22,6 +24,7 @@ interface BlockedUser {
  * Follows Instagram/Facebook pattern: shows all blocked users with unblock button.
  */
 export default function BlockedAccountsList() {
+  const t = useInboxT()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
@@ -83,10 +86,10 @@ export default function BlockedAccountsList() {
       const { error } = await (supabase as any).rpc('unblock_user', { p_blocked_id: blockedId })
       if (error) throw error
       setBlockedUsers(prev => prev.filter(u => u.blocked_id !== blockedId))
-      addToast(`${name} has been unblocked`, 'success')
+      addToast(t('safety.blockedList.unblocked', { name }), 'success')
     } catch (err) {
       logger.error('Unblock failed:', err)
-      addToast('Failed to unblock. Please try again.', 'error')
+      addToast(t('safety.blockedList.unblockFailed'), 'error')
     } finally {
       setUnblocking(null)
     }
@@ -104,7 +107,7 @@ export default function BlockedAccountsList() {
     return (
       <div className="text-center py-4">
         <Ban className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-        <p className="text-sm text-gray-500">No blocked accounts</p>
+        <p className="text-sm text-gray-500">{t('safety.blockedList.empty')}</p>
       </div>
     )
   }
@@ -112,7 +115,7 @@ export default function BlockedAccountsList() {
   return (
     <div className="space-y-2">
       {blockedUsers.map(({ blocked_id, profile: p }) => {
-        const name = p?.full_name || p?.username || 'Unknown'
+        const name = p?.full_name || p?.username || t('safety.blockedList.unknownName')
         return (
           <div key={blocked_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
             <Avatar
@@ -123,7 +126,7 @@ export default function BlockedAccountsList() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
-              {p?.role && <p className="text-xs text-gray-500 capitalize">{p.role}</p>}
+              {p?.role && <p className="text-xs text-gray-500 capitalize">{humanizeToken(p.role)}</p>}
             </div>
             <button
               type="button"
@@ -131,7 +134,7 @@ export default function BlockedAccountsList() {
               disabled={unblocking === blocked_id}
               className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
             >
-              {unblocking === blocked_id ? 'Unblocking...' : 'Unblock'}
+              {unblocking === blocked_id ? t('safety.blockedList.unblocking') : t('safety.blockedList.unblock')}
             </button>
           </div>
         )

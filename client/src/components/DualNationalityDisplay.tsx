@@ -1,5 +1,7 @@
 import { useCountries, type Country } from '@/hooks/useCountries'
 import Flag from '@/components/Flag'
+import { useCommonT } from '@/i18n/ns/common'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 interface DualNationalityDisplayProps {
   /** Primary nationality country ID */
@@ -150,6 +152,7 @@ interface CompactDisplayProps {
  * whitespace-nowrap so it never breaks mid-flag.
  */
 function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
+  const tc = useCommonT()
   const nationalities: Country[] = []
   if (primaryCountry) nationalities.push(primaryCountry)
   if (secondaryCountry) nationalities.push(secondaryCountry)
@@ -165,7 +168,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
             <span>{country.nationality_name}</span>
             {isEu && (
               <span className="ml-0.5 text-[10px] font-semibold text-eu-ink uppercase tracking-wide">
-                EU
+                {tc('nationality.euBadge')}
               </span>
             )}
             {i < nationalities.length - 1 && <span className="text-gray-500 ml-1">·</span>}
@@ -182,6 +185,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
  * nationality unit so it never visually attaches to a non-EU country.
  */
 function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
+  const tc = useCommonT()
   const nationalities: Country[] = []
   if (primaryCountry) nationalities.push(primaryCountry)
   if (secondaryCountry) nationalities.push(secondaryCountry)
@@ -202,7 +206,7 @@ function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
             <span className="truncate">{country.nationality_name}</span>
             {isEu && (
               <span className="inline-flex items-center rounded bg-eu-soft px-1.5 py-px text-[10px] font-semibold text-eu-ink">
-                EU
+                {tc('nationality.euBadge')}
               </span>
             )}
           </span>
@@ -219,6 +223,7 @@ function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
  * intentionally NOT attached per-country here.
  */
 function CodeDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
+  const tc = useCommonT()
   const nationalities: Country[] = []
   if (primaryCountry) nationalities.push(primaryCountry)
   if (secondaryCountry) nationalities.push(secondaryCountry)
@@ -242,7 +247,7 @@ function CodeDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
       </span>
       {anyEu && (
         <span className="inline-flex flex-shrink-0 items-center rounded-[3px] border border-gray-300 px-1 text-[10px] font-semibold leading-[1.5] text-gray-500">
-          EU
+          {tc('nationality.euBadge')}
         </span>
       )}
     </span>
@@ -267,6 +272,7 @@ function CardDisplay({
   isEuCountry,
   className,
 }: CardDisplayProps) {
+  const t = useProfileEditT()
   // Determine which nationalities are EU
   const primaryIsEu = primaryCountry ? isEuCountry(primaryCountry.id) : false
   const secondaryIsEu = secondaryCountry ? isEuCountry(secondaryCountry.id) : false
@@ -280,7 +286,7 @@ function CardDisplay({
         <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
         <span>{primaryCountry.name}</span>
         {primaryIsEu && (
-          <span className="text-xs text-eu-ink font-medium">(EU)</span>
+          <span className="text-xs text-eu-ink font-medium">{t('nationality.euParen')}</span>
         )}
       </span>
     )
@@ -294,7 +300,7 @@ function CardDisplay({
           <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span>{primaryCountry.name}</span>
           {primaryIsEu && (
-            <span className="text-xs text-eu-ink font-medium">(EU)</span>
+            <span className="text-xs text-eu-ink font-medium">{t('nationality.euParen')}</span>
           )}
         </div>
       )}
@@ -304,7 +310,7 @@ function CardDisplay({
           <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span>{secondaryCountry.name}</span>
           {secondaryIsEu && (
-            <span className="text-xs text-eu-ink font-medium">(EU)</span>
+            <span className="text-xs text-eu-ink font-medium">{t('nationality.euParen')}</span>
           )}
         </div>
       )}
@@ -325,6 +331,7 @@ function FullDisplay({
   isEuCountry,
   className,
 }: FullDisplayProps) {
+  const tc = useCommonT()
   // Determine which nationalities are EU
   const primaryIsEu = primaryCountry ? isEuCountry(primaryCountry.id) : false
   const secondaryIsEu = secondaryCountry ? isEuCountry(secondaryCountry.id) : false
@@ -338,7 +345,7 @@ function FullDisplay({
           <span className="font-medium">{primaryCountry.nationality_name}</span>
           {primaryIsEu && (
             <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
-              EU
+              {tc('nationality.euBadge')}
             </span>
           )}
         </div>
@@ -351,7 +358,7 @@ function FullDisplay({
           <span className="font-medium">{secondaryCountry.nationality_name}</span>
           {secondaryIsEu && (
             <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
-              EU
+              {tc('nationality.euBadge')}
             </span>
           )}
         </div>

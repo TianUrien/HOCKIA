@@ -20,6 +20,7 @@ import { guardCheck } from './authGuard'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
+import { tAuth } from '@/i18n/ns/auth'
 
 export type MagicLinkRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -70,7 +71,7 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
   const shouldCreateUser = intent === 'signup'
 
   if (!email || !isValidEmail(email)) {
-    return { ok: false, error: 'Please enter a valid email address.' }
+    return { ok: false, error: tAuth('magicLinkSend.invalidEmail') }
   }
 
   Sentry.addBreadcrumb({
@@ -133,7 +134,7 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
         return {
           ok: false,
           userNotFound: true,
-          error: 'No account found for this email. Want to sign up instead?',
+          error: tAuth('magicLinkSend.userNotFound'),
         }
       }
 
@@ -142,7 +143,7 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
         hasRole: !!role,
         intent,
       })
-      return { ok: false, error: 'Could not send the link. Please try again.' }
+      return { ok: false, error: tAuth('magicLinkSend.failed') }
     }
 
     reportCaptchaCoverage('magic_link')
@@ -154,6 +155,6 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
       hasRole: !!role,
       intent,
     })
-    return { ok: false, error: 'Could not send the link. Please try again.' }
+    return { ok: false, error: tAuth('magicLinkSend.failed') }
   }
 }

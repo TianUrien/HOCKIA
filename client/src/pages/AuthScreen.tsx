@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
+import { networkErrorCopy } from '@/lib/networkCopy'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { Trans } from 'react-i18next'
@@ -35,7 +35,7 @@ import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 /** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
-import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
+import { captchaFailedCopy, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { useAuthT } from '@/i18n/ns/auth'
 
@@ -167,7 +167,7 @@ export default function AuthScreen() {
         // say so, instead of blaming the password.
         if (isNetworkFailureError(signInError)) {
           trackLoginFailed('password', 'network')
-          setError(NETWORK_ERROR_COPY)
+          setError(networkErrorCopy())
           return
         }
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
@@ -193,7 +193,7 @@ export default function AuthScreen() {
       const network = isNetworkFailureError(err)
       trackLoginFailed('password', network ? 'network' : 'exception')
       reportAuthFlowError('password_signin.catch', err, { emailDomain: email.split('@')[1] ?? null })
-      setError(network ? NETWORK_ERROR_COPY : err instanceof Error ? err.message : t('signIn.failed'))
+      setError(network ? networkErrorCopy() : err instanceof Error ? err.message : t('signIn.failed'))
     } finally {
       setLoading(false)
     }
@@ -308,7 +308,7 @@ export default function AuthScreen() {
         {error && !userNotFound && <FormError>{error}</FormError>}
         {captchaFailed && (
           <div className="rounded-[12px] bg-status-danger-soft px-3.5 py-3" role="alert" data-testid="captcha-failed">
-            <p className="text-secondary text-status-danger">{CAPTCHA_FAILED_COPY}</p>
+            <p className="text-secondary text-status-danger">{captchaFailedCopy()}</p>
             <p className="mt-1 text-secondary text-ink-2">{t('signIn.captchaAlternative')}</p>
             <button
               type="button"

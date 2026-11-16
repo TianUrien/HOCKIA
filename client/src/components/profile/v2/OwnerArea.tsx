@@ -10,6 +10,7 @@ import { SquircleBox } from '@/components/home/v1/primitives'
 import { cn } from '@/lib/utils'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * Own profile, under the hero (Figma PR2 101:46): Edit profile + Preview as…
@@ -23,17 +24,18 @@ export function OwnerButtons({ onEdit, previews, inline = false }: {
   /** "Preview as…" options (PR3): e.g. "Someone on Hockia", "A club". */
   previews: Array<{ key: string; label: string; detail: string; onSelect: () => void }>
 }) {
+  const t = useProfileT()
   const [open, setOpen] = useState(false)
   const btn = inline
     ? 'flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-white px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-subtle'
     : 'flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white text-[15px] font-semibold text-ink-1 transition-transform duration-300 active:scale-[0.97]'
   return (
     <div className={inline ? 'flex shrink-0 gap-3' : 'flex gap-2.5 px-4 pt-4'}>
-      <button type="button" onClick={onEdit} className={btn} data-testid="profile-edit"><Pencil className="h-4 w-4" strokeWidth={1.8} /> Edit profile</button>
-      <button type="button" onClick={() => setOpen(true)} className={btn} data-testid="profile-preview-as"><Eye className="h-4 w-4" strokeWidth={1.8} /> Preview as…</button>
-      <BottomSheet open={open} onClose={() => setOpen(false)} ariaLabel="Preview as">
+      <button type="button" onClick={onEdit} className={btn} data-testid="profile-edit"><Pencil className="h-4 w-4" strokeWidth={1.8} /> {t('ownerArea.editProfile')}</button>
+      <button type="button" onClick={() => setOpen(true)} className={btn} data-testid="profile-preview-as"><Eye className="h-4 w-4" strokeWidth={1.8} /> {t('ownerArea.previewAs')}</button>
+      <BottomSheet open={open} onClose={() => setOpen(false)} ariaLabel={t('ownerArea.previewSheet')}>
         <div className="px-5 pb-4 pt-1">
-          <h2 className="pb-3 text-body font-semibold text-ink-1">Preview your profile as…</h2>
+          <h2 className="pb-3 text-body font-semibold text-ink-1">{t('ownerArea.previewTitle')}</h2>
           <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
             {previews.map((p) => (
               <button key={p.key} type="button" onClick={() => { setOpen(false); p.onSelect() }} className="flex min-h-[60px] w-full items-center gap-3 px-4 py-2.5 text-left">
@@ -45,7 +47,7 @@ export function OwnerButtons({ onEdit, previews, inline = false }: {
               </button>
             ))}
           </div>
-          <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">Cancel</button>
+          <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">{t('ownerArea.cancel')}</button>
         </div>
       </BottomSheet>
     </div>
@@ -118,6 +120,7 @@ export function PrimaryCard({ stepKey, title, subtitle, cta, onAction, visual, s
 
 /** Private stats (🔒 only you). Hidden until there is data (spec: stats hidden until there's data). */
 export function PrivateStats({ stats, emptyText }: { stats: Array<{ value: number; label: string }>; /** PR25: one quiet line instead of nothing while every stat is 0. */ emptyText?: string }) {
+  const t = useProfileT()
   if (stats.every((s) => s.value === 0)) {
     return emptyText ? (
       <p className="flex items-center gap-1 px-4 pt-3 text-caption text-ink-3" data-testid="profile-private-stats-empty">
@@ -136,7 +139,7 @@ export function PrivateStats({ stats, emptyText }: { stats: Array<{ value: numbe
         ))}
       </div>
       <Link to="/pulse" className={cn('mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3')}>
-        <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Your activity <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+        <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> {t('ownerArea.onlyYou')} <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>
   )
@@ -157,6 +160,7 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
   onPostRole: () => void
   testId?: string
 }) {
+  const t = useProfileT()
   const recruiting = openRoleCount > 0
   const toReview = recruiting && pending > 0
   const names = [...new Set(roleNames.filter(Boolean))].slice(0, 2).join(', ')
@@ -167,20 +171,20 @@ export function RecruitingCard({ pending, openRoleCount, roleNames, hasNextStep,
           <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-hockia-primary', toReview ? 'bg-white' : 'bg-hockia-soft')}><Briefcase className="h-5 w-5" strokeWidth={1.8} /></span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-              {toReview ? `${pending} ${pending === 1 ? 'applicant' : 'applicants'} to review` : recruiting ? 'No new applicants' : 'Not recruiting right now'}
+              {toReview ? t('ownerArea.applicantsToReview', { count: pending }) : recruiting ? t('ownerArea.noNewApplicants') : t('ownerArea.notRecruiting')}
             </span>
             <span className="block truncate text-secondary text-ink-2">
-              {recruiting ? `${openRoleCount} open ${openRoleCount === 1 ? 'opportunity' : 'opportunities'}${names ? ` · ${names}` : ''}` : 'Post an opportunity and players can apply'}
+              {recruiting ? (names ? t('ownerArea.openRolesWithNames', { count: openRoleCount, names }) : t('ownerArea.openRoles', { count: openRoleCount })) : t('ownerArea.postToReceive')}
             </span>
           </span>
         </div>
         <div className="flex gap-2.5">
           {toReview && (
-            <button type="button" onClick={onReview} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Review applicants</button>
+            <button type="button" onClick={onReview} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">{t('ownerArea.reviewApplicants')}</button>
           )}
-          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>+ Post an opportunity</button>
+          <button type="button" onClick={onPostRole} className={cn('flex h-11 items-center justify-center rounded-full px-4 text-[16px] font-semibold', toReview ? 'bg-white text-hockia-primary' : hasNextStep ? 'border border-line bg-white text-hockia-primary' : 'flex-1 bg-hockia-primary text-white')}>{t('ownerArea.postOpportunity')}</button>
           {recruiting && !toReview && (
-            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">View opportunities</button>
+            <button type="button" onClick={onReview} className="flex h-11 items-center px-2 text-[16px] font-semibold text-hockia-primary">{t('ownerArea.viewOpportunities')}</button>
           )}
         </div>
       </div>

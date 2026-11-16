@@ -4,12 +4,14 @@ Added 2026-11-16 (Claude Code, Spanish localization Stage 0). Plan: `docs/engine
 
 - `en/<namespace>.json` is the source of truth. English catalogs are imported as JS by the code that uses them.
 - `es/<namespace>.json` holds the Spanish text. It is fetched on demand and falls back to English key by key.
-- One namespace per product area (`common`, `auth`, `onboarding`, `home`, `opportunities`, ...). A screen's namespace is registered next to the screen with `registerNamespace` from `@/i18n`.
+- One namespace per product area (`common`, `auth`, `onboarding`, `home`, `opportunities`, `profile`, `profileEdit`, `media`, `community`, `inbox`, `notifications`, `world`, `settings`, `enums`). Each has a module in `src/i18n/ns/` exporting `use<Ns>T()` for components and `t<Ns>` for plain functions; always import from it.
+- A namespace module does nothing at import: its English catalog is added the first time its `t` or hook runs (`ensureNamespace` in `src/i18n/index.ts`). An import with a top-level effect stays in the start-up chunk even when the component that imported it is dropped (measured in Stage 2: about 54 KB gzip of screen catalogs in the first load).
+- Code that runs at start-up uses `common`, `auth`, `notifications` or a `<ns>.core` part only (`home`, `opportunities`, `onboarding`), so screen catalogs stay in their screens' chunks. `App.tsx` imports components directly, not through the `@/components` barrel, for the same reason.
 
 ## Adding or changing copy
 
 1. Add the key to `en/<namespace>.json` and to `es/<namespace>.json` in the same PR.
-2. Use it: `const { t } = useTranslation()` in components, `t` from `@/i18n` in plain functions.
+2. Use it: `const t = use<Ns>T()` in components, `t<Ns>` from the same module in plain functions.
 3. When a file has no hard-coded copy left, add it to `I18N_MIGRATED` in `client/eslint.config.js`.
 4. `npm run lint` runs the parity check (`scripts/check-locales.mjs`): missing keys, missing plural forms, empty values and changed variables fail.
 

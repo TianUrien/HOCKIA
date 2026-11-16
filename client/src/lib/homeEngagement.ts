@@ -7,6 +7,7 @@ import { positionLabel } from '@/lib/identity'
 import { getShareOrigin } from '@/lib/profileShare'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import type { PostComment, SigningMetadata } from '@/types/homeFeed'
+import { tHome } from '@/i18n/ns/home'
 
 /**
  * Home v1 engagement (Figma t24oVt… H9 / H12c / H17): Congrats and comments
@@ -36,7 +37,7 @@ export async function toggleCongrats(target: EngageTarget): Promise<Result & { h
     return result
   } catch (err) {
     logger.error('[homeEngagement] toggleCongrats', err)
-    return failed(err, 'Could not send congrats')
+    return failed(err, tHome('engagement.congratsFailed'))
   }
 }
 
@@ -79,7 +80,7 @@ export async function createComment(target: EngageTarget, content: string): Prom
     return result
   } catch (err) {
     logger.error('[homeEngagement] createComment', err)
-    return failed(err, 'Could not post your comment')
+    return failed(err, tHome('engagement.commentFailed'))
   }
 }
 
@@ -96,7 +97,7 @@ export async function deleteComment(target: EngageTarget, commentId: string): Pr
     return data as unknown as Result
   } catch (err) {
     logger.error('[homeEngagement] deleteComment', err)
-    return failed(err, 'Could not delete the comment')
+    return failed(err, tHome('engagement.deleteCommentFailed'))
   }
 }
 
@@ -113,7 +114,7 @@ export async function setCommentsEnabled(target: EngageTarget, enabled: boolean)
     return data as unknown as Result
   } catch (err) {
     logger.error('[homeEngagement] setCommentsEnabled', err)
-    return failed(err, 'Could not change comments')
+    return failed(err, tHome('engagement.commentsToggleFailed'))
   }
 }
 
@@ -124,7 +125,7 @@ export async function removeSigningTag(postId: string): Promise<Result> {
     return data as unknown as Result
   } catch (err) {
     logger.error('[homeEngagement] removeSigningTag', err)
-    return failed(err, 'Could not remove your tag')
+    return failed(err, tHome('engagement.removeTagFailed'))
   }
 }
 

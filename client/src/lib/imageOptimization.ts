@@ -3,7 +3,9 @@
  * Compresses and resizes images before upload to reduce bandwidth and storage costs
  */
 
+import { tCommon } from '@/i18n/ns/common'
 import { logger } from './logger'
+
 
 export interface OptimizeOptions {
   maxWidth?: number
@@ -223,7 +225,7 @@ const MAX_VIDEO_DURATION_SECONDS = 180
 
 export function validateVideo(file: File): { valid: boolean; error?: string } {
   if (!file.name || file.name.length > 255) {
-    return { valid: false, error: 'Invalid file name' }
+    return { valid: false, error: tCommon('upload.errors.invalidFileName') }
   }
 
   const normalizedName = file.name.toLowerCase()
@@ -234,14 +236,14 @@ export function validateVideo(file: File): { valid: boolean; error?: string } {
   const hasValidMime = ALLOWED_VIDEO_TYPES.includes(file.type.toLowerCase())
 
   if (!hasValidExtension || !hasValidMime) {
-    return { valid: false, error: 'Only MP4, MOV, or WebM videos are allowed.' }
+    return { valid: false, error: tCommon('upload.errors.videoTypes') }
   }
 
   const maxBytes = MAX_VIDEO_SIZE_MB * 1024 * 1024
   if (file.size > maxBytes) {
     return {
       valid: false,
-      error: `Video is too large. Max ${MAX_VIDEO_SIZE_MB}MB.`,
+      error: tCommon('upload.errors.videoTooLarge', { maxMb: MAX_VIDEO_SIZE_MB }),
     }
   }
 
@@ -365,12 +367,12 @@ export async function validateVideoFull(file: File): Promise<{ valid: boolean; e
     ])
 
     if (duration > MAX_VIDEO_DURATION_SECONDS) {
-      return { valid: false, error: `Video must be ${MAX_VIDEO_DURATION_SECONDS / 60} minutes or less. Current: ${Math.ceil(duration)}s.` }
+      return { valid: false, error: tCommon('upload.errors.videoTooLong', { maxMinutes: MAX_VIDEO_DURATION_SECONDS / 60, seconds: Math.ceil(duration) }) }
     }
 
     return { valid: true, duration, width: dimensions.width, height: dimensions.height }
   } catch {
-    return { valid: false, error: 'Could not read video metadata. The file may be corrupted.' }
+    return { valid: false, error: tCommon('upload.errors.unreadableVideo') }
   }
 }
 
@@ -493,19 +495,19 @@ export function validateImage(file: File, options: ImageValidationOptions): { va
   const allowed = genericMime ? hasValidExtension : allowedMimeTypes.includes(mime)
 
   if (!allowed) {
-    return { valid: false, error: 'Only JPG/JPEG or PNG images are allowed.' }
+    return { valid: false, error: tCommon('upload.errors.imageTypes') }
   }
 
   const maxBytes = maxFileSizeMB * 1024 * 1024
   if (file.size > maxBytes) {
     return {
       valid: false,
-      error: `Please upload an image smaller than ${maxFileSizeMB} MB.`,
+      error: tCommon('upload.errors.imageTooLarge', { maxMb: maxFileSizeMB }),
     }
   }
 
   if (!file.name || file.name.length > 255) {
-    return { valid: false, error: 'Invalid file name' }
+    return { valid: false, error: tCommon('upload.errors.invalidFileName') }
   }
 
   return { valid: true }

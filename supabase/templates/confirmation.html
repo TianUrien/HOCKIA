@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- English, or Spanish when the account's user metadata has ui_language "es" (set at sign-up and by the language switch; Spanish localization Stage 2, 2026-11-16). printf keeps a missing key safe. -->
+<html lang="{{ if eq (printf "%v" .Data.ui_language) "es" }}es{{ else }}en{{ end }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,41 +11,43 @@
       <img src="https://inhockia.com/hockia-logo-white.png" alt="HOCKIA" style="height: 24px; width: 100px; background: #8026FA; padding: 8px 12px; border-radius: 6px;">
     </div>
 
-    <h1 style="color: #111827; font-size: 22px; font-weight: 700; margin: 0 0 16px;">Verify your email address</h1>
+    <h1 style="color: #111827; font-size: 22px; font-weight: 700; margin: 0 0 16px;">{{ if eq (printf "%v" .Data.ui_language) "es" }}Verificar tu email{{ else }}Verify your email address{{ end }}</h1>
 
-    <p style="margin: 0 0 16px; color: #4b5563;">Welcome to HOCKIA! Click the button below to verify your email and complete your account setup:</p>
+    <p style="margin: 0 0 16px; color: #4b5563;">{{ if eq (printf "%v" .Data.ui_language) "es" }}¡Te damos la bienvenida a HOCKIA! El botón de abajo verifica tu email y termina de crear la cuenta:{{ else }}Welcome to HOCKIA! Click the button below to verify your email and complete your account setup:{{ end }}</p>
 
     <div style="margin: 24px 0;">
-      <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #8026FA; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">Verify Email Address</a>
+      <a href="{{ .ConfirmationURL }}" style="display: inline-block; background: #8026FA; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">{{ if eq (printf "%v" .Data.ui_language) "es" }}Verificar email{{ else }}Verify Email Address{{ end }}</a>
     </div>
 
     <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px 16px; margin: 24px 0;">
-      <p style="color: #92400e; font-weight: 600; font-size: 14px; margin: 0 0 4px;">Opening on mobile?</p>
+      <p style="color: #92400e; font-weight: 600; font-size: 14px; margin: 0 0 4px;">{{ if eq (printf "%v" .Data.ui_language) "es" }}¿Se abre en el celular?{{ else }}Opening on mobile?{{ end }}</p>
       <p style="color: #a16207; font-size: 13px; margin: 0;">
-        If you're opening this from Instagram, WhatsApp, or another app,
+        {{ if eq (printf "%v" .Data.ui_language) "es" }}Si el email se abrió desde Instagram, WhatsApp u otra app,
+        <strong>mantener presionado</strong> el botón de arriba y elegir
+        <strong>"Abrir en Safari"</strong> o <strong>"Abrir en el navegador"</strong>.{{ else }}If you're opening this from Instagram, WhatsApp, or another app,
         <strong>tap and hold</strong> the button above, then select
-        <strong>"Open in Safari"</strong> or <strong>"Open in Browser"</strong>.
+        <strong>"Open in Safari"</strong> or <strong>"Open in Browser"</strong>.{{ end }}
       </p>
     </div>
 
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
 
     <p style="font-size: 13px; color: #6b7280; margin: 0 0 8px;">
-      If the button doesn't work, copy and paste this link into your browser:
+      {{ if eq (printf "%v" .Data.ui_language) "es" }}Si el botón no funciona, copiar y pegar este enlace en el navegador:{{ else }}If the button doesn't work, copy and paste this link into your browser:{{ end }}
     </p>
     <p style="font-size: 12px; word-break: break-all; color: #8026FA; margin: 0 0 16px;">
       {{ .ConfirmationURL }}
     </p>
 
     <p style="font-size: 13px; color: #9ca3af; margin: 0 0 24px;">
-      This link expires in 24 hours. If you didn't create a HOCKIA account, you can ignore this email.
+      {{ if eq (printf "%v" .Data.ui_language) "es" }}El enlace vence en 24 horas. Si esta cuenta de HOCKIA no se creó desde tu email, este mensaje se puede ignorar.{{ else }}This link expires in 24 hours. If you didn't create a HOCKIA account, you can ignore this email.{{ end }}
     </p>
 
     <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0;">
       <p style="color: #9ca3af; font-size: 12px; margin: 0;">
         HOCKIA &mdash; Where field hockey sticks together.<br>
-        <a href="https://inhockia.com/privacy-policy" style="color: #8026FA; text-decoration: none;">Privacy Policy</a> &middot;
-        <a href="https://inhockia.com/terms" style="color: #8026FA; text-decoration: none;">Terms of Service</a>
+        <a href="https://inhockia.com/privacy-policy" style="color: #8026FA; text-decoration: none;">{{ if eq (printf "%v" .Data.ui_language) "es" }}Política de privacidad{{ else }}Privacy Policy{{ end }}</a> &middot;
+        <a href="https://inhockia.com/terms" style="color: #8026FA; text-decoration: none;">{{ if eq (printf "%v" .Data.ui_language) "es" }}Términos del servicio{{ else }}Terms of Service{{ end }}</a>
       </p>
     </div>
   </div>

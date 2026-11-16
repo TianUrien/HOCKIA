@@ -1,5 +1,6 @@
 import { rankScoutRows } from '@/lib/findPlayers'
 import type { FitState } from '@/lib/clubRecruiting'
+import { tCommunity } from '@/i18n/ns/community'
 
 /**
  * Community in club view (Figma D1 · D1.17 352:995; DEV NOTE 355:905).
@@ -53,9 +54,9 @@ export function rankCommunityClubView<T extends ClubViewRankable>(
 /** The sort menu in club view: "Best fit" replaces "Newest" while a player context ranks the grid. */
 export function clubViewSortOptions(fitActive: boolean): { value: 'newest' | 'evidence' | 'completeness'; label: string }[] {
   return [
-    { value: 'newest', label: fitActive ? 'Best fit' : 'Newest' },
-    { value: 'evidence', label: 'Strongest evidence' },
-    { value: 'completeness', label: 'Most complete' },
+    { value: 'newest', label: fitActive ? tCommunity('clubView.sort.bestFit') : tCommunity('clubView.sort.newest') },
+    { value: 'evidence', label: tCommunity('clubView.sort.evidence') },
+    { value: 'completeness', label: tCommunity('clubView.sort.completeness') },
   ]
 }
 

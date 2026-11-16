@@ -12,6 +12,7 @@ import { getAuthRedirectUrl } from './siteUrl'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
 import { AuthGuardRefused, guardCheck } from './authGuard'
+import { tAuth } from '@/i18n/ns/auth'
 
 export type OAuthProvider = 'apple' | 'google' | 'facebook'
 
@@ -53,7 +54,7 @@ export async function startOAuthSignIn(provider: OAuthProvider): Promise<void> {
 
   // Measured, and refused only when a server switch is on (lib/authGuard).
   const guard = await guardCheck('oauth_start', provider)
-  if (!guard.allowed) throw new AuthGuardRefused(guard.message ?? 'Too many attempts. Please try again in a minute.')
+  if (!guard.allowed) throw new AuthGuardRefused(guard.message ?? tAuth('oauthStart.tooManyAttempts'))
 
   try {
     if (platform === 'native') {

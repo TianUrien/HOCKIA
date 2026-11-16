@@ -5,6 +5,14 @@ import { useAuthStore } from '@/lib/auth'
 import { trackSignupWallAction } from '@/lib/analytics'
 import { trackDbEvent, markWallIntent } from '@/lib/trackDbEvent'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
+import { useProfileT } from '@/i18n/ns/profile'
+
+type UnavailableNoun = 'club' | 'player' | 'coach' | 'umpire' | 'profile'
+const NOUNS: readonly string[] = ['club', 'player', 'coach', 'umpire', 'profile']
+/** The copy variant for a noun; anything unexpected reads as "profile". */
+function nounKey(noun: string): UnavailableNoun {
+  return (NOUNS.includes(noun) ? noun : 'profile') as UnavailableNoun
+}
 
 /**
  * The state a public profile page renders when it has NO profile to show —
@@ -43,6 +51,7 @@ export default function ProfileUnavailable({
   /** Member-facing detail, e.g. "Club profile not found." */
   message?: string | null
 }) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuthStore()
@@ -78,6 +87,8 @@ export default function ProfileUnavailable({
     navigate(kind === 'sign_in' ? `/signin?next=${encodeURIComponent(from)}` : '/signup')
   }
 
+  const variant = nounKey(noun)
+
   if (isGuest) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center bg-gray-50 px-4">
@@ -86,10 +97,10 @@ export default function ProfileUnavailable({
             <Lock className="h-6 w-6" strokeWidth={2.25} aria-hidden="true" />
           </span>
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em] text-gray-900">
-            Sign in to view this {noun}
+            {t(`profileUnavailable.guestTitle.${variant}`)}
           </h2>
           <p className="mt-2 text-[15px] leading-6 text-gray-600">
-            This {noun} isn&apos;t publicly visible. Members can see full profiles, message, and connect.
+            {t(`profileUnavailable.guestBody.${variant}`)}
           </p>
           <div className="mt-6 flex flex-col gap-3">
             <button
@@ -98,7 +109,7 @@ export default function ProfileUnavailable({
               className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#7c3aed] text-[16px] font-semibold text-white shadow-[0_6px_18px_rgba(124,58,237,0.28)] transition-all hover:bg-[#6d28d9] active:scale-[0.985]"
             >
               <UserPlus className="h-4 w-4" aria-hidden="true" />
-              Create a free profile
+              {t('profileUnavailable.createProfile')}
             </button>
             <button
               type="button"
@@ -106,7 +117,7 @@ export default function ProfileUnavailable({
               className="flex h-[50px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#dad9e2] bg-white text-[16px] font-semibold text-gray-900 transition-all hover:bg-gray-50 active:scale-[0.985]"
             >
               <LogIn className="h-4 w-4" aria-hidden="true" />
-              Log in
+              {t('profileUnavailable.logIn')}
             </button>
           </div>
           <button
@@ -115,7 +126,7 @@ export default function ProfileUnavailable({
             className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Keep exploring
+            {t('profileUnavailable.keepExploring')}
           </button>
         </div>
       </div>
@@ -126,15 +137,15 @@ export default function ProfileUnavailable({
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="mx-auto max-w-md px-4 text-center">
         <div className="mb-4 text-6xl">🏑</div>
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Profile Not Found</h2>
-        <p className="mb-6 text-gray-600">{message || `This ${noun} could not be found.`}</p>
+        <h2 className="mb-2 text-2xl font-bold text-gray-900">{t('profileUnavailable.notFoundTitle')}</h2>
+        <p className="mb-6 text-gray-600">{message || t(`profileUnavailable.notFoundBody.${variant}`)}</p>
         <button
           type="button"
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-white transition-colors hover:bg-purple-700"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Go Back
+          {t('profileUnavailable.goBack')}
         </button>
       </div>
     </div>

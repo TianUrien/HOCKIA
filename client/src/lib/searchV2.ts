@@ -9,26 +9,32 @@
  */
 import { isOrganisationRole, positionLabel, type RoleLike } from '@/lib/identity'
 import { profilePath } from '@/lib/profileNavigation'
+import { tWorld } from '@/i18n/ns/world'
 
-export const SEARCH_SCOPE_LINE = 'Players, coaches, clubs, brands and umpires'
-export const SEARCH_PLACEHOLDER = 'Search'
+/** "Players, coaches, clubs, brands and umpires" — who search covers. */
+export function searchScopeLine(): string {
+  return tWorld('search.scopeLine')
+}
+export function searchPlaceholder(): string {
+  return tWorld('search.placeholder')
+}
 /** `search_content` returns nothing for shorter queries. */
 export const MIN_QUERY_LENGTH = 2
 /** Rows shown before the "See all" footer hands over to Community. */
 export const MAX_ROWS = 10
 
 export function askAiLabel(query: string): string {
-  return `Ask Hockia AI about “${query.trim()}”`
+  return tWorld('search.askAi', { query: query.trim() })
 }
 
 export function noMembersLabel(query: string): string {
-  return `No members match “${query.trim()}”`
+  return tWorld('search.noMembers', { query: query.trim() })
 }
 
 /** "See all 9 members" → Community with the query. A single hit still says
  *  where it goes rather than "See all 1 members". */
 export function seeAllMembersLabel(total: number): string {
-  return total === 1 ? 'See 1 member in Community' : `See all ${total} members`
+  return total === 1 ? tWorld('search.seeOneMember') : tWorld('search.seeAllMembers', { count: total })
 }
 
 export interface MemberMetaInput {

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
+import { useWorldT } from '@/i18n/ns/world'
 
 interface SearchBarProps {
   autoFocus?: boolean
@@ -10,6 +11,7 @@ interface SearchBarProps {
 
 export function SearchBar({ autoFocus = false, initialQuery = '', onQueryChange }: SearchBarProps) {
   const navigate = useNavigate()
+  const t = useWorldT()
   const [searchParams] = useSearchParams()
   const [query, setQuery] = useState(initialQuery || searchParams.get('q') || '')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -55,7 +57,7 @@ export function SearchBar({ autoFocus = false, initialQuery = '', onQueryChange 
         type="search"
         value={query}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search posts, people, clubs..."
+        placeholder={t('searchBar.placeholder')}
         className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:bg-white transition-colors"
         autoComplete="off"
         enterKeyHint="search"
@@ -68,7 +70,7 @@ export function SearchBar({ autoFocus = false, initialQuery = '', onQueryChange 
           type="button"
           onClick={handleClear}
           className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Clear search"
+          aria-label={t('searchBar.clear')}
         >
           <X className="w-4 h-4" />
         </button>

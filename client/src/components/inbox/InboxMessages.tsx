@@ -16,6 +16,7 @@ import { recruitingPreview } from '@/lib/signing'
 import { useConversationActions } from '@/lib/conversationActions'
 import { ConversationActionsSheet, type ConversationActionTarget } from './ConversationActionsSheet'
 import { BlockMemberSheet, type BlockTarget } from '@/components/safety/BlockMemberSheet'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface ConversationRpcRow {
   conversation_id: string
@@ -56,6 +57,7 @@ interface InboxMessagesProps {
  * in, and an amber notice counts them (hidden at 0). Players see none of it.
  */
 export function InboxMessages({ onCompose }: InboxMessagesProps) {
+  const t = useInboxT()
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.user?.id ?? null)
   const [query, setQuery] = useState('')
@@ -99,7 +101,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
   }, [data, query])
 
   return (
-    <section aria-label="Messages">
+    <section aria-label={t('messages.label')}>
       <div className="px-5 pb-1.5">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={2} aria-hidden="true" />
@@ -107,8 +109,8 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search"
-            aria-label="Search conversations"
+            placeholder={t('messages.searchPlaceholder')}
+            aria-label={t('messages.searchLabel')}
             autoComplete="off"
             autoCapitalize="none"
             autoCorrect="off"
@@ -120,7 +122,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             <button
               type="button"
               onClick={() => setQuery('')}
-              aria-label="Clear search"
+              aria-label={t('messages.clearSearch')}
               className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-3"
             >
               <X className="h-4 w-4" />
@@ -149,20 +151,20 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         </div>
       ) : isError ? (
         <div className="px-5 py-10 text-center">
-          <p className="text-row font-semibold text-ink-1">Could not load your messages</p>
+          <p className="text-row font-semibold text-ink-1">{t('messages.loadFailed')}</p>
           <button type="button" onClick={() => void refetch()} className={buttonClassName({ variant: 'secondary', size: 'small', radius: 'rounded-full', className: 'mt-3' })}>
-            Try again
+            {t('messages.retry')}
           </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="px-5 py-12 text-center">
-          <p className="text-row font-semibold text-ink-1">{query ? 'No conversations match' : 'No messages yet'}</p>
+          <p className="text-row font-semibold text-ink-1">{query ? t('messages.noMatch') : t('messages.emptyTitle')}</p>
           <p className="mt-1 text-secondary text-ink-2">
-            {query ? 'Try another name.' : role === 'club' ? 'Messages from players, coaches and clubs show up here.' : 'Messages with clubs, players and coaches show up here.'}
+            {query ? t('messages.noMatchHint') : role === 'club' ? t('messages.emptyBodyClub') : t('messages.emptyBody')}
           </p>
           {!query && (
             <button type="button" onClick={onCompose} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'mt-4' })}>
-              New message
+              {t('messages.newMessage')}
             </button>
           )}
         </div>
@@ -170,12 +172,12 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         <ul>
           {filtered.map((row) => {
             const unread = Number(row.unread_count ?? 0) > 0
-            const name = row.other_participant_name ?? row.other_participant_username ?? 'Hockia member'
+            const name = row.other_participant_name ?? row.other_participant_username ?? t('messages.memberFallback')
             const mine = row.last_message_sender_id === userId
             // Recruiting lines the server posts as the club are reworded for
             // the club and never carry the "You:" prefix (lib/signing).
             const line = row.last_message_content ? recruitingPreview(row.last_message_content, { isMine: mine, otherFirstName: firstNameOf(row.other_participant_name, '') }) : null
-            const preview = line ? `${mine && !line.system ? 'You: ' : ''}${line.text}` : 'Say hello'
+            const preview = line ? (mine && !line.system ? t('messages.previewMine', { text: line.text }) : line.text) : t('messages.sayHello')
             const m = clubV2 ? meta?.get(row.conversation_id) : undefined
             const roleLine = m ? clubInboxRoleLine(row.other_participant_role, m.detail, m.applied) : identityLine(row.other_participant_role)
             return (
@@ -207,7 +209,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         onClose={() => setActionTarget(null)}
         onToggleUnread={setUnread}
         onDelete={deleteConversation}
-        onBlock={(t) => { if (t.otherId) setBlockTarget({ id: t.otherId, name: t.name }) }}
+        onBlock={(target) => { if (target.otherId) setBlockTarget({ id: target.otherId, name: target.name }) }}
       />
       {/* A blocked person's conversation leaves the list (server filter): refetch. */}
       <BlockMemberSheet target={blockTarget} onClose={() => setBlockTarget(null)} onBlocked={() => void refetch()} />

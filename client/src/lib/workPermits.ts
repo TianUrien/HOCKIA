@@ -13,14 +13,18 @@
  * expiring soon / expired); a future start date still makes it not yet valid.
  */
 
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+import { lazyTextRecord } from '@/lib/opportunityLazyText'
+
 export const WORK_PERMIT_TYPES = ['visa', 'work_permit', 'residency'] as const
 export type WorkPermitType = (typeof WORK_PERMIT_TYPES)[number]
 
-export const WORK_PERMIT_TYPE_LABELS: Record<WorkPermitType, string> = {
-  visa: 'Visa',
-  work_permit: 'Work permit',
-  residency: 'Residency',
-}
+/** Read on every access, so the label follows the interface language. */
+export const WORK_PERMIT_TYPE_LABELS: Record<WorkPermitType, string> = lazyTextRecord({
+  visa: () => tProfileEdit('permits.types.visa'),
+  work_permit: () => tProfileEdit('permits.types.workPermit'),
+  residency: () => tProfileEdit('permits.types.residency'),
+})
 
 /** A permit expiring within this many days (still valid) is "expiring soon". */
 export const EXPIRING_SOON_DAYS = 30
@@ -46,7 +50,7 @@ export function isWorkPermitType(value: unknown): value is WorkPermitType {
 }
 
 export function workPermitTypeLabel(type: string | null | undefined): string {
-  return isWorkPermitType(type) ? WORK_PERMIT_TYPE_LABELS[type] : 'Permit'
+  return isWorkPermitType(type) ? WORK_PERMIT_TYPE_LABELS[type] : tProfileEdit('permits.types.fallback')
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000

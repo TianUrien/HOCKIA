@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { chipTone } from '@/components/ui/chipClasses'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * PortfolioSectionNav — sticky quick-nav chips on the public portfolio.
@@ -41,6 +42,7 @@ export default function PortfolioSectionNav({
   sections,
   hasPreviewBanner = false,
 }: PortfolioSectionNavProps) {
+  const t = useProfileT()
   const [activeId, setActiveId] = useState<string | null>(null)
   // Suppress observer-driven highlight churn while a chip-initiated smooth
   // scroll is in flight — the sections passing by would flash each chip.
@@ -85,7 +87,7 @@ export default function PortfolioSectionNav({
 
   return (
     <nav
-      aria-label="Profile sections"
+      aria-label={t('portfolioSectionNav.label')}
       data-testid="portfolio-section-nav"
       className={cn(
         'sticky z-30 -mx-4 border-b border-gray-100 bg-gray-50/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6',

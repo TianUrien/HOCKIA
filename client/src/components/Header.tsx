@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Users, Briefcase, Bell, Search, SquarePlus } from 'lucide-react'
-import { AvatarMenu } from '@/components'
+import AvatarMenu from '@/components/AvatarMenu'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'

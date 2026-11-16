@@ -3,6 +3,7 @@ import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 import { useNearViewport } from '@/hooks/useNearViewport'
 import { cn } from '@/lib/utils'
 import { formatVideoDuration } from '@/lib/videoCopy'
+import { useMediaT } from '@/i18n/ns/media'
 import { VideoLockBadge } from './VideoLockBadge'
 
 /**
@@ -33,6 +34,7 @@ interface ProfileVideoTileProps {
 }
 
 export function ProfileVideoTile({ video, portrait = false, locked = false, canWatch = true, onOpen, className, compact = false, eager = false, priority = false, size }: ProfileVideoTileProps) {
+  const t = useMediaT()
   const { ref, near } = useNearViewport<HTMLButtonElement>(eager || priority)
   const gated = locked && !canWatch
   const box = size ?? (portrait ? { width: 124, height: 164 } : { width: 224, height: 126 })
@@ -42,15 +44,15 @@ export function ProfileVideoTile({ video, portrait = false, locked = false, canW
 
   if (dead) {
     return (
-      <button ref={ref} type="button" onClick={onOpen} aria-label={`${video.title} · video unavailable`} className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-2 text-center', className)}>
+      <button ref={ref} type="button" onClick={onOpen} aria-label={t('videoTile.unavailableLabel', { title: video.title })} className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-2 text-center', className)}>
         <VideoOff className="h-5 w-5 text-ink-4" strokeWidth={1.8} aria-hidden="true" />
-        <span className="text-caption text-ink-3">Video unavailable</span>
+        <span className="text-caption text-ink-3">{t('videoTile.unavailable')}</span>
       </button>
     )
   }
 
   return (
-    <button ref={ref} type="button" onClick={onOpen} aria-label={`${gated ? 'Locked: ' : 'Play '}${video.title}`} className={cn('relative overflow-hidden rounded-card bg-surface-grouped text-left', className)}>
+    <button ref={ref} type="button" onClick={onOpen} aria-label={gated ? t('videoTile.lockedLabel', { title: video.title }) : t('videoTile.playLabel', { title: video.title })} className={cn('relative overflow-hidden rounded-card bg-surface-grouped text-left', className)}>
       {thumb && (
         <img
           src={thumb}
@@ -77,18 +79,20 @@ export function ProfileVideoTile({ video, portrait = false, locked = false, canW
  * recruiters-only rows, so there is no title or thumbnail to show — only
  * the count from get_video_access_summary). Tapping explains why.
  */
-export function LockedVideoTile({ label = 'Full match', onOpen, className }: { label?: string; onOpen: () => void; className?: string }) {
+export function LockedVideoTile({ label: labelProp, onOpen, className }: { label?: string; onOpen: () => void; className?: string }) {
+  const t = useMediaT()
+  const label = labelProp ?? t('videoTile.fullMatch')
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${label} · for clubs & recruiting coaches only`}
+      aria-label={t('videoTile.lockedTileLabel', { label })}
       data-testid="locked-video-tile"
       className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-3 text-center', className)}
     >
       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_0_0_1px_rgba(20,20,28,0.06)]"><Lock className="h-4 w-4" strokeWidth={2} aria-hidden="true" /></span>
       <span className="text-caption font-semibold text-ink-1">{label}</span>
-      <span className="text-caption text-ink-2">Clubs &amp; recruiting coaches only</span>
+      <span className="text-caption text-ink-2">{t('videoTile.lockedTileNote')}</span>
     </button>
   )
 }

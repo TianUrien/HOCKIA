@@ -11,6 +11,7 @@ import RoleBadge from '../RoleBadge'
 import ConfirmActionModal from '../ConfirmActionModal'
 import type { Database } from '@/lib/database.types'
 import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
+import { tCommunity, useCommunityT } from '@/i18n/ns/community'
 
 /**
  * ConnectionsSection — segmented Connections / Requests / Sent panel.
@@ -43,6 +44,7 @@ interface ConnectionsSectionProps {
 }
 
 export default function ConnectionsSection({ profileId, profileRole, onAskToVouch }: ConnectionsSectionProps) {
+  const t = useCommunityT()
   const { profile: authProfile } = useAuthStore()
   const navigate = useNavigate()
   const { addToast } = useToastStore()
@@ -52,7 +54,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<TabId>('connections')
   const [mutatingId, setMutatingId] = useState<string | null>(null)
-  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string | null } | null>(null)
 
   const fetchConnections = useCallback(async () => {
     setLoading(true)
@@ -89,11 +91,11 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
       setConnections(enriched)
     } catch (error) {
       logger.error('[ConnectionsSection] fetch failed', error)
-      addToast('Unable to load connections. Please try again.', 'error')
+      addToast(t('connections.toasts.loadFailed'), 'error')
     } finally {
       setLoading(false)
     }
-  }, [profileId, addToast])
+  }, [profileId, addToast, t])
 
   useEffect(() => {
     void fetchConnections()
@@ -131,20 +133,20 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
         await fetchConnections()
         const msg =
           status === 'accepted'
-            ? 'Connection accepted.'
+            ? t('connections.toasts.accepted')
             : status === 'rejected'
-              ? 'Request declined.'
-              : 'Request withdrawn.'
+              ? t('connections.toasts.declined')
+              : t('connections.toasts.withdrawn')
         addToast(msg, 'success')
       } catch (error) {
         logger.error('[ConnectionsSection] update failed', error)
-        const msg = friendRequestErrorMessage(error, 'Could not update connection. Please try again.')
+        const msg = friendRequestErrorMessage(error, t('connections.toasts.updateFailed'))
         addToast(msg, friendRequestToastType(msg))
       } finally {
         setMutatingId(null)
       }
     },
-    [addToast, fetchConnections],
+    [addToast, fetchConnections, t],
   )
 
   // Remove = revoke an accepted connection. The friendships RLS update
@@ -162,15 +164,15 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
         if (error) throw error
         invalidateFriendshipEdges()
         await fetchConnections()
-        addToast('Connection removed.', 'success')
+        addToast(t('connections.toasts.removed'), 'success')
       } catch (error) {
         logger.error('[ConnectionsSection] remove failed', error)
-        addToast('Could not remove connection. Please try again.', 'error')
+        addToast(t('connections.toasts.removeFailed'), 'error')
       } finally {
         setMutatingId(null)
       }
     },
-    [addToast, fetchConnections],
+    [addToast, fetchConnections, t],
   )
 
   const list = tab === 'connections' ? accepted : tab === 'requests' ? incoming : outgoing
@@ -182,30 +184,30 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
     >
       <header className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Connections</h2>
-          <p className="mt-0.5 text-xs text-gray-500">People in your Hockia network.</p>
+          <h2 className="text-base font-semibold text-gray-900">{t('connections.title')}</h2>
+          <p className="mt-0.5 text-xs text-gray-500">{t('connections.subtitle')}</p>
         </div>
         <Link
           to="/dashboard/profile/friends"
           className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4] flex-shrink-0"
         >
-          View all
+          {t('connections.viewAll')}
         </Link>
       </header>
 
       {/* Segmented tab control */}
       <div
         role="tablist"
-        aria-label="Connection filter"
+        aria-label={t('connections.tabsLabel')}
         className="flex items-center gap-1 mb-4 border-b border-gray-100"
       >
-        <TabButton id="connections" current={tab} onClick={setTab} label="Connections" />
+        <TabButton id="connections" current={tab} onClick={setTab} label={t('connections.tabs.connections')} />
         {isOwner && (
           <TabButton
             id="requests"
             current={tab}
             onClick={setTab}
-            label="Requests"
+            label={t('connections.tabs.requests')}
             badge={incoming.length}
           />
         )}
@@ -214,7 +216,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
             id="sent"
             current={tab}
             onClick={setTab}
-            label="Sent"
+            label={t('connections.tabs.sent')}
             badge={outgoing.length}
           />
         )}
@@ -245,8 +247,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
               onRemove={() =>
                 setRemoveTarget({
                   id: edge.id!,
-                  name:
-                    edge.friend?.full_name || edge.friend?.username || 'this connection',
+                  name: edge.friend?.full_name || edge.friend?.username || null,
                 })
               }
               onOpenProfile={() => {
@@ -278,16 +279,18 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
           await performRemove(removeTarget.id)
           setRemoveTarget(null)
         }}
-        title="Remove connection"
+        title={t('connections.remove.title')}
         description={
           removeTarget
-            ? `${removeTarget.name} will be removed from your connections. You can always reconnect later.`
+            ? removeTarget.name
+              ? t('connections.remove.description', { name: removeTarget.name })
+              : t('connections.remove.descriptionNoName')
             : ''
         }
-        confirmLabel="Remove connection"
+        confirmLabel={t('connections.remove.confirm')}
         confirmTone="danger"
         confirmLoading={Boolean(removeTarget && mutatingId === removeTarget.id)}
-        loadingLabel="Removing..."
+        loadingLabel={t('connections.remove.loading')}
       />
     </section>
   )
@@ -352,14 +355,15 @@ function SkeletonRow() {
 }
 
 function EmptyState({ tab, isOwner }: { tab: TabId; isOwner: boolean }) {
+  const t = useCommunityT()
   const copy =
     tab === 'connections'
       ? isOwner
-        ? 'No connections yet. Find people on Hockia to grow your network.'
-        : 'No connections to show yet.'
+        ? t('connections.empty.ownerConnections')
+        : t('connections.empty.visitorConnections')
       : tab === 'requests'
-        ? 'No pending requests.'
-        : 'No requests sent.'
+        ? t('connections.empty.requests')
+        : t('connections.empty.sent')
   return (
     <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/40 px-4 py-8 text-center">
       <p className="text-sm text-gray-500">{copy}</p>
@@ -394,8 +398,9 @@ function ConnectionRow({
   onRemove,
   onOpenProfile,
 }: ConnectionRowProps) {
+  const t = useCommunityT()
   const friend = edge.friend
-  const fullName = friend?.full_name || friend?.username || 'Hockia Member'
+  const fullName = friend?.full_name || friend?.username || t('connections.row.memberFallback')
   const initials = (friend?.full_name ?? '')
     .split(' ')
     .map((p) => p[0])
@@ -412,7 +417,7 @@ function ConnectionRow({
           type="button"
           onClick={onOpenProfile}
           className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 rounded-full"
-          aria-label={`Open ${fullName}'s profile`}
+          aria-label={t('connections.row.openProfile', { name: fullName })}
         >
           <Avatar
             src={friend?.avatar_url}
@@ -459,7 +464,7 @@ function ConnectionRow({
                   className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                 >
                   <ShieldCheck className="h-3 w-3" />
-                  Ask to vouch
+                  {t('connections.row.askToVouch')}
                 </button>
               )}
               <button
@@ -469,7 +474,7 @@ function ConnectionRow({
                 className="inline-flex items-center gap-1 rounded-lg bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 <UserMinus className="h-3 w-3" />
-                Remove
+                {t('connections.row.remove')}
               </button>
             </>
           )}
@@ -482,7 +487,7 @@ function ConnectionRow({
                 className="inline-flex items-center gap-1 rounded-lg bg-brand-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-primary transition-colors disabled:opacity-50"
               >
                 <Check className="h-3 w-3" />
-                Accept
+                {t('connections.row.accept')}
               </button>
               <button
                 type="button"
@@ -491,7 +496,7 @@ function ConnectionRow({
                 className="inline-flex items-center gap-1 rounded-lg bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 <X className="h-3 w-3" />
-                Reject
+                {t('connections.row.reject')}
               </button>
             </>
           )}
@@ -503,7 +508,7 @@ function ConnectionRow({
               className="inline-flex items-center gap-1 rounded-lg bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               <X className="h-3 w-3" />
-              Cancel
+              {t('connections.row.cancel')}
             </button>
           )}
         </div>
@@ -522,20 +527,12 @@ function formatTimestamp(edge: EnrichedEdge, tab: TabId): string | null {
   if (Number.isNaN(d.getTime())) return null
   const diffMs = Date.now() - d.getTime()
   const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  let phrase: string
-  if (days < 1) phrase = 'today'
-  else if (days < 7) phrase = `${days} day${days === 1 ? '' : 's'} ago`
-  else if (days < 30) {
-    const weeks = Math.floor(days / 7)
-    phrase = `${weeks} week${weeks === 1 ? '' : 's'} ago`
-  } else if (days < 365) {
-    const months = Math.floor(days / 30)
-    phrase = `${months} month${months === 1 ? '' : 's'} ago`
-  } else {
-    const years = Math.floor(days / 365)
-    phrase = `${years} year${years === 1 ? '' : 's'} ago`
-  }
-  return tab === 'connections' ? `Connected ${phrase}` : `Sent ${phrase}`
+  const prefix = tab === 'connections' ? 'connected' : 'sent'
+  if (days < 1) return tCommunity(`connections.since.${prefix}Today`)
+  if (days < 7) return tCommunity(`connections.since.${prefix}Days`, { count: days })
+  if (days < 30) return tCommunity(`connections.since.${prefix}Weeks`, { count: Math.floor(days / 7) })
+  if (days < 365) return tCommunity(`connections.since.${prefix}Months`, { count: Math.floor(days / 30) })
+  return tCommunity(`connections.since.${prefix}Years`, { count: Math.floor(days / 365) })
 }
 
 // Re-export the UserPlus icon import to silence the unused-import error

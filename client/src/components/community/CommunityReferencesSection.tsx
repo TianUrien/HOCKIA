@@ -24,6 +24,7 @@ import { formatRelationshipType } from '@/lib/utils'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import type { Profile } from '@/lib/supabase'
 import { STATUS_TONE_PILL, pendingVerificationTone } from '@/lib/statusTone'
+import { useCommunityT } from '@/i18n/ns/community'
 
 type TrustedReferencesState = ReturnType<typeof useTrustedReferences>
 
@@ -109,6 +110,7 @@ export default function CommunityReferencesSection({
     isMutating,
   } = references
 
+  const t = useCommunityT()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
@@ -160,7 +162,7 @@ export default function CommunityReferencesSection({
   const handleMessage = async (targetId: string | null) => {
     if (!targetId || !user) {
       if (!user) {
-        addToast('Sign in to message references.', 'info')
+        addToast(t('references.toasts.signInToMessage'), 'info')
         navigate('/')
       }
       return
@@ -182,7 +184,7 @@ export default function CommunityReferencesSection({
       else navigate(`/messages?new=${targetId}`, { state: { returnTo, messageOrigin: 'Community' } })
     } catch (error) {
       logger.error('Failed to open messages', error)
-      addToast('Unable to start conversation. Please try again.', 'error')
+      addToast(t('references.toasts.messageFailed'), 'error')
     } finally {
       setMessageTargetId(null)
     }
@@ -233,8 +235,8 @@ export default function CommunityReferencesSection({
     setConfirmState({
       mode: 'remove',
       referenceId,
-      headline: 'Remove trusted reference',
-      description: `This will remove ${referenceName} from your trusted references. You can always invite them again later.`,
+      headline: t('references.confirm.removeTitle'),
+      description: t('references.confirm.removeDescription', { name: referenceName }),
     })
   }
 
@@ -242,8 +244,8 @@ export default function CommunityReferencesSection({
     setConfirmState({
       mode: 'withdraw',
       referenceId,
-      headline: 'Withdraw your endorsement',
-      description: `This reference will disappear from ${referenceName}'s profile immediately.`,
+      headline: t('references.confirm.withdrawTitle'),
+      description: t('references.confirm.withdrawDescription', { name: referenceName }),
     })
   }
 
@@ -275,9 +277,9 @@ export default function CommunityReferencesSection({
       >
         <header className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">References</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t('references.selected.title')}</h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              Coaches, teammates, and clubs vouching for you.
+              {t('references.selected.subtitle')}
             </p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft px-2.5 py-1 text-xs font-semibold text-gold flex-shrink-0">
@@ -302,7 +304,7 @@ export default function CommunityReferencesSection({
             {acceptedReferences.map((reference) => {
               const isExpanded = expandedRefId === reference.id
               const profile = reference.profile
-              const fullName = profile?.fullName ?? 'Hockia Member'
+              const fullName = profile?.fullName ?? t('references.memberFallback')
               return (
                 <li
                   key={reference.id}
@@ -313,7 +315,7 @@ export default function CommunityReferencesSection({
                       type="button"
                       onClick={() => openProfile(profile?.id ?? null, profile?.role)}
                       className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 rounded-full"
-                      aria-label={`Open ${fullName}'s profile`}
+                      aria-label={t('references.openProfile', { name: fullName })}
                     >
                       <Avatar
                         src={profile?.avatarUrl}
@@ -335,7 +337,7 @@ export default function CommunityReferencesSection({
                         </button>
                         <ShieldCheck
                           className="h-3.5 w-3.5 text-gold flex-shrink-0"
-                          aria-label="Vouched"
+                          aria-label={t('references.selected.vouched')}
                         />
                         {profile?.role && (
                           <RoleBadge
@@ -368,7 +370,7 @@ export default function CommunityReferencesSection({
                             }
                             className="text-xs font-medium text-hockia-primary hover:text-[#6B20D4]"
                           >
-                            {isExpanded ? 'Show less' : 'Read full reference'}
+                            {isExpanded ? t('references.selected.showLess') : t('references.selected.readFull')}
                           </button>
                         )}
                         {profile?.id && (
@@ -379,7 +381,7 @@ export default function CommunityReferencesSection({
                             className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50"
                           >
                             <MessageCircle className="h-3 w-3" />
-                            Message
+                            {t('references.selected.message')}
                           </button>
                         )}
                         <button
@@ -390,7 +392,7 @@ export default function CommunityReferencesSection({
                           className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-600"
                         >
                           <Trash2 className="h-3 w-3" />
-                          Remove
+                          {t('references.selected.remove')}
                         </button>
                       </div>
                     </div>
@@ -410,9 +412,9 @@ export default function CommunityReferencesSection({
                   className="w-full rounded-xl border border-dashed border-gold-line/40 bg-gold-soft px-4 py-3 text-sm font-semibold text-gold hover:bg-gold-soft transition-colors inline-flex items-center justify-center gap-1.5"
                 >
                   <Plus className="h-4 w-4" />
-                  Add Reference
+                  {t('references.selected.addReference')}
                   <span className="ml-1 text-xs font-normal text-gold">
-                    ({maxReferences - acceptedCount} of {maxReferences} spots left)
+                    {t('references.selected.spotsLeft', { count: maxReferences - acceptedCount, max: maxReferences })}
                   </span>
                 </button>
               </li>
@@ -429,8 +431,8 @@ export default function CommunityReferencesSection({
         >
           <header className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-base font-semibold text-gray-900">Reference requests</h2>
-              <p className="mt-0.5 text-xs text-gray-500">People asking you to vouch for them.</p>
+              <h2 className="text-base font-semibold text-gray-900">{t('references.requests.title')}</h2>
+              <p className="mt-0.5 text-xs text-gray-500">{t('references.requests.subtitle')}</p>
             </div>
             {/* The viewer is the one who must verify → amber (lib/statusTone). */}
             {incomingRequests.length > 0 && (
@@ -444,13 +446,13 @@ export default function CommunityReferencesSection({
             <SkeletonRows />
           ) : incomingRequests.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/40 px-4 py-6 text-center">
-              <p className="text-sm text-gray-500">No new requests right now.</p>
+              <p className="text-sm text-gray-500">{t('references.requests.empty')}</p>
             </div>
           ) : (
             <ul className="space-y-2.5">
               {incomingRequests.map((request) => {
                 const requester = request.requesterProfile
-                const fullName = requester?.fullName ?? 'Hockia Member'
+                const fullName = requester?.fullName ?? t('references.memberFallback')
                 return (
                   <li
                     key={request.id}
@@ -461,7 +463,7 @@ export default function CommunityReferencesSection({
                         type="button"
                         onClick={() => openProfile(requester?.id ?? null, requester?.role)}
                         className="flex-shrink-0"
-                        aria-label={`Open ${fullName}'s profile`}
+                        aria-label={t('references.openProfile', { name: fullName })}
                       >
                         <Avatar
                           src={requester?.avatarUrl}
@@ -504,7 +506,7 @@ export default function CommunityReferencesSection({
                         className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand-primary px-3 py-2 text-xs font-semibold text-white hover:bg-brand-primary disabled:opacity-60 transition-colors"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Accept & endorse
+                        {t('references.requests.accept')}
                       </button>
                       <button
                         type="button"
@@ -513,7 +515,7 @@ export default function CommunityReferencesSection({
                         className="inline-flex items-center justify-center gap-1 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-60 transition-colors"
                       >
                         <X className="h-3.5 w-3.5" />
-                        Decline
+                        {t('references.requests.decline')}
                       </button>
                     </div>
                   </li>
@@ -536,12 +538,12 @@ export default function CommunityReferencesSection({
                 recruitment. Players see the generic "References you
                 gave" framing. */}
             <h2 className="text-base font-semibold text-gray-900">
-              {profileRole === 'coach' ? 'Players you recommend' : 'References you gave'}
+              {profileRole === 'coach' ? t('references.given.coachTitle') : t('references.given.title')}
             </h2>
             <p className="mt-0.5 text-xs text-gray-500">
               {profileRole === 'coach'
-                ? `Endorsements you wrote that appear on the players' profiles — your coaching social proof. Not counted toward your ${maxReferences} above.`
-                : `Endorsements you wrote that appear on other members' profiles — not counted toward your ${maxReferences} above.`}
+                ? t('references.given.coachSubtitle', { max: maxReferences })
+                : t('references.given.subtitle', { max: maxReferences })}
             </p>
           </div>
           {givenReferences.length > 0 && (
@@ -555,13 +557,13 @@ export default function CommunityReferencesSection({
           <SkeletonRows />
         ) : givenReferences.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/40 px-4 py-6 text-center">
-            <p className="text-sm text-gray-500">You haven't endorsed anyone yet.</p>
+            <p className="text-sm text-gray-500">{t('references.given.empty')}</p>
           </div>
         ) : (
           <ul className="space-y-2.5">
             {givenReferences.map((reference) => {
               const requester = reference.requesterProfile
-              const fullName = requester?.fullName ?? 'Hockia Member'
+              const fullName = requester?.fullName ?? t('references.memberFallback')
               const hasEndorsement = Boolean(reference.endorsementText)
               return (
                 <li
@@ -573,7 +575,7 @@ export default function CommunityReferencesSection({
                       type="button"
                       onClick={() => openProfile(requester?.id ?? null, requester?.role)}
                       className="flex-shrink-0"
-                      aria-label={`Open ${fullName}'s profile`}
+                      aria-label={t('references.openProfile', { name: fullName })}
                     >
                       <Avatar
                         src={requester?.avatarUrl}
@@ -604,7 +606,7 @@ export default function CommunityReferencesSection({
                               : 'bg-surface-grouped text-ink-2'
                           }`}
                         >
-                          {hasEndorsement ? 'Endorsed' : 'No endorsement'}
+                          {hasEndorsement ? t('references.given.endorsed') : t('references.given.noEndorsement')}
                         </span>
                       </div>
                       <p className="mt-0.5 text-xs text-gray-600 truncate">
@@ -623,7 +625,7 @@ export default function CommunityReferencesSection({
                           className="inline-flex items-center gap-1 text-xs font-medium text-gold hover:text-gold disabled:opacity-50"
                         >
                           <Pencil className="h-3 w-3" />
-                          {hasEndorsement ? 'Edit endorsement' : 'Add endorsement'}
+                          {hasEndorsement ? t('references.given.editEndorsement') : t('references.given.addEndorsement')}
                         </button>
                         <button
                           type="button"
@@ -632,7 +634,7 @@ export default function CommunityReferencesSection({
                           className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-600 disabled:opacity-50"
                         >
                           <Trash2 className="h-3 w-3" />
-                          Withdraw
+                          {t('references.given.withdraw')}
                         </button>
                       </div>
                     </div>
@@ -666,7 +668,7 @@ export default function CommunityReferencesSection({
         onClose={() => setEndorsementRequest(null)}
         onSubmit={handleAcceptRequest}
         loading={endorsementRequest ? isMutating('respond', endorsementRequest.id) : false}
-        requesterName={endorsementRequest?.requesterProfile?.fullName ?? 'this member'}
+        requesterName={endorsementRequest?.requesterProfile?.fullName ?? t('references.requesterFallback')}
         relationshipType={endorsementRequest?.relationshipType ?? ''}
         requestNote={endorsementRequest?.requestNote}
       />
@@ -676,7 +678,7 @@ export default function CommunityReferencesSection({
         onClose={() => setEditingReference(null)}
         onSubmit={handleEditEndorsement}
         loading={editingReference ? isMutating('edit', editingReference.id) : false}
-        requesterName={editingReference?.requesterProfile?.fullName ?? 'this member'}
+        requesterName={editingReference?.requesterProfile?.fullName ?? t('references.requesterFallback')}
         relationshipType={editingReference?.relationshipType ?? ''}
         existingEndorsement={editingReference?.endorsementText}
         mode="edit"
@@ -688,10 +690,10 @@ export default function CommunityReferencesSection({
         onConfirm={executeConfirm}
         title={confirmState?.headline ?? ''}
         description={confirmState?.description}
-        confirmLabel={confirmState?.mode === 'remove' ? 'Remove reference' : 'Withdraw endorsement'}
+        confirmLabel={confirmState?.mode === 'remove' ? t('references.confirm.removeButton') : t('references.confirm.withdrawButton')}
         confirmTone={confirmState?.mode === 'remove' ? 'danger' : 'primary'}
         confirmLoading={confirmLoading}
-        loadingLabel="Working..."
+        loadingLabel={t('references.confirm.working')}
       />
     </div>
   )
@@ -730,19 +732,20 @@ function SelectedEmptyState({
   canAddMore: boolean
   onAddReference: () => void
 }) {
+  const t = useCommunityT()
   if (!canCollect) {
     return (
       <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/40 px-4 py-6 text-center">
-        <p className="text-sm text-gray-500">No trusted references yet.</p>
+        <p className="text-sm text-gray-500">{t('references.emptyState.visitor')}</p>
       </div>
     )
   }
   return (
     <div className="rounded-xl border border-dashed border-gold-line/40 bg-gold-soft px-4 py-6 text-center">
       <ShieldCheck className="mx-auto h-7 w-7 text-gold" aria-hidden="true" />
-      <p className="mt-2 text-sm font-semibold text-gray-900">No references yet</p>
+      <p className="mt-2 text-sm font-semibold text-gray-900">{t('references.emptyState.title')}</p>
       <p className="mt-1 text-xs text-gray-600">
-        Ask coaches, teammates, and clubs to vouch for you. Each one strengthens your profile.
+        {t('references.emptyState.body')}
       </p>
       {canAddMore && (
         <button
@@ -751,7 +754,7 @@ function SelectedEmptyState({
           className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-xs font-semibold text-white hover:bg-brand-primary transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
-          Add Reference
+          {t('references.emptyState.addReference')}
         </button>
       )}
     </div>

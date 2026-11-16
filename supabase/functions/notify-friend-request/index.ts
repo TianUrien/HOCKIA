@@ -14,6 +14,7 @@ import {
   sendEmail,
 } from '../_shared/friend-request-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguage } from '../_shared/member-language.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 
 /**
@@ -211,36 +212,42 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Both accounts are real - proceeding with email')
 
-    const requesterName = requester.full_name?.trim() || 'Someone'
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    const nameFor = (lang: MemberLanguage) =>
+      requester.full_name?.trim() || (lang === 'es' ? 'Alguien' : 'Someone')
+    const requesterName = nameFor(language)
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
-    const templateVars = {
-      requester_name: requesterName,
+    const templateVars = (lang: MemberLanguage) => ({
+      requester_name: nameFor(lang),
       requester_location: requester.base_location?.trim() || '',
       requester_avatar_url: requester.avatar_url || '',
       avatar_role: requester.role || '',
       cta_url: `${HOCKIA_BASE_URL}/friends`,
       profile_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    }
+    })
 
     // Try DB template, fall back to hardcoded
     let subject: string
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'friend_request', templateVars)
+    const rendered = await renderTemplate(supabase, 'friend_request', templateVars, language)
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for friend_request')
+      logger.info('Using DB template for friend_request', { language: rendered.language })
     } else {
-      emailHtml = generateEmailHtml(requester as RequesterData)
-      emailText = generateEmailText(requester as RequesterData)
-      subject = `${requesterName} sent you a friend request on Hockia`
-      logger.info('Falling back to hardcoded template')
+      emailHtml = generateEmailHtml(requester as RequesterData, language)
+      emailText = generateEmailText(requester as RequesterData, language)
+      subject = language === 'es'
+        ? `${requesterName} te envió una solicitud de amistad en Hockia`
+        : `${requesterName} sent you a friend request on Hockia`
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     const result = await sendTrackedEmail({

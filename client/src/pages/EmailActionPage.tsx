@@ -18,6 +18,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Loader2, Star, HelpCircle, X, CheckCircle2, Link2, Clock, ShieldAlert, RefreshCw } from 'lucide-react'
 import { SUPABASE_URL } from '@/lib/supabase'
 import { buttonClassName } from '@/components/ui/buttonClasses'
+import { intlLocale } from '@/i18n/format'
+import { useSettingsT } from '@/i18n/ns/settings'
 
 type Action = 'shortlisted' | 'maybe' | 'rejected' | 'renew'
 
@@ -35,7 +37,7 @@ function formatDeadline(d: string | undefined): string | null {
   if (!d) return null
   const [y, m, day] = d.split('-').map(Number)
   if (!y || !m || !day) return null
-  return new Date(y, m - 1, day).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+  return new Date(y, m - 1, day).toLocaleDateString(intlLocale(), { month: 'long', day: 'numeric' })
 }
 
 const ENDPOINT = `${SUPABASE_URL}/functions/v1/application-action`
@@ -115,16 +117,17 @@ function appLink(info: ActionInfo): string {
 }
 
 function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () => void }) {
+  const t = useSettingsT()
   if (phase.kind === 'loading' || phase.kind === 'executing') {
     const executingLabel =
       phase.kind === 'executing' && phase.info.action === 'renew'
-        ? 'Renewing your opportunity…'
-        : 'Recording your response…'
+        ? t('emailAction.renewing')
+        : t('emailAction.recording')
     return (
       <>
         <Loader2 className="mx-auto h-10 w-10 animate-spin text-hockia-primary" />
         <h1 className="mt-8 text-title text-ink-1">
-          {phase.kind === 'executing' ? executingLabel : 'Checking your link…'}
+          {phase.kind === 'executing' ? executingLabel : t('emailAction.checking')}
         </h1>
       </>
     )
@@ -138,32 +141,35 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <X className="h-9 w-9 text-ink-2" />
         </div>
         <h1 className="mt-8 text-title text-ink-1">
-          Mark {info.applicant_name ?? 'this applicant'} as Not a fit?
+          {info.applicant_name
+            ? t('emailAction.confirmReject.title', { name: info.applicant_name })
+            : t('emailAction.confirmReject.titleNoName')}
         </h1>
         <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-          For {info.opportunity_title ?? 'your opportunity'}. They&apos;ll be notified honestly. A
-          clear answer beats silence.
+          {info.opportunity_title
+            ? t('emailAction.confirmReject.body', { title: info.opportunity_title })
+            : t('emailAction.confirmReject.bodyNoTitle')}
         </p>
         <button
           type="button"
           onClick={onConfirmReject}
           className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-8' })}
         >
-          Yes, mark as Not a fit
+          {t('emailAction.confirmReject.confirm')}
         </button>
         <Link
           to={appLink(info)}
           className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}
         >
-          Review in Hockia instead
+          {t('emailAction.confirmReject.review')}
         </Link>
       </>
     )
   }
 
   const { info } = phase
-  const name = info.applicant_name ?? 'The applicant'
-  const cta = (label = 'Review applicants in Hockia') => (
+  const name = info.applicant_name ?? t('emailAction.applicantFallback')
+  const cta = (label = t('emailAction.reviewApplicants')) => (
     <Link
       to={appLink(info)}
       className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-8' })}
@@ -180,12 +186,13 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-positive-soft">
             <RefreshCw className="h-9 w-9 text-positive" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">Opportunity renewed</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.renewed.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            {info.opportunity_title ?? 'Your opportunity'} is open again
-            {until ? ` and accepting applications until ${until}` : ''}.
+            {info.opportunity_title
+              ? (until ? t('emailAction.renewed.bodyUntil', { title: info.opportunity_title, date: until }) : t('emailAction.renewed.body', { title: info.opportunity_title }))
+              : (until ? t('emailAction.renewed.bodyNoTitleUntil', { date: until }) : t('emailAction.renewed.bodyNoTitle'))}
           </p>
-          {cta('Open in Hockia')}
+          {cta(t('emailAction.openIn'))}
         </>
       )
     }
@@ -195,12 +202,13 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">This opportunity stays closed</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.closed.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            {info.opportunity_title ?? 'This opportunity'} was closed from the app, so this link
-            didn&apos;t change anything. You can reopen it anytime from your dashboard.
+            {info.opportunity_title
+              ? t('emailAction.closed.body', { title: info.opportunity_title })
+              : t('emailAction.closed.bodyNoTitle')}
           </p>
-          {cta('Open in Hockia')}
+          {cta(t('emailAction.openIn'))}
         </>
       )
     case 'applied':
@@ -211,9 +219,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
               <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-positive-soft">
                 <Star className="h-9 w-9 text-positive" />
               </div>
-              <h1 className="mt-8 text-title text-ink-1">{name} added to your shortlist</h1>
+              <h1 className="mt-8 text-title text-ink-1">{t('emailAction.shortlisted.title', { name })}</h1>
               <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-                They&apos;ll see they&apos;re on your shortlist for {info.opportunity_title ?? 'your opportunity'}.
+                {info.opportunity_title
+                  ? t('emailAction.shortlisted.body', { title: info.opportunity_title })
+                  : t('emailAction.shortlisted.bodyNoTitle')}
               </p>
               {cta()}
             </>
@@ -224,9 +234,9 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
               <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
                 <HelpCircle className="h-9 w-9 text-ink-2" />
               </div>
-              <h1 className="mt-8 text-title text-ink-1">{name} marked as Maybe</h1>
+              <h1 className="mt-8 text-title text-ink-1">{t('emailAction.maybe.title', { name })}</h1>
               <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-                You can revisit them anytime. They see their application as under review.
+                {t('emailAction.maybe.body')}
               </p>
               {cta()}
             </>
@@ -237,9 +247,9 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
               <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
                 <CheckCircle2 className="h-9 w-9 text-ink-2" />
               </div>
-              <h1 className="mt-8 text-title text-ink-1">{name} marked as Not a fit</h1>
+              <h1 className="mt-8 text-title text-ink-1">{t('emailAction.rejected.title', { name })}</h1>
               <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-                They&apos;ll be notified honestly. A clear answer beats silence.
+                {t('emailAction.rejected.body')}
               </p>
               {cta()}
             </>
@@ -251,12 +261,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">This application was already handled</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.alreadyHandled.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            {name}&apos;s application isn&apos;t pending anymore. It was already responded to. Nothing
-            was changed.
+            {t('emailAction.alreadyHandled.body', { name })}
           </p>
-          {cta('Open in Hockia')}
+          {cta(t('emailAction.openIn'))}
         </>
       )
     case 'used':
@@ -265,13 +274,13 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <CheckCircle2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">This link was already used</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.used.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
             {info.action === 'renew'
-              ? 'This opportunity was already renewed with this link. Nothing was changed.'
-              : 'Your response was recorded the first time. Nothing was changed.'}
+              ? t('emailAction.used.bodyRenew')
+              : t('emailAction.used.body')}
           </p>
-          {cta('Open in Hockia')}
+          {cta(t('emailAction.openIn'))}
         </>
       )
     case 'expired':
@@ -280,11 +289,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <Clock className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">This link has expired</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.expired.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            Action links work for 14 days. You can still respond from your dashboard.
+            {t('emailAction.expired.body')}
           </p>
-          {cta('Open in Hockia')}
+          {cta(t('emailAction.openIn'))}
         </>
       )
     case 'rate_limited':
@@ -293,8 +302,8 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <ShieldAlert className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">Too many requests</h1>
-          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Please wait a minute and open the link again.</p>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.rateLimited.title')}</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">{t('emailAction.rateLimited.body')}</p>
         </>
       )
     case 'error':
@@ -303,11 +312,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-status-danger-soft">
             <ShieldAlert className="h-9 w-9 text-status-danger" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">Something went wrong</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.error.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            Your response was not recorded. Please try the link again, or respond from your dashboard.
+            {t('emailAction.error.body')}
           </p>
-          {cta('Open Hockia')}
+          {cta(t('emailAction.openHockia'))}
         </>
       )
     default:
@@ -316,11 +325,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
             <Link2 className="h-9 w-9 text-ink-2" />
           </div>
-          <h1 className="mt-8 text-title text-ink-1">This link isn&apos;t valid</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('emailAction.invalid.title')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            It may have been truncated by your email client. You can respond from your dashboard instead.
+            {t('emailAction.invalid.body')}
           </p>
-          {cta('Open Hockia')}
+          {cta(t('emailAction.openHockia'))}
         </>
       )
   }

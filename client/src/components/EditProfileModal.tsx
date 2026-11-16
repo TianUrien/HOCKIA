@@ -37,6 +37,9 @@ import {
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { X as XIcon } from 'lucide-react'
+import { tProfileEdit, useProfileEditT } from '@/i18n/ns/profileEdit'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 type UmpireSpec = 'outdoor' | 'indoor' | 'both' | ''
 
@@ -173,26 +176,28 @@ function validateFormData(formData: ProfileFormData, role: string): string | nul
   // Universal required field. The name input is labelled "Club Name"
   // for clubs, so the error wording follows the role.
   if (!formData.full_name.trim()) {
-    return role === 'club' ? 'Club name is required.' : 'Full name is required.'
+    return role === 'club' ? tProfileEdit('modalValidation.clubNameRequired') : tProfileEdit('modalValidation.fullNameRequired')
   }
   if (formData.full_name.length > FULL_NAME_MAX_LENGTH) {
-    return `${role === 'club' ? 'Club name' : 'Full name'} must be ${FULL_NAME_MAX_LENGTH} characters or fewer.`
+    return role === 'club'
+      ? tProfileEdit('modalValidation.clubNameTooLong', { max: FULL_NAME_MAX_LENGTH })
+      : tProfileEdit('modalValidation.fullNameTooLong', { max: FULL_NAME_MAX_LENGTH })
   }
   if (formData.bio && formData.bio.length > BIO_MAX_LENGTH) {
-    return `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+    return tProfileEdit('modalValidation.bioTooLong', { max: BIO_MAX_LENGTH })
   }
 
   // Role-specific validation
   if (role === 'player' && formData.secondary_position && formData.secondary_position === formData.position) {
-    return 'Primary and secondary positions must be different.'
+    return tProfileEdit('modalValidation.samePositions')
   }
 
   if ((role === 'player' || role === 'coach' || role === 'umpire') && !formData.base_location.trim()) {
-    return 'Location is required.'
+    return tProfileEdit('modalValidation.locationRequired')
   }
 
   if (role === 'club' && !formData.base_location.trim()) {
-    return 'Club location is required.'
+    return tProfileEdit('modalValidation.clubLocationRequired')
   }
 
   if (role === 'club') {
@@ -202,33 +207,33 @@ function validateFormData(formData: ProfileFormData, role: string): string | nul
       const currentYear = new Date().getFullYear()
       const year = Number(yearText)
       if (!Number.isInteger(year) || year < CLUB_YEAR_MIN || year > currentYear) {
-        return `Year founded must be a year between ${CLUB_YEAR_MIN} and ${currentYear}.`
+        return tProfileEdit('modalValidation.yearFounded', { min: CLUB_YEAR_MIN, max: currentYear })
       }
     }
     if (!isValidWebsite(formData.website)) {
-      return 'Please enter a valid website URL (e.g. example.com).'
+      return tProfileEdit('modalValidation.website')
     }
     if (formData.club_bio && formData.club_bio.length > BIO_MAX_LENGTH) {
-      return `Club bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+      return tProfileEdit('modalValidation.clubBioTooLong', { max: BIO_MAX_LENGTH })
     }
     if (formData.club_history && formData.club_history.length > BIO_MAX_LENGTH) {
-      return `Club history must be ${BIO_MAX_LENGTH} characters or fewer.`
+      return tProfileEdit('modalValidation.clubHistoryTooLong', { max: BIO_MAX_LENGTH })
     }
   }
 
   if (role === 'umpire') {
-    if (!formData.umpire_level.trim()) return 'Umpire level is required.'
-    if (!formData.federation.trim()) return 'Federation is required.'
-    if (!formData.officiating_specialization) return 'Please choose outdoor, indoor, or both.'
+    if (!formData.umpire_level.trim()) return tProfileEdit('modalValidation.umpireLevelRequired')
+    if (!formData.federation.trim()) return tProfileEdit('modalValidation.federationRequired')
+    if (!formData.officiating_specialization) return tProfileEdit('modalValidation.specializationRequired')
     if (!formData.languages || formData.languages.length === 0) {
-      return 'Please add at least one language.'
+      return tProfileEdit('modalValidation.languageRequired')
     }
   }
 
   const cleanedSocialLinks = cleanSocialLinks(formData.social_links)
   const socialLinksValidation = validateSocialLinks(cleanedSocialLinks)
   if (!socialLinksValidation.valid) {
-    return socialLinksValidation.error || 'Invalid social media links'
+    return socialLinksValidation.error || tProfileEdit('modalValidation.socialInvalid')
   }
 
   return null
@@ -295,27 +300,28 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
 })
 
 // Candidate-intent option sets (Matching Increment #2 — Interested lens).
+// Labels live in the profileEdit catalog (modalIntent.*), read at render.
 const RELOCATION_OPTIONS = [
-  { value: 'relocate', label: 'Open to relocating' },
-  { value: 'home_only', label: 'Staying in my country' },
-  { value: 'open_to_discuss', label: 'Open to discuss' },
+  { value: 'relocate' },
+  { value: 'home_only' },
+  { value: 'open_to_discuss' },
 ] as const
 const LEVEL_TARGET_OPTIONS = [
-  { value: 'top', label: 'Highest I can' },
-  { value: 'competitive', label: 'Competitive' },
-  { value: 'development', label: 'Development' },
-  { value: 'any', label: 'Any level' },
+  { value: 'top' },
+  { value: 'competitive' },
+  { value: 'development' },
+  { value: 'any' },
 ] as const
 const OPPORTUNITY_PREF_OPTIONS = [
-  { value: 'paid', label: 'Paid' },
-  { value: 'development', label: 'Development' },
-  { value: 'either', label: 'Either' },
+  { value: 'paid' },
+  { value: 'development' },
+  { value: 'either' },
 ] as const
 const AVAILABILITY_DURATION_OPTIONS = [
-  { value: 'full_season', label: 'Full season' },
-  { value: 'half_season', label: 'Half season' },
-  { value: 'short_term', label: 'Short term' },
-  { value: 'flexible', label: 'Flexible' },
+  { value: 'full_season' },
+  { value: 'half_season' },
+  { value: 'short_term' },
+  { value: 'flexible' },
 ] as const
 
 /** Pill-button styling for the single-choice candidate-intent rows. */
@@ -323,14 +329,17 @@ const AVAILABILITY_DURATION_OPTIONS = [
  *  refuses changes ('already_set'), so once set the field renders read-only
  *  with the support path spelled out instead of a picker that silently no-ops. */
 function LockedDobField({ dob }: { dob: string }) {
+  const t = useProfileEditT()
+  // English keeps the browser's own locale (unchanged output); other languages use the interface language.
+  const dateLocale = isEnglish() ? undefined : intlLocale()
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{t('modal.dobLabel')}</label>
       <p className="text-sm text-gray-900">
-        {new Date(dob + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+        {new Date(dob + 'T00:00:00').toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
       <p className="mt-1 text-xs text-gray-500">
-        Locked after registration. Contact Hockia support if it needs correcting.
+        {t('modal.dobLocked')}
       </p>
     </div>
   )
@@ -359,6 +368,8 @@ function candidateIntentUpdate(formData: ProfileFormData): TablesUpdate<'profile
 
 export default function EditProfileModal({ isOpen, onClose, role }: EditProfileModalProps) {
   const { profile, setProfile } = useAuthStore()
+  const t = useProfileEditT()
+  const tEnums = useEnumsT()
   // D2: the column arrives with 20260928250000; before that the field is hidden.
   const hasCoachCurrentRole = Boolean(profile && 'coach_current_role' in profile)
   const { addToast } = useToastStore()
@@ -517,11 +528,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     if (loading) {
       return
     }
-    if (isDirty() && !window.confirm('You have unsaved changes. Discard them?')) {
+    if (isDirty() && !window.confirm(t('modal.discardConfirm'))) {
       return
     }
     onClose()
-  }, [loading, onClose, isDirty])
+  }, [loading, onClose, isDirty, t])
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen && Boolean(profile), initialFocusRef: closeButtonRef })
 
@@ -604,7 +615,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     try {
       const validation = validateImage(file, { maxFileSizeMB: 5 })
       if (!validation.valid) {
-        setError(validation.error || 'Invalid image')
+        setError(validation.error || t('modal.imageInvalid'))
         return
       }
 
@@ -641,7 +652,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         stage: 'avatarUploadCatch',
       }, 'EditProfileModal.handleAvatarUpload.catch')
       logger.error('Error uploading avatar:', error)
-      setError('We couldn\'t upload this image. Please use PNG or JPG up to 5MB.')
+      setError(t('modal.imageUploadFailed'))
     }
   }
 
@@ -655,7 +666,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         }
       } catch (err) {
         logger.error('Native image picker error:', err)
-        setError('Could not access camera or photos. Please check app permissions.')
+        setError(t('modal.cameraFailed'))
       }
       return
     }
@@ -894,7 +905,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       }
       await invalidateProfile({ userId: profileId, reason: 'profile-update-retry' })
       // Show error but don't reopen modal - user already sees their changes
-      addToast('Some profile changes may not have saved. Please refresh the page.', 'error')
+      addToast(t('modal.saveFailed'), 'error')
     } finally {
       setLoading(false)
     }
@@ -913,14 +924,14 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 id={titleId} className="text-2xl font-bold text-gray-900">
-            Edit {role === 'club' ? 'Club' : role === 'coach' ? 'Coach' : role === 'umpire' ? 'Umpire' : 'Player'} Profile
+            {role === 'club' ? t('modal.titleClub') : role === 'coach' ? t('modal.titleCoach') : role === 'umpire' ? t('modal.titleUmpire') : t('modal.titlePlayer')}
           </h2>
           <button
             ref={closeButtonRef}
             onClick={handleDismiss}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-            aria-label="Close modal"
-            title="Close"
+            aria-label={t('modal.closeLabel')}
+            title={t('modal.closeTitle')}
             disabled={loading}
           >
             <X className="w-5 h-5" />
@@ -939,7 +950,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             {/* Avatar Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {role === 'club' ? 'Club Logo' : 'Profile Picture'}
+                {role === 'club' ? t('modal.logoLabel') : t('modal.photoLabel')}
               </label>
               <div className="flex items-center gap-4">
                 <div 
@@ -950,7 +961,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <StorageImage
                       src={formData.avatar_url}
                       imageSize="avatar-lg"
-                      alt="Preview"
+                      alt={t('modal.previewAlt')}
                       className="w-full h-full object-cover"
                       containerClassName="w-full h-full"
                       fallbackClassName="w-full h-full"
@@ -966,9 +977,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     onClick={handleImageClick}
                     className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                   >
-                    {formData.avatar_url ? 'Change Image' : 'Upload Image'}
+                    {formData.avatar_url ? t('modal.changeImage') : t('modal.uploadImage')}
                   </button>
-                  <p className="text-xs text-gray-500 mt-1">PNG or JPG, up to 5MB</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('modal.imageHint')}</p>
                 </div>
               </div>
               <input
@@ -977,14 +988,14 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleAvatarUpload}
                 className="hidden"
-                aria-label="Profile picture upload"
+                aria-label={t('modal.uploadInputLabel')}
               />
             </div>
 
             {/* Common Fields */}
             <div>
               <Input
-                label={role === 'club' ? 'Club Name' : 'Full Name'}
+                label={role === 'club' ? t('modal.clubName') : t('modal.fullName')}
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value.slice(0, FULL_NAME_MAX_LENGTH) })}
                 required
@@ -1002,9 +1013,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             </div>
 
             <LocationAutocomplete
-              label="Base Location (City, State/Province)"
+              label={t('modal.locationLabel')}
               icon={<MapPin className="w-5 h-5" />}
-              placeholder="e.g., Port Jervis, NY"
+              placeholder={t('modal.locationPlaceholder')}
               value={formData.base_location}
               onChange={handleLocationChange}
               onLocationSelect={handleLocationSelect}
@@ -1014,38 +1025,38 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             />
 
             <CountrySelect
-              label={role === 'club' ? 'Country' : 'Nationality'}
+              label={role === 'club' ? t('modal.countryLabel') : t('modal.nationalityLabel')}
               value={formData.nationality_country_id}
               onChange={handleNationalityChange}
-              placeholder={role === 'club' ? 'Select your club country' : 'Select your nationality'}
+              placeholder={role === 'club' ? t('modal.clubCountryPlaceholder') : t('modal.nationalityPlaceholder')}
               required
             />
 
             {role !== 'club' && (
               <CountrySelect
-                label="Secondary Nationality (Optional)"
+                label={t('modal.secondNationalityLabel')}
                 value={formData.nationality2_country_id}
                 onChange={(id) => setFormData({ ...formData, nationality2_country_id: id })}
-                placeholder="Select secondary nationality"
+                placeholder={t('modal.secondNationalityPlaceholder')}
               />
             )}
 
             {/* ── Contact Information ── */}
             <div className="pt-3 mt-1 border-t border-gray-100">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Contact</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modal.contactHeading')}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Account Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('modal.accountEmail')}</label>
               <div className="px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
                 {profile.email}
               </div>
-              <p className="text-xs text-gray-500 mt-1">Only visible to you and used for login.</p>
+              <p className="text-xs text-gray-500 mt-1">{t('modal.accountEmailHint')}</p>
             </div>
 
             <div>
               <Input
-                label="Contact Email (for networking)"
+                label={t('modal.contactEmail')}
                 type="email"
                 placeholder="contact@example.com"
                 value={formData.contact_email}
@@ -1053,8 +1064,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               />
               <p className="text-xs text-gray-500 mt-1">
                 {role === 'club'
-                  ? 'So players, coaches, and recruiters can reach the club directly. Your login email is never shown.'
-                  : 'So clubs can reach you directly when they are interested. Your login email is never shown.'}
+                  ? t('modal.contactHintClub')
+                  : t('modal.contactHintPerson')}
               </p>
             </div>
 
@@ -1066,11 +1077,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 onChange={(e) => setFormData({ ...formData, contact_email_public: e.target.checked })}
               />
               <span>
-                Share my contact email with other Hockia members
+                {t('modal.shareContact')}
                 <span className="block text-xs text-gray-500 mt-1">
                   {role === 'club'
-                    ? 'Tick this so players and coaches can contact the club after viewing the profile.'
-                    : 'Tick this so coaches and clubs can contact you after viewing your profile.'}
+                    ? t('modal.shareHintClub')
+                    : t('modal.shareHintPerson')}
                 </span>
               </span>
             </label>
@@ -1080,12 +1091,12 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <>
                 {/* ── Hockey Details ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Hockey Details</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalPlayer.heading')}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="player-position">
-                    Position
+                    {t('modalPlayer.position')}
                   </label>
                   <select
                     id="player-position"
@@ -1093,31 +1104,31 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     onChange={(e) => setFormData({ ...formData, position: e.target.value, specialist_skills: pruneSpecialistSkillsForPosition(formData.specialist_skills, e.target.value) })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     required
-                    aria-label="Select position"
+                    aria-label={t('modalPlayer.positionAria')}
                   >
-                    <option value="">Select position</option>
-                    <option value="goalkeeper">Goalkeeper</option>
-                    <option value="defender">Defender</option>
-                    <option value="midfielder">Midfielder</option>
-                    <option value="forward">Forward</option>
+                    <option value="">{t('modalPlayer.positionEmpty')}</option>
+                    <option value="goalkeeper">{tEnums('position.goalkeeper')}</option>
+                    <option value="defender">{tEnums('position.defender')}</option>
+                    <option value="midfielder">{tEnums('position.midfielder')}</option>
+                    <option value="forward">{tEnums('position.forward')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="player-secondary-position">
-                    Second Position (Optional)
+                    {t('modalPlayer.secondPosition')}
                   </label>
                   <select
                     id="player-secondary-position"
                     value={formData.secondary_position}
                     onChange={(e) => setFormData({ ...formData, secondary_position: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
-                    aria-label="Select secondary position"
+                    aria-label={t('modalPlayer.secondPositionAria')}
                   >
-                    <option value="">No secondary position</option>
-                    {['goalkeeper', 'defender', 'midfielder', 'forward'].map((option) => (
+                    <option value="">{t('modalPlayer.secondPositionNone')}</option>
+                    {(['goalkeeper', 'defender', 'midfielder', 'forward'] as const).map((option) => (
                       <option key={option} value={option} disabled={option === formData.position}>
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                        {tEnums(`position.${option}`)}
                       </option>
                     ))}
                   </select>
@@ -1125,9 +1136,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label id="edit-playing-category-label" className="block text-sm font-medium text-gray-700 mb-2">
-                    Playing Category <span className="text-red-500">*</span>
+                    {t('modalPlayer.category')} <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Which category do you currently play in?</p>
+                  <p className="text-xs text-gray-500 mb-3">{t('modalPlayer.categoryHint')}</p>
                   <PlayingCategorySelector
                     idPrefix="edit-playing-category"
                     value={formData.playing_category || null}
@@ -1138,8 +1149,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 {/* Specialist skills (Matching Increment #3) — what the
                     player specialises in, beyond position. Optional. */}
                 <SpecialistSkillsSelect
-                  label="Specialist skills"
-                  hint="Optional. What you specialise in beyond your position. Helps recruiters find the exact player they need."
+                  label={t('modalPlayer.skills')}
+                  hint={t('modalPlayer.skillsHint')}
                   value={formData.specialist_skills}
                   onChange={(next) => setFormData({ ...formData, specialist_skills: next })}
                   position={formData.position}
@@ -1147,14 +1158,14 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 {/* ── Personal ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Personal</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalPlayer.personalHeading')}</p>
                 </div>
 
                 {profile?.date_of_birth ? (
                   <LockedDobField dob={profile.date_of_birth} />
                 ) : (
                   <DateOfBirthPicker
-                    label="Date of Birth (Optional)"
+                    label={t('modalPlayer.dob')}
                     value={formData.date_of_birth}
                     onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
                   />
@@ -1170,22 +1181,22 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   })}
                   onClubClear={() => setFormData({ ...formData, current_world_club_id: null })}
                   selectedClubId={formData.current_world_club_id}
-                  label="Current Club (Optional)"
-                  placeholder="e.g., Holcombe Hockey Club"
+                  label={t('modalPlayer.club')}
+                  placeholder={t('modalPlayer.clubPlaceholder')}
                 />
 
                 <Input
-                  label="Brand Representation (Optional)"
+                  label={t('modalPlayer.brand')}
                   type="text"
                   value={formData.brand_representation}
                   onChange={(e) => setFormData({ ...formData, brand_representation: e.target.value.slice(0, 60) })}
-                  placeholder="e.g., Grays Player"
+                  placeholder={t('modalPlayer.brandPlaceholder')}
                   maxLength={60}
                 />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="player-bio">
-                    About Me (Optional)
+                    {t('modalPlayer.bio')}
                   </label>
                   <textarea
                     id="player-bio"
@@ -1194,8 +1205,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     rows={4}
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-none"
-                    placeholder="Share your playing background, strengths, and goals"
-                    aria-label="About me"
+                    placeholder={t('modalPlayer.bioPlaceholder')}
+                    aria-label={t('modalPlayer.bioAria')}
                   />
                   <p
                     className={`mt-1 text-xs text-right ${
@@ -1216,9 +1227,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       onChange={(e) => setFormData({ ...formData, open_to_play: e.target.checked })}
                     />
                     <span>
-                      <span className="font-medium">Open to Play</span>
+                      <span className="font-medium">{t('modalPlayer.openToPlay')}</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Looking to join a team or club to play regular matches. A badge appears on your profile in the Community.
+                        {t('modalPlayer.openToPlayHint')}
                       </span>
                     </span>
                   </label>
@@ -1230,9 +1241,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
                     />
                     <span>
-                      <span className="font-medium">Open to Opportunities</span>
+                      <span className="font-medium">{t('modalPlayer.openToOpps')}</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Broader than playing: trials, transfers, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
+                        {t('modalPlayer.openToOppsHint')}
                       </span>
                     </span>
                   </label>
@@ -1245,20 +1256,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <>
                 {/* ── Coaching Details ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Coaching Details</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalCoach.heading')}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Specialization
+                    {t('modalCoach.specialization')}
                   </label>
                   <select
                     value={formData.coach_specialization}
                     onChange={(e) => setFormData({ ...formData, coach_specialization: e.target.value as CoachSpecialization | '' })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
-                    aria-label="Select coaching specialization"
+                    aria-label={t('modalCoach.specializationAria')}
                   >
-                    <option value="">Select specialization</option>
+                    <option value="">{t('modalCoach.specializationEmpty')}</option>
                     {COACH_SPECIALIZATIONS.map((spec) => (
                       <option key={spec.value} value={spec.value}>{spec.label}</option>
                     ))}
@@ -1268,20 +1279,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 {hasCoachCurrentRole && (
                   <div>
                     <Input
-                      label="Current role"
-                      placeholder="Head coach, U21 women"
+                      label={t('modalCoach.currentRole')}
+                      placeholder={t('modalCoach.currentRolePlaceholder')}
                       maxLength={COACH_CURRENT_ROLE_MAX}
                       value={formData.coach_current_role}
                       onChange={(e) => setFormData({ ...formData, coach_current_role: e.target.value })}
                     />
-                    <p className="mt-1 text-xs text-gray-500">Shown on your profile under your club, in Coaches at.</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('modalCoach.currentRoleHint')}</p>
                   </div>
                 )}
 
                 {formData.coach_specialization === 'other' && (
                   <Input
-                    label="Your Role Title"
-                    placeholder="e.g., Team Manager, Umpire Coach"
+                    label={t('modalCoach.roleTitle')}
+                    placeholder={t('modalCoach.roleTitlePlaceholder')}
                     value={formData.coach_specialization_custom}
                     onChange={(e) => setFormData({ ...formData, coach_specialization_custom: e.target.value })}
                   />
@@ -1289,9 +1300,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label id="edit-coaching-categories-label" className="block text-sm font-medium text-gray-700 mb-2">
-                    Coaching Categories <span className="text-red-500">*</span>
+                    {t('modalCoach.categories')} <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Which categories do you coach or want to work with?</p>
+                  <p className="text-xs text-gray-500 mb-3">{t('modalCoach.categoriesHint')}</p>
                   <MultiCategorySelector
                     idPrefix="edit-coaching-categories"
                     value={formData.coaching_categories.length > 0 ? formData.coaching_categories : null}
@@ -1305,10 +1316,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     on onboarding step 3. Editable here anytime. */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Do you also recruit players for a team?
+                    {t('modalCoach.recruits')}
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Saying yes unlocks recruiter shortcuts on your dashboard and AI Discovery.
+                    {t('modalCoach.recruitsHint')}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -1320,7 +1331,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                           : 'border-gray-200 hover:border-gray-300 text-gray-700'
                       }`}
                     >
-                      Yes, I recruit
+                      {t('modalCoach.recruitsYes')}
                     </button>
                     <button
                       type="button"
@@ -1331,7 +1342,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                           : 'border-gray-200 hover:border-gray-300 text-gray-700'
                       }`}
                     >
-                      Not right now
+                      {t('modalCoach.recruitsNo')}
                     </button>
                   </div>
                 </div>
@@ -1340,7 +1351,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <LockedDobField dob={profile.date_of_birth} />
                 ) : (
                   <DateOfBirthPicker
-                    label="Date of Birth (Optional)"
+                    label={t('modalCoach.dob')}
                     value={formData.date_of_birth}
                     onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
                   />
@@ -1356,13 +1367,13 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   })}
                   onClubClear={() => setFormData({ ...formData, current_world_club_id: null })}
                   selectedClubId={formData.current_world_club_id}
-                  label="Current Club (Optional)"
-                  placeholder="e.g., Holcombe Hockey Club"
+                  label={t('modalCoach.club')}
+                  placeholder={t('modalCoach.clubPlaceholder')}
                 />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio (Optional)
+                    {t('modalCoach.bio')}
                   </label>
                   <textarea
                     value={formData.bio || ''}
@@ -1370,7 +1381,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     rows={4}
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-none"
-                    placeholder="Tell us about your coaching experience..."
+                    placeholder={t('modalCoach.bioPlaceholder')}
                   />
                   <p
                     className={`mt-1 text-xs text-right ${
@@ -1391,9 +1402,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       onChange={(e) => setFormData({ ...formData, open_to_coach: e.target.checked })}
                     />
                     <span>
-                      <span className="font-medium">Open to Coach</span>
+                      <span className="font-medium">{t('modalCoach.openToCoach')}</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Looking for a head, assistant, or youth coaching opportunity. A badge appears on your profile in the Community.
+                        {t('modalCoach.openToCoachHint')}
                       </span>
                     </span>
                   </label>
@@ -1405,9 +1416,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
                     />
                     <span>
-                      <span className="font-medium">Open to Opportunities</span>
+                      <span className="font-medium">{t('modalCoach.openToOpps')}</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Broader than coaching: consulting, clinics, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
+                        {t('modalCoach.openToOppsHint')}
                       </span>
                     </span>
                   </label>
@@ -1420,15 +1431,15 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             {(role === 'player' || role === 'coach') && (
               <div className="pt-4 mt-1 border-t border-gray-200 space-y-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Recruitment preferences</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{t('modalIntent.heading')}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Optional. Sharpens your matches with recruiters. Never shown as a requirement on your profile.
+                    {t('modalIntent.intro')}
                   </p>
                 </div>
 
                 {/* Relocation willingness */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Open to relocating?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('modalIntent.relocationLabel')}</label>
                   <div className="flex flex-wrap gap-2">
                     {RELOCATION_OPTIONS.map((opt) => (
                       <button
@@ -1437,7 +1448,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                         onClick={() => setFormData({ ...formData, relocation_willingness: formData.relocation_willingness === opt.value ? '' : opt.value })}
                         className={segmentedClass(formData.relocation_willingness === opt.value)}
                       >
-                        {opt.label}
+                        {t(`modalIntent.relocation.${opt.value}`)}
                       </button>
                     ))}
                   </div>
@@ -1445,21 +1456,21 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 {/* Countries — collapsed by default to keep friction low */}
                 <details className="rounded-lg border border-gray-200 px-3 py-2">
-                  <summary className="text-sm text-gray-700 cursor-pointer select-none">Add specific countries (optional)</summary>
+                  <summary className="text-sm text-gray-700 cursor-pointer select-none">{t('modalIntent.countriesToggle')}</summary>
                   <div className="mt-3 space-y-3">
                     <CountryMultiSelect
-                      label="Open to playing in"
+                      label={t('modalIntent.openCountries')}
                       value={formData.relocation_countries_open}
                       onChange={(ids) => setFormData({ ...formData, relocation_countries_open: ids })}
                       excludeIds={formData.relocation_countries_excluded}
-                      placeholder="Add countries you'd consider"
+                      placeholder={t('modalIntent.openCountriesPlaceholder')}
                     />
                     <CountryMultiSelect
-                      label="Would not consider"
+                      label={t('modalIntent.excludedCountries')}
                       value={formData.relocation_countries_excluded}
                       onChange={(ids) => setFormData({ ...formData, relocation_countries_excluded: ids })}
                       excludeIds={formData.relocation_countries_open}
-                      placeholder="Add countries to exclude"
+                      placeholder={t('modalIntent.excludedCountriesPlaceholder')}
                     />
                   </div>
                 </details>
@@ -1467,12 +1478,12 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 {/* Availability window */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Available from</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('modalIntent.availableFrom')}</label>
                     <input
                       type="date"
                       value={formData.available_from}
                       onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
-                      aria-label="Available from"
+                      aria-label={t('modalIntent.availableFromAria')}
                       // h-10 + bg-white: iOS renders a native date input taller
                       // than the sibling <select>; a fixed height + matching bg
                       // keeps the two columns aligned (and not grey on iOS).
@@ -1480,16 +1491,16 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('modalIntent.duration')}</label>
                     <select
                       value={formData.availability_duration}
                       onChange={(e) => setFormData({ ...formData, availability_duration: e.target.value })}
-                      aria-label="Availability duration"
+                      aria-label={t('modalIntent.durationAria')}
                       className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm bg-white focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     >
-                      <option value="">Not set</option>
+                      <option value="">{t('modalIntent.durationNotSet')}</option>
                       {AVAILABILITY_DURATION_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
+                        <option key={o.value} value={o.value}>{t(`modalIntent.durations.${o.value}`)}</option>
                       ))}
                     </select>
                   </div>
@@ -1497,7 +1508,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 {/* Level target */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Level you're targeting</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('modalIntent.levelLabel')}</label>
                   <div className="flex flex-wrap gap-2">
                     {LEVEL_TARGET_OPTIONS.map((opt) => (
                       <button
@@ -1506,7 +1517,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                         onClick={() => setFormData({ ...formData, level_target: formData.level_target === opt.value ? '' : opt.value })}
                         className={segmentedClass(formData.level_target === opt.value)}
                       >
-                        {opt.label}
+                        {t(`modalIntent.levels.${opt.value}`)}
                       </button>
                     ))}
                   </div>
@@ -1514,7 +1525,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 {/* Opportunity preference */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Looking for</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('modalIntent.lookingFor')}</label>
                   <div className="flex flex-wrap gap-2">
                     {OPPORTUNITY_PREF_OPTIONS.map((opt) => (
                       <button
@@ -1523,7 +1534,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                         onClick={() => setFormData({ ...formData, opportunity_preference: formData.opportunity_preference === opt.value ? '' : opt.value })}
                         className={segmentedClass(formData.opportunity_preference === opt.value)}
                       >
-                        {opt.label}
+                        {t(`modalIntent.preferences.${opt.value}`)}
                       </button>
                     ))}
                   </div>
@@ -1536,14 +1547,14 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             {role === 'umpire' && (
               <>
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Officiating credentials</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalUmpire.heading')}</p>
                 </div>
 
                 <div>
                   <label id="edit-umpiring-categories-label" className="block text-sm font-medium text-gray-700 mb-2">
-                    Umpiring Categories <span className="text-gray-400 font-normal">(optional)</span>
+                    {t('modalUmpire.categories')} <span className="text-gray-400 font-normal">{t('modalUmpire.optional')}</span>
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Which categories do you umpire or want to umpire?</p>
+                  <p className="text-xs text-gray-500 mb-3">{t('modalUmpire.categoriesHint')}</p>
                   <MultiCategorySelector
                     idPrefix="edit-umpiring-categories"
                     value={formData.umpiring_categories.length > 0 ? formData.umpiring_categories : null}
@@ -1553,7 +1564,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-umpire-level">
-                    Umpire level <span className="text-red-500">*</span>
+                    {t('modalUmpire.level')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="edit-umpire-level"
@@ -1561,7 +1572,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     list="edit-umpire-level-suggestions"
                     value={formData.umpire_level}
                     onChange={(e) => setFormData({ ...formData, umpire_level: e.target.value })}
-                    placeholder="e.g., FIH International, National Panel"
+                    placeholder={t('modalUmpire.levelPlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     required
                     autoComplete="off"
@@ -1575,7 +1586,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-federation">
-                    Federation <span className="text-red-500">*</span>
+                    {t('modalUmpire.federation')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="edit-federation"
@@ -1583,7 +1594,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     list="edit-federation-suggestions"
                     value={formData.federation}
                     onChange={(e) => setFormData({ ...formData, federation: e.target.value })}
-                    placeholder="e.g., FIH, England Hockey, CAH"
+                    placeholder={t('modalUmpire.federationPlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     required
                     autoComplete="off"
@@ -1597,7 +1608,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-umpire-since">
-                    Umpiring since (year)
+                    {t('modalUmpire.since')}
                   </label>
                   <input
                     id="edit-umpire-since"
@@ -1607,7 +1618,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     max={new Date().getFullYear()}
                     value={formData.umpire_since}
                     onChange={(e) => setFormData({ ...formData, umpire_since: e.target.value })}
-                    placeholder="e.g., 2018"
+                    placeholder={t('modalUmpire.sincePlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     autoComplete="off"
                   />
@@ -1615,14 +1626,14 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Specialization <span className="text-red-500">*</span>
+                    {t('modalUmpire.specialization')} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {(['outdoor', 'indoor', 'both'] as const).map((value) => {
                       const labels: Record<typeof value, string> = {
-                        outdoor: 'Outdoor',
-                        indoor: 'Indoor',
-                        both: 'Outdoor & Indoor',
+                        outdoor: t('modalUmpire.specOutdoor'),
+                        indoor: t('modalUmpire.specIndoor'),
+                        both: t('modalUmpire.specBoth'),
                       }
                       const active = formData.officiating_specialization === value
                       return (
@@ -1647,7 +1658,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3" htmlFor="edit-umpire-languages">
-                    Languages <span className="text-red-500">*</span>
+                    {t('modalUmpire.languages')} <span className="text-red-500">*</span>
                   </label>
                   {formData.languages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -1665,7 +1676,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                                 languages: formData.languages.filter((l) => l !== lang),
                               })
                             }
-                            aria-label={`Remove ${lang}`}
+                            aria-label={t('modalUmpire.removeLanguage', { language: lang })}
                             className="text-hockia-primary hover:text-[#6B20D4]"
                           >
                             <XIcon className="w-3.5 h-3.5" />
@@ -1681,7 +1692,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       list="edit-language-suggestions"
                       value={formData.pending_language}
                       onChange={(e) => setFormData({ ...formData, pending_language: e.target.value })}
-                      placeholder="e.g., English, Spanish, Dutch"
+                      placeholder={t('modalUmpire.languagesPlaceholder')}
                       className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       autoComplete="off"
                       onKeyDown={(e) => {
@@ -1715,7 +1726,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       disabled={!formData.pending_language.trim()}
                       className="px-4 py-3 rounded-lg bg-hockia-primary text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                      Add
+                      {t('modalUmpire.addLanguage')}
                     </button>
                   </div>
                   <datalist id="edit-language-suggestions">
@@ -1723,12 +1734,12 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       <option key={lang} value={lang} />
                     ))}
                   </datalist>
-                  <p className="text-xs text-gray-400 mt-2">Press Enter or tap Add.</p>
+                  <p className="text-xs text-gray-400 mt-2">{t('modalUmpire.languagesHint')}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-umpire-bio">
-                    About you
+                    {t('modalUmpire.bio')}
                   </label>
                   <textarea
                     id="edit-umpire-bio"
@@ -1737,7 +1748,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     rows={4}
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-none"
-                    placeholder="Share a short professional summary: career highlights, officiating philosophy, tournaments you've worked."
+                    placeholder={t('modalUmpire.bioPlaceholder')}
                   />
                   <p
                     className={`mt-1 text-xs text-right ${
@@ -1755,16 +1766,16 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <>
                 {/* ── Organization ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Organization</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalClub.heading')}</p>
                 </div>
 
                 <Input
-                  label="Year Founded (Optional)"
+                  label={t('modalClub.yearFounded')}
                   type="number"
                   min={CLUB_YEAR_MIN}
                   max={new Date().getFullYear()}
                   step={1}
-                  placeholder={`e.g. ${new Date().getFullYear() - 20}`}
+                  placeholder={t('modalClub.yearFoundedPlaceholder', { year: new Date().getFullYear() - 20 })}
                   value={formData.year_founded}
                   onChange={(e) => setFormData({ ...formData, year_founded: e.target.value })}
                 />
@@ -1777,10 +1788,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <MapPin className="w-4 h-4 inline mr-1" />
-                          Region
+                          {t('modalClub.region')}
                         </label>
                         <select
-                          aria-label="Region"
+                          aria-label={t('modalClub.regionAria')}
                           value={formData.world_region_id ?? ''}
                           onChange={(e) => {
                             const regionId = e.target.value ? parseInt(e.target.value) : null
@@ -1794,7 +1805,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           disabled={loadingWorld}
                         >
-                          <option value="">Select region...</option>
+                          <option value="">{t('modalClub.regionEmpty')}</option>
                           {worldRegions.map(region => (
                             <option key={region.id} value={region.id}>{region.name}</option>
                           ))}
@@ -1806,11 +1817,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Trophy className="w-4 h-4 inline mr-1" />
-                        Women's League
+                        {t('modalClub.womensLeague')}
                       </label>
-                      <p className="text-xs text-gray-500 mb-1.5">Main women's team. You'll be able to add more teams later.</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('modalClub.womensHint')}</p>
                       <select
-                        aria-label="Women's League"
+                        aria-label={t('modalClub.womensAria')}
                         value={formData.womens_league_id ?? ''}
                         onChange={(e) => setFormData({
                           ...formData,
@@ -1819,16 +1830,16 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                         disabled={(countryHasRegions && !formData.world_region_id) || loadingWorld}
                       >
-                        <option value="">None / Not applicable</option>
+                        <option value="">{t('modalClub.womensNone')}</option>
                         {filteredLeagues.map(league => (
                           <option key={league.id} value={league.id}>
                             {league.name}
-                            {league.tier && ` (Tier ${league.tier})`}
+                            {league.tier && t('modalClub.womensTier', { tier: league.tier })}
                           </option>
                         ))}
                       </select>
                       {countryHasRegions && !formData.world_region_id && (
-                        <p className="text-xs text-gray-500 mt-1">Select a region first</p>
+                        <p className="text-xs text-gray-500 mt-1">{t('modalClub.womensRegionFirst')}</p>
                       )}
                     </div>
 
@@ -1836,11 +1847,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Trophy className="w-4 h-4 inline mr-1" />
-                        Men's League
+                        {t('modalClub.mensLeague')}
                       </label>
-                      <p className="text-xs text-gray-500 mb-1.5">Main men's team. You'll be able to add more teams later.</p>
+                      <p className="text-xs text-gray-500 mb-1.5">{t('modalClub.mensHint')}</p>
                       <select
-                        aria-label="Men's League"
+                        aria-label={t('modalClub.mensAria')}
                         value={formData.mens_league_id ?? ''}
                         onChange={(e) => setFormData({
                           ...formData,
@@ -1849,31 +1860,31 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                         disabled={(countryHasRegions && !formData.world_region_id) || loadingWorld}
                       >
-                        <option value="">None / Not applicable</option>
+                        <option value="">{t('modalClub.mensNone')}</option>
                         {filteredLeagues.map(league => (
                           <option key={league.id} value={league.id}>
                             {league.name}
-                            {league.tier && ` (Tier ${league.tier})`}
+                            {league.tier && t('modalClub.mensTier', { tier: league.tier })}
                           </option>
                         ))}
                       </select>
                       {countryHasRegions && !formData.world_region_id && (
-                        <p className="text-xs text-gray-500 mt-1">Select a region first</p>
+                        <p className="text-xs text-gray-500 mt-1">{t('modalClub.mensRegionFirst')}</p>
                       )}
                     </div>
                   </>
                 ) : (
                   <>
                     <Input
-                      label="Women's League (Optional)"
-                      placeholder="e.g. Serie A1"
+                      label={t('modalClub.womensLeagueOptional')}
+                      placeholder={t('modalClub.womensLeaguePlaceholder')}
                       value={formData.womens_league_division}
                       onChange={(e) => setFormData({ ...formData, womens_league_division: e.target.value })}
                     />
 
                     <Input
-                      label="Men's League (Optional)"
-                      placeholder="e.g. Premier Division"
+                      label={t('modalClub.mensLeagueOptional')}
+                      placeholder={t('modalClub.mensLeaguePlaceholder')}
                       value={formData.mens_league_division}
                       onChange={(e) => setFormData({ ...formData, mens_league_division: e.target.value })}
                     />
@@ -1882,20 +1893,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 {/* ── Web & About ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Web & About</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">{t('modalClub.webHeading')}</p>
                 </div>
 
                 <Input
-                  label="Website (Optional)"
+                  label={t('modalClub.website')}
                   type="url"
-                  placeholder="e.g. example.com"
+                  placeholder={t('modalClub.websitePlaceholder')}
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="club-bio">
-                    Bio
+                    {t('modalClub.bio')}
                   </label>
                   <textarea
                     id="club-bio"
@@ -1904,8 +1915,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     rows={4}
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-none"
-                    placeholder="Tell us about your club..."
-                    aria-label="Club bio"
+                    placeholder={t('modalClub.bioPlaceholder')}
+                    aria-label={t('modalClub.bioAria')}
                   />
                   <p
                     className={`mt-1 text-xs text-right ${
@@ -1918,7 +1929,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="club-history">
-                    Club History (Optional)
+                    {t('modalClub.history')}
                   </label>
                   <textarea
                     id="club-history"
@@ -1927,8 +1938,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-secondary focus:border-transparent"
                     rows={3}
-                    placeholder="Tell us about your club's history..."
-                    aria-label="Club history"
+                    placeholder={t('modalClub.historyPlaceholder')}
+                    aria-label={t('modalClub.historyAria')}
                   />
                   <p
                     className={`mt-1 text-xs text-right ${
@@ -1958,7 +1969,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             onClick={onClose}
             className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
           >
-            Cancel
+            {t('modal.cancel')}
           </button>
           <Button
             onClick={handleSubmit}
@@ -1968,10 +1979,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                Saving...
+                {t('modal.saving')}
               </>
             ) : (
-              'Save Changes'
+              t('modal.save')
             )}
           </Button>
         </div>

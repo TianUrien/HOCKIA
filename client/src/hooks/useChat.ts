@@ -16,8 +16,9 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { reportOfferContactIfPending } from '@/lib/memberOffers'
 import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
-import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from '@/lib/newConversationLimit'
-import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from '@/lib/recruiterMinor'
+import { isNewConversationLimitError, newConversationLimitMessage, reportNewConversationRefusal } from '@/lib/newConversationLimit'
+import { tInbox } from '@/i18n/ns/inbox'
+import { recruiterMinorMessage, isRecruiterMinorError } from '@/lib/recruiterMinor'
 import { mergeFetchedMessages, olderMessagesCursorFilter } from '@/lib/chatThread'
 import { requestPushAsk } from '@/lib/pushAsk'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
@@ -496,11 +497,11 @@ export function useChat({
   const editMessage = useCallback(async (messageId: string, nextContent: string) => {
     const trimmed = nextContent.trim()
     if (!trimmed) {
-      addToast('Message cannot be empty.', 'error')
+      addToast(tInbox('chat.errors.empty'), 'error')
       return false
     }
     if (trimmed.length > 1000) {
-      addToast('Message is too long. Maximum 1000 characters.', 'error')
+      addToast(tInbox('chat.errors.tooLong', { count: 1000 }), 'error')
       return false
     }
 
@@ -540,7 +541,7 @@ export function useChat({
       syncMessagesState(prev =>
         prev.map(msg => (msg.id === messageId ? { ...msg, content: previous.content, edited_at: previous.edited_at ?? null } : msg))
       )
-      addToast(extractErrorMessage(error, 'Failed to edit message. Please try again.'), 'error')
+      addToast(extractErrorMessage(error, tInbox('chat.errors.editFailed')), 'error')
       return false
     }
   }, [addToast, conversation.id, syncMessagesState])
@@ -582,7 +583,7 @@ export function useChat({
       syncMessagesState(prev =>
         prev.map(msg => (msg.id === messageId ? { ...msg, content: previous.content, metadata: previous.metadata ?? null, deleted_at: previous.deleted_at ?? null } : msg))
       )
-      addToast(extractErrorMessage(error, 'Failed to delete message. Please try again.'), 'error')
+      addToast(extractErrorMessage(error, tInbox('chat.errors.deleteFailed')), 'error')
       return false
     }
   }, [addToast, conversation.id, syncMessagesState])
@@ -614,7 +615,7 @@ export function useChat({
         next.splice(Math.min(index, next.length), 0, previous)
         return next
       })
-      addToast(extractErrorMessage(error, 'Could not delete the message. Try again.'), 'error')
+      addToast(extractErrorMessage(error, tInbox('chat.errors.hideFailed')), 'error')
       return false
     }
   }, [addToast, conversation.id, syncMessagesState])
@@ -624,7 +625,7 @@ export function useChat({
 
     const messageContent = content.trim()
     if (messageContent.length > 1000) {
-      addToast('Message is too long. Maximum 1000 characters.', 'error')
+      addToast(tInbox('chat.errors.tooLong', { count: 1000 }), 'error')
       return
     }
 
@@ -688,7 +689,7 @@ export function useChat({
 
           const createdConversation = result.data?.[0]
           if (!createdConversation) {
-            throw new Error('Failed to create conversation')
+            throw new Error(tInbox('chat.errors.createConversationFailed'))
           }
 
           activeConversationId = createdConversation.id
@@ -883,12 +884,12 @@ export function useChat({
         // Nothing was created and nothing was sent: the typed text stays in
         // the composer, and the member is told when they can start again.
         reportNewConversationRefusal()
-        addToast(NEW_CONVERSATION_LIMIT_MESSAGE, 'info')
+        addToast(newConversationLimitMessage(), 'info')
         return false
       }
       if (isRecruiterMinorError(error)) {
         // Nothing was created and nothing was sent; the typed text stays.
-        addToast(RECRUITER_MINOR_MESSAGE, 'info')
+        addToast(recruiterMinorMessage(), 'info')
         return false
       }
       logger.error('Error sending message:', error)
@@ -902,7 +903,7 @@ export function useChat({
         operation: 'send_message'
       })
       if (optimisticId) {
-        updateMessageStatus(optimisticId, 'failed', 'Failed to send')
+        updateMessageStatus(optimisticId, 'failed', tInbox('chat.errors.failedStatus'))
       }
 
       if (conversationCreatedForSend && newlyCreatedConversation) {
@@ -928,7 +929,7 @@ export function useChat({
         }
       }
 
-      addToast(extractErrorMessage(error, 'Failed to send message. Please try again.'), 'error')
+      addToast(extractErrorMessage(error, tInbox('chat.errors.sendFailed')), 'error')
       return false
     } finally {
       sendingRef.current = false

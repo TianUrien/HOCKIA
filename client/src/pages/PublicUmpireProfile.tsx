@@ -21,6 +21,7 @@ import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
 import ProfileUnavailable from '@/components/profile/ProfileUnavailable'
 import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
+import { useProfileT } from '@/i18n/ns/profile'
 
 type PublicUmpireShape = Partial<Profile> &
   Pick<
@@ -68,7 +69,9 @@ export default function PublicUmpireProfile() {
   })
   const [profile, setProfile] = useState<PublicUmpireShape | null>(seededProfile)
   const [isLoading, setIsLoading] = useState(!seededProfile)
-  const [error, setError] = useState<string | null>(null)
+  const t = useProfileT()
+  // A catalog key, so the message follows the interface language.
+  const [error, setError] = useState<'invalidUrl' | 'notFound' | 'unavailable' | 'loadFailed' | null>(null)
 
   // Pure: returns block status, sets no state (so a late check from a previous
   // profile can't stamp an error onto the one you navigated to).
@@ -84,7 +87,7 @@ export default function PublicUmpireProfile() {
     let cancelled = false
     const fetchProfile = async () => {
       if (!cacheKey) {
-        setError('Invalid profile URL')
+        setError('invalidUrl')
         setIsLoading(false)
         return
       }
@@ -133,12 +136,12 @@ export default function PublicUmpireProfile() {
 
         if (!typed) {
           setProfile(null)
-          setError('Umpire profile not found.')
+          setError('notFound')
           return
         }
         if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
           setProfile(null)
-          setError('Umpire profile not found.')
+          setError('notFound')
           return
         }
         // Block check (per viewer pair). Remember the result so the NEXT visit gates
@@ -149,7 +152,7 @@ export default function PublicUmpireProfile() {
           rememberBlockedPair(currentUserProfile.id, typed.id, blocked)
           if (blocked) {
             setProfile(null)
-            setError('This profile is not available.')
+            setError('unavailable')
             return
           }
         }
@@ -157,7 +160,7 @@ export default function PublicUmpireProfile() {
       } catch (err) {
         if (cancelled) return
         logger.error('Error fetching umpire profile:', err)
-        setError('Failed to load umpire profile. Please try again.')
+        setError('loadFailed')
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -193,14 +196,14 @@ export default function PublicUmpireProfile() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-ink-2 mb-4"></div>
-          <p className="text-gray-600">Loading umpire profile...</p>
+          <p className="text-gray-600">{t('publicUmpireProfile.loading')}</p>
         </div>
       </div>
     )
   }
 
   if (error || !profile) {
-    return <ProfileUnavailable noun="umpire" message={error} />
+    return <ProfileUnavailable noun="umpire" message={error ? t(`publicUmpireProfile.errors.${error}`) : null} />
   }
 
   // Pass the umpire-specific columns through via the cast — UmpireDashboard

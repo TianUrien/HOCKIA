@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useGalleryCount } from '@/hooks/useGalleryCount'
+import { useProfileT } from '@/i18n/ns/profile'
 import type { CoachProfileShape } from '@/pages/CoachDashboard'
 
 export interface ProfileBucket {
@@ -33,6 +34,7 @@ interface UseCoachProfileStrengthOptions {
  *   career history 15 · gallery 5 · friends 5 · references 15 · open-to-coach 10
  */
 export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOptions) {
+  const t = useProfileT()
   const profileId = profile?.id ?? null
 
   // Gallery count is the only remaining query — shared React Query fetch
@@ -92,106 +94,106 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     return [
       {
         id: 'basic',
-        label: 'Add your nationality and location',
-        hint: 'Add your nationality and base location',
-        unlockCopy: 'Clubs filter for coaches by location when they search.',
+        label: t('useCoachProfileStrength.basic.label'),
+        hint: t('useCoachProfileStrength.basic.hint'),
+        unlockCopy: t('useCoachProfileStrength.basic.unlockCopy'),
         weight: 10,
         completed: basicComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Edit Profile',
+        actionLabel: t('useCoachProfileStrength.basic.actionLabel'),
       },
       {
         id: 'specialization',
-        label: 'Set your coaching focus',
-        hint: 'Add your coaching specialization or the categories you coach',
-        unlockCopy: 'Head coach, assistant, age groups: clubs search by coaching focus.',
+        label: t('useCoachProfileStrength.focus.label'),
+        hint: t('useCoachProfileStrength.focus.hint'),
+        unlockCopy: t('useCoachProfileStrength.focus.unlockCopy'),
         weight: 10,
         completed: focusComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Set Focus',
+        actionLabel: t('useCoachProfileStrength.focus.actionLabel'),
       },
       {
         id: 'photo',
-        label: 'Profile Photo',
-        hint: 'Upload a profile photo',
-        unlockCopy: 'Helps clubs put a face to your name.',
+        label: t('useCoachProfileStrength.photo.label'),
+        hint: t('useCoachProfileStrength.photo.hint'),
+        unlockCopy: t('useCoachProfileStrength.photo.unlockCopy'),
         weight: 10,
         completed: photoComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Add Photo',
+        actionLabel: t('useCoachProfileStrength.photo.actionLabel'),
       },
       {
         id: 'bio',
-        label: 'Professional Bio',
-        hint: 'Add a bio about your coaching background',
-        unlockCopy: 'Gives clubs a feel for your coaching style and experience.',
+        label: t('useCoachProfileStrength.bio.label'),
+        hint: t('useCoachProfileStrength.bio.hint'),
+        unlockCopy: t('useCoachProfileStrength.bio.unlockCopy'),
         weight: 10,
         completed: bioComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Add Bio',
+        actionLabel: t('useCoachProfileStrength.bio.actionLabel'),
       },
       {
         id: 'current-club',
-        label: 'Add your current club',
-        hint: 'Add the club or team you currently coach',
-        unlockCopy: 'Shows clubs your current team and level.',
+        label: t('useCoachProfileStrength.currentClub.label'),
+        hint: t('useCoachProfileStrength.currentClub.hint'),
+        unlockCopy: t('useCoachProfileStrength.currentClub.unlockCopy'),
         weight: 10,
         completed: Boolean(profile?.current_club?.trim()),
         actionId: 'edit-profile',
-        actionLabel: 'Add Club',
+        actionLabel: t('useCoachProfileStrength.currentClub.actionLabel'),
       },
       {
         id: 'journey',
-        label: 'Career history',
-        hint: 'Add at least one experience entry',
-        unlockCopy: 'Shows where you have coached and the teams you have developed.',
+        label: t('useCoachProfileStrength.journey.label'),
+        hint: t('useCoachProfileStrength.journey.hint'),
+        unlockCopy: t('useCoachProfileStrength.journey.unlockCopy'),
         weight: 15,
         completed: journeyComplete,
         actionId: 'journey-tab',
-        actionLabel: 'Add Experience',
+        actionLabel: t('useCoachProfileStrength.journey.actionLabel'),
       },
       {
         id: 'gallery',
-        label: 'Media Gallery',
-        hint: 'Upload at least one gallery photo',
-        unlockCopy: 'Match photos, training sessions, moments from your career.',
+        label: t('useCoachProfileStrength.gallery.label'),
+        hint: t('useCoachProfileStrength.gallery.hint'),
+        unlockCopy: t('useCoachProfileStrength.gallery.unlockCopy'),
         weight: 5,
         completed: galleryComplete,
         actionId: 'gallery-tab',
-        actionLabel: 'Add Media',
+        actionLabel: t('useCoachProfileStrength.gallery.actionLabel'),
       },
       {
         id: 'friends',
-        label: 'Make your first connection',
-        hint: 'Add a friend to start building your network',
-        unlockCopy: 'Clubs can see the players and coaches you are connected with.',
+        label: t('useCoachProfileStrength.friends.label'),
+        hint: t('useCoachProfileStrength.friends.hint'),
+        unlockCopy: t('useCoachProfileStrength.friends.unlockCopy'),
         weight: 5,
         completed: friendsComplete,
         actionId: 'friends-tab',
-        actionLabel: 'Add Connection',
+        actionLabel: t('useCoachProfileStrength.friends.actionLabel'),
       },
       {
         id: 'references',
-        label: 'Get a trusted reference',
-        hint: 'Ask a player or fellow coach to vouch for you',
-        unlockCopy: 'Former players or clubs vouching for you builds trust fast.',
+        label: t('useCoachProfileStrength.references.label'),
+        hint: t('useCoachProfileStrength.references.hint'),
+        unlockCopy: t('useCoachProfileStrength.references.unlockCopy'),
         weight: 15,
         completed: referencesComplete,
         actionId: 'friends-tab',
-        actionLabel: 'Get Reference',
+        actionLabel: t('useCoachProfileStrength.references.actionLabel'),
       },
       {
         id: 'availability',
-        label: 'Mark yourself open to coach',
-        hint: 'Let clubs know you are open to coaching opportunities',
-        unlockCopy: 'Recruiters filter for "Open to Coach". Set it to appear in their searches.',
+        label: t('useCoachProfileStrength.availability.label'),
+        hint: t('useCoachProfileStrength.availability.hint'),
+        unlockCopy: t('useCoachProfileStrength.availability.unlockCopy'),
         weight: 10,
         completed: profile?.open_to_coach === true,
         actionId: 'profile-tab',
-        actionLabel: 'Set Availability',
+        actionLabel: t('useCoachProfileStrength.availability.actionLabel'),
       },
     ]
-  }, [isBasicInfoComplete, hasCoachingFocus, hasProfilePhoto, hasProfessionalBio, journeyCount, galleryCount, referenceCount, friendCount, profile?.current_club, profile?.open_to_coach])
+  }, [isBasicInfoComplete, hasCoachingFocus, hasProfilePhoto, hasProfessionalBio, journeyCount, galleryCount, referenceCount, friendCount, profile?.current_club, profile?.open_to_coach, t])
 
   // Calculate total percentage
   const percentage = useMemo(() => {

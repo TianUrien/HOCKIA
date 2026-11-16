@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { leagueSideFor } from '@/lib/profileD2'
 import { fieldLabel, fieldReadOnly, fieldSelect } from '@/components/ui/fieldClasses'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 /**
  * League half of the player's "Club & league" editor (D2 "Add league").
@@ -27,6 +28,7 @@ interface PlayerLeagueFieldProps {
 }
 
 export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCategory, value, onChange, onClubLeague }: PlayerLeagueFieldProps) {
+  const t = useProfileEditT()
   const [clubLeague, setClubLeague] = useState<string | null>(null)
   const [options, setOptions] = useState<Option[]>([])
   const [loading, setLoading] = useState(true)
@@ -80,18 +82,18 @@ export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCateg
   if (clubLeague) {
     return (
       <div>
-        <span className={fieldLabel}>League</span>
+        <span className={fieldLabel}>{t('league.field.label')}</span>
         <p className={fieldReadOnly}>{clubLeague}</p>
-        <p className="mt-1.5 text-caption text-ink-3">From your club on Hockia.</p>
+        <p className="mt-1.5 text-caption text-ink-3">{t('league.field.fromClub')}</p>
       </div>
     )
   }
   if (options.length === 0) {
-    return <p className="text-caption text-ink-3">{worldClubId ? 'Your club has no league on Hockia yet, and there are no leagues for its country to choose from.' : 'Link your club to add your league.'}</p>
+    return <p className="text-caption text-ink-3">{worldClubId ? t('league.field.noLeaguesForClub') : t('league.field.linkClubFirst')}</p>
   }
   return (
     <div>
-      <label htmlFor="edit-own-league" className={fieldLabel}>League (optional)</label>
+      <label htmlFor="edit-own-league" className={fieldLabel}>{t('league.field.optionalLabel')}</label>
       <select
         id="edit-own-league"
         value={value ?? ''}
@@ -101,10 +103,10 @@ export function PlayerLeagueField({ worldClubId, fallbackCountryId, playingCateg
         }}
         className={fieldSelect}
       >
-        <option value="">Not set</option>
+        <option value="">{t('league.field.notSet')}</option>
         {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
       </select>
-      <p className="mt-1.5 text-caption text-ink-3">Your club has no league on Hockia yet, so clubs see this one marked “self-reported”.</p>
+      <p className="mt-1.5 text-caption text-ink-3">{t('league.field.selfReportedHint')}</p>
     </div>
   )
 }

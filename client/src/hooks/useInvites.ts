@@ -7,11 +7,12 @@ import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { tInbox } from '@/i18n/ns/inbox'
 import {
   OPEN_APPLICATION_STATUSES,
   firstNameOf,
   inviteDailyLimit,
-  INVITE_GENERIC_ERROR,
+  inviteGenericError,
   inviteErrorMessage,
   inviteLimitReason,
   isInvitablePlayer,
@@ -152,12 +153,12 @@ export function useSendInvite() {
         // Refusals with their own copy (limit, passed, already applied…) are
         // expected outcomes; only the generic fallback means something broke.
         const message = inviteErrorMessage(error)
-        if (message === INVITE_GENERIC_ERROR) reportSupabaseError('useInvites.send', error)
+        if (message === inviteGenericError()) reportSupabaseError('useInvites.send', error)
         return message
       }
       const res = (data ?? {}) as { invite_id?: string }
       trackDbEvent('invite_sent', 'opportunity', opts.opportunityId, { invite_id: res.invite_id ?? null, player_id: opts.playerId })
-      addToast(`Invite sent to ${firstNameOf(opts.playerName, 'the player')}`, 'success')
+      addToast(tInbox('invites.sentToast', { name: firstNameOf(opts.playerName, tInbox('invites.sentToastFallback')) }), 'success')
       void queryClient.invalidateQueries({ queryKey: INVITES_KEY })
       return null
     } catch (err) {

@@ -5,6 +5,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 export interface MoreMenuItem {
   key: string
@@ -39,7 +40,9 @@ const ANCHOR_GAP = 6
  * anchored to the button. Items run in the order given — Report sits in the
  * same place on every surface because callers add it last-but-block.
  */
-export function MoreMenu({ items, label = 'More actions', title, triggerClassName, iconClassName, testId = 'more-menu' }: MoreMenuProps) {
+export function MoreMenu({ items, label: labelProp, title, triggerClassName, iconClassName, testId = 'more-menu' }: MoreMenuProps) {
+  const t = useInboxT()
+  const label = labelProp ?? t('safety.moreMenu.label')
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -125,7 +128,7 @@ export function MoreMenu({ items, label = 'More actions', title, triggerClassNam
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">Cancel</button>
+            <button type="button" onClick={() => setOpen(false)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">{t('safety.moreMenu.cancel')}</button>
           </div>
         </BottomSheet>
       ) : (

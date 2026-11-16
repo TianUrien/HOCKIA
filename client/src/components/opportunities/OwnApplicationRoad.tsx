@@ -4,7 +4,7 @@ import { Check, Minus } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useToastStore } from '@/lib/toast'
 import { useOwnOfferMade, useSigningActions } from '@/hooks/useSigning'
-import { WITHDRAW_TITLE, canWithdraw, playerRoadHint, playerRoadSteps, withdrawBody } from '@/lib/signing'
+import { withdrawTitle, canWithdraw, playerRoadHint, playerRoadSteps, withdrawBody } from '@/lib/signing'
 import { cn } from '@/lib/utils'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
@@ -118,9 +118,9 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
           {t('road.withdrawApplication')}
         </button>
       )}
-      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={WITHDRAW_TITLE}>
+      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={withdrawTitle()}>
         <div className="px-5 pb-2 pt-2 text-center" data-testid="withdraw-application-confirm">
-          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{WITHDRAW_TITLE}</h2>
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{withdrawTitle()}</h2>
           <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{withdrawBody(status)}</p>
           <button type="button" onClick={() => void withdraw()} disabled={withdrawing} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60" data-testid="withdraw-application-yes">
             {withdrawing ? t('road.withdrawing') : t('road.withdraw')}

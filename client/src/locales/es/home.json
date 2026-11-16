@@ -956,5 +956,104 @@
       "moreAria_other": "{{count}} jugadores/as más disponibles para jugar",
       "moreAria_many": "{{count}} jugadores/as más disponibles para jugar"
     }
+  },
+  "engagement": {
+    "congratsFailed": "No se pudieron enviar las felicitaciones",
+    "commentFailed": "No se pudo publicar el comentario",
+    "deleteCommentFailed": "No se pudo eliminar el comentario",
+    "commentsToggleFailed": "No se pudieron cambiar los comentarios",
+    "removeTagFailed": "No se pudo quitar la etiqueta"
+  },
+  "aiNextSteps": {
+    "photo": {
+      "label": "Agregar una foto de perfil",
+      "fromGallery": "Elegir una de tus fotos o subir una nueva",
+      "description": "Los clubes miran primero la foto",
+      "invalidFile": "La foto tiene que ser JPG o PNG"
+    },
+    "passport": {
+      "label": "Agregar mis pasaportes",
+      "descriptionPlayer": "Los clubes filtran por nacionalidad y UE",
+      "description": "Solo los países, nunca un documento"
+    },
+    "bio": {
+      "label": "Escribir mi bio",
+      "description": "La redacto a partir de tu perfil; la elección y la edición quedan de tu lado"
+    },
+    "improveBio": {
+      "label": "Mejorar mi bio",
+      "description": "La actual es corta; sugiero una más completa"
+    },
+    "video": {
+      "label": "Agregar un video de jugadas",
+      "description": "Pegar un enlace de YouTube o Vimeo"
+    },
+    "career": {
+      "label": "Agregar mis clubes",
+      "description": "Desde tu CV o con unas pocas líneas"
+    },
+    "links": {
+      "label": "Agregar mis enlaces",
+      "description": "Instagram, TikTok, LinkedIn…"
+    },
+    "position": {
+      "label": "Agregar mi posición",
+      "description": "Con una línea alcanza"
+    }
+  },
+  "goalOptions": {
+    "play_abroad": "Jugar en el exterior",
+    "move_up": "Subir de categoría",
+    "club_near_me": "Encontrar un club donde vivo",
+    "get_sponsor": "Conseguir un sponsor",
+    "keep_playing": "Seguir jugando bien",
+    "coach_abroad": "Entrenar en el exterior",
+    "coach_higher": "Entrenar en un nivel más alto",
+    "recruit_players": "Sumar jugadoras y jugadores a mi equipo",
+    "grow_coach": "Crecer como entrenador/a",
+    "fill_role": "Cubrir un lugar esta temporada",
+    "sign_abroad": "Incorporar deportistas del exterior",
+    "find_coach": "Encontrar entrenador/a",
+    "find_sponsors": "Encontrar sponsors",
+    "grow_club": "Hacer crecer nuestro club",
+    "find_ambassadors": "Encontrar embajadoras y embajadores",
+    "reach_new_countries": "Llegar a deportistas de otros países",
+    "reach_clubs": "Llegar a clubes",
+    "umpire_higher": "Arbitrar en un nivel más alto",
+    "umpire_abroad": "Arbitrar en el exterior",
+    "build_record": "Sumar antecedentes"
+  },
+  "goalRows": {
+    "abroad_one": "{{count}} oportunidad abierta en el exterior",
+    "abroad_other": "{{count}} oportunidades abiertas en el exterior",
+    "abroad_many": "{{count}} oportunidades abiertas en el exterior",
+    "abroadFor": {
+      "goalkeeper_one": "{{count}} oportunidad abierta en el exterior para arquero/a",
+      "goalkeeper_other": "{{count}} oportunidades abiertas en el exterior para arquero/a",
+      "goalkeeper_many": "{{count}} oportunidades abiertas en el exterior para arquero/a",
+      "defender_one": "{{count}} oportunidad abierta en el exterior para defensor/a",
+      "defender_other": "{{count}} oportunidades abiertas en el exterior para defensor/a",
+      "defender_many": "{{count}} oportunidades abiertas en el exterior para defensor/a",
+      "midfielder_one": "{{count}} oportunidad abierta en el exterior para volante",
+      "midfielder_other": "{{count}} oportunidades abiertas en el exterior para volante",
+      "midfielder_many": "{{count}} oportunidades abiertas en el exterior para volante",
+      "forward_one": "{{count}} oportunidad abierta en el exterior para delantero/a",
+      "forward_other": "{{count}} oportunidades abiertas en el exterior para delantero/a",
+      "forward_many": "{{count}} oportunidades abiertas en el exterior para delantero/a"
+    },
+    "inCountry_one": "{{count}} oportunidad abierta en {{country}}",
+    "inCountry_other": "{{count}} oportunidades abiertas en {{country}}",
+    "inCountry_many": "{{count}} oportunidades abiertas en {{country}}",
+    "openRoles_one": "{{count}} oportunidad abierta",
+    "openRoles_other": "{{count}} oportunidades abiertas",
+    "openRoles_many": "{{count}} oportunidades abiertas",
+    "applicantsWaiting_one": "{{count}} postulación en espera",
+    "applicantsWaiting_other": "{{count}} postulaciones en espera",
+    "applicantsWaiting_many": "{{count}} postulaciones en espera",
+    "see": "Ver",
+    "review": "Revisar",
+    "postAnother": "Publicar otra oportunidad en menos de un minuto",
+    "postFirst": "Publicar una oportunidad en menos de un minuto",
+    "postAction": "Publicar una oportunidad"
   }
 }

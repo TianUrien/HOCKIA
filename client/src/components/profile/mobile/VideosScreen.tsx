@@ -13,6 +13,7 @@ import { formatVideoDuration } from '@/lib/videoCopy'
 import { getImageUrl } from '@/lib/imageUrl'
 import { profilePath } from '@/lib/profileNavigation'
 import { VideoLockBadge } from './VideoLockBadge'
+import { tMedia, useMediaT } from '@/i18n/ns/media'
 
 /**
  * Videos — all (Figma 153:581): where "N Videos" and "See all N" land — the
@@ -31,7 +32,12 @@ interface VideosScreenProps {
   onManage?: () => void
 }
 
-const KIND_LABEL: Record<ProfileVideo['kind'], string> = { highlight: 'Highlight', full_match: 'Full match', reel: 'Reel' }
+/** The player's chip for each kind of video, in the interface language. */
+function kindLabel(kind: ProfileVideo['kind']): string {
+  if (kind === 'highlight') return tMedia('videosScreen.kind.highlight')
+  if (kind === 'full_match') return tMedia('videosScreen.kind.fullMatch')
+  return tMedia('videosScreen.kind.reel')
+}
 
 function LinkTile({ title, href, date, locked }: { title: string; href: string; date?: string | null; locked?: boolean }) {
   return (
@@ -57,9 +63,10 @@ function Group({ title, count, lockLabel, children }: { title: string; count: nu
   )
 }
 
-const linkTitle = (l: ProfileFullGameLink) => l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')
+const linkTitle = (l: ProfileFullGameLink) => l.match_title?.trim() || (l.opponent_team ? tMedia('videosScreen.versus', { opponent: l.opponent_team }) : tMedia('videosScreen.fullMatchFallback'))
 
 export default function VideosScreen({ profile, mode, onBack, onManage }: VideosScreenProps) {
+  const t = useMediaT()
   const own = mode === 'own'
   const viewer = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
@@ -102,11 +109,11 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
     <div className="min-h-screen bg-white pb-24 lg:hidden" data-testid={own ? 'videos-screen-own' : 'videos-screen-public'}>
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
         <DetailNavBar
-          parent={own ? 'Profile' : firstName ?? 'Profile'}
-          title={loading ? 'Videos' : `Videos · ${total}`}
+          parent={own ? t('videosScreen.parent') : firstName ?? t('videosScreen.parent')}
+          title={loading ? t('videosScreen.title') : t('videosScreen.titleCount', { total })}
           showParent
           onBack={onBack}
-          trailing={own && onManage ? <button type="button" onClick={onManage} className="h-11 px-3 text-row font-semibold text-hockia-primary">Manage</button> : undefined}
+          trailing={own && onManage ? <button type="button" onClick={onManage} className="h-11 px-3 text-row font-semibold text-hockia-primary">{t('videosScreen.manage')}</button> : undefined}
         />
       </div>
 
@@ -115,23 +122,23 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
           <div className="grid grid-cols-2 gap-2.5" aria-busy="true">{Array.from({ length: 4 }, (_, i) => <div key={i} className="aspect-[16/9] animate-pulse rounded-card bg-surface-grouped" />)}</div>
         ) : total === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-row font-semibold text-ink-1">{own ? 'No videos yet' : 'No videos to show'}</p>
-            {own && onManage && <button type="button" onClick={onManage} className="mt-3 text-row font-semibold text-hockia-primary">Add your first highlight</button>}
+            <p className="text-row font-semibold text-ink-1">{own ? t('videosScreen.emptyOwn') : t('videosScreen.emptyPublic')}</p>
+            {own && onManage && <button type="button" onClick={onManage} className="mt-3 text-row font-semibold text-hockia-primary">{t('videosScreen.addFirst')}</button>}
           </div>
         ) : (
           <>
             {highlightCount > 0 && (
-              <Group title="Highlights" count={highlightCount}>
+              <Group title={t('videosScreen.highlights')} count={highlightCount}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} priority={i === 0} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
-                  {linkedHighlight && canOpenLinkedHighlight && <LinkTile title="Linked highlight" href={linkedHighlight} />}
-                  {linkedHighlight && !canOpenLinkedHighlight && <LockedVideoTile label="Highlight" onOpen={showLocked} className="aspect-[16/9] w-full" />}
-                  {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="aspect-[16/9] w-full" />)}
+                  {linkedHighlight && canOpenLinkedHighlight && <LinkTile title={t('videosScreen.linkedHighlight')} href={linkedHighlight} />}
+                  {linkedHighlight && !canOpenLinkedHighlight && <LockedVideoTile label={t('videosScreen.lockedLinkedHighlight')} onOpen={showLocked} className="aspect-[16/9] w-full" />}
+                  {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label={t('videosScreen.lockedHighlight')} onOpen={showLocked} className="aspect-[16/9] w-full" />)}
                 </div>
               </Group>
             )}
             {fullCount > 0 && (
-              <Group title="Full matches" count={fullCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
+              <Group title={t('videosScreen.fullMatches')} count={fullCount} lockLabel={lockFullMatches ? t('videosScreen.recruitersOnly') : null}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
                   {links.flatMap((l) => { const href = safeVideoHref(l.video_url); return href ? [<LinkTile key={l.id} title={linkTitle(l)} href={href} date={l.match_date} locked={l.visibility === 'recruiters'} />] : [] })}
@@ -140,7 +147,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
               </Group>
             )}
             {reels.length > 0 && (
-              <Group title="Reels" count={reels.length}>
+              <Group title={t('videosScreen.reels')} count={reels.length}>
                 <div className="grid grid-cols-3 gap-2.5">
                   {reels.map((v, i) => <ProfileVideoTile key={v.id} video={v} portrait locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 6} size={{ width: 116, height: 155 }} onOpen={() => open(v)} className="aspect-[3/4] w-full" />)}
                 </div>
@@ -155,7 +162,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
           images={[{ video_id: playing.id, media_type: 'video', duration: playing.durationSeconds, order: 0 }]}
           initialIndex={0}
           onClose={() => setPlaying(null)}
-          videoLabel={KIND_LABEL[playing.kind]}
+          videoLabel={kindLabel(playing.kind)}
           isOwner={own}
           caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(' · ')}
           author={{ id: profile.id, name: profile.full_name ?? null, avatarUrl: avatar, role: profile.role ?? null, profilePath: own ? null : profilePath(profile.role, profile.username, profile.id) }}

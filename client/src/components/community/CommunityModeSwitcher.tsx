@@ -6,6 +6,7 @@
  */
 
 import { useNavigate } from 'react-router-dom'
+import { useCommunityT } from '@/i18n/ns/community'
 
 export type CommunityMode = 'people' | 'questions'
 
@@ -14,6 +15,7 @@ interface CommunityModeSwitcherProps {
 }
 
 export function CommunityModeSwitcher({ mode }: CommunityModeSwitcherProps) {
+  const t = useCommunityT()
   const navigate = useNavigate()
 
   const handleModeChange = (newMode: CommunityMode) => {
@@ -37,7 +39,7 @@ export function CommunityModeSwitcher({ mode }: CommunityModeSwitcherProps) {
         }`}
         aria-pressed={mode === 'people' ? 'true' : 'false'}
       >
-        People
+        {t('modeSwitcher.people')}
       </button>
       <button
         onClick={() => handleModeChange('questions')}
@@ -48,7 +50,7 @@ export function CommunityModeSwitcher({ mode }: CommunityModeSwitcherProps) {
         }`}
         aria-pressed={mode === 'questions' ? 'true' : 'false'}
       >
-        Questions
+        {t('modeSwitcher.questions')}
       </button>
     </div>
   )

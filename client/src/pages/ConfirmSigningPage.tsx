@@ -16,15 +16,16 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { inviteRoleLabel } from '@/lib/invites'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import {
-  SIGNING_CLUB_MISSING_MESSAGE,
   SIGNING_CONFIRM_DAYS,
   confirmSigningTitle,
   hideFromClubsCopy,
   offerStartLine,
   seasonLabel,
   signedTitle,
+  signingClubMissingMessage,
   signingShareText,
 } from '@/lib/signing'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * D4.5 · Confirm signing (Figma 390:936; DEV NOTE 391:40) and D4.6 · Signed
@@ -50,6 +51,7 @@ function Crest({ src, name, size }: { src: string | null; name: string | null; s
 }
 
 export default function ConfirmSigningPage() {
+  const t = useInboxT()
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useNavigate()
   const me = useAuthStore((s) => s.profile)
@@ -62,7 +64,7 @@ export default function ConfirmSigningPage() {
   const [confirmed, setConfirmed] = useState(false)
   // The server refused because the role names no club yet (a coach's role).
   const [clubMissing, setClubMissing] = useState(false)
-  useDocumentTitle('Signing')
+  useDocumentTitle(t('signing.confirmPage.documentTitle'))
 
   const shell = (children: ReactNode) => (
     <div className="flex min-h-app-screen flex-col bg-white pb-[max(env(safe-area-inset-bottom),1rem)] pt-[env(safe-area-inset-top)]">
@@ -75,8 +77,8 @@ export default function ConfirmSigningPage() {
   if (!data || !own) {
     return shell(
       <div className="mt-24 text-center" data-testid="signing-unavailable">
-        <p className="text-[17px] font-semibold text-ink-1">This signing isn’t available.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
+        <p className="text-[17px] font-semibold text-ink-1">{t('signing.confirmPage.unavailable')}</p>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">{t('signing.confirmPage.myApplications')}</button>
       </div>,
     )
   }
@@ -86,7 +88,7 @@ export default function ConfirmSigningPage() {
   // organisation, else the club on the coach's profile (what confirm_signing
   // writes on the career entry). The crest is a club account's only.
   const coachPublisher = club.role === 'coach'
-  const clubName = role.organization_name?.trim() || (coachPublisher ? club.current_club?.trim() : club.full_name?.trim()) || 'The club'
+  const clubName = role.organization_name?.trim() || (coachPublisher ? club.current_club?.trim() : club.full_name?.trim()) || t('signing.confirmPage.clubFallback')
   const clubCrest = coachPublisher ? null : club.avatar_url
   const roleText = inviteRoleLabel(role)
   const start = offer?.start_date ?? role.start_date
@@ -102,9 +104,9 @@ export default function ConfirmSigningPage() {
           return
         }
         await navigator.clipboard.writeText(url ? `${text} ${url}` : text)
-        addToast('Copied. Paste it anywhere', 'success')
+        addToast(t('signing.confirmPage.copied'), 'success')
       } catch (err) {
-        if (!(err instanceof Error && err.name === 'AbortError')) addToast('Couldn’t share. Please try again.', 'error')
+        if (!(err instanceof Error && err.name === 'AbortError')) addToast(t('signing.confirmPage.shareFailed'), 'error')
       }
     }
     return shell(
@@ -114,21 +116,21 @@ export default function ConfirmSigningPage() {
             <Check className="h-12 w-12" strokeWidth={2.6} />
           </span>
           <h1 className="mt-5 text-title text-ink-1">{signedTitle(clubName, me?.role)}</h1>
-          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">{t('signing.confirmPage.signedBody')}</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
             <Crest src={clubCrest} name={clubName} size={52} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[16px] font-semibold text-ink-1">{clubName}</p>
-              <p className="truncate text-[14px] text-ink-1">{roleText} · {seasonLabel(start)}</p>
+              <p className="truncate text-[14px] text-ink-1">{t('signing.confirmPage.roleSeason', { role: roleText, season: seasonLabel(start) })}</p>
               <SignedThroughHockiaPill className="mt-1" />
             </div>
           </div>
         </div>
         <button type="button" onClick={() => void share()} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })} data-testid="signing-share">
-          <Share className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Share the news
+          <Share className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> {t('signing.confirmPage.share')}
         </button>
         <button type="button" onClick={() => navigate('/dashboard/profile')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}>
-          Done
+          {t('signing.confirmPage.done')}
         </button>
       </div>,
     )
@@ -139,24 +141,24 @@ export default function ConfirmSigningPage() {
   if (application.status !== 'signed_pending_confirmation' || lapsed) {
     return shell(
       <div className="mt-24 text-center" data-testid="signing-not-waiting">
-        <p className="text-[17px] font-semibold text-ink-1">{lapsed ? 'This signing request has expired.' : 'There’s no signing waiting for your confirmation.'}</p>
-        <p className="mt-1 text-secondary text-ink-2">You can message the club if something isn’t right.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
+        <p className="text-[17px] font-semibold text-ink-1">{lapsed ? t('signing.confirmPage.expired') : t('signing.confirmPage.notWaiting')}</p>
+        <p className="mt-1 text-secondary text-ink-2">{t('signing.confirmPage.messageClub')}</p>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">{t('signing.confirmPage.myApplicationsNotWaiting')}</button>
       </div>,
     )
   }
 
   const rows: [string, string | null][] = [
-    ['Club', clubName],
-    ['Role', roleText],
-    ['League', leagueFor(club, role.gender) ?? (role.level_sought?.trim() || null)],
-    ['From', offerStartLine(start, offer?.length ?? role.duration_text)],
+    [t('signing.confirmPage.rows.club'), clubName],
+    [t('signing.confirmPage.rows.role'), roleText],
+    [t('signing.confirmPage.rows.league'), leagueFor(club, role.gender) ?? (role.level_sought?.trim() || null)],
+    [t('signing.confirmPage.rows.from'), offerStartLine(start, offer?.length ?? role.duration_text)],
   ]
   const toggle = hideFromClubsCopy(me?.role)
   const confirm = async () => {
     if (!applicationId) return
     const res = await confirmSigning(applicationId, hide)
-    if (!res.ok) setClubMissing(res.error === SIGNING_CLUB_MISSING_MESSAGE)
+    if (!res.ok) setClubMissing(res.error === signingClubMissingMessage())
     if (res.ok) {
       setConfirmed(true)
       void refetch()
@@ -176,7 +178,7 @@ export default function ConfirmSigningPage() {
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
         <Crest src={clubCrest} name={clubName} size={80} />
         <h1 className="mt-5 text-title text-ink-1">{confirmSigningTitle(clubName)}</h1>
-        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
+        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">{t('signing.confirmPage.confirmBody')}</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
           {rows.filter(([, v]) => !!v).map(([k, v], i) => (
             <div key={k}>
@@ -199,14 +201,14 @@ export default function ConfirmSigningPage() {
       </div>
       {clubMissing && (
         <p className="mt-4 text-center text-secondary text-ink-2" role="status" data-testid="signing-club-missing">
-          This signing can’t be confirmed yet: the club’s details are incomplete. Message the club, then try again.
+          {t('signing.confirmPage.clubMissing')}
         </p>
       )}
       <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
-        {busy ? 'Confirming…' : 'Yes, I signed'}
+        {busy ? t('signing.confirmPage.confirming') : t('signing.confirmPage.confirm')}
       </button>
       <button type="button" onClick={() => navigate(-1)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1" data-testid="signing-not-yet">
-        Not yet
+        {t('signing.confirmPage.notYet')}
       </button>
     </div>,
   )

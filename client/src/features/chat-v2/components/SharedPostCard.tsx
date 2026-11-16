@@ -12,6 +12,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import { cn } from '@/lib/utils'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface SharedPostCardProps {
   postId: string
@@ -32,6 +33,7 @@ export function SharedPostCard({
   thumbnailUrl,
   isMine,
 }: SharedPostCardProps) {
+  const t = useInboxT()
   const navigate = useNavigate()
 
   const handleClick = () => {
@@ -63,7 +65,7 @@ export function SharedPostCard({
             isMine ? 'text-white' : 'text-ink-1',
           )}
         >
-          {authorName || 'Unknown'}
+          {authorName || t('chat.sharedPost.unknownAuthor')}
         </span>
         <RoleBadge role={authorRole} />
       </div>
@@ -98,7 +100,7 @@ export function SharedPostCard({
           isMine ? 'text-white/70' : 'text-hockia-primary',
         )}
       >
-        <span>View post</span>
+        <span>{t('chat.sharedPost.view')}</span>
         <ExternalLink className="w-3 h-3" />
       </div>
     </button>

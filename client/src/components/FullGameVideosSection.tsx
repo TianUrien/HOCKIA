@@ -9,6 +9,9 @@ import { useToastStore } from '@/lib/toast'
 import { useFullGameVideos, type FullGameVideo } from '@/hooks/useFullGameVideos'
 import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { cn } from '@/lib/utils'
+import { intlLocale } from '@/i18n/format'
+import { tMedia, useMediaT } from '@/i18n/ns/media'
+import { tEnums } from '@/i18n/ns/enums'
 
 /**
  * FullGameVideosSection — owner-side list + CRUD for full match footage.
@@ -41,7 +44,7 @@ function formatMatchDate(dateStr: string | null): string | null {
   if (!dateStr) return null
   const d = new Date(dateStr)
   if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+  return d.toLocaleDateString(intlLocale(), { month: 'short', year: 'numeric' })
 }
 
 function buildContextLine(v: FullGameVideo): string | null {
@@ -52,18 +55,30 @@ function buildContextLine(v: FullGameVideo): string | null {
   return parts.length > 0 ? parts.join(' · ') : null
 }
 
+/** The stored position value (English, from the form's list) in the interface language. */
+function positionLabel(value: string): string {
+  switch (value) {
+    case 'Goalkeeper': return tEnums('position.goalkeeper')
+    case 'Defender': return tEnums('position.defender')
+    case 'Midfielder': return tEnums('position.midfielder')
+    case 'Forward': return tEnums('position.forward')
+    case 'Other': return tMedia('fullGameForm.positionOther')
+    default: return value
+  }
+}
+
 function buildPlayerLine(v: FullGameVideo): string | null {
   const parts: string[] = []
-  if (v.position_played) parts.push(`Position: ${v.position_played}`)
-  if (v.shirt_number !== null && v.shirt_number !== undefined) parts.push(`Shirt #${v.shirt_number}`)
-  if (v.minutes_played !== null && v.minutes_played !== undefined) parts.push(`${v.minutes_played} minutes`)
+  if (v.position_played) parts.push(tMedia('fullGames.row.position', { position: positionLabel(v.position_played) }))
+  if (v.shirt_number !== null && v.shirt_number !== undefined) parts.push(tMedia('fullGames.row.shirt', { number: v.shirt_number }))
+  if (v.minutes_played !== null && v.minutes_played !== undefined) parts.push(tMedia('fullGames.row.minutes', { count: v.minutes_played }))
   return parts.length > 0 ? parts.join(' · ') : null
 }
 
 function buildOpponentLine(v: FullGameVideo): string | null {
-  if (v.player_team && v.opponent_team) return `${v.player_team} vs ${v.opponent_team}`
+  if (v.player_team && v.opponent_team) return tMedia('fullGames.row.versus', { team: v.player_team, opponent: v.opponent_team })
   if (v.player_team) return v.player_team
-  if (v.opponent_team) return `vs ${v.opponent_team}`
+  if (v.opponent_team) return tMedia('fullGames.row.versusOnly', { opponent: v.opponent_team })
   return null
 }
 
@@ -75,6 +90,7 @@ export default function FullGameVideosSection({
   // Visitors who are not recruiters get a count of what RLS hid from them,
   // so the section reads "for clubs and coaches" instead of vanishing.
   const { lockedFullMatches } = useVideoAccessSummary(playerUserId, { enabled: readOnly })
+  const t = useMediaT()
   const { addToast } = useToastStore()
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingVideo, setEditingVideo] = useState<FullGameVideo | null>(null)
@@ -108,10 +124,10 @@ export default function FullGameVideosSection({
     const ok = await deleteVideo(deletingVideoId)
     setIsDeleting(false)
     if (ok) {
-      addToast('Match video removed.', 'success')
+      addToast(t('fullGames.removed'), 'success')
       setDeletingVideoId(null)
     } else {
-      addToast('Could not remove video. Please try again.', 'error')
+      addToast(t('fullGames.removeFailed'), 'error')
     }
   }
 
@@ -129,14 +145,14 @@ export default function FullGameVideosSection({
   // gets a neutral framing that names the artifact without framing it as
   // a quality judgement.
   const subtitle = readOnly
-    ? 'Unedited match videos for deeper context.'
-    : 'Unedited match videos so clubs can see you in real game conditions.'
+    ? t('fullGames.subtitlePublic')
+    : t('fullGames.subtitleOwn')
 
   return (
     <section className="mt-6" data-testid="full-game-videos-section">
       <header className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">Full match footage</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t('fullGames.title')}</h3>
           <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>
         </div>
         {!readOnly && (
@@ -146,7 +162,7 @@ export default function FullGameVideosSection({
             className="flex items-center gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            Add video
+            {t('fullGames.add')}
           </Button>
         )}
       </header>
@@ -162,9 +178,9 @@ export default function FullGameVideosSection({
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
               <Film className="h-5 w-5 text-gray-500" />
             </div>
-            <p className="text-sm font-medium text-gray-900">No match videos yet</p>
+            <p className="text-sm font-medium text-gray-900">{t('fullGames.emptyTitle')}</p>
             <p className="mx-auto mt-1 max-w-md text-xs text-gray-500">
-              Add full match footage so clubs can evaluate you in real game conditions.
+              {t('fullGames.emptyBody')}
             </p>
           </div>
         )
@@ -177,9 +193,9 @@ export default function FullGameVideosSection({
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">
-                  {lockedFullMatches === 1 ? '1 full match' : `${lockedFullMatches} full matches`} for clubs &amp; recruiting coaches only
+                  {t('fullGames.lockedTitle', { count: lockedFullMatches })}
                 </p>
-                <p className="text-xs text-gray-500">Only clubs and coaches who recruit can watch full matches.</p>
+                <p className="text-xs text-gray-500">{t('fullGames.lockedBody')}</p>
               </div>
             </li>
           )}
@@ -204,12 +220,12 @@ export default function FullGameVideosSection({
 
       <ConfirmActionModal
         isOpen={Boolean(deletingVideoId)}
-        title="Remove this match video?"
-        description="The video link will be removed from your profile. You can always add it again later."
-        confirmLabel="Remove"
+        title={t('fullGames.confirmTitle')}
+        description={t('fullGames.confirmBody')}
+        confirmLabel={t('fullGames.confirmRemove')}
         confirmTone="danger"
         confirmLoading={isDeleting}
-        loadingLabel="Removing…"
+        loadingLabel={t('fullGames.removing')}
         onConfirm={confirmDelete}
         onClose={() => {
           if (!isDeleting) setDeletingVideoId(null)
@@ -227,6 +243,7 @@ interface FullGameVideoRowProps {
 }
 
 function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRowProps) {
+  const t = useMediaT()
   const opponentLine = buildOpponentLine(video)
   const contextLine = buildContextLine(video)
   const playerLine = buildPlayerLine(video)
@@ -241,17 +258,17 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-              Full match video
+              {t('fullGames.row.kicker')}
             </p>
             {isRecruiterOnly && (
               <span
                 className={cn(
                   'inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700',
                 )}
-                title="Visible to clubs and coaches who recruit"
+                title={t('fullGames.row.recruitersTitle')}
               >
                 <Lock className="h-2.5 w-2.5" aria-hidden="true" />
-                Clubs &amp; coaches
+                {t('fullGames.row.recruitersBadge')}
               </span>
             )}
           </div>
@@ -279,8 +296,8 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
               type="button"
               onClick={onEdit}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Edit video"
-              title="Edit"
+              aria-label={t('fullGames.row.editLabel')}
+              title={t('fullGames.row.editTitle')}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -288,8 +305,8 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
               type="button"
               onClick={onDelete}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-              aria-label="Remove video"
-              title="Remove"
+              aria-label={t('fullGames.row.removeLabel')}
+              title={t('fullGames.row.removeTitle')}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -303,7 +320,7 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
         rel="noopener noreferrer"
         className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90"
       >
-        {videoLinkSite(video.video_url) ? `Watch on ${videoLinkSite(video.video_url)}` : 'Watch video'}
+        {videoLinkSite(video.video_url) ? t('fullGames.row.watchOn', { site: videoLinkSite(video.video_url) }) : t('fullGames.row.watch')}
         <ExternalLink className="h-3 w-3" aria-hidden="true" />
       </a>
     </li>

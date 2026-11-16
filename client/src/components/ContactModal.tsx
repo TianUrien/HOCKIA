@@ -15,8 +15,10 @@ import { createPortal } from 'react-dom'
 import { X, Mail, Copy, Check } from 'lucide-react'
 import { SUPPORT_EMAIL, openSupportEmail, copySupportEmail, useContactModal } from '@/lib/contact'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 export default function ContactModal() {
+  const t = useInboxT()
   const isOpen = useContactModal((s) => s.isOpen)
   const close = useContactModal((s) => s.close)
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -93,13 +95,13 @@ export default function ContactModal() {
               <Mail className="h-5 w-5 text-hockia-primary" />
             </span>
             <h2 id="contact-modal-title" className="text-lg font-bold text-gray-900">
-              Contact us
+              {t('contact.title')}
             </h2>
           </div>
           <button
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={t('contact.close')}
             className="-mr-1 -mt-1 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
           >
             <X className="h-5 w-5" />
@@ -109,7 +111,7 @@ export default function ContactModal() {
         {/* Body */}
         <div className="p-5 pt-3">
           <p className="text-sm text-gray-600">
-            Questions before joining Hockia? We're happy to help — reach the team at:
+            {t('contact.body')}
           </p>
 
           {/* The email itself — selectable, with an always-works Copy action. */}
@@ -120,17 +122,17 @@ export default function ContactModal() {
             <button
               type="button"
               onClick={handleCopy}
-              aria-label="Copy email address"
+              aria-label={t('contact.copyLabel')}
               className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-hockia-primary transition-colors hover:bg-hockia-primary/10"
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('contact.copied') : t('contact.copy')}
             </button>
           </div>
 
           {copyFailed && (
             <p className="mt-2 text-xs text-amber-600" role="status">
-              Couldn&apos;t copy automatically — tap the address above to select it.
+              {t('contact.copyFailed')}
             </p>
           )}
 
@@ -141,7 +143,7 @@ export default function ContactModal() {
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-5 py-3 text-base font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
           >
             <Mail className="h-5 w-5" />
-            Open email app
+            {t('contact.openEmailApp')}
           </button>
         </div>
       </div>

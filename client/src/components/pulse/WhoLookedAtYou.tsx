@@ -7,6 +7,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { formatActivityAge } from '@/lib/inboxTime'
 import { viewerLines, type ViewerLine, type WeekViewerRow } from '@/lib/pulseWeek'
 import { cn } from '@/lib/utils'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * "Who looked at you" (Your week v2, Figma 42:276): club and coach viewers
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils'
  */
 export function WhoLookedAtYou({ rows }: { rows: readonly WeekViewerRow[] }) {
   const { getCountryById } = useCountries()
+  const t = useCommunityT()
   const [all, setAll] = useState(false)
   const lines = viewerLines(rows)
   if (lines.length === 0) return null
@@ -38,9 +40,9 @@ export function WhoLookedAtYou({ rows }: { rows: readonly WeekViewerRow[] }) {
     )
 
   return (
-    <section aria-label="Who looked at you" data-testid="who-looked">
+    <section aria-label={t('pulse.viewers.title')} data-testid="who-looked">
       <div className="flex items-center justify-between pb-2 pr-1">
-        <h2 className="text-body font-semibold text-ink-1">Who looked at you</h2>
+        <h2 className="text-body font-semibold text-ink-1">{t('pulse.viewers.title')}</h2>
         <button
           type="button"
           onClick={() => setAll((v) => !v)}
@@ -48,7 +50,7 @@ export function WhoLookedAtYou({ rows }: { rows: readonly WeekViewerRow[] }) {
           className="flex h-8 items-center gap-0.5 text-secondary font-semibold text-hockia-primary"
           data-testid="who-looked-see-all"
         >
-          {all ? 'Show less' : 'See all'}
+          {all ? t('pulse.viewers.showLess') : t('pulse.viewers.seeAll')}
           <ChevronRight className={cn('h-4 w-4 transition-transform', all && 'rotate-90')} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>

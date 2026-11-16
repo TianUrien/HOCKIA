@@ -7,6 +7,7 @@ import { withTimeout } from '@/lib/retry'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { currentSurface } from '@/lib/homeInstrumentation'
 import type { PostComment } from '@/types/homeFeed'
+import { tCommunity } from '@/i18n/ns/community'
 
 interface LikeResult {
   success: boolean
@@ -80,7 +81,7 @@ export function usePostInteractions() {
       })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to toggle like',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.toggleLike'),
       }
     }
   }, [markPostQueriesStale])
@@ -143,7 +144,7 @@ export function usePostInteractions() {
       }, { feature: 'post_interactions', op: 'create_comment' })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create comment',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.createComment'),
       }
     }
   }, [invalidatePostQueries])
@@ -173,7 +174,7 @@ export function usePostInteractions() {
       })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to delete comment',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.deleteComment'),
       }
     }
   }, [invalidatePostQueries])

@@ -5,6 +5,8 @@
  */
 
 import { Capacitor } from '@capacitor/core'
+import { tCommon } from '@/i18n/ns/common'
+import { lazyTextRecord } from '@/lib/opportunityLazyText'
 
 export type RuntimePlatform = 'ios-native' | 'android-native' | 'pwa' | 'web'
 
@@ -21,12 +23,13 @@ export function getRuntimePlatform(): RuntimePlatform {
   return standalone ? 'pwa' : 'web'
 }
 
-export const PLATFORM_LABEL: Record<RuntimePlatform, string> = {
-  'ios-native': 'iOS app',
-  'android-native': 'Android app',
-  'pwa': 'Web app (installed)',
-  'web': 'Web (browser)',
-}
+/** Read on every access, so the label follows the interface language. */
+export const PLATFORM_LABEL: Record<RuntimePlatform, string> = lazyTextRecord({
+  'ios-native': () => tCommon('appVersion.platform.iosNative'),
+  'android-native': () => tCommon('appVersion.platform.androidNative'),
+  'pwa': () => tCommon('appVersion.platform.pwa'),
+  'web': () => tCommon('appVersion.platform.web'),
+})
 
 export interface AppVersionInfo {
   version: string // marketing version, e.g. "1.3.2"

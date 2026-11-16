@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tMedia } from '@/i18n/ns/media'
 import { optimizeImage, validateImage, imageFileExtension } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
 import { clearCoverPhotoCache } from './useCoverPhoto'
@@ -55,7 +56,7 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
       for (let i = 0; i < batch.length; i += 1) {
         const file = batch[i]
         const check = validateImage(file, { maxFileSizeMB: 10 })
-        if (!check.valid) { failed.push(`${file.name}: ${check.error ?? 'invalid image'}`); continue }
+        if (!check.valid) { failed.push(tMedia('gallery.fileRejected', { fileName: file.name, reason: check.error ?? tMedia('gallery.invalidImage') })); continue }
         try {
           const optimized = await optimizeImage(file, OPTIMIZE)
           const ext = imageFileExtension(optimized)

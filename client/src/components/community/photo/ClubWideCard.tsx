@@ -9,6 +9,7 @@ import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import recruitingDot from '@/assets/community/recruiting-dot.svg'
 import { LogoTile } from './LogoTile'
 import RolePlaceholder from '@/components/RolePlaceholder'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Card / Club wide (Figma 12:41): clubs always span both columns (founder
@@ -34,6 +35,7 @@ interface ClubWideCardProps {
 /** Spec: the cover is the best photo at least 600 px wide (Figma Community 26:1020). */
 
 export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null, recruiting, onOpen, priority = false }: ClubWideCardProps) {
+  const t = useCommunityT()
   const [coverFailed, setCoverFailed] = useState(false)
   const [crestFailed, setCrestFailed] = useState(false)
   const crest = crestUrl && !crestFailed ? crestUrl : null
@@ -47,7 +49,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${name}, ${meta}. Tap to preview.`}
+      aria-label={t('clubCard.openLabel', { name, meta })}
       data-testid="member-tile"
       ref={ref}
       className={`relative flex h-[196px] w-full flex-col justify-end gap-1 overflow-hidden rounded-[24px] px-4 pb-4 text-left ${PRESS} focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
@@ -95,7 +97,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
       {recruiting && (
         <span className={`absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] py-[5px] pl-2 pr-2.5 ${GLASS}`}>
           <img src={recruitingDot} alt="" width={7} height={7} />
-          <span className="text-[12px] font-semibold leading-4 text-white">Recruiting now</span>
+          <span className="text-[12px] font-semibold leading-4 text-white">{t('clubCard.recruitingNow')}</span>
         </span>
       )}
 

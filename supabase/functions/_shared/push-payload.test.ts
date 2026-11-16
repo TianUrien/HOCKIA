@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
-import { buildPushPayload, isGeneratedHeadline, pushAllowed, pushPreferenceColumn } from '../send-push/push-payload.ts'
+import { buildPushPayload, isGeneratedHeadline, pushAllowed, pushLanguageOf, pushPreferenceColumn, unnamedActor } from '../send-push/push-payload.ts'
 
 // The push body mirrors client/src/components/notifications/config.ts
 // (applicationStatusCopy). Keep both in sync.
@@ -133,4 +133,46 @@ Deno.test('club reminder pushes use the server copy, route like the bell, and ob
   assertEquals(pushPreferenceColumn('applicant_last_call'), 'notify_applications')
   assertEquals(pushPreferenceColumn('applicants_closing_soon'), 'notify_applications')
   assertEquals(pushAllowed('applicant_last_call', { notify_push: true, notify_applications: false }), false)
+})
+
+// ── Spanish (localization Stage 2, 2026-11-16) ──
+const SPANISH_KINDS = [
+  'friend_request_received', 'friend_request_accepted', 'reference_request_received',
+  'reference_request_accepted', 'reference_updated', 'reference_request_rejected',
+  'ambassador_request_received', 'ambassador_request_accepted', 'brand_offer_approved',
+  'brand_offer_not_approved', 'club_invitation_received', 'club_invitation_accepted',
+  'profile_viewed', 'profile_comment_created', 'profile_comment_reply', 'profile_comment_like',
+  'user_post_comment_received', 'feed_item_comment_received', 'congrats_received', 'signing_tagged',
+  'content_removed', 'message_received', 'conversation_started', 'opportunity_published',
+  'vacancy_application_received', 'vacancy_application_status', 'recruiting_update',
+  'applications_expired', 'profile_completed', 'account_verified', 'system_announcement', 'unknown_kind',
+]
+
+Deno.test('Spanish push: every kind has text, the same route and tag as English, and no English left', () => {
+  for (const kind of SPANISH_KINDS) {
+    const en = buildPushPayload(kind, {}, 'Ana', 'actor-1')
+    const es = buildPushPayload(kind, {}, 'Ana', 'actor-1', 'es')
+    assertEquals(es.url, en.url, kind)
+    assertEquals(es.tag, en.tag, kind)
+    if (!es.title || !es.body) throw new Error(`empty Spanish push for ${kind}`)
+    if (kind !== 'content_removed' && kind !== 'unknown_kind') {
+      if (es.body === en.body) throw new Error(`Spanish body equals English for ${kind}: ${es.body}`)
+    }
+  }
+})
+
+Deno.test('Spanish push: English stays the default and unknown languages read as English', () => {
+  assertEquals(buildPushPayload('friend_request_received', {}, 'Ana').body, 'Ana wants to connect')
+  assertEquals(pushLanguageOf('es'), 'es')
+  assertEquals(pushLanguageOf('fr'), 'en')
+  assertEquals(pushLanguageOf(null), 'en')
+  assertEquals(unnamedActor('en'), 'A HOCKIA member')
+})
+
+Deno.test('Spanish push: application status reads naturally', () => {
+  const p = buildPushPayload('vacancy_application_status', {
+    status: 'shortlisted', club_name: 'Club Atlético', vacancy_title: 'Arquera para Primera',
+  }, 'x', null, 'es')
+  assertEquals(p.title, 'Club Atlético te sumó a su preselección')
+  assertEquals(p.body, 'Tu perfil está en consideración para Arquera para Primera.')
 })

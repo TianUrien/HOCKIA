@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react'
-import { REPORT_MENU_LABEL } from '@/lib/report'
+import { reportMenuLabel } from '@/lib/report'
 import { useReportAction } from '@/components/safety/useReportAction'
-import { REMOVED_ACCOUNT_NOTICE, useIsRemovedAccount } from '../removedAccount'
+import { removedAccountNotice, useIsRemovedAccount } from '../removedAccount'
 
 interface RemovedAccountNoticeProps {
   participantId: string | null | undefined
@@ -23,14 +23,14 @@ export function RemovedAccountNotice({ participantId, conversationId, enabled = 
     <div role="note" className="flex flex-shrink-0 gap-2.5 border-b border-line bg-surface-muted px-4 py-3" data-testid="removed-account-notice">
       <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-ink-2" aria-hidden="true" />
       <div className="min-w-0">
-        <p className="text-secondary text-ink-2">{REMOVED_ACCOUNT_NOTICE}</p>
+        <p className="text-secondary text-ink-2">{removedAccountNotice()}</p>
         <button
           type="button"
           onClick={report.open}
           className="mt-1 -ml-1 flex h-9 items-center px-1 text-secondary font-semibold text-ink-1 underline underline-offset-2"
           data-testid="removed-account-report"
         >
-          {REPORT_MENU_LABEL}
+          {reportMenuLabel()}
         </button>
         {report.sheet}
       </div>
