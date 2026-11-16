@@ -1,3 +1,5 @@
+import { withOutputLanguage, type MemberLanguage } from './ai-language.ts'
+
 // Hockia AI "Improve my bio" (next steps, 2026-10-18): two bio drafts written
 // ONLY from the member's own profile facts, the first one recommended. The
 // member picks one, edits it and saves; nothing is written here.
@@ -28,6 +30,15 @@ Rules:
 - If facts are thin, keep it short and honest rather than padding.
 - Write two different drafts: the first follows the focus most closely (it is the recommended one); the second takes a slightly different angle.
 - The language is English unless the member's instruction asks otherwise.`
+
+const PROFILE_BIO_LANGUAGE_EN = '- The language is English unless the member\'s instruction asks otherwise.'
+const PROFILE_BIO_LANGUAGE_ES = '- The language is Spanish unless the member\'s instruction asks otherwise.'
+
+/** The system prompt for the member's language; English is PROFILE_BIO_SYSTEM unchanged. */
+export function profileBioSystem(lang: MemberLanguage = 'en'): string {
+  if (lang !== 'es') return PROFILE_BIO_SYSTEM
+  return withOutputLanguage(PROFILE_BIO_SYSTEM.replace(PROFILE_BIO_LANGUAGE_EN, PROFILE_BIO_LANGUAGE_ES), 'es')
+}
 
 // Flat string fields: the model sometimes JSON-encodes a nested array into a
 // string (seen 2026-10-18), so the tool asks for plain strings instead.
@@ -80,9 +91,11 @@ export function bioFactLines(f: BioFacts): string {
 // A phone number has 9+ digits; "2019-2023" (8) and season ranges are fine.
 const CONTACT = /[\w.+-]+@[\w-]+\.[\w.]+|https?:\/\/|www\.|(^|\s)@\w{2,}|(?:\+?\d[\s().-]{0,2}){9,}/i
 const CLAIMS = /\b(guarantee[sd]?|world[- ]class|best (player|coach) in|years? old|\d{1,2} ?(yo|y\/o))\b/i
+// Spanish drafts: the same claims in Spanish (applied on top, Spanish only).
+const CLAIMS_ES = /(garantiz|de clase mundial|mejor (jugador|jugadora|entrenador|entrenadora) de|\b\d{1,2} años de edad\b|\btengo \d{1,2} años\b)/i
 
 /** Keep drafts that respect the rules; trim to length on a sentence end. */
-export function validateBioDrafts(raw: unknown): { angle: string; bio: string }[] {
+export function validateBioDrafts(raw: unknown, lang: MemberLanguage = 'en'): { angle: string; bio: string }[] {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   // Flat fields (current tool); an older { drafts: [...] } shape is read too.
   let drafts: unknown[] = [
@@ -95,12 +108,13 @@ export function validateBioDrafts(raw: unknown): { angle: string; bio: string }[
     const o = (d && typeof d === 'object' ? d : {}) as { angle?: unknown; bio?: unknown }
     let bio = typeof o.bio === 'string' ? o.bio.replace(/\s+/g, ' ').trim() : ''
     if (!bio || CONTACT.test(bio) || CLAIMS.test(bio)) continue
+    if (lang === 'es' && CLAIMS_ES.test(bio)) continue
     if (bio.length > BIO_MAX) {
       const cut = bio.slice(0, BIO_MAX)
       const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
       bio = end > 80 ? cut.slice(0, end + 1) : `${cut.slice(0, BIO_MAX - 1).trimEnd()}…`
     }
-    const angle = typeof o.angle === 'string' && o.angle.trim() ? o.angle.trim().slice(0, 40) : out.length ? 'Another angle' : 'Recommended'
+    const angle = typeof o.angle === 'string' && o.angle.trim() ? o.angle.trim().slice(0, 40) : out.length ? (lang === 'es' ? 'Otro enfoque' : 'Another angle') : (lang === 'es' ? 'Recomendado' : 'Recommended')
     out.push({ angle, bio })
   }
   return out

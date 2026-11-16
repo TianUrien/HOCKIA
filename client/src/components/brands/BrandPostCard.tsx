@@ -11,6 +11,7 @@ import { MoreHorizontal, Pencil, Trash2, CheckCircle, Store } from 'lucide-react
 import { getImageUrl } from '@/lib/imageUrl'
 import type { BrandPost } from '@/hooks/useBrandPosts'
 import { getTimeAgo } from '@/lib/utils'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface BrandPostCardProps {
   post: BrandPost
@@ -34,6 +35,7 @@ export function BrandPostCard({
   onEdit,
   onDelete,
 }: BrandPostCardProps) {
+  const t = useBrandsT()
   const [showMenu, setShowMenu] = useState(false)
 
   // Close menu on outside click
@@ -85,7 +87,7 @@ export function BrandPostCard({
             <div className="relative">
               <button
                 type="button"
-                aria-label="Post options"
+                aria-label={t('postCard.options')}
                 onClick={(e) => {
                   e.stopPropagation()
                   setShowMenu(!showMenu)
@@ -106,7 +108,7 @@ export function BrandPostCard({
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <Pencil className="w-4 h-4" />
-                    Edit
+                    {t('postCard.edit')}
                   </button>
                   <button
                     type="button"
@@ -117,7 +119,7 @@ export function BrandPostCard({
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {t('postCard.delete')}
                   </button>
                 </div>
               )}
@@ -137,7 +139,7 @@ export function BrandPostCard({
           <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={getImageUrl(post.image_url, 'feed-full') ?? undefined}
-              alt="Post image"
+              alt={t('postCard.imageAlt')}
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"

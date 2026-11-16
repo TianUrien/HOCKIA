@@ -31,6 +31,8 @@
 import { goalSummary } from '../_shared/member-goal.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { currentAiLanguage, inCurrentLanguage, resolveAiLanguage, runWithAiLanguage, setCurrentAiLanguage, type AiLanguageHolder } from '../_shared/ai-language.ts'
+import { buildRoleSummaryEs, canonicalQuery, entityPluralEs, entitySingularEs, localizeNlBody, stepLabelEs } from '../_shared/nl-search-es.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
@@ -55,7 +57,7 @@ import {
   type TestPublisherRoleRow,
   type Viewer as CandidateViewer,
 } from '../_shared/opportunity-search.ts'
-import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
+import { labelFor, labelForInline, positionLabel, scrubInternalValues } from '../_shared/display-labels.ts'
 import { AI_DAILY_QUESTION_CAP, aiQuestionCapReached, recordAiUsage } from '../_shared/aiUsage.ts'
 import { boundHistory, CONTINUATION_WINDOW_MINUTES } from '../_shared/history-limits.ts'
 import { REFINE_EMPTY_POOL, REFINE_MODE, buildRefineCandidates, isUuid, type CountryName } from '../_shared/role-suggestions-refine.ts'
@@ -830,6 +832,7 @@ function buildRecommendationCaveats(
  *  (Not a fit included even though the ranker excludes them) so the owner
  *  sees what the AI looked at and what it ignored. */
 function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
+  if (currentAiLanguage() === 'es') return buildRecruitmentOrientationEs(opp)
   const b = opp.triage_breakdown
   const total = b.pending + b.shortlisted + b.maybe + b.rejected
   const pool = b.pending + b.shortlisted + b.maybe
@@ -847,6 +850,32 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
     return headline
   }
   return `${headline} I'm recommending from the ${pool} you haven't ruled out.`
+}
+
+// Spanish orientation (Stage 3). Triage words as the client's Applicants
+// screen (es/recruiting.json): En preselección, Tal vez, Por revisar, No encaja.
+function buildRecruitmentOrientationEs(opp: OwnerOpportunity): string {
+  const b = opp.triage_breakdown
+  const total = b.pending + b.shortlisted + b.maybe + b.rejected
+  const pool = b.pending + b.shortlisted + b.maybe
+  const parts: string[] = []
+  if (b.shortlisted > 0) parts.push(`${b.shortlisted} En preselección`)
+  if (b.maybe > 0) parts.push(`${b.maybe} Tal vez`)
+  if (b.pending > 0) parts.push(`${b.pending} Por revisar`)
+  if (b.rejected > 0) parts.push(`${b.rejected} No encaja`)
+  const label = (opp.position ? positionLabel(opp.position, 'es') : null) ?? opportunityLabel(opp)
+  const headline = `Para tu oportunidad de ${label}, ${total === 1 ? 'hay 1 postulación' : `hay ${total} postulaciones`}: ${parts.join(', ')}.`
+  if (pool === 0) {
+    if (b.rejected > 0) return `${headline} Todas están marcadas como No encaja; no voy a cambiar eso. ¿Buscar fuera de tus postulaciones?`
+    return headline
+  }
+  return `${headline} Las recomendaciones salen de las ${pool} que no descartaste.`
+}
+
+/** "I couldn't find any clubs…" for the world-club directory, in the reader's language. */
+function noClubsMessage(locationLabel: string | null | undefined): string {
+  if (currentAiLanguage() === 'es') return `No encontré clubes que coincidan en el directorio de HOCKIA${locationLabel ? ` para ${locationLabel}` : ''}.`
+  return `I couldn't find any clubs matching that in HOCKIA's directory${locationLabel ? ` for ${locationLabel}` : ''}.`
 }
 
 /**
@@ -1119,7 +1148,9 @@ async function handleOwnApplicantsIntent(params: {
       const noun = formatPosition(first.position).toLowerCase()
       return respond({
         kind: 'recommendation' as ResponseKind,
-        ai_message: `No one has applied to your ${formatPosition(first.position)} opening yet. Want me to suggest strong ${noun}s you could invite?`,
+        ai_message: currentAiLanguage() === 'es'
+          ? `Todavía no hay postulaciones para tu oportunidad de ${positionLabel(first.position, 'es') ?? formatPosition(first.position)}.`
+          : `No one has applied to your ${formatPosition(first.position)} opening yet. Want me to suggest strong ${noun}s you could invite?`,
         recommendations: [],
         suggested_actions: [
           { label: `Find ${noun}s to invite`, intent: { type: 'free_text', query: `find me ${noun}s` } },
@@ -1301,10 +1332,14 @@ async function handleOwnApplicantsIntent(params: {
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
       const n = secondaryOpps[0].pool.length
-      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening. Want me to surface those next?`
+      secondary_note = currentAiLanguage() === 'es'
+        ? `También ${n === 1 ? 'hay 1 postulación' : `hay ${n} postulaciones`} en tu oportunidad de ${opportunityLabel(o)}. ¿Verlas a continuación?`
+        : `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening. Want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
       const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
-      secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings. Want me to look at them too?`
+      secondary_note = currentAiLanguage() === 'es'
+        ? `También hay ${totalSec} postulaciones en otras ${secondaryOpps.length} oportunidades. ¿Revisarlas también?`
+        : `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings. Want me to look at them too?`
     }
 
     // Explicit "Show {position} applicants" chips — one per secondary
@@ -1325,14 +1360,16 @@ async function handleOwnApplicantsIntent(params: {
     // Honest about thin data on the recommendations.
     const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
     const lowDataNote = thinData
-      ? ` Some of these profiles are still thin. I've called out what's there, not what's missing.`
+      ? (currentAiLanguage() === 'es'
+        ? ' Algunos de estos perfiles todavía tienen poca información. Destaco lo que hay, no lo que falta.'
+        : ` Some of these profiles are still thin. I've called out what's there, not what's missing.`)
       : ''
 
     // B7 — when the user asked for the negative cut, lead with the reverse
     // framing so the cards aren't misread as "top picks". Owner sees both
     // the headline (pool view) and what they're now looking at.
     const aiMessage = negativeIntent
-      ? `${buildRecruitmentOrientation(primary.opp)} You asked who doesn't fit, so I'm leading with the position mismatches and weakest profiles.${lowDataNote}`
+      ? `${buildRecruitmentOrientation(primary.opp)} ${currentAiLanguage() === 'es' ? 'La pregunta fue quién no encaja, así que primero van los puestos que no coinciden y los perfiles más flojos.' : "You asked who doesn't fit, so I'm leading with the position mismatches and weakest profiles."}${lowDataNote}`
       : buildRecruitmentOrientation(primary.opp) + lowDataNote
 
     return respond({
@@ -1507,7 +1544,9 @@ async function handleCandidateOpportunitySearch(params: {
 
     const filterChips = [
       ...criteria.positions.map(p => labelFor(p)),
-      ...criteria.genders.map(g => g === 'Men' ? "Men's" : g === 'Women' ? "Women's" : g),
+      ...criteria.genders.map(g => currentAiLanguage() === 'es'
+        ? ({ Men: 'Caballeros', Women: 'Damas', Girls: 'Juveniles damas', Boys: 'Juveniles caballeros', Mixed: 'Mixto' } as Record<string, string>)[g] ?? g
+        : g === 'Men' ? "Men's" : g === 'Women' ? "Women's" : g),
       ...(askedLabel ? [askedLabel] : []),
       ...criteria.benefits.map(b => labelFor(b)),
     ]
@@ -1534,7 +1573,7 @@ async function handleCandidateOpportunitySearch(params: {
       }, meta, 0)
     }
 
-    const shown = matched.slice(0, OPPORTUNITY_RESULT_CAP).map(toOpportunityResult)
+    const shown = matched.slice(0, OPPORTUNITY_RESULT_CAP).map(r => toOpportunityResult(r))
     const aiMessage = landed === 'original'
       ? buildOpportunityMessage(matched.length, criteria, askedLabel)
       : ineligibleInAsked > 0
@@ -1848,7 +1887,7 @@ async function handleRoleAsk(params: {
         model,
         max_tokens: SHORT_ANSWER_MAX_TOKENS,
         output_config: SHORT_ANSWER_OUTPUT,
-        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: ROLE_ASK_SYSTEM }, { type: 'text', text: `Facts:\n${lines.join('\n')}` }],
+        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: inCurrentLanguage(ROLE_ASK_SYSTEM) }, { type: 'text', text: `Facts:\n${lines.join('\n')}` }],
         messages: [...turns, { role: 'user', content: question.slice(0, 500) }],
       }),
       signal: AbortSignal.timeout(25_000),
@@ -1896,7 +1935,7 @@ async function handleApplicantsSummary(params: {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model, max_tokens: SHORT_ANSWER_MAX_TOKENS, output_config: SHORT_ANSWER_OUTPUT, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: SUMMARY_SYSTEM }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
+      body: JSON.stringify({ model, max_tokens: SHORT_ANSWER_MAX_TOKENS, output_config: SHORT_ANSWER_OUTPUT, system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: inCurrentLanguage(SUMMARY_SYSTEM) }], messages: [{ role: 'user', content: summaryFacts(String(opp.title ?? 'this role'), list) }] }),
       signal: AbortSignal.timeout(20_000),
     })
     if (!res.ok) throw new Error(`anthropic ${res.status}`)
@@ -1924,7 +1963,7 @@ type StepState = 'now' | 'done'
 type StepEvent = { id: string; label: string; state: StepState }
 const stepChannel = new AsyncLocalStorage<(e: StepEvent) => void>()
 function step(id: string, label: string, state: StepState = 'now') {
-  stepChannel.getStore()?.({ id, label, state })
+  stepChannel.getStore()?.({ id, label: currentAiLanguage() === 'es' ? stepLabelEs(label) : label, state })
 }
 
 function streamResponse(req: Request): Response {
@@ -1966,7 +2005,21 @@ Deno.serve((req) => {
   return handleRequest(req)
 })
 
+// Language (Stage 3): body `locale` > profiles.ui_language > English, set
+// once the caller is known. For a Spanish reader the finished JSON body has
+// its fixed English strings swapped (_shared/nl-search-es.ts); English
+// responses are returned untouched.
 async function handleRequest(req: Request): Promise<Response> {
+  const holder: AiLanguageHolder = { lang: 'en' }
+  const res = await runWithAiLanguage(holder, () => handleRequestInner(req))
+  if (holder.lang !== 'es' || !(res.headers.get('Content-Type') ?? '').includes('application/json')) return res
+  const text = await res.text()
+  let body: unknown
+  try { body = JSON.parse(text) } catch { return new Response(text, { status: res.status, headers: res.headers }) }
+  return new Response(JSON.stringify(localizeNlBody(body)), { status: res.status, headers: res.headers })
+}
+
+async function handleRequestInner(req: Request): Promise<Response> {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const origin = req.headers.get('origin')
   const headers = getCorsHeaders(origin)
@@ -2054,7 +2107,11 @@ async function handleRequest(req: Request): Promise<Response> {
 
     // ── Parse body ──────────────────────────────────────────────────────
     const body = await req.json()
-    const query = body?.query?.trim()
+    const lang = await resolveAiLanguage(adminClient, user.id, body)
+    setCurrentAiLanguage(lang)
+    // A Spanish chip sends Spanish text; route it as the English query it stands for.
+    const rawQuery0 = body?.query?.trim()
+    const query = lang === 'es' && typeof rawQuery0 === 'string' ? canonicalQuery(rawQuery0) : rawQuery0
     // Phase 1b — "Show more": a load-more request carries an offset so the
     // search pages past results already shown. Capped to a sane ceiling.
     const requestedOffset = Number.isInteger(body?.offset) && body.offset > 0
@@ -2779,7 +2836,7 @@ async function handleRequest(req: Request): Promise<Response> {
             .eq('profile_id', user.id)
             .maybeSingle()
           const goal = goalRow as { options?: string[] | null; other_text?: string | null } | null
-          userContext.goal = goalSummary(goal?.options, goal?.other_text)
+          userContext.goal = goalSummary(goal?.options, goal?.other_text, currentAiLanguage())
         }
       }
     } catch (ctxError) {
@@ -3305,27 +3362,36 @@ async function handleRequest(req: Request): Promise<Response> {
       let wcNoResultsMeta: LLMCallMeta | null = null
       if (mapped.length > 0) {
         const total = mapped.length
-        const noun = total === 1 ? 'club' : 'clubs'
-        const where = locationLabel ? ` in ${locationLabel}` : wcFilters.text_query ? ` matching "${wcFilters.text_query}"` : ''
+        const es = currentAiLanguage() === 'es'
+        const noun = es ? (total === 1 ? 'club' : 'clubes') : total === 1 ? 'club' : 'clubs'
+        const where = es
+          ? (locationLabel ? ` en ${locationLabel}` : wcFilters.text_query ? ` que coinciden con "${wcFilters.text_query}"` : '')
+          : locationLabel ? ` in ${locationLabel}` : wcFilters.text_query ? ` matching "${wcFilters.text_query}"` : ''
         const isAre = (n: number) => (n === 1 ? 'is' : 'are')
         // The UI shows the top 3 first (claimed clubs lead) with a "Show
         // all" expander. Naming that turns the response into a curated
         // recommendation rather than a directory dump the user must sift.
-        const topNote = total > 3 ? ' Here are the top 3 to start with.' : ''
+        const topNote = total > 3 ? (es ? ' Para empezar, estos son los 3 primeros.' : ' Here are the top 3 to start with.') : ''
         // When the directory search was widened, the opening sentence has to
         // say so. "I found 20 clubs in the United Kingdom" would name a place
         // these clubs are NOT in — the same grid-contradicts-the-copy defect
         // this codebase has now had to fix three times.
         const opening = wcSoftening
           ? describeSoftening(wcSoftening.step, {
-              noun: 'clubs',
+              noun: es ? 'clubes' : 'clubs',
               nounSingular: 'club',
               count: total,
               countryLabel: wcSoftening.countryLabel ?? locationLabel,
               regionLabel: wcRegionPeers?.regionLabel ?? null,
             })
-          : `I found ${total} ${noun}${where}.`
-        if (claimedCount > 0 && unclaimedCount > 0) {
+          : es ? `Hay ${total} ${noun}${where}.` : `I found ${total} ${noun}${where}.`
+        if (es) {
+          wcAiMessage = claimedCount > 0 && unclaimedCount > 0
+            ? `${opening} ${claimedCount} ${claimedCount === 1 ? 'tiene' : 'tienen'} cuenta activa en HOCKIA, así que se les puede escribir directamente, y ${unclaimedCount} ${unclaimedCount === 1 ? 'figura' : 'figuran'} en el directorio sin reclamar todavía, así que puede hacer falta contactarlos por fuera.${topNote}`
+            : claimedCount > 0
+              ? `${opening} Todos tienen cuenta activa en HOCKIA, así que se les puede escribir directamente.${topNote}`
+              : `${opening} Ninguno está reclamado todavía, así que hace falta contactarlos por fuera, pero son clubes reales que vale la pena explorar.${topNote}`
+        } else if (claimedCount > 0 && unclaimedCount > 0) {
           wcAiMessage = `${opening} ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
         } else if (claimedCount > 0) {
           wcAiMessage = `${opening} All are active on HOCKIA, so you can message them directly.${topNote}`
@@ -3355,14 +3421,14 @@ async function handleRequest(req: Request): Promise<Response> {
             userContext,
           })
           wcNoResultsMeta = nrMeta
-          wcAiMessage = nrResult.ai_message?.trim() || `I couldn't find any clubs matching that in HOCKIA's directory.`
+          wcAiMessage = nrResult.ai_message?.trim() || (currentAiLanguage() === 'es' ? 'No encontré clubes que coincidan en el directorio de HOCKIA.' : `I couldn't find any clubs matching that in HOCKIA's directory.`)
           if (nrResult.follow_up_query?.trim()) wcNoResultsFollowUp = nrResult.follow_up_query.trim()
         } catch (nrErr) {
           captureException(nrErr, { functionName: 'nl-search', correlationId, extra: { phase: 'compose_no_results_world_club' } })
-          wcAiMessage = `I couldn't find any clubs matching that in HOCKIA's directory${locationLabel ? ` for ${locationLabel}` : ''}.`
+          wcAiMessage = noClubsMessage(locationLabel)
         }
       } else {
-        wcAiMessage = `I couldn't find any clubs matching that in HOCKIA's directory${locationLabel ? ` for ${locationLabel}` : ''}.`
+        wcAiMessage = noClubsMessage(locationLabel)
       }
 
       const wcApplied: AppliedSearch = {
@@ -4345,7 +4411,9 @@ async function handleRequest(req: Request): Promise<Response> {
       const broadenHint = categorySource === 'context' && effectiveCategory
         ? ` I filtered by your category (${effectiveCategory.replace('_', ' ')}). Want me to broaden that?`
         : ''
-      aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
+      aiMessage = currentAiLanguage() === 'es'
+        ? `No encontré ${entityPluralEs(entityNoun)} que coincidan.${categorySource === 'context' && effectiveCategory ? ` Filtré por tu categoría (${labelForInline(effectiveCategory)}). Se puede ampliar.` : ''}`
+        : `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
       // Count the rows the user can actually see, not result.total (the
       // full match count). On a "Show more" load-more request the count is
@@ -4373,22 +4441,27 @@ async function handleRequest(req: Request): Promise<Response> {
       const geoLabel = rawGeo
         ? rawGeo.replace(/[^\p{L}\p{N}\s\-.,'()]/gu, '').trim().slice(0, 40) || null
         : null
+      const esSearch = currentAiLanguage() === 'es'
       aiMessage = geoSoftening
         // The user's own scope was empty and we widened it. Say that plainly:
         // the unwidened phrasing below would name a place these results are
         // NOT in, which is precisely the grid-contradicts-the-copy defect
         // this area of the code keeps having to fix.
         ? describeSoftening(geoSoftening.step, {
-            noun: entityNoun,
-            nounSingular: ENTITY_SINGULAR[entityNoun] ?? entityNoun,
+            noun: esSearch ? entityPluralEs(entityNoun) : entityNoun,
+            nounSingular: esSearch ? entitySingularEs(entityNoun) : ENTITY_SINGULAR[entityNoun] ?? entityNoun,
             count: shown,
             cityLabel: geoSoftening.cityLabel,
             countryLabel: geoSoftening.countryLabel,
             regionLabel: geoSoftening.regionLabel,
           })
-        : geoLabel
-          ? `I found ${shown} ${noun} based in ${geoLabel}. Say "broaden the location" to widen this.`
-          : `I found ${shown} ${noun} for you.`
+        : esSearch
+          ? (geoLabel
+            ? `Hay ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} con base en ${geoLabel}. Para ampliar, escribir "ampliar la ubicación".`
+            : `Hay ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} para tu búsqueda.`)
+          : geoLabel
+            ? `I found ${shown} ${noun} based in ${geoLabel}. Say "broaden the location" to widen this.`
+            : `I found ${shown} ${noun} for you.`
     }
 
     // ── Phase 4 — proactive no-results diagnosis ─────────────────────
@@ -4647,7 +4720,7 @@ async function handleRequest(req: Request): Promise<Response> {
         : undefined,
       role_summary: '',
     }
-    applied.role_summary = buildRoleSummary(applied)
+    applied.role_summary = currentAiLanguage() === 'es' ? buildRoleSummaryEs(applied) : buildRoleSummary(applied)
 
     const responseKind: ResponseKind = result.total === 0 ? 'no_results' : 'results'
     // Chips only on no_results in PR-1 (refine chips for results land in Package B).

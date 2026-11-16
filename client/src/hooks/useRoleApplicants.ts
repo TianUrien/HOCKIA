@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import type { Vacancy } from '@/lib/supabase'
 import { DEFAULT_EXPIRY_DAYS, fitTarget, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { heldDecision } from '@/lib/pendingDecisions'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 
 /**
  * Applicants of one role for its publishing club (Figma 04 Club ·
@@ -126,7 +127,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
       ])
       if (cancelled) return
       if (roleErr || appErr) logger.debug('[useRoleApplicants] read failed', roleErr ?? appErr)
-      if (!role) { setState((s) => ({ ...s, loading: false, error: 'This opportunity isn’t yours or no longer exists.' })); return }
+      if (!role) { setState((s) => ({ ...s, loading: false, error: tRecruiting('roleApplicants.notFound') })); return }
       // Withdrawn applications are readable since the D4 re-check (2026-10-02):
       // they sit under Closed, read-only, with no fit computed for them.
       const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.applicant)
@@ -157,7 +158,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
           invited: !!r.invite_id,
           fit: fitById.get(r.id) ?? null,
           person: {
-            id: a.id, fullName: a.full_name?.trim() || 'Hockia member', avatarUrl: a.avatar_url, role: a.role, position: a.position, secondaryPosition: a.secondary_position,
+            id: a.id, fullName: a.full_name?.trim() || tRecruiting('roleApplicants.memberFallback'), avatarUrl: a.avatar_url, role: a.role, position: a.position, secondaryPosition: a.secondary_position,
             nationalityCountryId: a.nationality_country_id, nationality2CountryId: a.nationality2_country_id, baseLocation: a.base_location,
             playingCategory: a.playing_category, lastActiveAt: a.last_active_at, currentClub: a.current_club, currentWorldClubId: a.current_world_club_id,
           },
@@ -172,7 +173,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
       setState({ loading: false, error: null, ...value })
     })().catch((err) => {
       logger.debug('[useRoleApplicants] failed', err)
-      if (!cancelled) setState((s) => ({ ...s, loading: false, error: 'Couldn’t load applicants. Pull to try again.' }))
+      if (!cancelled) setState((s) => ({ ...s, loading: false, error: tRecruiting('roleApplicants.loadFailed') }))
     })
     return () => { cancelled = true }
   }, [roleId, clubId, nonce])

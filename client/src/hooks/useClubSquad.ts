@@ -14,6 +14,7 @@ import {
   revokeClubInviteLink,
 } from '@/lib/clubMembership'
 import { isInvitable, type SquadPerson } from '@/lib/clubSquad'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 
 /**
  * Data behind Squad — own (Figma 04 Club D1.15, DEV NOTE 338:702).
@@ -174,7 +175,7 @@ export function useClubSquad(clubId: string | null) {
     const current = linkQuery.data
     if (current) return { token: current.token }
     const res = await createClubInviteLink()
-    if (!res.success || !res.token) return { error: res.error ?? 'Could not create the invite link.' }
+    if (!res.success || !res.token) return { error: res.error ?? tRecruiting('clubSquadHook.linkFailed') }
     const created: InviteLink = { id: res.id ?? '', token: res.token, join_count: 0 }
     queryClient.setQueryData<InviteLink | null>(qk.clubInviteLink(clubId), created)
     return { token: res.token }
@@ -205,7 +206,7 @@ export function useClubSquad(clubId: string | null) {
     pending,
     link: linkQuery.data ?? null,
     loading: membersQuery.isLoading || pendingQuery.isLoading,
-    error: membersQuery.error ? 'Couldn’t load your squad. Please try again.' : null,
+    error: membersQuery.error ? tRecruiting('clubSquadHook.loadFailed') : null,
     retry: () => { void membersQuery.refetch(); void pendingQuery.refetch() },
     ensureLink,
     revokeLink,
@@ -243,5 +244,5 @@ export function useInviteSearch(clubId: string | null, query: string, blockedIds
     },
   })
   const rows = useMemo(() => (result.data ?? []).filter((r) => !blockedIds.has(r.id)), [result.data, blockedIds])
-  return { rows, searching: enabled && result.isFetching, error: result.error ? 'Search failed. Please try again.' : null, active: enabled }
+  return { rows, searching: enabled && result.isFetching, error: result.error ? tRecruiting('clubSquadHook.searchFailed') : null, active: enabled }
 }

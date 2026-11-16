@@ -189,7 +189,7 @@ describe('useAIOpinion', () => {
     // Always calls the edge fn (hash-keyed cache server-side); never a
     // client-side ai_opinions pre-read (would serve stale across scopes).
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
-      body: { player_id: 'player-1', force: false },
+      body: { player_id: 'player-1', force: false, locale: 'en' },
     })
     expect(supabaseFromSpy).not.toHaveBeenCalledWith('ai_opinions')
   })
@@ -220,7 +220,7 @@ describe('useAIOpinion', () => {
     expect(ready.opinionId).toBe('op-fresh-1')
     expect(ready.data.citations).toHaveLength(2)
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
-      body: { player_id: 'player-1', force: false },
+      body: { player_id: 'player-1', force: false, locale: 'en' },
     })
   })
 
@@ -302,7 +302,7 @@ describe('useAIOpinion', () => {
       expect(result.current.status.kind).toBe('ready')
     })
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
-      body: { player_id: 'player-1', force: false },
+      body: { player_id: 'player-1', force: false, locale: 'en' },
     })
 
     // Regenerate: edge fn returns fresh.
@@ -324,7 +324,7 @@ describe('useAIOpinion', () => {
     // skips its server-side cache check. Without this, QA F8 reproduces:
     // server serves the same cached row and Regenerate is a no-op.
     expect(supabaseInvokeSpy).toHaveBeenLastCalledWith('ai-opinion', {
-      body: { player_id: 'player-1', force: true },
+      body: { player_id: 'player-1', force: true, locale: 'en' },
     })
     const ready = expectCachedReady(result.current.status)
     expect(ready.cached).toBe(false)

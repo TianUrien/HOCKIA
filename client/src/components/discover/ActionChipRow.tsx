@@ -1,5 +1,6 @@
 import type { SuggestedAction } from '@/hooks/useDiscover'
 import { Chip } from '@/components/ui/Chip'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface ActionChipRowProps {
   actions: SuggestedAction[]
@@ -14,13 +15,14 @@ interface ActionChipRowProps {
  * lib/hockiaAi.ts; the row renders whatever it is given.
  */
 export default function ActionChipRow({ actions, onAction, compact = false }: ActionChipRowProps) {
+  const t = useHockiaAiT()
   if (!actions || actions.length === 0) return null
 
   return (
     <div
       className={compact ? 'mt-2 flex flex-wrap gap-2' : 'mt-3 flex flex-wrap gap-2'}
       role="group"
-      aria-label="Suggested next actions"
+      aria-label={t('discover.chipsLabel')}
     >
       {actions.map((action, idx) => (
         <Chip

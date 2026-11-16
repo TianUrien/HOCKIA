@@ -46,6 +46,8 @@ import { canDecline, DECLINABLE_STATUSES } from '../_shared/application-decline.
 import { checkUserRateLimit } from '../_shared/rate-limit.ts'
 import { recordAiUsage } from '../_shared/aiUsage.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
+import { resolveAiLanguage, type MemberLanguage } from '../_shared/ai-language.ts'
+import { BANNED_ES, clubFallbackMessageEs, reasonCopyEs, fallbackMessageEs, FEEDBACK_SPANISH_RULE, humanizePositionEs } from '../_shared/application-feedback-es.ts'
 
 // Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
 // secret + redeploy. Default stays the prior prod model so a deploy can't
@@ -164,15 +166,28 @@ function clubFallbackMessage(ctx: StatusContext): string {
     : `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. Not this time, but we appreciate your interest.`
 }
 
-function userPrompt(ctx: StatusContext): string {
+function userPrompt(ctx: StatusContext, lang: MemberLanguage = 'en'): string {
   return JSON.stringify({
     status: ctx.status,
     club_name: ctx.clubName,
     position: ctx.position,
     opportunity_title: ctx.opportunityTitle,
     club_reason_code: ctx.reason,
-    club_reason_plain: reasonCopy(ctx.reason),
+    club_reason_plain: lang === 'es' ? reasonCopyEs(ctx.reason) : reasonCopy(ctx.reason),
   })
+}
+
+// Spanish: the same prompt plus the output-language rule; English unchanged.
+function withLanguage(prompt: string, lang: MemberLanguage): string {
+  return lang === 'es' ? `${prompt}\n\n${FEEDBACK_SPANISH_RULE}` : prompt
+}
+
+function fallbackFor(ctx: StatusContext, lang: MemberLanguage): string {
+  return lang === 'es' ? fallbackMessageEs(ctx) : fallbackMessage(ctx)
+}
+
+function clubFallbackFor(ctx: StatusContext, lang: MemberLanguage): string {
+  return lang === 'es' ? clubFallbackMessageEs(ctx) : clubFallbackMessage(ctx)
 }
 
 // Per-request token sink: filled as soon as Anthropic answers, so spend is
@@ -181,7 +196,7 @@ interface UsageSink {
   usage: { input: number | null; output: number | null; cached: number | null } | null
 }
 
-async function callClaude(ctx: StatusContext, voice: 'player' | 'club', sink: UsageSink): Promise<string> {
+async function callClaude(ctx: StatusContext, voice: 'player' | 'club', sink: UsageSink, lang: MemberLanguage = 'en'): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -195,8 +210,8 @@ async function callClaude(ctx: StatusContext, voice: 'player' | 'club', sink: Us
       model: MODEL,
       max_tokens: 256,
       // Cache the identical system prompt across calls (5-min window).
-      system: [{ type: 'text', text: voice === 'club' ? clubSystemPrompt() : systemPrompt(), cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: userPrompt(ctx) }],
+      system: [{ type: 'text', text: withLanguage(voice === 'club' ? clubSystemPrompt() : systemPrompt(), lang), cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: userPrompt(ctx, lang) }],
     }),
     signal: AbortSignal.timeout(ANTHROPIC_TIMEOUT_MS),
   })
@@ -222,6 +237,11 @@ async function callClaude(ctx: StatusContext, voice: 'player' | 'club', sink: Us
   const lower = message.toLowerCase()
   for (const banned of BANNED) {
     if (lower.includes(banned)) throw new Error(`banned vocabulary: ${banned}`)
+  }
+  if (lang === 'es') {
+    for (const banned of BANNED_ES) {
+      if (lower.includes(banned)) throw new Error(`banned vocabulary: ${banned}`)
+    }
   }
   return message
 }
@@ -320,8 +340,10 @@ serve(async (req: Request) => {
     let mode: 'read' | 'draft' | 'decline' = 'read'
     let bodyReason: string | null = null
     let bodyMessage: string | null = null
+    let rawBody: unknown = null
     try {
-      const body = await req.json() as { application_id?: string; mode?: string; reason?: string; message?: string }
+      const body = await req.json() as { application_id?: string; mode?: string; reason?: string; message?: string; locale?: string }
+      rawBody = body
       if (!body.application_id || typeof body.application_id !== 'string') throw new Error()
       applicationId = body.application_id
       if (body.mode === 'draft' || body.mode === 'decline') mode = body.mode
@@ -330,6 +352,8 @@ serve(async (req: Request) => {
     } catch {
       return jsonResponse({ error: 'missing_application_id' }, 400, corsHeaders)
     }
+
+    const lang = await resolveAiLanguage(supabase, userId, rawBody)
 
     // 3) Fetch application.
     const { data: app } = await supabase
@@ -356,12 +380,13 @@ serve(async (req: Request) => {
       }
       if (!bodyReason || !REASON_CODES.includes(bodyReason)) return jsonResponse({ error: 'invalid_reason' }, 400, corsHeaders)
       const organisation = await roleClubName(supabase, opp)
-      const title = opp.title ?? 'this role'
+      const es = lang === 'es'
+      const title = opp.title ?? (es ? 'esta oportunidad' : 'this role')
       const ctx: StatusContext = {
         status: 'rejected',
         reason: bodyReason,
-        position: humanizePosition(opp.position) ?? derivePosition(title) ?? 'this role',
-        clubName: organisation ?? 'our club',
+        position: (es ? humanizePositionEs(opp.position) : humanizePosition(opp.position)) ?? derivePosition(title) ?? (es ? 'esta oportunidad' : 'this role'),
+        clubName: organisation ?? (es ? 'nuestro club' : 'our club'),
         opportunityTitle: title,
       }
 
@@ -371,17 +396,17 @@ serve(async (req: Request) => {
         const limit = await checkUserRateLimit(supabase, userId, 'feedback_draft', DRAFT_LIMIT_PER_HOUR, 3600)
         if (limit.error) console.warn('application-feedback: rate limit check failed —', limit.error)
         if (!limit.allowed) {
-          return jsonResponse({ message: clubFallbackMessage(ctx), source: 'fallback' }, 200, corsHeaders)
+          return jsonResponse({ message: clubFallbackFor(ctx, lang), source: 'fallback' }, 200, corsHeaders)
         }
         const sink: UsageSink = { usage: null }
         try {
-          const message = await callClaude(ctx, 'club', sink)
+          const message = await callClaude(ctx, 'club', sink, lang)
           await logUsage(supabase, userId, sink)
           return jsonResponse({ message, source: 'ai' }, 200, corsHeaders)
         } catch (err) {
           await logUsage(supabase, userId, sink)
           console.warn('application-feedback: club draft fallback —', String(err))
-          return jsonResponse({ message: clubFallbackMessage(ctx), source: 'fallback' }, 200, corsHeaders)
+          return jsonResponse({ message: clubFallbackFor(ctx, lang), source: 'fallback' }, 200, corsHeaders)
         }
       }
 
@@ -444,6 +469,8 @@ serve(async (req: Request) => {
     if (
       cache && (cache.source === 'ai' || cache.source === 'club') &&
       cache.status === status && (cache.reason ?? null) === reason &&
+      // An AI message is cached per language (no key = English); a club note is served as sent.
+      (cache.source === 'club' || (cache.lang === 'es' ? 'es' : 'en') === lang) &&
       typeof cache.message === 'string'
     ) {
       return jsonResponse({ message: cache.message, status, cached: true, source: cache.source }, 200, corsHeaders)
@@ -455,14 +482,15 @@ serve(async (req: Request) => {
       .select('id, title, club_id, position, organization_name, world_club_id')
       .eq('id', app.opportunity_id)
       .maybeSingle()
-    const title = opp?.title ?? 'this role'
-    const clubName = (opp ? await roleClubName(supabase, opp) : null) ?? 'The club'
+    const es = lang === 'es'
+    const title = opp?.title ?? (es ? 'esta oportunidad' : 'this role')
+    const clubName = (opp ? await roleClubName(supabase, opp) : null) ?? (es ? 'El club' : 'The club')
     const ctx: StatusContext = {
       status,
       reason,
       // Structured enum first; only fall back to a title-derived position when the
       // title actually has a "Position — Club" separator; else a neutral phrase.
-      position: humanizePosition(opp?.position) ?? derivePosition(title) ?? 'this role',
+      position: (es ? humanizePositionEs(opp?.position) : humanizePosition(opp?.position)) ?? derivePosition(title) ?? (es ? 'esta oportunidad' : 'this role'),
       clubName,
       opportunityTitle: title,
     }
@@ -476,17 +504,18 @@ serve(async (req: Request) => {
     // own application status must never use it up.
     const sink: UsageSink = { usage: null }
     try {
-      message = await callClaude(ctx, 'player', sink)
+      message = await callClaude(ctx, 'player', sink, lang)
       source = 'ai'
     } catch (err) {
       console.warn('application-feedback: AI fallback —', String(err))
-      message = fallbackMessage(ctx)
+      message = fallbackFor(ctx, lang)
       source = 'fallback'
     }
 
     // 6) Cache into the dedicated ai_feedback column (not metadata, not status), so
     //    nothing else's writes collide and no trigger fires.
-    const feedback = { message, status, reason, source } as unknown as Json
+    // English rows keep today's shape; Spanish ones carry lang so a language switch regenerates.
+    const feedback = (lang === 'es' ? { message, status, reason, source, lang } : { message, status, reason, source }) as unknown as Json
     await supabase.from('opportunity_applications').update({ ai_feedback: feedback }).eq('id', applicationId)
 
     return jsonResponse({ message, status, cached: false, source }, 200, corsHeaders)

@@ -24,6 +24,8 @@ import {
   type EvidenceResult,
   type EvidenceChecklistRow,
 } from '@/lib/evidence'
+import { Trans } from 'react-i18next'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 // Single-active-popover registry — opening one closes any other (matches
 // ClubFitChip so the two never stack).
@@ -46,6 +48,7 @@ interface EvidenceSignalProps {
 }
 
 export default function EvidenceSignal({ result, checklist = [], className = '' }: EvidenceSignalProps) {
+  const t = useRecruitingT()
   const [open, setOpen] = useState(false)
   const popoverId = useId()
   const pillRef = useRef<HTMLSpanElement>(null)
@@ -107,11 +110,11 @@ export default function EvidenceSignal({ result, checklist = [], className = '' 
             ? 'cursor-pointer hover:bg-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40'
             : '',
         ].join(' ')}
-        title={result.reasons.length > 0 ? `${tier} — ${result.reasons.join(' · ')}` : tier}
+        title={result.reasons.length > 0 ? t('evidenceSignal.tooltip', { tier, reasons: result.reasons.join(' · ') }) : tier}
         aria-label={
           expandable
-            ? `Evidence: ${tier}. Tap to see the full checklist.`
-            : `Evidence: ${tier}. ${result.reasons.join('. ')}`
+            ? t('evidenceSignal.ariaExpandable', { tier })
+            : t('evidenceSignal.aria', { tier, reasons: result.reasons.join('. ') })
         }
         aria-expanded={expandable ? open : undefined}
         aria-controls={expandable ? popoverId : undefined}
@@ -151,6 +154,7 @@ interface ChecklistPopoverProps {
 }
 
 function ChecklistPopover({ id, tier, rows, anchorRef, popoverRef }: ChecklistPopoverProps) {
+  const t = useRecruitingT()
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
   const measure = useCallback(() => {
@@ -197,7 +201,7 @@ function ChecklistPopover({ id, tier, rows, anchorRef, popoverRef }: ChecklistPo
       className="z-50 rounded-lg border border-gray-200 bg-white p-3 shadow-xl text-left cursor-auto"
     >
       <span className="mb-2 block text-[11px] font-bold text-gray-900">
-        {tier} <span className="font-normal text-gray-500">· evidence on file</span>
+        <Trans t={t} i18nKey="evidenceSignal.heading" values={{ tier }} components={{ muted: <span className="font-normal text-gray-500" /> }} />
       </span>
       <span className="block space-y-1">
         {rows.map((r) => (
@@ -212,7 +216,7 @@ function ChecklistPopover({ id, tier, rows, anchorRef, popoverRef }: ChecklistPo
         ))}
       </span>
       <span className="mt-2 block text-[10px] leading-relaxed text-gray-400">
-        Based on facts in this profile. Never shown to the candidate.
+        {t('evidenceSignal.privacy')}
       </span>
     </span>,
     document.body,

@@ -1,4 +1,5 @@
 import { supabase, SUPABASE_URL_FOR_STREAM, SUPABASE_ANON_KEY_FOR_STREAM } from '@/lib/supabase'
+import { currentLanguage } from '@/i18n'
 
 /** A live step from nl-search (Hockia AI sheet, 2026-10-17). */
 export interface AiStep { id: string; label: string; state: 'now' | 'done' }
@@ -49,7 +50,8 @@ async function once(body: Record<string, unknown>, onStep: (s: AiStep) => void):
       apikey: SUPABASE_ANON_KEY_FOR_STREAM,
       Authorization: `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY_FOR_STREAM}`,
     },
-    body: JSON.stringify(body),
+    // The member's interface language: Hockia AI answers in it.
+    body: JSON.stringify({ ...body, locale: currentLanguage() }),
   })
   const type = res.headers.get('content-type') ?? ''
   // A function without the stream mode (or an early auth / rate-limit refusal) answers JSON.

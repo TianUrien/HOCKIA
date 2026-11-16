@@ -1,6 +1,7 @@
 import type { AppliedSearch, SuggestedAction } from '@/hooks/useDiscover'
 import ActionChipRow from './ActionChipRow'
 import AppliedSearchStrip from './AppliedSearchStrip'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface NoResultsCardProps {
   applied: AppliedSearch | null
@@ -26,6 +27,7 @@ export default function NoResultsCard({
   onAction,
   fallbackMessage,
 }: NoResultsCardProps) {
+  const t = useHockiaAiT()
   const summary = applied?.role_summary
   const isLegacyTerseMessage =
     !!fallbackMessage && /^I couldn't find any .+ matching that\.?$/i.test(fallbackMessage.trim())
@@ -34,20 +36,21 @@ export default function NoResultsCard({
   const headline = useBackendMessage
     ? fallbackMessage!
     : summary
-      ? `I searched for ${summary} based on your profile, but I didn't find a strong match yet.`
-      : "I didn't find a match yet."
+      ? t('discover.noResultsSummary', { summary })
+      : t('discover.noResults')
 
   const subline = useBackendMessage
     ? null
     : summary
-      ? "Let's try a different angle — pick one below."
-      : 'Pick one of these to keep going:'
+      ? t('discover.noResultsSubSummary')
+      : t('discover.noResultsSub')
 
   const actions: SuggestedAction[] = suggestedActions.length > 0
     ? suggestedActions
     : [
-        { label: 'Find opportunities', intent: { type: 'free_text', query: 'Find opportunities for my position' } },
-        { label: 'Browse Marketplace', intent: { type: 'free_text', query: 'Show me products' } },
+        // The query is the English prompt Hockia AI reads; the label follows the language.
+        { label: t('discover.chipFindOpportunities'), intent: { type: 'free_text', query: t('discover.chipFindOpportunitiesQuery', { lng: 'en' }) } },
+        { label: t('discover.chipBrowseMarketplace'), intent: { type: 'free_text', query: t('discover.chipBrowseMarketplaceQuery', { lng: 'en' }) } },
       ]
 
   return (

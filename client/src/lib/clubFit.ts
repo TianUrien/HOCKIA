@@ -40,6 +40,8 @@ import {
 } from './recruitingContext'
 import { specialistSkillLabel } from './specialistSkills'
 import { isRecruitingViewer } from './recruiterAccess'
+import { tRecruiting } from '@/i18n/ns/recruiting'
+import { tEnums } from '@/i18n/ns/enums'
 
 export type ClubFitState = 'green' | 'yellow' | 'grey'
 
@@ -323,11 +325,11 @@ export function computeClubFit(
   // is not penalised this way; it's just missing info.
   const categoryMismatch = Boolean(candidate.playing_category) && gender_match === 0
   if (gender_match === 1 && candidate.playing_category) {
-    pushReason(`Plays ${humanizeCategory(candidate.playing_category)}, which matches ${target.toLowerCase()}'s team category.`, 'positive')
+    pushReason(tRecruiting('clubFit.reasons.categoryMatch', { category: humanizeCategory(candidate.playing_category), target: targetWord(target) }), 'positive')
   } else if (candidate.playing_category) {
-    pushReason(`Plays ${humanizeCategory(candidate.playing_category)}, which is different from your team's category.`, 'caveat')
+    pushReason(tRecruiting('clubFit.reasons.categoryMismatch', { category: humanizeCategory(candidate.playing_category) }), 'caveat')
   } else {
-    pushReason('Playing category not added yet. No match info.')
+    pushReason(tRecruiting('clubFit.reasons.categoryMissing'))
   }
 
   // Competition proximity — cross-country via curated level_band_global.
@@ -336,13 +338,13 @@ export function computeClubFit(
     viewerProfile.competition_level_band ?? null,
   )
   if (competition_proximity >= 0.75) {
-    pushReason('Plays at a comparable league level to your team.', 'positive')
+    pushReason(tRecruiting('clubFit.reasons.levelComparable'), 'positive')
   } else if (competition_proximity > 0) {
-    pushReason('Plays at a different league level from your team.')
+    pushReason(tRecruiting('clubFit.reasons.levelDifferent'))
   } else if (candidate.competition_level_band == null) {
-    pushReason('Current league not linked. Level comparison unavailable.')
+    pushReason(tRecruiting('clubFit.reasons.leagueMissing'))
   } else if (viewerProfile.competition_level_band == null) {
-    pushReason("Your team's league level isn't set. Level comparison unavailable.")
+    pushReason(tRecruiting('clubFit.reasons.teamLevelMissing'))
   }
 
   // Availability — the open flag only (no activity signal, ruling 2026-10-11).
@@ -352,9 +354,9 @@ export function computeClubFit(
     Boolean(candidate.open_to_opportunities)
   const availability = isOpen ? 1 : 0
   if (isOpen) {
-    pushReason('Open to opportunities.', 'positive')
+    pushReason(tRecruiting('clubFit.reasons.open'), 'positive')
   } else {
-    pushReason('Not currently flagged open to opportunities.', 'caveat')
+    pushReason(tRecruiting('clubFit.reasons.notOpen'), 'caveat')
   }
   const recency = 0
 
@@ -369,13 +371,13 @@ export function computeClubFit(
   if (hasTargetPosition) {
     const tp = humanizePosition(options!.targetPosition!)
     if (positionFit >= 1) {
-      pushReason(`Plays ${tp}, which matches the position you're recruiting.`, 'positive')
+      pushReason(tRecruiting('clubFit.reasons.positionMatch', { position: tp }), 'positive')
     } else if (positionFit > 0) {
-      pushReason(`Plays ${tp} as a secondary position.`, 'positive')
+      pushReason(tRecruiting('clubFit.reasons.positionSecondary', { position: tp }), 'positive')
     } else if (candidate.position) {
-      pushReason(`Primary position is ${humanizePosition(candidate.position)}, not ${tp}.`, 'caveat')
+      pushReason(tRecruiting('clubFit.reasons.positionMismatch', { position: humanizePosition(candidate.position), target: tp }), 'caveat')
     } else {
-      pushReason('Position not added yet. No position match info.')
+      pushReason(tRecruiting('clubFit.reasons.positionMissing'))
     }
   }
 
@@ -388,11 +390,11 @@ export function computeClubFit(
   const specialistFit = hasSpecialists ? matchedSpecialists.length / soughtSpecialists.length : 0
   if (hasSpecialists) {
     if (matchedSpecialists.length === soughtSpecialists.length) {
-      pushReason(`Holds the specialism${soughtSpecialists.length > 1 ? 's' : ''} you're recruiting (${matchedSpecialists.map(specialistSkillLabel).join(', ')}).`, 'positive')
+      pushReason(tRecruiting('clubFit.reasons.specialistsAll', { count: soughtSpecialists.length, skills: matchedSpecialists.map(specialistSkillLabel).join(', ') }), 'positive')
     } else if (matchedSpecialists.length > 0) {
-      pushReason(`Holds ${matchedSpecialists.map(specialistSkillLabel).join(', ')} (of the ${soughtSpecialists.length} sought).`, 'positive')
+      pushReason(tRecruiting('clubFit.reasons.specialistsSome', { count: soughtSpecialists.length, skills: matchedSpecialists.map(specialistSkillLabel).join(', ') }), 'positive')
     } else {
-      pushReason("Doesn't list the specialism you're recruiting.", 'caveat')
+      pushReason(tRecruiting('clubFit.reasons.specialistsNone'), 'caveat')
     }
   }
 
@@ -431,8 +433,8 @@ export function computeClubFit(
   if (positionRequiredEffective && hasTargetPosition && Boolean(candidate.position) && positionFit === 0) {
     hardFailReasons.push(
       isGoalkeeperScope && !options?.positionRequired
-        ? `Plays ${humanizePosition(candidate.position!)}, not a goalkeeper. Goalkeeper is a specialist position, so this isn't a position fit.`
-        : `Plays ${humanizePosition(candidate.position!)}, not the ${humanizePosition(options!.targetPosition!)} you require.`,
+        ? tRecruiting('clubFit.hardFail.notGoalkeeper', { position: humanizePosition(candidate.position!) })
+        : tRecruiting('clubFit.hardFail.position', { position: humanizePosition(candidate.position!), target: humanizePosition(options!.targetPosition!) }),
     )
   }
   if (
@@ -442,7 +444,7 @@ export function computeClubFit(
     matchedSpecialists.length === 0
   ) {
     hardFailReasons.push(
-      `Doesn't hold the required specialism${soughtSpecialists.length > 1 ? 's' : ''} (${soughtSpecialists.map(specialistSkillLabel).join(', ')}).`,
+      tRecruiting('clubFit.hardFail.specialists', { count: soughtSpecialists.length, skills: soughtSpecialists.map(specialistSkillLabel).join(', ') }),
     )
   }
   const hardFail = hardFailReasons.length > 0
@@ -520,28 +522,38 @@ export function computeClubFit(
 export function clubFitStateLabel(state: ClubFitState): string {
   switch (state) {
     case 'green':
-      return 'Strong fit'
+      return tRecruiting('clubFit.state.green')
     case 'yellow':
-      return 'Possible fit'
+      return tRecruiting('clubFit.state.yellow')
     case 'grey':
-      return 'Lower fit'
+      return tRecruiting('clubFit.state.grey')
   }
 }
 
 function humanizeCategory(category: string): string {
   switch (category) {
     case 'adult_women':
-      return "Women's"
     case 'adult_men':
-      return "Men's"
     case 'girls':
-      return 'Girls'
     case 'boys':
-      return 'Boys'
     case 'mixed':
-      return 'Mixed'
+      return tEnums(`category.${category}`)
     default:
       return category
+  }
+}
+
+/** The target team category as a word inside a reason ("women", "men"). */
+function targetWord(target: TargetCategory): string {
+  switch (target) {
+    case 'Men':
+      return tRecruiting('clubFit.target.men')
+    case 'Women':
+      return tRecruiting('clubFit.target.women')
+    case 'Mixed':
+      return tRecruiting('clubFit.target.mixed')
+    default:
+      return String(target).toLowerCase()
   }
 }
 
@@ -550,14 +562,15 @@ function humanizeCategory(category: string): string {
  *  so new enum entries still read cleanly without a code change. */
 function humanizePosition(position: string): string {
   const p = position.trim().toLowerCase()
-  const known: Record<string, string> = {
-    goalkeeper: 'Goalkeeper',
-    defender: 'Defender',
-    midfielder: 'Midfielder',
-    forward: 'Forward',
-    striker: 'Striker',
+  switch (p) {
+    case 'goalkeeper':
+    case 'defender':
+    case 'midfielder':
+    case 'forward':
+      return tEnums(`position.${p}`)
+    case 'striker':
+      return tRecruiting('clubFit.position.striker')
   }
-  if (known[p]) return known[p]
   return p
     .split(/[\s_-]+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))

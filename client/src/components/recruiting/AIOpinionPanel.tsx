@@ -33,6 +33,7 @@ import {
 import { useAIOpinion } from '@/hooks/useAIOpinion'
 import type { AIOpinionFeedbackRating, AIOpinionCandidate } from '@/hooks/useAIOpinion'
 import { BetaPill } from '@/components/hockiaAi/BetaPill'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import {
   trackAIOpinionViewed,
   trackAIOpinionRegenerated,
@@ -57,6 +58,7 @@ function isFeatureEnabled(): boolean {
 }
 
 export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionPanelProps) {
+  const t = useHockiaAiT()
   const featureEnabled = isFeatureEnabled()
   const { status, regenerate, submitFeedback } = useAIOpinion(candidate, { enabled: featureEnabled })
   const [citationsOpen, setCitationsOpen] = useState(false)
@@ -160,7 +162,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         className,
       ].join(' ')}
       data-testid="ai-opinion-panel"
-      aria-label="Hockia AI fit opinion"
+      aria-label={t('opinion.panelLabel')}
       aria-busy={status.kind === 'loading'}
     >
       <header className="flex items-start gap-2.5 mb-2">
@@ -169,10 +171,10 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         </span>
         <div className="flex-1 min-w-0">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
-            Hockia AI · fit opinion <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
+            {t('opinion.eyebrow')} <span className="normal-case tracking-normal"><BetaPill testId="ai-opinion-beta" /></span>
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
-            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your recruiting context.
+            {candidate.role === 'coach' ? t('opinion.privateCoach') : t('opinion.privatePlayer')}
           </p>
         </div>
       </header>
@@ -189,13 +191,13 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
           {/* Neutral, not amber: nothing here asks the viewer to act soon. */}
           <Info className="h-4 w-4 flex-shrink-0 text-ink-3 mt-0.5" aria-hidden="true" data-testid="ai-opinion-error-icon" />
           <div className="flex-1 min-w-0">
-            <p>Couldn't load the opinion right now.</p>
+            <p>{t('opinion.loadError')}</p>
             <button
               type="button"
               onClick={() => void regenerate()}
               className="mt-1 text-xs font-medium text-hockia-primary hover:text-[#6B20D4]"
             >
-              Try again
+              {t('opinion.tryAgain')}
             </button>
           </div>
         </div>
@@ -205,9 +207,9 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
         <div className="mt-2 flex items-start gap-2 text-sm text-gray-700">
           <Clock className="h-4 w-4 flex-shrink-0 text-amber-500 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p>Daily AI opinion limit reached (50/day).</p>
+            <p>{t('opinion.quota')}</p>
             <p className="mt-0.5 text-xs text-gray-500">
-              Resets at midnight UTC. Cached opinions still available without a fresh call.
+              {t('opinion.quotaNote')}
             </p>
           </div>
         </div>
@@ -231,7 +233,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 aria-controls="ai-opinion-citations"
                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-hockia-primary hover:text-[#6B20D4]"
               >
-                {citationsOpen ? 'Hide evidence' : `Why · ${status.data.citations.length} citation${status.data.citations.length === 1 ? '' : 's'}`}
+                {citationsOpen ? t('opinion.hideEvidence') : t('opinion.why', { count: status.data.citations.length })}
                 {citationsOpen ? (
                   <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
                 ) : (
@@ -263,9 +265,9 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
 
           <footer className="mt-3 pt-2 border-t border-hockia-primary/10 flex items-center justify-between text-[10px] text-gray-500">
             <span>
-              {status.cached ? 'Cached' : 'Fresh'}
+              {status.cached ? t('opinion.cached') : t('opinion.fresh')}
               {status.quotaRemaining !== null && !status.cached && (
-                <span className="ml-1">· {status.quotaRemaining} fresh remaining today</span>
+                <span className="ml-1">{t('opinion.freshRemaining', { count: status.quotaRemaining })}</span>
               )}
             </span>
             <div className="flex items-center gap-3">
@@ -273,7 +275,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 <div
                   className="flex items-center gap-1"
                   role="group"
-                  aria-label="Rate this opinion"
+                  aria-label={t('opinion.rateLabel')}
                   data-testid="ai-opinion-feedback"
                 >
                   <button
@@ -281,8 +283,8 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                     onClick={() => void handleRating('up')}
                     disabled={submitting}
                     aria-pressed={rating === 'up' ? 'true' : 'false'}
-                    aria-label="Helpful"
-                    title="Helpful"
+                    aria-label={t('opinion.helpful')}
+                    title={t('opinion.helpful')}
                     className={[
                       'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
                       rating === 'up'
@@ -298,8 +300,8 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                     onClick={() => void handleRating('down')}
                     disabled={submitting}
                     aria-pressed={rating === 'down' ? 'true' : 'false'}
-                    aria-label="Not helpful"
-                    title="Not helpful"
+                    aria-label={t('opinion.notHelpful')}
+                    title={t('opinion.notHelpful')}
                     className={[
                       'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
                       rating === 'down'
@@ -316,10 +318,10 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 type="button"
                 onClick={handleRegenerate}
                 className="inline-flex items-center gap-1 font-medium text-hockia-primary hover:text-[#6B20D4]"
-                title="Regenerate the opinion (counts against your daily quota if not cached)"
+                title={t('opinion.regenerateTitle')}
               >
                 <RefreshCcw className="h-3 w-3" />
-                Regenerate
+                {t('opinion.regenerate')}
               </button>
             </div>
           </footer>
@@ -333,14 +335,14 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 htmlFor="ai-opinion-feedback-reason-input"
                 className="block text-[10px] font-semibold text-ink-2"
               >
-                What was off? (optional)
+                {t('opinion.reasonLabel')}
               </label>
               <textarea
                 id="ai-opinion-feedback-reason-input"
                 value={reasonText}
                 onChange={(e) => setReasonText(e.target.value.slice(0, 500))}
                 rows={2}
-                placeholder="e.g. the level comparison was inverted, or it missed a key fact…"
+                placeholder={t('opinion.reasonPlaceholder')}
                 className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary/30"
               />
               <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px]">
@@ -349,7 +351,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                   onClick={() => setReasonOpen(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  Skip
+                  {t('opinion.skip')}
                 </button>
                 <button
                   type="button"
@@ -357,7 +359,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                   disabled={submitting || reasonText.trim().length === 0}
                   className="rounded bg-hockia-primary px-2 py-1 font-medium text-white hover:bg-[#6b1fd4] disabled:opacity-40"
                 >
-                  Send
+                  {t('opinion.send')}
                 </button>
               </div>
             </div>

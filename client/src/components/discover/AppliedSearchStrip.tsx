@@ -1,10 +1,19 @@
 import { Building2, GraduationCap, MapPin, ShoppingBag, User, Users } from 'lucide-react'
 import type { AppliedSearch } from '@/hooks/useDiscover'
 import { categoryToDisplay, opportunityGenderToDisplay } from '@/lib/hockeyCategories'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface AppliedSearchStripProps {
   applied: AppliedSearch
 }
+
+const ENTITY_KEYS = {
+  clubs: 'discover.entity.clubs',
+  players: 'discover.entity.players',
+  coaches: 'discover.entity.coaches',
+  brands: 'discover.entity.brands',
+  umpires: 'discover.entity.umpires',
+} as const
 
 const ENTITY_ICON: Record<string, typeof Building2> = {
   clubs: Building2,
@@ -20,11 +29,13 @@ const ENTITY_ICON: Record<string, typeof Building2> = {
  * Package B will make these tappable to drop individual filters.
  */
 export default function AppliedSearchStrip({ applied }: AppliedSearchStripProps) {
+  const t = useHockiaAiT()
   if (!applied) return null
   const chips: { label: string; key: string }[] = []
 
   if (applied.entity) {
-    chips.push({ key: 'entity', label: applied.entity })
+    const entityKey = ENTITY_KEYS[applied.entity as keyof typeof ENTITY_KEYS]
+    chips.push({ key: 'entity', label: entityKey ? t(entityKey) : applied.entity })
   }
   // Phase 3e — prefer category_label (Adult women / Girls / etc.). Fall back
   // to legacy gender_label if a stale backend response is in flight, mapping
@@ -41,9 +52,9 @@ export default function AppliedSearchStrip({ applied }: AppliedSearchStripProps)
     chips.push({ key: 'location', label: applied.location_label })
   }
   if (applied.age?.max != null) {
-    chips.push({ key: 'age', label: `U${applied.age.max + 1}` })
+    chips.push({ key: 'age', label: t('discover.ageUnder', { age: applied.age.max + 1 }) })
   } else if (applied.age?.min != null) {
-    chips.push({ key: 'age', label: `${applied.age.min}+ yrs` })
+    chips.push({ key: 'age', label: t('discover.ageMin', { min: applied.age.min }) })
   }
 
   if (chips.length === 0) return null
@@ -53,7 +64,7 @@ export default function AppliedSearchStrip({ applied }: AppliedSearchStripProps)
     <div className="mb-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
       <span className="inline-flex items-center gap-1 font-medium uppercase tracking-[0.04em]">
         <EntityIcon className="w-3 h-3" aria-hidden="true" />
-        Searched
+        {t('discover.searched')}
       </span>
       {chips.map(c => (
         <span

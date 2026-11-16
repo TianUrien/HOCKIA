@@ -10,6 +10,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { ProductImage } from './useBrandProducts'
+import { tBrands } from '@/i18n/ns/brands'
 
 export interface FeedItemBase {
   id: string
@@ -101,7 +102,7 @@ export function useBrandFeed(): UseBrandFeedResult {
   let errorStr: string | null = null
   if (query.error) {
     logger.error('[useBrandFeed] Error fetching feed:', query.error)
-    errorStr = query.error instanceof Error ? query.error.message : 'Failed to load feed'
+    errorStr = query.error instanceof Error ? query.error.message : tBrands('hookErrors.feedLoad')
   }
 
   return {

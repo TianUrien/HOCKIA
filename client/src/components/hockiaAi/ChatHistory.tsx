@@ -5,8 +5,9 @@ import { logger } from '@/lib/logger'
 import { hapticLight, hapticSelection } from '@/lib/haptics'
 import {
   deleteAllChats, deleteChat, groupChats, listChats, matchesChatSearch,
-  type AiChatKind, type AiChatRow,
+  type AiChatGroup, type AiChatKind, type AiChatRow,
 } from '@/lib/aiChats'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 const KIND_ICON: Record<AiChatKind, typeof Check> = {
   apply: Check,
@@ -16,6 +17,12 @@ const KIND_ICON: Record<AiChatKind, typeof Check> = {
   role: CircleDot,
 }
 const DELETE_W = 88
+/** groupChats labels are tokens; these are what the member reads. */
+const GROUP_KEYS: Record<AiChatGroup['label'], 'history.groupToday' | 'history.groupWeek' | 'history.groupEarlier'> = {
+  Today: 'history.groupToday',
+  'This week': 'history.groupWeek',
+  Earlier: 'history.groupEarlier',
+}
 
 interface Props {
   onBack: () => void
@@ -34,6 +41,7 @@ interface Props {
  * 90 days (ruling 2026-10-18).
  */
 export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink }: Props) {
+  const t = useHockiaAiT()
   const userId = useAuthStore((s) => s.user?.id ?? null)
   const [rows, setRows] = useState<AiChatRow[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -98,26 +106,26 @@ export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink
     <div className="flex min-h-0 flex-1 flex-col" data-testid="hockia-ai-history">
       <div className="flex h-11 shrink-0 items-center gap-2.5 px-4">
         <button type="button" onClick={onBack} className="-ml-1 flex min-h-[44px] items-center gap-0.5 text-[16px] leading-[22px] text-brand-primary" data-testid="hockia-ai-history-back">
-          <ChevronLeft className="h-5 w-5" strokeWidth={2} /> Chat
+          <ChevronLeft className="h-5 w-5" strokeWidth={2} /> {t('history.back')}
         </button>
         <button type="button" onClick={onNewChat} className="rounded-full bg-brand-primary px-3 py-[7px] text-[13px] font-semibold leading-[18px] text-white" data-testid="hockia-ai-new-chat">
-          New chat
+          {t('history.newChat')}
         </button>
-        <button type="button" onClick={onClose} aria-label="Close" className="ml-auto flex h-10 w-10 items-center justify-center rounded-full text-ink-2" data-testid="hockia-ai-history-close">
+        <button type="button" onClick={onClose} aria-label={t('history.close')} className="ml-auto flex h-10 w-10 items-center justify-center rounded-full text-ink-2" data-testid="hockia-ai-history-close">
           <X className="h-5 w-5" strokeWidth={2} />
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2.5">
-        <h2 className="text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-ink-1">Chats</h2>
+        <h2 className="text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-ink-1">{t('history.title')}</h2>
         <label className="mt-1.5 flex items-center gap-2 rounded-[12px] bg-surface-subtle px-3 py-2.5">
           <Search className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
-          <span className="sr-only">Search chats</span>
+          <span className="sr-only">{t('history.searchLabel')}</span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search chats"
+            placeholder={t('history.searchPlaceholder')}
             className="min-w-0 flex-1 bg-transparent text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none"
             data-testid="hockia-ai-history-search"
           />
@@ -125,11 +133,11 @@ export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink
 
         {failed ? (
           <div className="py-10 text-center" data-testid="hockia-ai-history-error">
-            <p className="text-[15px] text-ink-2">I couldn’t load your chats.</p>
-            <button type="button" onClick={load} className="mt-2 text-secondary font-semibold text-brand-primary">Try again</button>
+            <p className="text-[15px] text-ink-2">{t('history.loadError')}</p>
+            <button type="button" onClick={load} className="mt-2 text-secondary font-semibold text-brand-primary">{t('history.tryAgain')}</button>
           </div>
         ) : rows === null ? (
-          <div className="flex flex-col gap-3 pt-5" aria-label="Loading chats">
+          <div className="flex flex-col gap-3 pt-5" aria-label={t('history.loading')}>
             {[0, 1, 2].map((i) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="h-9 w-9 animate-pulse rounded-[10px] bg-surface-subtle" />
@@ -139,14 +147,14 @@ export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink
           </div>
         ) : rows.length === 0 ? (
           <p className="py-10 text-center text-[15px] leading-5 text-ink-2" data-testid="hockia-ai-history-empty">
-            No chats yet. What you ask Hockia AI shows up here for 90 days.
+            {t('history.empty')}
           </p>
         ) : groups.length === 0 ? (
-          <p className="py-10 text-center text-[15px] text-ink-2">No chats match “{query.trim()}”.</p>
+          <p className="py-10 text-center text-[15px] text-ink-2">{t('history.noMatch', { query: query.trim() })}</p>
         ) : (
           groups.map((g) => (
-            <section key={g.label} aria-label={g.label}>
-              <h3 className="pb-1 pt-3.5 text-[11px] font-semibold uppercase leading-[14px] text-ink-3">{g.label}</h3>
+            <section key={g.label} aria-label={t(GROUP_KEYS[g.label])}>
+              <h3 className="pb-1 pt-3.5 text-[11px] font-semibold uppercase leading-[14px] text-ink-3">{t(GROUP_KEYS[g.label])}</h3>
               <ul>
                 {g.rows.map((r) => (
                   <ChatRow key={r.id} row={r} busy={opening === r.id} onOpen={() => void open(r)} onDelete={() => void remove(r)} />
@@ -156,23 +164,23 @@ export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink
           ))
         )}
 
-        {openFailed && <p className="mt-2 text-secondary text-status-danger" role="alert">I couldn’t open that chat. Try again in a moment.</p>}
+        {openFailed && <p className="mt-2 text-secondary text-status-danger" role="alert">{t('history.openError')}</p>}
 
-        <p className="pt-4 text-[12px] leading-4 text-ink-3">Chats are private to you. Delete any time.</p>
+        <p className="pt-4 text-[12px] leading-4 text-ink-3">{t('history.privacy')}</p>
         {rows && rows.length > 0 && (
           confirmAll ? (
             <div className="mt-3 rounded-[16px] border border-line p-3" data-testid="hockia-ai-delete-all-confirm">
-              <p className="text-[14px] leading-[19px] text-ink-1">Delete all {rows.length} {rows.length === 1 ? 'chat' : 'chats'}? This can’t be undone.</p>
+              <p className="text-[14px] leading-[19px] text-ink-1">{t('history.confirmAll', { count: rows.length })}</p>
               <div className="mt-2.5 flex gap-2">
-                <button type="button" onClick={() => setConfirmAll(false)} className="flex-1 rounded-full border border-line py-2 text-[14px] font-semibold text-ink-1">Cancel</button>
+                <button type="button" onClick={() => setConfirmAll(false)} className="flex-1 rounded-full border border-line py-2 text-[14px] font-semibold text-ink-1">{t('history.cancel')}</button>
                 <button type="button" onClick={() => void removeAll()} disabled={deletingAll} className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-status-danger py-2 text-[14px] font-semibold text-white" data-testid="hockia-ai-delete-all-yes">
-                  {deletingAll && <Loader2 className="h-4 w-4 animate-spin" />} Delete all
+                  {deletingAll && <Loader2 className="h-4 w-4 animate-spin" />} {t('history.deleteAll')}
                 </button>
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => setConfirmAll(true)} className="mt-2 min-h-[44px] text-[14px] font-semibold text-status-danger" data-testid="hockia-ai-delete-all">
-              Delete all chats
+              {t('history.deleteAllChats')}
             </button>
           )
         )}
@@ -183,6 +191,7 @@ export function ChatHistory({ onBack, onNewChat, onClose, onOpenChat, onOpenLink
 
 /** One row; drag it left to show Delete (iOS swipe-to-delete). */
 function ChatRow({ row, busy, onOpen, onDelete }: { row: AiChatRow; busy: boolean; onOpen: () => void; onDelete: () => void }) {
+  const t = useHockiaAiT()
   const Icon = KIND_ICON[row.kind] ?? Search
   const [dx, setDx] = useState(0)
   const [revealed, setRevealed] = useState(false)
@@ -231,7 +240,7 @@ function ChatRow({ row, busy, onOpen, onDelete }: { row: AiChatRow; busy: boolea
         style={{ width: DELETE_W }}
         data-testid="hockia-ai-history-swipe-delete"
       >
-        Delete
+        {t('history.delete')}
       </button>
       <div
         className="relative flex items-center bg-white"
@@ -254,7 +263,7 @@ function ChatRow({ row, busy, onOpen, onDelete }: { row: AiChatRow; busy: boolea
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`Delete chat: ${row.title}`}
+          aria-label={t('history.deleteRow', { title: row.title })}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-3 opacity-0 transition-opacity hover:text-status-danger focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:hidden"
           data-testid="hockia-ai-history-delete"
         >

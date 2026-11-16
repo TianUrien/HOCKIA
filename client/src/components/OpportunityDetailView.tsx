@@ -172,7 +172,7 @@ export default function VacancyDetailView({
 
   const formatShortDate = (dateString: string | null) => {
     if (!dateString) return null
-    return new Date(dateString).toLocaleDateString(isEnglish() ? 'en-US' : intlLocale(), { month: 'short', year: 'numeric' })
+    return new Date(dateString).toLocaleDateString(intlLocale(),{ month: 'short', year: 'numeric' })
   }
 
   const isImmediate = !vacancy.start_date

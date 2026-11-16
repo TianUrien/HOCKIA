@@ -1,6 +1,6 @@
 import { AlertTriangle, Info } from 'lucide-react'
 import type { SuggestedAction } from '@/hooks/useDiscover'
-import { SOFT_ERROR_DEFAULT_COPY } from '@/lib/hockiaAi'
+import { hockiaAiCopy } from '@/lib/hockiaAi'
 import { cn } from '@/lib/utils'
 import ActionChipRow from './ActionChipRow'
 
@@ -46,7 +46,7 @@ export default function SoftErrorCard({
             className={cn('mt-[3px] h-4 w-4 shrink-0', tone === 'warning' ? 'text-status-warning' : 'text-ink-3')}
             aria-hidden="true"
           />
-          <p className="text-row text-ink-1 whitespace-pre-line">{message ?? SOFT_ERROR_DEFAULT_COPY}</p>
+          <p className="text-row text-ink-1 whitespace-pre-line">{message ?? hockiaAiCopy.softErrorDefault}</p>
         </div>
       </div>
       <ActionChipRow actions={suggestedActions} onAction={onAction} />

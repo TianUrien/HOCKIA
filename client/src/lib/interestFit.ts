@@ -29,6 +29,7 @@
  */
 
 import { formatAvailableFrom } from './candidateIntent'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 import { LEVEL_RANK, bandToLevelRank, candidateLevelRank, levelSoughtLabel } from './opportunityIntent'
 
 export type InterestLevel = 'strong' | 'possible' | 'low'
@@ -188,49 +189,49 @@ export function computeInterest(
 
     if (oppNorm && excludedNorms.includes(oppNorm)) {
       mobility = 0
-      add(`Excluded ${oppRaw} from the countries they'd consider.`, 'caveat')
-      if (options.locationRequired) hardFailReasons.push(`Excluded ${oppRaw}, the location you require.`)
+      add(tRecruiting('interestFit.mobility.excluded', { country: oppRaw }), 'caveat')
+      if (options.locationRequired) hardFailReasons.push(tRecruiting('interestFit.hardFail.excluded', { country: oppRaw }))
     } else if (willingness === 'home_only') {
       if (homeNorm && oppNorm) {
         if (homeNorm === oppNorm) {
           mobility = 1
-          add('Opportunity is in their home country.', 'positive')
+          add(tRecruiting('interestFit.mobility.homeCountry'), 'positive')
         } else {
           mobility = 0
-          add(`Only wants to stay in ${homeName ?? 'their home country'}.`, 'caveat')
+          add(homeName ? tRecruiting('interestFit.mobility.homeOnlyNamed', { country: homeName }) : tRecruiting('interestFit.mobility.homeOnly'), 'caveat')
           if (options.locationRequired) {
-            hardFailReasons.push(`Won't relocate to ${oppRaw}. Only wants ${homeName ?? 'their home country'}.`)
+            hardFailReasons.push(homeName ? tRecruiting('interestFit.hardFail.homeOnlyNamed', { country: oppRaw, home: homeName }) : tRecruiting('interestFit.hardFail.homeOnly', { country: oppRaw }))
           }
         }
       } else {
         mobility = 0.5
-        add('Prefers to stay in their home country.')
+        add(tRecruiting('interestFit.mobility.prefersHome'))
       }
     } else if (willingness === 'relocate' || willingness === 'open_to_discuss') {
       const base = willingness === 'relocate' ? 1 : 0.75
       if (openNorms.length > 0) {
         if (oppNorm && openNorms.includes(oppNorm)) {
           mobility = base
-          add(`Open to relocating to ${oppRaw}.`, 'positive')
+          add(tRecruiting('interestFit.mobility.relocateTo', { country: oppRaw }), 'positive')
         } else {
           mobility = base * 0.5
-          add(`Open to relocating, though ${oppRaw} isn't in their listed countries.`)
+          add(tRecruiting('interestFit.mobility.relocateNotListed', { country: oppRaw }))
         }
       } else {
         mobility = base
-        add(willingness === 'relocate' ? 'Open to relocating.' : 'Open to discussing relocation.', 'positive')
+        add(willingness === 'relocate' ? tRecruiting('interestFit.mobility.relocate') : tRecruiting('interestFit.mobility.discuss'), 'positive')
       }
     } else {
       // Countries listed but no explicit willingness pill.
       if (oppNorm && openNorms.includes(oppNorm)) {
         mobility = 0.85
-        add(`Lists ${oppRaw} among countries they'd consider.`, 'positive')
+        add(tRecruiting('interestFit.mobility.listed', { country: oppRaw }), 'positive')
       } else if (openNorms.length > 0) {
         mobility = 0.4
-        add(`${oppRaw} isn't among their listed countries.`, 'caveat')
+        add(tRecruiting('interestFit.mobility.notListed', { country: oppRaw }), 'caveat')
       } else {
         mobility = 0.6
-        add(`Hasn't excluded ${oppRaw}.`)
+        add(tRecruiting('interestFit.mobility.notExcluded', { country: oppRaw }))
       }
     }
     measured.push({ score: clamp01(mobility), weight: WEIGHTS.mobility })
@@ -250,34 +251,33 @@ export function computeInterest(
       const diff = oppLevelRank - basisRank // + = opening above candidate; − = below
       const absDiff = Math.abs(diff)
       let levelScore = absDiff === 0 ? 1 : absDiff === 1 ? 0.8 : absDiff === 2 ? 0.55 : 0.4
-      const oppLabel = levelSoughtLabel(options.targetLevel)?.toLowerCase() ?? 'this level'
+      const oppLabel = levelSoughtLabel(options.targetLevel)?.toLowerCase() ?? tRecruiting('interestFit.level.thisLevel')
 
       if (absDiff === 0) {
         add(
           proven
-            ? `Has proven ${oppLabel}, which matches what you're recruiting.`
-            : `Targeting ${oppLabel}, which matches what you're recruiting.`,
+            ? tRecruiting('interestFit.level.provenMatch', { level: oppLabel })
+            : tRecruiting('interestFit.level.targetMatch', { level: oppLabel }),
           'positive',
         )
       } else if (diff > 0) {
-        const phrase = absDiff === 1 ? 'A step up from' : 'Well above'
         // A stretch upward is ambiguous for interest (ambition vs reach) →
         // neutral, not a selling point.
         add(
-          proven
-            ? `${phrase} the level they've proven.`
-            : `${phrase} the level they say they're targeting.`,
+          absDiff === 1
+            ? (proven ? tRecruiting('interestFit.level.stepUpProven') : tRecruiting('interestFit.level.stepUpTarget'))
+            : (proven ? tRecruiting('interestFit.level.wellAboveProven') : tRecruiting('interestFit.level.wellAboveTarget')),
         )
         // MUST-HAVE level fails only on a PROVEN level below the requirement —
         // a self-declared aspiration is a soft signal, not an explicit mismatch
         // of ACTUAL level (proven outranks declared), and a band-less
         // candidate's true level is unknown → neutral, never "Out of scope".
-        if (options.levelRequired && proven) hardFailReasons.push(`Below the ${oppLabel} level you require.`)
+        if (options.levelRequired && proven) hardFailReasons.push(tRecruiting('interestFit.hardFail.belowLevel', { level: oppLabel }))
       } else {
         add(
           proven
-            ? `Below the level they've proven${absDiff >= 2 ? ', likely over-qualified' : ''}.`
-            : `Below the level they say they're targeting.`,
+            ? (absDiff >= 2 ? tRecruiting('interestFit.level.belowProvenOverqualified') : tRecruiting('interestFit.level.belowProven'))
+            : tRecruiting('interestFit.level.belowTarget'),
           'caveat',
         )
       }
@@ -288,10 +288,10 @@ export function computeInterest(
       if (proven && declaredRank != null) {
         if (declaredRank < oppLevelRank) {
           levelScore *= 0.85
-          add('Though they say they want a lower level than this opening.', 'caveat')
+          add(tRecruiting('interestFit.level.wantsLower'), 'caveat')
         } else if (declaredRank > oppLevelRank + 1) {
           levelScore *= 0.9
-          add('They say they want a higher level than this opening.', 'caveat')
+          add(tRecruiting('interestFit.level.wantsHigher'), 'caveat')
         }
       }
       measured.push({ score: clamp01(levelScore), weight: WEIGHTS.level })
@@ -310,21 +310,21 @@ export function computeInterest(
     if (oppComp === 'either' || candPref === 'either') {
       compScore = 0.85
       compReason =
-        candPref === 'either' ? 'Open to paid or development.' : 'This opening is open on compensation.'
+        candPref === 'either' ? tRecruiting('interestFit.comp.openEither') : tRecruiting('interestFit.comp.openingEither')
     } else if (candPref === 'paid' && oppComp === 'paid') {
       compScore = 1
-      compReason = 'Wants paid, and this is a paid opportunity.'
+      compReason = tRecruiting('interestFit.comp.paidMatch')
     } else if (candPref === 'development' && oppComp === 'unpaid_development') {
       compScore = 1
-      compReason = 'Looking for a development opportunity, which matches.'
+      compReason = tRecruiting('interestFit.comp.developmentMatch')
     } else if (candPref === 'paid' && oppComp === 'unpaid_development') {
       compScore = 0.1
-      compReason = 'Wants paid; this is a development opportunity.'
-      if (options.compensationRequired) hardFailReasons.push('Wants paid; this is a development opportunity.')
+      compReason = tRecruiting('interestFit.comp.wantsPaid')
+      if (options.compensationRequired) hardFailReasons.push(tRecruiting('interestFit.hardFail.wantsPaid'))
     } else {
       // candidate development, opportunity paid — no conflict, a small plus.
       compScore = 0.9
-      compReason = 'Open to a development opportunity; this one is paid.'
+      compReason = tRecruiting('interestFit.comp.developmentPaid')
     }
     add(compReason, compScore >= 0.66 ? 'positive' : compScore <= 0.4 ? 'caveat' : 'neutral')
     measured.push({ score: compScore, weight: WEIGHTS.compensation })
@@ -335,13 +335,13 @@ export function computeInterest(
   const startDate = options.targetStartDate || null
   if (availFrom && startDate) {
     if (availFrom <= startDate) {
-      add(`Available from ${formatAvailableFrom(availFrom)}, in time for the start.`, 'positive')
+      add(tRecruiting('interestFit.availability.inTime', { date: formatAvailableFrom(availFrom) }), 'positive')
       measured.push({ score: 1, weight: WEIGHTS.availability })
     } else {
-      add(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start.`, 'caveat')
+      add(tRecruiting('interestFit.availability.late', { date: formatAvailableFrom(availFrom), start: formatAvailableFrom(startDate) }), 'caveat')
       measured.push({ score: 0.3, weight: WEIGHTS.availability })
       if (options.availabilityRequired) {
-        hardFailReasons.push(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start you require.`)
+        hardFailReasons.push(tRecruiting('interestFit.hardFail.late', { date: formatAvailableFrom(availFrom), start: formatAvailableFrom(startDate) }))
       }
     }
   }
@@ -369,10 +369,10 @@ export function computeInterest(
 export function interestLevelLabel(level: InterestLevel): string {
   switch (level) {
     case 'strong':
-      return 'Strong interest'
+      return tRecruiting('interestFit.label.strong')
     case 'possible':
-      return 'Possible interest'
+      return tRecruiting('interestFit.label.possible')
     case 'low':
-      return 'Low interest'
+      return tRecruiting('interestFit.label.low')
   }
 }

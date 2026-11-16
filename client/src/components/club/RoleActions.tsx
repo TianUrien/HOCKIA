@@ -15,6 +15,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { shortDayOf } from '@/lib/signing'
 import { closedRoleLine } from '@/lib/postAgain'
 import { ChevronRight } from 'lucide-react'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * The "…" menu on a club's own role (phone Club v2): Edit role, Close role
@@ -57,6 +58,7 @@ interface Props {
 }
 
 export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }: Props) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const [sheet, setSheet] = useState<null | 'menu' | 'close'>(null)
@@ -83,7 +85,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
       onChanged()
     } catch (err) {
       logger.error('[RoleActions] reopen failed', err)
-      addToast('Could not reopen the opportunity. Try again.', 'error')
+      addToast(t('roleActions.reopenFailed'), 'error')
     } finally {
       setBusy(false)
     }
@@ -98,7 +100,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
       navigate(to)
     } catch (err) {
       logger.error('[RoleActions] find for role failed', err)
-      addToast('Could not open the search. Try again.', 'error')
+      addToast(t('roleActions.findFailed'), 'error')
     }
   }
 
@@ -109,7 +111,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
       <button
         type="button"
         onClick={() => setSheet('menu')}
-        aria-label={`More actions for ${role.title}`}
+        aria-label={t('roleActions.moreLabel', { title: role.title })}
         aria-haspopup="dialog"
         className={className ?? '-my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2'}
         data-testid="role-actions-button"
@@ -117,7 +119,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
         <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
       </button>
 
-      <BottomSheet open={sheet === 'menu' && isClosed} onClose={() => setSheet(null)} ariaLabel="Closed opportunity actions">
+      <BottomSheet open={sheet === 'menu' && isClosed} onClose={() => setSheet(null)} ariaLabel={t('roleActions.closedSheetLabel')}>
         {/* Figma 05 CS3 205:5722: Post again leads; Reopen keeps today's +30 days; Edit keeps it closed. */}
         <div className="flex flex-col gap-3 px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-1" data-testid="closed-role-actions">
           <div>
@@ -127,54 +129,54 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
           {postAgain && (
           <button type="button" onClick={() => { setSheet(null); postAgain() }} className="flex items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left disabled:opacity-50" data-testid="role-actions-post-again">
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] leading-[22px] text-brand-primary">Post again</span>
-              <span className="block text-secondary text-ink-2">A new opportunity with the same details. Dates and applicants start fresh. You check it before it goes live.</span>
+              <span className="block text-[17px] leading-[22px] text-brand-primary">{t('roleActions.postAgain')}</span>
+              <span className="block text-secondary text-ink-2">{t('roleActions.postAgainDetail')}</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
           )}
           <button type="button" disabled={busy} onClick={() => void reopen()} className="flex items-center gap-3 rounded-[16px] bg-surface-subtle px-4 py-3 text-left disabled:opacity-50" data-testid="role-actions-reopen">
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] leading-[22px] text-ink-1">Reopen this opportunity</span>
-              <span className="block text-secondary text-ink-2">Same opportunity and applicants, open again for 30 days</span>
+              <span className="block text-[17px] leading-[22px] text-ink-1">{t('roleActions.reopenThis')}</span>
+              <span className="block text-secondary text-ink-2">{t('roleActions.reopenThisDetail')}</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => { setSheet(null); if (onEdit) onEdit(); else navigate(`/dashboard/opportunities/${role.id}/edit`) }} className="flex items-center gap-3 rounded-[16px] bg-surface-subtle px-4 py-3 text-left disabled:opacity-50">
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] leading-[22px] text-ink-1">Edit opportunity</span>
-              <span className="block text-secondary text-ink-2">Change the details; it stays closed</span>
+              <span className="block text-[17px] leading-[22px] text-ink-1">{t('roleActions.editClosed')}</span>
+              <span className="block text-secondary text-ink-2">{t('roleActions.editClosedDetail')}</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
           </button>
-          <button type="button" onClick={() => setSheet(null)} className="flex h-11 w-full items-center justify-center text-body text-ink-2">Cancel</button>
+          <button type="button" onClick={() => setSheet(null)} className="flex h-11 w-full items-center justify-center text-body text-ink-2">{t('roleActions.cancel')}</button>
         </div>
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'menu' && !isClosed} onClose={() => setSheet(null)} ariaLabel="Opportunity actions">
+      <BottomSheet open={sheet === 'menu' && !isClosed} onClose={() => setSheet(null)} ariaLabel={t('roleActions.sheetLabel')}>
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-1" data-testid="role-actions-sheet">
           <p className="truncate pb-3 text-center text-secondary font-semibold text-ink-2">{role.title}</p>
           <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
             {isOpen && (
               <button type="button" className={item} disabled={finding} onClick={() => void find()} data-testid="role-actions-find">
-                <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? 'Find players for this opportunity' : 'Find coaches for this opportunity'}
+                <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? t('roleActions.findPlayers') : t('roleActions.findCoaches')}
               </button>
             )}
             <button type="button" className={item} onClick={() => { setSheet(null); if (onEdit) onEdit(); else navigate(`/dashboard/opportunities/${role.id}/edit`) }}>
-              <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Edit opportunity
+              <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {t('roleActions.edit')}
             </button>
             {isOpen && (
               <button type="button" className={item} onClick={() => setSheet('close')}>
-                <XCircle className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Close opportunity
+                <XCircle className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {t('roleActions.close')}
               </button>
             )}
             {isClosed && (
               <button type="button" className={item} disabled={busy} onClick={() => void reopen()}>
-                <RotateCcw className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Reopen opportunity
+                <RotateCcw className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {t('roleActions.reopen')}
               </button>
             )}
           </div>
-          <button type="button" onClick={() => setSheet(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body text-ink-2">Cancel</button>
+          <button type="button" onClick={() => setSheet(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body text-ink-2">{t('roleActions.cancel')}</button>
         </div>
       </BottomSheet>
 

@@ -8,6 +8,7 @@ import { personRoleLine } from '@/lib/clubRecruiting'
 import type { InvitePill } from '@/lib/invites'
 import type { RoleSuggestion } from '@/lib/roleSuggestions'
 import type { ReasonLine } from '@/lib/suggestionReasons'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Card / Suggestion (Figma "New-Hockia" D5.1 398:83): rank (ink-3), Avatar 48,
@@ -32,11 +33,12 @@ interface Props {
 }
 
 export function SuggestionCard({ suggestion: s, rank, flags, reasons, shortlisted, onToggleShortlist, invitePill, inviteLimitReason, onInvite, onOpen }: Props) {
+  const t = useRecruitingT()
   const avatar = s.avatar_url ? getImageUrl(s.avatar_url, 'avatar-md') ?? s.avatar_url : null
-  const name = s.full_name || 'Player'
+  const name = s.full_name || t('suggestionCard.playerFallback')
   const roleLine = personRoleLine({ role: s.role ?? 'player', position: s.position, secondaryPosition: s.secondary_position })
   return (
-    <article className="rounded-card border border-line bg-white px-4 pb-3.5 pt-4" data-testid="suggestion-card" aria-label={`${rank}. ${name}`}>
+    <article className="rounded-card border border-line bg-white px-4 pb-3.5 pt-4" data-testid="suggestion-card" aria-label={t('suggestionCard.ariaLabel', { rank, name })}>
       <button type="button" onClick={onOpen} className="flex w-full items-start gap-3 text-left">
         <span className="w-3 shrink-0 pt-[14px] text-secondary font-semibold text-ink-3" data-testid="suggestion-rank">{rank}</span>
         <EntityAvatar src={avatar} name={s.full_name} role="player" size={48} className="shrink-0" />
@@ -50,12 +52,12 @@ export function SuggestionCard({ suggestion: s, rank, flags, reasons, shortliste
       </button>
 
       {reasons.length > 0 && (
-        <ul className="flex flex-col gap-1.5 pt-3" aria-label="Why Hockia suggests this player">
+        <ul className="flex flex-col gap-1.5 pt-3" aria-label={t('suggestionCard.reasonsLabel')}>
           {reasons.map((r) => (
             <li key={r.key} className="flex items-start gap-2" data-testid="suggestion-reason" data-kind={r.kind}>
               {r.kind === 'met'
-                ? <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-positive" strokeWidth={2.4} aria-label="Met" />
-                : <Minus className="mt-[3px] h-3.5 w-3.5 shrink-0 text-ink-3" strokeWidth={2.4} aria-label="Not on the profile" />}
+                ? <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-positive" strokeWidth={2.4} aria-label={t('suggestionCard.met')} />
+                : <Minus className="mt-[3px] h-3.5 w-3.5 shrink-0 text-ink-3" strokeWidth={2.4} aria-label={t('suggestionCard.missing')} />}
               <span className={r.kind === 'met' ? 'text-[14px] leading-[19px] text-ink-1' : 'text-[14px] leading-[19px] text-ink-3'}>{r.text}</span>
             </li>
           ))}
@@ -65,7 +67,7 @@ export function SuggestionCard({ suggestion: s, rank, flags, reasons, shortliste
       <div className="flex items-center gap-2 pt-3.5">
         <IconButton
           variant={shortlisted ? 'tonal' : 'muted'}
-          label={shortlisted ? `Remove ${name} from the shortlist` : `Shortlist ${name}`}
+          label={shortlisted ? t('suggestionCard.removeShortlist', { name }) : t('suggestionCard.addShortlist', { name })}
           aria-pressed={shortlisted}
           onClick={onToggleShortlist}
           data-testid="suggestion-shortlist"

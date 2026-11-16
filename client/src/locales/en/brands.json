@@ -1,0 +1,1062 @@
+{
+  "offers": {
+    "roles": {
+      "player": "Players",
+      "coach": "Coaches",
+      "club": "Clubs",
+      "umpire": "Umpires"
+    },
+    "regions": {
+      "europe": "Europe",
+      "southAmerica": "South America",
+      "oceania": "Oceania",
+      "asia": "Asia",
+      "africa": "Africa",
+      "northAmerica": "North America",
+      "centralAmerica": "Central America",
+      "caribbean": "Caribbean"
+    },
+    "groups": {
+      "needsYou": "Needs you",
+      "live": "Live",
+      "drafts": "Drafts",
+      "pausedEnded": "Paused and ended"
+    },
+    "pill": {
+      "takenDown": "Taken down",
+      "live": "Live",
+      "draft": "Draft",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "liveLimitLine": "{{live}} of {{limit}} live · free for every brand for now",
+    "counts": {
+      "shown_one": "{{n}} shown",
+      "shown_other": "{{n}} shown",
+      "opened_one": "{{n}} opened",
+      "opened_other": "{{n}} opened",
+      "storeVisits_one": "{{n}} went to your store",
+      "storeVisits_other": "{{n}} went to your store",
+      "codeCopies_one": "{{n}} copied the code",
+      "codeCopies_other": "{{n}} copied the code",
+      "contacted_one": "{{n}} contacted",
+      "contacted_other": "{{n}} contacted",
+      "notUseful_one": "{{n}} not useful",
+      "notUseful_other": "{{n}} not useful"
+    },
+    "daysAgo": {
+      "recently": "recently",
+      "today": "today",
+      "yesterday": "yesterday",
+      "days_one": "{{count}} day ago",
+      "days_other": "{{count}} days ago"
+    },
+    "status": {
+      "takenDownNote": "Taken down: {{note}}. Edit and publish again.",
+      "takenDown": "Taken down. Edit and publish again.",
+      "notPublished": "Not published yet",
+      "paused": "Paused {{when}}. Members don't see it.",
+      "ended": "Ended {{date}} · {{counts}}"
+    },
+    "missing": {
+      "photo": "Add a photo",
+      "title": "Add a title",
+      "titleTooLong": "Keep the title under {{max}} characters",
+      "body": "Say what members get",
+      "bodyTooLong": "Keep it under {{max}} characters",
+      "perkTooLong": "Keep the perk under {{max}} characters",
+      "promoCode": "Use letters, numbers, - or _ in the code",
+      "link": "Add a link that starts with https",
+      "where": "Choose where members live",
+      "who": "Choose who it is for",
+      "endDate": "Choose an end date in the future"
+    },
+    "reasonEverywhere": {
+      "player": "You see this because you play. It is for members everywhere.",
+      "coach": "You see this because you coach. It is for members everywhere.",
+      "club": "You see this because you run a club. It is for members everywhere.",
+      "umpire": "You see this because you umpire. It is for members everywhere."
+    },
+    "reason": {
+      "everywhere": "It is for members everywhere.",
+      "where": "You see this because you live in {{where}}.",
+      "fallback": "You see this because of where you live."
+    },
+    "reasonWhere": {
+      "player": "You see this because you live in {{where}} and play.",
+      "coach": "You see this because you live in {{where}} and coach.",
+      "club": "You see this because you live in {{where}} and run a club.",
+      "umpire": "You see this because you live in {{where}} and umpire."
+    },
+    "everywhere": "Everywhere",
+    "reach": {
+      "fewer": "Fewer than 5 members match this today.",
+      "total_one": "Reaches {{n}} member today.",
+      "total_other": "Reaches {{n}} members today.",
+      "totalWithRoles_one": "Reaches {{n}} member today ({{roles}}).",
+      "totalWithRoles_other": "Reaches {{n}} members today ({{roles}})."
+    },
+    "reachRole": {
+      "player_one": "{{n}} player",
+      "player_other": "{{n}} players",
+      "coach_one": "{{n}} coach",
+      "coach_other": "{{n}} coaches",
+      "club_one": "{{n}} club",
+      "club_other": "{{n}} clubs",
+      "umpire_one": "{{n}} umpire",
+      "umpire_other": "{{n}} umpires"
+    },
+    "errors": {
+      "liveLimit": "You already have {{limit}} live offers. Pause one first.",
+      "invalid": "Some details are missing or not valid. Check the offer and try again.",
+      "expired": "This offer has passed its end date. Change the dates first.",
+      "tooMany": "You have a lot of offers. End some you no longer need.",
+      "reasonRequired": "Write the reason the brand will see.",
+      "notLive": "This offer is no longer live.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "results": {
+    "change": {
+      "same": "Same as before",
+      "more_one": "{{n}} more than before",
+      "more_other": "{{n}} more than before",
+      "fewer_one": "{{n}} fewer than before",
+      "fewer_other": "{{n}} fewer than before"
+    },
+    "ago": {
+      "today": "today",
+      "yesterday": "yesterday",
+      "days_one": "{{count}} day ago",
+      "days_other": "{{count}} days ago"
+    },
+    "surface": {
+      "home": "Home",
+      "hockiaAi": "Hockia AI",
+      "brandsTab": "Brands tab",
+      "sharedLink": "Shared link",
+      "other": "Other"
+    },
+    "roles": {
+      "player": "Players",
+      "coach": "Coaches",
+      "club": "Clubs",
+      "umpire": "Umpires"
+    },
+    "roleOne": {
+      "player": "Player",
+      "coach": "Coach",
+      "club": "Club",
+      "umpire": "Umpire"
+    },
+    "next": {
+      "noLive": "You have no live offers. Members only see brands with an offer for them.",
+      "noLiveAction": "Create an offer",
+      "missed_one": "{{n}} member lives in {{country}} and none of your offers reach them.",
+      "missed_other": "{{n}} members live in {{country}} and none of your offers reach them.",
+      "missedAction": "Add it to an offer",
+      "unopened_one": "“{{title}}” was shown to {{n}} member and nobody opened it. A photo and a perk usually help.",
+      "unopened_other": "“{{title}}” was shown to {{n}} members and nobody opened it. A photo and a perk usually help.",
+      "unopenedAction": "Edit offer",
+      "notUseful": "“{{title}}” is marked “not useful” more than it is opened. Check who it is for.",
+      "notUsefulAction": "Edit audience"
+    },
+    "navParent": "Profile",
+    "title": "Results",
+    "periodAria": "Period",
+    "periodShort": "{{days}}d",
+    "error": "Results are not available right now. Try again in a moment.",
+    "waiting": {
+      "title_one": "{{n}} person is waiting",
+      "title_other": "{{n}} people are waiting",
+      "oldest": "The oldest wrote {{ago}}",
+      "reply": "Reply"
+    },
+    "contacted": {
+      "label": "Members who contacted you",
+      "period_one": "From your offers, last {{count}} day",
+      "period_other": "From your offers, last {{count}} days"
+    },
+    "funnel": {
+      "shown": "Shown to",
+      "opened": "Opened",
+      "store": "To your store",
+      "code": "Copied the code"
+    },
+    "nextStep": "Next step",
+    "offers": {
+      "eyebrow": "Which offer works?",
+      "paused": "Paused",
+      "ended": "Ended",
+      "shown": "Shown",
+      "opened": "Opened",
+      "store": "To store",
+      "code": "Code",
+      "contacted": "Contacted",
+      "notUseful": "Not useful",
+      "empty": "No offers yet. Results start when members see your first offer.",
+      "create": "Create an offer"
+    },
+    "contacts": {
+      "eyebrow": "Who wants to talk to you?",
+      "title": "People who contacted you",
+      "member": "Member",
+      "fromOffer": "From {{title}}",
+      "fromAnOffer": "From an offer",
+      "message": "Message",
+      "empty_one": "Nobody has written from an offer in the last {{count}} day.",
+      "empty_other": "Nobody has written from an offer in the last {{count}} days."
+    },
+    "market": {
+      "eyebrow": "How big is your market?",
+      "title": "Who you could reach",
+      "totalLabel_one": "member lives where you sell",
+      "totalLabel_other": "members live where you sell",
+      "covered": "Your offers show here",
+      "add": "Add to an offer",
+      "note": "Members who live there today, counted only in groups of 5 or more. Nobody is identified."
+    },
+    "fewerThan5": "Fewer than 5",
+    "country": "Country",
+    "seen": {
+      "eyebrow": "Where should you show it?",
+      "title": "Who saw your offers",
+      "country": "Country",
+      "role": "Role",
+      "where": "Where",
+      "breakdownAria": "Breakdown",
+      "empty": "Nobody has seen your offers in this period yet.",
+      "others": "Others",
+      "everyone": "Everyone",
+      "fewerEach": "Fewer than 5 each"
+    },
+    "products": {
+      "title": "Products",
+      "line": "{{seen}} seen · {{store}} to store"
+    },
+    "community": {
+      "title": "Ambassadors and followers",
+      "ambassadors": "Active ambassadors",
+      "invites": "Invites accepted",
+      "invitesValue": "{{accepted}} of {{sent}}",
+      "followers": "New followers",
+      "find": "Find ambassadors ›"
+    },
+    "footnote": "Counts are distinct members. Test accounts, hidden profiles and your own visits are never counted."
+  },
+  "dashboard": {
+    "tabs": {
+      "overview": "Overview",
+      "products": "Products",
+      "posts": "Posts",
+      "ambassadors": "Ambassadors",
+      "followers": "Followers"
+    },
+    "toasts": {
+      "complete": "Your brand profile is now complete!",
+      "strength": "Profile strength +{{increase}}%. Keep going!",
+      "productUpdated": "Product updated",
+      "productAdded": "Product added",
+      "productDeleted": "Product deleted",
+      "productDeleteFailed": "Failed to delete product",
+      "postUpdated": "Post updated",
+      "postPublished": "Post published",
+      "postDeleted": "Post deleted",
+      "postDeleteFailed": "Failed to delete post",
+      "ambassadorSent": "Ambassador request sent",
+      "requestCancelled": "Ambassador request cancelled",
+      "ambassadorRemoved": "Ambassador removed",
+      "cancelFailed": "Failed to cancel request",
+      "removeFailed": "Failed to remove ambassador",
+      "updateFailed": "Failed to update brand",
+      "updated": "Brand profile updated successfully",
+      "couldNotSave": "Could not save"
+    },
+    "header": {
+      "publicView": "Public View",
+      "view": "View",
+      "editBrand": "Edit Brand",
+      "edit": "Edit"
+    },
+    "products": {
+      "title": "Products & Services",
+      "add": "Add Product",
+      "emptyTitle": "No products yet",
+      "emptyBody": "Add products so players, clubs, and coaches can discover your brand and reach out for partnerships.",
+      "addFirst": "Add Your First Product"
+    },
+    "posts": {
+      "title": "Brand Announcements",
+      "subtitle": "Appear on your brand profile and in the global feed",
+      "new": "New Post",
+      "emptyTitle": "No posts yet",
+      "emptyBody": "Share updates, announcements, and news with your audience. Posts appear in the global brand feed.",
+      "createFirst": "Create Your First Post",
+      "homeFeed": "Home Feed Posts"
+    },
+    "ambassadors": {
+      "title": "Ambassadors",
+      "invite": "Invite Ambassador",
+      "emptyTitle": "No ambassadors yet",
+      "emptyBody": "Invite the players you sponsor to become brand ambassadors. They'll appear on your public profile once they accept.",
+      "inviteFirst": "Invite Your First Ambassador",
+      "pendingHeading": "Pending Requests ({{n}})",
+      "activeHeading": "Active ({{n}})",
+      "pending": "Pending",
+      "cancelAria": "Cancel request",
+      "removeAria": "Remove ambassador"
+    },
+    "total": "{{n}} total",
+    "unknown": "Unknown",
+    "loadMore": "Load more",
+    "followers": {
+      "title": "Followers",
+      "emptyTitle": "No followers yet",
+      "emptyBody": "Share your brand profile to grow your audience. Athletes and clubs can follow your brand from your profile page.",
+      "followed": "Followed {{ago}}"
+    },
+    "editModal": {
+      "title": "Edit Brand Profile",
+      "close": "Close",
+      "save": "Save Changes"
+    },
+    "confirm": {
+      "deleteProductTitle": "Delete Product",
+      "deleteProductBody": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "delete": "Delete",
+      "deletePostTitle": "Delete Post",
+      "deletePostBody": "Are you sure you want to delete this post? This action cannot be undone.",
+      "cancelRequestTitle": "Cancel Request",
+      "removeTitle": "Remove Ambassador",
+      "cancelRequestBody": "Cancel the ambassador request to {{name}}?",
+      "cancelRequestBodyNoName": "Cancel the ambassador request to this player?",
+      "removeBody": "Remove {{name}} as a brand ambassador?",
+      "removeBodyNoName": "Remove this player as a brand ambassador?",
+      "remove": "Remove"
+    }
+  },
+  "offersPage": {
+    "toasts": {
+      "live": "Your offer is live.",
+      "draftSaved": "Draft saved",
+      "paused": "Offer paused",
+      "resumed": "Offer is live again",
+      "ended": "Offer ended",
+      "draftDeleted": "Draft deleted",
+      "duplicated": "Copied as a new draft"
+    },
+    "brandFallback": "Your brand",
+    "howItWorks": "Offers go live as soon as you publish. They reach members by where they live, never by nationality.",
+    "empty": {
+      "title": "Bring something useful to members",
+      "body": "An offer is a product or service for hockey members where they live: a discount, a fitting, a camp place. It’s free and goes live as soon as you publish.",
+      "createFirst": "Create your first offer",
+      "tipsTitle": "What works with members",
+      "tipWhat": "Say exactly what a member gets.",
+      "tipWhere": "Pick the countries where your customers live.",
+      "tipPhoto": "Use a real photo of the product or service."
+    },
+    "title": "Offers",
+    "newOffer": "New offer",
+    "deskPrompt": "Choose an offer to edit, or create a new one.",
+    "loading": "Loading offers",
+    "actions": {
+      "untitled": "Untitled offer",
+      "edit": "Edit",
+      "editHintLive": "Members see your changes right away.",
+      "editHintTakenDown": "Fix what was flagged, then publish again.",
+      "editHint": "Change the photo, text or audience.",
+      "duplicate": "Duplicate",
+      "duplicateHint": "A new draft with the same photo, text and audience.",
+      "end": "End offer",
+      "endHint": "It stops for good and moves to Ended.",
+      "pause": "Pause",
+      "pauseHint": "Members stop seeing it. Your results are kept.",
+      "resume": "Resume",
+      "resumeHint": "Members see it again right away.",
+      "deleteDraft": "Delete draft",
+      "deleteDraftHint": "It is removed. Nobody has seen it.",
+      "aria": "Actions for {{title}}"
+    },
+    "confirm": {
+      "pauseTitle": "Pause this offer?",
+      "pauseBody": "Members stop seeing \"{{title}}\". Your results are kept, and you can resume it any time.",
+      "pauseBodyNoTitle": "Members stop seeing \"this offer\". Your results are kept, and you can resume it any time.",
+      "pauseYes": "Pause offer",
+      "pauseNo": "Cancel",
+      "endTitle": "End this offer?",
+      "endBody": "\"{{title}}\" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.",
+      "endBodyNoTitle": "\"this offer\" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.",
+      "endYes": "End offer",
+      "endNo": "Keep it live",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "\"{{title}}\" is removed. Nobody has seen it.",
+      "deleteBodyNoTitle": "\"this offer\" is removed. Nobody has seen it.",
+      "deleteYes": "Delete draft",
+      "deleteNo": "Keep it"
+    },
+    "limit": {
+      "title": "You have {{limit}} live offers",
+      "body": "While Hockia is free, each brand can have up to {{limit}} live offers. Pause or end one to make room. Drafts don’t count.",
+      "choose": "Choose an offer to pause",
+      "saveDraft": "Save as a draft instead"
+    }
+  },
+  "partnerships": {
+    "followers_one": "{{n}} follower (declared)",
+    "followers_other": "{{n}} followers (declared)",
+    "errors": {
+      "handle": "Use your Instagram username: letters, numbers, dots and underscores.",
+      "followers": "Enter your follower count as a number.",
+      "save": "That didn’t save. Check your connection and try again."
+    },
+    "toasts": {
+      "on": "Brands where you live can now find you.",
+      "off": "Brands no longer see you."
+    },
+    "navParent": "Settings",
+    "title": "Brand partnerships",
+    "footer": "Off by default. Members under 18 never appear to brands.",
+    "open": "Open to brand partnerships",
+    "openOther": "Open to other brands",
+    "openOtherHint": "While you are an ambassador, other brands can still find you.",
+    "meaning": {
+      "title": "What this means",
+      "find": "Brands that sell in your country can find you and invite you as an ambassador.",
+      "see": "They see what your profile already shows: photo, name, position, club and where you live, plus your Instagram below. Never your contact details.",
+      "decide": "You decide: accept, decline or ignore any invitation.",
+      "off": "Turn it off any time. You stop appearing to brands right away."
+    },
+    "handlePlaceholder": "@yourname",
+    "followersLabel": "Followers",
+    "followersHint": "You declare this. Brands see it marked as declared; Hockia doesn’t check it.",
+    "save": "Save"
+  },
+  "ambassadors": {
+    "toasts": {
+      "sent": "Invite sent to {{name}}. They accept or decline from their inbox.",
+      "sentNoName": "Invite sent to the player. They accept or decline from their inbox.",
+      "failed": "Couldn’t send the invite. Try again."
+    },
+    "navParent": "Profile",
+    "title": "Ambassadors",
+    "tabs": {
+      "mine": "Your ambassadors",
+      "candidates": "Candidates"
+    },
+    "intro": "Players in {{countries}} who said yes to brand partnerships. Followers are what each player declared.",
+    "introNoCountry": "Players in where you sell who said yes to brand partnerships. Followers are what each player declared.",
+    "filtersAria": "Filters",
+    "all": "All",
+    "country": "Country",
+    "empty": {
+      "title": "No candidates yet",
+      "body": "Players appear here when they turn on brand partnerships and live where you sell. Offers in more places bring more candidates.",
+      "openOffers": "Open your offers ›"
+    },
+    "invited": "Invited",
+    "sending": "Sending…",
+    "invite": "Invite",
+    "mineEmpty": {
+      "title": "No ambassadors yet",
+      "body": "Invite a candidate. They show on your profile once they accept."
+    }
+  },
+  "addAmbassador": {
+    "failed": "Failed to add ambassador",
+    "title": "Invite Ambassador",
+    "subtitle": "Search for a player to invite",
+    "searchPlaceholder": "Search players by name...",
+    "withReferences": "With references",
+    "results": "Search Results",
+    "noResults": "No players found matching “{{term}}”",
+    "minChars": "Type at least 2 characters to search",
+    "searching": "Searching...",
+    "help": "The player will receive a notification and must accept your invitation"
+  },
+  "ambassadorInvite": {
+    "errors": {
+      "pending": "Invite already sent.",
+      "already": "Already one of your ambassadors.",
+      "notAvailable": "This player can’t be invited.",
+      "onlyPlayers": "Only players can be ambassadors.",
+      "generic": "Couldn’t send the invite. Try again."
+    },
+    "sent": "Ambassador invite sent.",
+    "label": "Invite as ambassador",
+    "labelSent": "Invite sent"
+  },
+  "editLib": {
+    "invalidUrl": "That doesn't look like a valid URL.",
+    "urlSpaces": "URLs cannot contain spaces.",
+    "instagramPostLink": "That’s a post link. Use your profile link or @handle.",
+    "instagramInvalid": "Enter an Instagram handle (@yourbrand) or link."
+  },
+  "brandEdit": {
+    "rowAdd": "Add",
+    "locked": "Locked",
+    "saveFailed": "Could not save that. Please try again.",
+    "nameRequired": "The brand name is required.",
+    "chooseCountry": "Choose a country.",
+    "bioTooLong": "Keep it under {{max}} characters.",
+    "invalidImage": "Invalid image",
+    "uploadFailed": "We couldn’t upload this image. Please use PNG or JPG.",
+    "navPreview": "Preview",
+    "navTitle": "Edit profile",
+    "done": "Done",
+    "changeLogo": "Change logo",
+    "logoTitle": "Brand logo",
+    "uploading": "Uploading…",
+    "change": "Change",
+    "add": "Add",
+    "coverTitle": "Cover photo",
+    "addCover": "Add a cover photo",
+    "coverHint": "Tap the cover to change it. It shows at the top of your brand page.",
+    "removeCover": "Remove cover",
+    "groupBrand": "Brand",
+    "groupAbout": "About",
+    "groupPartnerships": "Partnerships",
+    "groupLinks": "Links",
+    "fieldName": "Brand name",
+    "fieldRole": "Role",
+    "roleBrand": "Brand",
+    "fieldCategory": "Category",
+    "fieldCountry": "Country",
+    "fieldBio": "Bio",
+    "fieldWebsite": "Website",
+    "fieldInstagram": "Instagram",
+    "openToPartners": "Open to partners",
+    "sheetEdit": "Edit",
+    "bioPlaceholder": "What you make and who it’s for.",
+    "websitePlaceholder": "yourbrand.com",
+    "instagramPlaceholder": "@yourbrand"
+  },
+  "brandForm": {
+    "uploadCoverFailed": "Failed to upload cover",
+    "uploadLogoFailed": "Failed to upload logo",
+    "pickerFailed": "Could not access camera or photos. Please check app permissions.",
+    "nameRequired": "Brand name is required",
+    "categoryRequired": "Please choose a category for your brand.",
+    "countryRequired": "Please choose a country for your brand.",
+    "slugRequired": "Brand URL slug is required",
+    "slugReserved": "That URL slug is reserved. Please pick another.",
+    "slugFormat": "URL slug must be lowercase letters, numbers, and hyphens only (no leading or trailing hyphen).",
+    "slugTakenSubmit": "That URL is already taken. Please choose another.",
+    "slugInvalidSubmit": "That URL is not valid. Use lowercase letters, numbers and hyphens only.",
+    "fixWebsite": "Please fix the website URL before saving.",
+    "fixInstagram": "Please fix the Instagram handle before saving.",
+    "saveFailed": "Failed to save brand",
+    "logoLabel": "Brand Logo",
+    "logoAlt": "Brand logo",
+    "logoHint": "Click to upload your brand logo",
+    "logoRecommended": "Recommended: Square image, at least 200x200px",
+    "uploadLogo": "Upload brand logo",
+    "coverLabel": "Cover photo",
+    "coverAlt": "Brand cover",
+    "addCover": "Add a cover photo",
+    "coverHint": "Tap the cover to change it. It shows at the top of your brand page.",
+    "removeCover": "Remove cover",
+    "uploadCover": "Upload brand cover",
+    "openToPartners": "Open to partners",
+    "openToPartnersHint": "Players and clubs see you’re looking for ambassadors",
+    "nameLabel": "Brand Name *",
+    "namePlaceholder": "Enter your brand name",
+    "slugLabel": "URL Slug *",
+    "slugPlaceholder": "your-brand",
+    "slugHint": "This will be your brand's unique URL. It cannot be changed later.",
+    "slugChecking": "Checking availability…",
+    "slugAvailable": "✓ Available",
+    "slugTaken": "That URL is already taken. Try a different one.",
+    "slugInvalid": "URL must be lowercase letters, numbers and hyphens only (no leading/trailing hyphen).",
+    "categoryLabel": "Category *",
+    "categoryPlaceholder": "Choose a category…",
+    "countryLabel": "Country *",
+    "countryPlaceholder": "Where is your brand based?",
+    "bioLabel": "About",
+    "bioPlaceholder": "Tell us about your brand...",
+    "websiteLabel": "Website",
+    "websitePlaceholder": "www.your-brand.com",
+    "instagramLabel": "Instagram",
+    "instagramPlaceholder": "@yourbrand or instagram.com/yourbrand",
+    "saving": "Saving...",
+    "save": "Save"
+  },
+  "addPost": {
+    "uploadFailed": "Failed to upload image",
+    "contentRequired": "Post content is required",
+    "contentTooLong": "Content exceeds {{max}} character limit",
+    "saveFailed": "Failed to save post",
+    "titleEdit": "Edit Post",
+    "titleCreate": "Create Post",
+    "close": "Close",
+    "contentLabel": "What's new with your brand?",
+    "contentPlaceholder": "Share an update, announcement, or news...",
+    "imageLabel": "Image <muted>(optional)</muted>",
+    "imageAlt": "Post image",
+    "removeImage": "Remove image",
+    "addImage": "Add an image",
+    "uploadImage": "Upload post image",
+    "posting": "Posting...",
+    "saveChanges": "Save Changes",
+    "publish": "Publish Post"
+  },
+  "addProduct": {
+    "nameRequired": "Product name is required",
+    "imageRequired": "At least one image is required",
+    "descriptionTooLong": "Description must be 300 characters or less",
+    "saveFailed": "Failed to save product",
+    "titleEdit": "Edit Product",
+    "titleAdd": "Add Product",
+    "close": "Close",
+    "nameLabel": "Product Name <req>*</req>",
+    "namePlaceholder": "e.g. Pro Field Hockey Stick",
+    "descriptionLabel": "Description <muted>(optional)</muted>",
+    "descriptionPlaceholder": "Short description of your product or service...",
+    "urlLabel": "Product URL <muted>(optional)</muted>",
+    "urlPlaceholder": "www.yourbrand.com/product",
+    "urlHint": "Links to your website. If empty, the card will link to your brand's website.",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "submitAdd": "Add Product"
+  },
+  "productImage": {
+    "uploadFailed": "Failed to upload image",
+    "label": "Product Images <muted>(up to {{max}})</muted>",
+    "imageAlt": "Product image {{n}}",
+    "remove": "Remove image {{n}}",
+    "main": "Main",
+    "add": "Add image",
+    "upload": "Upload product image"
+  },
+  "productCard": {
+    "imageAlt": "{{name}} - image {{n}}",
+    "goToImage": "Go to image {{n}}",
+    "actions": "Product actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "learnMore": "Learn more"
+  },
+  "brandCard": {
+    "activeNow": "Active just now",
+    "activeToday": "Active today",
+    "activeYesterday": "Active yesterday",
+    "activeDaysAgo_one": "Active {{count}}d ago",
+    "activeDaysAgo_other": "Active {{count}}d ago",
+    "activeOn": "Active {{date}}"
+  },
+  "categoryFilter": {
+    "all": "All"
+  },
+  "postCard": {
+    "options": "Post options",
+    "edit": "Edit",
+    "delete": "Delete",
+    "imageAlt": "Post image"
+  },
+  "globalFeed": {
+    "emptyTitle": "No activity yet",
+    "emptyBody": "When brands add products or share updates, they'll appear here.",
+    "addedProduct": "Added a product · {{time}}",
+    "learnMore": "Learn more",
+    "viewBrand": "View brand",
+    "postImageAlt": "Post image"
+  },
+  "memberOffers": {
+    "dismiss": {
+      "notForMe": "Not for me",
+      "alreadyHave": "Already have it",
+      "wrongCountry": "Wrong country",
+      "tooMany": "Too many offers",
+      "hideBrand": "Hide this brand"
+    },
+    "role": {
+      "players": "Players",
+      "coaches": "Coaches",
+      "clubs": "Clubs",
+      "umpires": "Umpires"
+    },
+    "forLine": {
+      "members": "Members",
+      "everywhere": "{{who}} everywhere",
+      "liveIn": "{{who}} who live in {{where}}"
+    },
+    "detailReason": {
+      "everywhere": "You see this because it is for members everywhere.",
+      "liveIn": "You see this because you live in {{country}}."
+    },
+    "aiTopic": {
+      "movingTo": "moving to {{country}}",
+      "movingAbroad": "moving abroad",
+      "gear": "gear",
+      "kit": "kit",
+      "training": "training",
+      "camps": "camps",
+      "physio": "physio"
+    },
+    "aiReason": "Shown because you asked about {{about}}. It did not change the answer."
+  },
+  "memberOfferCard": {
+    "hideFailed": "Could not hide this offer. Please try again.",
+    "dismissed": "Got it. You’ll see fewer offers like this.",
+    "undo": "Undo",
+    "whyPrompt": "Tell us why (optional, the brand only sees totals)",
+    "seeOffer": "See offer",
+    "notUseful": "Not useful",
+    "fromBrandsBy": "From brands · {{brand}}",
+    "fromBrands": "From brands",
+    "openOffer": "Open offer: {{title}}"
+  },
+  "aiOffer": {
+    "fromBrands": "From brands"
+  },
+  "gearRail": {
+    "title": "Gear and deals near you",
+    "seeAll": "See all",
+    "fromBrandsIn": "From brands that sell in {{country}}",
+    "fromBrandsNear": "From brands that sell where you live",
+    "optionsLabel": "Gear and deals options",
+    "showFewer": "Show fewer of these",
+    "whyMenu": "Why am I seeing this?",
+    "whySheetLabel": "Why am I seeing this?",
+    "whyTitle": "Why am I seeing this?",
+    "whyBody": "Brands that sell where you live. Offers are picked by your country and role. Brands never see who you are.",
+    "tileOptions": "Tile options",
+    "notUseful": "Not useful",
+    "hideBrand": "Hide this brand",
+    "optionsFor": "Options for {{title}}"
+  },
+  "idRedirect": {
+    "loading": "Loading brand"
+  },
+  "offersCard": {
+    "title": "Offers",
+    "emptyBody": "Bring something useful to members where they live. Free, and live as soon as you publish.",
+    "createFirst": "Create your first offer",
+    "liveOf": "{{live}} of {{limit}} live",
+    "drafts_one": "{{count}} draft",
+    "drafts_other": "{{count}} drafts",
+    "subtitleWithDrafts": "{{live}} · {{drafts}}",
+    "tileShown": "Shown to",
+    "tileOpened": "Opened",
+    "tileStore": "To your store",
+    "tileContacted": "Contacted",
+    "openOffers": "Open offers ›",
+    "tilesLabel": "Offer results, last 30 days",
+    "last30": "Last 30 days",
+    "seeResults": "See results"
+  },
+  "offerParts": {
+    "untitled": "Untitled offer",
+    "noAudience": "No audience yet",
+    "actionsFor": "Actions for {{title}}",
+    "actionsForUntitled": "Actions for offer",
+    "fromBrands": "From brands",
+    "yourTitle": "Your title",
+    "whatMembersGet": "What members get",
+    "seeOffer": "See offer",
+    "notUseful": "Not useful"
+  },
+  "offerEditor": {
+    "titleEdit": "Edit offer",
+    "titleNew": "New offer",
+    "publishChanges": "Publish changes",
+    "publish": "Publish",
+    "saveDraft": "Save draft",
+    "saving": "Saving…",
+    "noteChangesPhone": "Members see the changes right away.",
+    "noteNew": "Members see it right away. Hockia takes down offers that break the rules.",
+    "noteChangesDesktop": "Changes go live right away. Hockia takes down offers that break the rules.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Kit for your first season abroad",
+    "bodyLabel": "What members get",
+    "bodyPlaceholder": "15% off your first full kit when you join a club in a new country.",
+    "claimWarning": "\"{{claim}}\" is a claim members can't check. Say exactly what a member gets instead.",
+    "bodyHint": "Say exactly what a member gets. No claims you can’t back up, like \"best\" or \"cheapest\".",
+    "perkLabel": "Perk",
+    "optional": "Optional",
+    "perkPlaceholder": "15% off",
+    "perkHint": "Shown on the card, so members see the deal at a glance.",
+    "codeLabel": "Code",
+    "codeHint": "Members copy it on the offer page. Use a code only for Hockia to count sales in your store.",
+    "linkLabel": "Link",
+    "linkPlaceholder": "yourbrand.com/hockia",
+    "linkHint": "Members open this page from the offer.",
+    "areaLabel": "Region or city (optional)",
+    "areaPlaceholder": "Optional: region or city",
+    "whoFor": "Who it’s for",
+    "startsLabel": "Starts",
+    "startsHint": "When you publish",
+    "endsLabel": "Ends",
+    "close": "Close",
+    "previewTitle": "How members see it",
+    "cancel": "Cancel",
+    "photoFailed": "The photo could not be uploaded. Try another one.",
+    "photoLabel": "Photo",
+    "changePhoto": "Change photo",
+    "addPhoto": "Add photo",
+    "photoHint": "A real photo of the product or service. No text on the image.",
+    "placeLabel": "Where members live",
+    "everywhere": "Everywhere",
+    "removeItem": "Remove {{name}}",
+    "removeCountry": "Remove country",
+    "addRegion": "Add region",
+    "addCountry": "Add country",
+    "placeHintEverywhere": "Every member it is for, wherever they live, including members who have not added their country yet.",
+    "placeHint": "Offers reach members by where they live, never by nationality. An offer for the United Kingdom also reaches England, Scotland, Wales and Northern Ireland, and an offer for one of them reaches members who just say United Kingdom.",
+    "searchCountries": "Search countries",
+    "searchCountriesLabel": "Search countries",
+    "counting": "Counting members…",
+    "reachUnavailable": "Reach is not available right now."
+  },
+  "offerDetail": {
+    "missingTitle": "This offer isn’t available",
+    "missingBody": "It may have ended, or the brand paused it.",
+    "backHome": "Back to Home",
+    "openFailed": "Could not open the conversation. Please try again.",
+    "brandHidden": "You won't see offers from {{brand}}.",
+    "hideFailed": "Could not hide this brand. Please try again.",
+    "actionsLabel": "Offer actions",
+    "hideBrand": "Hide this brand",
+    "report": "Report offer",
+    "following": "Following",
+    "follow": "Follow",
+    "forLabel": "For",
+    "untilLabel": "Until",
+    "storeLabel": "Store",
+    "ambassadorTitle": "{{brand}} is looking for ambassadors",
+    "ambassadorBody": "Applying sends a message to the brand from your profile.",
+    "ambassadorDraft": "I'd like to be an ambassador for {{brand}}.",
+    "ambassadorApply": "Apply as ambassador",
+    "close": "Close",
+    "goToStore": "Go to store",
+    "aboutDraft": "About: {{title}}",
+    "messageBrand": "Message {{brand}}",
+    "yourCode": "Your code",
+    "copied": "Copied",
+    "copy": "Copy"
+  },
+  "profile": {
+    "anchor": {
+      "products": "Products",
+      "ambassadors": "Ambassadors",
+      "updates": "Updates",
+      "about": "About"
+    },
+    "linkCopied": "Link copied",
+    "reach": {
+      "profileViews_one": "profile view",
+      "profileViews_other": "profile views",
+      "inSearches": "in searches",
+      "storeTaps_one": "tap to your store",
+      "storeTaps_other": "taps to your store",
+      "title": "Reach this week",
+      "seeViewers": "Only you see this · Last 7 days · See who viewed",
+      "sheetLabel": "Profile views",
+      "searches_one": "Your brand appeared in {{n}} search in the last 7 days.",
+      "searches_other": "Your brand appeared in {{n}} searches in the last 7 days."
+    },
+    "bar": {
+      "following": "Following",
+      "follow": "Follow",
+      "opening": "Opening…",
+      "message": "Message"
+    },
+    "invites": {
+      "waiting_one": "{{n}} invite waiting for a reply",
+      "waiting_other": "{{n}} invites waiting for a reply",
+      "empty": "Invite athletes to represent you",
+      "athlete": "Athlete",
+      "howAccept": "They accept from their inbox",
+      "invite": "+ Invite athletes",
+      "view": "View invites",
+      "findCandidates": "Find candidates ›"
+    },
+    "partners": {
+      "title": "Open to partners",
+      "switchLabel": "Open to partners",
+      "body": "Players and clubs see you’re looking for ambassadors",
+      "pill": "Looking for ambassadors"
+    },
+    "product": {
+      "taps_one": "{{n}} tap",
+      "taps_other": "{{n}} taps",
+      "view": "View ↗"
+    },
+    "hero": {
+      "changeCover": "Change cover",
+      "addCoverDesktop": "Add a cover",
+      "addCover": "Add a cover",
+      "changeLogo": "Change logo",
+      "share": "Share brand",
+      "editCover": "Edit cover",
+      "back": "Back",
+      "settings": "Settings"
+    },
+    "preview": {
+      "label": "Someone on Hockia",
+      "detail": "What athletes and clubs see"
+    },
+    "section": {
+      "products": "Products",
+      "addProductAction": "+ Add product",
+      "addProduct": "Add product",
+      "ambassadorsCount": "Ambassadors · {{n}}",
+      "ambassadors": "Ambassadors",
+      "inviteAction": "+ Invite",
+      "noAmbassadors": "No ambassadors yet.",
+      "updates": "Latest updates",
+      "postUpdate": "+ Post update",
+      "noUpdates": "No updates yet.",
+      "about": "About",
+      "edit": "Edit",
+      "noDescription": "No description yet",
+      "seeAllCount": "See all {{n}}",
+      "seeAll": "See all",
+      "more": "More"
+    },
+    "detail": {
+      "category": "Category",
+      "country": "Country",
+      "website": "Website",
+      "instagram": "Instagram"
+    },
+    "stats": {
+      "followers_one": "{{n}} follower",
+      "followers_other": "{{n}} followers",
+      "ambassadors_one": "{{n}} ambassador",
+      "ambassadors_other": "{{n}} ambassadors",
+      "verified": "✓ Verified brand"
+    }
+  },
+  "profilePage": {
+    "back": "Back",
+    "breadcrumbMarketplace": "Marketplace",
+    "breadcrumbBrand": "Brand",
+    "blockedTitle": "This profile is not available",
+    "goBack": "Go back",
+    "notFoundTitle": "Brand not found",
+    "notFoundBody": "The brand you're looking for doesn't exist or has been removed.",
+    "browse": "Browse Marketplace"
+  },
+  "hookErrors": {
+    "brandLoad": "Failed to load brand",
+    "myBrandLoad": "Failed to load brand",
+    "myBrandCreate": "Failed to create brand",
+    "myBrandUpdate": "Failed to update brand",
+    "brandsLoad": "Failed to load brands",
+    "feedLoad": "Failed to load feed",
+    "ambassadorsLoad": "Failed to load ambassadors",
+    "ambassadorsNoBrand": "No brand ID",
+    "ambassadorAdd": "Failed to add ambassador",
+    "ambassadorRemove": "Failed to remove ambassador",
+    "postsLoad": "Failed to load posts",
+    "postsNoBrand": "No brand ID",
+    "postCreate": "Failed to create post",
+    "postUpdate": "Failed to update post",
+    "postDelete": "Failed to delete post",
+    "productsLoad": "Failed to load products",
+    "productsNoBrand": "No brand ID",
+    "productCreate": "Failed to create product",
+    "productUpdate": "Failed to update product",
+    "productDelete": "Failed to delete product"
+  },
+  "strength": {
+    "logoLabel": "Brand Logo",
+    "logoHint": "Upload your brand logo",
+    "logoUnlock": "A recognisable logo makes your brand stand out in searches.",
+    "logoAction": "Add Logo",
+    "aboutLabel": "About Your Brand",
+    "aboutHint": "Write a description about your brand",
+    "aboutUnlock": "Tell players and clubs what makes your brand worth following.",
+    "aboutAction": "Add Description",
+    "contactLabel": "Contact Info",
+    "contactHint": "Add your website or Instagram link",
+    "contactUnlock": "A direct way for people to reach you outside Hockia.",
+    "contactAction": "Add Contact",
+    "countryLabel": "Brand Country",
+    "countryHint": "Set your brand's country",
+    "countryUnlock": "Players favour brands they can buy from locally or that ship to their region.",
+    "countryAction": "Add Country",
+    "ambassadorsLabel": "Ambassadors",
+    "ambassadorsHint": "Add at least one brand ambassador",
+    "ambassadorsUnlock": "Players associated with your brand bring their network with them.",
+    "ambassadorsAction": "Add Ambassador"
+  },
+  "needs": {
+    "gear": "Gear",
+    "moving_abroad": "Moving abroad",
+    "training_recovery": "Training and recovery",
+    "for_clubs": "For clubs"
+  },
+  "needSubtitles": {
+    "gear": "Sticks, protection, kit",
+    "moving_abroad": "Insurance, housing, language, visas",
+    "training_recovery": "Physio, camps, coaching, strength",
+    "for_clubs": "Team kit, equipment, travel"
+  },
+  "needPageSubtitles": {
+    "gear": "Sticks, protection, footwear, kit and goalkeeping.",
+    "moving_abroad": "What players sort out before a season in another country.",
+    "training_recovery": "Physio, camps, coaching, strength and nutrition.",
+    "for_clubs": "Team kit, club equipment, team travel and club services."
+  },
+  "needPicker": {
+    "legend": "Which need does it help with?",
+    "hint": "Members find it under this need in Community › Brands."
+  },
+  "marketParts": {
+    "offerPill": "Offer",
+    "optionsFor": "Options for {{title}}",
+    "menuAria": "Item options",
+    "notUseful": "Not useful",
+    "hideBrand": "Hide this brand",
+    "chooseCountry": "Choose a country",
+    "countrySheetAria": "Choose a country",
+    "countrySheetTitle": "Choose a country",
+    "searchCountries": "Search countries",
+    "searchCountriesAria": "Search countries",
+    "suggestThanks": "Thanks. We’ll look into it.",
+    "suggestFailed": "Could not send it. Please try again.",
+    "suggestAria": "Suggest a brand",
+    "suggestTitle": "Suggest a brand",
+    "suggestBody": "Tell us who should be here. Only the Hockia team sees this.",
+    "namePlaceholder": "Brand or service name",
+    "nameAria": "Brand or service name",
+    "nameMissing": "Add a brand or service name",
+    "linkPlaceholder": "Website (optional)",
+    "linkAria": "Website",
+    "notePlaceholder": "What do they offer? (optional)",
+    "noteAria": "What do they offer",
+    "send": "Send suggestion"
+  },
+  "hub": {
+    "nearYouChip": "Near you",
+    "needsAria": "Needs",
+    "allChip": "All",
+    "suggestPrompt": "More brands are joining. Know one that should be here?",
+    "suggestButton": "Suggest a brand",
+    "sectionAria": "Marketplace",
+    "nearYouTitle": "Near you",
+    "emptyBody": "No brands sell in {{where}} yet.",
+    "yourCountry": "your country",
+    "lowSupply_one": "{{count}} brand sells in {{where}} so far",
+    "lowSupply_other": "{{count}} brands sell in {{where}} so far",
+    "offersTitle": "Offers for members",
+    "offersSubtitle": "Only on Hockia · {{country}}",
+    "offersSubtitleNoCountry": "Only on Hockia",
+    "seeAll": "See all",
+    "allBrands": "All brands"
+  },
+  "needPage": {
+    "parent": "Brands",
+    "movingTo": "Moving to",
+    "nearYou": "Near you",
+    "emptyTitle": "Nothing here yet",
+    "emptyTitleIn": "Nothing here for {{where}} yet",
+    "emptyBody": "More brands are joining. Know one that should be here?",
+    "suggest": "Suggest a brand",
+    "aiMoving": "What should I sort out before moving to {{where}} to play?",
+    "aiNeed": "What {{need}} do I need in {{where}}?",
+    "askAi": "Ask Hockia AI what to sort out for {{where}}"
+  }
+}

@@ -15,6 +15,8 @@ import type { BrandProduct, ProductImage, CreateProductInput, UpdateProductInput
 import { useQuery } from '@tanstack/react-query'
 import { NeedPicker } from '@/components/marketplace/NeedPicker'
 import { fetchMyItemNeeds, type Need } from '@/lib/marketplace'
+import { Trans } from 'react-i18next'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface AddProductModalProps {
   isOpen: boolean
@@ -59,6 +61,7 @@ export function AddProductModal({
   brandId,
   editingProduct,
 }: AddProductModalProps) {
+  const t = useBrandsT()
   const { user } = useAuthStore()
   const isEdit = Boolean(editingProduct)
   const draftKey = `${DRAFT_PREFIX}${brandId}`
@@ -153,20 +156,20 @@ export function AddProductModal({
     const newErrors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Product name is required'
+      newErrors.name = t('addProduct.nameRequired')
     }
 
     if (formData.images.length === 0) {
-      newErrors.images = 'At least one image is required'
+      newErrors.images = t('addProduct.imageRequired')
     }
 
     if (formData.description.length > 300) {
-      newErrors.description = 'Description must be 300 characters or less'
+      newErrors.description = t('addProduct.descriptionTooLong')
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [formData])
+  }, [formData, t])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -185,7 +188,7 @@ export function AddProductModal({
       const result = await onSubmit(submitData, isEdit)
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to save product')
+        throw new Error(result.error || t('addProduct.saveFailed'))
       }
 
       // Clear draft on success
@@ -199,12 +202,12 @@ export function AddProductModal({
       logger.error('[AddProductModal] Submit error:', err)
       setErrors(prev => ({
         ...prev,
-        submit: err instanceof Error ? err.message : 'Failed to save product',
+        submit: err instanceof Error ? err.message : t('addProduct.saveFailed'),
       }))
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, validate, onSubmit, isEdit, onClose, draftKey, need])
+  }, [formData, validate, onSubmit, isEdit, onClose, draftKey, need, t])
 
   if (!isOpen) return null
 
@@ -223,13 +226,13 @@ export function AddProductModal({
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 id="add-product-title" className="text-xl font-semibold text-gray-900">
-              {isEdit ? 'Edit Product' : 'Add Product'}
+              {isEdit ? t('addProduct.titleEdit') : t('addProduct.titleAdd')}
             </h2>
             <button
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
-              aria-label="Close"
+              aria-label={t('addProduct.close')}
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -263,14 +266,14 @@ export function AddProductModal({
             {/* Name */}
             <div>
               <label htmlFor="product-name" className="block text-sm font-medium text-gray-700 mb-1">
-                Product Name <span className="text-red-500">*</span>
+                <Trans t={t} i18nKey="addProduct.nameLabel" components={{ req: <span className="text-red-500" /> }} />
               </label>
               <input
                 id="product-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="e.g. Pro Field Hockey Stick"
+                placeholder={t('addProduct.namePlaceholder')}
                 className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                   errors.name ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -286,13 +289,13 @@ export function AddProductModal({
             {/* Description */}
             <div>
               <label htmlFor="product-description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description <span className="text-gray-400">(optional)</span>
+                <Trans t={t} i18nKey="addProduct.descriptionLabel" components={{ muted: <span className="text-gray-400" /> }} />
               </label>
               <textarea
                 id="product-description"
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                placeholder="Short description of your product or service..."
+                placeholder={t('addProduct.descriptionPlaceholder')}
                 rows={3}
                 maxLength={300}
                 autoCapitalize="sentences"
@@ -316,7 +319,7 @@ export function AddProductModal({
             {/* External URL */}
             <div>
               <label htmlFor="product-url" className="block text-sm font-medium text-gray-700 mb-1">
-                Product URL <span className="text-gray-400">(optional)</span>
+                <Trans t={t} i18nKey="addProduct.urlLabel" components={{ muted: <span className="text-gray-400" /> }} />
               </label>
               <input
                 id="product-url"
@@ -324,11 +327,11 @@ export function AddProductModal({
                 value={formData.external_url}
                 onChange={(e) => handleChange('external_url', e.target.value)}
                 onBlur={handleUrlBlur}
-                placeholder="www.yourbrand.com/product"
+                placeholder={t('addProduct.urlPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               />
               <p className="mt-1 text-xs text-gray-400">
-                Links to your website. If empty, the card will link to your brand's website.
+                {t('addProduct.urlHint')}
               </p>
             </div>
 
@@ -339,7 +342,7 @@ export function AddProductModal({
               className="w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Product'}
+              {isSubmitting ? t('addProduct.saving') : isEdit ? t('addProduct.saveChanges') : t('addProduct.submitAdd')}
             </button>
           </form>
         </div>

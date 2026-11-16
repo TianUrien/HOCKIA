@@ -1,5 +1,6 @@
 import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
 import { DESCRIPTION_MAX, PAY_OPTIONS, TITLE_MAX, startLabel, type PostRoleDraft, type RoleGender, type RoleLevel, type RolePay, type RolePosition } from '@/lib/postRole'
 
 /**
@@ -80,30 +81,30 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
   return [
     {
       key: 'role',
-      label: 'The opportunity',
-      lines: [join([pos, title && title.toLowerCase() !== (pos ?? '').toLowerCase() ? title : null, team ? `${team} team` : null])].filter(Boolean),
-      optionalMissing: player && !d.level ? ['level'] : [],
-      neededMissing: [!d.position ? (player ? 'position' : 'role') : null, !d.gender ? 'team' : null].filter((x): x is string => Boolean(x)),
+      label: tHockiaAi('postRole.sectionRole'),
+      lines: [join([pos, title && title.toLowerCase() !== (pos ?? '').toLowerCase() ? title : null, team ? tHockiaAi('postRole.teamLine', { team }) : null])].filter(Boolean),
+      optionalMissing: player && !d.level ? [tHockiaAi('postRole.missingLevel')] : [],
+      neededMissing: [!d.position ? (player ? tHockiaAi('postRole.missingPosition') : tHockiaAi('postRole.missingRole')) : null, !d.gender ? tHockiaAi('postRole.missingTeam') : null].filter((x): x is string => Boolean(x)),
     },
     {
       key: 'offer',
-      label: 'The offer',
-      lines: [join([start ? `Starts ${start}` : null, d.duration]), join([pay, ...pkg])].filter(Boolean),
-      optionalMissing: [!start ? 'start' : null, !d.duration ? 'length' : null, !pay ? 'pay' : null].filter((x): x is string => Boolean(x)),
+      label: tHockiaAi('postRole.sectionOffer'),
+      lines: [join([start ? tHockiaAi('postRole.starts', { date: start }) : null, d.duration]), join([pay, ...pkg])].filter(Boolean),
+      optionalMissing: [!start ? tHockiaAi('postRole.missingStart') : null, !d.duration ? tHockiaAi('postRole.missingLength') : null, !pay ? tHockiaAi('postRole.missingPay') : null].filter((x): x is string => Boolean(x)),
       neededMissing: [],
     },
     {
       key: 'where',
-      label: 'Where',
-      lines: place ? [join([place, opts.fromClub ? 'from your club profile' : null])] : [],
+      label: tHockiaAi('postRole.sectionWhere'),
+      lines: place ? [join([place, opts.fromClub ? tHockiaAi('postRole.fromClub') : null])] : [],
       optionalMissing: [],
-      neededMissing: d.city.trim() && d.country.trim() ? [] : ['where the opportunity is'],
+      neededMissing: d.city.trim() && d.country.trim() ? [] : [tHockiaAi('postRole.missingWhere')],
     },
     {
       key: 'about',
-      label: 'About the opportunity',
+      label: tHockiaAi('postRole.sectionAbout'),
       lines: d.description.trim() ? [d.description.trim()] : [],
-      optionalMissing: d.description.trim() ? [] : ['description'],
+      optionalMissing: d.description.trim() ? [] : [tHockiaAi('postRole.missingDescription')],
       neededMissing: [],
     },
   ]
@@ -111,7 +112,5 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
 
 /** Why Hockia AI couldn't draft, in the toast. */
 export function aiDraftFailedCopy(reason: string | null | undefined): string {
-  return reason === 'limit'
-    ? 'You’ve used today’s Hockia AI drafts. Your words are in “About the opportunity”. Fill in the rest.'
-    : 'Hockia AI couldn’t draft this right now. Your words are in “About the opportunity”. Fill in the rest.'
+  return reason === 'limit' ? tHockiaAi('postRole.draftLimit') : tHockiaAi('postRole.draftFailed')
 }

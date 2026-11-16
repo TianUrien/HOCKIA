@@ -9,6 +9,8 @@ import type { DiscoverResult } from '@/hooks/useDiscover'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { useAuthStore } from '@/lib/auth'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
+import { hasEnumsKey, useEnumsT } from '@/i18n/ns/enums'
 
 interface DiscoverResultCardProps {
   result: DiscoverResult
@@ -18,13 +20,13 @@ interface DiscoverResultCardProps {
 // sky = neutral-positive, gray = muted. "Strong match" means strong against
 // the search criteria, not a quality judgement of the person.
 const FIT_LEVEL_PRESET: Record<NonNullable<DiscoverResult['fit_level']>, {
-  label: string
+  labelKey: 'discover.fitStrong' | 'discover.fitGood' | 'discover.fitMoreInfo'
   pillBg: string
   pillText: string
 }> = {
-  strong_match: { label: 'Strong match', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
-  possible_match: { label: 'Good match', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
-  needs_more_info: { label: 'Needs more info', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
+  strong_match: { labelKey: 'discover.fitStrong', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
+  possible_match: { labelKey: 'discover.fitGood', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
+  needs_more_info: { labelKey: 'discover.fitMoreInfo', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
 }
 
 /** Title-case a stored lowercase position word for display. */
@@ -34,17 +36,16 @@ function cap(s: string): string {
 
 /** Claimed / directory pill for World-directory club rows. */
 function WorldClubPill({ claimed }: { claimed: boolean }) {
+  const t = useHockiaAiT()
   return (
     <span
       className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
         claimed ? 'bg-emerald-50 text-emerald-700' : 'bg-surface-muted text-ink-2'
       }`}
-      title={claimed
-        ? 'Active on Hockia. You can message them inside the platform'
-        : 'In the global directory. Not yet active on Hockia'}
+      title={claimed ? t('discover.claimedTitle') : t('discover.directoryTitle')}
     >
       <Globe2 className="w-2.5 h-2.5" aria-hidden="true" />
-      {claimed ? 'Claimed' : 'Directory'}
+      {claimed ? t('discover.claimed') : t('discover.directory')}
     </span>
   )
 }
@@ -77,6 +78,8 @@ function KeyInfoRow({ label, value }: { label: string; value: string }) {
  */
 export default function DiscoverResultCard({ result }: DiscoverResultCardProps) {
   const navigate = useNavigate()
+  const t = useHockiaAiT()
+  const te = useEnumsT()
   const [expanded, setExpanded] = useState(false)
   // Match language is recruiter-only (founder rule 2026-09-25): players and
   // coaches looking for a role never see "Strong / Good match" pills.
@@ -111,7 +114,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   const positionLine = isWorldClub
     ? [result.league_name, result.province_name, result.base_country_name].filter(Boolean).join(' · ')
     : specializationLabel
-      || [result.position, result.secondary_position].filter(Boolean).map(s => cap(s as string)).join(' · ')
+      || [result.position, result.secondary_position].filter(Boolean).map(s => (hasEnumsKey(`position.${s}`) ? te(`position.${s}` as never) : cap(s as string))).join(' · ')
       || null
 
   const nationality = !isWorldClub ? result.nationality_name : null
@@ -149,10 +152,10 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   // lives here (it doesn't fit above). The drawer is for additional
   // insight. (Phase 3 adds Journey highlights, references, and strengths.)
   const keyInfo: { label: string; value: string }[] = []
-  if (result.age != null) keyInfo.push({ label: 'Age', value: String(result.age) })
-  if (baseLine) keyInfo.push({ label: 'Based in', value: baseLine })
-  if (isPersonRole) keyInfo.push({ label: 'Current club', value: club || 'No current club' })
-  else if (club) keyInfo.push({ label: 'Current club', value: club })
+  if (result.age != null) keyInfo.push({ label: t('discover.age'), value: String(result.age) })
+  if (baseLine) keyInfo.push({ label: t('discover.basedIn'), value: baseLine })
+  if (isPersonRole) keyInfo.push({ label: t('discover.currentClub'), value: club || t('discover.noCurrentClub') })
+  else if (club) keyInfo.push({ label: t('discover.currentClub'), value: club })
 
   // Phase 3 — rule-based Journey highlights, derived by the backend.
   const highlights = !isWorldClub ? (result.highlights ?? []) : []
@@ -179,7 +182,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm font-semibold text-gray-900 truncate">
-                {result.full_name ?? 'Unknown'}
+                {result.full_name ?? t('discover.unknown')}
               </span>
               {isWorldClub ? (
                 <WorldClubPill claimed={!!(result.claimed && result.claimed_profile_id)} />
@@ -213,7 +216,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             {result.provenance === 'verified' && (
               <p className="mt-1 flex items-center gap-1 text-xs">
                 <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  ✓ Verified
+                  {t('discover.verified')}
                 </span>
                 {result.provenance_label && (
                   <span className="truncate text-gray-700">{result.provenance_label}</span>
@@ -223,7 +226,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             {result.provenance === 'self_described' && (
               <p className="mt-1 text-xs">
                 <span className="inline-flex items-center rounded-full bg-surface-grouped px-1.5 py-0.5 text-[10px] font-semibold text-ink-2">
-                  Bio mention · not verified
+                  {t('discover.bioMention')}
                 </span>
               </p>
             )}
@@ -236,7 +239,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
                 <span
                   className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${fitPreset.pillBg} ${fitPreset.pillText}`}
                 >
-                  {fitPreset.label}
+                  {t(fitPreset.labelKey)}
                 </span>
               )}
               {availabilityPill}
@@ -249,7 +252,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
           <button
             type="button"
             onClick={() => setExpanded(e => !e)}
-            aria-label={expanded ? 'Hide details' : 'Show details'}
+            aria-label={expanded ? t('discover.hideDetails') : t('discover.showDetails')}
             className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:border-hockia-primary/40 hover:text-hockia-primary transition-colors"
           >
             <ChevronDown
@@ -272,7 +275,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
               {keyInfo.length > 0 && (
                 <section>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-0.5">
-                    Key info
+                    {t('discover.keyInfo')}
                   </p>
                   <div>
                     {keyInfo.map(row => (
@@ -284,7 +287,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
               {highlights.length > 0 && (
                 <section>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-1">
-                    Profile highlights
+                    {t('discover.highlights')}
                   </p>
                   <ul className="space-y-1">
                     {highlights.map((h, i) => (

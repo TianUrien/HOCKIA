@@ -11,6 +11,8 @@ import { supabase } from '@/lib/supabase'
 import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { logger } from '@/lib/logger'
 import type { ProductImage } from '@/hooks/useBrandProducts'
+import { Trans } from 'react-i18next'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface ProductImageUploaderProps {
   images: ProductImage[]
@@ -27,6 +29,7 @@ export function ProductImageUploader({
   maxImages = 4,
   userId,
 }: ProductImageUploaderProps) {
+  const t = useBrandsT()
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -108,11 +111,11 @@ export function ProductImageUploader({
       onChange(sorted)
     } catch (err) {
       logger.error('[ProductImageUploader] Upload error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to upload image')
+      setError(err instanceof Error ? err.message : t('productImage.uploadFailed'))
     } finally {
       setUploadingSlot(null)
     }
-  }, [images, onChange, userId])
+  }, [images, onChange, userId, t])
 
   const handleRemove = useCallback((slotIndex: number) => {
     const updated = images
@@ -131,7 +134,7 @@ export function ProductImageUploader({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Product Images <span className="text-gray-400">(up to {maxImages})</span>
+        <Trans t={t} i18nKey="productImage.label" values={{ max: maxImages }} components={{ muted: <span className="text-gray-400" /> }} />
       </label>
 
       <div className="grid grid-cols-2 gap-3">
@@ -147,20 +150,20 @@ export function ProductImageUploader({
               >
                 <img
                   src={slot.url}
-                  alt={`Product image ${i + 1}`}
+                  alt={t('productImage.imageAlt', { n: i + 1 })}
                   className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemove(i)}
                   className="absolute top-2 right-2 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
-                  aria-label={`Remove image ${i + 1}`}
+                  aria-label={t('productImage.remove', { n: i + 1 })}
                 >
                   <X className="w-4 h-4" />
                 </button>
                 {i === 0 && (
                   <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded text-white text-xs font-medium">
-                    Main
+                    {t('productImage.main')}
                   </span>
                 )}
               </div>
@@ -181,7 +184,7 @@ export function ProductImageUploader({
               ) : (
                 <>
                   <ImagePlus className="w-6 h-6" />
-                  <span className="text-xs">Add image</span>
+                  <span className="text-xs">{t('productImage.add')}</span>
                 </>
               )}
             </button>
@@ -199,7 +202,7 @@ export function ProductImageUploader({
         accept=".jpg,.jpeg,.png,image/jpeg,image/png"
         onChange={handleFileChange}
         className="hidden"
-        aria-label="Upload product image"
+        aria-label={t('productImage.upload')}
       />
     </div>
   )

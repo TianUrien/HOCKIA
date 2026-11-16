@@ -22,6 +22,7 @@ import {
 } from '@/lib/signing'
 import { Chips, Segments } from './roleFormUi'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * D4.2 · Make an offer (Figma 390:249; DEV NOTE 391:28). Filled in from the
@@ -65,6 +66,7 @@ function Row({ label, value, open, onToggle, children, testId }: { label: string
 const Divider = () => <div className="ml-3.5 h-[0.5px] bg-line" />
 
 export default function OfferSheet({ open, firstName, roleLabel, role, current, publisherIsClub = true, organisation, busy, onClose, onSend }: Props) {
+  const t = useRecruitingT()
   const [draft, setDraft] = useState<OfferDraft | null>(null)
   const [field, setField] = useState<Field>(null)
 
@@ -83,7 +85,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
     ]
   }, [draft?.package])
 
-  if (!draft) return <BottomSheet open={open} onClose={onClose} ariaLabel={`Offer to ${firstName}`}><div className="h-40" /></BottomSheet>
+  if (!draft) return <BottomSheet open={open} onClose={onClose} ariaLabel={t('offerSheet.title', { name: firstName })}><div className="h-40" /></BottomSheet>
 
   const set = <K extends keyof OfferDraft>(k: K, v: OfferDraft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d))
   const toggle = (f: Field) => setField((x) => (x === f ? null : f))
@@ -92,40 +94,40 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
   const maxDay = toDayString(addDays(new Date(), OFFER_MAX_DAYS))
 
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel={`Offer to ${firstName}`}>
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('offerSheet.title', { name: firstName })}>
       <div className="overflow-y-auto px-5 pb-3 pt-1" data-testid="offer-sheet">
-        <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">Offer to {firstName}</h2>
-        <p className="mt-1 text-[14px] leading-5 text-ink-2">Filled in from your opportunity. Change anything that’s different for {firstName}.</p>
+        <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{t('offerSheet.title', { name: firstName })}</h2>
+        <p className="mt-1 text-[14px] leading-5 text-ink-2">{t('offerSheet.intro', { name: firstName })}</p>
 
         <div className="mt-3.5 overflow-hidden rounded-2xl bg-surface-grouped">
-          <Row label="Role" value={roleLabel} open={false} testId="offer-row-role" />
+          <Row label={t('offerSheet.role')} value={roleLabel} open={false} testId="offer-row-role" />
           <Divider />
           {/* No start date on the role = starts immediately (Post a role convention), so this never reads "Not set". */}
-          <Row label="Start" value={offerStartLine(draft.startDate, draft.length)} open={field === 'start'} onToggle={() => toggle('start')} testId="offer-row-start">
+          <Row label={t('offerSheet.start')} value={offerStartLine(draft.startDate, draft.length)} open={field === 'start'} onToggle={() => toggle('start')} testId="offer-row-start">
             <div className="flex gap-2">
-              <input type="date" value={draft.startDate ?? ''} onChange={(e) => set('startDate', e.target.value || null)} aria-label="Start date" className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
-              <select value={draft.length ?? ''} onChange={(e) => set('length', e.target.value || null)} aria-label="Length" className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2 text-[15px] text-ink-1">
-                <option value="">Length</option>
+              <input type="date" value={draft.startDate ?? ''} onChange={(e) => set('startDate', e.target.value || null)} aria-label={t('offerSheet.startDate')} className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
+              <select value={draft.length ?? ''} onChange={(e) => set('length', e.target.value || null)} aria-label={t('offerSheet.length')} className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2 text-[15px] text-ink-1">
+                <option value="">{t('offerSheet.length')}</option>
                 {[...new Set([...(draft.length && !DURATION_OPTIONS.includes(draft.length) ? [draft.length] : []), ...DURATION_OPTIONS])].map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
           </Row>
           <Divider />
-          <Row label="Pay" value={offerPayLine(draft.pay) ?? 'Not stated'} open={field === 'pay'} onToggle={() => toggle('pay')} testId="offer-row-pay">
-            <Segments label="Pay" value={PAY_OPTIONS.some((o) => o.value === draft.pay) ? draft.pay as (typeof PAY_OPTIONS)[number]['value'] : null} options={PAY_OPTIONS} onChange={(v) => set('pay', draft.pay === v ? null : v)} />
+          <Row label={t('offerSheet.pay')} value={offerPayLine(draft.pay) ?? t('offerSheet.notStated')} open={field === 'pay'} onToggle={() => toggle('pay')} testId="offer-row-pay">
+            <Segments label={t('offerSheet.pay')} value={PAY_OPTIONS.some((o) => o.value === draft.pay) ? draft.pay as (typeof PAY_OPTIONS)[number]['value'] : null} options={PAY_OPTIONS} onChange={(v) => set('pay', draft.pay === v ? null : v)} />
           </Row>
           <Divider />
-          <Row label="Package" value={offerPackageLine(draft.package) ?? 'None'} open={field === 'package'} onToggle={() => toggle('package')} testId="offer-row-package">
+          <Row label={t('offerSheet.package')} value={offerPackageLine(draft.package) ?? t('offerSheet.none')} open={field === 'package'} onToggle={() => toggle('package')} testId="offer-row-package">
             <Chips
-              label="Package"
+              label={t('offerSheet.package')}
               values={draft.package}
               options={packageOptions}
               onToggle={(v) => set('package', draft.package.includes(v) ? draft.package.filter((x) => x !== v) : [...draft.package, v])}
             />
           </Row>
           <Divider />
-          <Row label="Open until" value={shortDay(draft.openUntil) ?? 'Choose a date'} open={field === 'openUntil'} onToggle={() => toggle('openUntil')} testId="offer-row-open-until">
-            <input type="date" value={draft.openUntil} min={today} max={maxDay} onChange={(e) => set('openUntil', e.target.value)} aria-label="Open until" className="h-10 w-full rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
+          <Row label={t('offerSheet.openUntil')} value={shortDay(draft.openUntil) ?? t('offerSheet.chooseDate')} open={field === 'openUntil'} onToggle={() => toggle('openUntil')} testId="offer-row-open-until">
+            <input type="date" value={draft.openUntil} min={today} max={maxDay} onChange={(e) => set('openUntil', e.target.value)} aria-label={t('offerSheet.openUntil')} className="h-10 w-full rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
           </Row>
         </div>
         {dateError && <p className="mt-2 text-secondary text-ink-2" data-testid="offer-date-error">{dateError}</p>}
@@ -134,8 +136,8 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           value={draft.note}
           onChange={(e) => set('note', e.target.value.slice(0, OFFER_NOTE_MAX))}
           rows={2}
-          placeholder="Add a note (optional)"
-          aria-label="Note (optional)"
+          placeholder={t('offerSheet.notePlaceholder')}
+          aria-label={t('offerSheet.noteLabel')}
           className="mt-3 w-full resize-none rounded-card border border-line px-3.5 py-3 text-[15px] text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
           data-testid="offer-note"
         />
@@ -148,7 +150,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           className="mt-3.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-50"
           data-testid="offer-send"
         >
-          {busy ? 'Sending…' : current ? 'Send updated offer' : 'Send offer'}
+          {busy ? t('offerSheet.sending') : current ? t('offerSheet.sendUpdated') : t('offerSheet.send')}
         </button>
       </div>
     </BottomSheet>

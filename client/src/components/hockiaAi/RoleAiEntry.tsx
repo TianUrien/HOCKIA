@@ -3,7 +3,8 @@ import { ChevronRight } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { positionLabel } from '@/lib/identity'
-import { CHECK_PROFILE_AGAINST_ROLE } from '@/lib/hockiaAi'
+import { checkProfileAgainstRole } from '@/lib/hockiaAi'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import { applyRoleMismatch } from '@/lib/applyRoleMatch'
 import { MascotAvatar } from './mascot'
 import { useHockiaAiSheet } from './hockiaAiSheetStore'
@@ -15,6 +16,7 @@ import { useHockiaAiSheet } from './hockiaAiSheetStore'
  * the city. The sheet itself is mounted once for the app (GlobalHockiaAiSheet).
  */
 export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacancy: Vacancy; clubName: string | null; clubLogo: string | null; className?: string }) {
+  const t = useHockiaAiT()
   const role = useAuthStore((s) => s.profile?.role)
   const askAboutRole = useHockiaAiSheet((s) => s.askAboutRole)
   if (role !== 'player' && role !== 'coach') return null
@@ -31,8 +33,8 @@ export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacanc
       >
         <MascotAvatar size={36} />
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-ink-1">Ask Hockia AI about this opportunity <BetaPill onSoft testId="role-ask-ai-beta" /></span>
-          <span className="block truncate text-caption text-ink-2">{[CHECK_PROFILE_AGAINST_ROLE, canApply ? 'Prepare my application' : null, city ? `Life in ${city}` : null].filter(Boolean).join(' · ')}</span>
+          <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-ink-1">{t('roleEntry.title')} <BetaPill onSoft testId="role-ask-ai-beta" /></span>
+          <span className="block truncate text-caption text-ink-2">{[checkProfileAgainstRole(), canApply ? t('roleEntry.prepare') : null, city ? t('roleEntry.lifeIn', { city }) : null].filter(Boolean).join(' · ')}</span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-brand-primary" strokeWidth={2} />
       </button>

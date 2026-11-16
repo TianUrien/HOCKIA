@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { Avatar } from '@/components'
+import { useClubT } from '@/i18n/ns/club'
 
 interface InvitePreview {
   valid: boolean
@@ -23,6 +24,7 @@ export default function ClubInviteLanding() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuthStore()
   const { addToast } = useToastStore()
+  const t = useClubT()
 
   const [preview, setPreview] = useState<InvitePreview | null>(null)
   const [loading, setLoading] = useState(true)
@@ -63,10 +65,10 @@ export default function ClubInviteLanding() {
     setJoining(false)
     const result = (error ? { success: false, error: error.message } : data) as { success: boolean; error?: string; already_member?: boolean }
     if (result.success) {
-      addToast(result.already_member ? 'You’re already a member.' : `You joined ${preview?.club_name ?? 'the club'}.`, 'success')
+      addToast(result.already_member ? t('inviteLanding.toastAlreadyMember') : preview?.club_name ? t('inviteLanding.toastJoined', { clubName: preview.club_name }) : t('inviteLanding.toastJoinedNoName'), 'success')
       navigate(clubPath)
     } else {
-      addToast(result.error ?? 'Could not join the club.', 'error')
+      addToast(result.error ?? t('inviteLanding.toastJoinFailed'), 'error')
       void loadPreview()
     }
   }
@@ -85,7 +87,7 @@ export default function ClubInviteLanding() {
     return shell(
       <div className="flex flex-col items-center py-8 text-ink-3">
         <Loader2 className="w-7 h-7 animate-spin mb-3" />
-        <p className="text-sm">Loading invitation…</p>
+        <p className="text-sm">{t('inviteLanding.loading')}</p>
       </div>
     )
   }
@@ -96,16 +98,16 @@ export default function ClubInviteLanding() {
         <div className="mx-auto flex h-[88px] w-[88px] items-center justify-center rounded-full bg-surface-muted">
           <ShieldX className="h-9 w-9 text-ink-2" />
         </div>
-        <h1 className="mt-8 text-title text-ink-1">Invite not available</h1>
-        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">This invite link is no longer valid. Ask the club for a new one.</p>
+        <h1 className="mt-8 text-title text-ink-1">{t('inviteLanding.unavailableTitle')}</h1>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">{t('inviteLanding.unavailableBody')}</p>
         <button type="button" onClick={() => navigate('/')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
-          Go to Hockia
+          {t('inviteLanding.goHome')}
         </button>
       </>
     )
   }
 
-  const clubName = preview.club_name ?? 'A club'
+  const clubName = preview.club_name ?? t('inviteLanding.aClub')
   const isAuthed = Boolean(user)
   const role = preview.caller_role
   const alreadyMember = preview.caller_member_status === 'active'
@@ -114,8 +116,8 @@ export default function ClubInviteLanding() {
   const header = (
     <>
       <Avatar src={preview.club_avatar_url} alt={clubName} initials={clubName.slice(0, 2)} size="xl" role="club" className="mx-auto mb-4 shadow-sm" />
-      <p className="mb-2 text-micro font-semibold uppercase tracking-[0.06em] text-brand-text">Club invitation</p>
-      <h1 className="text-title text-ink-1">{clubName} invited you to join its squad</h1>
+      <p className="mb-2 text-micro font-semibold uppercase tracking-[0.06em] text-brand-text">{t('inviteLanding.eyebrow')}</p>
+      <h1 className="text-title text-ink-1">{t('inviteLanding.title', { clubName })}</h1>
       {preview.club_location && <p className="mt-1 text-secondary text-ink-3">{preview.club_location}</p>}
     </>
   )
@@ -124,40 +126,40 @@ export default function ClubInviteLanding() {
   if (!isAuthed) {
     action = (
       <>
-        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Sign in or create your Hockia profile to join this club.</p>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">{t('inviteLanding.signedOutBody')}</p>
         <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate(`/signup?next=${encodeURIComponent(`/invite/club/${token}`)}`) }} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>
-          Create my profile
+          {t('inviteLanding.createProfile')}
         </button>
         <button type="button" onClick={handleSignIn} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-3' })}>
-          I already have an account
+          {t('inviteLanding.haveAccount')}
         </button>
       </>
     )
   } else if (alreadyMember) {
     action = (
       <>
-        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">You’re already a member of {clubName}.</p>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">{t('inviteLanding.alreadyMember', { clubName })}</p>
         <button type="button" onClick={() => navigate(clubPath)} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
-          View club
+          {t('inviteLanding.viewClub')}
         </button>
       </>
     )
   } else if (ineligibleRole) {
     action = (
       <>
-        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Only players and coaches can join a club as a member.</p>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">{t('inviteLanding.ineligible')}</p>
         <button type="button" onClick={() => navigate('/home')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}>
-          Go to Hockia
+          {t('inviteLanding.goHome')}
         </button>
       </>
     )
   } else {
     action = (
       <>
-        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">Join {clubName} as a member. They’ll see you in their roster.</p>
+        <p className="mb-8 mt-3 text-[17px] leading-[22px] text-ink-2">{t('inviteLanding.joinBody', { clubName })}</p>
         <button type="button" onClick={handleJoin} disabled={joining} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>
           {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-          {joining ? 'Joining…' : 'Join club'}
+          {joining ? t('inviteLanding.joining') : t('inviteLanding.join')}
         </button>
       </>
     )

@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
+import { tCommon } from '@/i18n/ns/common'
 import type { HomeFeedItem } from '@/types/homeFeed'
 
 interface FeedPage {
@@ -316,7 +317,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
   let errorStr: string | null = null
   if (query.error) {
     logger.error('[useHomeFeed] Error fetching feed:', query.error)
-    errorStr = query.error instanceof Error ? query.error.message : 'Failed to load feed'
+    errorStr = query.error instanceof Error ? query.error.message : tCommon('errors.feedLoadFailed')
   }
 
   // Report RPC failures to Sentry once per error (deduped via the query

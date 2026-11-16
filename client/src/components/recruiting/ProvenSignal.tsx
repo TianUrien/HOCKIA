@@ -13,6 +13,7 @@
 import { Video, Users, BadgeCheck, Trophy, ShieldCheck } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { evidenceLevelLabel, type EvidenceItem, type EvidenceResult } from '@/lib/evidence'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 const ITEM_ICON: Record<EvidenceItem['key'], ComponentType<{ className?: string }>> = {
   video: Video,
@@ -30,16 +31,17 @@ interface ProvenSignalProps {
 }
 
 export default function ProvenSignal({ result, variant = 'full', className = '' }: ProvenSignalProps) {
+  const t = useRecruitingT()
   if (!result.isApplicable) return null
   const tier = evidenceLevelLabel(result.level)
-  const tooltip = result.reasons.length > 0 ? `${tier} — ${result.reasons.join(' · ')}` : tier
+  const tooltip = result.reasons.length > 0 ? t('provenSignal.tooltip', { tier, reasons: result.reasons.join(' · ') }) : tier
 
   return (
     <div className={['flex flex-col gap-1', className].join(' ')}>
       <span
         className="inline-flex items-center gap-1 self-start rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
         title={tooltip}
-        aria-label={`Evidence: ${tier}. ${result.reasons.join('. ')}`}
+        aria-label={t('provenSignal.aria', { tier, reasons: result.reasons.join('. ') })}
       >
         <ShieldCheck className="w-3 h-3" aria-hidden="true" />
         {tier}

@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel, feedbackMessageKind } from '@/lib/applicationStatus'
 import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
 import { dayFirst } from '@/lib/dayFirst'
+import { currentLanguage } from '@/i18n'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 /**
@@ -193,7 +194,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       const fallback = applicationStatusFallbackMessage(status, latestReason)
       try {
         const { data, error } = await supabase.functions.invoke('application-feedback', {
-          body: { application_id: appId },
+          body: { application_id: appId, locale: currentLanguage() },
         })
         if (cancelled) return
         if (error) {

@@ -15,6 +15,7 @@ import {
   inviteSheetFooter,
   roleOfferLine,
 } from '@/lib/invites'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * D3.2 · Invite to apply (Figma 393:178; DEV NOTE 394:102). Pick the role
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export default function InviteSheet({ open, player, activeRoleId, onClose, onSent }: Props) {
+  const t = useRecruitingT()
   const { roles, loading } = useInviteRoles('player', open)
   const allowance = useInviteAllowance()
   const { send, sending } = useSendInvite()
@@ -108,32 +110,32 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel={`Invite ${firstName} to apply`}>
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('inviteSheet.title', { name: firstName })}>
       <div className="flex flex-col px-5 pb-6 pt-1" data-testid="invite-sheet">
         <div className="flex items-center gap-3 pb-4">
           <EntityAvatar src={avatar} name={player?.full_name ?? null} role="player" size={48} />
           <div className="min-w-0">
-            <h2 className="truncate text-[20px] font-bold leading-6 tracking-[-0.2px] text-ink-1">Invite {firstName} to apply</h2>
+            <h2 className="truncate text-[20px] font-bold leading-6 tracking-[-0.2px] text-ink-1">{t('inviteSheet.title', { name: firstName })}</h2>
             {player && <p className="truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine({ role: player.role, position: player.position, secondaryPosition: player.secondary_position })}</p>}
           </div>
         </div>
 
-        <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Opportunity</p>
+        <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">{t('inviteSheet.opportunityHeading')}</p>
         {choosing && passedActiveRole && (
           <p className="pb-2 text-secondary leading-[18px] text-ink-2" role="status" data-testid="invite-passed-active">
-            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)}. Choose another opportunity.
+            {t('inviteSheet.passedActive', { name: firstNameOf(player?.full_name, t('inviteSheet.playerFallback')), role: inviteRoleLabel(passedActiveRole) })}
           </p>
         )}
         {loading ? (
-          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">Loading opportunities…</p>
+          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">{t('inviteSheet.loading')}</p>
         ) : roles.length === 0 ? (
-          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post an opportunity first. An invite is always to one of your open opportunities.</p>
+          <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">{t('inviteSheet.noRoles')}</p>
         ) : (
-          <div className="flex flex-col gap-2" role="radiogroup" aria-label="Role">
+          <div className="flex flex-col gap-2" role="radiogroup" aria-label={t('inviteSheet.roleLabel')}>
             {(picking || choosing ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {
               const on = r.id === roleId
               const wasPassed = passed.includes(r.id)
-              const offer = wasPassed ? 'Passed on this opportunity' : roleOfferLine(r)
+              const offer = wasPassed ? t('inviteSheet.passedOn') : roleOfferLine(r)
               return (
                 <button
                   key={r.id}
@@ -160,7 +162,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
             })}
             {!picking && !choosing && invitable.length > 1 && (
               <button type="button" onClick={() => setPicking(true)} className="-my-2 flex min-h-11 items-center self-start text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
-                Change opportunity
+                {t('inviteSheet.changeRole')}
               </button>
             )}
           </div>
@@ -168,22 +170,22 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
 
         {role && (
           <>
-            <p className="pb-2 pt-4 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Note</p>
+            <p className="pb-2 pt-4 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">{t('inviteSheet.noteHeading')}</p>
             <div className="flex flex-col gap-1.5 rounded-card bg-surface-grouped p-3.5 focus-within:ring-2 focus-within:ring-focus-ring">
               {showsDraft ? (
                 <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-2" data-testid="invite-note-draft">
-                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the opportunity · tap to edit
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> {t('inviteSheet.drafted')}
                 </span>
               ) : (
-                <span className="text-caption font-semibold text-ink-2">Your note</span>
+                <span className="text-caption font-semibold text-ink-2">{t('inviteSheet.ownNote')}</span>
               )}
               <textarea
                 value={note}
                 onChange={(e) => { setNote(e.target.value.slice(0, INVITE_NOTE_MAX)); setEdited(true) }}
                 rows={Math.max(4, Math.ceil(note.length / 42))}
                 maxLength={INVITE_NOTE_MAX}
-                aria-label={`Note to ${firstName}`}
-                placeholder={`Write a short note to ${firstName}`}
+                aria-label={t('inviteSheet.noteLabel', { name: firstName })}
+                placeholder={t('inviteSheet.notePlaceholder', { name: firstName })}
                 className="w-full resize-none bg-transparent text-[16px] leading-[22px] text-ink-1 outline-none focus-visible:outline-none placeholder:text-ink-3"
               />
             </div>
@@ -201,7 +203,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
           className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
           data-testid="invite-send"
         >
-          {sending ? 'Sending…' : 'Send invite'}
+          {sending ? t('inviteSheet.sending') : t('inviteSheet.send')}
         </button>
       </div>
     </BottomSheet>

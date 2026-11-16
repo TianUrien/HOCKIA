@@ -5,6 +5,9 @@ import { isYouthGender, playerRoleGender } from '@/lib/youthRoles'
 import { humanizeToken } from '@/lib/identity'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import { dayFirst } from '@/lib/dayFirst'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { tClub } from '@/i18n/ns/club'
+import { tEnums } from '@/i18n/ns/enums'
 
 /**
  * Post a role (Figma 04 Club 330:318 → 330:431 → 330:596; DEV NOTEs
@@ -53,32 +56,59 @@ export interface PostRoleDraft {
 export const TITLE_MAX = 120
 export const DESCRIPTION_MAX = 2000
 
+/** An option whose label is read in the interface language on every use (never at import). */
+function option<V extends string>(value: V, label: () => string): { value: V; label: string } {
+  return withLazyText({ value }, { label })
+}
+
 export const PLAYER_POSITIONS: { value: RolePosition; label: string }[] = [
-  { value: 'goalkeeper', label: 'Goalkeeper' },
-  { value: 'defender', label: 'Defender' },
-  { value: 'midfielder', label: 'Midfielder' },
-  { value: 'forward', label: 'Forward' },
+  option<RolePosition>('goalkeeper', () => tEnums('position.goalkeeper')),
+  option<RolePosition>('defender', () => tEnums('position.defender')),
+  option<RolePosition>('midfielder', () => tEnums('position.midfielder')),
+  option<RolePosition>('forward', () => tEnums('position.forward')),
 ]
 
 export const COACH_POSITIONS: { value: RolePosition; label: string }[] = [
-  { value: 'head_coach', label: 'Head coach' },
-  { value: 'assistant_coach', label: 'Assistant coach' },
-  { value: 'youth_coach', label: 'Youth coach' },
-  { value: 'goalkeeper_coach', label: 'Goalkeeper coach' },
-  { value: 'strength_conditioning', label: 'Strength & conditioning' },
-  { value: 'performance_analyst', label: 'Performance analyst' },
-  { value: 'sports_scientist', label: 'Sports scientist' },
-  { value: 'other_coach', label: 'Other' },
+  option<RolePosition>('head_coach', () => tEnums('coachSpecialization.head_coach')),
+  option<RolePosition>('assistant_coach', () => tEnums('coachSpecialization.assistant_coach')),
+  option<RolePosition>('youth_coach', () => tEnums('coachSpecialization.youth_coach')),
+  option<RolePosition>('goalkeeper_coach', () => tEnums('coachSpecialization.goalkeeper_coach')),
+  option<RolePosition>('strength_conditioning', () => tEnums('coachSpecialization.strength_conditioning')),
+  option<RolePosition>('performance_analyst', () => tEnums('coachSpecialization.performance_analyst')),
+  option<RolePosition>('sports_scientist', () => tEnums('coachSpecialization.sports_scientist')),
+  option<RolePosition>('other_coach', () => tClub('postRoleLib.otherCoach')),
 ]
+
+/**
+ * English position names for the saved default title (rule: stored values
+ * stay English, whatever the interface language).
+ */
+const POSITION_EN: Partial<Record<RolePosition, string>> = {
+  goalkeeper: 'Goalkeeper',
+  defender: 'Defender',
+  midfielder: 'Midfielder',
+  forward: 'Forward',
+  head_coach: 'Head coach',
+  assistant_coach: 'Assistant coach',
+  youth_coach: 'Youth coach',
+  goalkeeper_coach: 'Goalkeeper coach',
+  strength_conditioning: 'Strength & conditioning',
+  performance_analyst: 'Performance analyst',
+  sports_scientist: 'Sports scientist',
+  other_coach: 'Other',
+}
+
+/** English team words for the saved default title ("Men's midfielder"). */
+const TEAM_EN: Record<string, string> = { Men: "Men's", Women: "Women's", Mixed: 'Mixed', Boys: 'Boys', Girls: 'Girls' }
 
 /**
  * Teams a PLAYER role can target. No Boys/Girls: under-18s are never
  * recruitable (founder ruling 2026-09-25; the DB rejects them too).
  */
 export const TEAMS: { value: RoleGender; label: string }[] = [
-  { value: 'Men', label: 'Men' },
-  { value: 'Women', label: 'Women' },
-  { value: 'Mixed', label: 'Mixed' },
+  option<RoleGender>('Men', () => tClub('postRoleLib.teams.men')),
+  option<RoleGender>('Women', () => tClub('postRoleLib.teams.women')),
+  option<RoleGender>('Mixed', () => tClub('postRoleLib.teams.mixed')),
 ]
 
 /**
@@ -87,15 +117,15 @@ export const TEAMS: { value: RoleGender; label: string }[] = [
  */
 export const COACH_TEAMS: { value: RoleGender; label: string }[] = [
   ...TEAMS,
-  { value: 'Boys', label: 'Boys' },
-  { value: 'Girls', label: 'Girls' },
+  option<RoleGender>('Boys', () => tClub('postRoleLib.teams.boys')),
+  option<RoleGender>('Girls', () => tClub('postRoleLib.teams.girls')),
 ]
 
 export function teamsFor(type: RoleType): typeof TEAMS {
   return type === 'player' ? TEAMS : COACH_TEAMS
 }
 
-export { COACH_TEAM_HINT } from '@/lib/youthRoles'
+export { COACH_TEAM_HINT, coachTeamHint } from '@/lib/youthRoles'
 
 /** Player ↔ Coach: the team stays, except Boys/Girls, which a player role can't use. */
 export function switchRoleType(d: PostRoleDraft, type: RoleType): PostRoleDraft {
@@ -104,21 +134,21 @@ export function switchRoleType(d: PostRoleDraft, type: RoleType): PostRoleDraft 
 }
 
 export const LEVELS: { value: RoleLevel; label: string }[] = [
-  { value: 'competitive', label: 'Competitive' },
-  { value: 'high_performance', label: 'High performance' },
-  { value: 'elite', label: 'Elite' },
+  option<RoleLevel>('competitive', () => tClub('postRoleLib.levels.competitive')),
+  option<RoleLevel>('high_performance', () => tClub('postRoleLib.levels.highPerformance')),
+  option<RoleLevel>('elite', () => tClub('postRoleLib.levels.elite')),
 ]
 
 /** Figma's short labels for the specialist vocabulary (lib/specialistSkills values). */
 export const SKILLS: { value: string; label: string; gkOnly?: boolean }[] = [
-  { value: 'drag_flicker', label: 'Drag flicker' },
-  { value: 'penalty_corner', label: 'Penalty corner' },
-  { value: 'defensive_leader', label: 'Defensive leader' },
-  { value: 'target_forward', label: 'Target forward' },
-  { value: 'pressing', label: 'Pressing' },
-  { value: 'playmaker', label: 'Playmaker' },
-  { value: 'indoor', label: 'Indoor' },
-  { value: 'sweeper_keeper', label: 'Sweeper keeper', gkOnly: true },
+  option('drag_flicker', () => tClub('postRoleLib.skills.dragFlicker')),
+  option('penalty_corner', () => tClub('postRoleLib.skills.penaltyCorner')),
+  option('defensive_leader', () => tClub('postRoleLib.skills.defensiveLeader')),
+  option('target_forward', () => tClub('postRoleLib.skills.targetForward')),
+  option('pressing', () => tClub('postRoleLib.skills.pressing')),
+  option('playmaker', () => tClub('postRoleLib.skills.playmaker')),
+  option('indoor', () => tClub('postRoleLib.skills.indoor')),
+  withLazyText({ value: 'sweeper_keeper', gkOnly: true }, { label: () => tClub('postRoleLib.skills.sweeperKeeper') }),
 ]
 
 export function skillsFor(position: RolePosition | null): typeof SKILLS {
@@ -126,9 +156,9 @@ export function skillsFor(position: RolePosition | null): typeof SKILLS {
 }
 
 export const PAY_OPTIONS: { value: RolePay; label: string }[] = [
-  { value: 'paid', label: 'Paid' },
-  { value: 'unpaid_development', label: 'Unpaid' },
-  { value: 'either', label: 'Either' },
+  option<RolePay>('paid', () => tClub('postRoleLib.pay.paid')),
+  option<RolePay>('unpaid_development', () => tClub('postRoleLib.pay.unpaid')),
+  option<RolePay>('either', () => tClub('postRoleLib.pay.either')),
 ]
 
 export const PACKAGE_KEYS = ['housing', 'flights', 'insurance', 'job', 'car', 'visa', 'bonuses', 'equipment'] as const
@@ -139,6 +169,18 @@ export const DURATION_OPTIONS: string[] = [
   'Full season',
   'Permanent',
 ]
+
+/**
+ * The picker's option as the club reads it. The value itself is saved
+ * (duration_text) and stays English; only known options are translated.
+ */
+export function durationLabel(value: string): string {
+  const m = /^(\d+) months?$/.exec(value)
+  if (m) return tClub('postRoleLib.duration.months', { count: Number(m[1]) })
+  if (value === 'Full season') return tClub('postRoleLib.duration.fullSeason')
+  if (value === 'Permanent') return tClub('postRoleLib.duration.permanent')
+  return value
+}
 
 /** Legacy duration text → the picker's value when it maps cleanly. */
 export function normalizeDuration(raw: string | null | undefined): string | null {
@@ -237,11 +279,16 @@ function positionLabel(position: RolePosition | null): string | null {
   return [...PLAYER_POSITIONS, ...COACH_POSITIONS].find((p) => p.value === position)?.label ?? humanizeToken(position)
 }
 
-/** Title when the club leaves it empty: "Men's midfielder", "Girls head coach" (the column is NOT NULL). */
+/**
+ * Title when the club leaves it empty: "Men's midfielder", "Girls head coach"
+ * (the column is NOT NULL). Saved on the role and shown to everyone, so it is
+ * always built in English.
+ */
 export function defaultTitle(d: Pick<PostRoleDraft, 'type' | 'position' | 'gender'>): string {
-  const pos = positionLabel(d.position)
-  if (!pos) return ''
-  const team = genderPill(d.type === 'player' ? playerRoleGender(d.gender) : d.gender)?.label
+  if (!d.position) return ''
+  const pos = POSITION_EN[d.position] ?? humanizeToken(d.position) ?? d.position
+  const gender = d.type === 'player' ? playerRoleGender(d.gender) : d.gender
+  const team = gender ? TEAM_EN[gender] : undefined
   return team ? `${team} ${pos.toLowerCase()}` : pos
 }
 
@@ -250,18 +297,18 @@ export type Step = 1 | 2 | 3
 /** What blocks Continue on a step, in the club's words; null = can continue. */
 export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   if (step === 1) {
-    if (!d.position) return d.type === 'player' ? 'Choose a position.' : 'Choose the role.'
+    if (!d.position) return d.type === 'player' ? tClub('postRoleLib.problems.position') : tClub('postRoleLib.problems.role')
     // Every role names its team; a player role only an adult one.
-    if (!d.gender || (d.type === 'player' && isYouthGender(d.gender))) return 'Choose the team.'
-    if (d.title.trim().length > TITLE_MAX) return `Keep the title to ${TITLE_MAX} characters.`
-    if (d.skillsRequired && d.skills.length === 0) return 'Pick a specialist skill, or make it nice to have.'
+    if (!d.gender || (d.type === 'player' && isYouthGender(d.gender))) return tClub('postRoleLib.problems.team')
+    if (d.title.trim().length > TITLE_MAX) return tClub('postRoleLib.problems.titleLength', { max: TITLE_MAX })
+    if (d.skillsRequired && d.skills.length === 0) return tClub('postRoleLib.problems.skill')
     return null
   }
   if (step === 2) {
-    if (!d.city.trim() || !d.country.trim()) return 'Add where the opportunity is.'
+    if (!d.city.trim() || !d.country.trim()) return tClub('postRoleLib.problems.location')
     return null
   }
-  if (d.description.length > DESCRIPTION_MAX) return `Keep “About the opportunity” to ${DESCRIPTION_MAX} characters.`
+  if (d.description.length > DESCRIPTION_MAX) return tClub('postRoleLib.problems.descriptionLength', { max: DESCRIPTION_MAX })
   return stepProblem(d, 1) ?? stepProblem(d, 2)
 }
 
@@ -331,8 +378,11 @@ export function roleChecklist(d: PostRoleDraft): ChecklistItem[] {
 
 /** Step 3 headings: who the preview and checklist speak for. */
 export function checkStepCopy(type: RoleType): { sub: string; checklistTitle: string } {
-  const who = type === 'player' ? 'players' : 'coaches'
-  return { sub: `Step 3 of 3 · How ${who} will see it`, checklistTitle: `What ${who} ask first` }
+  const player = type === 'player'
+  return {
+    sub: player ? tClub('postRoleLib.check.subPlayer') : tClub('postRoleLib.check.subCoach'),
+    checklistTitle: player ? tClub('postRoleLib.check.titlePlayer') : tClub('postRoleLib.check.titleCoach'),
+  }
 }
 
 /**
@@ -341,42 +391,42 @@ export function checkStepCopy(type: RoleType): { sub: string; checklistTitle: st
  * no level.
  */
 export function levelHint(type: RoleType): string {
-  return `Used to rank applicants. ${type === 'player' ? 'Players' : 'Coaches'} don’t see it.`
+  return type === 'player' ? tClub('postRoleLib.levelHint.player') : tClub('postRoleLib.levelHint.coach')
 }
 
 /** Step 2 ("The offer") hints, in the words of who the role is for. */
 export function offerStepCopy(type: RoleType): { when: string; package: string; euPassport: string } {
   if (type === 'player') {
     return {
-      when: 'Players mark when they’re free; we match it to your start.',
-      package: 'Housing and flights are what relocating players ask about first.',
-      euPassport: 'Only players with an EU passport can apply.',
+      when: tClub('postRoleLib.offer.whenPlayer'),
+      package: tClub('postRoleLib.offer.packagePlayer'),
+      euPassport: tClub('postRoleLib.offer.euPassportPlayer'),
     }
   }
   return {
-    when: 'Coaches mark when they’re free; we match it to your start.',
-    package: 'Housing and visa support are what relocating coaches ask about first.',
-    euPassport: 'Only coaches with an EU passport can apply.',
+    when: tClub('postRoleLib.offer.whenCoach'),
+    package: tClub('postRoleLib.offer.packageCoach'),
+    euPassport: tClub('postRoleLib.offer.euPassportCoach'),
   }
 }
 
 export function coachChecklist(d: PostRoleDraft): ChecklistItem[] {
   return [
-    { key: 'when', label: 'Start date and contract length', ok: Boolean(d.startDate && d.duration) },
-    { key: 'pay', label: 'Pay', ok: d.pay !== null },
-    { key: 'relocation', label: 'Housing and visa support', ok: d.benefits.includes('housing') && d.benefits.includes('visa') },
-    { key: 'team', label: 'Team and level', ok: Boolean(d.gender && d.level) },
-    { key: 'about', label: 'A few lines about the opportunity and the squad', ok: d.description.trim().length >= 40 },
+    { key: 'when', label: tClub('postRoleLib.checklist.coachWhen'), ok: Boolean(d.startDate && d.duration) },
+    { key: 'pay', label: tClub('postRoleLib.checklist.pay'), ok: d.pay !== null },
+    { key: 'relocation', label: tClub('postRoleLib.checklist.coachRelocation'), ok: d.benefits.includes('housing') && d.benefits.includes('visa') },
+    { key: 'team', label: tClub('postRoleLib.checklist.coachTeam'), ok: Boolean(d.gender && d.level) },
+    { key: 'about', label: tClub('postRoleLib.checklist.coachAbout'), ok: d.description.trim().length >= 40 },
   ]
 }
 
 /** "What players ask first" (DEV NOTE 330:781): client-side, no score. */
 export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
   return [
-    { key: 'when', label: 'Start date and length', ok: Boolean(d.startDate && d.duration) },
-    { key: 'pay', label: 'Pay', ok: d.pay !== null },
-    { key: 'relocation', label: 'Housing and flights', ok: d.benefits.includes('housing') && d.benefits.includes('flights') },
-    { key: 'about', label: 'A few lines about the team and the season', ok: d.description.trim().length >= 40 },
+    { key: 'when', label: tClub('postRoleLib.checklist.playerWhen'), ok: Boolean(d.startDate && d.duration) },
+    { key: 'pay', label: tClub('postRoleLib.checklist.pay'), ok: d.pay !== null },
+    { key: 'relocation', label: tClub('postRoleLib.checklist.playerRelocation'), ok: d.benefits.includes('housing') && d.benefits.includes('flights') },
+    { key: 'about', label: tClub('postRoleLib.checklist.playerAbout'), ok: d.description.trim().length >= 40 },
   ]
 }
 
@@ -387,22 +437,23 @@ export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
  */
 export function hardnessFootnote(d: PostRoleDraft): string {
   const must: string[] = []
-  const who = d.type === 'player' ? 'players' : 'coaches'
-  if (d.type === 'player') {
+  const player = d.type === 'player'
+  if (player) {
     if (d.positionRequired && d.position) must.push(positionLabel(d.position) as string)
     if (d.levelRequired && d.level) must.push(LEVELS.find((l) => l.value === d.level)?.label ?? d.level)
     if (d.skillsRequired && d.skills.length) must.push(d.skills.map((s) => SKILLS.find((x) => x.value === s)?.label ?? s).join(', '))
-    if (d.availabilityRequired && d.startDate) must.push('available from the start date')
-    if (d.locationRequired && d.city) must.push(`based in ${d.city}`)
+    if (d.availabilityRequired && d.startDate) must.push(tClub('postRoleLib.footnote.availableFromStart'))
+    if (d.locationRequired && d.city) must.push(tClub('postRoleLib.footnote.basedIn', { city: d.city }))
     if (d.payRequired && d.pay) must.push(PAY_OPTIONS.find((p) => p.value === d.pay)?.label.toLowerCase() ?? d.pay)
   }
   const always: string[] = []
-  if (d.type === 'player' && d.gender) always.push(`${genderPill(d.gender)?.label ?? d.gender} team`)
-  if (d.euPassport) always.push('EU passport')
+  if (player && d.gender) always.push(tClub('postRoleLib.footnote.team', { team: genderPill(d.gender)?.label ?? d.gender }))
+  if (d.euPassport) always.push(tClub('postRoleLib.footnote.euPassport'))
   const parts: string[] = []
-  if (must.length) parts.push(`Must have: ${must.join(', ')}.`)
-  if (always.length) parts.push(`Always required: ${always.join(', ')}.`)
-  parts.push(must.length || always.length ? `Everything else ranks ${who}, it doesn’t block them.` : `Nothing blocks ${who}; everything here ranks them.`)
+  if (must.length) parts.push(tClub('postRoleLib.footnote.mustHave', { items: must.join(', ') }))
+  if (always.length) parts.push(tClub('postRoleLib.footnote.alwaysRequired', { items: always.join(', ') }))
+  if (must.length || always.length) parts.push(player ? tClub('postRoleLib.footnote.restRanksPlayers') : tClub('postRoleLib.footnote.restRanksCoaches'))
+  else parts.push(player ? tClub('postRoleLib.footnote.nothingBlocksPlayers') : tClub('postRoleLib.footnote.nothingBlocksCoaches'))
   return parts.join(' ')
 }
 
@@ -449,16 +500,16 @@ export function roleFindPath(type: PostRoleDraft['type'], roleId: string): strin
  */
 export function rolePostedCopy(d: Pick<PostRoleDraft, 'type' | 'position'>): RolePostedCopy {
   const player = d.type === 'player'
-  const who = player ? 'players' : 'coaches'
+  const position = positionLabel(d.position)
   return {
-    title: `${positionLabel(d.position) ?? 'Your opportunity'} is live`,
-    body: `${player ? 'Players' : 'Coaches'} who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.`,
-    findLabel: `Find ${who} for this opportunity`,
-    pushTitle: `Know when ${who} apply`,
+    title: position ? tClub('postRoleLib.posted.title', { position }) : tClub('postRoleLib.posted.titleFallback'),
+    body: player ? tClub('postRoleLib.posted.bodyPlayer') : tClub('postRoleLib.posted.bodyCoach'),
+    findLabel: player ? tClub('postRoleLib.posted.findPlayers') : tClub('postRoleLib.posted.findCoaches'),
+    pushTitle: player ? tClub('postRoleLib.posted.pushPlayers') : tClub('postRoleLib.posted.pushCoaches'),
   }
 }
 
 /** The reply window line; `days` = application_response_settings.expiry_days. */
 export function replyWindowLine(days: number): string {
-  return `Answer each applicant within ${days} ${days === 1 ? 'day' : 'days'}. After that, their application closes on its own.`
+  return tClub('postRoleLib.replyWindow', { count: days })
 }

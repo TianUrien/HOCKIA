@@ -17,6 +17,7 @@ import { useCountryNames } from '@/hooks/useCountryNames'
 import { OfferEditor } from '@/components/brands/offers/OfferEditor'
 import { useQuery } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { useBrandsT } from '@/i18n/ns/brands'
 import { fetchMyItemNeeds, setOfferNeed, type Need } from '@/lib/marketplace'
 import {
   EMPTY_OFFER,
@@ -44,6 +45,7 @@ type Confirm = { offer: BrandOffer; action: 'pause' | 'end' | 'delete' } | null
  */
 export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'new' | 'edit' }) {
   const navigate = useNavigate()
+  const t = useBrandsT()
   const { offerId } = useParams()
   const { user, profile } = useAuthStore()
   const isPhone = useMediaQuery('(max-width: 1023px)')
@@ -103,7 +105,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
       if (needDraft && needDraft !== (id ? needs.get(id) : null)) {
         try { await setOfferNeed(savedId, needDraft); void refetchNeeds() } catch (err) { logger.error('[BrandOffers] need not saved', err) }
       }
-      addToast(submit ? 'Your offer is live.' : 'Draft saved', 'success')
+      addToast(submit ? t('offersPage.toasts.live') : t('offersPage.toasts.draftSaved'), 'success')
       closeEditor()
     } catch (err) {
       addToast(offerErrorMessage(err), 'error')
@@ -119,7 +121,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     setSaving('draft')
     try {
       await save.mutateAsync({ id: draft.id, fields: draft.fields, submit: false })
-      addToast('Draft saved', 'success')
+      addToast(t('offersPage.toasts.draftSaved'), 'success')
       closeEditor()
     } catch (err) {
       addToast(offerErrorMessage(err), 'error')
@@ -136,7 +138,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     }
     try {
       await setState.mutateAsync({ id: o.id, action })
-      const word = { pause: 'Offer paused', resume: 'Offer is live again', end: 'Offer ended', delete: 'Draft deleted' }[action]
+      const word = { pause: t('offersPage.toasts.paused'), resume: t('offersPage.toasts.resumed'), end: t('offersPage.toasts.ended'), delete: t('offersPage.toasts.draftDeleted') }[action]
       addToast(word, 'success')
       if (deskOpen === o.id && (action === 'end' || action === 'delete')) setDeskOpen(null)
     } catch (err) {
@@ -148,7 +150,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const runDuplicate = async (o: BrandOffer) => {
     try {
       const id = await duplicate.mutateAsync(o.id)
-      addToast('Copied as a new draft', 'success')
+      addToast(t('offersPage.toasts.duplicated'), 'success')
       if (isPhone) navigate(`/dashboard/offers/${id}/edit`)
       else setDeskOpen(id)
     } catch (err) {
@@ -156,7 +158,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     }
   }
 
-  const brandName = brand?.name ?? 'Your brand'
+  const brandName = brand?.name ?? t('offersPage.brandFallback')
   const loading = brandLoading || isLoading
 
   // ── Phone editor screens (B2) ────────────────────────────────────────────
@@ -192,7 +194,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     <div className="space-y-6 lg:space-y-5">
       {offers.length > 0 ? (
         <p className="rounded-[20px] bg-brand-soft px-4 py-3 text-row text-brand-primary lg:hidden">
-          Offers go live as soon as you publish. They reach members by where they live, never by nationality.
+          {t('offersPage.howItWorks')}
         </p>
       ) : null}
       {GROUP_ORDER.map((g) => {
@@ -216,18 +218,18 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
     <div className="space-y-4" data-testid="offers-empty">
       <div className="rounded-[24px] bg-white px-6 pb-6 pt-7 text-center shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
         <span className="mx-auto block h-[72px] w-[72px] rounded-[20px] bg-gradient-to-br from-brand-primary to-brand-primary-pressed" aria-hidden="true" />
-        <h2 className="mt-4 text-title text-ink-1">Bring something useful to members</h2>
+        <h2 className="mt-4 text-title text-ink-1">{t('offersPage.empty.title')}</h2>
         <p className="mt-2 text-row text-ink-2">
-          An offer is a product or service for hockey members where they live: a discount, a fitting, a camp place. It&rsquo;s free and goes live as soon as you publish.
+          {t('offersPage.empty.body')}
         </p>
-        <Button block className="mt-5 rounded-full" onClick={openNew} data-testid="offers-create-first">Create your first offer</Button>
+        <Button block className="mt-5 rounded-full" onClick={openNew} data-testid="offers-create-first">{t('offersPage.empty.createFirst')}</Button>
       </div>
       <div className="rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
-        <h3 className="text-body font-semibold text-ink-1">What works with members</h3>
+        <h3 className="text-body font-semibold text-ink-1">{t('offersPage.empty.tipsTitle')}</h3>
         <ul className="mt-2 list-disc space-y-1.5 pl-5 text-row text-ink-2">
-          <li>Say exactly what a member gets.</li>
-          <li>Pick the countries where your customers live.</li>
-          <li>Use a real photo of the product or service.</li>
+          <li>{t('offersPage.empty.tipWhat')}</li>
+          <li>{t('offersPage.empty.tipWhere')}</li>
+          <li>{t('offersPage.empty.tipPhoto')}</li>
         </ul>
       </div>
     </div>
@@ -242,12 +244,12 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
         {isPhone ? (
           <>
             <LargeTitleBar
-              title="Offers"
+              title={t('offersPage.title')}
               className="-mx-4 pr-3"
               trailing={
                 <span className="flex items-center gap-2">
                   <HockiaAiButton onClick={() => showAi('header')} />
-                  <button type="button" onClick={openNew} aria-label="New offer" className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:bg-brand-primary-pressed" data-testid="offers-new">
+                  <button type="button" onClick={openNew} aria-label={t('offersPage.newOffer')} className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:bg-brand-primary-pressed" data-testid="offers-new">
                     <Plus className="h-6 w-6" strokeWidth={2} />
                   </button>
                 </span>
@@ -262,10 +264,10 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
           <div className="pt-8">
             <div className="mb-6 flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1">Offers</h1>
+                <h1 className="font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1">{t('offersPage.title')}</h1>
                 {offers.length > 0 ? <p className="mt-0.5 text-[15px] leading-[1.45] text-ink-2">{liveLimitLine(offers)}</p> : null}
               </div>
-              <Button variant="secondary" className="shrink-0 rounded-full" icon={<Plus className="h-4 w-4" />} onClick={openNew} data-testid="offers-new">New offer</Button>
+              <Button variant="secondary" className="shrink-0 rounded-full" icon={<Plus className="h-4 w-4" />} onClick={openNew} data-testid="offers-new">{t('offersPage.newOffer')}</Button>
             </div>
           <div className="grid grid-cols-[400px_minmax(0,1fr)] items-start gap-6 min-[1440px]:grid-cols-[520px_minmax(0,1fr)]">
             <div>
@@ -290,8 +292,8 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
                 empty
               ) : (
                 <div className="rounded-[24px] bg-white p-8 text-row text-ink-2 ring-1 ring-inset ring-line">
-                  <p className="text-body font-semibold text-ink-1">Choose an offer to edit, or create a new one.</p>
-                  <p className="mt-2">Offers go live as soon as you publish. They reach members by where they live, never by nationality.</p>
+                  <p className="text-body font-semibold text-ink-1">{t('offersPage.deskPrompt')}</p>
+                  <p className="mt-2">{t('offersPage.howItWorks')}</p>
                 </div>
               )}
             </div>
@@ -323,8 +325,9 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
 }
 
 function ListSkeleton() {
+  const t = useBrandsT()
   return (
-    <div className="space-y-3" aria-busy="true" aria-label="Loading offers">
+    <div className="space-y-3" aria-busy="true" aria-label={t('offersPage.loading')}>
       {[0, 1, 2].map((i) => <div key={i} className="h-[124px] animate-pulse rounded-[24px] bg-white" />)}
     </div>
   )
@@ -342,31 +345,32 @@ interface ActionsSheetProps {
 
 /** B3 / B3-paused: what the brand can do with one offer. */
 function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume, onConfirm }: ActionsSheetProps) {
+  const t = useBrandsT()
   if (!offer) return null
-  const title = offerShownFields(offer).title || 'Untitled offer'
-  const statusWord = { draft: 'Draft', in_review: 'Draft', not_approved: 'Taken down', live: 'Live', paused: 'Paused', ended: 'Ended' }[offer.status]
+  const title = offerShownFields(offer).title || t('offersPage.actions.untitled')
+  const statusWord = { draft: t('offers.pill.draft'), in_review: t('offers.pill.draft'), not_approved: t('offers.pill.takenDown'), live: t('offers.pill.live'), paused: t('offers.pill.paused'), ended: t('offers.pill.ended') }[offer.status]
   type Item = { key: string; label: string; hint: string; run: () => void; danger?: boolean }
   const edit: Item = {
     key: 'edit',
-    label: 'Edit',
-    hint: offer.status === 'live' || offer.status === 'paused' ? 'Members see your changes right away.' : offer.status === 'not_approved' ? 'Fix what was flagged, then publish again.' : 'Change the photo, text or audience.',
+    label: t('offersPage.actions.edit'),
+    hint: offer.status === 'live' || offer.status === 'paused' ? t('offersPage.actions.editHintLive') : offer.status === 'not_approved' ? t('offersPage.actions.editHintTakenDown') : t('offersPage.actions.editHint'),
     run: () => onEdit(offer),
   }
-  const dup: Item = { key: 'dup', label: 'Duplicate', hint: 'A new draft with the same photo, text and audience.', run: () => onDuplicate(offer) }
-  const end: Item = { key: 'end', label: 'End offer', hint: 'It stops for good and moves to Ended.', run: () => onConfirm(offer, 'end'), danger: true }
+  const dup: Item = { key: 'dup', label: t('offersPage.actions.duplicate'), hint: t('offersPage.actions.duplicateHint'), run: () => onDuplicate(offer) }
+  const end: Item = { key: 'end', label: t('offersPage.actions.end'), hint: t('offersPage.actions.endHint'), run: () => onConfirm(offer, 'end'), danger: true }
   const items: Item[] =
     offer.status === 'live'
-      ? [edit, { key: 'pause', label: 'Pause', hint: 'Members stop seeing it. Your results are kept.', run: () => onConfirm(offer, 'pause') }, dup, end]
+      ? [edit, { key: 'pause', label: t('offersPage.actions.pause'), hint: t('offersPage.actions.pauseHint'), run: () => onConfirm(offer, 'pause') }, dup, end]
       : offer.status === 'paused'
-        ? [{ key: 'resume', label: 'Resume', hint: 'Members see it again right away.', run: () => onResume(offer) }, edit, dup, end]
+        ? [{ key: 'resume', label: t('offersPage.actions.resume'), hint: t('offersPage.actions.resumeHint'), run: () => onResume(offer) }, edit, dup, end]
         : offer.status === 'ended'
           ? [dup]
           : offer.status === 'draft'
-            ? [edit, dup, { key: 'delete', label: 'Delete draft', hint: 'It is removed. Nobody has seen it.', run: () => onConfirm(offer, 'delete'), danger: true }]
+            ? [edit, dup, { key: 'delete', label: t('offersPage.actions.deleteDraft'), hint: t('offersPage.actions.deleteDraftHint'), run: () => onConfirm(offer, 'delete'), danger: true }]
             : [edit, dup, end]
 
   return (
-    <BottomSheet open onClose={onClose} ariaLabel={`Actions for ${title}`}>
+    <BottomSheet open onClose={onClose} ariaLabel={t('offersPage.actions.aria', { title })}>
       <div className="px-5 pb-2" data-testid="offer-actions">
         <h2 className="text-title text-ink-1">{title}</h2>
         <p className="mt-1 text-row text-ink-2">{[statusWord, countries].filter(Boolean).join(' · ')}</p>
@@ -387,13 +391,14 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
 
 /** B4-pause / B4-end (and deleting a draft): left-aligned sheet, solid confirm + tonal cancel. */
 function OfferConfirmSheet({ confirm, onClose, onConfirm }: { confirm: Confirm; onClose: () => void; onConfirm: (c: NonNullable<Confirm>) => Promise<void> }) {
+  const t = useBrandsT()
   const [busy, setBusy] = useState(false)
   if (!confirm) return null
-  const title = offerShownFields(confirm.offer).title || 'this offer'
+  const shownTitle = offerShownFields(confirm.offer).title
   const copy = {
-    pause: { h: 'Pause this offer?', p: `Members stop seeing "${title}". Your results are kept, and you can resume it any time.`, yes: 'Pause offer', no: 'Cancel', danger: false },
-    end: { h: 'End this offer?', p: `"${title}" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.`, yes: 'End offer', no: 'Keep it live', danger: true },
-    delete: { h: 'Delete this draft?', p: `"${title}" is removed. Nobody has seen it.`, yes: 'Delete draft', no: 'Keep it', danger: true },
+    pause: { h: t('offersPage.confirm.pauseTitle'), p: shownTitle ? t('offersPage.confirm.pauseBody', { title: shownTitle }) : t('offersPage.confirm.pauseBodyNoTitle'), yes: t('offersPage.confirm.pauseYes'), no: t('offersPage.confirm.pauseNo'), danger: false },
+    end: { h: t('offersPage.confirm.endTitle'), p: shownTitle ? t('offersPage.confirm.endBody', { title: shownTitle }) : t('offersPage.confirm.endBodyNoTitle'), yes: t('offersPage.confirm.endYes'), no: t('offersPage.confirm.endNo'), danger: true },
+    delete: { h: t('offersPage.confirm.deleteTitle'), p: shownTitle ? t('offersPage.confirm.deleteBody', { title: shownTitle }) : t('offersPage.confirm.deleteBodyNoTitle'), yes: t('offersPage.confirm.deleteYes'), no: t('offersPage.confirm.deleteNo'), danger: true },
   }[confirm.action]
   const run = async () => {
     setBusy(true)
@@ -420,15 +425,16 @@ function OfferConfirmSheet({ confirm, onClose, onConfirm }: { confirm: Confirm; 
 
 /** B1-limit: a 6th live offer would pass the free limit. */
 function LimitSheet({ open, onClose, onChoose, onDraft }: { open: boolean; onClose: () => void; onChoose: () => void; onDraft: () => void }) {
+  const t = useBrandsT()
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel={`You have ${OFFER_LIVE_LIMIT} live offers`}>
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('offersPage.limit.title', { limit: OFFER_LIVE_LIMIT })}>
       <div className="px-5 pb-2" data-testid="offers-limit">
-        <h2 className="text-title text-ink-1">You have {OFFER_LIVE_LIMIT} live offers</h2>
+        <h2 className="text-title text-ink-1">{t('offersPage.limit.title', { limit: OFFER_LIVE_LIMIT })}</h2>
         <p className="mt-2 text-body text-ink-2">
-          While Hockia is free, each brand can have up to {OFFER_LIVE_LIMIT} live offers. Pause or end one to make room. Drafts don&rsquo;t count.
+          {t('offersPage.limit.body', { limit: OFFER_LIVE_LIMIT })}
         </p>
-        <Button block className="mt-5 rounded-full" onClick={onChoose}>Choose an offer to pause</Button>
-        <Button block variant="tonal" className="mt-3 rounded-full" onClick={onDraft}>Save as a draft instead</Button>
+        <Button block className="mt-5 rounded-full" onClick={onChoose}>{t('offersPage.limit.choose')}</Button>
+        <Button block variant="tonal" className="mt-3 rounded-full" onClick={onDraft}>{t('offersPage.limit.saveDraft')}</Button>
       </div>
     </BottomSheet>
   )

@@ -41,6 +41,8 @@ import {
 } from './recruitingContext'
 import { isOpenToAny } from './hockeyCategories'
 import { isRecruitingViewer } from './recruiterAccess'
+import { tRecruiting } from '@/i18n/ns/recruiting'
+import { tEnums } from '@/i18n/ns/enums'
 
 export type CoachFitState = 'green' | 'yellow' | 'grey'
 
@@ -127,23 +129,23 @@ export function normalizeSpec(s: string | null | undefined): string | null {
 
 /** Human label for a coach specialization value (enum or profile form). */
 export function humanizeCoachSpecialization(spec: string): string {
+  // Token → enums coachSpecialization key ('other' has its own label here).
   const known: Record<string, string> = {
-    head_coach: 'Head coach',
-    head: 'Head coach',
-    assistant_coach: 'Assistant coach',
-    assistant: 'Assistant coach',
-    youth_coach: 'Youth coach',
-    youth: 'Youth coach',
-    goalkeeper_coach: 'Goalkeeper coach',
-    goalkeeper: 'Goalkeeper coach',
-    strength_conditioning: 'Strength & conditioning',
-    performance_analyst: 'Performance analyst',
-    sports_scientist: 'Sports scientist',
-    other_coach: 'Other',
-    other: 'Other',
+    head_coach: 'head_coach',
+    head: 'head_coach',
+    assistant_coach: 'assistant_coach',
+    assistant: 'assistant_coach',
+    youth_coach: 'youth_coach',
+    youth: 'youth_coach',
+    goalkeeper_coach: 'goalkeeper_coach',
+    goalkeeper: 'goalkeeper_coach',
+    strength_conditioning: 'strength_conditioning',
+    performance_analyst: 'performance_analyst',
+    sports_scientist: 'sports_scientist',
   }
   const p = spec.trim().toLowerCase()
-  if (known[p]) return known[p]
+  if (p === 'other' || p === 'other_coach') return tRecruiting('coachFit.specOther')
+  if (known[p]) return tEnums(`coachSpecialization.${known[p]}` as 'coachSpecialization.head_coach')
   return p
     .split(/[\s_-]+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
@@ -194,19 +196,19 @@ export function computeCoachFit(
     specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
     const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
     if (specialization_match === 1) {
-      pushReason(`Specializes as ${soughtLabel}, which matches the opportunity you're recruiting.`, 'positive')
+      pushReason(tRecruiting('coachFit.reasons.specMatch', { spec: soughtLabel }), 'positive')
     } else if (candidate.coach_specialization) {
       pushReason(
-        `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)}, not ${soughtLabel}.`,
+        tRecruiting('coachFit.reasons.specMismatch', { spec: humanizeCoachSpecialization(candidate.coach_specialization), target: soughtLabel }),
         'caveat',
       )
     } else {
-      pushReason('Coaching specialization not added yet. No role match info.')
+      pushReason(tRecruiting('coachFit.reasons.specMissing'))
     }
   } else {
     // Open coach search — no role to rank on. Neutral note (NOT a caveat —
     // the recruiter didn't ask for a specific role).
-    pushReason('Open coach search: ranked on team category, track record, and availability.')
+    pushReason(tRecruiting('coachFit.reasons.openSearch'))
   }
 
   // ── Category match (tiebreak) ──
@@ -219,11 +221,11 @@ export function computeCoachFit(
       : 0
   if (target) {
     if (category_match === 1) {
-      pushReason(`Coaches ${target.toLowerCase()}'s teams, which matches your team category.`, 'positive')
+      pushReason(tRecruiting('coachFit.reasons.categoryMatch', { target: targetWord(target) }), 'positive')
     } else if (Array.isArray(candidate.coaching_categories) && candidate.coaching_categories.length > 0) {
-      pushReason(`Coaches a different team category from ${target.toLowerCase()}'s.`, 'caveat')
+      pushReason(tRecruiting('coachFit.reasons.categoryMismatch', { target: targetWord(target) }), 'caveat')
     } else {
-      pushReason('Coaching categories not added yet. No category match info.')
+      pushReason(tRecruiting('coachFit.reasons.categoryMissing'))
     }
   }
 
@@ -267,10 +269,24 @@ export function computeCoachFit(
 export function coachFitStateLabel(state: CoachFitState): string {
   switch (state) {
     case 'green':
-      return 'Strong fit'
+      return tRecruiting('coachFit.state.green')
     case 'yellow':
-      return 'Possible fit'
+      return tRecruiting('coachFit.state.yellow')
     case 'grey':
-      return 'Lower fit'
+      return tRecruiting('coachFit.state.grey')
+  }
+}
+
+/** The target team category as a word inside a reason ("women", "men"). */
+function targetWord(target: TargetCategory): string {
+  switch (target) {
+    case 'Men':
+      return tRecruiting('coachFit.target.men')
+    case 'Women':
+      return tRecruiting('coachFit.target.women')
+    case 'Mixed':
+      return tRecruiting('coachFit.target.mixed')
+    default:
+      return String(target).toLowerCase()
   }
 }

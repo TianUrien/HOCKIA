@@ -60,5 +60,40 @@
     "homeMine": "My opportunities",
     "homeAll": "Opportunities",
     "signingNeedsClub": "Add your club to your profile to mark a signing."
+  },
+  "coachSpecializationOption": {
+    "head_coach": {
+      "label": "Head coach",
+      "description": "Lead coach, tactical & team management"
+    },
+    "assistant_coach": {
+      "label": "Assistant coach",
+      "description": "Supports head coach, session delivery"
+    },
+    "goalkeeper_coach": {
+      "label": "Goalkeeper coach",
+      "description": "Specialist GK training & development"
+    },
+    "youth_coach": {
+      "label": "Youth / development coach",
+      "description": "Age-group coaching, talent pathway"
+    },
+    "strength_conditioning": {
+      "label": "Strength & conditioning coach",
+      "description": "Physical preparation, injury prevention"
+    },
+    "performance_analyst": {
+      "label": "Performance analyst",
+      "description": "Video analysis, data & match statistics"
+    },
+    "sports_scientist": {
+      "label": "Sports scientist",
+      "description": "Physiology, load monitoring, recovery"
+    },
+    "other": {
+      "label": "Other",
+      "description": "A different coaching or staff role"
+    },
+    "fallback": "Coach"
   }
 }

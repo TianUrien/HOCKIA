@@ -28,6 +28,7 @@ import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { markSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
+import { tCommon } from '@/i18n/ns/common'
 import type { Database } from '@/lib/database.types'
 
 export type ShortlistRow = Database['public']['Tables']['shortlists']['Row']
@@ -122,7 +123,7 @@ const useShortlistsStore = create<ShortlistsStoreState>((set, get) => {
         .order('created_at', { ascending: false })
       if (fetchError) {
         reportSupabaseError('useShortlistsStore.fetch', fetchError)
-        set({ error: 'Could not load shortlists', loading: false, inflight: null })
+        set({ error: tCommon('savedLists.shortlistsLoadFailed'), loading: false, inflight: null })
         return
       }
       const lists = (data ?? []).map((row) => {
@@ -203,7 +204,7 @@ export function useShortlists(): UseShortlistsResult {
     if (!viewerId) return null
     const trimmed = name.trim()
     if (!trimmed) {
-      addToast('Name your shortlist', 'error')
+      addToast(tCommon('savedLists.shortlistNameRequired'), 'error')
       return null
     }
     const { data, error: insertError } = await supabase
@@ -213,7 +214,7 @@ export function useShortlists(): UseShortlistsResult {
       .single()
     if (insertError) {
       reportSupabaseError('useShortlists.create', insertError)
-      addToast('Could not create shortlist', 'error')
+      addToast(tCommon('savedLists.shortlistCreateFailed'), 'error')
       return null
     }
     trackDbEvent('shortlist.created', 'shortlist', (data as ShortlistRow).id, { name: trimmed })
@@ -232,7 +233,7 @@ export function useShortlists(): UseShortlistsResult {
       .eq('owner_id', viewerId)
     if (updateError) {
       reportSupabaseError('useShortlists.rename', updateError)
-      addToast('Could not rename shortlist', 'error')
+      addToast(tCommon('savedLists.shortlistRenameFailed'), 'error')
       return
     }
     await refresh()
@@ -242,7 +243,7 @@ export function useShortlists(): UseShortlistsResult {
     if (!viewerId) return
     const target = lists.find((l) => l.id === id)
     if (target?.is_default) {
-      addToast('Promote another list to default before deleting this one', 'error')
+      addToast(tCommon('savedLists.shortlistDefaultFirst'), 'error')
       return
     }
     const { error: deleteError } = await supabase
@@ -252,7 +253,7 @@ export function useShortlists(): UseShortlistsResult {
       .eq('owner_id', viewerId)
     if (deleteError) {
       reportSupabaseError('useShortlists.remove', deleteError)
-      addToast('Could not delete shortlist', 'error')
+      addToast(tCommon('savedLists.shortlistDeleteFailed'), 'error')
       return
     }
     await refresh()
@@ -274,7 +275,7 @@ export function useShortlists(): UseShortlistsResult {
       .eq('is_default', true)
     if (demoteError) {
       reportSupabaseError('useShortlists.setDefault.demote', demoteError)
-      addToast('Could not change default list', 'error')
+      addToast(tCommon('savedLists.shortlistDefaultFailed'), 'error')
       return
     }
     const { error: promoteError } = await supabase
@@ -294,7 +295,7 @@ export function useShortlists(): UseShortlistsResult {
           .eq('id', previousDefaultId)
       }
       reportSupabaseError('useShortlists.setDefault.promote', promoteError)
-      addToast('Could not change default list', 'error')
+      addToast(tCommon('savedLists.shortlistDefaultFailed'), 'error')
       await refresh()
       return
     }
@@ -369,7 +370,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       .order('created_at', { ascending: false })
     if (fetchError) {
       reportSupabaseError('useShortlistItems.refresh', fetchError)
-      setError('Could not load items')
+      setError(tCommon('savedLists.itemsLoadFailed'))
       setLoading(false)
       return
     }
@@ -395,7 +396,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       // player IS saved, so keep the heart in sync before bailing.
       if (insertError.code !== '23505') {
         reportSupabaseError('useShortlistItems.add', insertError)
-        addToast('Could not add to shortlist', 'error')
+        addToast(tCommon('savedLists.itemAddFailed'), 'error')
         return
       }
       markSavedProfileId(viewerId, playerId)
@@ -421,7 +422,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       .eq('owner_id', viewerId)
     if (deleteError) {
       reportSupabaseError('useShortlistItems.remove', deleteError)
-      addToast('Could not remove item', 'error')
+      addToast(tCommon('savedLists.itemRemoveFailed'), 'error')
       setItems(previous)
       return
     }
@@ -443,7 +444,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       .eq('owner_id', viewerId)
     if (updateError) {
       reportSupabaseError('useShortlistItems.setStatus', updateError)
-      addToast('Could not update status', 'error')
+      addToast(tCommon('savedLists.itemStatusFailed'), 'error')
       setItems(previous)
       return
     }
@@ -452,10 +453,10 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     // pill update was correct. Confirm-saved toast resolves the
     // "did anything happen?" gap.
     const STATUS_LABEL: Record<ShortlistItemStatus, string> = {
-      unsorted: 'Marked Unsorted',
-      good_fit: 'Marked Top pick',
-      maybe: 'Marked Maybe',
-      not_a_fit: 'Marked Not a fit',
+      unsorted: tCommon('savedLists.markedUnsorted'),
+      good_fit: tCommon('savedLists.markedTopPick'),
+      maybe: tCommon('savedLists.markedMaybe'),
+      not_a_fit: tCommon('savedLists.markedNotAFit'),
     }
     addToast(STATUS_LABEL[status], 'success')
   }, [viewerId, items, addToast])
@@ -471,7 +472,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       .eq('owner_id', viewerId)
     if (updateError) {
       reportSupabaseError('useShortlistItems.setNote', updateError)
-      addToast('Could not save note', 'error')
+      addToast(tCommon('savedLists.noteSaveFailed'), 'error')
       setItems(previous)
       return
     }
@@ -479,7 +480,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     // F10 (QA): toast on note save so the user knows the blur
     // committed. Different copy for clear-note so they can tell
     // their text was wiped.
-    addToast(note == null ? 'Note cleared' : 'Note saved', 'success')
+    addToast(note == null ? tCommon('savedLists.noteCleared') : tCommon('savedLists.noteSaved'), 'success')
   }, [viewerId, items, addToast])
 
   const moveTo = useCallback(async (itemId: string, targetShortlistId: string, targetName?: string) => {
@@ -497,10 +498,10 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       // Most likely failure: unique violation when the player already
       // exists in the target list. Surface a helpful message.
       if (updateError.code === '23505') {
-        addToast('That player is already in the destination list', 'error')
+        addToast(tCommon('savedLists.itemAlreadyThere'), 'error')
       } else {
         reportSupabaseError('useShortlistItems.moveTo', updateError)
-        addToast('Could not move item', 'error')
+        addToast(tCommon('savedLists.itemMoveFailed'), 'error')
       }
       setItems(previous)
       return
@@ -510,7 +511,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     // when the caller passed one ("Moved to Women's pre-season"
     // beats a generic "Moved to other list").
     addToast(
-      targetName ? `Moved to ${targetName}` : 'Moved to other list',
+      targetName ? tCommon('savedLists.movedTo', { name: targetName }) : tCommon('savedLists.movedOther'),
       'success',
     )
   }, [viewerId, shortlistId, items, addToast])

@@ -4,6 +4,9 @@
 // edits it; nothing is sent until "Send application". Kept in _shared so the
 // deno suite covers the facts and the template fallback.
 
+import { spanishPositionLabel } from './member-language.ts'
+import { withOutputLanguage, type MemberLanguage } from './ai-language.ts'
+
 export const NOTE_MAX = 450
 
 export interface ApplyFacts {
@@ -38,6 +41,15 @@ export const APPLY_NOTE_SYSTEM = [
   'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
 ].join('\n')
 
+/** The system prompt in the member's language; English is APPLY_NOTE_SYSTEM unchanged. */
+export function applyNoteSystem(lang: MemberLanguage = 'en'): string {
+  if (lang !== 'es') return APPLY_NOTE_SYSTEM
+  return withOutputLanguage(
+    APPLY_NOTE_SYSTEM.replace('Start with "Hi <club>," using the club name given.', 'Start with "Hola, <club>:" using the club name given.'),
+    'es',
+  )
+}
+
 const POSITION: Record<string, string> = { goalkeeper: 'goalkeeper', defender: 'defender', midfielder: 'midfielder', forward: 'forward' }
 const human = (v: string | null) => (v ? POSITION[v] ?? v.replace(/_/g, ' ') : null)
 
@@ -67,6 +79,25 @@ export function templateNote(m: ApplyFacts, r: RoleFacts): string {
   if (m.availableFrom) parts.push(`I can start from ${m.availableFrom}.`)
   parts.push('Happy to share more about my hockey.')
   return parts.join(' ').slice(0, NOTE_MAX)
+}
+
+/** The Spanish template (same facts, same shape as templateNote). */
+export function templateNoteEs(m: ApplyFacts, r: RoleFacts): string {
+  const parts: string[] = [`Hola, ${r.club}:`]
+  const pos = m.position ? spanishPositionLabel(m.position) ?? m.position.replace(/_/g, ' ') : null
+  const where = m.currentClub ?? m.career[0]?.club ?? null
+  if (pos) parts.push(`${m.role === 'coach' ? 'Mi rol' : 'Mi puesto'}: ${pos}${where ? ` (${where})` : ''}.`)
+  parts.push(`Me interesa postularme a ${r.title}.`)
+  const eu = m.passports.find((p) => p.eu)
+  if (r.euRequired && eu) parts.push(`Tengo pasaporte de la UE (${eu.name}).`)
+  if (m.availableFrom) parts.push(`Tengo disponibilidad desde ${m.availableFrom}.`)
+  parts.push('Con gusto comparto más sobre mi hockey.')
+  return parts.join(' ').slice(0, NOTE_MAX)
+}
+
+/** templateNote in the member's language. */
+export function templateNoteFor(m: ApplyFacts, r: RoleFacts, lang: MemberLanguage = 'en'): string {
+  return lang === 'es' ? templateNoteEs(m, r) : templateNote(m, r)
 }
 
 /** Keep a model note only when it's a clean note: no placeholders, right length. */

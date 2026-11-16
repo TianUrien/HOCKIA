@@ -14,32 +14,54 @@
  * client only renders `kind: 'cap_reached'`.
  */
 import type { OpportunityResultItem, SuggestedAction } from '@/hooks/useDiscover'
+import en from '@/locales/en/hockiaAi.json'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
 
 export const HOCKIA_AI_TITLE = 'Hockia AI'
-export const COMPOSER_PLACEHOLDER = 'Ask about clubs, players or opportunities'
 export const COMPOSER_MAX_LENGTH = 500
+
+/**
+ * English copy for callers that still read a constant (they cannot follow the
+ * interface language). New code reads `hockiaAiCopy`, which does.
+ */
+export const COMPOSER_PLACEHOLDER = en.copy.composerPlaceholder
 /** Existing beta copy, reused verbatim. */
-export const BETA_NOTE =
-  'Hockia AI is in beta. It can help you explore Hockia, but answers may sometimes be incomplete or inaccurate.'
-export const TRY_ASKING_EYEBROW = 'Try asking'
-export const CAP_REACHED_COPY = "You've reached today's limit. Try again tomorrow."
-export const CONNECTION_ERROR_COPY = "I had trouble connecting just now. Let's try a different angle."
-export const SOFT_ERROR_DEFAULT_COPY = "I had trouble with that one. Let's try a different angle."
-export const SEARCHING_LABEL = 'Searching'
+export const BETA_NOTE = en.copy.betaNote
+export const TRY_ASKING_EYEBROW = en.copy.tryAsking
+export const CAP_REACHED_COPY = en.copy.capReached
+export const CONNECTION_ERROR_COPY = en.copy.connectionError
+export const SOFT_ERROR_DEFAULT_COPY = en.copy.softErrorDefault
+export const SEARCHING_LABEL = en.copy.searching
+
+/** The same copy in the interface language, read on every use. */
+export const hockiaAiCopy = /* @__PURE__ */ lazyTextRecord({
+  composerPlaceholder: () => tHockiaAi('copy.composerPlaceholder'),
+  betaNote: () => tHockiaAi('copy.betaNote'),
+  tryAsking: () => tHockiaAi('copy.tryAsking'),
+  capReached: () => tHockiaAi('copy.capReached'),
+  connectionError: () => tHockiaAi('copy.connectionError'),
+  softErrorDefault: () => tHockiaAi('copy.softErrorDefault'),
+  searching: () => tHockiaAi('copy.searching'),
+})
 
 export const OPEN_ROLES_ROUTE = '/opportunities'
 /** Phone leaf of the player's own profile editor (desktop opens the modal on the same URL). */
 export const IMPROVE_PROFILE_ROUTE = '/dashboard/profile/edit'
 
-export const OPEN_ROLES_CHIP: SuggestedAction = {
-  label: 'Opportunities for me',
-  intent: { type: 'navigate', route: OPEN_ROLES_ROUTE },
-}
-export const IMPROVE_PROFILE_CHIP: SuggestedAction = {
-  label: 'Improve my profile',
-  intent: { type: 'navigate', route: IMPROVE_PROFILE_ROUTE },
-}
-export const TRY_AGAIN_CHIP: SuggestedAction = { label: 'Try again', intent: { type: 'retry' } }
+/** Chip labels follow the interface language (read on every use). */
+export const OPEN_ROLES_CHIP: SuggestedAction = /* @__PURE__ */ withLazyText(
+  { intent: { type: 'navigate', route: OPEN_ROLES_ROUTE } } as Omit<SuggestedAction, 'label'>,
+  { label: () => tHockiaAi('chips.openRoles') },
+)
+export const IMPROVE_PROFILE_CHIP: SuggestedAction = /* @__PURE__ */ withLazyText(
+  { intent: { type: 'navigate', route: IMPROVE_PROFILE_ROUTE } } as Omit<SuggestedAction, 'label'>,
+  { label: () => tHockiaAi('chips.improveProfile') },
+)
+export const TRY_AGAIN_CHIP: SuggestedAction = /* @__PURE__ */ withLazyText(
+  { intent: { type: 'retry' } } as Omit<SuggestedAction, 'label'>,
+  { label: () => tHockiaAi('chips.tryAgain') },
+)
 
 /** Roles that look for a role themselves (the Figma 04 Player viewer). */
 export function isCandidateRole(role: string | null | undefined): boolean {
@@ -61,15 +83,15 @@ export function capReachedChips(role: string | null | undefined): SuggestedActio
   return isCandidateRole(role) ? [OPEN_ROLES_CHIP] : []
 }
 
-/** Default examples for unauthenticated visits + the universal fallback set. */
-const DEFAULT_EXAMPLES = [
-  'Find U25 defenders with a EU passport and 2+ references',
-  'Show female defenders open to play',
-  'Find men goalkeepers from New Zealand',
-]
+/** Prompts are sent to Hockia AI in English (`lng: 'en'`); the member reads them in the interface language. */
+type Lng = { lng?: 'en' }
+const tx = (key: string, opts: Lng & Record<string, unknown> = {}): string => tHockiaAi(key as never, opts as never) as unknown as string
 
-/** Founder example 2026-10-03: a precise role question a player can copy. */
-export const ROLE_EXAMPLE = 'Goalkeeper opportunities in Serie A1 with no passport requirement'
+/** Default examples for unauthenticated visits + the universal fallback set. */
+const DEFAULT_EXAMPLES = ['examples.default1', 'examples.default2', 'examples.default3']
+
+/** Founder example 2026-10-03: a precise role question a player can copy (English; the list itself follows the language). */
+export const ROLE_EXAMPLE = en.examples.roleExample
 
 /**
  * Role-aware choices (design audit 2026-10-21, A7): each role gets prompts
@@ -79,41 +101,48 @@ export const ROLE_EXAMPLE = 'Goalkeeper opportunities in Serie A1 with no passpo
  * Marketplace.
  */
 const ROLE_EXAMPLES: Record<string, string[]> = {
-  player: ['What should I improve in my profile?', 'What clubs would suit me?', ROLE_EXAMPLE],
-  brand: [
-    'Find players who could be ambassadors',
-    'What’s missing from my brand profile?',
-    'How can athletes find my brand?',
-  ],
-  umpire: [
-    'What should I add to my officiating record?',
-    'Show me umpires based in my country',
-    'How do I add my latest match?',
-  ],
+  player: ['examples.player1', 'examples.player2', 'examples.roleExample'],
+  brand: ['examples.brand1', 'examples.brand2', 'examples.brand3'],
+  umpire: ['examples.umpire1', 'examples.umpire2', 'examples.umpire3'],
 }
 
 /** Recruiters (club or recruiting coach): "Find available players for <role>", "Draft a role", "Summarise my applicants". */
-export function recruiterExamples(activeRoleTitle?: string | null): string[] {
+export function recruiterExamples(activeRoleTitle?: string | null, opts: Lng = {}): string[] {
   const role = activeRoleTitle?.trim()
-  return [role ? `Find available players for ${role}` : 'Find available players for my open opportunity', 'Draft an opportunity', 'Summarise my applicants']
+  return [
+    role ? tx('examples.recruiterFindForRole', { ...opts, role }) : tx('examples.recruiterFindForOpen', opts),
+    tx('examples.recruiterDraft', opts),
+    tx('examples.recruiterSummarise', opts),
+  ]
 }
 
 /** Candidate coaches never get recruiter prompts they can't act on. */
-const CANDIDATE_COACH_EXAMPLES = ['What should I add to my profile?', 'Show me clubs hiring head coaches', 'Who should I connect with?']
+const CANDIDATE_COACH_EXAMPLES = ['examples.coach1', 'examples.coach2', 'examples.coach3']
 
 type AiViewer = { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined
 
 /** What a role option does: ask Hockia AI, open the profile builder, or open the screen where it happens. */
 export type RoleOptionAction = { type: 'ask'; query: string } | { type: 'builder' } | { type: 'go'; to: string }
 export interface RoleOption {
-  /** FIND / LEARN / ASK: Hockia AI answers. DO IT FOR ME: the builder. OPEN: a screen, no AI answer. */
+  /** FIND / LEARN / ASK: Hockia AI answers. DO IT FOR ME: the builder. OPEN: a screen, no AI answer. Translate with `eyebrowLabel`. */
   eyebrow: 'FIND' | 'LEARN' | 'ASK' | 'DO IT FOR ME' | 'OPEN'
   label: string
   action: RoleOptionAction
 }
 
-const ask = (eyebrow: RoleOption['eyebrow'], label: string, query = label): RoleOption => ({ eyebrow, label, action: { type: 'ask', query } })
-const go = (label: string, to: string): RoleOption => ({ eyebrow: 'OPEN', label, action: { type: 'go', to } })
+const EYEBROW_KEYS: Record<RoleOption['eyebrow'], string> = {
+  FIND: 'eyebrow.find', LEARN: 'eyebrow.learn', ASK: 'eyebrow.ask', 'DO IT FOR ME': 'eyebrow.doItForMe', OPEN: 'eyebrow.open',
+}
+/** The eyebrow as the member reads it. */
+export function eyebrowLabel(eyebrow: RoleOption['eyebrow']): string {
+  return tx(EYEBROW_KEYS[eyebrow])
+}
+
+/** `labelKey` is shown; the query (English) is what Hockia AI reads. */
+const ask = (eyebrow: RoleOption['eyebrow'], labelKey: string, vars: Record<string, unknown> = {}, queryKey = labelKey): RoleOption => ({
+  eyebrow, label: tx(labelKey, vars), action: { type: 'ask', query: tx(queryKey, { ...vars, lng: 'en' }) },
+})
+const go = (labelKey: string, to: string): RoleOption => ({ eyebrow: 'OPEN', label: tx(labelKey), action: { type: 'go', to } })
 /** Checking a profile or preparing an application needs an opportunity: pick one first. */
 const PICK_OPPORTUNITY = '/opportunities'
 
@@ -127,36 +156,36 @@ export function roleOptionsFor(profile: AiViewer, activeRoleTitle?: string | nul
   if (isRecruiterProfile(profile)) {
     const role = activeRoleTitle?.trim()
     return [
-      ask('FIND', role ? `Find available players for ${role}` : 'Find available players for my open opportunity'),
-      ask('ASK', 'Summarise my applicants'),
-      ask('DO IT FOR ME', 'Draft a new opportunity', 'Draft an opportunity'),
+      role ? ask('FIND', 'options.findForRole', { role }) : ask('FIND', 'options.findForOpen'),
+      ask('ASK', 'options.summarise'),
+      ask('DO IT FOR ME', 'options.draftNew', {}, 'options.draftQuery'),
     ]
   }
   switch (profile?.role) {
     case 'player':
       return [
-        ask('FIND', 'Find opportunities that fit me'),
-        go('Check my profile against an opportunity', PICK_OPPORTUNITY),
-        { eyebrow: 'DO IT FOR ME', label: 'Fill my profile from my files', action: { type: 'builder' } },
+        ask('FIND', 'options.playerFind'),
+        go('options.checkProfile', PICK_OPPORTUNITY),
+        { eyebrow: 'DO IT FOR ME', label: tx('options.fillFromFiles'), action: { type: 'builder' } },
       ]
     case 'coach':
       return [
-        ask('FIND', 'Find coaching opportunities for me'),
-        go('Check my profile against an opportunity', PICK_OPPORTUNITY),
-        go('Prepare my application', PICK_OPPORTUNITY),
+        ask('FIND', 'options.coachFind'),
+        go('options.checkProfile', PICK_OPPORTUNITY),
+        go('options.prepareApplication', PICK_OPPORTUNITY),
       ]
     case 'brand':
       // Ambassadors: no per-brand country list on the server yet, so no "in my countries".
       return [
-        go('Find ambassador candidates', '/dashboard/ambassadors'),
-        go('How did my offers do this month?', '/dashboard/results'),
-        go('Write a new offer for members', '/dashboard/offers/new'),
+        go('options.brandAmbassadors', '/dashboard/ambassadors'),
+        go('options.brandOffersMonth', '/dashboard/results'),
+        go('options.brandWriteOffer', '/dashboard/offers/new'),
       ]
     case 'umpire':
       return [
-        go('Add my latest match', '/dashboard/profile?tab=officiating&add=match'),
-        ask('LEARN', 'What is missing from my record?'),
-        ask('FIND', 'Who are the umpires based in my country?'),
+        go('options.umpireAddMatch', '/dashboard/profile?tab=officiating&add=match'),
+        ask('LEARN', 'options.umpireMissing'),
+        ask('FIND', 'options.umpireCountry'),
       ]
     default:
       return null
@@ -167,32 +196,36 @@ export function isRecruiterProfile(profile: AiViewer): boolean {
   return profile?.role === 'club' || (profile?.role === 'coach' && Boolean(profile.coach_recruits_for_team))
 }
 
-/** Three "Try asking" rows for the first-use screen. */
-export function exampleQueriesFor(profile: AiViewer, activeRoleTitle?: string | null): string[] {
-  if (isRecruiterProfile(profile)) return recruiterExamples(activeRoleTitle)
-  if (profile?.role === 'coach') return CANDIDATE_COACH_EXAMPLES
+/** Three "Try asking" rows for the first-use screen. `lng: 'en'` gives the English prompts Hockia AI reads, in the same order. */
+export function exampleQueriesFor(profile: AiViewer, activeRoleTitle?: string | null, opts: Lng = {}): string[] {
+  if (isRecruiterProfile(profile)) return recruiterExamples(activeRoleTitle, opts)
+  if (profile?.role === 'coach') return CANDIDATE_COACH_EXAMPLES.map((k) => tx(k, opts))
   const examples = profile?.role ? ROLE_EXAMPLES[profile.role] : null
-  return examples && examples.length > 0 ? examples : DEFAULT_EXAMPLES
+  return (examples && examples.length > 0 ? examples : DEFAULT_EXAMPLES).map((k) => tx(k, opts))
 }
 
 /** The medium-detent greeting line, per role (audit A7). */
 export function aiIntroFor(profile: AiViewer): string {
-  if (isRecruiterProfile(profile)) return 'Ask me to find available players, draft an opportunity or summarise your applicants.'
+  if (isRecruiterProfile(profile)) return tx('intro.recruiter')
   switch (profile?.role) {
-    case 'brand': return 'Ask me to find players who could be your ambassadors, or anything about hockey.'
-    case 'umpire': return 'Ask me about your officiating record, other umpires, or anything about hockey.'
-    case 'coach': return 'Ask me to find coaching opportunities, or anything about hockey.'
-    default: return 'I see you’re browsing opportunities. Ask me to find the ones that fit you, or anything about hockey.'
+    case 'brand': return tx('intro.brand')
+    case 'umpire': return tx('intro.umpire')
+    case 'coach': return tx('intro.coach')
+    default: return tx('intro.default')
   }
 }
 
-/** Replaces "Do I fit?": facts about the profile against the role, not a verdict (audit A7). */
-export const CHECK_PROFILE_AGAINST_ROLE = 'Check my profile against this opportunity'
+/** English, for callers that read a constant. */
+export const CHECK_PROFILE_AGAINST_ROLE = en.copy.checkProfileAgainstRole
+/** Replaces "Do I fit?": facts about the profile against the role, not a verdict (audit A7). `lng: 'en'` for the prompt. */
+export function checkProfileAgainstRole(opts: Lng = {}): string {
+  return tx('copy.checkProfileAgainstRole', opts)
+}
 
 /** "From 24 open roles · updated today"; null when the pool size is unknown. */
 export function fromOpenRolesCaption(total: number | null | undefined): string | null {
   if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) return null
-  return `From ${total} open ${total === 1 ? 'opportunity' : 'opportunities'} · updated today`
+  return tx('copy.fromOpenRoles', { count: total })
 }
 
 /**

@@ -1,15 +1,17 @@
 import { useEffect } from 'react'
 import { UNDO_WINDOW_MS, undoDecision } from '@/lib/pendingDecisions'
 import { useUndoToast } from '@/lib/undoToast'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /** `aboveBar`: on the applicant review the toast sits just above the decision bar (Figma CS7). */
 export function UndoToast({ aboveBar = false }: { aboveBar?: boolean } = {}) {
+  const t = useRecruitingT()
   const toast = useUndoToast((s) => s.toast)
   const hide = useUndoToast((s) => s.hide)
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(hide, Math.max(0, UNDO_WINDOW_MS - (Date.now() - toast.at)))
-    return () => clearTimeout(t)
+    const timer = setTimeout(hide, Math.max(0, UNDO_WINDOW_MS - (Date.now() - toast.at)))
+    return () => clearTimeout(timer)
   }, [toast, hide])
   if (!toast) return null
   return (
@@ -27,7 +29,7 @@ export function UndoToast({ aboveBar = false }: { aboveBar?: boolean } = {}) {
           }}
           className="shrink-0 rounded-full px-3 py-1.5 text-row font-semibold text-[#c4b5fd]"
         >
-          Undo
+          {t('undoToast.undo')}
         </button>
       </div>
     </div>

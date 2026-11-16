@@ -2,10 +2,10 @@ import { useCallback } from 'react'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import {
-  CLUB_INVITE_ACCEPTED_MESSAGE,
-  CLUB_INVITE_DECLINED_MESSAGE,
-  CLUB_INVITE_ERROR_MESSAGE,
-  CLUB_INVITE_UNAVAILABLE_MESSAGE,
+  clubInviteAcceptedMessage,
+  clubInviteDeclinedMessage,
+  clubInviteErrorMessage,
+  clubInviteUnavailableMessage,
 } from '@/lib/clubInviteCopy'
 
 /**
@@ -23,14 +23,14 @@ export function useRespondToClubInvite() {
     async (clubMemberId: string, action: 'accept' | 'decline'): Promise<boolean> => {
       const result = await respondToClubInvite({ clubMemberId, action })
       if (result === 'unavailable') {
-        addToast(CLUB_INVITE_UNAVAILABLE_MESSAGE, 'neutral')
+        addToast(clubInviteUnavailableMessage(), 'neutral')
         return false
       }
       if (result !== true) {
-        addToast(CLUB_INVITE_ERROR_MESSAGE, 'error')
+        addToast(clubInviteErrorMessage(), 'error')
         return false
       }
-      addToast(action === 'accept' ? CLUB_INVITE_ACCEPTED_MESSAGE : CLUB_INVITE_DECLINED_MESSAGE, 'success')
+      addToast(action === 'accept' ? clubInviteAcceptedMessage() : clubInviteDeclinedMessage(), 'success')
       return true
     },
     [respondToClubInvite, addToast],

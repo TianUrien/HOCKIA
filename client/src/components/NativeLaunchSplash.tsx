@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, type SyntheticEvent } from 'react'
+import { tCommon } from '@/i18n/ns/common'
 import { hideNativeSplash, holdLaunchCanvas, LAUNCH_ARTWORK_URL, LAUNCH_CANVAS_COLOR } from '@/lib/launchSplash'
 
 /**
@@ -42,7 +43,7 @@ export default function NativeLaunchSplash() {
       data-testid="native-launch-splash"
       className="fixed inset-0 z-[9995] overflow-hidden"
       style={{ backgroundColor: LAUNCH_CANVAS_COLOR }}
-      aria-label="Loading Hockia"
+      aria-label={tCommon('skeletons.launch')}
     >
       <img
         src={LAUNCH_ARTWORK_URL}

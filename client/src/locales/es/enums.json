@@ -62,5 +62,40 @@
     "homeMine": "Mis oportunidades",
     "homeAll": "Oportunidades",
     "signingNeedsClub": "Para marcar una incorporación hace falta agregar el club al perfil."
+  },
+  "coachSpecializationOption": {
+    "head_coach": {
+      "label": "Entrenador/a principal",
+      "description": "Conducción del equipo, táctica y gestión"
+    },
+    "assistant_coach": {
+      "label": "Entrenador/a asistente",
+      "description": "Apoyo al cuerpo técnico principal, dictado de entrenamientos"
+    },
+    "goalkeeper_coach": {
+      "label": "Entrenador/a de arqueros/as",
+      "description": "Entrenamiento y desarrollo específico de arqueros/as"
+    },
+    "youth_coach": {
+      "label": "Entrenador/a de juveniles / formación",
+      "description": "Categorías formativas, desarrollo de talentos"
+    },
+    "strength_conditioning": {
+      "label": "Preparador/a físico/a",
+      "description": "Preparación física, prevención de lesiones"
+    },
+    "performance_analyst": {
+      "label": "Analista de rendimiento",
+      "description": "Análisis de video, datos y estadísticas de partido"
+    },
+    "sports_scientist": {
+      "label": "Especialista en ciencias del deporte",
+      "description": "Fisiología, control de cargas, recuperación"
+    },
+    "other": {
+      "label": "Otro",
+      "description": "Otro rol técnico o de staff"
+    },
+    "fallback": "Entrenador/a"
   }
 }

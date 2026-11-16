@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { PLAYING_CATEGORIES, CATEGORY_LABELS, type PlayingCategory } from '@/lib/hockeyCategories'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface PlayerResult {
   id: string
@@ -28,6 +29,7 @@ interface AddAmbassadorModalProps {
 }
 
 export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }: AddAmbassadorModalProps) {
+  const t = useBrandsT()
   const { user } = useAuthStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<PlayerResult[]>([])
@@ -108,10 +110,10 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
       if (result.success) {
         handleClose()
       } else {
-        setError(result.error || 'Failed to add ambassador')
+        setError(result.error || t('addAmbassador.failed'))
       }
     } catch {
-      setError('Failed to add ambassador')
+      setError(t('addAmbassador.failed'))
     } finally {
       setAddingId(null)
     }
@@ -139,8 +141,8 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
               <Award className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Invite Ambassador</h2>
-              <p className="text-sm text-gray-500">Search for a player to invite</p>
+              <h2 className="text-xl font-bold text-gray-900">{t('addAmbassador.title')}</h2>
+              <p className="text-sm text-gray-500">{t('addAmbassador.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -157,7 +159,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
-            placeholder="Search players by name..."
+            placeholder={t('addAmbassador.searchPlaceholder')}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -192,7 +194,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
             aria-pressed={requireReferences ? 'true' : 'false'}
           >
             <Shield className="w-3 h-3" aria-hidden="true" />
-            With references
+            {t('addAmbassador.withReferences')}
           </button>
           {PLAYING_CATEGORIES.map((cat) => {
             const active = categoryFilter === cat
@@ -219,7 +221,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
         {/* Section Label */}
         {searchTerm.trim().length >= 2 && (
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
-            Search Results
+            {t('addAmbassador.results')}
           </p>
         )}
 
@@ -228,13 +230,13 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
           <div className="max-h-72 overflow-y-auto divide-y divide-gray-100">
             {showEmptyState ? (
               <div className="p-6 text-center text-sm text-gray-500">
-                No players found matching &ldquo;{searchTerm}&rdquo;
+                {t('addAmbassador.noResults', { term: searchTerm })}
               </div>
             ) : results.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-500">
                 {searchTerm.trim().length < 2
-                  ? 'Type at least 2 characters to search'
-                  : 'Searching...'}
+                  ? t('addAmbassador.minChars')
+                  : t('addAmbassador.searching')}
               </div>
             ) : (
               results.map((player) => {
@@ -284,7 +286,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
 
         {/* Help text */}
         <p className="mt-4 text-xs text-gray-400 text-center">
-          The player will receive a notification and must accept your invitation
+          {t('addAmbassador.help')}
         </p>
       </div>
     </Modal>

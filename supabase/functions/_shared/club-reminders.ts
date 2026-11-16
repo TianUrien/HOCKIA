@@ -16,7 +16,16 @@
  *     pronoun).
  *
  * The edge function `club-reminders` runs it; tests sit in club-reminders.test.ts.
+ *
+ * Language (Stage 3, 2026-11-16): every copy helper takes an optional `lang`
+ * ('en' default, unchanged). Spanish is written in the PUBLISHER's interface
+ * language (client/src/locales/glossary.md); dates and weekdays via Intl.
  */
+
+import { spanishPositionLabel } from './member-language.ts'
+
+/** The publisher's interface language (member-language.ts MemberLanguage). */
+export type ReminderLanguage = 'en' | 'es'
 
 // ── Timezones ────────────────────────────────────────────────────────────────
 
@@ -268,9 +277,13 @@ const POSITION_LABELS: Record<string, string> = {
 }
 
 /** 'head_coach' → 'Head coach' (mirrors _shared/display-labels positionLabel). */
-export function positionText(value: string | null | undefined): string | null {
+export function positionText(value: string | null | undefined, lang: ReminderLanguage = 'en'): string | null {
   if (!value || !value.trim()) return null
   const v = value.trim()
+  if (lang === 'es') {
+    const es = spanishPositionLabel(v)
+    if (es) return es
+  }
   const hit = POSITION_LABELS[v.toLowerCase()]
   if (hit) return hit
   const words = v.replace(/_/g, ' ').replace(/\s+/g, ' ').toLowerCase()
@@ -278,9 +291,11 @@ export function positionText(value: string | null | undefined): string | null {
 }
 
 /** "Player · Midfielder · Argentina" (client lib/clubRecruiting personRoleLine + country). */
-export function roleLine(role: string | null, position: string | null, country: string | null): string {
-  const roleWord = role === 'coach' ? 'Coach' : role === 'umpire' ? 'Umpire' : 'Player'
-  return [roleWord, positionText(position), country?.trim() || null].filter(Boolean).join(' · ')
+export function roleLine(role: string | null, position: string | null, country: string | null, lang: ReminderLanguage = 'en'): string {
+  const roleWord = lang === 'es'
+    ? (role === 'coach' ? 'Entrenador/a' : role === 'umpire' ? 'Árbitro/a' : 'Jugador/a')
+    : role === 'coach' ? 'Coach' : role === 'umpire' ? 'Umpire' : 'Player'
+  return [roleWord, positionText(position, lang), country?.trim() || null].filter(Boolean).join(' · ')
 }
 
 /** First name only (gender-neutral copy uses the name, never a pronoun). */
@@ -294,17 +309,18 @@ export function fitOf(state: string | null | undefined): 'strong' | 'possible' |
   return state === 'green' ? 'strong' : state === 'yellow' ? 'possible' : null
 }
 
-function applicantItem(r: CandidateRow, tz: string): ApplicantItem {
+function applicantItem(r: CandidateRow, tz: string, lang: ReminderLanguage = 'en'): ApplicantItem {
+  const es = lang === 'es'
   return {
     applicationId: r.application_id,
     opportunityId: r.opportunity_id,
-    roleTitle: r.role_title?.trim() || positionText(r.role_position) || 'your opportunity',
+    roleTitle: r.role_title?.trim() || positionText(r.role_position, lang) || (es ? 'tu oportunidad' : 'your opportunity'),
     orgName: r.org_name?.trim() || null,
     applicantId: r.applicant_id,
-    applicantName: r.applicant_full_name?.trim() || 'An applicant',
+    applicantName: r.applicant_full_name?.trim() || (es ? 'Postulante' : 'An applicant'),
     firstName: firstNameOf(r.applicant_full_name),
     avatarUrl: r.applicant_avatar_url,
-    roleLine: roleLine(r.applicant_role, r.applicant_position, r.applicant_country),
+    roleLine: roleLine(r.applicant_role, r.applicant_position, r.applicant_country, lang),
     isPlayer: r.applicant_role !== 'coach',
     fit: fitOf(r.fit_state),
     appliedAt: r.applied_at,
@@ -313,20 +329,20 @@ function applicantItem(r: CandidateRow, tz: string): ApplicantItem {
 }
 
 /** New-application rows → visible items, oldest application first. */
-export function toApplicantItems(rows: CandidateRow[], tz: string): ApplicantItem[] {
+export function toApplicantItems(rows: CandidateRow[], tz: string, lang: ReminderLanguage = 'en'): ApplicantItem[] {
   const seen = new Set<string>()
   const items: ApplicantItem[] = []
   for (const r of rows) {
     if (!isVisibleApplicant(r) || seen.has(r.application_id)) continue
     seen.add(r.application_id)
-    items.push(applicantItem(r, tz))
+    items.push(applicantItem(r, tz, lang))
   }
   return items.sort((a, b) => a.appliedAt.localeCompare(b.appliedAt))
 }
 
 /** Reminder rows → visible pending items, soonest-closing first. Hidden people
  *  are dropped here, so they are in neither the rows nor any "N players" count. */
-export function toItems(rows: CandidateRow[], tz: string, now: Date): ReminderItem[] {
+export function toItems(rows: CandidateRow[], tz: string, now: Date, lang: ReminderLanguage = 'en'): ReminderItem[] {
   const today = localParts(now, tz).date
   const seen = new Set<string>()
   const items: ReminderItem[] = []
@@ -336,7 +352,7 @@ export function toItems(rows: CandidateRow[], tz: string, now: Date): ReminderIt
     const closesLocal = localParts(new Date(r.closes_at), tz)
     const daysLeft = daysBetween(today, closesLocal.date)
     if (daysLeft < 0) continue
-    items.push({ ...applicantItem(r, tz), closesAt: r.closes_at, daysLeft, closesLocal })
+    items.push({ ...applicantItem(r, tz, lang), closesAt: r.closes_at, daysLeft, closesLocal })
   }
   return items.sort((a, b) => a.closesAt.localeCompare(b.closesAt) || a.appliedAt.localeCompare(b.appliedAt))
 }
@@ -377,12 +393,12 @@ export interface PublisherReminderPlan {
  *   (22:00–07:59), so a due push waits for 08:00.
  *   Day-10 and day-13 content combine into ONE email (Last call first).
  */
-export function planPublisherReminders(rows: CandidateRow[], now: Date): PublisherReminderPlan | null {
+export function planPublisherReminders(rows: CandidateRow[], now: Date, lang: ReminderLanguage = 'en'): PublisherReminderPlan | null {
   if (rows.length === 0) return null
   const head = rows[0]
   const tz = timezoneForCountry(head.publisher_country_code)
   const local = localParts(now, tz)
-  const pending = toItems(rows, tz, now)
+  const pending = toItems(rows, tz, now, lang)
   const flags = new Map(rows.map((r) => [r.application_id, r]))
 
   const inLastCall = (i: ReminderItem) => i.daysLeft <= LAST_CALL_MAX_DAYS
@@ -464,17 +480,33 @@ export function newApplicationsDue(lastSentAt: string | null | undefined, now: D
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export function weekdayName(local: Pick<LocalParts, 'weekday'>): string {
+export function weekdayName(local: Pick<LocalParts, 'weekday'>, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') {
+    // 2 Jan 2000 was a Sunday (weekday 0).
+    const w = Number.isInteger(local.weekday) && local.weekday >= 0 && local.weekday <= 6 ? local.weekday : 1
+    return new Intl.DateTimeFormat('es', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, 0, 2 + w)))
+  }
   return WEEKDAYS[local.weekday] ?? 'Monday'
 }
 
-/** "2 Oct" — day first, the app-wide short date. */
-export function shortDate(local: Pick<LocalParts, 'day' | 'month'>): string {
+/** "2 Oct" — day first, the app-wide short date. Spanish: "2 oct". */
+export function shortDate(local: Pick<LocalParts, 'day' | 'month'>, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') {
+    if (!(local.month >= 1 && local.month <= 12)) return `${local.day}`
+    const month = new Intl.DateTimeFormat('es', { month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, local.month - 1, 1))).replace(/\.$/, '')
+    return `${local.day} ${month}`
+  }
   return `${local.day} ${MONTHS[local.month - 1] ?? ''}`.trim()
 }
 
-/** "today" · "tomorrow" · "on Friday" · "on 14 Oct". */
-export function closesPhrase(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>): string {
+/** "today" · "tomorrow" · "on Friday" · "on 14 Oct". Spanish: "hoy" · "mañana" · "el viernes" · "el 14 oct". */
+export function closesPhrase(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') {
+    if (daysLeft <= 0) return 'hoy'
+    if (daysLeft === 1) return 'mañana'
+    if (daysLeft <= 6) return `el ${weekdayName(closesLocal, 'es')}`
+    return `el ${shortDate(closesLocal, 'es')}`
+  }
   if (daysLeft <= 0) return 'today'
   if (daysLeft === 1) return 'tomorrow'
   if (daysLeft <= 6) return `on ${weekdayName(closesLocal)}`
@@ -482,7 +514,8 @@ export function closesPhrase(daysLeft: number, closesLocal: Pick<LocalParts, 'we
 }
 
 /** Chip text: "Closes today" · "Closes tomorrow" · "Closes Friday" · "Closes 14 Oct". */
-export function closesChip(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>): string {
+export function closesChip(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') return `Cierra ${closesPhrase(daysLeft, closesLocal, 'es')}`
   const p = closesPhrase(daysLeft, closesLocal)
   return `Closes ${p.startsWith('on ') ? p.slice(3) : p}`
 }
@@ -496,13 +529,20 @@ function plural(n: number, one: string, many: string): string {
 }
 
 /** "player"/"players", or "applicant(s)" when a coach role is in the list. */
-export function peopleNoun(n: number, allPlayers: boolean): string {
+export function peopleNoun(n: number, allPlayers: boolean, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') return allPlayers ? plural(n, 'jugador/a', 'jugadores/as') : plural(n, 'postulante', 'postulantes')
   return allPlayers ? plural(n, 'player', 'players') : plural(n, 'applicant', 'applicants')
 }
 
 /** "Ana" · "Ana and Ben" · "Ana and 2 more" (no first name → "an applicant"). */
-export function namesPhrase(firstNames: (string | null)[]): string {
+export function namesPhrase(firstNames: (string | null)[], lang: ReminderLanguage = 'en'): string {
   const names = firstNames.map((n) => n ?? null)
+  if (lang === 'es') {
+    const first = names[0] ?? 'una persona'
+    if (names.length <= 1) return first
+    if (names.length === 2) return `${first} y ${names[1] ?? '1 más'}`
+    return `${first} y ${names.length - 1} más`
+  }
   const first = names[0] ?? 'an applicant'
   if (names.length <= 1) return first
   if (names.length === 2) return `${first} and ${names[1] ?? 'one more'}`
@@ -510,12 +550,19 @@ export function namesPhrase(firstNames: (string | null)[]): string {
 }
 
 /** Day 13 subject: "Last day to answer Ana" (grouped: "… Ana and Ben" / "… Ana and 2 more"). */
-export function lastCallSubject(items: Pick<ReminderItem, 'firstName'>[]): string {
+export function lastCallSubject(items: Pick<ReminderItem, 'firstName'>[], lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') return `Último día para responder a ${namesPhrase(items.map((i) => i.firstName), 'es')}`
   return `Last day to answer ${namesPhrase(items.map((i) => i.firstName))}`
 }
 
 /** Day 13 paragraph, per application. */
-export function lastCallBody(item: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'appliedLocal'>): string {
+export function lastCallBody(item: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'appliedLocal'>, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') {
+    const name = item.firstName ?? 'Esta persona'
+    const who = item.firstName ?? 'la persona'
+    const when = item.daysLeft <= 0 ? 'Hoy' : 'Mañana'
+    return `${name} se postuló el ${shortDate(item.appliedLocal, 'es')}. ${when} la postulación se cierra sola y ${who} recibe el aviso de que no hubo respuesta. Una respuesta breve, en un sentido u otro, es mejor que ninguna.`
+  }
   const name = item.firstName ?? 'This applicant'
   const who = item.firstName ?? 'the applicant'
   const when = item.daysLeft <= 0 ? 'Today' : 'Tomorrow'
@@ -528,31 +575,42 @@ export function lastCallBody(item: Pick<ReminderItem, 'firstName' | 'daysLeft' |
  * The "N players are waiting" line stays as the headline inside the email.
  * `pending` is sorted soonest-closing first, so [0] is the most urgent.
  */
-export function closingSoonSubject(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true): string {
+export function closingSoonSubject(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true, lang: ReminderLanguage = 'en'): string {
   const i = pending[0]
+  if (lang === 'es') {
+    if (!i) return waitingLine(0, allPlayers, 'es')
+    return `${i.firstName ? `La postulación de ${i.firstName}` : 'Una postulación'} cierra ${closesPhrase(i.daysLeft, i.closesLocal, 'es')}`
+  }
   if (!i) return waitingLine(0, allPlayers)
   const owner = i.firstName ? `${i.firstName}'s application` : 'An application'
   return `${owner} closes ${closesPhrase(i.daysLeft, i.closesLocal)}`
 }
 
 /** Day 10 headline inside the email: one applicant → the named line; several → "N players are waiting for your answer". */
-export function closingSoonHeadline(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true): string {
-  return pending.length === 1 ? closingSoonSubject(pending, allPlayers) : waitingLine(pending.length, allPlayers)
+export function closingSoonHeadline(pending: Pick<ReminderItem, 'firstName' | 'daysLeft' | 'closesLocal'>[], allPlayers = true, lang: ReminderLanguage = 'en'): string {
+  return pending.length === 1 ? closingSoonSubject(pending, allPlayers, lang) : waitingLine(pending.length, allPlayers, lang)
 }
 
 /** "3 players are waiting for your answer" / "1 player is waiting for your answer". */
-export function waitingLine(n: number, allPlayers = true): string {
+export function waitingLine(n: number, allPlayers = true, lang: ReminderLanguage = 'en'): string {
+  if (lang === 'es') return `${n} ${peopleNoun(n, allPlayers, 'es')} ${plural(n, 'espera', 'esperan')} tu respuesta`
   return `${n} ${peopleNoun(n, allPlayers)} ${plural(n, 'is', 'are')} waiting for your answer`
 }
 
 export const DECLINE_HINT = 'Not the right fit? Marking it "Not a fit" takes one tap, and Hockia AI drafts a kind note you can edit.'
 export const SETTINGS_FOOTER = 'Change emails in Settings → Notifications.'
+export const DECLINE_HINT_ES = '¿No encaja? Marcarla como "No encaja" lleva un toque, y Hockia AI redacta una nota amable para editar.'
+export const SETTINGS_FOOTER_ES = 'Los emails se cambian en Ajustes → Notificaciones.'
 /** The footer opens the Notifications screen itself, not the settings hub. */
 export const SETTINGS_FOOTER_PATH = '/settings/notifications'
 
 /** New-applications batch subject. */
-export function newApplicationsSubject(items: Pick<ApplicantItem, 'firstName' | 'roleTitle' | 'opportunityId'>[]): string {
+export function newApplicationsSubject(items: Pick<ApplicantItem, 'firstName' | 'roleTitle' | 'opportunityId'>[], lang: ReminderLanguage = 'en'): string {
   const roles = new Set(items.map((i) => i.opportunityId))
+  if (lang === 'es') {
+    if (items.length === 1) return `${items[0].firstName ?? 'Alguien'} se postuló a ${items[0].roleTitle}`
+    return roles.size === 1 ? `${items.length} postulaciones nuevas para ${items[0].roleTitle}` : `${items.length} postulaciones nuevas para tus oportunidades`
+  }
   if (items.length === 1) {
     const i = items[0]
     return `${i.firstName ?? 'Someone'} applied for ${i.roleTitle}`
@@ -606,16 +664,21 @@ export function buildReminderNotification(
   kind: ClubReminderKind,
   lastCall: ReminderItem[],
   pending: ReminderItem[],
+  lang: ReminderLanguage = 'en',
 ): ClubReminderNotification {
+  const es = lang === 'es'
   if (kind === 'applicant_last_call') {
     const items = lastCall
     const first = items[0]
     const single = items.length === 1
-    const title = `Last day to answer ${namesPhrase(items.map((i) => i.firstName))}`
-    const when = first && first.daysLeft <= 0 ? 'today' : 'tomorrow'
-    const summary = single
-      ? `The application to ${first.roleTitle} closes ${when}.`
-      : `Their applications close ${when}.`
+    const title = lastCallSubject(items, lang)
+    const today = first && first.daysLeft <= 0
+    const when = es ? (today ? 'hoy' : 'mañana') : today ? 'today' : 'tomorrow'
+    const summary = es
+      ? (single ? `La postulación a ${first.roleTitle} cierra ${when}.` : `Sus postulaciones cierran ${when}.`)
+      : single
+        ? `The application to ${first.roleTitle} closes ${when}.`
+        : `Their applications close ${when}.`
     const target = reviewTarget(items)
     return {
       kind, title, summary, target_url: target,
@@ -633,12 +696,16 @@ export function buildReminderNotification(
   const allPlayers = items.every((i) => i.isPlayer)
   const org = first?.orgName ?? null
   const n = items.length
-  const title = org
-    ? `${n} ${peopleNoun(n, allPlayers)} ${plural(n, 'is', 'are')} waiting for ${org}`
-    : waitingLine(n, allPlayers)
-  const summary = first
-    ? `${first.firstName ? `${first.firstName}'s application` : 'An application'} closes ${closesPhrase(first.daysLeft, first.closesLocal)}.`
-    : 'Applications are waiting for your answer.'
+  const title = es
+    ? (org ? `${n} ${peopleNoun(n, allPlayers, 'es')} ${plural(n, 'espera', 'esperan')} respuesta de ${org}` : waitingLine(n, allPlayers, 'es'))
+    : org
+      ? `${n} ${peopleNoun(n, allPlayers)} ${plural(n, 'is', 'are')} waiting for ${org}`
+      : waitingLine(n, allPlayers)
+  const summary = es
+    ? (first ? `${closingSoonSubject([first], allPlayers, 'es')}.` : 'Hay postulaciones esperando tu respuesta.')
+    : first
+      ? `${first.firstName ? `${first.firstName}'s application` : 'An application'} closes ${closesPhrase(first.daysLeft, first.closesLocal)}.`
+      : 'Applications are waiting for your answer.'
   const target = reviewTarget(items)
   return {
     kind, title, summary, target_url: target,
@@ -674,9 +741,15 @@ export function reminderRouteFromMetadata(metadata: Record<string, unknown> | nu
 }
 
 /** Push/in-app copy for a stored reminder notification; never empty. */
-export function reminderCopyFromMetadata(kind: string, metadata: Record<string, unknown> | null | undefined): { title: string; body: string } {
+export function reminderCopyFromMetadata(kind: string, metadata: Record<string, unknown> | null | undefined, lang: ReminderLanguage = 'en'): { title: string; body: string } {
   const title = typeof metadata?.title === 'string' && metadata.title.trim() ? metadata.title : null
   const body = typeof metadata?.summary === 'string' && metadata.summary.trim() ? metadata.summary : null
+  if (lang === 'es') {
+    if (kind === 'applicant_last_call') {
+      return { title: title ?? 'Último día para responder una postulación', body: body ?? 'Una postulación cierra mañana.' }
+    }
+    return { title: title ?? 'Hay postulaciones esperando tu respuesta', body: body ?? 'Algunas postulaciones cierran pronto.' }
+  }
   if (kind === 'applicant_last_call') {
     return { title: title ?? 'Last day to answer an applicant', body: body ?? 'An application closes tomorrow.' }
   }
@@ -715,11 +788,15 @@ export interface NewApplicationsPush {
  *   Several roles:  "4 new applicants for your roles" · "Ana and 3 more applied."
  * Tap: the applicant (one), the role's Applicants (one role), else Opportunities.
  */
-export function buildNewApplicationsPush(publisherId: string, items: ApplicantItem[]): NewApplicationsPush {
-  const title = newApplicationsSubject(items)
-  const summary = items.length === 1
-    ? 'Tap to review the application.'
-    : `${capitalise(namesPhrase(items.map((i) => i.firstName)))} applied.`
+export function buildNewApplicationsPush(publisherId: string, items: ApplicantItem[], lang: ReminderLanguage = 'en'): NewApplicationsPush {
+  const title = newApplicationsSubject(items, lang)
+  const summary = lang === 'es'
+    ? (items.length === 1
+      ? 'Tocar para revisar la postulación.'
+      : `${capitalise(namesPhrase(items.map((i) => i.firstName), 'es'))} se postularon.`)
+    : items.length === 1
+      ? 'Tap to review the application.'
+      : `${capitalise(namesPhrase(items.map((i) => i.firstName)))} applied.`
   const target = reviewTarget(items)
   return {
     title, summary, target_url: target,
@@ -763,9 +840,10 @@ export function pushStandsDownForBatch(
 }
 
 /** Push copy for the grouped push from its metadata; never empty. */
-export function newApplicationsCopyFromMetadata(metadata: Record<string, unknown> | null | undefined): { title: string; body: string } {
+export function newApplicationsCopyFromMetadata(metadata: Record<string, unknown> | null | undefined, lang: ReminderLanguage = 'en'): { title: string; body: string } {
   const title = typeof metadata?.title === 'string' && metadata.title.trim() ? metadata.title : null
   const body = typeof metadata?.summary === 'string' && metadata.summary.trim() ? metadata.summary : null
+  if (lang === 'es') return { title: title ?? 'Postulaciones nuevas', body: body ?? 'Hay postulaciones nuevas esperando.' }
   return { title: title ?? 'New applicants', body: body ?? 'New applications are waiting for you.' }
 }
 

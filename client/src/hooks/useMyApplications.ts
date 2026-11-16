@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
+import { tOpportunities } from '@/i18n/ns/opportunities'
 import { logger } from '@/lib/logger'
 
 /**
@@ -67,7 +68,7 @@ export function useMyApplications(enabled: boolean) {
           opportunity_id: r.opportunity_id as string,
           status: r.status as string,
           applied_at: r.applied_at as string,
-          opportunity_title: opp?.title ?? 'Opportunity no longer available',
+          opportunity_title: opp?.title ?? tOpportunities('applications.unavailable'),
           club_name: opp?.profiles?.full_name ?? null,
           viewed_by_club: false,
           role_open: opp?.status === 'open',

@@ -1,0 +1,1030 @@
+{
+  "roadToSigning": {
+    "title": "Camino a la incorporación",
+    "trialDoneLabel": "Prueba o videollamada hecha",
+    "message": "Escribir"
+  },
+  "roleActions": {
+    "reopenFailed": "No se pudo reabrir la oportunidad. Se puede volver a intentar.",
+    "findFailed": "No se pudo abrir la búsqueda. Se puede volver a intentar.",
+    "moreLabel": "Más acciones para {{title}}",
+    "closedSheetLabel": "Acciones de la oportunidad cerrada",
+    "postAgain": "Volver a publicar",
+    "postAgainDetail": "Una oportunidad nueva con los mismos datos. Las fechas y las postulaciones empiezan de cero. Antes de publicarse, queda para revisar.",
+    "reopenThis": "Reabrir esta oportunidad",
+    "reopenThisDetail": "La misma oportunidad y las mismas postulaciones, abierta otra vez por 30 días",
+    "editClosed": "Editar oportunidad",
+    "editClosedDetail": "Cambiar los datos; sigue cerrada",
+    "cancel": "Cancelar",
+    "sheetLabel": "Acciones de la oportunidad",
+    "findPlayers": "Buscar jugadores/as para esta oportunidad",
+    "findCoaches": "Buscar cuerpos técnicos para esta oportunidad",
+    "edit": "Editar oportunidad",
+    "close": "Cerrar oportunidad",
+    "reopen": "Reabrir oportunidad"
+  },
+  "roleApplicants": {
+    "notFound": "Esta oportunidad no es tuya o ya no existe.",
+    "memberFallback": "Integrante de Hockia",
+    "loadFailed": "No se pudieron cargar las postulaciones. Deslizar hacia abajo para volver a intentar."
+  },
+  "applicantsScreen": {
+    "chips": {
+      "toReviewCount_one": "Por revisar · {{count}}",
+      "toReviewCount_other": "Por revisar · {{count}}",
+      "toReviewCount_many": "Por revisar · {{count}}",
+      "toReview": "Por revisar",
+      "shortlisted": "En preselección",
+      "maybe": "Tal vez",
+      "notAFit": "No encaja",
+      "closedCount_one": "Cerradas · {{count}}",
+      "closedCount_other": "Cerradas · {{count}}",
+      "closedCount_many": "Cerradas · {{count}}",
+      "closed": "Cerradas"
+    },
+    "caption": {
+      "pending": "Las más antiguas primero · cada una se cierra {{days}} días después de llegar",
+      "closed": "Cerradas sin respuesta a los {{days}} días, cubiertas o retiradas por quien se postuló",
+      "recent": "Decisión más reciente primero"
+    },
+    "empty": {
+      "pending": "No hay postulaciones en espera. Las nuevas aparecen acá.",
+      "shortlisted": "Todavía no hay nadie en preselección.",
+      "maybe": "No hay nadie en tal vez.",
+      "rejected": "No hay postulaciones descartadas.",
+      "closed": "Todavía no hay postulaciones cerradas."
+    },
+    "cancel": "Cancelar",
+    "deselectAll": "Quitar selección",
+    "selectAll": "Seleccionar todo",
+    "clubFallback": "Club",
+    "statusTabsLabel": "Estado de la postulación",
+    "selectHint": "Seleccionar postulaciones para responderlas juntas",
+    "select": "Seleccionar",
+    "newLabel": "Nueva",
+    "invitedTag": "Con invitación",
+    "newTag": "Nueva",
+    "footer": "Preseleccionar, Tal vez o Descartar. Lo que quede sin respuesta se cierra a los {{days}} días.",
+    "footerWithNote": "Preseleccionar, Tal vez o Descartar. Lo que quede sin respuesta se cierra a los {{days}} días. {{note}}.",
+    "selectedCount_one": "{{count}} seleccionada",
+    "selectedCount_other": "{{count}} seleccionadas",
+    "selectedCount_many": "{{count}} seleccionadas",
+    "bulkMaybe": "Tal vez",
+    "bulkDeclineCount_one": "No encaja · {{count}}",
+    "bulkDeclineCount_other": "No encaja · {{count}}",
+    "bulkDeclineCount_many": "No encaja · {{count}}",
+    "bulkDecline": "No encaja"
+  },
+  "applicantsDesktop": {
+    "chips": {
+      "toReviewCount_one": "Por revisar · {{count}}",
+      "toReviewCount_other": "Por revisar · {{count}}",
+      "toReviewCount_many": "Por revisar · {{count}}",
+      "toReview": "Por revisar",
+      "shortlisted": "En preselección",
+      "maybe": "Tal vez",
+      "notAFit": "No encaja",
+      "closedCount_one": "Cerradas · {{count}}",
+      "closedCount_other": "Cerradas · {{count}}",
+      "closedCount_many": "Cerradas · {{count}}",
+      "closed": "Cerradas"
+    },
+    "caption": {
+      "pending": "Las más antiguas primero · cada una se cierra {{days}} días después de llegar",
+      "closed": "Cerradas sin respuesta a los {{days}} días, cubiertas o retiradas por quien se postuló",
+      "recent": "Decisión más reciente primero"
+    },
+    "empty": {
+      "pending": "No hay postulaciones en espera. Las nuevas aparecen acá.",
+      "shortlisted": "Todavía no hay nadie en preselección.",
+      "maybe": "No hay nadie en tal vez.",
+      "rejected": "No hay postulaciones descartadas.",
+      "closed": "Todavía no hay postulaciones cerradas."
+    },
+    "cancel": "Cancelar",
+    "deselectAll": "Quitar selección",
+    "selectAll": "Seleccionar todo",
+    "clubFallback": "Club",
+    "statusTabsLabel": "Estado de la postulación",
+    "selectHint": "Seleccionar postulaciones para responderlas juntas",
+    "select": "Seleccionar",
+    "newLabel": "Nueva",
+    "invitedTag": "Con invitación",
+    "newTag": "Nueva",
+    "footer": "Preseleccionar, Tal vez o Descartar. Lo que quede sin respuesta se cierra a los {{days}} días.",
+    "footerWithNote": "Preseleccionar, Tal vez o Descartar. Lo que quede sin respuesta se cierra a los {{days}} días. {{note}}.",
+    "bulkMaybe": "Tal vez",
+    "bulkDeclineCount_one": "No encaja · {{count}}",
+    "bulkDeclineCount_other": "No encaja · {{count}}",
+    "bulkDeclineCount_many": "No encaja · {{count}}",
+    "bulkDecline": "No encaja",
+    "errorTitle": "No se pueden abrir estas postulaciones",
+    "loadFailed": "No se pudieron cargar las postulaciones. Se puede volver a intentar.",
+    "keyboardHint": "Teclado: ↑ ↓ para moverse · S Preseleccionar · M Tal vez · D Descartar",
+    "selectedCount_one": "{{count}} seleccionada",
+    "selectedCount_other": "{{count}} seleccionadas",
+    "selectedCount_many": "{{count}} seleccionadas",
+    "selectionEmpty": "Marcar las postulaciones para responderlas juntas.",
+    "pickOne": "Elegir una postulación para revisar."
+  },
+  "applicantsList": {
+    "tiers": {
+      "unsorted": "Sin clasificar",
+      "topPick": "Primera opción",
+      "maybe": "Tal vez",
+      "offerSigning": "Oferta e incorporación",
+      "notAFit": "No encaja",
+      "expired": "Vencidas (sin respuesta)",
+      "filled": "Oportunidad cubierta",
+      "withdrawn": "Retiradas"
+    },
+    "documentTitleNamed": "Postulaciones · {{title}}",
+    "documentTitle": "Postulaciones",
+    "errors": {
+      "notFoundOrForbidden": "No se encontró la oportunidad o no hay permiso para verla.",
+      "loadFailed": "No se pudieron cargar las postulaciones. Se puede volver a intentar.",
+      "updateFailed": "No se pudo cambiar el estado. Se puede volver a intentar.",
+      "notFound": "No se encontró la oportunidad."
+    },
+    "endorserFallback": "Integrante de Hockia",
+    "loading": "Cargando postulaciones...",
+    "errorTitle": "Error",
+    "backToDashboard": "Volver al panel",
+    "backToOpportunities": "Volver a Oportunidades",
+    "title": "Postulaciones para {{title}}",
+    "count_one": "{{count}} postulación",
+    "count_other": "{{count}} postulaciones",
+    "count_many": "{{count}} postulaciones",
+    "shown_one": "({{count}} visible)",
+    "shown_other": "({{count}} visibles)",
+    "shown_many": "({{count}} visibles)",
+    "searchPlaceholder": "Buscar por nombre, ubicación, nacionalidad...",
+    "clearSearch": "Borrar búsqueda",
+    "positionFilterLabel": "Filtrar por posición",
+    "allPositions": "Todas las posiciones",
+    "referencesUnavailable": "No se pudieron cargar las referencias. Puede que no se muestren las referencias de quienes se postularon.",
+    "empty": {
+      "title": "Todavía no hay postulaciones",
+      "body": "Las postulaciones a esta oportunidad aparecen acá a medida que llegan."
+    },
+    "noMatches": {
+      "title": "Sin resultados",
+      "body": "Ninguna postulación coincide con la búsqueda o el filtro actual.",
+      "clear": "Borrar filtros"
+    }
+  },
+  "bulkDeclineSheet": {
+    "title_one": "No encaja: {{count}} postulante",
+    "title_many": "No encaja: {{count}} postulantes",
+    "title_other": "No encaja: {{count}} postulantes",
+    "reasonHeading": "Motivo",
+    "reasonLabel": "Motivo",
+    "noteHeading": "Nota · se envía a cada deportista",
+    "noteLabel": "Nota para cada deportista",
+    "previewFor": "Vista previa para {{name}}",
+    "footer": "Cada deportista recibe su propio email, con su nombre. La nota también aparece en su postulación, que muestra “Esta vez no”.",
+    "send_one": "Enviar la nota",
+    "send_many": "Enviar a {{count}}",
+    "send_other": "Enviar a {{count}}",
+    "cancel": "Cancelar"
+  },
+  "declineSheet": {
+    "ariaLabel": "{{name}} no encaja",
+    "title": "No encaja: {{name}}",
+    "intro": "Elegir un motivo. Con él, Hockia escribe una nota amable para {{name}}. Todo se puede cambiar antes del envío.",
+    "introNoName": "Elegir un motivo. Hockia lo convierte en una nota amable. Todo se puede cambiar antes del envío.",
+    "reasonLabel": "Motivo",
+    "drafting": "Redactando con Hockia AI…",
+    "drafted": "Redactada por Hockia AI · tocar para editar",
+    "ownNote": "Tu nota",
+    "noteLabel": "Nota para {{name}}",
+    "notePlaceholder": "Escribir una nota breve para {{name}}",
+    "footer": "Esta nota aparece en la postulación y en el email sobre ella.",
+    "send": "Enviar la nota",
+    "cancel": "Cancelar"
+  },
+  "declineNotes": {
+    "reasons": {
+      "positionFilled": "Puesto cubierto",
+      "differentLevel": "Otro nivel",
+      "timing": "Fechas",
+      "location": "Ubicación",
+      "eligibility": "Elegibilidad",
+      "other": "Otro"
+    },
+    "why": {
+      "positionFilled": "Ya cubrimos este puesto",
+      "differentPosition": "Para esta oportunidad buscamos otra posición",
+      "differentLevel": "Para esta oportunidad buscamos otro nivel",
+      "timing": "Las fechas no coinciden con esta oportunidad",
+      "location": "La ubicación no coincide con esta oportunidad",
+      "eligibility": "Para esta oportunidad necesitamos otros requisitos de elegibilidad",
+      "profileIncomplete": "Para esta oportunidad necesitamos un perfil más completo",
+      "videoMissing": "Para esta oportunidad necesitamos video de partidos",
+      "other": "Decidimos ir por otro camino en esta oportunidad",
+      "roleClosed": "Cerramos esta oportunidad"
+    },
+    "thisOpportunity": "esta oportunidad",
+    "body": "gracias por postularte a {{title}}. {{why}}, así que esta vez no seguimos adelante. Nos encantaría recibir tu postulación en nuestras próximas oportunidades.",
+    "greeting": "Hola, {{name}},",
+    "greetingNoName": "Hola,",
+    "namesMore": "{{names}} y {{count}} más",
+    "bulkMaybe_one": "Tal vez: {{count}} postulante",
+    "bulkMaybe_many": "Tal vez: {{count}} postulantes",
+    "bulkMaybe_other": "Tal vez: {{count}} postulantes",
+    "bulkDeclined_one": "No encaja: {{count}} postulante",
+    "bulkDeclined_many": "No encaja: {{count}} postulantes",
+    "bulkDeclined_other": "No encaja: {{count}} postulantes"
+  },
+  "undoToast": {
+    "undo": "Deshacer"
+  },
+  "inviteAction": {
+    "applied": "Se postuló",
+    "passed": "No le interesa",
+    "passedLabel": "No le interesa esta oportunidad",
+    "invited": "Con invitación",
+    "invite": "Invitar",
+    "inviteLabel": "Invitar a postularse",
+    "inviteLabelLimited": "Invitar a postularse · {{reason}}"
+  },
+  "inviteSheet": {
+    "title": "Invitar a {{name}} a postularse",
+    "opportunityHeading": "Oportunidad",
+    "passedActive": "A {{name}} no le interesa {{role}}. Elegir otra oportunidad.",
+    "playerFallback": "esta persona",
+    "loading": "Cargando oportunidades…",
+    "noRoles": "Primero hay que publicar una oportunidad. Una invitación siempre es a una de tus oportunidades abiertas.",
+    "roleLabel": "Oportunidad",
+    "passedOn": "No le interesa esta oportunidad",
+    "changeRole": "Cambiar oportunidad",
+    "noteHeading": "Nota",
+    "drafted": "Redactada a partir de la oportunidad · tocar para editar",
+    "ownNote": "Tu nota",
+    "noteLabel": "Nota para {{name}}",
+    "notePlaceholder": "Escribir una nota breve para {{name}}",
+    "sending": "Enviando…",
+    "send": "Enviar invitación"
+  },
+  "markSignedSheet": {
+    "ariaLabel": "Marcar la incorporación de {{name}}",
+    "title": "¿Marcar la incorporación de {{name}}?",
+    "closeRole": "Cerrar {{role}}",
+    "staysOpen": "La oportunidad sigue abierta, para sumar más incorporaciones.",
+    "saving": "Guardando…",
+    "confirm": "Marcar incorporación",
+    "notYet": "Todavía no"
+  },
+  "offerSheet": {
+    "title": "Oferta para {{name}}",
+    "intro": "Completada a partir de tu oportunidad. Se puede cambiar todo lo que sea distinto para {{name}}.",
+    "role": "Oportunidad",
+    "start": "Inicio",
+    "startDate": "Fecha de inicio",
+    "length": "Duración",
+    "pay": "Pago",
+    "notStated": "Sin indicar",
+    "package": "Beneficios",
+    "none": "Ninguno",
+    "openUntil": "Abierta hasta",
+    "chooseDate": "Elegir una fecha",
+    "notePlaceholder": "Agregar una nota (opcional)",
+    "noteLabel": "Nota (opcional)",
+    "sending": "Enviando…",
+    "sendUpdated": "Enviar oferta actualizada",
+    "send": "Enviar oferta"
+  },
+  "inviteMembersModal": {
+    "errors": {
+      "createLink": "No se pudo crear el enlace de invitación.",
+      "copy": "No se pudo copiar. Mantener presionado el enlace para copiarlo.",
+      "regenerate": "No se pudo generar un enlace nuevo."
+    },
+    "regenerated": "Se generó un enlace de invitación nuevo. El anterior ya no funciona.",
+    "invitedToast": "Invitación enviada a {{name}}.",
+    "invitedToastNoName": "Invitación enviada.",
+    "title": "Invitar integrantes",
+    "close": "Cerrar",
+    "intro": "Para armar el plantel del club. Jugadores/as y entrenadores/as pueden aceptar para sumarse.",
+    "tabLink": "Enlace de invitación",
+    "tabPerson": "Invitar a una persona",
+    "linkHelp": "Este enlace se puede compartir con el equipo. Quien lo abra puede aceptar y sumarse al club.",
+    "generating": "Generando enlace…",
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "regenerate": "Generar un enlace nuevo",
+    "searchPlaceholder": "Buscar jugadores/as y entrenadores/as por nombre",
+    "searching": "Buscando…",
+    "typeName": "Escribir un nombre para encontrar jugadores/as y entrenadores/as.",
+    "noResults": "No hay jugadores/as ni entrenadores/as que coincidan con “{{query}}”.",
+    "invited": "Con invitación",
+    "invite": "Invitar"
+  },
+  "hockiaSuggests": {
+    "backFallback": "Oportunidad",
+    "loading": "Buscando jugadores/as…",
+    "composerLabel": "Preguntar a Hockia sobre estos perfiles",
+    "send": "Preguntar a Hockia"
+  },
+  "suggestionCard": {
+    "playerFallback": "Jugador/a",
+    "ariaLabel": "{{rank}}. {{name}}",
+    "reasonsLabel": "Por qué Hockia sugiere este perfil",
+    "met": "Cumple",
+    "missing": "No figura en el perfil",
+    "removeShortlist": "Quitar a {{name}} de la preselección",
+    "addShortlist": "Agregar a {{name}} a la preselección"
+  },
+  "suggestRefine": {
+    "euPassport": "Pasaporte de la UE",
+    "availableFrom": "Desde {{date}}",
+    "playerFallback": "Jugador/a",
+    "chipsLabel": "Próximas preguntas sugeridas",
+    "composerLabel": "Preguntar a Hockia AI",
+    "send": "Enviar"
+  },
+  "recruitConfirm": {
+    "back": "Oportunidades",
+    "title": "¿Tu tarea incluye reclutar jugadores/as para un equipo?",
+    "body": "Publicar oportunidades es para cuerpos técnicos que reclutan. Con un sí, también se suman Buscar jugadores/as y una preselección.",
+    "error": "No se guardó. Revisar la conexión y volver a intentar.",
+    "yes": "Sí, recluto para un equipo",
+    "notNow": "Ahora no"
+  },
+  "fitCard": {
+    "title": "Encaje con esta oportunidad",
+    "footer": "Solo los clubes y los cuerpos técnicos que reclutan ven el encaje. Se basa en el perfil y en nada más."
+  },
+  "rankedForPill": {
+    "prefix": "Ranking para",
+    "ariaLabel": "Ranking para {{label}}. Cambiar el contexto"
+  },
+  "rankedForSheet": {
+    "title": "Ranking para",
+    "intro": "Filtra y ordena perfiles según un contexto. Solo es visible para tu cuenta.",
+    "close": "Cerrar",
+    "openRoles": "Tus oportunidades abiertas",
+    "savedContexts": "Contextos guardados",
+    "savedSearch": "Búsqueda guardada",
+    "savedSearchRegion": "Búsqueda guardada · {{region}}",
+    "noContext": "Sin contexto",
+    "noContextDetail": "Más recientes primero, sin encaje",
+    "newContext": "Nuevo contexto",
+    "toReview": "{{count}} por revisar",
+    "noApplicants": "Todavía sin postulantes"
+  },
+  "rankedForControl": {
+    "coachingFallback": "Oportunidad para entrenar"
+  },
+  "applicantReview": {
+    "menu": {
+      "markSigned": "Marcar incorporación",
+      "decline": "No seguir adelante",
+      "withdrawOffer": "Retirar oferta",
+      "undoSigning": "Deshacer incorporación"
+    },
+    "errors": {
+      "unavailable": "Esta postulación no está disponible.",
+      "loadFailed": "No se pudo cargar esta postulación."
+    },
+    "playerFallback": "esta persona",
+    "roleFallback": "esta oportunidad",
+    "toasts": {
+      "offerUpdated": "Oferta actualizada enviada a {{name}}",
+      "offerSent": "Oferta enviada a {{name}}",
+      "askedToConfirm": "Se le va a pedir a {{name}} que lo confirme",
+      "decisionFailed": "No se pudo guardar la decisión. Se puede volver a intentar.",
+      "declineFailed": "No se pudo enviar el descarte. Se puede volver a intentar."
+    },
+    "status": {
+      "new": "Nueva",
+      "shortlisted": "En preselección",
+      "maybe": "Tal vez",
+      "notAFit": "No encaja"
+    },
+    "statusNote": {
+      "shortlisted": "Esta persona está en tu preselección.",
+      "maybe": "Esta persona quedó como tal vez.",
+      "rejected": "Esta postulación quedó como no encaja.",
+      "noResponse": "Cerrada sin respuesta.",
+      "filled": "Esta oportunidad se cubrió.",
+      "withdrawn": "Retirada por quien se postuló."
+    },
+    "closesToday": "cierra hoy",
+    "daysLeftToReply": "{{daysLeft}} para responder",
+    "appliedOn": "Se postuló el {{date}}",
+    "menuMessage": "Enviar mensaje",
+    "viewFullProfile": "Ver perfil completo",
+    "decision": {
+      "notAFit": "No encaja",
+      "maybe": "Tal vez",
+      "shortlist": "Preseleccionar"
+    },
+    "messageName": "Escribir a {{name}}",
+    "moreActions": "Más acciones",
+    "message": "Escribir",
+    "road": {
+      "makeOffer": "Hacer una oferta",
+      "editOffer": "Editar oferta",
+      "markSigned": "Marcar incorporación"
+    },
+    "inTheirWords": "En sus palabras",
+    "facts": {
+      "age": "Edad",
+      "basedIn": "Vive en",
+      "club": "Club",
+      "passport_one": "Pasaporte",
+      "passport_other": "Pasaportes",
+      "passport_many": "Pasaportes"
+    },
+    "videos": "Videos",
+    "seeAllVideos": "Ver los {{total}}",
+    "fullMatch": "Partido completo",
+    "versus": "vs {{team}}",
+    "minutes": "{{minutes}} min",
+    "career": "Trayectoria",
+    "seeAll": "Ver todo",
+    "specialistSkills": "Habilidades específicas",
+    "references": "Referencias",
+    "noReferences": "Todavía no hay referencias. Las escriben amistades en Hockia: cuerpos técnicos y quienes comparten equipo pueden escribir una.",
+    "cancel": "Cancelar",
+    "confirm": {
+      "withdrawTitle": "¿Retirar esta oferta?",
+      "undoTitle": "¿Deshacer la incorporación?",
+      "withdrawBody": "Se le avisa a {{name}} que la oferta se retiró y vuelve a En preselección.",
+      "undoBody": "Ya no se le va a pedir a {{name}} que confirme. La incorporación se puede volver a marcar más adelante.",
+      "withdrawConfirm": "Retirar oferta",
+      "undoConfirm": "Deshacer incorporación",
+      "withdrawBusy": "Retirando…",
+      "undoBusy": "Deshaciendo…"
+    },
+    "backToApplicants": "Volver a las postulaciones",
+    "counter": "{{current}} de {{total}} por revisar"
+  },
+  "clubFit": {
+    "state": {
+      "green": "Encaje alto",
+      "yellow": "Encaje posible",
+      "grey": "Encaje bajo"
+    },
+    "target": {
+      "men": "caballeros",
+      "women": "damas",
+      "mixed": "mixto"
+    },
+    "position": {
+      "striker": "Delantero/a centro"
+    },
+    "reasons": {
+      "categoryMatch": "Juega en {{category}}, que coincide con la categoría del equipo de {{target}}.",
+      "categoryMismatch": "Juega en {{category}}, una categoría distinta a la de tu equipo.",
+      "categoryMissing": "Categoría de juego sin cargar. No hay datos para comparar.",
+      "levelComparable": "Juega en una liga de nivel similar al de tu equipo.",
+      "levelDifferent": "Juega en una liga de distinto nivel que tu equipo.",
+      "leagueMissing": "Liga actual sin vincular. No se puede comparar el nivel.",
+      "teamLevelMissing": "El nivel de liga de tu equipo no está definido. No se puede comparar el nivel.",
+      "open": "Disponible para oportunidades.",
+      "notOpen": "Por ahora no figura como disponible para oportunidades.",
+      "positionMatch": "Juega de {{position}}, la posición que se busca.",
+      "positionSecondary": "Juega de {{position}} como posición secundaria.",
+      "positionMismatch": "Su posición principal es {{position}}, no {{target}}.",
+      "positionMissing": "Posición sin cargar. No hay datos para comparar la posición.",
+      "specialistsAll_one": "Tiene la especialidad que se busca ({{skills}}).",
+      "specialistsAll_many": "Tiene las especialidades que se buscan ({{skills}}).",
+      "specialistsAll_other": "Tiene las especialidades que se buscan ({{skills}}).",
+      "specialistsSome": "Tiene {{skills}} (de las {{count}} que se buscan).",
+      "specialistsNone": "No figura con la especialidad que se busca."
+    },
+    "hardFail": {
+      "notGoalkeeper": "Juega de {{position}}, no de arquero/a. Arquero/a es una posición de especialista, así que no encaja en la posición.",
+      "position": "Juega de {{position}}, no de {{target}} como se requiere.",
+      "specialists_one": "No tiene la especialidad requerida ({{skills}}).",
+      "specialists_many": "No tiene las especialidades requeridas ({{skills}}).",
+      "specialists_other": "No tiene las especialidades requeridas ({{skills}})."
+    }
+  },
+  "coachFit": {
+    "state": {
+      "green": "Encaje alto",
+      "yellow": "Encaje posible",
+      "grey": "Encaje bajo"
+    },
+    "target": {
+      "men": "caballeros",
+      "women": "damas",
+      "mixed": "mixto"
+    },
+    "specOther": "Otra",
+    "reasons": {
+      "specMatch": "Su especialidad es {{spec}}, que coincide con la oportunidad que se busca cubrir.",
+      "specMismatch": "Su especialidad es {{spec}}, no {{target}}.",
+      "specMissing": "Especialidad sin cargar. No hay datos para comparar el rol.",
+      "openSearch": "Búsqueda abierta de cuerpo técnico: orden según categoría del equipo, trayectoria y disponibilidad.",
+      "categoryMatch": "Entrena equipos de {{target}}, que coincide con la categoría de tu equipo.",
+      "categoryMismatch": "Entrena una categoría de equipo distinta de {{target}}.",
+      "categoryMissing": "Categorías que entrena sin cargar. No hay datos para comparar la categoría."
+    }
+  },
+  "interestFit": {
+    "label": {
+      "strong": "Interés alto",
+      "possible": "Interés posible",
+      "low": "Interés bajo"
+    },
+    "mobility": {
+      "excluded": "Descartó {{country}} entre los países que consideraría.",
+      "homeCountry": "La oportunidad es en su país de origen.",
+      "homeOnlyNamed": "Solo quiere quedarse en {{country}}.",
+      "homeOnly": "Solo quiere quedarse en su país de origen.",
+      "prefersHome": "Prefiere quedarse en su país de origen.",
+      "relocateTo": "Con disposición a mudarse a {{country}}.",
+      "relocateNotListed": "Con disposición a mudarse, aunque {{country}} no está entre sus países elegidos.",
+      "relocate": "Con disposición a mudarse.",
+      "discuss": "Se puede conversar una mudanza.",
+      "listed": "Incluye {{country}} entre los países que consideraría.",
+      "notListed": "{{country}} no está entre sus países elegidos.",
+      "notExcluded": "No descartó {{country}}."
+    },
+    "level": {
+      "thisLevel": "este nivel",
+      "provenMatch": "Demostró {{level}}, que coincide con lo que se busca.",
+      "targetMatch": "Apunta a {{level}}, que coincide con lo que se busca.",
+      "stepUpProven": "Un escalón por encima del nivel que demostró.",
+      "stepUpTarget": "Un escalón por encima del nivel al que dice apuntar.",
+      "wellAboveProven": "Muy por encima del nivel que demostró.",
+      "wellAboveTarget": "Muy por encima del nivel al que dice apuntar.",
+      "belowProven": "Por debajo del nivel que demostró.",
+      "belowProvenOverqualified": "Por debajo del nivel que demostró; probablemente le sobra nivel.",
+      "belowTarget": "Por debajo del nivel al que dice apuntar.",
+      "wantsLower": "Aunque dice que busca un nivel más bajo que esta oportunidad.",
+      "wantsHigher": "Dice que busca un nivel más alto que esta oportunidad."
+    },
+    "comp": {
+      "openEither": "Acepta oportunidades pagas o de desarrollo.",
+      "openingEither": "Esta oportunidad está abierta en cuanto a la remuneración.",
+      "paidMatch": "Busca una oportunidad paga, y esta es paga.",
+      "developmentMatch": "Busca una oportunidad de desarrollo, y esta coincide.",
+      "wantsPaid": "Busca una oportunidad paga; esta es de desarrollo.",
+      "developmentPaid": "Acepta una oportunidad de desarrollo; esta es paga."
+    },
+    "availability": {
+      "inTime": "Disponible desde {{date}}, a tiempo para el inicio.",
+      "late": "Disponible desde {{date}}, después del inicio en {{start}}."
+    },
+    "hardFail": {
+      "excluded": "Descartó {{country}}, la ubicación requerida.",
+      "homeOnlyNamed": "No se mudaría a {{country}}. Solo quiere {{home}}.",
+      "homeOnly": "No se mudaría a {{country}}. Solo quiere su país de origen.",
+      "belowLevel": "Por debajo del nivel {{level}} requerido.",
+      "wantsPaid": "Busca una oportunidad paga; esta es de desarrollo.",
+      "late": "Disponible desde {{date}}, después del inicio requerido en {{start}}."
+    }
+  },
+  "candidateIntent": {
+    "relocation": {
+      "relocate": "Con disposición a mudarse",
+      "homeOnly": "Se queda en su país",
+      "openToDiscuss": "Se puede conversar"
+    },
+    "levelTarget": {
+      "top": "Máximo nivel",
+      "competitive": "Competitivo",
+      "development": "Desarrollo",
+      "any": "Cualquier nivel"
+    },
+    "preference": {
+      "paid": "Paga",
+      "development": "Desarrollo",
+      "either": "Paga o de desarrollo"
+    },
+    "duration": {
+      "fullSeason": "Temporada completa",
+      "halfSeason": "Media temporada",
+      "shortTerm": "Corto plazo",
+      "flexible": "Flexible"
+    },
+    "availableFrom": "Desde {{date}}",
+    "availableFromFor": "Desde {{date}} · {{duration}}",
+    "rows": {
+      "relocation": "Mudanza",
+      "availability": "Disponibilidad",
+      "level": "Nivel buscado",
+      "lookingFor": "Busca",
+      "openCountries": "Países posibles",
+      "excludedCountries": "Países descartados"
+    }
+  },
+  "evidence": {
+    "items": {
+      "matchVideo": "Video de partido",
+      "fullMatch": "Video de partido completo",
+      "fullMatchCount": "Video de partido completo ({{count}})",
+      "highlight": "Video de highlights",
+      "highlightDetail": "Video de highlights disponible",
+      "references_one": "{{count}} referencia",
+      "references_many": "{{count}} referencias",
+      "references_other": "{{count}} referencias",
+      "referencesDetail_one": "{{count}} referencia aceptada",
+      "referencesDetail_many": "{{count}} referencias aceptadas",
+      "referencesDetail_other": "{{count}} referencias aceptadas",
+      "verified": "Verificado",
+      "verifiedDetail": "Perfil verificado",
+      "provenLevel": "Nivel comprobable",
+      "levelCoach": "Entrena en un club y una liga registrados",
+      "levelPlayer": "Juega en un club y una liga registrados"
+    },
+    "reasons": {
+      "fullMatch": "Tiene video de partido completo.",
+      "fullMatchCount": "Tiene video de partido completo ({{count}} partidos).",
+      "highlight": "Tiene video de highlights.",
+      "references_one": "{{count}} referencia aceptada.",
+      "references_many": "{{count}} referencias aceptadas.",
+      "references_other": "{{count}} referencias aceptadas.",
+      "verified": "Perfil verificado por Hockia.",
+      "levelCoach": "Entrena en un club y una liga registrados (nivel comprobable).",
+      "levelPlayer": "Juega en un club y una liga registrados (nivel comprobable)."
+    },
+    "checklist": {
+      "fullMatch": "Video de partido completo",
+      "highlight": "Video de highlights",
+      "referencesCount_one": "{{count}} referencia",
+      "referencesCount_many": "{{count}} referencias",
+      "referencesCount_other": "{{count}} referencias",
+      "references": "Referencias",
+      "club": "Club actual",
+      "league": "Liga registrada",
+      "career": "Trayectoria",
+      "openToCoach": "Disponible para entrenar",
+      "openToPlay": "Disponible para jugar"
+    },
+    "level": {
+      "strong": "Evidencia sólida",
+      "moderate": "Evidencia suficiente",
+      "limited": "Evidencia limitada",
+      "minimal": "Evidencia mínima"
+    },
+    "tooltip": "El nivel de evidencia refleja cuánta información verificable ofrece este perfil para evaluarlo: videos, referencias, un nivel comprobable. No califica la habilidad ni el talento.",
+    "missing": "Falta: {{items}}"
+  },
+  "recruiterVerdict": {
+    "tier": {
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "possible": "Posible",
+      "out": "Fuera de tu contexto"
+    },
+    "limitedCoach": "Por ahora hay pocas referencias y poca trayectoria cargadas.",
+    "limitedPlayer": "Por ahora hay pocos videos y pocas referencias cargadas."
+  },
+  "clubFitChip": {
+    "tooltip": "{{label}} — {{reasons}}",
+    "ariaClub": "Encaje con el club: {{label}}. Tocar para ver el porqué.",
+    "ariaCoach": "Encaje con el cuerpo técnico: {{label}}. Tocar para ver el porqué.",
+    "forTeam": " · para tu equipo de {{target}}",
+    "target": {
+      "men": "caballeros",
+      "women": "damas",
+      "mixed": "mixto"
+    },
+    "privacyPlayer": "Basado en datos de este perfil. Nunca se le muestra a quien juega.",
+    "privacyCoach": "Basado en datos de este perfil. Nunca se le muestra a quien entrena."
+  },
+  "evidenceSignal": {
+    "tooltip": "{{tier}} — {{reasons}}",
+    "ariaExpandable": "Evidencia: {{tier}}. Tocar para ver la lista completa.",
+    "aria": "Evidencia: {{tier}}. {{reasons}}",
+    "heading": "{{tier}} <muted>· evidencia cargada</muted>",
+    "privacy": "Basado en datos de este perfil. Nunca se le muestra a la persona."
+  },
+  "hockeyContextLine": {
+    "missing": "Sin cargar"
+  },
+  "interestSignal": {
+    "tooltip": "{{label}} — {{reasons}}",
+    "aria": "Interés: {{label}}. {{reasons}}"
+  },
+  "provenSignal": {
+    "tooltip": "{{tier}} — {{reasons}}",
+    "aria": "Evidencia: {{tier}}. {{reasons}}"
+  },
+  "candidateCard": {
+    "unknownName": "Sin nombre",
+    "verified": "Verificado",
+    "opensProfile": "Abre el perfil.",
+    "tapToPreview": "Tocar para ver la vista previa.",
+    "aria": "{{name}} · {{detail}}. {{hint}}",
+    "ariaWithFit": "{{name}} · {{detail}}, {{fit}}. {{hint}}",
+    "tileDetail": "{{role}} · {{detail}}",
+    "coachSpec": {
+      "head_coach": "Entrenador/a principal",
+      "assistant_coach": "Entrenador/a asistente",
+      "youth_coach": "Entrenador/a de juveniles",
+      "goalkeeper_coach": "Entrenador/a de arqueros/as",
+      "strength_conditioning": "Preparador/a físico/a",
+      "performance_analyst": "Analista de rendimiento",
+      "sports_scientist": "Especialista en ciencias del deporte",
+      "other": "Otra especialidad",
+      "other_coach": "Otra especialidad"
+    },
+    "coachSpecFallback": "Entrenador/a de {{spec}}",
+    "umpireLevel": "Árbitro/a {{level}}"
+  },
+  "fitExplain": {
+    "empty": "Todavía no hay encaje para explicar. Elegir un contexto en Ranking para."
+  },
+  "verdictCard": {
+    "groupLabel": "Encaje con tu contexto",
+    "scoped": "Para tu contexto",
+    "general": "Encaje general",
+    "weightedFor": "Ponderado para <strong>{{problem}}</strong>"
+  },
+  "moveToShortlist": {
+    "defaultTitle": "Mover a…",
+    "loading": "Cargando listas…",
+    "empty": "Todavía no hay listas. Se puede crear una abajo.",
+    "defaultTag": "predeterminada",
+    "currentTag": "actual",
+    "namePlaceholder": "Nombre de la nueva lista",
+    "createAndAdd": "Crear y agregar",
+    "newList": "Nueva lista"
+  },
+  "moreActions": {
+    "moreActions": "Más acciones",
+    "moveToList": "Mover a una lista…",
+    "addNoteInList": "Agregar nota en la lista",
+    "alreadyInList": "{{name}} ya está en {{list}}",
+    "addFailed": "No se pudo agregar a esa lista",
+    "added": "{{name}} se agregó a {{list}}",
+    "addToListTitle": "Agregar a una lista…"
+  },
+  "quickActions": {
+    "removeSavedLabel": "Quitar a {{name}} de guardados",
+    "saveLabel": "Guardar a {{name}}",
+    "saved": "Guardado",
+    "save": "Guardar",
+    "messageLabel": "Enviar mensaje a {{name}}",
+    "message": "Mensaje",
+    "friends": "Amistades",
+    "friendsLabel": "Amistad con {{name}}",
+    "requested": "Solicitada",
+    "requestedLabel": "Solicitud de amistad enviada a {{name}}",
+    "addFriend": "Agregar amistad",
+    "addFriendLabel": "Agregar a {{name}} como amistad",
+    "signInToConnect": "Para conectar hay que iniciar sesión con un perfil de Hockia."
+  },
+  "recruiterCardActions": {
+    "saved": "Guardado",
+    "save": "Guardar",
+    "removeSavedLabel": "Quitar a {{name}} de guardados",
+    "saveLabel": "Guardar a {{name}}",
+    "chat": "Chat",
+    "messageLabel": "Enviar mensaje a {{name}}",
+    "addFriend": "Agregar amistad",
+    "loadingFriendship": "Cargando estado de amistad",
+    "friends": "Amistades",
+    "friendsLabel": "Amistad con {{name}}",
+    "requested": "Solicitada",
+    "requestedLabel": "Solicitud de amistad enviada a {{name}}",
+    "signInToConnect": "Para conectar hay que iniciar sesión con un perfil de Hockia.",
+    "addFriendLabel": "Agregar a {{name}} como amistad"
+  },
+  "findPlayers": {
+    "filterOpen": "Disponible para jugar",
+    "filterFullMatch": "Partido completo",
+    "filterEu": "Pasaporte de la UE",
+    "filterNotApplied": "Sin postulación",
+    "activeToday": "Actividad hoy",
+    "activeYesterday": "Actividad ayer",
+    "activeDaysAgo_one": "Actividad hace {{count}} día",
+    "activeDaysAgo_other": "Actividad hace {{count}} días",
+    "activeDaysAgo_many": "Actividad hace {{count}} días",
+    "fullMatches_one": "{{count}} partido completo",
+    "fullMatches_other": "{{count}} partidos completos",
+    "fullMatches_many": "{{count}} partidos completos",
+    "highlights_one": "{{count}} highlight",
+    "highlights_other": "{{count}} highlights",
+    "highlights_many": "{{count}} highlights",
+    "careerEntries_one": "{{count}} entrada en la trayectoria",
+    "careerEntries_other": "{{count}} entradas en la trayectoria",
+    "careerEntries_many": "{{count}} entradas en la trayectoria",
+    "careerShort_one": "{{count}} de trayectoria",
+    "careerShort_other": "{{count}} de trayectoria",
+    "careerShort_many": "{{count}} de trayectoria",
+    "age": "Edad {{age}}",
+    "euPassport": "Pasaporte de la UE",
+    "availableFrom": "Disponible desde {{day}}",
+    "noContext": "Sin contexto",
+    "customSearch": "Búsqueda personalizada",
+    "sourceAppliedToOn": "Se postuló a {{position}} · en preselección desde el {{day}}",
+    "sourceAppliedTo": "Se postuló a {{position}} · en preselección",
+    "sourceAppliedOn": "Se postuló · en preselección desde el {{day}}",
+    "sourceApplied": "Se postuló · en preselección",
+    "sourceScoutedOn": "Por búsqueda · se guardó el {{day}}",
+    "sourceScouted": "Por búsqueda",
+    "shortlistHeader_one": "{{count}} jugador/a · solo tu club ve esto",
+    "shortlistHeader_other": "{{count}} jugadores/as · solo tu club ve esto",
+    "shortlistHeader_many": "{{count}} jugadores/as · solo tu club ve esto"
+  },
+  "findPlayersScreen": {
+    "backOpportunities": "Oportunidades",
+    "title": "Buscar jugadores/as",
+    "shortlistLink": "Preselección",
+    "shortlistLinkCount": "Preselección · {{count}}",
+    "filtersLabel": "Filtros",
+    "levelUnknown": "{{league}} todavía no tiene nivel en Hockia, así que el encaje no puede comparar niveles. El orden se basa en partidos completos, highlights y trayectoria.",
+    "noContext": "No hay oportunidad elegida. El orden se basa en partidos completos, highlights y trayectoria. Al elegir una oportunidad se ve el encaje.",
+    "loading": "Buscando jugadores/as…",
+    "emptyFiltered": "No hay jugadores/as que coincidan con estos filtros.",
+    "empty": "Todavía no hay jugadores/as para mostrar.",
+    "removeNamed": "Quitar a {{name}} de la preselección",
+    "removePlayer": "Quitar de la preselección",
+    "shortlistNamed": "Preseleccionar a {{name}}",
+    "shortlistPlayer": "Preseleccionar",
+    "applied": "Se postuló"
+  },
+  "shortlistScreen": {
+    "backOpportunities": "Oportunidades",
+    "title": "Preselección",
+    "sourceTabs": "Origen de la preselección",
+    "chipAll": "Todo · {{count}}",
+    "chipApplied": "Con postulación · {{count}}",
+    "chipScouted": "Por búsqueda · {{count}}",
+    "loading": "Cargando…",
+    "emptyApplied": "Todavía no hay postulantes en preselección para esta oportunidad.",
+    "emptyScouted": "Todavía no se guardó a nadie desde la búsqueda para esta oportunidad.",
+    "emptyAll": "Todavía no hay nadie en esta preselección.",
+    "findPlayers": "Buscar jugadores/as",
+    "messageNamed": "Enviar mensaje a {{name}}",
+    "messagePlayer": "Enviar mensaje",
+    "privacyNote": "Nadie recibe aviso de estar en tu preselección. Las notas son privadas de tu club.",
+    "playerFallback": "Jugador/a",
+    "editNote": "Editar nota",
+    "addNote": "Agregar nota",
+    "removeApplied": "Quitar (la postulación pasa a Tal vez)",
+    "remove": "Quitar",
+    "noteLabel": "Nota",
+    "noteTitle": "Nota sobre {{firstName}}",
+    "noteTitleNoName": "Nota sobre esta persona",
+    "noteHint": "Solo tu club ve esto.",
+    "clearNote": "Borrar",
+    "saveNote": "Guardar nota"
+  },
+  "shortlistsIndex": {
+    "documentTitle": "Preselecciones",
+    "signedOutTitle": "Iniciar sesión para gestionar preselecciones",
+    "signedOutBody": "Agrupar perfiles en observación y ordenarlos más adelante.",
+    "signIn": "Iniciar sesión",
+    "back": "Volver",
+    "title": "Preselecciones",
+    "subtitle": "Listas para agrupar perfiles en observación. Solo tu cuenta las ve.",
+    "newList": "Nueva lista",
+    "namePlaceholder": "p. ej., Pruebas de pretemporada Damas",
+    "creating": "Creando…",
+    "create": "Crear",
+    "cancel": "Cancelar",
+    "confirmDeleteWithItems_one": "¿Eliminar \"{{name}}\" y quitar {{count}} jugador/a de esta lista? No se puede deshacer.",
+    "confirmDeleteWithItems_other": "¿Eliminar \"{{name}}\" y quitar {{count}} jugadores/as de esta lista? No se puede deshacer.",
+    "confirmDeleteWithItems_many": "¿Eliminar \"{{name}}\" y quitar {{count}} jugadores/as de esta lista? No se puede deshacer.",
+    "confirmDelete": "¿Eliminar \"{{name}}\"?",
+    "renameLabel": "Cambiar el nombre de la preselección {{name}}",
+    "renamePlaceholder": "Nombre de la preselección",
+    "defaultBadge": "Predeterminada",
+    "playerCount_one": "{{count}} jugador/a",
+    "playerCount_other": "{{count}} jugadores/as",
+    "playerCount_many": "{{count}} jugadores/as",
+    "saveName": "Guardar nombre",
+    "cancelRename": "Cancelar cambio de nombre",
+    "makeDefault": "Usar como lista predeterminada",
+    "makeDefaultTitle": "Usar como predeterminada. Los guardados rápidos van acá",
+    "rename": "Cambiar nombre",
+    "delete": "Eliminar",
+    "openList": "Abrir {{name}}",
+    "emptyTitle": "Todavía no hay preselecciones",
+    "emptyBody": "Se puede guardar a alguien desde Comunidad o crear una lista para agrupar perfiles de interés.",
+    "createFirst": "Crear la primera lista"
+  },
+  "shortlistDetail": {
+    "statusUnsorted": "Sin clasificar",
+    "statusTopPick": "Primera opción",
+    "statusMaybe": "Tal vez",
+    "statusNotAFit": "No encaja",
+    "documentTitle": "Preselección",
+    "signedOutTitle": "Iniciar sesión para ver la preselección",
+    "allShortlists": "Todas las preselecciones",
+    "titleFallback": "Preselección",
+    "defaultBadge": "Predeterminada",
+    "countLine_one": "{{count}} jugador/a · solo tu cuenta lo ve.",
+    "countLine_other": "{{count}} jugadores/as · solo tu cuenta lo ve.",
+    "countLine_many": "{{count}} jugadores/as · solo tu cuenta lo ve.",
+    "unavailable": "Perfil ya no disponible",
+    "remove": "Quitar",
+    "playerFallback": "Jugador/a",
+    "statusLabel": "Estado",
+    "notePlaceholder": "Agregar una nota privada…",
+    "saving": "Guardando…",
+    "openProfile": "Abrir perfil",
+    "moveLabel": "Mover a otra preselección",
+    "moveTo": "Mover a…",
+    "removeFromList": "Quitar de la lista",
+    "emptyTitle": "Todavía no hay jugadores/as",
+    "emptyBody": "Se puede guardar a alguien desde Comunidad, la búsqueda o cualquier perfil para sumarlo acá.",
+    "browseCommunity": "Explorar Comunidad"
+  },
+  "savedCandidates": {
+    "documentTitleCandidates": "Candidaturas guardadas",
+    "documentTitleProfiles": "Perfiles guardados",
+    "signedOutTitle": "Iniciar sesión para ver los perfiles guardados",
+    "signedOutBody": "Guardar a las personas que se descubren y tenerlas organizadas para más adelante.",
+    "signIn": "Iniciar sesión",
+    "back": "Volver",
+    "title": "Guardados",
+    "privacy": "Solo tu cuenta ve a quién guardaste. Nunca se les avisa.",
+    "errorRetry": "{{error}} — <button>reintentar</button>",
+    "emptyTitleCandidates": "Todavía no hay candidaturas guardadas",
+    "emptyTitleProfiles": "Todavía no hay perfiles guardados",
+    "emptyBodyCandidates": "El ícono de marcador en cualquier tarjeta de jugador/a en Comunidad guarda el perfil acá.",
+    "emptyBodyProfiles": "El ícono de marcador en cualquier perfil en Comunidad lo guarda acá.",
+    "browseCommunity": "Explorar Comunidad",
+    "unavailable": "Este perfil ya no está disponible en Hockia.",
+    "openNamed": "Abrir {{name}}",
+    "openProfile": "Abrir perfil",
+    "unnamed": "Sin nombre",
+    "removeNamed": "Quitar a {{name}} de guardados",
+    "removeTitle": "Quitar de guardados"
+  },
+  "clubSquadCopy": {
+    "settingsSubtitleUnknown": "Jugadores/as y staff · tu enlace de invitación",
+    "settingsSubtitleEmpty": "Todavía no hay integrantes · compartir el enlace de invitación",
+    "settingsSubtitle_one": "{{count}} integrante · tu enlace de invitación",
+    "settingsSubtitle_other": "{{count}} integrantes · tu enlace de invitación",
+    "settingsSubtitle_many": "{{count}} integrantes · tu enlace de invitación",
+    "notInvitable": "Esta persona todavía no puede recibir invitaciones.",
+    "inviteFailed": "No se pudo enviar la invitación."
+  },
+  "clubSquad": {
+    "yourClub": "tu club",
+    "joinCount_one": "{{count}} persona se sumó con este enlace",
+    "joinCount_other": "{{count}} personas se sumaron con este enlace",
+    "joinCount_many": "{{count}} personas se sumaron con este enlace"
+  },
+  "clubSquadHook": {
+    "linkFailed": "No se pudo crear el enlace de invitación.",
+    "loadFailed": "No se pudo cargar tu plantel. Se puede volver a intentar.",
+    "searchFailed": "La búsqueda falló. Se puede volver a intentar."
+  },
+  "scopeFilters": {
+    "coaches": "cuerpos técnicos",
+    "women": "deportistas de Damas",
+    "men": "deportistas de Caballeros",
+    "players": "deportistas",
+    "womenInRegion": "deportistas de Damas en {{region}}",
+    "menInRegion": "deportistas de Caballeros en {{region}}",
+    "playersInRegion": "deportistas en {{region}}"
+  },
+  "squadScreen": {
+    "backProfile": "Perfil",
+    "title": "Plantel",
+    "subtitle": "Jugadores/as y staff con tu escudo en su perfil.",
+    "linkCopied": "Enlace de invitación copiado",
+    "copyFailed": "No se pudo copiar el enlace. Se puede volver a intentar.",
+    "shareText": "Invitación para sumarse a {{clubName}} en Hockia",
+    "shareTextNoName": "Invitación para sumarse a nuestro club en Hockia",
+    "invitationSent": "Invitación enviada a {{name}}",
+    "invitationSentNoName": "Invitación enviada",
+    "linkRevoked": "Enlace de invitación revocado. Ya no funciona.",
+    "revokeFailed": "No se pudo revocar el enlace. Se puede volver a intentar.",
+    "invitationCancelled": "Invitación cancelada",
+    "memberRemoved": "{{name}} ya no está en tu plantel",
+    "memberRemovedNoName": "Integrante quitado del plantel",
+    "genericError": "Algo salió mal. Se puede volver a intentar.",
+    "linkTitle": "Enlace de invitación",
+    "linkBody": "Con este enlace cualquier persona puede pedir sumarse. Cada pedido necesita tu aprobación.",
+    "linkOptions": "Opciones del enlace de invitación",
+    "shareLink": "Compartir enlace",
+    "copy": "Copiar",
+    "searchPlaceholder": "Invitar a alguien en Hockia",
+    "clearSearch": "Borrar búsqueda",
+    "searching": "Buscando…",
+    "noMatches": "No hay jugadores/as ni entrenadores/as que coincidan con “{{query}}”.",
+    "onYourSquad": "En tu plantel",
+    "invite": "Invitar",
+    "loading": "Cargando…",
+    "tryAgain": "Reintentar",
+    "emptyTitle": "Todavía no hay nadie",
+    "emptyBody": "Quienes elijan {{clubName}} como club actual aparecen acá automáticamente. También se les puede enviar una invitación.",
+    "invitedSection": "Con invitación",
+    "membersSection": "Integrantes · {{count}}",
+    "memberFallback": "Integrante",
+    "revokeBody": "El enlace deja de funcionar. Compartir o Copiar genera uno nuevo.",
+    "cancelBody": "{{name}} ya no va a poder aceptar esta invitación.",
+    "cancelBodyNoName": "Esta invitación ya no se va a poder aceptar.",
+    "removeBody": "{{name}} ya no va a aparecer en tu plantel.",
+    "removeBodyNoName": "Esta persona ya no va a aparecer en tu plantel.",
+    "revokeLink": "Revocar enlace",
+    "cancelInvitation": "Cancelar invitación",
+    "removeFromSquad": "Quitar del plantel",
+    "invitationPending": "Invitación pendiente",
+    "optionsFor": "Opciones para {{name}}",
+    "optionsForMember": "Opciones para integrante"
+  }
+}

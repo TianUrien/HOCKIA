@@ -27,7 +27,7 @@ import { tSettings, useSettingsT } from '@/i18n/ns/settings'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { qk } from '@/lib/queryKeys'
 import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
-import { CLUB_EDIT_PATH, CLUB_GROUP_FOOTER, CONTACT_EMAIL_INTRO, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
+import { CLUB_EDIT_PATH, clubGroupFooter, contactEmailIntro, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -62,7 +62,7 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
     <BottomSheet open={open} onClose={onClose} ariaLabel={t('contactEmail.title')}>
       <div className="px-5 pb-3 pt-1" data-testid="contact-email-sheet">
         <h2 className="text-title text-ink-1">{t('contactEmail.title')}</h2>
-        <p className="mt-1 text-secondary text-ink-2">{CONTACT_EMAIL_INTRO}</p>
+        <p className="mt-1 text-secondary text-ink-2">{contactEmailIntro()}</p>
         <input
           type="email"
           inputMode="email"
@@ -178,7 +178,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
       </SettingsGroup>
 
       {isClub && (
-        <SettingsGroup label={t('club.label')} footer={CLUB_GROUP_FOOTER}>
+        <SettingsGroup label={t('club.label')} footer={clubGroupFooter()}>
           <SettingsRow title={t('club.clubLeague')} subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league&from=settings')} />
           <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members?from=settings')} />
           <SettingsRow title={t('club.contactEmail')} subtitle={contactEmailSubtitle(read<string | null>('contact_email', null), read<boolean>('contact_email_public', false))} onClick={() => setContactEmail(true)} />

@@ -1,4 +1,5 @@
 import { coachSpecialtyLabel, positionLabel, roleLabel } from '@/lib/identity'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 
 /**
  * Pure helpers behind Squad — own (Figma 04 Club D1.15, DEV NOTE 338:702).
@@ -32,7 +33,7 @@ export function squadRoleLine(p: Pick<SquadPerson, 'role' | 'position' | 'second
 /** "Kilkenny Hockey Club" → "Kilkenny" for the empty-state line (Figma D1.15). */
 export function clubShortName(name: string | null | undefined): string {
   const full = name?.trim() || ''
-  if (!full) return 'your club'
+  if (!full) return tRecruiting('clubSquad.yourClub')
   const short = full.replace(/\s+(field\s+)?(hockey\s+club|hockey|hc|club)$/i, '').trim()
   return short || full
 }
@@ -73,7 +74,7 @@ export function inviteStateFor(id: string, memberIds: ReadonlySet<string>, pendi
 /** "3 joined with this link" — DEV NOTE: shown once join_count > 0. */
 export function joinCountLine(count: number | null | undefined): string | null {
   if (!count || count <= 0) return null
-  return `${count} joined with this link`
+  return tRecruiting('clubSquad.joinCount', { count })
 }
 
-export { squadSettingsSubtitle, inviteErrorMessage, NOT_INVITABLE_MESSAGE } from './clubSquadCopy'
+export { squadSettingsSubtitle, inviteErrorMessage } from './clubSquadCopy'

@@ -1,4 +1,7 @@
 import { supabase } from '@/lib/supabase'
+import { tBrands } from '@/i18n/ns/brands'
+import { formatNumber, intlLocale, isEnglish } from '@/i18n/format'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
 
 /**
  * Brand offers, Phase 1 (founder 2026-10-23; Figma page "08 · Brands (all
@@ -19,12 +22,19 @@ export type OfferAction = 'pause' | 'resume' | 'end' | 'delete'
 export const OFFER_LIVE_LIMIT = 5
 export const OFFER_TITLE_MAX = 60
 export const OFFER_BODY_MAX = 140
-export const OFFER_ROLES: { value: OfferRole; label: string }[] = [
-  { value: 'player', label: 'Players' },
-  { value: 'coach', label: 'Coaches' },
-  { value: 'club', label: 'Clubs' },
-  { value: 'umpire', label: 'Umpires' },
+/** `label` is read in the interface language on every access. */
+// Literal calls (not .map) so the bundler can drop this table from the start-up chunk.
+export const OFFER_ROLES: { value: OfferRole; readonly label: string }[] = [
+  withLazyText({ value: 'player' as OfferRole }, { label: () => tBrands('offers.roles.player') }),
+  withLazyText({ value: 'coach' as OfferRole }, { label: () => tBrands('offers.roles.coach') }),
+  withLazyText({ value: 'club' as OfferRole }, { label: () => tBrands('offers.roles.club') }),
+  withLazyText({ value: 'umpire' as OfferRole }, { label: () => tBrands('offers.roles.umpire') }),
 ]
+
+/** A count as the interface language writes it (English keeps plain digits, as before). */
+export function brandCount(n: number): string {
+  return isEnglish() ? String(n) : formatNumber(n)
+}
 
 export interface OfferFields {
   title: string | null
@@ -51,6 +61,16 @@ export const PROMO_CODE_RE = /^[A-Za-z0-9_-]{2,30}$/
 
 /** The regions a brand can pick (countries.region values), largest hockey markets first. */
 export const OFFER_REGIONS: string[] = ['Europe', 'South America', 'Oceania', 'Asia', 'Africa', 'North America', 'Central America', 'Caribbean']
+
+const REGION_KEYS: Record<string, 'europe' | 'southAmerica' | 'oceania' | 'asia' | 'africa' | 'northAmerica' | 'centralAmerica' | 'caribbean'> = {
+  Europe: 'europe', 'South America': 'southAmerica', Oceania: 'oceania', Asia: 'asia', Africa: 'africa',
+  'North America': 'northAmerica', 'Central America': 'centralAmerica', Caribbean: 'caribbean',
+}
+/** A region value (countries.region, stored in English) as shown in the interface. */
+export function offerRegionLabel(region: string): string {
+  const key = REGION_KEYS[region]
+  return key ? tBrands(`offers.regions.${key}`) : region
+}
 
 export interface BrandOffer extends OfferFields {
   id: string
@@ -105,24 +125,24 @@ export function offerGroup(o: Pick<BrandOffer, 'status' | 'pending_status'>): Of
   return 'paused_ended'
 }
 
-export const OFFER_GROUP_LABELS: Record<OfferGroup, string> = {
-  needs_you: 'Needs you',
-  live: 'Live',
-  waiting: 'Drafts',
-  paused_ended: 'Paused and ended',
-}
+export const OFFER_GROUP_LABELS: Record<OfferGroup, string> = lazyTextRecord({
+  needs_you: () => tBrands('offers.groups.needsYou'),
+  live: () => tBrands('offers.groups.live'),
+  waiting: () => tBrands('offers.groups.drafts'),
+  paused_ended: () => tBrands('offers.groups.pausedEnded'),
+})
 
 export type OfferPillTone = 'positive' | 'neutral' | 'amber' | 'muted'
 
 /** The state pill: green only for Live, amber only where the brand must act. */
 export function offerPill(o: Pick<BrandOffer, 'status' | 'pending_status'>): { label: string; tone: OfferPillTone } {
-  if (o.status === 'not_approved') return { label: 'Taken down', tone: 'amber' }
+  if (o.status === 'not_approved') return { label: tBrands('offers.pill.takenDown'), tone: 'amber' }
   switch (o.status) {
-    case 'live': return { label: 'Live', tone: 'positive' }
-    case 'in_review': return { label: 'Draft', tone: 'neutral' }
-    case 'draft': return { label: 'Draft', tone: 'neutral' }
-    case 'paused': return { label: 'Paused', tone: 'muted' }
-    default: return { label: 'Ended', tone: 'muted' }
+    case 'live': return { label: tBrands('offers.pill.live'), tone: 'positive' }
+    case 'in_review': return { label: tBrands('offers.pill.draft'), tone: 'neutral' }
+    case 'draft': return { label: tBrands('offers.pill.draft'), tone: 'neutral' }
+    case 'paused': return { label: tBrands('offers.pill.paused'), tone: 'muted' }
+    default: return { label: tBrands('offers.pill.ended'), tone: 'muted' }
   }
 }
 
@@ -131,46 +151,57 @@ export function liveCount(offers: Pick<BrandOffer, 'status'>[]): number {
 }
 
 export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
-  return `${liveCount(offers)} of ${OFFER_LIVE_LIMIT} live · free for every brand for now`
+  return tBrands('offers.liveLimitLine', { live: brandCount(liveCount(offers)), limit: OFFER_LIVE_LIMIT })
 }
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
 export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
   return [
-    `${o.shown} shown`,
-    `${o.opened} opened`,
-    `${o.store_visits ?? 0} went to your store`,
-    (o.code_copies ?? 0) > 0 ? `${o.code_copies} copied the code` : null,
-    `${o.contacted} contacted`,
-    (o.not_useful ?? 0) > 0 ? `${o.not_useful} not useful` : null,
+    countPart('shown', o.shown),
+    countPart('opened', o.opened),
+    countPart('storeVisits', o.store_visits ?? 0),
+    (o.code_copies ?? 0) > 0 ? countPart('codeCopies', o.code_copies ?? 0) : null,
+    countPart('contacted', o.contacted),
+    (o.not_useful ?? 0) > 0 ? countPart('notUseful', o.not_useful ?? 0) : null,
   ].filter(Boolean).join(' · ')
+}
+
+function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'contacted' | 'notUseful', n: number): string {
+  return tBrands(`offers.counts.${key}`, { count: n, n: brandCount(n) })
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
 export function daysAgoWord(iso: string | null, now: Date = new Date()): string {
-  if (!iso) return 'recently'
+  if (!iso) return tBrands('offers.daysAgo.recently')
   const start = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((start(now) - start(new Date(iso))) / 86_400_000)
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  return `${days} days ago`
+  if (days <= 0) return tBrands('offers.daysAgo.today')
+  if (days === 1) return tBrands('offers.daysAgo.yesterday')
+  return tBrands('offers.daysAgo.days', { count: days })
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 /** "30 Sep" (fixed words: some ICU versions write "Sept"). */
-export const shortDate = (iso: string) => { const d = new Date(iso); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}` }
+export const shortDate = (iso: string) => {
+  const d = new Date(iso)
+  if (isEnglish()) return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
+  return new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d).replace(/\./g, '')
+}
 
 /** The line beside the pill on a list row (Figma B1-all). */
 export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
   const note = (o.review_note ?? '').trim().replace(/[.!]+$/, '')
   // Taken down by an admin: the reason word for word, and the way back.
-  if (o.status === 'not_approved') return note ? `Taken down: ${note}. Edit and publish again.` : 'Taken down. Edit and publish again.'
+  if (o.status === 'not_approved') return note ? tBrands('offers.status.takenDownNote', { note }) : tBrands('offers.status.takenDown')
   switch (o.status) {
     case 'live': return offerCountsLine(o)
     case 'in_review':
-    case 'draft': return 'Not published yet'
-    case 'paused': return `Paused ${daysAgoWord(o.updated_at, now)}. Members don't see it.`
-    default: return `Ended ${shortDate(o.ended_at ?? o.updated_at)} · ${o.shown} shown · ${o.store_visits ?? 0} went to your store · ${o.contacted} contacted`
+    case 'draft': return tBrands('offers.status.notPublished')
+    case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
+    default: return tBrands('offers.status.ended', {
+      date: shortDate(o.ended_at ?? o.updated_at),
+      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(' · '),
+    })
   }
 }
 
@@ -218,23 +249,23 @@ export function unprovableClaim(text: string | null | undefined): string | null 
 /** What still blocks "Publish", in the editor's order, or null. */
 export function offerMissing(f: OfferFields): string | null {
   // A real photo makes offers look trustworthy; required to publish (2026-11-07, client-side so old apps keep working).
-  if (!f.image_url) return 'Add a photo'
-  if (!f.title?.trim()) return 'Add a title'
-  if (f.title.trim().length > OFFER_TITLE_MAX) return `Keep the title under ${OFFER_TITLE_MAX} characters`
-  if (!f.body?.trim()) return 'Say what members get'
-  if (f.body.trim().length > OFFER_BODY_MAX) return `Keep it under ${OFFER_BODY_MAX} characters`
-  if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return `Keep the perk under ${OFFER_PERK_MAX} characters`
-  if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return 'Use letters, numbers, - or _ in the code'
-  if (!normalizeOfferLink(f.link_url)) return 'Add a link that starts with https'
-  if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return 'Choose where members live'
-  if (f.roles.length === 0) return 'Choose who it is for'
-  if (f.ends_at && new Date(f.ends_at).getTime() <= Date.now()) return 'Choose an end date in the future'
+  if (!f.image_url) return tBrands('offers.missing.photo')
+  if (!f.title?.trim()) return tBrands('offers.missing.title')
+  if (f.title.trim().length > OFFER_TITLE_MAX) return tBrands('offers.missing.titleTooLong', { max: OFFER_TITLE_MAX })
+  if (!f.body?.trim()) return tBrands('offers.missing.body')
+  if (f.body.trim().length > OFFER_BODY_MAX) return tBrands('offers.missing.bodyTooLong', { max: OFFER_BODY_MAX })
+  if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return tBrands('offers.missing.perkTooLong', { max: OFFER_PERK_MAX })
+  if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return tBrands('offers.missing.promoCode')
+  if (!normalizeOfferLink(f.link_url)) return tBrands('offers.missing.link')
+  if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return tBrands('offers.missing.where')
+  if (f.roles.length === 0) return tBrands('offers.missing.who')
+  if (f.ends_at && new Date(f.ends_at).getTime() <= Date.now()) return tBrands('offers.missing.endDate')
   return null
 }
 
 // ── The reason line (shown with every offer) ────────────────────────────────
 
-const ROLE_VERB: Record<OfferRole, string> = { player: 'play', coach: 'coach', club: 'run a club', umpire: 'umpire' }
+const OFFER_ROLE_SET = new Set<string>(['player', 'coach', 'club', 'umpire'])
 
 /**
  * "You see this because you live in England and play." Location and role
@@ -254,20 +285,21 @@ export function countryInSentence(name: string): string {
 }
 
 export function offerReasonLine(countryName: string | null, role: string | null | undefined, everywhere = false): string {
-  const verb = role && role in ROLE_VERB ? ROLE_VERB[role as OfferRole] : null
+  const r = role && OFFER_ROLE_SET.has(role) ? (role as OfferRole) : null
   // An Everywhere offer is about the role only, never where the member lives.
-  if (everywhere) return verb ? `You see this because you ${verb}. It is for members everywhere.` : 'It is for members everywhere.'
-  const where = countryName ? countryInSentence(countryName) : null
-  if (where && verb) return `You see this because you live in ${where} and ${verb}.`
-  if (where) return `You see this because you live in ${where}.`
-  return 'You see this because of where you live.'
+  if (everywhere) return r ? tBrands(`offers.reasonEverywhere.${r}`) : tBrands('offers.reason.everywhere')
+  // "the United Kingdom" is English grammar; other languages take the bare name.
+  const where = countryName ? (isEnglish() ? countryInSentence(countryName) : countryName.trim()) : null
+  if (where && r) return tBrands(`offers.reasonWhere.${r}`, { where })
+  if (where) return tBrands('offers.reason.where', { where })
+  return tBrands('offers.reason.fallback')
 }
 
 /** "England, Netherlands · Players, coaches" for list rows ("Everywhere · …", regions first). */
 export function audienceLine(countryNames: string[], roles: OfferRole[], place?: { everywhere?: boolean; regions?: string[] }): string {
   const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
   const whoText = who.length ? who[0] + (who.length > 1 ? ', ' + who.slice(1).map((w) => w.toLowerCase()).join(', ') : '') : ''
-  const where = place?.everywhere ? 'Everywhere' : [...(place?.regions ?? []), ...countryNames].join(', ')
+  const where = place?.everywhere ? tBrands('offers.everywhere') : [...(place?.regions ?? []).map(offerRegionLabel), ...countryNames].join(', ')
   return [where, whoText].filter(Boolean).join(' · ')
 }
 
@@ -275,11 +307,13 @@ export function audienceLine(countryNames: string[], roles: OfferRole[], place?:
 export interface OfferReach { total: number | null; without_country: number | null; by_role: Record<string, number | null>; by_country: { country_id: number; n: number | null }[] }
 export function reachLine(r: OfferReach | null, roles: OfferRole[]): string | null {
   if (!r) return null
-  if (r.total == null) return 'Fewer than 5 members match this today.'
+  if (r.total == null) return tBrands('offers.reach.fewer')
   const parts = OFFER_ROLES.filter((x) => roles.includes(x.value))
-    .map((x) => { const n = r.by_role[x.value]; return n == null ? null : `${n} ${x.label.toLowerCase()}` })
+    .map((x) => { const n = r.by_role[x.value]; return n == null ? null : tBrands(`offers.reachRole.${x.value}`, { count: n, n: brandCount(n) }) })
     .filter(Boolean)
-  return `Reaches ${r.total} members today${parts.length > 1 ? ` (${parts.join(', ')})` : ''}.`
+  return parts.length > 1
+    ? tBrands('offers.reach.totalWithRoles', { count: r.total, n: brandCount(r.total), roles: parts.join(', ') })
+    : tBrands('offers.reach.total', { count: r.total, n: brandCount(r.total) })
 }
 
 export async function fetchOfferReach(f: Pick<OfferFields, 'everywhere' | 'regions' | 'country_ids' | 'roles' | 'area'>): Promise<OfferReach | null> {
@@ -352,11 +386,11 @@ export async function takeDownOffer(offerId: string, reason: string): Promise<st
 /** Plain words for a server refusal, so the brand never sees an error code. */
 export function offerErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
-  if (msg.startsWith('live_limit')) return `You already have ${OFFER_LIVE_LIMIT} live offers. Pause one first.`
-  if (msg.startsWith('invalid_offer')) return 'Some details are missing or not valid. Check the offer and try again.'
-  if (msg.startsWith('offer_expired')) return 'This offer has passed its end date. Change the dates first.'
-  if (msg.startsWith('too_many_offers')) return 'You have a lot of offers. End some you no longer need.'
-  if (msg.startsWith('reason_required')) return 'Write the reason the brand will see.'
-  if (msg.startsWith('not_live')) return 'This offer is no longer live.'
-  return 'Something went wrong. Please try again.'
+  if (msg.startsWith('live_limit')) return tBrands('offers.errors.liveLimit', { limit: OFFER_LIVE_LIMIT })
+  if (msg.startsWith('invalid_offer')) return tBrands('offers.errors.invalid')
+  if (msg.startsWith('offer_expired')) return tBrands('offers.errors.expired')
+  if (msg.startsWith('too_many_offers')) return tBrands('offers.errors.tooMany')
+  if (msg.startsWith('reason_required')) return tBrands('offers.errors.reasonRequired')
+  if (msg.startsWith('not_live')) return tBrands('offers.errors.notLive')
+  return tBrands('offers.errors.generic')
 }

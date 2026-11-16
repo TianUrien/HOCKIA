@@ -199,7 +199,7 @@ describe('opened from Settings', () => {
     expect(settingsSource).toContain("'/dashboard/profile?tab=league&from=settings'")
   })
   it('the club leaves name Settings and return there', () => {
-    expect(dashboardSource).toContain("fromSettings ? 'Settings'")
+    expect(dashboardSource).toContain("fromSettings ? t('dashboard.parent.settings')")
     expect(dashboardSource).toContain("navigate('/settings')")
     expect(dashboardSource).toContain('<SquadScreen profile={profile} parent={leafParent} onBack={leafBack} />')
   })

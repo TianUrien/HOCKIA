@@ -14,6 +14,7 @@
  */
 
 import { renderFeatureKnowledge } from './hockia-features.ts'
+import { currentAiLanguage, inCurrentLanguage, SPANISH_OUTPUT_INSTRUCTION } from './ai-language.ts'
 import { labelFor, labelForInline, scrubInternalValues } from './display-labels.ts'
 import {
   REFINE_FALLBACK,
@@ -34,6 +35,16 @@ import {
  * the newer model is opted into by setting the secret (staging → claude-sonnet-5).
  */
 const CLAUDE_MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+
+/**
+ * Spanish readers (Stage 3): the output-language rule for the main search /
+ * conversation prompt. Empty for English, so English prompts are unchanged.
+ * Filter values stay English because the search RPCs match English tokens.
+ */
+function searchLanguageBlock(): string {
+  if (currentAiLanguage() !== 'es') return ''
+  return `${SPANISH_OUTPUT_INSTRUCTION}\n- Search tool filters (countries, nationalities, positions, categories, roles, leagues) stay in English exactly as the tool schema expects; only the "message" text and any reply the member reads are in Spanish.`
+}
 
 export interface ParsedFilters {
   roles?: string[]
@@ -778,6 +789,7 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
     SYSTEM_PROMPT,
     userContext ? buildUserContextBlock(userContext) : '',
     hintBlock,
+    searchLanguageBlock(),
   ].filter(Boolean).join('\n\n')
 
   const contents = [
@@ -881,6 +893,10 @@ async function callClaude(
     { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
   ]
   if (variableSystem) systemBlocks.push({ type: 'text', text: variableSystem })
+  // Spanish readers: the output-language rule in its own block, so the cached
+  // SYSTEM_PROMPT block stays identical for everyone.
+  const languageBlock = searchLanguageBlock()
+  if (languageBlock) systemBlocks.push({ type: 'text', text: languageBlock })
 
   const messages = [
     ...history.map(turn => ({ role: turn.role as 'user' | 'assistant', content: turn.content })),
@@ -986,6 +1002,7 @@ async function callOpenAI(query: string, history: HistoryTurn[] = [], userContex
     SYSTEM_PROMPT,
     userContext ? buildUserContextBlock(userContext) : '',
     hintBlock,
+    searchLanguageBlock(),
   ].filter(Boolean).join('\n\n')
 
   const messages = [
@@ -1186,7 +1203,7 @@ async function synthesizeWithGemini(profiles: ProfileQualitativeData[], userQuer
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYNTHESIS_SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: inCurrentLanguage(SYNTHESIS_SYSTEM_PROMPT) }] },
         contents: [{ role: 'user', parts: [{ text: buildSynthesisUserMessage(profiles, userQuery) }] }],
       }),
     },
@@ -1232,7 +1249,7 @@ async function synthesizeWithClaude(profiles: ProfileQualitativeData[], userQuer
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 512,
-        system: SYNTHESIS_SYSTEM_PROMPT,
+        system: inCurrentLanguage(SYNTHESIS_SYSTEM_PROMPT),
         messages: [{ role: 'user', content: buildSynthesisUserMessage(profiles, userQuery) }],
       }),
     },
@@ -1273,7 +1290,7 @@ async function synthesizeWithOpenAI(profiles: ProfileQualitativeData[], userQuer
       model: 'gpt-4o-mini',
       max_tokens: 512,
       messages: [
-        { role: 'system', content: SYNTHESIS_SYSTEM_PROMPT },
+        { role: 'system', content: inCurrentLanguage(SYNTHESIS_SYSTEM_PROMPT) },
         { role: 'user', content: buildSynthesisUserMessage(profiles, userQuery) },
       ],
     }),
@@ -1529,7 +1546,7 @@ async function composeShortlistWithGemini(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SHORTLIST_SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: inCurrentLanguage(SHORTLIST_SYSTEM_PROMPT) }] },
         contents: [{ role: 'user', parts: [{ text: buildShortlistUserMessage(candidates, searchCriteria, userQuery) }] }],
         tools: [{
           function_declarations: [
@@ -1587,7 +1604,7 @@ async function composeShortlistWithClaude(
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 2048,
-        system: SHORTLIST_SYSTEM_PROMPT,
+        system: inCurrentLanguage(SHORTLIST_SYSTEM_PROMPT),
         tools: [
           { name: COMPOSE_SHORTLIST_TOOL.name, description: COMPOSE_SHORTLIST_TOOL.description, input_schema: COMPOSE_SHORTLIST_TOOL.input_schema },
         ],
@@ -1637,7 +1654,7 @@ async function composeShortlistWithOpenAI(
       model: 'gpt-4o-mini',
       max_tokens: 2048,
       messages: [
-        { role: 'system', content: SHORTLIST_SYSTEM_PROMPT },
+        { role: 'system', content: inCurrentLanguage(SHORTLIST_SYSTEM_PROMPT) },
         { role: 'user', content: buildShortlistUserMessage(candidates, searchCriteria, userQuery) },
       ],
       tools: [
@@ -1763,7 +1780,7 @@ function buildNoResultsUserMessage(ctx: NoResultsContext): string {
   // Values are passed as human labels, never raw enum tokens — the model
   // echoes whatever it is given, and "adult_men" / "open_to_opportunities"
   // reached users verbatim (staging audit 2026-09-26).
-  if (ctx.searchCriteria.positions?.length) criteriaLines.push(`- positions: ${ctx.searchCriteria.positions.map(labelForInline).join(', ')}`)
+  if (ctx.searchCriteria.positions?.length) criteriaLines.push(`- positions: ${ctx.searchCriteria.positions.map(p => labelForInline(p)).join(', ')}`)
   if (ctx.searchCriteria.target_category) criteriaLines.push(`- team category: ${labelFor(ctx.searchCriteria.target_category)}`)
   if (ctx.searchCriteria.gender) criteriaLines.push(`- gender (legacy): ${ctx.searchCriteria.gender}`)
   if (ctx.searchCriteria.min_age != null) criteriaLines.push(`- min_age: ${ctx.searchCriteria.min_age}`)
@@ -1774,7 +1791,7 @@ function buildNoResultsUserMessage(ctx: NoResultsContext): string {
   if (ctx.searchCriteria.countries?.length) criteriaLines.push(`- countries: ${ctx.searchCriteria.countries.join(', ')}`)
   if (ctx.searchCriteria.availability) criteriaLines.push(`- availability: ${labelFor(ctx.searchCriteria.availability)}`)
   if (ctx.searchCriteria.min_references != null) criteriaLines.push(`- min_references: ${ctx.searchCriteria.min_references}`)
-  if (ctx.searchCriteria.coach_specializations?.length) criteriaLines.push(`- coach specializations: ${ctx.searchCriteria.coach_specializations.map(labelForInline).join(', ')}`)
+  if (ctx.searchCriteria.coach_specializations?.length) criteriaLines.push(`- coach specializations: ${ctx.searchCriteria.coach_specializations.map(p => labelForInline(p)).join(', ')}`)
   const criteriaBlock = criteriaLines.length > 0 ? criteriaLines.join('\n') : '(no explicit constraints, broad search)'
 
   const seedNote = ctx.categorySource === 'context' && ctx.effectiveCategory
@@ -1807,7 +1824,7 @@ async function composeNoResultsWithGemini(ctx: NoResultsContext): Promise<{ resu
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: NO_RESULTS_SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: inCurrentLanguage(NO_RESULTS_SYSTEM_PROMPT) }] },
         contents: [{ role: 'user', parts: [{ text: buildNoResultsUserMessage(ctx) }] }],
         tools: [{
           function_declarations: [
@@ -1863,7 +1880,7 @@ async function composeNoResultsWithClaude(ctx: NoResultsContext): Promise<{ resu
         model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: [
-          { type: 'text', text: NO_RESULTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+          { type: 'text', text: inCurrentLanguage(NO_RESULTS_SYSTEM_PROMPT), cache_control: { type: 'ephemeral' } },
         ],
         tools: [
           { name: COMPOSE_NO_RESULTS_TOOL.name, description: COMPOSE_NO_RESULTS_TOOL.description, input_schema: COMPOSE_NO_RESULTS_TOOL.input_schema },
@@ -1913,7 +1930,7 @@ async function composeNoResultsWithOpenAI(ctx: NoResultsContext): Promise<NoResu
       model: 'gpt-4o-mini',
       max_tokens: 1024,
       messages: [
-        { role: 'system', content: NO_RESULTS_SYSTEM_PROMPT },
+        { role: 'system', content: inCurrentLanguage(NO_RESULTS_SYSTEM_PROMPT) },
         { role: 'user', content: buildNoResultsUserMessage(ctx) },
       ],
       tools: [
@@ -2048,7 +2065,7 @@ async function answerPlatformHelpWithGemini(ctx: PlatformHelpContext): Promise<{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: PLATFORM_HELP_SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: inCurrentLanguage(PLATFORM_HELP_SYSTEM_PROMPT) }] },
         contents: [{ role: 'user', parts: [{ text: buildPlatformHelpUserMessage(ctx) }] }],
         tools: [{
           function_declarations: [
@@ -2104,7 +2121,7 @@ async function answerPlatformHelpWithClaude(ctx: PlatformHelpContext): Promise<{
         model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: [
-          { type: 'text', text: PLATFORM_HELP_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+          { type: 'text', text: inCurrentLanguage(PLATFORM_HELP_SYSTEM_PROMPT), cache_control: { type: 'ephemeral' } },
         ],
         tools: [
           { name: ANSWER_PLATFORM_HELP_TOOL.name, description: ANSWER_PLATFORM_HELP_TOOL.description, input_schema: ANSWER_PLATFORM_HELP_TOOL.input_schema },
@@ -2184,7 +2201,7 @@ async function refineWithGemini(ctx: RefineRoleSuggestionsContext): Promise<{ re
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: REFINE_SYSTEM_PROMPT }] },
+        system_instruction: { parts: [{ text: inCurrentLanguage(REFINE_SYSTEM_PROMPT) }] },
         contents,
         tools: [{ function_declarations: [{ name: REFINE_TOOL.name, description: REFINE_TOOL.description, parameters: REFINE_TOOL.input_schema }] }],
         tool_config: { function_calling_config: { mode: 'ANY' } },
@@ -2221,7 +2238,7 @@ async function refineWithClaude(ctx: RefineRoleSuggestionsContext): Promise<{ re
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 700,
-        system: [{ type: 'text', text: REFINE_SYSTEM_PROMPT }],
+        system: [{ type: 'text', text: inCurrentLanguage(REFINE_SYSTEM_PROMPT) }],
         tools: [{ name: REFINE_TOOL.name, description: REFINE_TOOL.description, input_schema: REFINE_TOOL.input_schema }],
         tool_choice: { type: 'tool', name: REFINE_TOOL.name },
         messages: [

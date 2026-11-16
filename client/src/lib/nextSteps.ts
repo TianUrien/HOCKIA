@@ -4,6 +4,7 @@ import { useAuthStore } from '@/lib/auth'
 import { validateImage } from '@/lib/imageOptimization'
 import { profilePhotoFields, uploadProfilePhoto } from '@/lib/profilePhoto'
 import type { SocialPlatform } from '@/lib/socialLinks'
+import { currentLanguage } from '@/i18n'
 import { tHome } from '@/i18n/ns/home'
 
 /**
@@ -110,7 +111,7 @@ export interface BioDraft { angle: string; bio: string }
 export type BioResult = { drafts: BioDraft[]; reason?: 'limit' | 'unavailable' }
 
 export async function draftBio(focus: BioFocus, note?: string): Promise<BioResult> {
-  const { data, error } = await supabase.functions.invoke('profile-bio', { body: { focus, note } })
+  const { data, error } = await supabase.functions.invoke('profile-bio', { body: { focus, note, locale: currentLanguage() } })
   if (error) return { drafts: [], reason: 'unavailable' }
   const r = data as { drafts?: BioDraft[]; reason?: BioResult['reason'] }
   return { drafts: Array.isArray(r?.drafts) ? r.drafts : [], reason: r?.reason }

@@ -6,6 +6,7 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Before a coach who only looks for a role can post one (iOS audit
@@ -14,6 +15,7 @@ import { logger } from '@/lib/logger'
  * coach (`coach_recruits_for_team`), then the Post flow; Not now = back.
  */
 export default function RecruitConfirmScreen() {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
   const refreshProfile = useAuthStore((s) => s.refreshProfile)
@@ -37,20 +39,20 @@ export default function RecruitConfirmScreen() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white" data-testid="recruit-confirm">
-      <DetailNavBar parent="Opportunities" fallbackPath="/opportunities" />
+      <DetailNavBar parent={t('recruitConfirm.back')} fallbackPath="/opportunities" />
       <div className="flex flex-1 flex-col items-center px-6 pt-16 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
           <Users className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
         </span>
-        <h1 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">Do you recruit players for a team?</h1>
+        <h1 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{t('recruitConfirm.title')}</h1>
         <p className="mt-2 text-row text-ink-2">
-          Posting opportunities is for coaches who recruit. Say yes and you also get Find players and a shortlist.
+          {t('recruitConfirm.body')}
         </p>
-        {failed && <p className="mt-3 text-row text-ink-2" role="alert">That didn’t save. Check your connection and try again.</p>}
+        {failed && <p className="mt-3 text-row text-ink-2" role="alert">{t('recruitConfirm.error')}</p>}
       </div>
       <div className="flex flex-col gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <Button block loading={saving} onClick={() => void confirm()} data-testid="recruit-confirm-yes">Yes, I recruit for a team</Button>
-        <Button block variant="tertiary" onClick={() => navigate('/opportunities', { replace: true })} data-testid="recruit-confirm-no">Not now</Button>
+        <Button block loading={saving} onClick={() => void confirm()} data-testid="recruit-confirm-yes">{t('recruitConfirm.yes')}</Button>
+        <Button block variant="tertiary" onClick={() => navigate('/opportunities', { replace: true })} data-testid="recruit-confirm-no">{t('recruitConfirm.notNow')}</Button>
       </div>
     </div>
   )

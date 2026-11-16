@@ -61,13 +61,21 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Endorse, vouch | Avalar, aval | |
 | Career history | Trayectoria | |
 | Media (photos and videos) | Multimedia | |
+| Applicant | Postulante | Added in Stage 3 |
+| Top pick / Maybe / Not a fit / Unsorted (shortlist) | Primera opción / Tal vez / No encaja / Sin clasificar | |
+| Strong fit / Possible fit | Encaje alto / Encaje posible | Chips; "Encaja muy bien / Puede encajar" in sentences |
+| Must have / Nice to have | Imprescindible / Deseable | |
+| Ambassador | Embajador/a | Role-like doublet allowed |
+| Partnership | Alianza | |
+| Marketplace | Marketplace | Kept in English |
+| Near you | En la zona | |
 | Junior / Senior (level) | Juveniles / Mayores | "Mayores" still to confirm |
 
 Search keeps accepting every regional synonym whatever word the interface shows.
 
 ## Wording still to confirm with the founder (Stage 1, 2026-11-16)
 
-- The tagline "Where field hockey sticks together." is "Donde el hockey sobre césped se mantiene unido." The pun is lost; it could stay in English.
+- Decided 2026-11-16 (founder): the brand tagline "Where field hockey sticks together." stays in English in the Spanish interface.
 - Headings in the infinitive ("Revisar la bandeja de entrada") read a little stiff; an alternative is a noun phrase ("Enlace enviado").
 - "Claim a club" is "Reclamar"; "registrar" is the alternative.
 - Application tags: "Postulación enviada" (Applied), "En preselección" (Shortlisted), "Con respuesta" (Replied), "Esta vez no" (Not this time).
@@ -83,3 +91,14 @@ Search keeps accepting every regional synonym whatever word the interface shows.
 - Umpire level suggestions ("National", "Regional", "Club") stay English because the chosen word is saved on the profile and shown to everyone.
 - Emails: fallback greeting "Hola, integrante:" when there is no name; footer "Este email te llega por tu cuenta en Hockia."
 - Safety copy (block, report, removed accounts) was rewritten without second-person verbs; please read it for meaning.
+
+## Wording still to confirm with the founder (Stage 3, 2026-11-16)
+
+- Hockia AI speaks in the first person ("No encontré…", "Puedo ayudar…", "Filtré por tu categoría"). Decided 2026-11-16 (founder): the Hockia AI intro "Your field hockey teammate" is "Tu asistente de hockey sobre césped".
+- Group nouns in Hockia AI chips and club pushes use doublets ("jugadores/as", "entrenadores/as"); "deportistas" and "cuerpos técnicos" are the alternatives.
+- Hockia AI chat history summaries ("3 players found") are saved in English, so they show in English in a Spanish chat list.
+- Tapping a suggested question in Spanish sends the English prompt, so the member's own bubble shows English.
+- Club decline notes and the club's AI decline draft are written in the club's language and reach the player as written.
+- "Recruiting" on the club side: "Buscando" in the context sheet, "Buscando incorporaciones" on the club header.
+- "Ranked for" is "Ranking para"; "Scouted" is "Por búsqueda".
+- Examples were localised, not translated: "Club Atlético San Isidro" for the club example, "Licencia de entrenador/a nivel B" for "UEFA B", "Rosario, Santa Fe" for the location example.

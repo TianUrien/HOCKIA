@@ -1,5 +1,8 @@
 import { supabase, type Vacancy } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { currentLanguage } from '@/i18n'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
+import { lazyTextRecord } from '@/lib/opportunityLazyText'
 
 /**
  * Hockia AI · "Prepare my application" (handoff A4 → A5). The note comes from
@@ -8,9 +11,12 @@ import { logger } from '@/lib/logger'
  * sent from here — submitApplication does that, on "Send application".
  */
 /** Same labels as the Apply sheet. */
-export const AVAILABILITY_LABELS: Record<string, string> = {
-  full_season: 'Full season', half_season: 'Half season', short_term: 'Short term', flexible: 'Flexible',
-}
+export const AVAILABILITY_LABELS: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
+  full_season: () => tHockiaAi('availability.full_season'),
+  half_season: () => tHockiaAi('availability.half_season'),
+  short_term: () => tHockiaAi('availability.short_term'),
+  flexible: () => tHockiaAi('availability.flexible'),
+})
 
 export type ApplyDraft =
   | { kind: 'draft'; note: string; byAi: boolean; vacancy: Vacancy }
@@ -22,7 +28,7 @@ export async function loadApplyDraft(opportunityId: string): Promise<ApplyDraft>
   try {
     const [{ data: vacancy }, { data, error }] = await Promise.all([
       supabase.from('opportunities').select('*').eq('id', opportunityId).maybeSingle(),
-      supabase.functions.invoke('apply-draft', { body: { opportunity_id: opportunityId } }),
+      supabase.functions.invoke('apply-draft', { body: { opportunity_id: opportunityId, locale: currentLanguage() } }),
     ])
     if (error) {
       const status = (error as { context?: { status?: number } }).context?.status

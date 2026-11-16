@@ -1,6 +1,8 @@
 import { differenceInCalendarDays } from 'date-fns'
 import { humanizeToken, roleLabel } from '@/lib/identity'
 import { NO_REPLY_DAYS, STATUS_TONE_TEXT, noReplyTone } from '@/lib/statusTone'
+import { tClub } from '@/i18n/ns/club'
+import { withLazyText } from '@/lib/opportunityLazyText'
 
 /**
  * Copy and arithmetic for the club's recruiting screens (Figma 04 Club ·
@@ -23,8 +25,8 @@ export function daysLeftToReply(appliedAt: string | null | undefined, expiryDays
 
 export function daysLeftLabel(days: number | null): string | null {
   if (days === null) return null
-  if (days === 0) return 'Closes today'
-  return days === 1 ? '1 day left' : `${days} days left`
+  if (days === 0) return tClub('recruitingCopy.closesToday')
+  return tClub('recruitingCopy.daysLeft', { count: days })
 }
 
 export function isDaysLeftUrgent(days: number | null): boolean {
@@ -84,9 +86,9 @@ export function pipelineOf(statuses: AppStatus[]): Pipeline {
  */
 export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdrawn'>, expiryDays = DEFAULT_EXPIRY_DAYS): string | null {
   const parts: string[] = []
-  if (p.noReply > 0) parts.push(`${p.noReply} closed without a reply after ${expiryDays} days`)
-  if (p.filled > 0) parts.push(`${p.filled} closed when the opportunity was filled`)
-  if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
+  if (p.noReply > 0) parts.push(tClub('recruitingCopy.closedNoReply', { count: p.noReply, days: expiryDays }))
+  if (p.filled > 0) parts.push(tClub('recruitingCopy.closedFilled', { count: p.filled }))
+  if (p.withdrawn > 0) parts.push(tClub('recruitingCopy.withdrawn', { count: p.withdrawn }))
   return parts.length ? parts.join(' · ') : null
 }
 
@@ -97,8 +99,8 @@ export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdr
  */
 export function toReviewClosedNote(p: Pick<Pipeline, 'noReply' | 'withdrawn'>): string | null {
   const parts: string[] = []
-  if (p.noReply > 0) parts.push(`${p.noReply} ${p.noReply === 1 ? 'has' : 'have'} closed without a reply on this opportunity so far`)
-  if (p.withdrawn > 0) parts.push(`${p.withdrawn} withdrawn`)
+  if (p.noReply > 0) parts.push(tClub('recruitingCopy.closedSoFar', { count: p.noReply }))
+  if (p.withdrawn > 0) parts.push(tClub('recruitingCopy.withdrawn', { count: p.withdrawn }))
   return parts.length ? parts.join(' · ') : null
 }
 
@@ -111,11 +113,10 @@ export function toReviewClosedNote(p: Pick<Pipeline, 'noReply' | 'withdrawn'>): 
  */
 export function appliedSinceLine(apps: { status: AppStatus; appliedAt: string | null }[], formatDay: (iso: string) => string | null): string {
   const counted = apps
-  if (!counted.length) return 'No applicants yet'
+  if (!counted.length) return tClub('recruitingCopy.noApplicants')
   const first = counted.map((a) => a.appliedAt).filter((x): x is string => Boolean(x)).sort()[0]
-  const n = `${counted.length} applied`
   const day = first ? formatDay(first) : null
-  return day ? `${n} since ${day}` : n
+  return day ? tClub('recruitingCopy.appliedSince', { count: counted.length, day }) : tClub('recruitingCopy.applied', { count: counted.length })
 }
 
 /** "3 applicants waiting for a reply" + "The oldest closes in 5 days if you don't answer." */
@@ -124,18 +125,18 @@ export function waitingNotice(pendingAppliedAt: (string | null)[], expiryDays = 
   if (dates.length === 0) return null
   const oldest = dates.reduce((a, b) => (new Date(a) < new Date(b) ? a : b))
   const days = daysLeftToReply(oldest, expiryDays, now)
-  const title = dates.length === 1 ? '1 applicant waiting for a reply' : `${dates.length} applicants waiting for a reply`
+  const title = tClub('recruitingCopy.waitingTitle', { count: dates.length })
   const detail = days === null ? null
-    : days === 0 ? 'The oldest closes today if you don’t answer.'
-    : `The oldest closes in ${days === 1 ? '1 day' : `${days} days`} if you don’t answer.`
+    : days === 0 ? tClub('recruitingCopy.oldestClosesToday')
+    : tClub('recruitingCopy.oldestClosesIn', { count: days })
   return { title, detail }
 }
 
 export type FitState = 'green' | 'yellow' | 'grey'
 /** Fit chip: green "Strong fit", yellow "Possible fit", grey = no chip. */
 export function fitChipLabel(state: FitState | null | undefined): string | null {
-  if (state === 'green') return 'Strong fit'
-  if (state === 'yellow') return 'Possible fit'
+  if (state === 'green') return tClub('recruitingCopy.fitStrong')
+  if (state === 'yellow') return tClub('recruitingCopy.fitPossible')
   return null
 }
 
@@ -169,8 +170,8 @@ export interface FitRow { key: 'position' | 'category' | 'open' | 'active' | 'le
 /** "Goalkeeper", "Head coach", "Other" (other_coach) — the role vocabulary. */
 function fitPositionLabel(token: string | null | undefined): string | null {
   if (!token) return null
-  if (token === 'other_coach' || token === 'other') return 'Other'
-  if (token === 'strength_conditioning') return 'Strength & conditioning'
+  if (token === 'other_coach' || token === 'other') return tClub('recruitingCopy.positionOther')
+  if (token === 'strength_conditioning') return tClub('recruitingCopy.positionStrength')
   return humanizeToken(token)
 }
 
@@ -180,26 +181,27 @@ function fitPositionLabel(token: string | null | undefined): string | null {
  */
 export function fitPositionRow(c: FitComponents): FitRow | null {
   if (typeof c.position_match !== 'number' || !c.role_position) return null
-  const role = fitPositionLabel(c.role_position) ?? 'this position'
+  const role = fitPositionLabel(c.role_position) ?? tClub('recruitingCopy.fit.thisPosition')
   const primary = fitPositionLabel(c.candidate_position)
-  if (c.position_match >= 1) return { key: 'position', label: 'Position', ok: true, detail: `Plays ${role} · matches` }
+  const label = tClub('recruitingCopy.fit.position')
+  if (c.position_match >= 1) return { key: 'position', label, ok: true, detail: tClub('recruitingCopy.fit.positionMatch', { role }) }
   if (c.position_match > 0) {
-    return { key: 'position', label: 'Position', ok: false, detail: `${primary ?? 'Another position'} · plays ${role} as a second position` }
+    return { key: 'position', label, ok: false, detail: primary ? tClub('recruitingCopy.fit.positionSecond', { primary, role }) : tClub('recruitingCopy.fit.positionSecondNoPrimary', { role }) }
   }
   return {
-    key: 'position', label: 'Position', ok: false,
-    detail: primary ? `${primary} · the opportunity is for a ${role}` : `No position on the profile yet. The opportunity is for a ${role}`,
+    key: 'position', label, ok: false,
+    detail: primary ? tClub('recruitingCopy.fit.positionMiss', { primary, role }) : tClub('recruitingCopy.fit.positionNone', { role }),
   }
 }
 
 /** "Men’s", "Women’s", "Mixed", "Boys", "Girls" — the role's team, for Fit copy. */
 export function roleTeamWord(gender: string | null | undefined): string | null {
   const g = gender?.trim().toLowerCase()
-  if (g === 'men') return 'Men’s'
-  if (g === 'women') return 'Women’s'
-  if (g === 'mixed') return 'Mixed'
-  if (g === 'boys') return 'Boys'
-  if (g === 'girls') return 'Girls'
+  if (g === 'men') return tClub('recruitingCopy.team.men')
+  if (g === 'women') return tClub('recruitingCopy.team.women')
+  if (g === 'mixed') return tClub('recruitingCopy.team.mixed')
+  if (g === 'boys') return tClub('recruitingCopy.team.boys')
+  if (g === 'girls') return tClub('recruitingCopy.team.girls')
   return null
 }
 
@@ -233,17 +235,19 @@ export function fitRows(c: FitComponents, ctx: {
   clubLeagueKnown: boolean
 }): FitRow[] {
   const team = roleTeamWord(ctx.roleGender)
-  const roleWord = team ? `a ${team} opportunity` : 'this opportunity'
+  const playerCategory = ctx.playerCategoryLabel ?? tClub('recruitingCopy.fit.category')
   const category: FitRow = {
-    key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
+    key: 'category', label: tClub('recruitingCopy.fit.category'), ok: (c.gender_match ?? 0) >= 1,
     detail: (c.gender_match ?? 0) >= 1
-      ? `${ctx.playerCategoryLabel ?? 'Category'} · matches ${roleWord}`
+      ? (team ? tClub('recruitingCopy.fit.categoryMatchTeam', { category: playerCategory, team }) : tClub('recruitingCopy.fit.categoryMatch', { category: playerCategory }))
       // Round 6: a category mismatch is a no-chip miss — say what the role is for.
-      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} · ${team ? `the opportunity is for ${team}` : 'doesn’t match this opportunity'}` : 'No playing category on the profile yet',
+      : ctx.playerCategoryLabel
+        ? (team ? tClub('recruitingCopy.fit.categoryMissTeam', { category: ctx.playerCategoryLabel, team }) : tClub('recruitingCopy.fit.categoryMiss', { category: ctx.playerCategoryLabel }))
+        : tClub('recruitingCopy.fit.categoryNone'),
   }
   const open: FitRow = {
-    key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,
-    detail: (c.availability ?? 0) >= 0.6 ? 'Marked available' : 'Not marked available right now',
+    key: 'open', label: tClub('recruitingCopy.fit.open'), ok: (c.availability ?? 0) >= 0.6,
+    detail: (c.availability ?? 0) >= 0.6 ? tClub('recruitingCopy.fit.openYes') : tClub('recruitingCopy.fit.openNo'),
   }
   // No "Active" row (founder ruling 2026-10-11: activity recency is never shown on profiles).
   const prox = c.competition_proximity ?? 0
@@ -251,36 +255,39 @@ export function fitRows(c: FitComponents, ctx: {
   // Neutral wording — no pronouns on any club surface (founder ruling 2026-09-26).
   if (!ctx.playerLeagueKnown) {
     levelDetail = ctx.playerLeagueSelfReported
-      ? 'Can’t compare yet: league is self-reported'
+      ? tClub('recruitingCopy.fit.levelSelfReported')
       : ctx.playerClub
-        ? `Can’t compare yet. Club: ${ctx.playerClub} has no league on Hockia.`
-        : 'Can’t compare yet. No club with a league on the profile.'
+        ? tClub('recruitingCopy.fit.levelClubNoLeague', { club: ctx.playerClub })
+        : tClub('recruitingCopy.fit.levelNoClub')
   } else if (!ctx.clubLeagueKnown) {
-    levelDetail = 'Can’t compare yet. Your league has no level on Hockia.'
+    levelDetail = tClub('recruitingCopy.fit.levelOwnUnknown')
   } else if (prox >= 0.75) {
-    levelDetail = 'Plays at a level close to yours'
+    levelDetail = tClub('recruitingCopy.fit.levelClose')
   } else if (prox > 0) {
-    levelDetail = 'Plays a little further from your level'
+    levelDetail = tClub('recruitingCopy.fit.levelFurther')
   } else {
-    levelDetail = 'Plays at a very different level'
+    levelDetail = tClub('recruitingCopy.fit.levelDifferent')
   }
-  const level: FitRow = { key: 'level', label: 'Level', ok: prox >= 0.75, detail: levelDetail }
+  const level: FitRow = { key: 'level', label: tClub('recruitingCopy.fit.level'), ok: prox >= 0.75, detail: levelDetail }
   const position = fitPositionRow(c)
   return position ? [position, category, open, level] : [category, open, level]
 }
 
-/** Short chip labels for the nine reason codes (Decline sheet, Figma 326:528). */
-export const DECLINE_REASON_CHIPS: { code: string; label: string }[] = [
-  { code: 'position_filled', label: 'Position filled' },
-  { code: 'different_position', label: 'Different position' },
-  { code: 'different_level', label: 'Different level' },
-  { code: 'timing', label: 'Timing' },
-  { code: 'location', label: 'Location' },
-  { code: 'eligibility', label: 'Eligibility' },
-  { code: 'profile_incomplete', label: 'Profile incomplete' },
-  { code: 'video_missing', label: 'Video missing' },
-  { code: 'other', label: 'Other' },
-]
+const DECLINE_REASON_KEYS = {
+  position_filled: 'positionFilled',
+  different_position: 'differentPosition',
+  different_level: 'differentLevel',
+  timing: 'timing',
+  location: 'location',
+  eligibility: 'eligibility',
+  profile_incomplete: 'profileIncomplete',
+  video_missing: 'videoMissing',
+  other: 'other',
+} as const
+
+/** Short chip labels for the nine reason codes (Decline sheet, Figma 326:528). The code is saved; the label is read in the interface language. */
+export const DECLINE_REASON_CHIPS: { code: string; label: string }[] = (Object.keys(DECLINE_REASON_KEYS) as (keyof typeof DECLINE_REASON_KEYS)[]).map((code) =>
+  withLazyText({ code }, { label: () => tClub(`recruitingCopy.declineReason.${DECLINE_REASON_KEYS[code]}`) }))
 
 /**
  * B2 · club reminders: the Last call email's "Decline with a kind note" opens
@@ -303,7 +310,9 @@ export function canOpenLinkedDecline(status: string | null | undefined, decidabl
 }
 
 export function decisionToast(firstName: string, status: 'shortlisted' | 'maybe' | 'rejected'): string {
-  return status === 'shortlisted' ? `${firstName} shortlisted` : status === 'maybe' ? `${firstName} marked maybe` : `${firstName} declined`
+  return status === 'shortlisted' ? tClub('recruitingCopy.toast.shortlisted', { name: firstName })
+    : status === 'maybe' ? tClub('recruitingCopy.toast.maybe', { name: firstName })
+    : tClub('recruitingCopy.toast.declined', { name: firstName })
 }
 
 /** "Player · Midfielder · Defender" — the role line under every person row. */

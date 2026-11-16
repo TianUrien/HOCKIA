@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import { tCommon } from '@/i18n/ns/common'
 import type { Profile } from '@/lib/supabase'
 
 /**
@@ -36,7 +37,7 @@ export function useProfileWriter() {
       return true
     } catch (err) {
       logger.error('[useProfileWriter] update failed', err)
-      addToast('Could not save that. Please try again.', 'error')
+      addToast(tCommon('errors.saveFailed'), 'error')
       return false
     } finally {
       setPending((p) => { const next = { ...p }; for (const k of Object.keys(patch)) delete next[k]; return next })

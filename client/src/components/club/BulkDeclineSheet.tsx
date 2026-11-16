@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BULK_DECLINE_REASONS, DECLINE_BODY_MAX, declineGreeting, declineNoteBody, namesLine } from '@/lib/declineNotes'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Decline several applicants at once (Figma 05 Club speed · CS5 204:1194).
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel, onSend }: Props) {
+  const t = useRecruitingT()
   const [reason, setReason] = useState<string | null>(null)
   const [body, setBody] = useState('')
   const [edited, setEdited] = useState(false)
@@ -39,7 +41,7 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
   }
 
   const canSend = Boolean(reason) && body.trim().length > 0 && body.length <= DECLINE_BODY_MAX && count > 0
-  const label = count === 1 ? 'Not a fit: 1 applicant' : `Not a fit: ${count} applicants`
+  const label = t('bulkDeclineSheet.title', { count })
 
   return (
     <BottomSheet open={open} onClose={onCancel} ariaLabel={label}>
@@ -48,8 +50,8 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
           <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">{label}</h2>
           <p className="mt-1 text-secondary text-ink-2">{[namesLine(names), roleTitle].filter(Boolean).join(' · ')}</p>
         </div>
-        <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Reason</p>
-        <div className="-mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
+        <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{t('bulkDeclineSheet.reasonHeading')}</p>
+        <div className="-mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label={t('bulkDeclineSheet.reasonLabel')}>
           {BULK_DECLINE_REASONS.map((r) => (
             <button
               key={r.code}
@@ -65,7 +67,7 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
         </div>
         {reason && (
           <>
-            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Note · sent to each player</p>
+            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{t('bulkDeclineSheet.noteHeading')}</p>
             <div className="-mt-1.5 flex flex-col gap-2.5 rounded-[16px] bg-surface-subtle px-4 py-3.5 focus-within:ring-2 focus-within:ring-focus-ring" data-testid="bulk-decline-note">
               <div className="text-body text-ink-1">
                 <p data-testid="bulk-decline-greeting">{declineGreeting(preview)}</p>
@@ -74,17 +76,17 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
                   onChange={(e) => { setBody(e.target.value); setEdited(true) }}
                   rows={Math.max(4, Math.ceil(body.length / 38))}
                   maxLength={DECLINE_BODY_MAX}
-                  aria-label="Note to each player"
+                  aria-label={t('bulkDeclineSheet.noteLabel')}
                   className="block w-full resize-none bg-transparent text-body text-ink-1 outline-none focus-visible:outline-none"
                 />
               </div>
               {count > 1 && preview && (
-                <span className="self-start rounded-full bg-surface-muted px-2 py-[3px] text-caption text-ink-2">Preview for {preview}</span>
+                <span className="self-start rounded-full bg-surface-muted px-2 py-[3px] text-caption text-ink-2">{t('bulkDeclineSheet.previewFor', { name: preview })}</span>
               )}
             </div>
           </>
         )}
-        <p className="text-secondary text-ink-2">Each player gets their own email with their own first name. The note also appears on their application, which shows “Not this time”.</p>
+        <p className="text-secondary text-ink-2">{t('bulkDeclineSheet.footer')}</p>
         <button
           type="button"
           disabled={!canSend}
@@ -92,9 +94,9 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
           className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
           data-testid="bulk-decline-send"
         >
-          {count === 1 ? 'Send the note' : `Send to ${count}`}
+          {t('bulkDeclineSheet.send', { count })}
         </button>
-        <button type="button" onClick={onCancel} className="-mt-2 flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
+        <button type="button" onClick={onCancel} className="-mt-2 flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">{t('bulkDeclineSheet.cancel')}</button>
       </div>
     </BottomSheet>
   )

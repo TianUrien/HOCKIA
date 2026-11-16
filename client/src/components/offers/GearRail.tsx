@@ -17,6 +17,7 @@ import { MENU_ICON_CLASS } from '@/lib/report'
 import { SectionHeader } from '@/components/home/v1/primitives'
 import { MemberOfferCard } from './MemberOfferCard'
 import { BrandLogo, OfferHero, PerkPill } from './OfferVisuals'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 /**
  * "Gear and deals near you" on Home (Figma page 02, YG: HR1; founder
@@ -72,6 +73,7 @@ function useSeenOnce<T extends HTMLElement>(onSeen: () => void) {
 }
 
 export function GearRail() {
+  const t = useBrandsT()
   const user = useAuthStore((s) => s.user)
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const visitId = useVisitId()
@@ -131,18 +133,18 @@ export function GearRail() {
     <section className="flex flex-col gap-2 pb-4" aria-labelledby="home-gear-title" data-testid="home-gear-rail">
       <div className="flex items-start pr-2">
         <div className="min-w-0 flex-1">
-          <SectionHeader title="Gear and deals near you" action="See all" to="/community/brands" className="pr-0" />
+          <SectionHeader title={t('gearRail.title')} action={t('gearRail.seeAll')} to="/community/brands" className="pr-0" />
           <p id="home-gear-title" className="-mt-2 px-4 text-secondary text-ink-2">
-            {country ? `From brands that sell in ${countryInSentence(country)}` : 'From brands that sell where you live'}
+            {country ? t('gearRail.fromBrandsIn', { country: countryInSentence(country) }) : t('gearRail.fromBrandsNear')}
           </p>
         </div>
         <MoreMenu
-          label="Gear and deals options"
+          label={t('gearRail.optionsLabel')}
           testId="home-gear-more"
           triggerClassName="flex h-11 w-11 items-center justify-center rounded-full text-ink-2"
           items={[
-            { key: 'fewer', label: 'Show fewer of these', icon: <EyeOff className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: showFewer },
-            { key: 'why', label: 'Why am I seeing this?', icon: <HelpCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setWhyOpen(true) },
+            { key: 'fewer', label: t('gearRail.showFewer'), icon: <EyeOff className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: showFewer },
+            { key: 'why', label: t('gearRail.whyMenu'), icon: <HelpCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setWhyOpen(true) },
           ]}
         />
       </div>
@@ -152,21 +154,21 @@ export function GearRail() {
         ))}
       </div>
 
-      <BottomSheet open={whyOpen} onClose={() => setWhyOpen(false)} ariaLabel="Why am I seeing this?">
+      <BottomSheet open={whyOpen} onClose={() => setWhyOpen(false)} ariaLabel={t('gearRail.whySheetLabel')}>
         <div className="px-5 pb-3" data-testid="home-gear-why">
-          <h2 className="text-title text-ink-1">Why am I seeing this?</h2>
-          <p className="mt-2 text-body text-ink-2">Brands that sell where you live. Offers are picked by your country and role. Brands never see who you are.</p>
+          <h2 className="text-title text-ink-1">{t('gearRail.whyTitle')}</h2>
+          <p className="mt-2 text-body text-ink-2">{t('gearRail.whyBody')}</p>
         </div>
       </BottomSheet>
 
-      <BottomSheet open={menuFor !== null} onClose={() => setMenuFor(null)} ariaLabel="Tile options">
+      <BottomSheet open={menuFor !== null} onClose={() => setMenuFor(null)} ariaLabel={t('gearRail.tileOptions')}>
         {menuFor ? (
           <div className="px-5 pb-2" data-testid="home-gear-tile-menu">
             <p className="text-row text-ink-2">{menuFor.brand_name}</p>
             <p className="text-body font-semibold text-ink-1">{menuFor.title}</p>
             <ul className="mt-3 divide-y divide-line border-t border-line">
-              <li><button type="button" onClick={() => void removeTile(menuFor, false)} className="block w-full py-3.5 text-left text-body text-ink-1">Not useful</button></li>
-              <li><button type="button" onClick={() => void removeTile(menuFor, true)} className="block w-full py-3.5 text-left text-body text-ink-1">Hide this brand</button></li>
+              <li><button type="button" onClick={() => void removeTile(menuFor, false)} className="block w-full py-3.5 text-left text-body text-ink-1">{t('gearRail.notUseful')}</button></li>
+              <li><button type="button" onClick={() => void removeTile(menuFor, true)} className="block w-full py-3.5 text-left text-body text-ink-1">{t('gearRail.hideBrand')}</button></li>
             </ul>
           </div>
         ) : null}
@@ -176,6 +178,7 @@ export function GearRail() {
 }
 
 function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMenu: () => void }) {
+  const t = useBrandsT()
   const navigate = useNavigate()
   const ref = useSeenOnce<HTMLDivElement>(() => {
     if (tile.kind === 'offer') trackImpressionOnce(`${visitId}-rail`, tile.id, 'home_rail')
@@ -225,7 +228,7 @@ function Tile({ tile, visitId, onMenu }: { tile: RailTile; visitId: string; onMe
         </span>
       </button>
       {/* Top-right of the image, a 28 pt glass circle with a 44 pt hit area, so the title keeps the full width. */}
-      <button type="button" onClick={onMenu} aria-label={`Options for ${tile.title}`} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center" data-testid="home-gear-tile-more">
+      <button type="button" onClick={onMenu} aria-label={t('gearRail.optionsFor', { title: tile.title })} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center" data-testid="home-gear-tile-more">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm">
           <MoreHorizontal className="h-4 w-4" />
         </span>
