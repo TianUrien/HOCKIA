@@ -41,7 +41,7 @@ Enforced in `.github/workflows/ci.yml`, job "Build" (verified):
 | Metric | Hard limit | Warning | Notes |
 |---|---|---|---|
 | Initial-load JS (gzip of the chunks `app.html` eagerly loads) | 560 KB | 520 KB | Raised from 480 KB on 2026-10-07 (founder approval) when the Sentry Capacitor SDK joined the eager set. If a change pushes it over, split the code instead; planned recoveries: lazy Sentry replay/tracing, signed-in-only paths out of the eager graph |
-| Raw JS across all chunks | 6,300 KB | 6,200 KB | Total-bloat backstop; raised to 6,000 KB and then 6,300 KB on 2026-11-16 with founder approval (Spanish interface stages 1 and 2: translation runtime and catalog keys; measured 5,847 KB, then 6,150 KB; history in the workflow comments) |
+| Raw JS across all chunks | 6,600 KB | 6,500 KB | Total-bloat backstop; raised to 6,000, 6,300 and then 6,600 KB on 2026-11-16 with founder approval (Spanish interface stages 1 to 3: translation runtime and catalog keys; measured 5,847, 6,150 and 6,299 KB; history in the workflow comments) |
 | Single chunk | - | 512 KB raw | Warning only |
 | Growth vs base commit | - | +50 KB raw | Warning only; flags a new heavy dependency or code leaking out of a lazy chunk |
 
