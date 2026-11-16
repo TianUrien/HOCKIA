@@ -647,6 +647,7 @@ const FALLBACK_NAME_ES: Record<string, string> = {
   'The club': 'El club',
   'the club': 'el club',
   'A player': 'Una persona',
+  'a player': 'una persona',
   'The player': 'La persona',
 }
 
@@ -664,6 +665,8 @@ const RECRUITING_TITLES: Record<string, { re: RegExp; es: (name: string) => stri
   signing_marked: [{ re: /^Confirm your signing with (.+)$/, es: (n) => `Confirmar la incorporación con ${n}` }],
   signing_undone: [{ re: /^(.+) undid the signing$/, es: (n) => `${n} deshizo la incorporación` }],
   signing_confirmed: [{ re: /^(.+) confirmed the signing$/, es: (n) => `${n} confirmó la incorporación` }],
+  offer_expired: [{ re: /^Your offer to (.+) expired$/, es: (n) => `Venció tu oferta a ${n}` }],
+  signing_expired: [{ re: /^(.+) didn[’']t confirm the signing in 14 days$/, es: (n) => `${n} no confirmó la incorporación en 14 días` }],
 }
 
 /** The Spanish recruiting_update title, or null when the stored one is not recognised. */

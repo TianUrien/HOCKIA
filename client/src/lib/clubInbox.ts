@@ -2,6 +2,7 @@ import { identityLine, positionLabel } from '@/lib/identity'
 import { DEFAULT_EXPIRY_DAYS, daysLeftToReply, isDaysLeftUrgent } from '@/lib/clubRecruiting'
 import { roleClosedLabel } from '@/lib/applicationStatus'
 import { shortDayOf } from '@/lib/signing'
+import { tInbox } from '@/i18n/ns/inbox'
 
 /**
  * Club v2 Home, Inbox and Chat (Figma D1.18 352:1290, D1.19 353:502,
@@ -17,9 +18,9 @@ export interface WeekStat { value: number; label: string; to?: string; accent?: 
 
 export function clubWeekStats({ toReview, views, openRoles }: { toReview: number; views: number; openRoles: number }): WeekStat[] {
   return [
-    { value: toReview, label: 'to review', to: '/opportunities', accent: true },
-    { value: views, label: views === 1 ? 'profile view' : 'profile views', to: '/pulse' },
-    { value: openRoles, label: openRoles === 1 ? 'open opportunity' : 'open opportunities', to: '/opportunities' },
+    { value: toReview, label: tInbox('clubInbox.week.toReview'), to: '/opportunities', accent: true },
+    { value: views, label: tInbox('clubInbox.week.views', { count: views }), to: '/pulse' },
+    { value: openRoles, label: tInbox('clubInbox.week.openRoles', { count: openRoles }), to: '/opportunities' },
   ]
 }
 
@@ -28,7 +29,7 @@ export function clubWeekStats({ toReview, views, openRoles }: { toReview: number
  *  person applied to any of the club's roles. */
 export function clubInboxRoleLine(role: string | null | undefined, detail: string | null | undefined, applied: boolean): string {
   const base = identityLine(role, detail)
-  return applied ? `${base} · Applied` : base
+  return applied ? tInbox('clubInbox.roleLineApplied', { base, applied: tInbox('clubInbox.applied') }) : base
 }
 
 /** The amber notice: people the club has never written to. Hidden at 0. */
@@ -37,12 +38,12 @@ export function inboxWaitingNotice(rows: { waiting: boolean; applied: boolean }[
   const n = waiting.length
   if (n === 0) return null
   const applied = waiting.filter((r) => r.applied).length
-  const title = n === 1 ? '1 person waiting for a first reply' : `${n} people waiting for a first reply`
+  const title = tInbox('clubInbox.waitingTitle', { count: n })
   const sub = applied === 0
     ? null
     : applied === n
-      ? (n === 1 ? 'They applied to your opportunities.' : 'All of them applied to your opportunities.')
-      : `${applied} of them applied to your opportunities.`
+      ? (n === 1 ? tInbox('clubInbox.waitingSubOne') : tInbox('clubInbox.waitingSubAll'))
+      : tInbox('clubInbox.waitingSubSome', { count: applied })
   return { title, sub }
 }
 
@@ -79,21 +80,16 @@ export function applicationCardTitle(app: Pick<ClubApplication, 'roleTitle' | 'r
   const pos = positionLabel(app.rolePosition)
   const title = app.roleTitle?.trim() || null
   const parts = pos && title && title.toLowerCase() === pos.toLowerCase() ? [pos] : [pos, title].filter(Boolean)
-  return parts.length ? `Applied to ${parts.join(' · ')}` : 'Applied to one of your opportunities'
+  return parts.length ? tInbox('clubInbox.cardTitle', { role: parts.join(' · ') }) : tInbox('clubInbox.cardTitleNone')
 }
 
-const STATUS_NOTE: Record<string, string> = {
-  shortlisted: 'shortlisted',
-  maybe: 'marked maybe',
-  rejected: 'not a fit', // the club's own word (founder 2026-10-25), never "declined"
-  withdrawn: 'withdrawn by the player',
-  offered: 'offer sent',
-  accepted: 'offer accepted',
-  signed_pending_confirmation: 'signing to confirm',
-  signed: 'signed',
-  offer_declined: 'offer declined',
-  filled: 'opportunity filled',
-}
+const STATUS_NOTE_KEYS = new Set([
+  'shortlisted', 'maybe',
+  'rejected', // the club's own word (founder 2026-10-25), never "declined"
+  'withdrawn', 'offered', 'accepted', 'signed_pending_confirmation', 'signed', 'offer_declined', 'filled',
+])
+const statusNote = (status: string): string | null =>
+  STATUS_NOTE_KEYS.has(status) ? tInbox(`clubInbox.status.${status}` as 'clubInbox.status.signed') : null
 
 /** "Sep 17 · 8 days left to reply" / "Sep 3 · closed without a reply on Sep 18".
  *  urgent (amber) only while the club still has to act and ≤5 days are left. */
@@ -103,15 +99,17 @@ export function applicationCardDetail(app: ClubApplication, expiryDays = DEFAULT
   if (app.status === 'pending' && !pendingOnOpenRole(app)) return { text: join(roleClosedLabel()), urgent: false }
   if (app.status === 'pending') {
     const days = daysLeftToReply(app.appliedAt, expiryDays, now)
-    const tail = days === null ? null : days === 0 ? 'closes today' : days === 1 ? '1 day left to reply' : `${days} days left to reply`
+    const tail = days === null ? null : days === 0 ? tInbox('clubInbox.closesToday') : tInbox('clubInbox.daysLeft', { count: days })
     return { text: join(tail), urgent: isDaysLeftUrgent(days) }
   }
   if (app.status === 'no_response') {
     const closed = monthDay(app.updatedAt)
-    return { text: join(closed ? `closed without a reply on ${closed}` : 'closed without a reply'), urgent: false }
+    return { text: join(closed ? tInbox('clubInbox.closedOn', { day: closed }) : tInbox('clubInbox.closed')), urgent: false }
   }
-  return { text: join(STATUS_NOTE[app.status] ?? null), urgent: false }
+  return { text: join(statusNote(app.status)), urgent: false }
 }
 
 /** Empty new chat with an applicant (D1.21). */
-export const APPLICANT_CHAT_EMPTY = { title: 'No messages yet', body: 'A short hello goes a long way. Most applicants never hear back.' }
+export function applicantChatEmpty(): { title: string; body: string } {
+  return { title: tInbox('clubInbox.emptyTitle'), body: tInbox('clubInbox.emptyBody') }
+}

@@ -428,8 +428,9 @@ export default function PostRoleScreen({ draftId }: Props) {
             <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? t('postRole.editTitle') : t('postRole.newTitle')}</span>
           )}
           {editing ? <span aria-hidden="true" /> : (
-            <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
-              {saving === 'draft' ? t('postRole.saving') : t('postRole.saveDraft')}
+            <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} aria-label={t('postRole.saveDraft')} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
+              {/* The short label: "Guardar borrador" ran into the centred title at 393 px. */}
+              {saving === 'draft' ? t('postRole.saving') : t('postRole.saveDraftShort')}
             </button>
           )}
         </div>

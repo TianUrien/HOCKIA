@@ -3,6 +3,7 @@ import { compensationLabel } from '@/lib/opportunityIntent'
 import { PACKAGE_KEYS } from '@/lib/postRole'
 import { formatDayMonth, isEnglish } from '@/i18n/format'
 import { tInbox } from '@/i18n/ns/inbox'
+import { recruitingServerLine } from '@/lib/recruitingTitles'
 
 /**
  * D4 · From yes to signed (Figma page 400:5; brief 401:2; DEV NOTES 391:23,
@@ -557,7 +558,7 @@ export function recruitingEventLine(event: string, content: string, viewer: { is
     const name = viewer.otherFirstName?.trim() || tInbox('signing.lines.playerFallback')
     return role ? tInbox('signing.lines.markedSignedFor', { name, role }) : tInbox('signing.lines.markedSigned', { name })
   }
-  return content
+  return recruitingServerLine(content)
 }
 
 /** The server's offer card fallback: "<club> sent you an offer|updated its offer for <role>, open until <day>. Open Hockia…". */
@@ -602,7 +603,7 @@ export interface RecruitingPreview {
  */
 export function recruitingPreview(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): RecruitingPreview {
   const system = RECRUITING_SYSTEM_LINES.some((re) => re.test(content))
-  if (!viewer.isMine) return { text: content, system }
+  if (!viewer.isMine) return { text: system ? recruitingServerLine(content) : content, system }
   if (SIGNING_MARKED_LINE.test(content)) return { text: recruitingEventLine('signing_marked', content, viewer), system: true }
   const offer = OFFER_LINE.exec(content)
   if (offer) {
@@ -611,7 +612,7 @@ export function recruitingPreview(content: string, viewer: { isMine: boolean; ot
   }
   const invite = INVITE_LINE.exec(content)
   if (invite) return { text: tInbox('signing.lines.invited', { name: viewer.otherFirstName?.trim() || tInbox('signing.lines.playerFallback'), role: invite[2].trim() }), system: true }
-  return { text: content, system }
+  return { text: system ? recruitingServerLine(content) : content, system }
 }
 
 /** recruitingPreview's text only (round 7 callers). */

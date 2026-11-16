@@ -303,6 +303,21 @@
       "confirm": "Yes, I signed",
       "confirming": "Confirming…",
       "notYet": "Not yet"
+    },
+    "serverLines": {
+      "inviteFirstLine": "{{name}} invited you to apply for {{role}}.",
+      "markedYou": "{{name}} marked you as signed for {{role}}. Confirm it on Hockia to add the signing to your career.",
+      "offerSent": "{{name}} sent you an offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "offerUpdated": "{{name}} updated its offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "applied": "{{name}} applied for {{role}}.",
+      "passedOn": "{{name}} passed on {{role}}.",
+      "offerWithdrawn": "{{name}} withdrew its offer for {{role}}.",
+      "applicationWithdrawn": "{{name}} withdrew their application for {{role}}.",
+      "offerAccepted": "{{name}} accepted the offer for {{role}}.",
+      "offerDeclined": "{{name}} declined the offer for {{role}}.",
+      "signingUndone": "{{name}} undid the signing for {{role}}.",
+      "signingConfirmed": "{{name}} confirmed the signing for {{role}}. Signed through Hockia.",
+      "yourRole": "your role"
     }
   },
   "invites": {
@@ -604,5 +619,42 @@
     "requests": "Requests",
     "activity": "Activity",
     "ariaLabel": "Inbox sections"
+  },
+  "clubInbox": {
+    "week": {
+      "toReview": "to review",
+      "views_one": "profile view",
+      "views_other": "profile views",
+      "openRoles_one": "open opportunity",
+      "openRoles_other": "open opportunities"
+    },
+    "applied": "Applied",
+    "roleLineApplied": "{{base}} · {{applied}}",
+    "waitingTitle_one": "{{count}} person waiting for a first reply",
+    "waitingTitle_other": "{{count}} people waiting for a first reply",
+    "waitingSubOne": "They applied to your opportunities.",
+    "waitingSubAll": "All of them applied to your opportunities.",
+    "waitingSubSome": "{{count}} of them applied to your opportunities.",
+    "cardTitle": "Applied to {{role}}",
+    "cardTitleNone": "Applied to one of your opportunities",
+    "status": {
+      "shortlisted": "shortlisted",
+      "maybe": "marked maybe",
+      "rejected": "not a fit",
+      "withdrawn": "withdrawn by the player",
+      "offered": "offer sent",
+      "accepted": "offer accepted",
+      "signed_pending_confirmation": "signing to confirm",
+      "signed": "signed",
+      "offer_declined": "offer declined",
+      "filled": "opportunity filled"
+    },
+    "closesToday": "closes today",
+    "daysLeft_one": "{{count}} day left to reply",
+    "daysLeft_other": "{{count}} days left to reply",
+    "closedOn": "closed without a reply on {{day}}",
+    "closed": "closed without a reply",
+    "emptyTitle": "No messages yet",
+    "emptyBody": "A short hello goes a long way. Most applicants never hear back."
   }
 }
