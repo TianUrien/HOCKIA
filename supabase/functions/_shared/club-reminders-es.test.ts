@@ -206,6 +206,8 @@ Deno.test('send-push: recruiting_update rebuilt in Spanish from the stored Engli
     ['signing_marked', 'Confirm your signing with CASI', 'Confirmar la incorporación con CASI'],
     ['signing_undone', 'CASI undid the signing', 'CASI deshizo la incorporación'],
     ['signing_confirmed', 'Ana confirmed the signing', 'Ana confirmó la incorporación'],
+    ['offer_expired', 'Your offer to a player expired', 'Venció tu oferta a una persona'],
+    ['signing_expired', 'Ana didn\'t confirm the signing in 14 days', 'Ana no confirmó la incorporación en 14 días'],
   ]
   for (const [event, stored, expected] of cases) {
     assertEquals(recruitingTitleEs(event, stored), expected)
