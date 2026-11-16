@@ -753,9 +753,9 @@
       "cta": "Abrir"
     },
     "roles": {
-      "title_one": "{{count}} oportunidad coincide con tu perfil",
-      "title_other": "{{count}} oportunidades coinciden con tu perfil",
-      "title_many": "{{count}} oportunidades coinciden con tu perfil",
+      "title_one": "{{count}} oportunidad para tu perfil",
+      "title_other": "{{count}} oportunidades para tu perfil",
+      "title_many": "{{count}} oportunidades para tu perfil",
       "cta": "Ver"
     },
     "views": {
@@ -783,14 +783,14 @@
     },
     "quiet": {
       "title": "{{title}} todavía no tiene postulaciones",
-      "subtitle": "Se puede compartir con tu red",
+      "subtitle": "Para compartir con tu red",
       "cta": "Abrir"
     },
     "available": {
       "title_one": "{{count}} jugador/a disponible",
       "title_other": "{{count}} jugadores/as disponibles",
       "title_many": "{{count}} jugadores/as disponibles",
-      "subtitle": "Disponibles para jugar · encajan con el equipo",
+      "subtitle": "Disponibles · afines al equipo",
       "cta": "Ver"
     },
     "crest": {

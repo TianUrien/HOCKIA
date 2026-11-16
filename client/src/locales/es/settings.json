@@ -102,7 +102,7 @@
     "fallbackName": "Mi perfil",
     "signedInWith": "Sesión iniciada con {{provider}}",
     "clubAdmin": "Club · admin",
-    "roleSignedIn": "{{role}} · sesión iniciada con {{provider}}",
+    "roleSignedIn": "{{role}} · ingreso con {{provider}}",
     "providerEmail": "email",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
@@ -149,7 +149,7 @@
     "perType": "Por tipo",
     "privacy": "Privacidad",
     "everyone": "Toda la comunidad",
-    "clubsCoaches": "Clubes y entrenadores/as"
+    "clubsCoaches": "Clubes y DT"
   },
   "accountGroup": {
     "label": "Cuenta",

@@ -47,10 +47,11 @@ export function LanguageSwitch({ className, showNote = true, variant = 'segmente
         onChange={onChange}
         options={[
           { value: 'en', label: t('language.english') },
-          { value: 'es', label: t('language.spanish') },
+          // "(beta)" did not fit at 320 px; the note below says it in both languages.
+          { value: 'es', label: t('language.spanishShort') },
         ]}
       />
-      {showNote && value === 'es' && <p className="text-caption leading-[16px] text-ink-3">{t('language.betaNote')}</p>}
+      {showNote && <p className="text-caption leading-[16px] text-ink-3">{t('language.betaNote')}</p>}
     </div>
   )
 }
