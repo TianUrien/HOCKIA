@@ -287,7 +287,8 @@
   "errors": {
     "recruiterMinor": "This member can't be contacted by clubs or coaches.",
     "saveFailed": "Could not save that. Please try again.",
-    "feedLoadFailed": "Failed to load feed"
+    "feedLoadFailed": "Failed to load feed",
+    "contentBlocked": "Your message contains language that violates our community guidelines. Please revise and try again."
   },
   "upload": {
     "errors": {

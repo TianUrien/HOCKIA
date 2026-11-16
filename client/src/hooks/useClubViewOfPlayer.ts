@@ -16,6 +16,7 @@ import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { DEFAULT_EXPIRY_DAYS, fitTarget, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import type { Json } from '@/lib/database.types'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 
 /**
  * What a club (or a coach who recruits) sees on top of a player's profile
@@ -213,7 +214,7 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
     },
   })
 
-  const firstName = player?.full_name?.trim().split(/\s+/)[0] || 'This player'
+  const firstName = player?.full_name?.trim().split(/\s+/)[0] || tRecruiting('scoutingToasts.thisPlayer')
   // D3 (DEV NOTE 394:98): Invite on the club view, secondary to Shortlist.
   const invite = useProfileInviteAction(recruits && player ? player : null)
 
@@ -221,7 +222,7 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
     if (!viewerId || !playerId) return
     // Applied to this role → shortlist the application itself.
     if (application && application.role.id === role.id) {
-      if (application.status === 'shortlisted') { addToast(`${firstName} is already shortlisted for ${role.title}`, 'success'); return }
+      if (application.status === 'shortlisted') { addToast(tRecruiting('scoutingToasts.alreadyShortlistedFor', { name: firstName, role: role.title }), 'success'); return }
       const prev = application.status
       const metadata = { ...application.metadata, status_reason: null } as unknown as Json
       const key = ['club-view', 'application', viewerId, playerId]
@@ -229,11 +230,11 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
       holdDecision({ kind: 'status', applicationId: application.id, status: 'shortlisted', metadata }, (ok, withdrawn) => {
         if (ok) { trackDbEvent('applicant_status_change', 'application', application.id, { new_status: 'shortlisted', reason: null }); return }
         queryClient.setQueryData<ClubViewApplication | null>(key, (a) => (a ? { ...a, status: prev } : a))
-        addToast(withdrawn ? withdrawnApplicationMessage() : 'Couldn’t save that decision. Please try again.', withdrawn ? 'info' : 'error')
+        addToast(withdrawn ? withdrawnApplicationMessage() : tRecruiting('scoutingToasts.saveDecisionFailed'), withdrawn ? 'info' : 'error')
       })
       showUndo({
         applicationId: application.id,
-        text: `${firstName} shortlisted`,
+        text: tRecruiting('scoutingToasts.shortlisted', { name: firstName }),
         onUndo: () => {
           queryClient.setQueryData<ClubViewApplication | null>(key, (a) => (a ? { ...a, status: prev } : a))
           setShortlistedRoleIds((ids) => ids.filter((id) => id !== role.id))
@@ -250,16 +251,16 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
       const { error } = await supabase.from('saved_profiles').insert({ owner_id: viewerId, saved_profile_id: playerId, shortlist_id: list.id })
       if (error && error.code !== '23505') {
         reportSupabaseError('useClubViewOfPlayer.shortlist', error)
-        addToast('Couldn’t shortlist. Please try again.', 'error')
+        addToast(tRecruiting('scoutingToasts.shortlistFailed'), 'error')
         return
       }
       markSavedProfileId(viewerId, playerId)
       if (!error) trackDbEvent('shortlist.item_added', 'shortlist', list.id, { player_id: playerId, source: 'profile_club_view', opportunity_id: role.id })
       setShortlistedRoleIds((ids) => [...ids, role.id])
-      addToast(`${firstName} shortlisted for ${role.title}`, 'success')
+      addToast(tRecruiting('scoutingToasts.shortlistedFor', { name: firstName, role: role.title }), 'success')
     } catch (err) {
       logger.error('[useClubViewOfPlayer] shortlist failed', err)
-      addToast('Couldn’t shortlist. Please try again.', 'error')
+      addToast(tRecruiting('scoutingToasts.shortlistFailed'), 'error')
     } finally {
       setBusy(false)
     }

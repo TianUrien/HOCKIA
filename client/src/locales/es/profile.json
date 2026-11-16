@@ -1251,7 +1251,8 @@
     "nativeHint": "Usar el menú para compartir del dispositivo",
     "whatsappHint": "Abrir WhatsApp con un mensaje listo",
     "emailLabel": "Email",
-    "emailHint": "Abrir la app de email con un mensaje listo"
+    "emailHint": "Abrir la app de email con un mensaje listo",
+    "nativeTitle": "Perfil en Hockia"
   },
   "keyFacts": {
     "notGiven": "Sin datos",
@@ -1337,5 +1338,32 @@
   },
   "place": {
     "basedIn": "Con base en {{where}}"
+  },
+  "shareCopy": {
+    "player": {
+      "short": "Este es mi perfil en Hockia, con mi trayectoria en el hockey, videos y referencias: {{url}}",
+      "subject": "Mi perfil de jugador/a en Hockia",
+      "body": "Hola:\n\nEste es mi perfil en Hockia. Tiene mi trayectoria en el hockey, videos y referencias:\n\n{{url}}\n\n¡Gracias!"
+    },
+    "coach": {
+      "short": "Este es mi perfil de entrenador/a en Hockia, con experiencia, trayectoria y referencias: {{url}}",
+      "subject": "Mi perfil de entrenador/a en Hockia",
+      "body": "Hola:\n\nEste es mi perfil de entrenador/a en Hockia. Tiene mi experiencia como entrenador/a, mi trayectoria y referencias:\n\n{{url}}\n\n¡Gracias!"
+    },
+    "umpire": {
+      "short": "Este es mi perfil de árbitro/a en Hockia, con mi trayectoria arbitral y referencias: {{url}}",
+      "subject": "Mi perfil de árbitro/a en Hockia",
+      "body": "Hola:\n\nEste es mi perfil de árbitro/a en Hockia. Tiene mi trayectoria arbitral y referencias:\n\n{{url}}\n\n¡Gracias!"
+    },
+    "club": {
+      "short": "Este es el perfil de nuestro club en Hockia: {{url}}",
+      "subject": "El perfil de nuestro club en Hockia",
+      "body": "Hola:\n\nEste es el perfil de nuestro club en Hockia:\n\n{{url}}\n\n¡Gracias!"
+    },
+    "brand": {
+      "short": "Este es el perfil de nuestra marca en Hockia: {{url}}",
+      "subject": "El perfil de nuestra marca en Hockia",
+      "body": "Hola:\n\nEste es el perfil de nuestra marca en Hockia:\n\n{{url}}\n\n¡Gracias!"
+    }
   }
 }

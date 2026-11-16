@@ -291,7 +291,8 @@
   "errors": {
     "recruiterMinor": "Clubes y cuerpos técnicos no pueden contactar a este perfil.",
     "saveFailed": "No se pudo guardar. Volver a intentarlo.",
-    "feedLoadFailed": "No se pudo cargar el inicio"
+    "feedLoadFailed": "No se pudo cargar el inicio",
+    "contentBlocked": "El mensaje tiene lenguaje que no cumple las normas de la comunidad. Revisarlo e intentar de nuevo."
   },
   "upload": {
     "errors": {
