@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { vi } from 'vitest'
+// Tests run in English: the catalogs are initialized synchronously here.
+import '@/i18n'
 
 class ResizeObserver {
   callback: ResizeObserverCallback

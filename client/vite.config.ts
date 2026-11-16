@@ -92,7 +92,9 @@ export default defineConfig(({ mode, command }) => {
           // content-hashed, so workbox fetches them with a revision query —
           // a SECOND download of e.g. the hero mockup during first load.
           // The runtime image route below caches them on actual use.
-          globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+          // assets/*.json = the Spanish catalogs (src/locales/es), so Spanish
+          // works offline. Root-level JSON (manifest, openapi) is not matched.
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff2}', 'assets/*.json'],
           // PERF (Lighthouse 2026-07-29): the precache was 266 entries /
           // 7.6MB, downloaded in the background on a first-time visitor's
           // landing view — competing with the LCP image on mobile radio

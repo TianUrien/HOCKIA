@@ -1,0 +1,14 @@
+{
+  "notFound": {
+    "documentTitle": "Page not found",
+    "title": "We can’t find that page",
+    "body": "The link may be old, or the page was removed.",
+    "goHome": "Go to Home",
+    "search": "Search Hockia"
+  },
+  "offline": {
+    "title": "You’re offline",
+    "body": "You can still read what’s loaded. Send messages or applications when you’re back online.",
+    "retry": "Try again"
+  }
+}

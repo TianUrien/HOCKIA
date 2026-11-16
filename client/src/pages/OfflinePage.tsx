@@ -1,18 +1,20 @@
 import { AuthStatus } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
+import { useTranslation } from 'react-i18next'
 
 /** Offline (rebrand page 28 · System): what still works, one way back. */
 export default function OfflinePage() {
+  const { t } = useTranslation()
   return (
     <div className="flex min-h-app-screen flex-col bg-white px-6 pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <AuthStatus
           tone="brand"
           icon={<OfflineGlyph />}
-          title="You’re offline"
-          actions={<Button block onClick={() => window.location.reload()}>Try again</Button>}
+          title={t('offline.title')}
+          actions={<Button block onClick={() => window.location.reload()}>{t('offline.retry')}</Button>}
         >
-          You can still read what’s loaded. Send messages or applications when you’re back online.
+          {t('offline.body')}
         </AuthStatus>
       </main>
     </div>

@@ -65,6 +65,7 @@ See decisions/ADR-0004.
 | **One set of words per application status** | `client/src/lib/applicationStatus.ts` (`APPLICATION_STATUS_LABELS`); tests in `applicationStatus.test.ts` |
 | **Players never see counts, scores, levels or reply-time estimates** | Header comment and helpers in `client/src/lib/opportunityCopy.ts` |
 | **Status labels and copy come from shared helpers**, not inline strings | `lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/clubInviteCopy.ts`, `lib/clubSquadCopy.ts`, `lib/careerCopy.ts`, `lib/videoCopy.ts`, `lib/invites.ts`, `lib/signing.ts` |
+| **Two languages (2026-11-16, Claude Code)**: new or changed member-facing copy goes into `client/src/locales/en` and `es` in the same PR; dates, times, numbers and lists come from `client/src/i18n/format.ts` or `lib/dayFirst.ts`. Admin stays English | ESLint `i18next/no-literal-string` on the files listed in `I18N_MIGRATED` (`client/eslint.config.js`; the list only grows) and `client/scripts/check-locales.mjs` (part of `npm run lint`); how-to in `client/src/locales/README.md` |
 | **No Save/bookmark surfaces in the player redesign** | Founder ruling (see memory); not machine-checked |
 | **Figma "03 Player" / "04 Club" pages are the source of truth for the redesign** | Component headers cite Figma node ids |
 
