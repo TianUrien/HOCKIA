@@ -9,11 +9,16 @@ const ACCENTS: Record<string, string> = {
 }
 
 export function pseudoString(value: string): string {
+  // Odd-indexed parts are the variables and tags the split captured.
   const parts = value.split(/(\{\{[^}]*\}\}|<[^>]*>)/)
-  const accented = parts
-    .map((part, index) => (index % 2 === 1 ? part : part.replace(/[aeiouncAEIOUNC]/g, (ch) => ACCENTS[ch] ?? ch)))
-    .join('')
-  const padding = '~'.repeat(Math.ceil(value.replace(/\{\{[^}]*\}\}|<[^>]*>/g, '').length * 0.3))
+  let accented = ''
+  let plainLength = 0
+  parts.forEach((part, index) => {
+    if (index % 2 === 1) { accented += part; return }
+    plainLength += part.length
+    accented += part.replace(/[aeiouncAEIOUNC]/g, (ch) => ACCENTS[ch] ?? ch)
+  })
+  const padding = '~'.repeat(Math.ceil(plainLength * 0.3))
   return `[${accented}${padding}]`
 }
 
