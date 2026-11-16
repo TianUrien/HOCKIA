@@ -20,6 +20,7 @@ import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 import { initPostHog } from './lib/posthog'
+import { applyResolvedLanguage } from './i18n'
 
 // Register the service worker (production builds only; the dev server has no
 // /sw.js). Prompt-based updates — the page never reloads on its own on the
@@ -49,6 +50,9 @@ window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault()
   void recoverFromStaleChunk()
 })
+
+// Interface language: English unless this device stored a choice (lib i18n).
+void applyResolvedLanguage()
 
 const isNativePlatform = Capacitor.isNativePlatform()
 // Native builds use the platform font (SF Pro / Roboto); the web keeps Inter.

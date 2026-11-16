@@ -1,7 +1,7 @@
 # Copy, claims, privacy, safety and minors
 
 ## Copy
-- English in the app; sentence case for titles, eyebrows and labels; Micro caps only for small section labels.
+- English is the source language of the app; Spanish is being added (2026-11-16). Every member-facing string lives in `client/src/locales/` in both languages; the Spanish rules and glossary are in `client/src/locales/glossary.md`. Sentence case for titles, eyebrows and labels; Micro caps only for small section labels.
 - No em dashes ("—") anywhere: UI copy, Figma text, docs, emails. Use a period, a colon, a comma or parentheses (founder, 2026-10-20).
 - Gender-neutral: the person's name or "they"; never his/her/him (repo standard).
 - Plain and specific; buttons say what happens ("Send application"), confirmations say what happened ("Application sent").
