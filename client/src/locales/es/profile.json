@@ -1334,5 +1334,8 @@
     "seeJourney": "Ver trayectoria completa →",
     "signInPromptNamed": "<signin>Iniciar sesión</signin> para preseleccionar o enviar un mensaje a {{name}}.",
     "signInPrompt": "<signin>Iniciar sesión</signin> para preseleccionar o enviar un mensaje a esta persona."
+  },
+  "place": {
+    "basedIn": "Con base en {{where}}"
   }
 }

@@ -254,7 +254,8 @@
     "activity": "Cargando actividad",
     "conversation": "Cargando conversación",
     "applicants": "Cargando postulaciones",
-    "backToConversations": "Volver a las conversaciones"
+    "backToConversations": "Volver a las conversaciones",
+    "page": "Cargando..."
   },
   "storeBadges": {
     "appStore": "Descargar Hockia en el App Store",

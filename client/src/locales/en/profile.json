@@ -1291,5 +1291,8 @@
     "seeJourney": "See full Journey →",
     "signInPromptNamed": "<signin>Sign in</signin> to shortlist or message {{name}}.",
     "signInPrompt": "<signin>Sign in</signin> to shortlist or message this player."
+  },
+  "place": {
+    "basedIn": "Based in {{where}}"
   }
 }

@@ -598,5 +598,11 @@
   },
   "newConversationLimit": {
     "message": "You've started a lot of new conversations today. You can start more tomorrow."
+  },
+  "segments": {
+    "messages": "Messages",
+    "requests": "Requests",
+    "activity": "Activity",
+    "ariaLabel": "Inbox sections"
   }
 }

@@ -1,5 +1,6 @@
 import { isEuCountryCode } from '@/hooks/useCountries'
 import type { DisplayPlace } from '@/lib/communityCard'
+import { tProfile } from '@/i18n/ns/profile'
 
 /**
  * Nationality is identity; location is where someone lives. A person's FLAG
@@ -48,7 +49,7 @@ export function nationalityNames(list: NationalityCountry[]): string | null {
 export function basedInLine(place: DisplayPlace | null | undefined): string | null {
   if (!place) return null
   const where = [place.city, place.country].filter(Boolean).join(', ')
-  return where ? `Based in ${where}` : null
+  return where ? tProfile('place.basedIn', { where }) : null
 }
 
 /** Card line 3 tail: "29 · Santander" (age, city only, no flag). */

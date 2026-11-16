@@ -604,5 +604,11 @@
   },
   "newConversationLimit": {
     "message": "Hoy ya se iniciaron muchas conversaciones nuevas desde tu cuenta. Mañana se pueden iniciar más."
+  },
+  "segments": {
+    "messages": "Mensajes",
+    "requests": "Solicitudes",
+    "activity": "Actividad",
+    "ariaLabel": "Secciones de mensajes"
   }
 }
