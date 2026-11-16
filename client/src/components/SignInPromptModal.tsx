@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { trackSignupWallAction } from '@/lib/analytics'
 import { trackDbEvent, markWallIntent } from '@/lib/trackDbEvent'
+import { useAuthT } from '@/i18n/ns/auth'
 
 interface SignInPromptModalProps {
   isOpen: boolean
@@ -15,11 +16,12 @@ interface SignInPromptModalProps {
   action?: string
 }
 
-/** "Sign in to apply" → "Join Hockia to apply" — one sheet, the trigger in the title. */
-function joinTitle(title: string): string {
+/** "Sign in to apply" → "Join Hockia to apply" — one sheet, the trigger in the title.
+ *  No title (or the old "Sign in to continue") is the plain "Join Hockia". */
+function joinTitle(title: string | undefined, t: ReturnType<typeof useAuthT>): string {
+  if (title === undefined || /^sign in to continue$/i.test(title.trim())) return t('joinSheet.title')
   const m = /^(?:sign in|log in) to (.+)$/i.exec(title.trim())
-  if (m) return `Join Hockia to ${m[1]}`
-  if (/^sign in to continue$/i.test(title.trim())) return 'Join Hockia'
+  if (m) return t('joinSheet.titleTo', { action: m[1] })
   return title
 }
 
@@ -35,11 +37,13 @@ function joinTitle(title: string): string {
 export default function SignInPromptModal({
   isOpen,
   onClose,
-  title = 'Sign in to continue',
-  message = 'Create a free Hockia profile. Clubs, coaches and players are already here.',
+  title,
+  message,
   action,
 }: SignInPromptModalProps) {
   const navigate = useNavigate()
+  const t = useAuthT()
+  const sheetTitle = joinTitle(title, t)
   const location = useLocation()
 
   // Fire once per open (false→true transition), not on every re-render.
@@ -66,27 +70,27 @@ export default function SignInPromptModal({
   }
 
   return (
-    <BottomSheet open={isOpen} onClose={onClose} ariaLabel={joinTitle(title)}>
+    <BottomSheet open={isOpen} onClose={onClose} ariaLabel={sheetTitle}>
       <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
         <div>
-          <h2 className="text-title text-ink-1">{joinTitle(title)}</h2>
-          <p className="mt-1.5 text-row text-ink-2">{message}</p>
+          <h2 className="text-title text-ink-1">{sheetTitle}</h2>
+          <p className="mt-1.5 text-row text-ink-2">{message ?? t('joinSheet.message')}</p>
         </div>
         <button
           type="button"
           onClick={handleSignUp}
           className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white"
         >
-          Create a profile
+          {t('joinSheet.createProfile')}
         </button>
         <button
           type="button"
           onClick={handleSignIn}
           className="flex h-[52px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1"
         >
-          Log in
+          {t('joinSheet.logIn')}
         </button>
-        <p className="text-center text-secondary text-ink-3">Free. It takes a minute.</p>
+        <p className="text-center text-secondary text-ink-3">{t('joinSheet.note')}</p>
       </div>
     </BottomSheet>
   )

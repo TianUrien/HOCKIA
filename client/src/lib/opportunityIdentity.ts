@@ -8,6 +8,7 @@
  */
 
 import { humanizeToken } from '@/lib/identity'
+import { tOpportunities } from '@/i18n/ns/opportunities'
 
 export type PublisherKind = 'club' | 'coach-for-club' | 'independent-coach'
 
@@ -46,7 +47,7 @@ export function roleIdentity(input: PublisherInput): RoleIdentity {
   const publisherName = input.publisherName?.trim() || ''
   const clubFromRole = input.worldClub?.name || input.organizationName?.trim() || null
   if (input.publisherRole !== 'coach') {
-    const name = clubFromRole || publisherName || 'Club'
+    const name = clubFromRole || publisherName || tOpportunities('identity.clubFallback')
     const logo = input.worldClub?.avatarUrl || input.publisherAvatar || null
     return { kind: 'club', hiringClub: { name, logo }, postedBy: null, displayName: name, displayLogo: logo }
   }
@@ -57,7 +58,7 @@ export function roleIdentity(input: PublisherInput): RoleIdentity {
     const logo = input.worldClub?.avatarUrl || null
     return { kind: 'coach-for-club', hiringClub: { name: clubName, logo }, postedBy: coach, displayName: clubName, displayLogo: logo }
   }
-  return { kind: 'independent-coach', hiringClub: null, postedBy: coach, displayName: publisherName || 'Coach', displayLogo: input.publisherAvatar ?? null }
+  return { kind: 'independent-coach', hiringClub: null, postedBy: coach, displayName: publisherName || tOpportunities('identity.coachFallback'), displayLogo: input.publisherAvatar ?? null }
 }
 
 /** The hiring club's short name for headings ("What Lazio offers"): first word(s) before " Hockey"/" HC"/" Club" when long. */
@@ -70,45 +71,45 @@ export function clubShortName(name: string): string {
 
 /** Coach-aware copy for the detail sections (Figma O2 148:231 + handoff ruling 2). */
 export function offersHeading(id: RoleIdentity): string {
-  if (id.hiringClub) return `What ${clubShortName(id.hiringClub.name)} offers`
-  return id.postedBy ? `What ${id.postedBy.firstName} offers` : 'What the club offers'
+  if (id.hiringClub) return tOpportunities('identity.offersNamed', { name: clubShortName(id.hiringClub.name) })
+  return id.postedBy ? tOpportunities('identity.offersNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.offersClub')
 }
 export function asksHeading(id: RoleIdentity): string {
-  return id.kind === 'club' ? 'What they’re looking for' : 'What they’re looking for'
+  return id.kind === 'club' ? tOpportunities('identity.asksClub') : tOpportunities('identity.asksCoach')
 }
 export function wordsHeading(id: RoleIdentity): string {
-  return id.postedBy ? `In ${id.postedBy.firstName}’s words` : 'In the club’s words'
+  return id.postedBy ? tOpportunities('identity.wordsNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.wordsClub')
 }
 export function noteHeading(id: RoleIdentity): string {
-  return id.postedBy ? `A note to ${id.postedBy.firstName}` : 'A note to the club'
+  return id.postedBy ? tOpportunities('identity.noteNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.noteClub')
 }
 export function messageLabel(id: RoleIdentity): string {
-  return id.postedBy ? `Message ${id.postedBy.firstName}` : 'Message the club'
+  return id.postedBy ? tOpportunities('identity.messageNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.messageClub')
 }
 export function askWhenApplying(id: RoleIdentity): string {
-  return id.postedBy ? `Ask ${id.postedBy.firstName} when you apply` : 'Ask the club when you apply'
+  return id.postedBy ? tOpportunities('identity.askNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.askClub')
 }
 /** "How applying works", step 2. */
 export function reviewsLine(id: RoleIdentity): string {
-  return id.postedBy ? `${id.postedBy.firstName} reviews it and replies here` : 'The club reviews it and replies here'
+  return id.postedBy ? tOpportunities('identity.reviewsNamed', { name: id.postedBy.firstName }) : tOpportunities('identity.reviewsClub')
 }
 /** Under the identity card when a coach posted for a club. */
 export function onBehalfNote(id: RoleIdentity): string | null {
   return id.kind === 'coach-for-club' && id.postedBy && id.hiringClub
-    ? `${id.postedBy.firstName} posted this opportunity on behalf of ${id.hiringClub.name}. Messages go to the coach.`
+    ? tOpportunities('identity.onBehalf', { name: id.postedBy.firstName, club: id.hiringClub.name })
     : null
 }
 /** "Posted by Ana García" for cards; null when the club itself posted or the coach is the title. */
 export function postedByLine(id: RoleIdentity): string | null {
-  return id.kind === 'coach-for-club' && id.postedBy ? `Posted by ${id.postedBy.name}` : null
+  return id.kind === 'coach-for-club' && id.postedBy ? tOpportunities('identity.postedBy', { name: id.postedBy.name }) : null
 }
 /** Apply sheet subtitle: "Lazio Hockey · posted by Nicolás Paz" / "Lazio Hockey" / "Coach Luis Pérez". */
 export function applySubline(id: RoleIdentity): string {
-  if (id.hiringClub) return id.postedBy ? `${id.hiringClub.name} · posted by ${id.postedBy.name}` : id.hiringClub.name
-  return id.postedBy ? `Coach ${id.postedBy.name}` : 'Club'
+  if (id.hiringClub) return id.postedBy ? tOpportunities('identity.clubPostedBy', { club: id.hiringClub.name, name: id.postedBy.name }) : id.hiringClub.name
+  return id.postedBy ? tOpportunities('identity.coachNamed', { name: id.postedBy.name }) : tOpportunities('identity.clubFallback')
 }
 /** Application sent: who reviews. */
 export function sentLine(id: RoleIdentity): string {
-  const who = id.postedBy ? id.postedBy.firstName : id.hiringClub?.name ?? 'The club'
-  return `${who} will review your profile. We’ll let you know when they reply. You can follow it in Applied.`
+  const who = id.postedBy ? id.postedBy.firstName : id.hiringClub?.name
+  return who ? tOpportunities('identity.sentNamed', { name: who }) : tOpportunities('identity.sentClub')
 }

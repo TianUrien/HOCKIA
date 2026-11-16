@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { Trans } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useBottomPrompt } from '@/lib/bottomPrompt'
 import { TERMS_GATE_OVERLAY } from '@/lib/overlaySequence'
+import { useAuthT } from '@/i18n/ns/auth'
 
 const CURRENT_TERMS_VERSION = '1.0'
 
@@ -24,6 +26,7 @@ const UNGATED_PREFIXES = ['/auth/callback', '/complete-profile', '/brands/onboar
  * Required by Apple Guideline 1.2 (Safety - User-Generated Content).
  */
 export default function TermsGate({ children }: { children: React.ReactNode }) {
+  const t = useAuthT()
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -118,7 +121,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
     } catch (err) {
       logger.error('Failed to accept terms:', err)
       // Retry once — if still fails, let user try again
-      setError('Failed to save acceptance. Please try again.')
+      setError(t('termsGate.saveFailed'))
     } finally {
       setLoading(false)
     }
@@ -138,37 +141,36 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 mb-2">
             <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-6" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Terms of Use</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t('termsGate.title')}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Please review and accept our terms before continuing
+            {t('termsGate.subtitle')}
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 space-y-4">
           <p>
-            By using Hockia, you agree to our{' '}
-            <button onClick={() => navigate('/terms')} className="text-hockia-primary underline font-medium">
-              Terms & Conditions
-            </button>{' '}
-            and{' '}
-            <button onClick={() => navigate('/privacy-policy')} className="text-hockia-primary underline font-medium">
-              Privacy Policy
-            </button>.
+            <Trans
+              t={t}
+              i18nKey="termsGate.agreement"
+              components={{
+                terms: <button onClick={() => navigate('/terms')} className="text-hockia-primary underline font-medium" />,
+                privacy: <button onClick={() => navigate('/privacy-policy')} className="text-hockia-primary underline font-medium" />,
+              }}
+            />
           </p>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-            <p className="font-semibold text-gray-900">Community Guidelines</p>
-            <p>Hockia has zero tolerance for objectionable content or abusive behavior. By continuing, you agree to:</p>
+            <p className="font-semibold text-gray-900">{t('termsGate.guidelinesTitle')}</p>
+            <p>{t('termsGate.guidelinesIntro')}</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Not post harassment, hate speech, threats, or inappropriate content</li>
-              <li>Not send spam or unsolicited messages</li>
-              <li>Not impersonate others or create misleading profiles</li>
-              <li>Report any objectionable content you encounter</li>
-              <li>Respect other users and the field hockey community</li>
+              <li>{t('termsGate.rules.noHarassment')}</li>
+              <li>{t('termsGate.rules.noSpam')}</li>
+              <li>{t('termsGate.rules.noImpersonation')}</li>
+              <li>{t('termsGate.rules.report')}</li>
+              <li>{t('termsGate.rules.respect')}</li>
             </ul>
             <p className="text-xs text-gray-500 mt-2">
-              Violations may result in content removal and account suspension.
-              Hockia reviews all reports within 24 hours.
+              {t('termsGate.violations')}
             </p>
           </div>
         </div>
@@ -182,7 +184,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
             disabled={loading}
             className="w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
           >
-            {loading ? 'Accepting...' : 'I agree and continue'}
+            {loading ? t('termsGate.accepting') : t('termsGate.accept')}
           </button>
         </div>
       </div>

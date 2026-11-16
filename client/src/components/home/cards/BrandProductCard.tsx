@@ -3,6 +3,7 @@ import { brandCategoryLabel } from '@/lib/identity'
 import { FeedImageCarousel } from '../FeedImageCarousel'
 import { FeedCard, FeedCardBody, FeedCardFooter, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandProductFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface BrandProductCardProps {
   item: BrandProductFeedItem
@@ -15,6 +16,7 @@ interface BrandProductCardProps {
  * CTA in the footer.
  */
 export function BrandProductCard({ item }: BrandProductCardProps) {
+  const t = useHomeT()
   const sortedImages = item.product_images
     ? [...item.product_images].sort((a, b) => a.order - b.order)
     : []
@@ -30,7 +32,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
         profilePath={`/brands/${item.brand_slug}`}
         subtitle={brandCategoryLabel(item.brand_category)}
         right={item.brand_is_verified ? (
-          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-positive" aria-label="Verified brand" />
+          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-positive" aria-label={t('cards.brandProduct.verified')} />
         ) : undefined}
       />
 
@@ -59,7 +61,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80"
           >
-            Learn more
+            {t('cards.brandProduct.learnMore')}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </FeedCardFooter>

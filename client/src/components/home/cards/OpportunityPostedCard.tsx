@@ -7,6 +7,7 @@ import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, profilePathFor
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
@@ -16,6 +17,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // Open the opportunity as an overlay over the Home feed (the feed stays
   // mounted underneath, so closing reveals it exactly where it was — no route
   // change, no unmount, no scroll jump). Deep links still use the route.
+  const t = useHomeT()
   const navigate = useNavigate()
   // The v2 role page, the same as Opportunities (17 Oct 2026); Back returns to Home at the same scroll.
   const openRole = () => navigate(`/opportunities/${item.opportunity_id}`)
@@ -43,7 +45,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
         createdAt={item.created_at}
         profilePath={publisherPath}
       />
-      <FeedCardCaption icon={<Briefcase />}>New opportunity</FeedCardCaption>
+      <FeedCardCaption icon={<Briefcase />}>{t('cards.opportunity.caption')}</FeedCardCaption>
 
       <FeedCardBody>
         <button
@@ -51,7 +53,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           ref={prefetch.ref}
           {...prefetch.handlers}
           onClick={openRole}
-          aria-label={`Open opportunity: ${item.title}`}
+          aria-label={t('cards.opportunity.openAria', { title: item.title })}
           data-testid="opportunity-posted-open"
           className="-mx-2 -my-1 block min-h-[44px] w-[calc(100%+1rem)] rounded-[12px] px-2 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary"
         >
@@ -101,7 +103,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             <span className="text-[13px] text-gray-500">{item.world_club_name}</span>
             <span className="inline-flex items-center gap-0.5 rounded-full bg-positive-soft px-1.5 py-0.5 text-[9px] font-semibold text-positive">
               <BadgeCheck className="h-2.5 w-2.5" />
-              Official
+              {t('cards.opportunity.official')}
             </span>
           </div>
         )}

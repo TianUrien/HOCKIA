@@ -6,6 +6,7 @@ import { HOCKIA_FALLBACK } from '@/lib/crestPalette'
 import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 export interface FeaturedRoleCardProps {
   vacancy: Vacancy
@@ -27,6 +28,7 @@ export interface FeaturedRoleCardProps {
  * chips. No button on the card: the whole card is the one tap target (audit A5).
  */
 export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, league, palette, onOpen, now, layout = 'phone' }: FeaturedRoleCardProps) {
+  const t = useOpportunitiesT()
   const press = usePressSpring<HTMLButtonElement>()
   const prefetch = useRolePrefetch(vacancy.id, press.ref)
   const headline = roleHeadline(vacancy)
@@ -35,12 +37,13 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
   const status = roleStatus(vacancy, now)
   const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
   const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
-  const chips = [...(isPaid(vacancy) ? ['€ Paid'] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
-  const eyebrow = ['FEATURED OPPORTUNITY', status && status.label !== 'New' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
+  const chips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
+  // The "New" tag (tone 'brand') is not repeated in the eyebrow; a deadline is.
+  const eyebrow = [t('list.featuredEyebrow'), status && status.tone !== 'brand' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
 
   if (layout === 'wide') {
     const stripColor = withAlpha((palette ?? HOCKIA_FALLBACK).stops[2], 0.62)
-    const wideChips = [...(isPaid(vacancy) ? ['€ Paid'] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
+    const wideChips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
     return (
       <button
         ref={press.ref}
@@ -49,7 +52,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
         {...press.handlers}
         {...prefetch.handlers}
         className="group block w-full text-left transition-transform duration-200 [transform-origin:center] [will-change:transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
-        aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
+        aria-label={t('list.featuredAria', { title: headline.title, club: clubName })}
         data-testid="featured-role"
       >
         <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="none" className="h-[400px] rounded-[28px] shadow-[0_12px_30px_rgba(0,0,0,0.12)] transition-shadow duration-200 group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
@@ -83,7 +86,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
       {...press.handlers}
       {...prefetch.handlers}
       className="block w-full text-left [transform-origin:center] [will-change:transform]"
-      aria-label={`Featured opportunity: ${headline.title} at ${clubName}`}
+      aria-label={t('list.featuredAria', { title: headline.title, club: clubName })}
       data-testid="featured-role"
     >
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="hero" className="h-[440px] rounded-[28px] shadow-[0_16px_40px_rgba(15,15,20,0.14),0_2px_4px_rgba(15,15,20,0.06)]">

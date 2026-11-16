@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, MessageCircle, ChevronRight } from 'lucide-react'
 import type { RolesHealthTotals } from '@/hooks/useRolesHealth'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * "Applicants to review" (club Pulse, Home V2 Phase 2): the triage card that
@@ -14,6 +15,7 @@ const MODULE_ID = 'applicants_review'
 const POSITION = 2
 
 export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTotals; loading: boolean }) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
 
@@ -34,16 +36,16 @@ export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTot
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-[#14141c]">
-            {totals.pending} applicant{totals.pending === 1 ? '' : 's'} waiting for a reply
+            {t('applicantsReview.title', { count: totals.pending })}
             {totals.newApplicants > 0 && (
               <span className="ml-2 inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">
-                {totals.newApplicants} new
+                {t('applicantsReview.newBadge', { count: totals.newApplicants })}
               </span>
             )}
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
             <MessageCircle className="h-3 w-3 text-hockia-primary" />
-            Answer every applicant.
+            {t('applicantsReview.hint')}
           </p>
         </div>
         <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />

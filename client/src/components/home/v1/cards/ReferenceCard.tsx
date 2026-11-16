@@ -9,9 +9,10 @@ import { SquircleBox } from '../primitives'
 import { CommentButton, CongratsPill } from '../PostParts'
 import { useHomeV1 } from '../homeV1Context'
 import type { ReferenceReceivedFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
-function firstName(name: string | null | undefined): string {
-  return (name ?? '').trim().split(/\s+/)[0] || 'them'
+function firstName(name: string | null | undefined, fallback: string): string {
+  return (name ?? '').trim().split(/\s+/)[0] || fallback
 }
 
 function relationship(type: string | null | undefined): string | null {
@@ -21,9 +22,10 @@ function relationship(type: string | null | undefined): string | null {
 }
 
 function FaceLink({ path, label, url, className }: { path: string | null; label: string | null; url: string | null; className: string }) {
+  const t = useHomeT()
   const face = <Avatar src={url} initials={initialsOf(label)} size="sm" className="!h-9 !w-9 ring-2 ring-gold-soft" />
   const cls = `absolute top-0 ${className}`
-  return path ? <Link to={path} aria-label={`${label ?? 'Member'} — view profile`} className={cls}>{face}</Link> : <span className={cls}>{face}</span>
+  return path ? <Link to={path} aria-label={t('feedV1.reference.viewProfileAria', { name: label ?? t('feedV1.reference.unnamedMember') })} className={cls}>{face}</Link> : <span className={cls}>{face}</span>
 }
 
 /**
@@ -32,6 +34,8 @@ function FaceLink({ path, label, url, className }: { path: string | null; label:
  * comments (v1: Congrats + comments on New signing and Reference only).
  */
 export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
+  const t = useHomeT()
+  const nameFallback = t('feedV1.reference.nameFallback')
   const { patchItem, openComments } = useHomeV1()
   const ownerId = item.author_profile_id ?? item.profile_id
   const quote = item.endorsement_text?.trim()
@@ -51,10 +55,10 @@ export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">
-              {firstName(item.referee_name)} → {firstName(item.full_name)}
+              {firstName(item.referee_name, nameFallback)} → {firstName(item.full_name, nameFallback)}
             </span>
             <span className="block truncate text-caption text-ink-2">
-              {['Reference', relationship(item.relationship_type)].filter(Boolean).join(' · ')}
+              {[t('feedV1.reference.label'), relationship(item.relationship_type)].filter(Boolean).join(' · ')}
             </span>
           </span>
           <Star className="h-[22px] w-[22px] shrink-0 fill-gold-line text-gold-line" strokeWidth={1.5} aria-hidden="true" />
@@ -64,13 +68,13 @@ export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
       <div className="flex items-center gap-2.5">
         <CongratsPill
           tone="gold"
-          label={`Congrats ${firstName(item.full_name)}`}
+          label={t('feedV1.reference.congratsLabel', { name: firstName(item.full_name, nameFallback) })}
           target={{ type: 'feed_item', id: item.feed_item_id }}
           has={Boolean(item.has_congrats)}
           count={congrats}
           onChange={(has, count) => patchItem(item.feed_item_id, { has_congrats: has, congrats_count: count })}
         />
-        {congrats > 0 && <span className="text-secondary tabular-nums text-ink-3">{compactCount(congrats)} congrats</span>}
+        {congrats > 0 && <span className="text-secondary tabular-nums text-ink-3">{t('feedV1.reference.congratsCount', { count: congrats, total: compactCount(congrats) })}</span>}
         <span className="flex-1" />
         <CommentButton
           count={comments}

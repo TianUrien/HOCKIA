@@ -1,0 +1,181 @@
+{
+  "chooseRole": {
+    "continue": "Continue",
+    "continueAs": {
+      "player": "Continue as a player",
+      "coach": "Continue as a coach",
+      "club": "Continue as a club",
+      "brand": "Continue as a brand",
+      "umpire": "Continue as an umpire"
+    },
+    "cards": {
+      "playerTitle": "Player",
+      "playerDetail": "Build the profile that gets you found by clubs",
+      "coachTitle": "Coach",
+      "coachDetail": "Find coaching opportunities, and recruit players if you also manage a team",
+      "clubTitle": "Club",
+      "clubDetail": "Recruit field hockey players with trust and context",
+      "brandTitle": "Brand",
+      "brandDetail": "Build your brand in the hockey community",
+      "umpireTitle": "Umpire",
+      "umpireDetail": "Keep your officiating history in one place"
+    }
+  },
+  "password": {
+    "help": "At least {{min}} characters, with a lowercase letter, an uppercase letter and a number",
+    "tooShort": "Use at least {{min}} characters.",
+    "mix": "Add a lowercase letter, an uppercase letter and a number."
+  },
+  "player": {
+    "photo": {
+      "changeAria": "Change photo",
+      "addAria": "Add photo",
+      "change": "Change photo",
+      "add": "Add a photo",
+      "uploading": "Uploading…",
+      "helper": "A real match photo gets more profile views.",
+      "inputLabel": "Upload profile photo",
+      "invalid": "Invalid image",
+      "uploadFailed": "We couldn’t upload this image. Please use PNG or JPG up to 5MB.",
+      "pickerFailed": "Could not access camera or photos. Please check app permissions."
+    },
+    "about": {
+      "title": "About you",
+      "fullName": "Full name",
+      "dateOfBirth": "Date of birth",
+      "dobLocked": "Locked after registration.",
+      "dobHint": "Can’t be changed later. Never shown on your profile. Only your age is.",
+      "category": "Category",
+      "position": "Position",
+      "secondPosition": "Second position (optional)",
+      "continue": "Continue"
+    },
+    "errors": {
+      "fullName": "Please add your full name.",
+      "dateOfBirth": "Please add your date of birth.",
+      "category": "Choose the category you play in.",
+      "position": "Choose your position.",
+      "secondPosition": "Your second position must be different from your first.",
+      "dobSave": "Could not save your date of birth. Please try again.",
+      "dobInvalid": "That date of birth doesn’t look right. Please check it.",
+      "saveFailed": "Could not save. Please try again."
+    },
+    "where": {
+      "back": "About you",
+      "skip": "Skip",
+      "title": "Where you play",
+      "subtitle": "All optional. You can add these later from your profile.",
+      "club": "Current club",
+      "clubPlaceholder": "Search your club",
+      "location": "Base location",
+      "locationPlaceholder": "City you’re based in",
+      "passport": "Passport",
+      "secondPassport": "Second passport",
+      "countryPlaceholder": "Choose a country",
+      "addSecond": "Add second",
+      "openToPlay": "Open to play",
+      "openToPlayHelper": "Clubs can see you and message you about opportunities.",
+      "under18": "Hockia is for players 18 and over, so we can’t create your account yet. Join the juniors waitlist and we’ll tell you when it opens. <waitlistLink>Juniors waitlist</waitlistLink>",
+      "needsDob": "Add your date of birth to turn on Open to play.",
+      "continue": "Continue"
+    }
+  },
+  "coach": {
+    "photo": {
+      "change": "Change photo",
+      "add": "Add photo",
+      "helper": "A clear coaching photo gets more views.",
+      "inputLabel": "Upload profile photo",
+      "invalid": "Invalid image",
+      "uploadFailed": "We couldn’t upload this image. Please use PNG or JPG up to 5MB.",
+      "pickerFailed": "Could not access camera or photos. Please check app permissions."
+    },
+    "about": {
+      "title": "About you",
+      "fullName": "Full name",
+      "dateOfBirth": "Date of birth",
+      "dobLocked": "Locked after registration.",
+      "dobHint": "Can’t be changed later. Never shown on your profile. Only your age is.",
+      "nationality": "Nationality",
+      "countryPlaceholder": "Choose a country",
+      "secondNationality": "Second nationality",
+      "secondNationalityPlaceholder": "Add a second nationality",
+      "location": "Base location",
+      "locationPlaceholder": "City you’re based in",
+      "continue": "Continue"
+    },
+    "errors": {
+      "fullName": "Please add your full name.",
+      "dateOfBirth": "Please add your date of birth.",
+      "nationality": "Choose your nationality.",
+      "location": "Please add your base location.",
+      "specialization": "Please select your coaching specialization.",
+      "specializationCustom": "Please enter your role title.",
+      "categories": "Please select at least one coaching category.",
+      "recruits": "Choose one to finish.",
+      "profileCreate": "Could not create your profile. Please try signing out and back in.",
+      "dobSave": "Could not save your date of birth. Please try again.",
+      "dobInvalid": "That date of birth doesn’t look right. Please check it.",
+      "saveFailed": "Could not save. Please try again."
+    },
+    "coaching": {
+      "back": "About you",
+      "skip": "Skip",
+      "title": "Your coaching",
+      "subtitle": "Step 2 of 2 · clubs filter coaches by these.",
+      "specialization": "Specialization",
+      "specializationPlaceholder": "Choose your specialization",
+      "roleTitle": "Role title",
+      "roleTitlePlaceholder": "e.g. Team manager",
+      "categories": "Coaching categories",
+      "categoriesHint": "Pick every category you coach.",
+      "club": "Current club",
+      "clubPlaceholder": "Search your club",
+      "recruitQuestion": "Do you recruit players for a team?",
+      "recruitHint": "Yes adds My opportunities and Find players to your app. You can change this in Settings.",
+      "recruitYesTitle": "Yes, I recruit for my team",
+      "recruitYesDetail": "Post opportunities and review applicants for your club.",
+      "recruitNoTitle": "Not right now",
+      "recruitNoDetail": "Use Hockia for your own coaching career.",
+      "openToCoach": "Open to coach",
+      "openToCoachHelper": "Clubs can see you’re available and message you.",
+      "finish": "Finish"
+    }
+  },
+  "brand": {
+    "errors": {
+      "heal": "Something went wrong restoring your brand onboarding. Please try again or contact support.",
+      "country": "Please choose a country for your brand.",
+      "createFailed": "Failed to create brand"
+    },
+    "heal": {
+      "title": "Something went wrong",
+      "retry": "Try again",
+      "contact": "If this keeps happening, contact support."
+    },
+    "page": {
+      "heroAlt": "Field Hockey",
+      "tagline": "Set up your brand profile",
+      "title": "Create Your Brand",
+      "subtitle": "Tell us about your brand to start connecting with athletes.",
+      "submit": "Create Brand"
+    }
+  },
+  "categoryBanner": {
+    "body": "We've updated Hockia to use hockey categories instead of gender. Please confirm or update your category preferences.",
+    "action": "Update categories"
+  },
+  "categorySelector": {
+    "anyHint": "(open to all categories)"
+  },
+  "dateOfBirth": {
+    "day": "Day",
+    "month": "Month",
+    "year": "Year"
+  },
+  "welcomeCard": {
+    "title": "Welcome to Hockia",
+    "body": "Build your hockey profile, get discovered by clubs and coaches, and share your profile externally.",
+    "dismiss": "Dismiss welcome message"
+  }
+}

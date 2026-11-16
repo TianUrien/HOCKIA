@@ -6,6 +6,8 @@ import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import { getImageUrl } from '@/lib/imageUrl'
+import { Trans } from 'react-i18next'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 export interface RoleCardProps {
   vacancy: Vacancy
@@ -37,6 +39,7 @@ const MAX_PACKAGE_CHIPS = 3
  * 16 Oct 2026). No level, no counts, no reply time.
  */
 export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, onOpen, postedBy = null, now }: RoleCardProps) {
+  const t = useOpportunitiesT()
   const press = usePressSpring<HTMLButtonElement>()
   const prefetch = useRolePrefetch(vacancy.id, press.ref)
   const pill = genderPill(vacancy.gender)
@@ -45,7 +48,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
   const headline = roleHeadline(vacancy)
   const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
   const subline = [clubName, countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
-  const packageChips = [...(isPaid(vacancy) ? ['€ Paid'] : []), ...roleBenefits(vacancy).map((b) => b.label), ...(vacancy.custom_benefits ?? [])]
+  const packageChips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label), ...(vacancy.custom_benefits ?? [])]
   const shown = packageChips.slice(0, MAX_PACKAGE_CHIPS)
   const more = packageChips.length - shown.length
   const status = roleStatus(vacancy, now)
@@ -60,7 +63,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
         {...press.handlers}
         {...prefetch.handlers}
         className="block w-full text-left [transform-origin:center] [will-change:transform]"
-        aria-label={applied ? `${headline.title} at ${clubName}, applied` : `${headline.title} at ${clubName}`}
+        aria-label={applied ? t('list.cardAriaApplied', { title: headline.title, club: clubName }) : t('list.cardAria', { title: headline.title, club: clubName })}
         data-testid="role-card-open"
       >
         <div className="flex items-start gap-3">
@@ -76,8 +79,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
         {postedBy && (
           <span className="mt-3 inline-flex max-w-full items-center gap-1 rounded-full bg-surface-subtle py-[5px] pl-1.5 pr-3 text-secondary text-ink-2" data-testid="role-posted-by">
             <EntityAvatar src={postedBy.avatar ? getImageUrl(postedBy.avatar, 'avatar-sm') ?? postedBy.avatar : null} name={postedBy.name} role="coach" size={22} />
-            <span>Posted by</span>
-            <span className="truncate font-semibold text-ink-1">{postedBy.name}</span>
+            <Trans t={t} i18nKey="list.postedByCapsule" values={{ name: postedBy.name }} components={{ label: <span />, name: <span className="truncate font-semibold text-ink-1" /> }} />
             {postedBy.roleLabel && <span className="truncate">· {postedBy.roleLabel}</span>}
           </span>
         )}
@@ -92,7 +94,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
               {pill.label}
             </span>
           )}
-          {applied && <span className="rounded-full bg-surface-muted px-2.5 py-1 text-secondary font-semibold text-ink-2" data-testid="applied-tag">Applied</span>}
+          {applied && <span className="rounded-full bg-surface-muted px-2.5 py-1 text-secondary font-semibold text-ink-2" data-testid="applied-tag">{t('list.appliedTag')}</span>}
           {shown.map((label) => (
             <span key={label} className="rounded-full bg-surface-muted px-2 py-[3px] text-caption text-ink-2">{label}</span>
           ))}

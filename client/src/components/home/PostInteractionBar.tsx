@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Heart, MessageCircle, Share2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { SharePostSheet } from './SharePostSheet'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface PostInteractionBarProps {
   postId: string
@@ -44,6 +45,7 @@ export function PostInteractionBar({
   variant = 'post',
   onAnswer,
 }: PostInteractionBarProps) {
+  const t = useHomeT()
   const { user } = useAuthStore()
   const [isLiking, setIsLiking] = useState(false)
   const [showShareSheet, setShowShareSheet] = useState(false)
@@ -60,7 +62,7 @@ export function PostInteractionBar({
   }, [user, isLiking, onToggleLike])
 
   const btn = 'inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-2 -ml-2 text-[14px] tabular-nums transition-colors'
-  const answersLabel = commentCount === 1 ? '1 answer' : `${commentCount} answers`
+  const answersLabel = t('interactions.answerCount', { count: commentCount })
 
   return (
     <div>
@@ -70,7 +72,7 @@ export function PostInteractionBar({
           onClick={handleLike}
           disabled={!user || isLiking}
           aria-pressed={hasLiked}
-          aria-label={`${hasLiked ? 'Unlike' : 'Like'}${likeCount ? `, ${likeCount} like${likeCount !== 1 ? 's' : ''}` : ''}`}
+          aria-label={likeCount ? (hasLiked ? t('interactions.unlikeWithCount', { count: likeCount }) : t('interactions.likeWithCount', { count: likeCount })) : (hasLiked ? t('interactions.unlike') : t('interactions.like'))}
           className={`${btn} ${hasLiked ? 'text-hockia-primary' : 'text-ink-2 hover:text-ink-1'} disabled:opacity-50`}
         >
           <Heart className={`h-[22px] w-[22px] ${hasLiked ? 'fill-hockia-primary' : ''}`} strokeWidth={1.7} />
@@ -81,7 +83,7 @@ export function PostInteractionBar({
           type="button"
           onClick={onToggleComments}
           aria-expanded={showComments}
-          aria-label={isQuestion ? `Answers, ${commentCount}` : `Comments${commentCount ? `, ${commentCount}` : ''}`}
+          aria-label={isQuestion ? t('interactions.answersAria', { total: commentCount }) : commentCount ? t('interactions.commentsAriaWithTotal', { total: commentCount }) : t('interactions.commentsAria')}
           className={`${btn} ${showComments ? 'text-hockia-primary' : 'text-ink-2 hover:text-ink-1'}`}
         >
           <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.7} />
@@ -91,7 +93,7 @@ export function PostInteractionBar({
         <button
           type="button"
           onClick={() => setShowShareSheet(true)}
-          aria-label="Share"
+          aria-label={t('interactions.share')}
           className={`${btn} text-ink-2 hover:text-ink-1`}
         >
           <Share2 className="h-[22px] w-[22px]" strokeWidth={1.7} />
@@ -103,7 +105,7 @@ export function PostInteractionBar({
             onClick={onAnswer ?? onToggleComments}
             className="ml-auto flex h-[30px] items-center rounded-full bg-hockia-soft px-3.5 text-[14px] font-semibold text-hockia-primary transition-colors active:bg-[#e4d9fb]"
           >
-            Answer
+            {t('interactions.answer')}
           </button>
         )}
       </div>

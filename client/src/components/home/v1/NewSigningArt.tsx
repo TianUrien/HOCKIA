@@ -6,6 +6,7 @@ import { SquircleBox } from './primitives'
 import pitchLines from '@/assets/home/signing-pitch-lines.svg'
 import confetti from '@/assets/home/signing-confetti.svg'
 import RolePlaceholder from '@/components/RolePlaceholder'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * The New signing card — option E, FINAL (Figma 60:194; spec 65:329):
@@ -38,6 +39,7 @@ function Initials({ role, className }: { name: string; role: 'player' | 'club'; 
 }
 
 export function NewSigningArt({ personName, personAvatarUrl, clubName, clubCrestUrl, detail, className }: SigningArtProps) {
+  const t = useHomeT()
   const [photoFailed, setPhotoFailed] = useState(false)
   const [crestFailed, setCrestFailed] = useState(false)
   const photo = personAvatarUrl && !photoFailed ? getImageUrl(personAvatarUrl, 'avatar-lg') : null
@@ -50,9 +52,9 @@ export function NewSigningArt({ personName, personAvatarUrl, clubName, clubCrest
       <img src={pitchLines} alt="" aria-hidden="true" className="pointer-events-none absolute left-0 top-[76px] h-[196px] w-full" />
       <img src={confetti} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" />
 
-      <p className="relative whitespace-nowrap text-[34px] font-black leading-[41px] tracking-[1.7px] text-ink-1">NEW SIGNING</p>
+      <p className="relative whitespace-nowrap text-[34px] font-black leading-[41px] tracking-[1.7px] text-ink-1">{t('signingArt.headline')}</p>
 
-      <div className="relative h-[140px] w-[260px]" role="img" aria-label={`${personName} and ${clubName}`}>
+      <div className="relative h-[140px] w-[260px]" role="img" aria-label={t('signingArt.ariaLabel', { person: personName, club: clubName })}>
         <span className={cn(CIRCLE, 'left-0')}>
           {photo ? (
             <BlurImage src={photo} lqip={getLqipUrl(personAvatarUrl)} eager className="h-full w-full" onError={() => setPhotoFailed(true)} />

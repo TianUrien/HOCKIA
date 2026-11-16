@@ -10,7 +10,7 @@ import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { isWithdrawnApplicationError, WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { isWithdrawnApplicationError, withdrawnApplicationMessage } from '@/lib/applicationStatus'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { clubRoadTag } from '@/lib/signing'
 
@@ -294,7 +294,7 @@ export default function ApplicantsList() {
         })
       )
       if (await isWithdrawnApplicationError(err)) {
-        addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info')
+        addToast(withdrawnApplicationMessage(), 'info')
       } else {
         logger.error('Error updating application status:', err)
         addToast('Failed to update status. Please try again.', 'error')

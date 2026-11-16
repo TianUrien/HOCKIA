@@ -1,1 +1,64 @@
-{}
+{
+  "role": {
+    "player": "Player",
+    "coach": "Coach",
+    "club": "Club",
+    "umpire": "Umpire",
+    "brand": "Brand",
+    "member": "Member"
+  },
+  "position": {
+    "goalkeeper": "Goalkeeper",
+    "defender": "Defender",
+    "midfielder": "Midfielder",
+    "forward": "Forward"
+  },
+  "coachSpecialization": {
+    "head_coach": "Head coach",
+    "assistant_coach": "Assistant coach",
+    "youth_coach": "Youth coach",
+    "goalkeeper_coach": "Goalkeeper coach",
+    "strength_conditioning": "Strength & conditioning",
+    "performance_analyst": "Performance analyst",
+    "sports_scientist": "Sports scientist",
+    "other_coach": "Coach"
+  },
+  "category": {
+    "adult_women": "Women's",
+    "adult_men": "Men's",
+    "girls": "Girls",
+    "boys": "Boys",
+    "mixed": "Mixed",
+    "any": "Any category"
+  },
+  "teamCategory": {
+    "adult_women": "Women's Team",
+    "adult_men": "Men's Team",
+    "girls": "Girls' Team",
+    "boys": "Boys' Team",
+    "mixed": "Mixed Team"
+  },
+  "brandCategory": {
+    "equipment": "Equipment",
+    "apparel": "Apparel",
+    "accessories": "Accessories",
+    "nutrition": "Nutrition",
+    "technology": "Technology",
+    "coaching": "Coaching & Training",
+    "recruiting": "Recruiting",
+    "media": "Media",
+    "services": "Services",
+    "other": "Other"
+  },
+  "coachRoles": {
+    "openLine_one": "Coaching opportunities · {{count}} open",
+    "openLine_other": "Coaching opportunities · {{count}} open",
+    "postedLine_one": "{{count}} coaching opportunity was posted on Hockia this year",
+    "postedLine_other": "{{count}} coaching opportunities were posted on Hockia this year",
+    "closedOn": "Closed {{date}}",
+    "recruitingFor": "Recruiting for {{clubName}}",
+    "homeMine": "My opportunities",
+    "homeAll": "Opportunities",
+    "signingNeedsClub": "Add your club to your profile to mark a signing."
+  }
+}

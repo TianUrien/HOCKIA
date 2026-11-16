@@ -30,15 +30,14 @@ import { SetupSignOut } from './SetupSignOut'
 import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
 import { AddPhotoPrompt } from '@/components/profile/AddPhotoPrompt'
 import {
-  OPEN_TO_PLAY_HELPER,
-  OPEN_TO_PLAY_NEEDS_DOB,
-  OPEN_TO_PLAY_UNDER_18,
-  PHOTO_HELPER,
   PLAYER_POSITIONS,
   aboutYouProblem,
   offersOpenToPlay,
   setupDraftKey,
+  tOnboardingEnglish,
 } from '@/lib/onboardingV2'
+import { Trans } from 'react-i18next'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 
 /**
  * Player set-up (Figma 04 Player 114:537 "About you" · 114:608 "Where you
@@ -87,6 +86,7 @@ interface Draft {
 }
 
 export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
+  const t = useOnboardingT()
   const { user, profile, fetchProfile } = useAuthStore()
   const { getCountryById } = useCountries()
   const pendingCleanup = usePendingStorageCleanup()
@@ -177,7 +177,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   const uploadPhoto = async (file: File | undefined) => {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
-    if (!check.valid) { setError(check.error ?? 'Invalid image'); return }
+    if (!check.valid) { setError(check.error ?? t('player.photo.invalid')); return }
     setUploading(true)
     setError(null)
     try {
@@ -194,7 +194,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded', role: 'player' })
     } catch (err) {
       logger.error('[PlayerSetup] photo upload failed', err)
-      setError('We couldn’t upload this image. Please use PNG or JPG up to 5MB.')
+      setError(t('player.photo.uploadFailed'))
     } finally {
       setUploading(false)
     }
@@ -206,7 +206,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         if (result) await uploadPhoto(result.file)
       } catch (err) {
         logger.error('[PlayerSetup] native picker failed', err)
-        setError('Could not access camera or photos. Please check app permissions.')
+        setError(t('player.photo.pickerFailed'))
       }
       return
     }
@@ -224,10 +224,11 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   // ── Step 1 → save About you ──
   const saveAboutYou = async () => {
     if (saving) return
-    const problem = aboutYouProblem(draft)
+    const problem = aboutYouProblem(draft, t)
     if (problem) {
       setError(problem)
-      trackDbEvent('onboarding_step', 'profile', user.id, { step: 'wizard_step_validation_failed', role: 'player', wizard_step: 1, reason: problem })
+      // The funnel keeps the English reason whatever the interface language.
+      trackDbEvent('onboarding_step', 'profile', user.id, { step: 'wizard_step_validation_failed', role: 'player', wizard_step: 1, reason: aboutYouProblem(draft, tOnboardingEnglish) })
       return
     }
     setSaving(true)
@@ -240,9 +241,9 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       // set-up here — the refreshed profile flips AgeGate to its goodbye screen.
       if (!dobLocked) {
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: draft.dateOfBirth })
-        if (dobError) throw new Error('Could not save your date of birth. Please try again.')
+        if (dobError) throw new Error(t('player.errors.dobSave'))
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right. Please check it.')
+        if (outcome === 'invalid_dob') throw new Error(t('player.errors.dobInvalid'))
         if (outcome === 'frozen') {
           await fetchProfile(user.id, { force: true })
           return
@@ -269,7 +270,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       setStep(2)
     } catch (err) {
       logger.error('[PlayerSetup] step 1 save failed', err)
-      setError(err instanceof Error ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof Error ? err.message : t('player.errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -328,7 +329,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
       await onFinished()
     } catch (err) {
       logger.error('[PlayerSetup] step 2 save failed', err)
-      setError(err instanceof Error ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof Error ? err.message : t('player.errors.saveFailed'))
       setSaving(false)
     }
   }
@@ -343,7 +344,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           noValidate
           className="flex flex-1 flex-col pt-4"
         >
-          <h1 className="text-title text-ink-1">About you</h1>
+          <h1 className="text-title text-ink-1">{t('player.about.title')}</h1>
 
           {/* Rebrand page 26 · Set up 1: 88 photo picker + "Add a photo" link. */}
           <div className="mt-5 flex items-center gap-4">
@@ -351,16 +352,16 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
               type="button"
               onClick={() => void pickPhoto()}
               disabled={uploading}
-              aria-label={avatar ? 'Change photo' : 'Add photo'}
+              aria-label={avatar ? t('player.photo.changeAria') : t('player.photo.addAria')}
               className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-muted text-ink-3 ring-1 ring-inset ring-line disabled:opacity-60"
             >
               {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <ProfileIcon className="h-8 w-8" />}
             </button>
             <div className="min-w-0 flex-1">
               <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="h-11 text-[15px] font-semibold text-brand-text disabled:opacity-60" data-testid="setup-photo-link">
-                {uploading ? 'Uploading…' : avatar ? 'Change photo' : 'Add a photo'}
+                {uploading ? t('player.photo.uploading') : avatar ? t('player.photo.change') : t('player.photo.add')}
               </button>
-              <p className="text-caption text-ink-3">{PHOTO_HELPER}</p>
+              <p className="text-caption text-ink-3">{t('player.photo.helper')}</p>
             </div>
             <input
               ref={fileRef}
@@ -368,13 +369,13 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => void uploadPhoto(e.target.files?.[0])}
               className="hidden"
-              aria-label="Upload profile photo"
+              aria-label={t('player.photo.inputLabel')}
             />
           </div>
 
           <div className="mt-6 space-y-4">
             <div>
-              <label htmlFor="setup-name" className={fieldLabel}>Full name</label>
+              <label htmlFor="setup-name" className={fieldLabel}>{t('player.about.fullName')}</label>
               <input
                 id="setup-name"
                 type="text"
@@ -390,35 +391,38 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
             {dobLocked ? (
               <div>
-                <span className={fieldLabel}>Date of birth</span>
+                <span className={fieldLabel}>{t('player.about.dateOfBirth')}</span>
                 <p className={`${fieldReadOnly} justify-between`}>
                   {draft.dateOfBirth}
                   <Lock className="h-4 w-4 text-ink-4" aria-hidden="true" />
                 </p>
-                <p className="mt-1.5 text-caption text-ink-3">Locked after registration.</p>
+                <p className="mt-1.5 text-caption text-ink-3">{t('player.about.dobLocked')}</p>
               </div>
             ) : (
               <div>
-                <DateOfBirthPicker appearance="field" label="Date of birth" value={draft.dateOfBirth} onChange={(next) => set({ dateOfBirth: next })} required />
-                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile. Only your age is.</p>
+                <DateOfBirthPicker appearance="field" label={t('player.about.dateOfBirth')} value={draft.dateOfBirth} onChange={(next) => set({ dateOfBirth: next })} required />
+                <p className="mt-1.5 text-caption text-ink-3">{t('player.about.dobHint')}</p>
               </div>
             )}
 
             {/* Category and positions as selectable chips (rebrand page 26). */}
             <ChoiceChips
-              label="Category"
+              id="setup-category"
+              label={t('player.about.category')}
               options={PLAYING_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
               value={draft.playingCategory}
               onChange={(v) => set({ playingCategory: v as PlayingCategory })}
             />
             <ChoiceChips
-              label="Position"
+              id="setup-position"
+              label={t('player.about.position')}
               options={PLAYER_POSITIONS.map((p) => ({ value: p, label: positionLabel(p) ?? p }))}
               value={draft.position}
               onChange={(v) => set({ position: v, secondaryPosition: draft.secondaryPosition === v ? '' : draft.secondaryPosition })}
             />
             <ChoiceChips
-              label="Second position (optional)"
+              id="setup-second-position-optional-"
+              label={t('player.about.secondPosition')}
               options={PLAYER_POSITIONS.filter((p) => p !== draft.position).map((p) => ({ value: p, label: positionLabel(p) ?? p }))}
               value={draft.secondaryPosition}
               onChange={(v) => set({ secondaryPosition: draft.secondaryPosition === v ? '' : v })}
@@ -428,7 +432,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           </div>
 
           <div className="mt-auto pt-8">
-            <Button type="submit" block loading={saving}>Continue</Button>
+            <Button type="submit" block loading={saving}>{t('player.about.continue')}</Button>
           </div>
         </form>
       </AuthShell>
@@ -440,10 +444,10 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   return (
     <AuthShell
       step={{ current: 2, total: 2 }}
-      back={{ parent: 'About you', onBack: () => { setError(null); setStep(1) } }}
+      back={{ parent: t('player.where.back'), onBack: () => { setError(null); setStep(1) } }}
       trailing={(
         <button type="button" onClick={() => void finish('skip')} disabled={saving} className="h-11 px-2 text-body text-hockia-primary disabled:opacity-40">
-          Skip
+          {t('player.where.skip')}
         </button>
       )}
     >
@@ -452,8 +456,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         noValidate
         className="flex flex-1 flex-col pt-4"
       >
-        <h1 className="text-title text-ink-1">Where you play</h1>
-        <p className="mt-1.5 text-row text-ink-2">All optional. You can add these later from your profile.</p>
+        <h1 className="text-title text-ink-1">{t('player.where.title')}</h1>
+        <p className="mt-1.5 text-row text-ink-2">{t('player.where.subtitle')}</p>
 
         {/* End of onboarding (founder 2026-10-26): no photo yet → the Add a
             photo prompt; dismissible, never blocks Finish. */}
@@ -466,7 +470,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => void uploadPhoto(e.target.files?.[0])}
               className="hidden"
-              aria-label="Upload profile photo"
+              aria-label={t('player.photo.inputLabel')}
             />
           </>
         )}
@@ -474,8 +478,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         <div className="mt-6 space-y-4">
           <WorldClubSearch
             appearance="field"
-            label="Current club"
-            placeholder="Search your club"
+            label={t('player.where.club')}
+            placeholder={t('player.where.clubPlaceholder')}
             value={draft.currentClub}
             onChange={(v) => set({ currentClub: v })}
             onClubSelect={(club) => set({ currentClub: club.club_name, currentWorldClubId: club.id, ownLeagueId: null, ownLeagueName: null })}
@@ -494,8 +498,8 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
           <LocationAutocomplete
             appearance="field"
-            label="Base location"
-            placeholder="City you’re based in"
+            label={t('player.where.location')}
+            placeholder={t('player.where.locationPlaceholder')}
             value={draft.location}
             onChange={(v) => set({ location: v, baseCity: '', baseCountryId: null, locationSelected: false })}
             onLocationSelect={(loc: LocationSelection) => set({ location: loc.displayName, baseCity: loc.city, baseCountryId: loc.countryId, locationSelected: true })}
@@ -506,24 +510,24 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           <div className="space-y-3">
             <CountrySelect
               appearance="field"
-              label="Passport"
+              label={t('player.where.passport')}
               showNationality
               value={draft.passport1}
               onChange={(id) => set({ passport1: id })}
-              placeholder="Choose a country"
+              placeholder={t('player.where.countryPlaceholder')}
             />
             {draft.showSecondPassport ? (
               <CountrySelect
                 appearance="field"
-                label="Second passport"
+                label={t('player.where.secondPassport')}
                 showNationality
                 value={draft.passport2}
                 onChange={(id) => set({ passport2: id })}
-                placeholder="Choose a country"
+                placeholder={t('player.where.countryPlaceholder')}
               />
             ) : (
               <Button variant="link" size="small" icon={<Plus className="h-4 w-4" />} onClick={() => set({ showSecondPassport: true })} className="-ml-3.5">
-                Add second
+                {t('player.where.addSecond')}
               </Button>
             )}
           </div>
@@ -533,20 +537,23 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
           {adult ? (
             <div className="overflow-hidden rounded-card bg-surface-muted" data-testid="open-to-play-row">
               <SettingsRow
-                title="Open to play"
-                subtitle={OPEN_TO_PLAY_HELPER}
-                trailing={<SettingsSwitch checked={draft.openToPlay} onChange={() => set({ openToPlay: !draft.openToPlay })} label="Open to play" />}
+                title={t('player.where.openToPlay')}
+                subtitle={t('player.where.openToPlayHelper')}
+                trailing={<SettingsSwitch checked={draft.openToPlay} onChange={() => set({ openToPlay: !draft.openToPlay })} label={t('player.where.openToPlay')} />}
               />
             </div>
           ) : (
             <div className="rounded-card bg-surface-muted px-4 py-3" data-testid="open-to-play-row">
               {(profile?.date_of_birth ?? draft.dateOfBirth) ? (
                 <p className="text-secondary text-ink-2">
-                  {OPEN_TO_PLAY_UNDER_18}{' '}
-                  <a href="/juniors-waitlist" className="font-semibold text-brand-primary" data-testid="juniors-waitlist-link">Juniors waitlist</a>
+                  <Trans
+                    t={t}
+                    i18nKey="player.where.under18"
+                    components={{ waitlistLink: <a href="/juniors-waitlist" className="font-semibold text-brand-primary" data-testid="juniors-waitlist-link" /> }}
+                  />
                 </p>
               ) : (
-                <p className="text-secondary text-ink-2">{OPEN_TO_PLAY_NEEDS_DOB}</p>
+                <p className="text-secondary text-ink-2">{t('player.where.needsDob')}</p>
               )}
             </div>
           )}
@@ -555,7 +562,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
         </div>
 
         <div className="mt-auto pt-8">
-          <Button type="submit" block loading={saving}>Continue</Button>
+          <Button type="submit" block loading={saving}>{t('player.where.continue')}</Button>
           <SetupSignOut placement="footer" />
         </div>
       </form>
@@ -565,8 +572,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
 
 /** Single-choice chip group (Chip / Selectable, rebrand page 26). Tapping the
  *  chosen chip again only clears optional groups (handled by the caller). */
-function ChoiceChips({ label, options, value, onChange }: { label: string; options: { value: string; label: string }[]; value: string; onChange: (value: string) => void }) {
-  const id = `setup-${label.toLowerCase().replace(/[^a-z]+/g, '-')}`
+function ChoiceChips({ id, label, options, value, onChange }: { id: string; label: string; options: { value: string; label: string }[]; value: string; onChange: (value: string) => void }) {
   return (
     <div>
       <span id={id} className={fieldLabel}>{label}</span>

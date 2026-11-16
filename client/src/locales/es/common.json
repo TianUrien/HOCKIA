@@ -16,5 +16,176 @@
     "english": "English",
     "spanish": "Español (beta)",
     "betaNote": "El español está en beta: algunas pantallas siguen en inglés."
+  },
+  "nav": {
+    "home": "Inicio",
+    "community": "Comunidad",
+    "opportunities": "Oportunidades",
+    "marketplace": "Marketplace",
+    "inbox": "Mensajes",
+    "search": "Buscar",
+    "searchHint": "Buscar jugadores/as, clubes, oportunidades",
+    "notifications": "Notificaciones",
+    "askHockiaAi": "Preguntar a Hockia AI",
+    "newPost": "Nueva publicación",
+    "goHome": "Hockia, ir a Inicio",
+    "unread": "Sin leer",
+    "logIn": "Iniciar sesión",
+    "signIn": "Iniciar sesión",
+    "join": "Unirse a Hockia"
+  },
+  "accountMenu": {
+    "open": "Abrir el menú de la cuenta",
+    "tabLabel": "Panel",
+    "fallbackName": "Mi cuenta",
+    "dashboard": "Mi panel",
+    "settings": "Ajustes",
+    "signOut": "Cerrar sesión",
+    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+  },
+  "dashboardMenu": {
+    "open": "Abrir el menú",
+    "close": "Cerrar el menú",
+    "settings": "Ajustes",
+    "signOut": "Cerrar sesión",
+    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+  },
+  "breadcrumbs": {
+    "label": "Ruta de navegación"
+  },
+  "confirmModal": {
+    "close": "Cerrar la ventana",
+    "cancel": "Cancelar",
+    "processing": "Procesando..."
+  },
+  "confirmDialog": {
+    "close": "Cerrar el diálogo",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "working": "Procesando…"
+  },
+  "cookies": {
+    "label": "Consentimiento de cookies",
+    "body": "Usamos cookies y analíticas para mejorar la experiencia. <privacyLink>Política de privacidad</privacyLink>",
+    "decline": "Rechazar",
+    "accept": "Aceptar"
+  },
+  "errorBoundary": {
+    "title": "Algo salió mal",
+    "body": "Ocurrió algo inesperado. Recargar la página puede solucionarlo.",
+    "reload": "Recargar la página",
+    "retry": "Reintentar",
+    "updatedTitle": "Hockia se acaba de actualizar",
+    "updatedBody": "Hay una nueva versión de la app. Para seguir usando Hockia hay que recargar la página.",
+    "reloadApp": "Recargar Hockia",
+    "details": "Detalles del error"
+  },
+  "footer": {
+    "copyright": "© {{year}} Hockia",
+    "privacy": "Política de privacidad",
+    "terms": "Términos",
+    "termsLabel": "Términos del servicio",
+    "developers": "Para desarrolladores",
+    "developersLabel": "Documentación y API para desarrolladores",
+    "support": "Contactar a soporte",
+    "supportLabel": "Contactar a soporte por email"
+  },
+  "install": {
+    "dismiss": "Cerrar",
+    "title": "Instalar Hockia",
+    "iosBody": "Agregar a la pantalla de inicio para la mejor experiencia",
+    "iosStepShare": "Tocar <icon/> Compartir",
+    "iosStepAdd": "Tocar <icon/> Agregar a inicio",
+    "body": "Acceso rápido desde la pantalla de inicio",
+    "button": "Instalar la app"
+  },
+  "bottomNav": {
+    "home": "Inicio",
+    "community": "Comunidad",
+    "opportunities": "Oportunidades",
+    "inbox": "Mensajes",
+    "profile": "Perfil",
+    "unread": "Sin leer",
+    "mainLabel": "Principal",
+    "guestLabel": "Explorar Hockia",
+    "createProfile": "Crear un perfil",
+    "join": "Unirse"
+  },
+  "modal": {
+    "close": "Cerrar la ventana"
+  },
+  "nativeUpdate": {
+    "requiredTitle": "Actualización necesaria",
+    "requiredBody": "Para continuar hay que actualizar Hockia. Esta versión ya no tiene soporte.",
+    "updateApp": "Actualizar Hockia",
+    "dismiss": "Cerrar",
+    "availableTitle": "Actualización disponible",
+    "availableBody": "Hay una nueva versión de Hockia con las últimas mejoras.",
+    "updateNow": "Actualizar ahora",
+    "later": "Más tarde"
+  },
+  "publicNav": {
+    "world": "Mundo hockey",
+    "opportunities": "Oportunidades",
+    "community": "Comunidad",
+    "signIn": "Iniciar sesión",
+    "join": "Unirse ahora",
+    "openMenu": "Abrir el menú",
+    "closeMenu": "Cerrar el menú",
+    "contact": "Contacto"
+  },
+  "pullToRefresh": {
+    "refreshing": "Actualizando"
+  },
+  "pushAsk": {
+    "title": "Novedades al momento",
+    "body": "Avisos de mensajes, postulaciones y oportunidades, incluso con la app cerrada.",
+    "enable": "Activar notificaciones",
+    "notNow": "Ahora no"
+  },
+  "toast": {
+    "close": "Cerrar la notificación"
+  },
+  "updatePrompt": {
+    "ready": "Hay una nueva versión de Hockia lista",
+    "reload": "Recargar",
+    "dismiss": "Cerrar"
+  },
+  "settingsSheet": {
+    "trigger": "Ajustes",
+    "fallbackName": "Mi cuenta",
+    "settings": "Ajustes",
+    "feedback": "Enviar comentarios",
+    "signOut": "Cerrar sesión",
+    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+  },
+  "actionSheet": {
+    "label": "Acciones",
+    "cancel": "Cancelar"
+  },
+  "activityRow": {
+    "unread": "Sin leer"
+  },
+  "confirmSheet": {
+    "cancel": "Cancelar",
+    "working": "Procesando…"
+  },
+  "friendRow": {
+    "ask": "Pedir referencia",
+    "requested": "Solicitud enviada",
+    "friends": "Amistad",
+    "add": "Agregar",
+    "addLabel": "{{action}} {{name}}",
+    "wroteYou": "Me escribió una referencia",
+    "wroteReference": "Escribió una referencia"
+  },
+  "nationality": {
+    "euBadge": "UE",
+    "euBadgeLabel": "Pasaporte UE",
+    "euPassportTag": "Pasaporte UE",
+    "tileTitle": "Nacionalidades, pasaportes y permisos",
+    "notGiven": "Sin datos",
+    "addPassport": "Agregar pasaporte",
+    "addAnother": "Agregar otro"
   }
 }

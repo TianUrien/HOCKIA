@@ -88,7 +88,8 @@ export function loadSpanishNamespace(namespace: string): Promise<void> {
  * is active.
  */
 export function registerNamespace(namespace: string, english: Catalog): void {
-  if (!i18n.hasResourceBundle('en', namespace)) i18n.addResourceBundle('en', namespace, english, true, true)
+  // Deep merge: a namespace may arrive in two parts (its start-up core, then the rest).
+  i18n.addResourceBundle('en', namespace, english, true, true)
   if (i18n.language === 'es') void loadSpanishNamespace(namespace)
 }
 

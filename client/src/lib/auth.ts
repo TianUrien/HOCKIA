@@ -28,6 +28,7 @@ import { clearSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { clearRecruitingContext } from '@/hooks/useRecruitingContext'
 import { clearSignedThumbnailCache } from '@/hooks/useSignedVideoThumbnail'
 import { getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
+import { tAuth } from '@/i18n/ns/auth'
 import { clearPersonalDraftsOnDevice } from '@/lib/profileDrafts'
 
 interface AuthState {
@@ -747,11 +748,11 @@ export const resendVerificationEmail = async (email: string): Promise<{ success:
       
       // Handle specific error cases
       if (error.message.includes('rate limit')) {
-        return { success: false, error: 'Too many requests. Please wait a few minutes before trying again.' }
+        return { success: false, error: tAuth('errors.resendRateLimited') }
       }
       
       if (error.message.includes('already confirmed')) {
-        return { success: false, error: 'This email is already verified. Try signing in.' }
+        return { success: false, error: tAuth('errors.alreadyVerified') }
       }
       
       return { success: false, error: error.message }
@@ -765,6 +766,6 @@ export const resendVerificationEmail = async (email: string): Promise<{ success:
       feature: 'auth_flow',
       operation: 'resend_verification'
     })
-    return { success: false, error: 'An unexpected error occurred. Please try again.' }
+    return { success: false, error: tAuth('errors.unexpected') }
   }
 }

@@ -44,6 +44,7 @@ import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
 import { isActiveApplication } from '@/hooks/useMyApplicationsAll'
+import { tOpportunities, useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
@@ -78,7 +79,8 @@ const isSortValue = (v: string | null): v is SortValue =>
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function OpportunitiesPage() {
-  useDocumentTitle('Opportunities')
+  const t = useOpportunitiesT()
+  useDocumentTitle(t('list.documentTitle'))
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -316,7 +318,7 @@ export default function OpportunitiesPage() {
               if (vacancy.club?.id) {
                 clubsMap[vacancy.club.id] = {
                   id: vacancy.club.id,
-                  full_name: vacancy.club.full_name || 'Unknown Club',
+                  full_name: vacancy.club.full_name || tOpportunities('list.unknownClub'),
                   avatar_url: vacancy.club.avatar_url,
                   role: vacancy.club.role ?? null,
                   current_club: vacancy.club.current_club ?? null,
@@ -346,7 +348,7 @@ export default function OpportunitiesPage() {
         setWorldClubsMap(wcMap)
       } catch (error) {
         logger.error('Error fetching vacancies:', error)
-        setFetchError('Could not load opportunities. Please check your connection and try again.')
+        setFetchError(tOpportunities('list.loadFailed'))
       } finally {
         if (!options?.silent) setIsLoading(false)
       }
@@ -390,7 +392,9 @@ export default function OpportunitiesPage() {
 
   // SEO meta tags
   useEffect(() => {
-    document.title = 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia'
+    // The tab title follows the interface language; the tags crawlers and
+    // link previews read (description, og:*, twitter:*) stay in English.
+    document.title = tOpportunities('list.tabTitle')
     const metaDescription = 'Open field hockey jobs for players and coaches: clubs across Europe, the Americas, Africa, Asia and Oceania recruiting on Hockia. Apply directly, free.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
@@ -530,7 +534,7 @@ export default function OpportunitiesPage() {
   const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
   const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
-  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} · ${eligibleCount} of ${vacancies.length} open opportunities` : null
+  const passportHint = profile?.role === 'player' && nationalityWord ? t('filters.passportHint', { nationality: nationalityWord, eligible: eligibleCount, total: vacancies.length }) : null
 
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
@@ -557,7 +561,7 @@ export default function OpportunitiesPage() {
             <RecruiterRoles
               data={myRoles}
               layout="desktop"
-              subtitle={profile?.full_name ? `${profile.full_name} · your opportunities` : 'Your opportunities'}
+              subtitle={profile?.full_name ? t('list.clubSubtitleNamed', { name: profile.full_name }) : t('list.clubSubtitle')}
               // Rebrand page 27: desktop clubs post and edit in the same three-step flow as phones.
               onPostRole={() => navigate('/dashboard/opportunities/new')}
               onEditRole={(role: ClubRole) => navigate(`/dashboard/opportunities/${role.id}/edit`)}
@@ -570,9 +574,9 @@ export default function OpportunitiesPage() {
           {isPhone && (
           <div>
             <LargeTitleBar
-              title="Opportunities"
+              title={t('list.title')}
               trailing={showMyRoles ? (
-                <IconButton label="Post an opportunity" onClick={postNew}>
+                <IconButton label={t('list.postOpportunity')} onClick={postNew}>
                   <Plus className="h-6 w-6" strokeWidth={2} />
                 </IconButton>
               ) : user ? (
@@ -581,7 +585,7 @@ export default function OpportunitiesPage() {
                   <HockiaAiButton onClick={openAi} />
                 </span>
               ) : (
-                <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
+                <IconButton label={t('list.filters')} onClick={() => setFiltersOpen(true)}>
                   <span className="relative">
                     <SlidersHorizontal className="h-6 w-6" strokeWidth={1.8} />
                     {activeRoleFilterCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
@@ -595,8 +599,8 @@ export default function OpportunitiesPage() {
               <div className="flex justify-end px-4 pb-2">
                 <button type="button" onClick={dismissAiTip} className="relative max-w-[260px] truncate rounded-[12px] bg-ink-1 px-3 py-2 text-[13px] font-semibold leading-[18px] text-white shadow-float" data-testid="hockia-ai-tip">
                   <span aria-hidden="true" className="absolute -top-1 right-5 h-2.5 w-2.5 rotate-45 rounded-[2px] bg-ink-1" />
-                  <span className="relative min-[390px]:hidden">Ask Hockia AI anything</span>
-                  <span className="relative hidden min-[390px]:inline">New: ask Hockia AI anything</span>
+                  <span className="relative min-[390px]:hidden">{t('list.aiTipShort')}</span>
+                  <span className="relative hidden min-[390px]:inline">{t('list.aiTip')}</span>
                 </button>
               </div>
             )}
@@ -605,16 +609,16 @@ export default function OpportunitiesPage() {
                  last one only for a coach who recruits for their team. */
               <div className="px-5 pb-3">
                 <SegmentedControl<'roles' | 'applied' | 'mine'>
-                  ariaLabel="Roles"
+                  ariaLabel={t('list.segmentAria')}
                   value={showMyRoles ? 'mine' : 'roles'}
                   onChange={(v) => {
                     if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } })
                     else setCoachView(v)
                   }}
                   options={[
-                    { value: 'roles', label: 'Opportunities' },
-                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
+                    { value: 'roles', label: t('list.tabs.opportunities') },
+                    { value: 'applied', label: t('list.tabs.applied'), count: activeApplicationCount },
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: t('list.tabs.mine'), shortLabel: t('list.tabs.mineShort'), count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
@@ -625,23 +629,23 @@ export default function OpportunitiesPage() {
             {user && profile?.role === 'player' && (
               <div className="px-5 pb-3">
                 <SegmentedControl<'open' | 'applied'>
-                  ariaLabel="Roles"
+                  ariaLabel={t('list.segmentAria')}
                   value="open"
                   onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
                   options={[
-                    { value: 'open', label: 'Open opportunities', shortLabel: 'Open', count: mobileList.length },
-                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
+                    { value: 'open', label: t('list.tabs.open'), shortLabel: t('list.tabs.openShort'), count: mobileList.length },
+                    { value: 'applied', label: t('list.tabs.applied'), count: activeApplicationCount },
                   ]}
                 />
               </div>
             )}
             {/* Quick chips (Figma 313:1417): the same filters the sheet edits. */}
             {!showMyRoles && !coachEmpty && (
-            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Quick filters" data-testid="opportunity-quick-chips">
+            <div className="-mt-1 flex gap-2 overflow-x-auto px-5 pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label={t('list.quickFiltersAria')} data-testid="opportunity-quick-chips">
               {/* Selected = soft violet (chip ruling 2026-10-05, confirmed by the founder 16 Oct); category chips carry their colour dot, never a fill. */}
               {user && (
                 <Chip
-                  label={activeRoleFilterCount > 0 ? `Filters · ${activeRoleFilterCount}` : 'Filters'}
+                  label={activeRoleFilterCount > 0 ? t('list.filtersCount', { count: activeRoleFilterCount }) : t('list.filters')}
                   selected={activeRoleFilterCount > 0}
                   leading={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />}
                   onClick={() => setFiltersOpen(true)}
@@ -670,19 +674,19 @@ export default function OpportunitiesPage() {
           {!isPhone && (
           <div className="mb-7 flex items-center gap-4" data-testid="opportunities-desktop-header">
             <div className="min-w-0 flex-1">
-              <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">Opportunities</h1>
+              <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1">{t('list.title')}</h1>
               <p className="mt-1 text-[16px] leading-[22px] text-ink-2">
                 {isUmpire
-                  ? 'See what clubs are looking for across the Hockia network.'
+                  ? t('list.subtitleUmpire')
                   : isLoading || fetchError
-                    ? 'Open opportunities from clubs and coaches'
-                    : `${mobileList.length} open ${mobileList.length === 1 ? 'opportunity' : 'opportunities'} from clubs and coaches`}
+                    ? t('list.subtitle')
+                    : t('list.subtitleCount', { count: mobileList.length })}
               </p>
             </div>
             {user && (profile?.role === 'player' || profile?.role === 'coach') && (
               <div className="shrink-0">
                 <SegmentedControl<'open' | 'applied' | 'mine'>
-                  ariaLabel="Roles"
+                  ariaLabel={t('list.segmentAria')}
                   value={showMyRoles ? 'mine' : 'open'}
                   className="[&_button]:whitespace-nowrap [&_button]:px-4"
                   onChange={(v) => {
@@ -690,9 +694,9 @@ export default function OpportunitiesPage() {
                     else setCoachView(v === 'mine' ? 'mine' : 'roles')
                   }}
                   options={[
-                    { value: 'open', label: profile.role === 'coach' ? 'Opportunities' : 'Open opportunities', shortLabel: profile.role === 'coach' ? undefined : 'Open', count: mobileList.length },
-                    { value: 'applied', label: 'Applied', count: activeApplicationCount },
-                    ...(recruitingCoach ? [{ value: 'mine' as const, label: 'My opportunities', shortLabel: 'Mine', count: myOpenRoleCount }] : []),
+                    { value: 'open', label: profile.role === 'coach' ? t('list.tabs.opportunities') : t('list.tabs.open'), shortLabel: profile.role === 'coach' ? undefined : t('list.tabs.openShort'), count: mobileList.length },
+                    { value: 'applied', label: t('list.tabs.applied'), count: activeApplicationCount },
+                    ...(recruitingCoach ? [{ value: 'mine' as const, label: t('list.tabs.mine'), shortLabel: t('list.tabs.mineShort'), count: myOpenRoleCount }] : []),
                   ]}
                 />
               </div>
@@ -704,7 +708,7 @@ export default function OpportunitiesPage() {
                 className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
               >
                 <Plus className="w-4 h-4" />
-                Post an opportunity
+                {t('list.postOpportunity')}
               </Button>
             )}
           </div>
@@ -717,11 +721,9 @@ export default function OpportunitiesPage() {
             <div className="mx-5 mb-6 flex items-start gap-3 rounded-xl bg-surface-grouped border border-line px-4 py-3 lg:mx-0">
               <Shield className="w-5 h-5 text-ink-2 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-ink-1">
-                <p className="font-medium">Browse-only for umpires right now</p>
+                <p className="font-medium">{t('list.umpireTitle')}</p>
                 <p className="text-ink-2 mt-0.5">
-                  Opportunities here are player and coach roster openings.
-                  You can see what clubs are building, but Apply is hidden.
-                  Umpiring opportunities and assessments will live here when we open them.
+                  {t('list.umpireBody')}
                 </p>
               </div>
             </div>
@@ -732,9 +734,9 @@ export default function OpportunitiesPage() {
               soft violet). Deep-link filters (?role, ?position, ?applied=mine…)
               keep working and show a clear chip. */}
           {!isPhone && !coachEmpty && !showMyRoles && (
-          <div className="mb-9 flex flex-wrap items-center gap-2" role="group" aria-label="Filters" data-testid="opportunity-desktop-chips">
+          <div className="mb-9 flex flex-wrap items-center gap-2" role="group" aria-label={t('list.filters')} data-testid="opportunity-desktop-chips">
             <Chip
-              label="Filters"
+              label={t('list.filters')}
               selected={activeRoleFilterCount > 0}
               leading={<SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />}
               onClick={() => setFiltersOpen(true)}
@@ -753,10 +755,10 @@ export default function OpportunitiesPage() {
               )
             })}
             {filters.applied === 'mine' && (
-              <Chip label="My applications ×" selected onClick={() => setFilters((prev) => ({ ...prev, applied: 'all' }))} aria-label="Clear the my-applications filter" />
+              <Chip label={t('list.myApplicationsChip')} selected onClick={() => setFilters((prev) => ({ ...prev, applied: 'all' }))} aria-label={t('list.myApplicationsChipAria')} />
             )}
             {hasActiveFilters && (
-              <button type="button" onClick={clearFilters} className="ml-1 text-[14px] font-semibold leading-[19px] text-ink-2 hover:text-brand-primary">Clear filters</button>
+              <button type="button" onClick={clearFilters} className="ml-1 text-[14px] font-semibold leading-[19px] text-ink-2 hover:text-brand-primary">{t('list.clearFilters')}</button>
             )}
           </div>
           )}
@@ -793,10 +795,10 @@ export default function OpportunitiesPage() {
             <div className="mx-5 mb-6 flex flex-col gap-3 rounded-xl border border-hockia-primary/10 bg-hockia-primary/5 p-4 text-gray-900 sm:flex-row sm:items-center sm:justify-between lg:mx-0">
               <div>
                 <p className="font-semibold text-sm">
-                  {opportunityCount === 1 ? 'New opportunity available' : `${opportunityCount} new opportunities available`}
+                  {t('list.newAvailableTitle', { count: opportunityCount })}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {opportunityCount === 1 ? 'A new opportunity was just published.' : 'Fresh opportunities were published since you opened this page.'}
+                  {t('list.newAvailableBody', { count: opportunityCount })}
                 </p>
               </div>
               <Button
@@ -805,7 +807,7 @@ export default function OpportunitiesPage() {
                 disabled={isSyncingNewVacancies}
                 onClick={handleSyncNewVacancies}
               >
-                {isSyncingNewVacancies ? 'Updating...' : 'View latest'}
+                {isSyncingNewVacancies ? t('list.updating') : t('list.viewLatest')}
               </Button>
             </div>
           )}
@@ -826,13 +828,13 @@ export default function OpportunitiesPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('list.errorTitle')}</h3>
               <p className="text-gray-600 mb-6">{fetchError}</p>
               <Button
                 onClick={() => fetchVacancies({ skipCache: true })}
                 className="mx-auto bg-gradient-to-r from-hockia-primary to-hockia-secondary"
               >
-                Try Again
+                {t('list.tryAgain')}
               </Button>
             </div>
           ) : totalFilteredCount === 0 ? (
@@ -841,18 +843,18 @@ export default function OpportunitiesPage() {
                 <span className="text-3xl">🔍</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {filters.applied === 'mine' ? "You haven't applied yet" : 'No opportunities found'}
+                {filters.applied === 'mine' ? t('list.emptyAppliedTitle') : t('list.emptyTitle')}
               </h3>
               <p className="text-gray-600 mb-6">
                 {filters.applied === 'mine'
-                  ? 'Apply to opportunities and they\'ll show up here.'
+                  ? t('list.emptyAppliedBody')
                   : hasActiveFilters
-                    ? 'Try adjusting your filters to see more results'
-                    : 'No opportunities are currently available'}
+                    ? t('list.emptyFilteredBody')
+                    : t('list.emptyBody')}
               </p>
               {hasActiveFilters && (
                 <Button onClick={clearFilters} className="mx-auto">
-                  Clear Filters
+                  {t('list.clearFiltersButton')}
                 </Button>
               )}
               {/* Posting an opportunity is recruiter-only.
@@ -865,15 +867,15 @@ export default function OpportunitiesPage() {
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500 mb-3">
                     {profile?.role === 'coach'
-                      ? 'As a coach, you can post opportunities to find players and staff.'
-                      : 'As a club, you can post opportunities to attract players and coaches.'}
+                      ? t('list.postHintCoach')
+                      : t('list.postHintClub')}
                   </p>
                   <Button
                     onClick={postNew}
                     className="mx-auto inline-flex items-center gap-1.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                   >
                     <Plus className="w-4 h-4" />
-                    Post an Opportunity
+                    {t('list.postOpportunityButton')}
                   </Button>
                 </div>
               )}
@@ -905,15 +907,15 @@ export default function OpportunitiesPage() {
               ))}
               {structured && mobileList.length > 0 && (
                 <div ref={allRolesRef} className="flex items-end px-5 pb-3 pt-7 [scroll-margin-top:12px]">
-                  <h2 className="flex-1 text-title text-ink-1">All open opportunities</h2>
-                  <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
+                  <h2 className="flex-1 text-title text-ink-1">{t('list.allOpen')}</h2>
+                  <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? t('list.sortClosingSoon') : t('list.sortNewest')}</span>
                 </div>
               )}
               <div className="flex flex-col gap-3 px-5">
                 {mobileList.length === 0 && (
                   <div className="py-10 text-center">
-                    <p className="text-row font-semibold text-ink-1">No opportunities match these filters</p>
-                    <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary">Reset filters</button>
+                    <p className="text-row font-semibold text-ink-1">{t('list.noMatch')}</p>
+                    <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary">{t('list.resetFilters')}</button>
                   </div>
                 )}
                 {mobileList.map((vacancy) => {
@@ -959,14 +961,14 @@ export default function OpportunitiesPage() {
                 <div ref={allRolesRef} className="[scroll-margin-top:96px]">
                   {structured && mobileList.length > 0 && (
                     <div className="flex items-end pb-3.5">
-                      <h2 className="flex-1 text-title text-ink-1">All open opportunities</h2>
-                      <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? 'Closing soon' : 'Newest'}</span>
+                      <h2 className="flex-1 text-title text-ink-1">{t('list.allOpen')}</h2>
+                      <span className="text-[14px] font-semibold leading-[19px] text-brand-primary">{sort === 'deadline' ? t('list.sortClosingSoon') : t('list.sortNewest')}</span>
                     </div>
                   )}
                   {mobileList.length === 0 ? (
                     <div className="rounded-[24px] bg-white py-12 text-center">
-                      <p className="text-row font-semibold text-ink-1">No opportunities match these filters</p>
-                      <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary hover:underline">Reset filters</button>
+                      <p className="text-row font-semibold text-ink-1">{t('list.noMatch')}</p>
+                      <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary hover:underline">{t('list.resetFilters')}</button>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4 min-[1200px]:grid-cols-3">

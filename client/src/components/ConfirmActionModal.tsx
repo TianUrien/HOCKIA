@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import Button from './Button'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface ConfirmActionModalProps {
   isOpen: boolean
@@ -26,10 +27,11 @@ export default function ConfirmActionModal({
   confirmLabel,
   confirmTone = 'primary',
   confirmLoading = false,
-  loadingLabel = 'Processing...',
+  loadingLabel,
   icon,
   body,
 }: ConfirmActionModalProps) {
+  const t = useCommonT()
   const dialogRef = useRef<HTMLDivElement>(null)
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null)
   const titleId = useId()
@@ -101,7 +103,7 @@ export default function ConfirmActionModal({
             onClick={handleClose}
             disabled={confirmLoading}
             className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-            aria-label="Close modal"
+            aria-label={t('confirmModal.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -120,7 +122,7 @@ export default function ConfirmActionModal({
             disabled={confirmLoading}
             className="flex-1"
           >
-            Cancel
+            {t('confirmModal.cancel')}
           </Button>
           <Button
             ref={confirmButtonRef}
@@ -128,7 +130,7 @@ export default function ConfirmActionModal({
             disabled={confirmLoading}
             className={`flex-1 text-white focus-visible:ring-2 focus-visible:ring-offset-2 ${confirmStyles}`}
           >
-            {confirmLoading ? loadingLabel : confirmLabel}
+            {confirmLoading ? loadingLabel ?? t('confirmModal.processing') : confirmLabel}
           </Button>
         </div>
       </div>

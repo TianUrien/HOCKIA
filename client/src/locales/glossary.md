@@ -43,5 +43,26 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Settings | Ajustes | |
 | Sign in / Sign up | Iniciar sesión / Crear cuenta | |
 | Offline | Sin conexión | |
+| Women's / Men's (team) | Damas / Caballeros | Girls / Boys: "Juveniles damas" / "Juveniles caballeros" |
+| Signing | Incorporación | Not "fichaje" (Spain). The feed artwork says "NUEVO REFUERZO" because the long word does not fit |
+| Transfer | Pase | |
+| Friends | Amistades | Avoids the generic masculine "amigos" |
+| Report (content, a member) | Reportar | |
+| Open to play / Open to coach | Disponible para jugar / Disponible para entrenar | |
+| Paid | Pago, paga | "Oportunidades pagas" |
+| Flights / Car / Bonuses | Pasajes / Auto / Premios | |
+| EU passport | Pasaporte de la UE | |
+| Recruiters | Quienes reclutan | |
+| Email | Email | Not "correo" |
+| Here | Acá | |
 
 Search keeps accepting every regional synonym whatever word the interface shows.
+
+## Wording still to confirm with the founder (Stage 1, 2026-11-16)
+
+- The tagline "Where field hockey sticks together." is "Donde el hockey sobre césped se mantiene unido." The pun is lost; it could stay in English.
+- Headings in the infinitive ("Revisar la bandeja de entrada") read a little stiff; an alternative is a noun phrase ("Enlace enviado").
+- "Claim a club" is "Reclamar"; "registrar" is the alternative.
+- Application tags: "Postulación enviada" (Applied), "En preselección" (Shortlisted), "Con respuesta" (Replied), "Esta vez no" (Not this time).
+- "Senior" team level is "Mayores"; "Primera" or "Plantel superior" are alternatives.
+- The possessive "tu" and the pronoun "te" are used (same in every variant); no second-person verb forms are.

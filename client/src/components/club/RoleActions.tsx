@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useFindForRole } from '@/hooks/useFindForRole'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
-import { REOPEN_ROLE_TOAST, reopenRolePatch } from '@/lib/roleLifecycle'
+import { reopenRoleToast, reopenRolePatch } from '@/lib/roleLifecycle'
 import { CloseRoleSheet } from './CloseRoleSheet'
 import { roleTitle } from '@/lib/opportunityCopy'
 import { useAuthStore } from '@/lib/auth'
@@ -79,7 +79,7 @@ export function RoleActions({ role, onChanged, className, onEdit, onPostAgain }:
       if (error) throw error
       void useRecruitingContextStore.getState().roleStatusChanged(role.id, 'open')
       setSheet(null)
-      addToast(REOPEN_ROLE_TOAST, 'success')
+      addToast(reopenRoleToast(), 'success')
       onChanged()
     } catch (err) {
       logger.error('[RoleActions] reopen failed', err)

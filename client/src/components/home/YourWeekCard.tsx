@@ -10,6 +10,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
 import { cn } from '@/lib/utils'
 import { clubWeekStats, type WeekStat } from '@/lib/clubInbox'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * "Your week" — the three numbers that summarise Pulse, at the top of Home
@@ -47,6 +48,7 @@ function talentStats(phone: boolean, c: { roles: Stat; views: Stat; replies: Sta
 }
 
 export function YourWeekCard() {
+  const t = useHomeT()
   const role = useAuthStore((s) => s.profile?.role)
   const coachRecruits = useAuthStore((s) => s.profile?.role === 'coach' && (s.profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team === true)
   const [coachMode] = useCoachPulseMode()
@@ -77,23 +79,23 @@ export function YourWeekCard() {
         .map((st) => (coachClubWeek && st.to === '/opportunities' ? { ...st, to: '/opportunities?view=mine' } : st))
     : isTalent
     ? talentStats(isPhone, {
-        roles: { value: matched, label: matched === 1 ? 'opportunity for you' : 'opportunities for you' },
-        views: { value: views, label: views === 1 ? 'profile view' : 'profile views' },
-        replies: { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
+        roles: { value: matched, label: t('yourWeek.rolesLabel', { count: matched }) },
+        views: { value: views, label: t('yourWeek.viewsLabel', { count: views }) },
+        replies: { value: replies, label: t('yourWeek.repliesLabel', { count: replies }) },
       })
     : isClub
       ? [
-          { value: scoped.fitCount, label: 'fit your search' },
-          { value: roles.totals.newApplicants, label: roles.totals.newApplicants === 1 ? 'new applicant' : 'new applicants' },
-          { value: views, label: views === 1 ? 'profile view' : 'profile views' },
+          { value: scoped.fitCount, label: t('yourWeek.fitLabel') },
+          { value: roles.totals.newApplicants, label: t('yourWeek.applicantsLabel', { count: roles.totals.newApplicants }) },
+          { value: views, label: t('yourWeek.viewsLabel', { count: views }) },
         ]
-      : [{ value: views, label: views === 1 ? 'profile view' : 'profile views' }]
+      : [{ value: views, label: t('yourWeek.viewsLabel', { count: views }) }]
 
   if (clubV2) {
     return (
       <div className="overflow-hidden rounded-[18px] bg-surface-grouped" data-testid="your-week-card">
-        <Link to="/pulse" className="flex h-12 items-center justify-between pl-4 pr-3.5 active:bg-[#e9e9ef]" aria-label="Your week: open Pulse">
-          <h2 className="text-body font-semibold text-ink-1">Your week</h2>
+        <Link to="/pulse" className="flex h-12 items-center justify-between pl-4 pr-3.5 active:bg-[#e9e9ef]" aria-label={t('yourWeek.ariaLabel')}>
+          <h2 className="text-body font-semibold text-ink-1">{t('yourWeek.title')}</h2>
           <ChevronRight className="h-5 w-5 text-ink-3" strokeWidth={1.75} aria-hidden="true" />
         </Link>
         <div className="h-px bg-line" />
@@ -118,13 +120,13 @@ export function YourWeekCard() {
     <Link
       to="/pulse"
       className="block overflow-hidden rounded-[18px] bg-surface-grouped transition-colors active:bg-[#e9e9ef]"
-      aria-label="Your week: open Pulse"
+      aria-label={t('yourWeek.ariaLabel')}
       data-testid="your-week-card"
     >
       {/* Figma Home v2 · Your week: 17/semibold title with a chevron, a hairline,
           then equal centred cells separated by 30px dividers. */}
       <div className="flex h-12 items-center justify-between pl-4 pr-3.5">
-        <h2 className="text-body font-semibold text-ink-1">Your week</h2>
+        <h2 className="text-body font-semibold text-ink-1">{t('yourWeek.title')}</h2>
         <ChevronRight className="h-5 w-5 text-ink-3" strokeWidth={1.75} aria-hidden="true" />
       </div>
       <div className="h-px bg-line" />

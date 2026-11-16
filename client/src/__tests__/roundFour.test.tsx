@@ -203,7 +203,7 @@ describe('desktop media counts include uploaded videos', () => {
 describe('coach profile + settings', () => {
   it('coach Settings toggles open_to_coach under "Open to coach"', () => {
     const src = read('../components/settings/SettingsMobile.tsx')
-    expect(src).toContain('<SettingsRow title="Open to coach"')
+    expect(src).toContain("<SettingsRow title={t('availability.openToCoach')}")
     expect(src).toContain("toggle('open_to_coach', false)")
   })
   it('the coach’s own profile has no recruiting-context chip and no second share/settings row', () => {
@@ -270,8 +270,8 @@ describe('club screens', () => {
 
   it('role toasts: close, reopen, and "Changes saved." after an edit', () => {
     // Round 5: the reopen copy is shared with desktop; the filled toast knows how many were waiting.
-    expect(read('../components/club/RoleActions.tsx')).toContain("addToast(REOPEN_ROLE_TOAST, 'success')")
-    expect(read('../lib/roleLifecycle.ts')).toContain("export const REOPEN_ROLE_TOAST = 'Opportunity reopened.'")
+    expect(read('../components/club/RoleActions.tsx')).toContain("addToast(reopenRoleToast(), 'success')")
+    expect(read('../locales/en/opportunities.json')).toContain('"reopened": "Opportunity reopened."')
     // Club speed CS6: a close that told the waiting players says how many; otherwise the filled toast knows how many were left.
     expect(read('../components/club/CloseRoleSheet.tsx')).toContain("closeRoleToldToast(told.told, told.failed) : closeRoleToast(chosen, left)")
     expect(read('../components/club/PostRoleScreen.tsx')).toContain("addToast('Changes saved.', 'success')")

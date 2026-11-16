@@ -8,6 +8,7 @@ import { hapticLight, hapticSuccess } from '@/lib/haptics'
 import { toggleCongrats, compactCount, type EngageTarget } from '@/lib/homeEngagement'
 import { initialsOf } from '@/lib/communityCard'
 import { cn } from '@/lib/utils'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * Post header (Figma "post header"): 36 pt avatar (32 on the signing card),
@@ -23,7 +24,8 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profileP
   small?: boolean
   menu?: ReactNode
 }) {
-  const display = name || (role === 'club' ? 'A club' : 'A member')
+  const t = useHomeT()
+  const display = name || (role === 'club' ? t('postParts.unnamedClub') : t('postParts.unnamedMember'))
   const identity = (
     <>
       <Avatar src={avatarUrl} initials={initialsOf(name)} size="sm" role={(role ?? undefined) as never} className={cn('shrink-0', !small && '!h-9 !w-9')} />
@@ -36,7 +38,7 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profileP
   return (
     <div className="flex items-center gap-2.5 pb-2 pl-4 pr-2" data-author={authorId}>
       {profilePath ? (
-        <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${display} · view profile`}>{identity}</Link>
+        <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={t('postParts.viewProfileAria', { name: display })}>{identity}</Link>
       ) : (
         <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
       )}
@@ -48,6 +50,7 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profileP
 const ICON_BTN = 'inline-flex min-h-[44px] items-center gap-[5px] text-secondary font-semibold tabular-nums text-ink-1'
 
 export function LikeButton({ liked, count, onToggle }: { liked: boolean; count: number; onToggle: () => void }) {
+  const t = useHomeT()
   const user = useAuthStore((s) => s.user)
   return (
     <button
@@ -55,7 +58,7 @@ export function LikeButton({ liked, count, onToggle }: { liked: boolean; count: 
       disabled={!user}
       onClick={() => { void hapticLight(); onToggle() }}
       aria-pressed={liked}
-      aria-label={`${liked ? 'Unlike' : 'Like'}${count ? `, ${count}` : ''}`}
+      aria-label={count ? (liked ? t('postParts.unlikeWithTotal', { total: count }) : t('postParts.likeWithTotal', { total: count })) : (liked ? t('postParts.unlike') : t('postParts.like'))}
       className={cn(ICON_BTN, liked && 'text-hockia-primary')}
     >
       <Heart className={cn('h-6 w-6', liked && 'fill-hockia-primary')} strokeWidth={1.7} />
@@ -65,8 +68,9 @@ export function LikeButton({ liked, count, onToggle }: { liked: boolean; count: 
 }
 
 export function CommentButton({ count, onOpen }: { count: number; onOpen: () => void }) {
+  const t = useHomeT()
   return (
-    <button type="button" onClick={onOpen} aria-label={`Comments${count ? `, ${count}` : ''}`} className={ICON_BTN}>
+    <button type="button" onClick={onOpen} aria-label={count ? t('postParts.commentsWithTotal', { total: count }) : t('postParts.comments')} className={ICON_BTN}>
       <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.7} />
       {count > 0 && <span>{compactCount(count)}</span>}
     </button>
@@ -74,8 +78,9 @@ export function CommentButton({ count, onOpen }: { count: number; onOpen: () => 
 }
 
 export function ShareButton({ onShare }: { onShare: () => void }) {
+  const t = useHomeT()
   return (
-    <button type="button" onClick={onShare} aria-label="Share" className="-mr-2.5 flex h-11 w-11 items-center justify-center text-ink-1">
+    <button type="button" onClick={onShare} aria-label={t('postParts.share')} className="-mr-2.5 flex h-11 w-11 items-center justify-center text-ink-1">
       <Share className="h-[22px] w-[22px]" strokeWidth={1.7} />
     </button>
   )
@@ -86,7 +91,7 @@ export function ShareButton({ onShare }: { onShare: () => void }) {
  * per item, tap again to undo. Tapped = filled "👏 You + N". The count is
  * public (founder ruling 11 Oct). `tone="gold"` on the Reference card.
  */
-export function CongratsPill({ target, has, count, onChange, label = 'Congrats', tone = 'brand' }: {
+export function CongratsPill({ target, has, count, onChange, label: labelProp, tone = 'brand' }: {
   target: EngageTarget
   has: boolean
   count: number
@@ -94,6 +99,8 @@ export function CongratsPill({ target, has, count, onChange, label = 'Congrats',
   label?: string
   tone?: 'brand' | 'gold'
 }) {
+  const t = useHomeT()
+  const label = labelProp ?? t('postParts.congrats.label')
   const user = useAuthStore((s) => s.user)
   const addToast = useToastStore((s) => s.addToast)
   const [busy, setBusy] = useState(false)
@@ -112,21 +119,21 @@ export function CongratsPill({ target, has, count, onChange, label = 'Congrats',
     setBusy(false)
     if (!res.success) {
       onChange(prev.has, prev.count)
-      addToast(res.error ?? 'Could not send congrats', 'error')
+      addToast(res.error ?? t('postParts.congrats.failed'), 'error')
       return
     }
     if (typeof res.has_congrats === 'boolean' && typeof res.count === 'number') onChange(res.has_congrats, res.count)
   }
 
   const others = Math.max(0, count - 1)
-  const text = has ? (others > 0 ? `You + ${compactCount(others)}` : 'You') : label
+  const text = has ? (others > 0 ? t('postParts.congrats.youAndOthers', { others: compactCount(others) }) : t('postParts.congrats.you')) : label
   return (
     <button
       type="button"
       onClick={() => void toggle()}
       disabled={!user}
       aria-pressed={has}
-      aria-label={has ? `Congrats sent${others ? `, with ${others} others` : ''}. Tap to undo.` : `${label}${count ? `, ${count} congrats` : ''}`}
+      aria-label={has ? (others ? t('postParts.congrats.sentAriaWithOthers', { count: others }) : t('postParts.congrats.sentAria')) : (count ? t('postParts.congrats.labelAriaWithCount', { label, count }) : label)}
       // 32 visual, 44 hit (spec: pills 32 with 44 hit).
       className="relative inline-flex h-11 shrink-0 items-center"
     >

@@ -2,6 +2,8 @@
 // field. Categories describe the hockey context (Adult women, Adult men,
 // Girls, Boys, Mixed), not personal identity. Players have a single category;
 // coaches and umpires can have multiple, plus an "Any category" sentinel.
+// Labels come from the "enums" catalog (category.*, teamCategory.*).
+import { tEnums } from '@/i18n/ns/enums'
 
 /** Player playing categories. Single-select. */
 export const PLAYING_CATEGORIES = [
@@ -25,15 +27,19 @@ export const COACH_UMPIRE_CATEGORIES: readonly CoachUmpireCategory[] = [
   ANY_CATEGORY,
 ]
 
-export const CATEGORY_LABELS: Record<CoachUmpireCategory, string> = {
-  // Same words as lib/opportunityCopy genderPill (design audit A6, 2026-10-21).
-  adult_women: "Women's",
-  adult_men: "Men's",
-  girls: 'Girls',
-  boys: 'Boys',
-  mixed: 'Mixed',
-  any: 'Any category',
-}
+/**
+ * Label of each category in the interface language. The properties are
+ * getters, so `CATEGORY_LABELS[cat]` is translated when it is read, not when
+ * this module loads.
+ */
+export const CATEGORY_LABELS: Record<CoachUmpireCategory, string> = Object.defineProperties(
+  {} as Record<CoachUmpireCategory, string>,
+  Object.fromEntries(COACH_UMPIRE_CATEGORIES.map((category) => [
+    category,
+    // Same words as lib/opportunityCopy genderPill (design audit A6, 2026-10-21).
+    { enumerable: true, get: () => tEnums(`category.${category}`) },
+  ])),
+)
 
 /** Translate a stored category value to a user-facing label. Empty string for
  * unknown / null — caller decides on a fallback like "Not specified". */
@@ -117,26 +123,15 @@ export const PLAYER_ROLE_GENDERS: readonly OpportunityGender[] = ['Men', 'Women'
 /** UI label for an opportunity_gender value: 'Men' → "Men's", the same word
  * as lib/opportunityCopy genderPill (design audit A6). */
 export function opportunityGenderToDisplay(value: string | null | undefined): string {
-  if (!value) return ''
-  if (value === 'Men') return "Men's"
-  if (value === 'Women') return "Women's"
-  if (value === 'Girls') return 'Girls'
-  if (value === 'Boys') return 'Boys'
-  if (value === 'Mixed') return 'Mixed'
-  return ''
+  return categoryToDisplay(opportunityGenderToPlayingCategory(value))
 }
 
 /** Possessive team-style label for an opportunity_gender value. Used by the
  * home-feed card and the vacancy card chips: "Men's Team", "Girls' Team", etc.
  * Matches hockey vernacular for vacancy categories. */
 export function opportunityGenderToTeamLabel(value: string | null | undefined): string {
-  if (!value) return ''
-  if (value === 'Men') return "Men's Team"
-  if (value === 'Women') return "Women's Team"
-  if (value === 'Girls') return "Girls' Team"
-  if (value === 'Boys') return "Boys' Team"
-  if (value === 'Mixed') return 'Mixed Team'
-  return ''
+  const category = opportunityGenderToPlayingCategory(value)
+  return category ? tEnums(`teamCategory.${category}`) : ''
 }
 
 /** Map a player's playing_category to the matching opportunity_gender enum

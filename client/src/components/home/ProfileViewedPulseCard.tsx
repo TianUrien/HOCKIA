@@ -1,6 +1,7 @@
 import { Eye, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { PulseItem } from '@/hooks/useMyPulse'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * ProfileViewedPulseCard — Loop Layer L3 (v5 plan).
@@ -42,20 +43,15 @@ function readString(metadata: PulseItem['metadata'], key: string): string | null
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
 
-function buildHeadline(uniqueClubs: number, uniqueCoaches: number): string {
+function buildHeadline(uniqueClubs: number, uniqueCoaches: number, t: ReturnType<typeof useHomeT>): string {
   if (uniqueClubs > 0 && uniqueCoaches > 0) {
-    const clubLabel = uniqueClubs === 1 ? '1 club' : `${uniqueClubs} clubs`
-    const coachLabel = uniqueCoaches === 1 ? '1 coach' : `${uniqueCoaches} coaches`
-    return `${clubLabel} and ${coachLabel} viewed your profile this week`
+    // Two counts in one sentence: one key per singular/plural pairing.
+    const vars = { clubs: uniqueClubs, coaches: uniqueCoaches }
+    if (uniqueClubs === 1) return uniqueCoaches === 1 ? t('profileViews.clubAndCoach', vars) : t('profileViews.clubAndCoaches', vars)
+    return uniqueCoaches === 1 ? t('profileViews.clubsAndCoach', vars) : t('profileViews.clubsAndCoaches', vars)
   }
-  if (uniqueClubs > 0) {
-    return uniqueClubs === 1
-      ? '1 club viewed your profile this week'
-      : `${uniqueClubs} clubs viewed your profile this week`
-  }
-  return uniqueCoaches === 1
-    ? '1 coach viewed your profile this week'
-    : `${uniqueCoaches} coaches viewed your profile this week`
+  if (uniqueClubs > 0) return t('profileViews.clubs', { count: uniqueClubs })
+  return t('profileViews.coaches', { count: uniqueCoaches })
 }
 
 
@@ -64,6 +60,7 @@ export function ProfileViewedPulseCard({
   onClick,
   onDismiss,
 }: ProfileViewedPulseCardProps) {
+  const t = useHomeT()
   const navigate = useNavigate()
 
   const uniqueClubs = readNumber(item.metadata, 'unique_clubs')
@@ -75,9 +72,9 @@ export function ProfileViewedPulseCard({
   // seen so the dispatcher doesn't fire mark-seen forever.
   if (uniqueRecruiters < 1) return null
 
-  const headline = buildHeadline(uniqueClubs, uniqueCoaches)
+  const headline = buildHeadline(uniqueClubs, uniqueCoaches, t)
   const subtitle = readString(item.metadata, 'subtitle') ??
-    'Tap to see who they are and what made them stop by.'
+    t('profileViews.subtitle')
 
   const handleSee = () => {
     onClick(item.id)
@@ -100,7 +97,7 @@ export function ProfileViewedPulseCard({
         type="button"
         onClick={handleDismiss}
         className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-        aria-label="Dismiss"
+        aria-label={t('profileViews.dismiss')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -111,7 +108,7 @@ export function ProfileViewedPulseCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-text mb-0.5">
-            This week
+            {t('profileViews.eyebrow')}
           </p>
           <p className="text-sm font-semibold text-gray-900 leading-snug">{headline}</p>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">{subtitle}</p>
@@ -120,7 +117,7 @@ export function ProfileViewedPulseCard({
             onClick={handleSee}
             className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
           >
-            See viewers
+            {t('profileViews.cta')}
           </button>
         </div>
       </div>

@@ -11,6 +11,7 @@ import { FeedCardMenu } from '../FeedCardMenu'
 import { GlassChip } from '../primitives'
 import { PostHeader, ShareButton } from '../PostParts'
 import type { MediaAddedFeedItem, PostMediaItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 const MAX_DOTS = 5
 
@@ -20,6 +21,7 @@ const MAX_DOTS = 5
  * photo viewer (H7) on that photo. v1: Share only (likes on photos: PHASE 2).
  */
 export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
+  const t = useHomeT()
   const profilePath = profilePathForRole(item.uploader_role, item.uploader_id)
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set())
   const [index, setIndex] = useState(0)
@@ -69,7 +71,7 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
         name={item.uploader_name}
         avatarUrl={item.uploader_avatar_url}
         role={item.uploader_role}
-        subtitle={`Added ${count} ${count === 1 ? 'photo' : 'photos'} · ${formatActivityAge(item.created_at)}`}
+        subtitle={t('feedV1.photos.subtitle', { count, age: formatActivityAge(item.created_at) })}
         profilePath={profilePath}
         menu={<FeedCardMenu authorId={item.uploader_id} authorName={item.uploader_name} sharePath={profilePath ?? '/home'} report={{ subject: 'profile', contentId: null }} />}
       />
@@ -84,7 +86,7 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
               key={u}
               type="button"
               onClick={() => setViewerAt(i)}
-              aria-label={`Photo ${i + 1} of ${n}`}
+              aria-label={t('feedV1.photos.photoAria', { number: i + 1, total: n })}
               className={cn('relative aspect-[361/460] shrink-0 snap-start overflow-hidden bg-surface-muted', n > 1 ? 'w-[calc(100%-32px)]' : 'w-full')}
             >
               <BlurImage

@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react'
 import { Camera, ImagePlus, X, Loader2, Film, Play } from 'lucide-react'
 import { IconButton } from '@/components/ui/IconButton'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
+import { useHomeT } from '@/i18n/ns/home'
 
 export interface UploadedMedia {
   url?: string
@@ -47,6 +48,7 @@ function formatDuration(seconds: number): string {
  *  Legacy items keep their stored thumb_url; the dark Film tile is only the
  *  loading/failure fallback. */
 function VideoPreview({ item, index }: { item: UploadedMedia; index: number }) {
+  const t = useHomeT()
   const { thumb, onThumbError, onThumbLoad } = useSignedVideoThumbnail(item.video_id)
   const isSigned = !item.thumb_url && Boolean(thumb)
   const poster = item.thumb_url ?? thumb
@@ -57,7 +59,7 @@ function VideoPreview({ item, index }: { item: UploadedMedia; index: number }) {
       {poster ? (
         <img
           src={poster}
-          alt={`Video ${index + 1}`}
+          alt={t('mediaUploader.videoAlt', { number: index + 1 })}
           onError={isSigned ? onThumbError : undefined}
           onLoad={isSigned ? onThumbLoad : undefined}
           className="w-full h-full object-cover"
@@ -95,6 +97,7 @@ export function PostMediaUploader({
   allowVideo = true,
   quiet = false,
 }: PostMediaUploaderProps) {
+  const t = useHomeT()
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -124,7 +127,7 @@ export function PostMediaUploader({
         accept=".jpg,.jpeg,.png,image/jpeg,image/png"
         onChange={handleImageChange}
         className="hidden"
-        aria-label="Select image file"
+        aria-label={t('mediaUploader.selectImage')}
       />
       {allowVideo && (
         <input
@@ -133,7 +136,7 @@ export function PostMediaUploader({
           accept=".mp4,.mov,.webm"
           onChange={handleVideoChange}
           className="hidden"
-          aria-label="Select video file"
+          aria-label={t('mediaUploader.selectVideo')}
         />
       )}
     </>
@@ -144,15 +147,15 @@ export function PostMediaUploader({
   if (media.length === 0 && !isUploading && quiet) {
     return (
       <div className="flex items-center gap-2" data-testid="composer-media-bar">
-        <IconButton variant="muted" label="Add photos" onClick={() => imageInputRef.current?.click()}>
+        <IconButton variant="muted" label={t('mediaUploader.addPhotos')} onClick={() => imageInputRef.current?.click()}>
           <Camera className="h-[18px] w-[18px]" strokeWidth={1.8} />
         </IconButton>
         {allowVideo && (
-          <IconButton variant="muted" label="Add video" onClick={() => videoInputRef.current?.click()}>
+          <IconButton variant="muted" label={t('mediaUploader.addVideo')} onClick={() => videoInputRef.current?.click()}>
             <Film className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </IconButton>
         )}
-        <p className="pl-1 text-secondary text-ink-2">{allowVideo ? 'Photo or video' : 'Photo'}</p>
+        <p className="pl-1 text-secondary text-ink-2">{allowVideo ? t('mediaUploader.hintPhotoOrVideo') : t('mediaUploader.hintPhoto')}</p>
         {fileInputs}
       </div>
     )
@@ -165,7 +168,7 @@ export function PostMediaUploader({
           type="button"
           onClick={() => imageInputRef.current?.click()}
           disabled={isUploading}
-          aria-label="Add photos"
+          aria-label={t('mediaUploader.addPhotos')}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-grouped text-ink-1 transition-colors active:bg-gray-200 disabled:opacity-50"
         >
           <ImagePlus className="h-5 w-5" strokeWidth={1.8} />
@@ -175,14 +178,14 @@ export function PostMediaUploader({
             type="button"
             onClick={() => videoInputRef.current?.click()}
             disabled={isUploading}
-            aria-label="Add video"
+            aria-label={t('mediaUploader.addVideo')}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-grouped text-ink-1 transition-colors active:bg-gray-200 disabled:opacity-50"
           >
             <Film className="h-5 w-5" strokeWidth={1.8} />
           </button>
         )}
         <p className="text-secondary text-ink-3">
-          {allowVideo ? `Photo or video · up to ${maxItems}` : `Photos · up to ${maxItems}`}
+          {allowVideo ? t('mediaUploader.limitPhotoOrVideo', { max: maxItems }) : t('mediaUploader.limitPhotos', { max: maxItems })}
         </p>
         {fileInputs}
       </div>
@@ -204,10 +207,10 @@ export function PostMediaUploader({
                 />
               </div>
               <span className="text-sm mt-1.5 block font-medium">{Math.round(uploadProgress)}%</span>
-              <span className="text-xs text-gray-400">Uploading video...</span>
+              <span className="text-xs text-gray-400">{t('mediaUploader.uploadingVideo')}</span>
             </div>
           ) : (
-            <span className="text-sm">Uploading...</span>
+            <span className="text-sm">{t('mediaUploader.uploading')}</span>
           )}
           {onCancelUpload && (
             <button
@@ -215,7 +218,7 @@ export function PostMediaUploader({
               onClick={onCancelUpload}
               className="mt-1 px-4 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
             >
-              Cancel upload
+              {t('mediaUploader.cancelUpload')}
             </button>
           )}
         </div>
@@ -245,7 +248,7 @@ export function PostMediaUploader({
             ) : (
               <img
                 src={item.url}
-                alt={`Upload ${i + 1}`}
+                alt={t('mediaUploader.uploadAlt', { number: i + 1 })}
                 className="w-full h-full object-cover"
               />
             )}
@@ -255,7 +258,7 @@ export function PostMediaUploader({
               type="button"
               onClick={() => onRemove(i)}
               className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
-              aria-label={`Remove ${item.media_type === 'video' ? 'video' : 'image'} ${i + 1}`}
+              aria-label={item.media_type === 'video' ? t('mediaUploader.removeVideo', { number: i + 1 }) : t('mediaUploader.removeImage', { number: i + 1 })}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -263,7 +266,7 @@ export function PostMediaUploader({
             {/* Order badge */}
             {i === 0 && media.length > 1 && (
               <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full">
-                Main
+                {t('mediaUploader.mainBadge')}
               </span>
             )}
           </div>
@@ -278,7 +281,7 @@ export function PostMediaUploader({
               className="flex-1 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
             >
               <ImagePlus className="w-5 h-5" />
-              <span className="text-[10px]">Photo</span>
+              <span className="text-[10px]">{t('mediaUploader.addPhotoTile')}</span>
             </button>
             {allowVideo && !hasVideo && (
               <button
@@ -287,7 +290,7 @@ export function PostMediaUploader({
                 className="flex-1 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-purple-400 hover:text-purple-500 transition-colors"
               >
                 <Film className="w-5 h-5" />
-                <span className="text-[10px]">Video</span>
+                <span className="text-[10px]">{t('mediaUploader.addVideoTile')}</span>
               </button>
             )}
           </div>
@@ -310,7 +313,7 @@ export function PostMediaUploader({
                 <span className="text-xs mt-1 block">{Math.round(uploadProgress)}%</span>
               </div>
             ) : (
-              <span className="text-xs">Uploading...</span>
+              <span className="text-xs">{t('mediaUploader.uploading')}</span>
             )}
             {onCancelUpload && (
               <button
@@ -318,7 +321,7 @@ export function PostMediaUploader({
                 onClick={onCancelUpload}
                 className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
               >
-                Cancel
+                {t('mediaUploader.cancel')}
               </button>
             )}
           </div>
@@ -326,7 +329,7 @@ export function PostMediaUploader({
       </div>
 
       <p className="text-xs text-gray-400 mt-1.5">
-        {media.length}/{maxItems} items · Photos: up to 10 MB{hasVideo ? '' : ' · Video: up to 100 MB, 3 min'}
+        {hasVideo ? t('mediaUploader.footer', { used: media.length, max: maxItems }) : t('mediaUploader.footerWithVideo', { used: media.length, max: maxItems })}
       </p>
 
       {fileInputs}

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Trans } from 'react-i18next'
 import { AuthShell } from '@/components/auth/authUi'
 import { AlertTriangle, Mail } from 'lucide-react'
 import ResendVerificationButton from '@/components/ResendVerificationButton'
 import { detectInAppBrowser } from '@/lib/inAppBrowser'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * VerifyEmail - Handles all email verification states
@@ -16,6 +18,7 @@ import { detectInAppBrowser } from '@/lib/inAppBrowser'
  */
 export default function VerifyEmail() {
   const navigate = useNavigate()
+  const t = useAuthT()
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState<string | null>(null)
   const [browserInfo] = useState(() => detectInAppBrowser())
@@ -56,10 +59,10 @@ export default function VerifyEmail() {
               <AlertTriangle className="w-8 h-8 text-status-warning" />
             </div>
             <h1 className="mb-3 text-title text-ink-1">
-              Verification link invalid
+              {t('verify.expiredTitle')}
             </h1>
             <p className="text-gray-600 mb-6">
-              This verification link has expired or has already been used.
+              {t('verify.expiredBody')}
             </p>
           </>
         )
@@ -71,18 +74,18 @@ export default function VerifyEmail() {
               <AlertTriangle className="w-8 h-8 text-status-danger" />
             </div>
             <h1 className="mb-3 text-title text-ink-1">
-              Verification failed
+              {t('verify.failedTitle')}
             </h1>
             <p className="text-gray-600 mb-2">
-              We couldn't verify your email. This usually happens when:
+              {t('verify.failedIntro')}
             </p>
             <ul className="text-left text-gray-600 mb-4 ml-6 list-disc space-y-1">
-              <li>The link has already been used</li>
-              <li>The link has expired (links expire after 24 hours)</li>
-              <li>You clicked the link multiple times</li>
+              <li>{t('verify.failedUsed')}</li>
+              <li>{t('verify.failedExpired')}</li>
+              <li>{t('verify.failedClicked')}</li>
             </ul>
             <p className="text-gray-600 mb-6">
-              Request a new verification email below to continue.
+              {t('verify.failedHelp')}
             </p>
           </>
         )
@@ -94,14 +97,14 @@ export default function VerifyEmail() {
               <AlertTriangle className="w-8 h-8 text-status-warning" />
             </div>
             <h1 className="mb-3 text-title text-ink-1">
-              Verify your email first
+              {t('verify.unverifiedTitle')}
             </h1>
             <p className="text-gray-600 mb-2">
-              Please verify your email address before signing in.
+              {t('verify.unverifiedBody')}
             </p>
             {email && (
               <p className="text-gray-600 mb-6">
-                We sent a verification email to: <strong>{email}</strong>
+                <Trans t={t} i18nKey="verify.unverifiedSentTo" values={{ email }} components={{ strong: <strong /> }} />
               </p>
             )}
           </>
@@ -115,11 +118,12 @@ export default function VerifyEmail() {
               <Mail className="h-9 w-9 text-hockia-primary" strokeWidth={1.75} />
             </div>
             <h1 className="mb-3 text-title text-ink-1">
-              Check your inbox
+              {t('verify.inboxTitle')}
             </h1>
             <p className="mb-6 text-[17px] leading-[22px] text-ink-2">
-              We sent a confirmation link to{' '}
-              {email ? <span className="font-semibold text-ink-1">{email}</span> : 'your email'}. Open it on this phone to continue.
+              {email
+                ? <Trans t={t} i18nKey="verify.inboxBody" values={{ email }} components={{ email: <span className="font-semibold text-ink-1" /> }} />
+                : t('verify.inboxBodyNoEmail')}
             </p>
 
             {/* In-app browser (Instagram, Facebook…): the email link opens in the
@@ -128,9 +132,9 @@ export default function VerifyEmail() {
                 it opens. Say so calmly instead of warning. */}
             {browserInfo.isInAppBrowser && (
               <div className="mb-4 rounded-xl bg-gray-50 p-4 text-left ring-1 ring-inset ring-gray-200">
-                <p className="text-sm font-medium text-gray-900">The link may open in Safari or Chrome</p>
+                <p className="text-sm font-medium text-gray-900">{t('verify.inAppTitle')}</p>
                 <p className="mt-1 text-sm text-gray-600">
-                  That’s expected: you’ll be signed in there and can carry on. Prefer to stay here? After confirming, come back and log in with your email and password.
+                  {t('verify.inAppBody')}
                 </p>
               </div>
             )}
@@ -143,7 +147,7 @@ export default function VerifyEmail() {
   // one action at the bottom. ("Open mail app" is left out: the web and the
   // app can't open the inbox reliably; mailto: opens a new draft instead.)
   return (
-    <AuthShell back={{ parent: 'Log in', onBack: () => navigate('/signin') }}>
+    <AuthShell back={{ parent: t('shell.parentLogIn'), onBack: () => navigate('/signin') }}>
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           {renderContent()}
@@ -151,10 +155,9 @@ export default function VerifyEmail() {
         <div className="space-y-4 pt-8">
           {email && <ResendVerificationButton email={email} />}
           <p className="text-center text-[15px] leading-[21px] text-ink-2">
-            Wrong email?{' '}
-            <Link to="/signup/email" className="font-semibold text-brand-text">Change it</Link>
+            <Trans t={t} i18nKey="verify.wrongEmail" components={{ a: <Link to="/signup/email" className="font-semibold text-brand-text" /> }} />
           </p>
-          <p className="text-center text-caption text-ink-3">Check your spam folder. Links expire after 24 hours.</p>
+          <p className="text-center text-caption text-ink-3">{t('verify.footnote')}</p>
         </div>
       </div>
     </AuthShell>

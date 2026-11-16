@@ -20,8 +20,10 @@ import { dayFirst, parseDayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
-import { APPLICATION_STATUS_LABELS, ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
+import { APPLICATION_STATUS_LABELS, roleClosedLabel } from '@/lib/applicationStatus'
 import { NO_REPLY_DAYS } from '@/lib/statusTone'
+import { tOpportunities } from '@/i18n/ns/opportunities.core'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
 
 /** "Forward" — the position is the headline; free-text title is the fallback. */
 export function roleTitle(v: { position: string | null; title: string; opportunity_type: string | null }): string {
@@ -38,7 +40,7 @@ export function roleHeadline(v: { position: string | null; title: string | null;
   const pos = v.position ? positionLabel(v.position) : null
   const team = genderPill(v.gender ?? null)?.label ?? null
   const detail = [pos, team].filter(Boolean).join(' · ') || null
-  const title = v.title?.trim() || detail || 'Role'
+  const title = v.title?.trim() || detail || tOpportunities('role.fallbackTitle')
   return { title, detail }
 }
 
@@ -49,7 +51,16 @@ export interface GenderPill { label: string; className: string }
  * Women's, Girls, Boys, Mixed) uses the one soft-purple Tag style — no pink /
  * blue by gender.
  */
-const CATEGORY_LABELS: Record<string, string> = { Women: "Women's", Men: "Men's", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed' }
+function categoryLabel(gender: string | null | undefined): string | undefined {
+  switch (gender) {
+    case 'Women': return tOpportunities('category.women')
+    case 'Men': return tOpportunities('category.men')
+    case 'Girls': return tOpportunities('category.girls')
+    case 'Boys': return tOpportunities('category.boys')
+    case 'Mixed': return tOpportunities('category.mixed')
+    default: return undefined
+  }
+}
 
 /**
  * The team's own colour (Opportunities v2 ruling, 2026-10-16): women #be123c,
@@ -91,7 +102,7 @@ export function categoryTagClass(gender: string | null | undefined): string | nu
 }
 
 export function genderPill(gender: string | null | undefined): GenderPill | null {
-  const label = gender ? CATEGORY_LABELS[gender] : undefined
+  const label = categoryLabel(gender)
   const className = categoryTagClass(gender)
   return label && className ? { label, className } : null
 }
@@ -117,8 +128,7 @@ export function formatDurationText(raw: string | null | undefined): string | nul
   const t = raw?.trim().replace(/\s+/g, ' ') ?? ''
   if (!t) return null
   if (/^\d+$/.test(t)) {
-    const n = Number(t)
-    return n === 1 ? '1 month' : `${n} months`
+    return tOpportunities('dates.months', { count: Number(t) })
   }
   return t
 }
@@ -130,15 +140,16 @@ export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now =
   if (start) parts.push(start)
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
-  return parts.length ? parts.join(' · ') : 'Starts immediately'
+  return parts.length ? parts.join(' · ') : tOpportunities('dates.startsImmediately')
 }
 
 /** Detail header: "Starts 16 Sep 2026 · 3 months" (the header always carries the year). */
 export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): string {
   const duration = formatDurationText(v.duration_text)
-  if (!v.start_date) return duration ? `Starts immediately · ${duration}` : 'Starts immediately'
-  const when = dayFirst(v.start_date, { year: 'always' }) ?? v.start_date
-  return duration ? `Starts ${when} · ${duration}` : `Starts ${when}`
+  const starts = v.start_date
+    ? tOpportunities('dates.startsOn', { date: dayFirst(v.start_date, { year: 'always' }) ?? v.start_date })
+    : tOpportunities('dates.startsImmediately')
+  return duration ? `${starts} · ${duration}` : starts
 }
 
 /**
@@ -155,12 +166,18 @@ export function rolePostedAt(v: Pick<Vacancy, 'created_at'>): string {
  * "Posted 3 days ago · No deadline — closes when filled". A CLOSED role never
  * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed 26 Sep 2026".
  */
+function postedLabel(days: number): string {
+  if (days <= 0) return tOpportunities('dates.postedToday')
+  if (days === 1) return tOpportunities('dates.postedYesterday')
+  return tOpportunities('dates.postedDaysAgo', { count: days })
+}
+
 export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
   const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
-  const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
+  const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
+    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
   return `${posted} · ${deadlineLine(v)}`
 }
@@ -184,13 +201,13 @@ export function deadlineDaysLeft(deadline: string | null | undefined, now = new 
 export function closesLabel(deadline: string | null | undefined, now = new Date()): string | null {
   const days = deadlineDaysLeft(deadline, now)
   if (days === null || days < 0) return null
-  if (days === 0) return 'Closes today'
-  if (days === 1) return 'Closes tomorrow'
-  if (days <= DEADLINE_COUNTDOWN_DAYS) return `Closes in ${days} days`
+  if (days === 0) return tOpportunities('dates.closesToday')
+  if (days === 1) return tOpportunities('dates.closesTomorrow')
+  if (days <= DEADLINE_COUNTDOWN_DAYS) return tOpportunities('dates.closesInDays', { count: days })
   // The year only when the deadline is close to a year away ("Closes 13 Feb"
   // for next February; "Closes 2 Nov 2027" for one that far out).
   const day = dayFirst(deadline, { now, year: days > 330 ? 'always' : 'never' })
-  return day ? `Closes ${day}` : null
+  return day ? tOpportunities('dates.closesOn', { date: day }) : null
 }
 
 /** The countdown only (≤ 14 days), for a line that already shows the date. */
@@ -203,41 +220,50 @@ export function closesSoonLabel(deadline: string | null | undefined, now = new D
 /** "Posted 3 days ago" alone: the role page shows the deadline in its chip and Apply-by tile only. */
 export function postedOnlyLine(v: Pick<Vacancy, 'created_at'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
   const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
-  const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
+  const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? `Closed ${c}` : 'Closed'}`
+    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
   return posted
 }
 
 export function deadlineLine(v: Pick<Vacancy, 'application_deadline'>): string {
-  if (!v.application_deadline) return 'No deadline · closes when filled'
-  return `Apply by ${dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline}`
+  if (!v.application_deadline) return tOpportunities('dates.noDeadline')
+  return tOpportunities('dates.applyBy', { date: dayFirst(v.application_deadline, { year: 'always' }) ?? v.application_deadline })
 }
 
 export interface BenefitTile { key: string; label: string; icon: TileIcon; tileClass: string; detail: string }
 
-/** The nine package benefits (Figma Filters › Package), with the card tile tints. */
+/** The nine package benefits (Figma Filters › Package), with the card tile tints.
+ *  `label` and `detail` follow the interface language (read on use, lib/opportunityLazyText). */
 export const BENEFIT_TILES: Record<string, BenefitTile> = {
-  housing: { key: 'housing', label: 'Housing', icon: BenefitHousingIcon, tileClass: 'bg-accent-blue-soft text-accent-blue-ink', detail: 'Provided by the club' },
-  flights: { key: 'flights', label: 'Flights', icon: BenefitFlightsIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Covered' },
-  job: { key: 'job', label: 'Job', icon: BenefitJobIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Work arranged alongside hockey' },
-  insurance: { key: 'insurance', label: 'Insurance', icon: BenefitInsuranceIcon, tileClass: 'bg-accent-red-soft text-status-danger-strong', detail: 'Covered by the club' },
-  bonuses: { key: 'bonuses', label: 'Bonuses', icon: BenefitBonusesIcon, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
-  visa: { key: 'visa', label: 'Visa', icon: BenefitVisaIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Sponsorship arranged' },
-  car: { key: 'car', label: 'Car', icon: BenefitCarIcon, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  equipment: { key: 'equipment', label: 'Equipment', icon: BenefitEquipmentIcon, tileClass: 'bg-accent-teal-soft-2 text-accent-teal', detail: 'Kit and stick provided' },
-  meals: { key: 'meals', label: 'Meals', icon: BenefitMealsIcon, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  education: { key: 'education', label: 'Education', icon: BenefitEducationIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Study alongside hockey' },
+  housing: withLazyText({ key: 'housing', icon: BenefitHousingIcon, tileClass: 'bg-accent-blue-soft text-accent-blue-ink' }, { label: () => tOpportunities('benefits.housing.label'), detail: () => tOpportunities('benefits.housing.detail') }),
+  flights: withLazyText({ key: 'flights', icon: BenefitFlightsIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink' }, { label: () => tOpportunities('benefits.flights.label'), detail: () => tOpportunities('benefits.flights.detail') }),
+  job: withLazyText({ key: 'job', icon: BenefitJobIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink' }, { label: () => tOpportunities('benefits.job.label'), detail: () => tOpportunities('benefits.job.detail') }),
+  insurance: withLazyText({ key: 'insurance', icon: BenefitInsuranceIcon, tileClass: 'bg-accent-red-soft text-status-danger-strong' }, { label: () => tOpportunities('benefits.insurance.label'), detail: () => tOpportunities('benefits.insurance.detail') }),
+  bonuses: withLazyText({ key: 'bonuses', icon: BenefitBonusesIcon, tileClass: 'bg-positive-soft text-positive' }, { label: () => tOpportunities('benefits.bonuses.label'), detail: () => tOpportunities('benefits.bonuses.detail') }),
+  visa: withLazyText({ key: 'visa', icon: BenefitVisaIcon, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink' }, { label: () => tOpportunities('benefits.visa.label'), detail: () => tOpportunities('benefits.visa.detail') }),
+  car: withLazyText({ key: 'car', icon: BenefitCarIcon, tileClass: 'bg-hockia-soft text-hockia-primary' }, { label: () => tOpportunities('benefits.car.label'), detail: () => tOpportunities('benefits.car.detail') }),
+  equipment: withLazyText({ key: 'equipment', icon: BenefitEquipmentIcon, tileClass: 'bg-accent-teal-soft-2 text-accent-teal' }, { label: () => tOpportunities('benefits.equipment.label'), detail: () => tOpportunities('benefits.equipment.detail') }),
+  meals: withLazyText({ key: 'meals', icon: BenefitMealsIcon, tileClass: 'bg-hockia-soft text-hockia-primary' }, { label: () => tOpportunities('benefits.meals.label'), detail: () => tOpportunities('benefits.meals.detail') }),
+  education: withLazyText({ key: 'education', icon: BenefitEducationIcon, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink' }, { label: () => tOpportunities('benefits.education.label'), detail: () => tOpportunities('benefits.education.detail') }),
 }
 
 export const PACKAGE_FILTER_KEYS = ['paid', 'housing', 'flights', 'job', 'insurance', 'bonuses', 'visa', 'car', 'equipment'] as const
 export type PackageFilterKey = (typeof PACKAGE_FILTER_KEYS)[number]
 
-export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = {
-  paid: 'Paid', housing: 'Housing', flights: 'Flights', job: 'Job', insurance: 'Insurance', bonuses: 'Bonuses', visa: 'Visa', car: 'Car', equipment: 'Equipment',
-}
+export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = lazyTextRecord({
+  paid: () => tOpportunities('filters.package.paid'),
+  housing: () => tOpportunities('filters.package.housing'),
+  flights: () => tOpportunities('filters.package.flights'),
+  job: () => tOpportunities('filters.package.job'),
+  insurance: () => tOpportunities('filters.package.insurance'),
+  bonuses: () => tOpportunities('filters.package.bonuses'),
+  visa: () => tOpportunities('filters.package.visa'),
+  car: () => tOpportunities('filters.package.car'),
+  equipment: () => tOpportunities('filters.package.equipment'),
+})
 
 export const SPECIALIST_TILE = { icon: StickAndBallIcon as TileIcon, tileClass: 'bg-hockia-soft text-hockia-primary' }
 
@@ -255,7 +281,7 @@ export const REQUIREMENT_TILE = { icon: InfoIcon as TileIcon, tileClass: 'bg-sur
 
 /** "Paid" / "Development" / "Compensation not stated". */
 export function compensationText(v: Pick<Vacancy, 'compensation'>): string {
-  return compensationLabel(v.compensation) ?? 'Compensation not stated'
+  return compensationLabel(v.compensation) ?? tOpportunities('benefits.compensationNotStated')
 }
 
 export function isPaid(v: Pick<Vacancy, 'compensation'>): boolean {
@@ -281,9 +307,11 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
 export type PackageItemType = 'benefit' | 'skill' | 'requirement' | 'note'
 export interface PackageItem { key: string; type: PackageItemType; label: string; icon: TileIcon; tileClass: string }
 
-export const PAID_TILE: BenefitTile = { key: 'paid', label: 'Paid', icon: BenefitPaidIcon, tileClass: 'bg-positive-soft text-positive', detail: 'The club pays for the season' }
+export const PAID_TILE: BenefitTile = withLazyText({ key: 'paid', icon: BenefitPaidIcon, tileClass: 'bg-positive-soft text-positive' }, { label: () => tOpportunities('benefits.paid.label'), detail: () => tOpportunities('benefits.paid.detail') })
 export const NOTE_TILE = { icon: InfoIcon as TileIcon, tileClass: 'bg-surface-muted text-ink-2' }
-export const PACKAGE_NOT_LISTED = 'Package not listed · ask the club'
+export function packageNotListed(): string {
+  return tOpportunities('benefits.notListed')
+}
 export const MAX_CARD_PACKAGE_ITEMS = 6
 
 /**
@@ -298,16 +326,16 @@ export function rolePackageItems(
   const items: PackageItem[] = []
   const comp = (v.compensation ?? '').toLowerCase()
   if (comp === 'paid') items.push({ key: 'paid', type: 'benefit', label: PAID_TILE.label, icon: PAID_TILE.icon, tileClass: PAID_TILE.tileClass })
-  else if (comp === 'either') items.push({ key: 'comp', type: 'note', label: 'Paid or unpaid', ...NOTE_TILE })
+  else if (comp === 'either') items.push({ key: 'comp', type: 'note', label: tOpportunities('benefits.paidOrUnpaid'), ...NOTE_TILE })
   else if (comp) items.push({ key: 'comp', type: 'note', label: compensationText(v), ...NOTE_TILE })
   for (const b of roleBenefits(v)) items.push({ key: b.key, type: 'benefit', label: b.label, icon: b.icon, tileClass: b.tileClass })
   for (const s of (v.specialist_skills_wanted ?? []).slice(0, 2)) {
     items.push({ key: `skill-${s}`, type: 'skill', label: humanizeToken(s) ?? s, icon: specialistIcon(s), tileClass: SPECIALIST_TILE.tileClass })
   }
   const requirement: PackageItem | null = v.eu_passport_required
-    ? { key: 'eu-passport', type: 'requirement', label: 'EU passport', icon: REQUIREMENT_TILE.icon, tileClass: REQUIREMENT_TILE.tileClass }
+    ? { key: 'eu-passport', type: 'requirement', label: tOpportunities('benefits.euPassport'), icon: REQUIREMENT_TILE.icon, tileClass: REQUIREMENT_TILE.tileClass }
     : null
-  if (items.length === 0 && !requirement) return [{ key: 'not-listed', type: 'note', label: PACKAGE_NOT_LISTED, ...NOTE_TILE }]
+  if (items.length === 0 && !requirement) return [{ key: 'not-listed', type: 'note', label: packageNotListed(), ...NOTE_TILE }]
   if (!requirement) return items.slice(0, max)
   return [...items.slice(0, max - 1), requirement]
 }
@@ -353,11 +381,11 @@ export function applicationStatusPill(
     case 'signed': return { label: L.signed, tone: 'positive' }
     case 'offer_declined': return { label: L.shortlisted, tone: 'positive' }
     default: {
-      if (!roleOpen) return { label: ROLE_CLOSED_LABEL, tone: 'grey' }
+      if (!roleOpen) return { label: roleClosedLabel(), tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
       // The applicant waits on the club → grey; the club sees the same
       // state in amber (lib/statusTone noReplyTone).
-      if (days >= NO_REPLY_DAYS) return { label: `${L.no_response} · ${days}d`, tone: 'grey', waitingLong: true }
+      if (days >= NO_REPLY_DAYS) return { label: tOpportunities('status.noReplyDays', { days }), tone: 'grey', waitingLong: true }
       return { label: L.pending, tone: 'neutral' }
     }
   }
@@ -392,7 +420,7 @@ export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null 
 /** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */
 export function appliedOnLine(appliedAt: string | null | undefined): string | null {
   const d = dayFirst(appliedAt, { year: 'always' })
-  return d ? `Applied ${d}` : null
+  return d ? tOpportunities('dates.appliedOn', { date: d }) : null
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
@@ -412,10 +440,10 @@ export const APPLICATION_TONE_TEXT: Record<ApplicationTone, string> = {
 export function appliedLine(appliedAt: string | null, now = new Date()): string {
   if (!appliedAt) return ''
   const days = differenceInCalendarDays(now, new Date(appliedAt))
-  if (days <= 0) return 'Applied today'
-  if (days < 7) return `Applied ${days}d`
-  if (days < 30) return `Applied ${Math.round(days / 7)}w`
-  return `Applied ${dayFirst(appliedAt, { now })}`
+  if (days <= 0) return tOpportunities('dates.appliedToday')
+  if (days < 7) return tOpportunities('dates.appliedDays', { days })
+  if (days < 30) return tOpportunities('dates.appliedWeeks', { weeks: Math.round(days / 7) })
+  return tOpportunities('dates.appliedOn', { date: dayFirst(appliedAt, { now }) })
 }
 
 /**
@@ -426,4 +454,9 @@ export function appliedLine(appliedAt: string | null, now = new Date()): string 
  */
 export function showFullMatchNudge(role: string | null | undefined, fullMatchCount: number | null): boolean {
   return role === 'player' && fullMatchCount === 0
+}
+
+/** The Application sent tip (components/opportunities/ApplicationSent): about clubs in general, never about other applicants. */
+export function fullMatchTip(): string {
+  return tOpportunities('sent.fullMatchTip')
 }

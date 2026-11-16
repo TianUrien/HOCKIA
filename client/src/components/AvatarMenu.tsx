@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import Avatar from './Avatar'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * AvatarMenu — single header dropdown anchored to the user's avatar.
@@ -43,6 +44,7 @@ interface AvatarMenuProps {
 
 export default function AvatarMenu({ isOnDashboard, className = '', placement = 'bottom', showLabel = false }: AvatarMenuProps) {
   const navigate = useNavigate()
+  const t = useCommonT()
   const { profile, signOut } = useAuthStore()
   const { addToast } = useToastStore()
   const closeNotificationsDrawer = useNotificationStore((state) => state.toggleDrawer)
@@ -127,7 +129,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
       navigate('/')
     } catch (error) {
       logger.error('Failed to sign out', error)
-      addToast('Could not sign out. Please try again.', 'error')
+      addToast(t('accountMenu.signOutFailed'), 'error')
     }
   }
 
@@ -152,7 +154,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
                 isOnDashboard ? 'ring-2 ring-hockia-primary ring-offset-2' : 'hover:opacity-80'
               } ${className}`
         }
-        aria-label="Open account menu"
+        aria-label={t('accountMenu.open')}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
@@ -176,7 +178,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
               isOnDashboard ? 'opacity-100' : 'opacity-60'
             }`}
           >
-            Dashboard
+            {t('accountMenu.tabLabel')}
             <ChevronDown className="w-2.5 h-2.5" aria-hidden="true" strokeWidth={2.5} />
           </span>
         ) : (
@@ -207,7 +209,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
             {/* Identity row — gives the menu visual context. */}
             <div className="px-4 pb-2 pt-1">
               <p className="truncate text-sm font-semibold text-gray-900">
-                {profile.full_name ?? 'Your account'}
+                {profile.full_name ?? t('accountMenu.fallbackName')}
               </p>
               {profile.username && (
                 <p className="truncate text-xs text-gray-500">@{profile.username}</p>
@@ -221,7 +223,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <LayoutDashboard className="h-4 w-4" />
-              Your dashboard
+              {t('accountMenu.dashboard')}
             </button>
             <button
               type="button"
@@ -230,7 +232,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <Settings className="h-4 w-4" />
-              Settings
+              {t('accountMenu.settings')}
             </button>
             <div className="my-1 h-px bg-gray-200" />
             <button
@@ -240,7 +242,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
-              Sign out
+              {t('accountMenu.signOut')}
             </button>
           </div>,
           document.body,

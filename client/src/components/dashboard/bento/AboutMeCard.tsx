@@ -1,5 +1,6 @@
 import { UserCircle2 } from 'lucide-react'
 import DashboardCard from './DashboardCard'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * AboutMeCard — bio preview. Body shows the bio text (clamped to a few
@@ -14,13 +15,14 @@ interface AboutMeCardProps {
 }
 
 export default function AboutMeCard({ bio, readOnly, onEdit, onViewFull }: AboutMeCardProps) {
+  const t = useHomeT()
   const hasBio = Boolean(bio?.trim())
 
   return (
     <DashboardCard
       icon={UserCircle2}
-      title="About me"
-      ctaLabel={!readOnly ? 'Edit' : hasBio ? 'View more' : undefined}
+      title={t('aboutMe.title')}
+      ctaLabel={!readOnly ? t('aboutMe.edit') : hasBio ? t('aboutMe.viewMore') : undefined}
       onCtaClick={!readOnly ? onEdit : onViewFull}
       testId="about-me-card"
     >
@@ -29,10 +31,10 @@ export default function AboutMeCard({ bio, readOnly, onEdit, onViewFull }: About
           {bio}
         </p>
       ) : readOnly ? (
-        <p className="text-sm text-gray-500 italic">No bio shared yet.</p>
+        <p className="text-sm text-gray-500 italic">{t('aboutMe.emptyVisitor')}</p>
       ) : (
         <p className="text-sm text-gray-500">
-          Share your playing style, ambitions, and what you’re looking for in a club.
+          {t('aboutMe.emptyOwner')}
         </p>
       )}
     </DashboardCard>

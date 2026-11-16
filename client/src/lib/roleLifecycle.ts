@@ -8,6 +8,8 @@
  * Hockia" comes only from a signing the player confirmed), so a close never
  * sends it.
  */
+import { tOpportunities } from '@/i18n/ns/opportunities'
+
 export type RoleCloseOutcome = 'filled' | 'withdrawn'
 
 export interface RoleClosePatch {
@@ -62,22 +64,25 @@ export const WAITING_APPLICATION_STATUSES = ['pending', 'shortlisted', 'maybe', 
  *  just what happened, and that applicants were told ONLY when some were still
  *  waiting (founder copy 2026-09-26; round 5: never claim it with 0). */
 export function closeRoleToast(outcome: RoleCloseOutcome, waitingApplicants = 0): string {
-  if (outcome !== 'filled') return 'Opportunity closed.'
-  return waitingApplicants > 0 ? 'Opportunity closed as filled. Applicants have been told.' : 'Opportunity closed as filled.'
+  if (outcome !== 'filled') return tOpportunities('roleLifecycle.closed')
+  return waitingApplicants > 0 ? tOpportunities('roleLifecycle.closedFilledTold') : tOpportunities('roleLifecycle.closedFilled')
 }
 
 /** Toast after a close that told the waiting players (Club speed CS6). */
 export function closeRoleToldToast(told: number, failed: number): string {
-  const who = (n: number) => (n === 1 ? '1 player' : `${n} players`)
-  if (told === 0 && failed > 0) return `Opportunity closed. Couldn’t tell ${who(failed)}.`
-  return failed > 0 ? `Opportunity closed. ${who(told)} told; couldn’t tell ${failed}.` : `Opportunity closed. ${who(told)} told.`
+  if (told === 0 && failed > 0) return tOpportunities('roleLifecycle.closedNoneTold', { count: failed })
+  return failed > 0 ? tOpportunities('roleLifecycle.closedSomeTold', { count: told, failed }) : tOpportunities('roleLifecycle.closedAllTold', { count: told })
 }
 
 /** Reopen toast — phone and desktop share it. */
-export const REOPEN_ROLE_TOAST = 'Opportunity reopened.'
+export function reopenRoleToast(): string {
+  return tOpportunities('roleLifecycle.reopened')
+}
 
 /** The "not filled" close choice — phone and desktop share it. */
-export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'
+export function closeNotFilledLabel(): string {
+  return tOpportunities('roleLifecycle.closeNotFilled')
+}
 
 /** Applications that make a role undeletable: a confirmed signing (signed) or one
  *  waiting for the player to confirm. Same list as the BEFORE DELETE trigger
@@ -85,7 +90,9 @@ export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'
 export const SIGNING_LOCK_STATUSES = ['signed', 'signed_pending_confirmation'] as const
 
 /** Founder copy 2026-10-09: why "Delete permanently" is off for such a role. */
-export const ROLE_HAS_SIGNING_MESSAGE = 'This opportunity has a confirmed signing, so it can’t be deleted. Close it instead.'
+export function roleHasSigningMessage(): string {
+  return tOpportunities('roleLifecycle.hasSigning')
+}
 
 /** True when a delete was refused by the server because the role has a signing
  *  (P0001 from guard_opportunity_delete_with_signing). */
@@ -112,8 +119,8 @@ export function deadlineBounds(now = new Date()): { min: string; max: string } {
 export function deadlineError(value: string | null | undefined, now = new Date()): string | null {
   if (!value) return null
   const { min, max } = deadlineBounds(now)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Enter a valid date.'
-  if (value < min) return 'The deadline can’t be in the past.'
-  if (value > max) return 'The deadline must be within 2 years.'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return tOpportunities('roleLifecycle.deadlineInvalid')
+  if (value < min) return tOpportunities('roleLifecycle.deadlinePast')
+  if (value > max) return tOpportunities('roleLifecycle.deadlineTooFar')
   return null
 }

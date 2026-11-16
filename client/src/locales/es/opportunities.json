@@ -1,1 +1,730 @@
-{}
+{
+  "status": {
+    "pending": "En revisión",
+    "shortlisted": "En preselección",
+    "maybe": "Con respuesta",
+    "rejected": "Esta vez no",
+    "withdrawn": "Retirada",
+    "noResponse": "Sin respuesta",
+    "filled": "Oportunidad cubierta",
+    "offered": "Oferta",
+    "accepted": "Oferta aceptada",
+    "signedPendingConfirmation": "Confirmar incorporación",
+    "signed": "Incorporación confirmada",
+    "roleClosed": "Oportunidad cerrada",
+    "withdrawnMessage": "Esta postulación fue retirada por quien la envió",
+    "movedOnMessage": "Esta postulación ya avanzó, así que no se rechazó",
+    "noReplyDays": "Sin respuesta · {{days}} d"
+  },
+  "statusReason": {
+    "positionFilled": "Puesto ya cubierto",
+    "differentPosition": "Se busca otra posición",
+    "differentLevel": "Se busca otro nivel",
+    "timing": "Las fechas no coincidieron",
+    "location": "Ubicación / mudanza",
+    "eligibility": "Pasaporte / elegibilidad",
+    "profileIncomplete": "Al perfil le falta detalle",
+    "videoMissing": "Falta video",
+    "other": "Otro motivo"
+  },
+  "reasonCopy": {
+    "positionFilled": "El puesto parece estar cubierto. Es una cuestión de tiempos, no de tu nivel. Las oportunidades que todavía buscan tu posición pueden encajar mejor.",
+    "differentPosition": "Para esta oportunidad están priorizando otra posición. Es probable que las oportunidades para tu posición encajen mejor.",
+    "differentLevel": "Para esta oportunidad en particular buscan otro nivel. Vale la pena seguir sumando al perfil y a la experiencia comprobada.",
+    "timing": "Las fechas o la disponibilidad no coincidieron esta vez. Vale la pena tener al club en el radar para más adelante.",
+    "location": "La ubicación o la mudanza no cerraron para esta oportunidad.",
+    "eligibility": "Hubo una cuestión de pasaporte o elegibilidad propia de esta oportunidad.",
+    "profileIncomplete": "Sumar más detalle a tu perfil puede ayudar a que los clubes se hagan una idea más rápido la próxima vez.",
+    "videoMissing": "Los clubes suelen pedir video antes de avanzar. Un video de highlights o de un partido completo puede reforzar las próximas postulaciones."
+  },
+  "statusFallback": {
+    "shortlisted": "Buenas noticias: tu postulación está en preselección. Conviene mantener el perfil al día mientras el club revisa.",
+    "maybe": "El club respondió. Todavía no hay una decisión final.",
+    "maybeWithReason": "El club respondió. Todavía no hay una decisión final. {{reason}}",
+    "rejected": "Esta vez no. Muchas veces es una cuestión de encaje, no de capacidad. Vale la pena seguir postulándose.",
+    "rejectedWithReason": "Esta vez no. {{reason}} A seguir. El lugar indicado existe.",
+    "noResponse": "Esta postulación ya no está activa en Hockia. Las postulaciones se cierran solas después de un tiempo sin novedades acá, para que nadie quede esperando. Conviene poner la energía en lo que está abierto ahora.",
+    "filled": "Esta oportunidad ya se cubrió. Gracias por la postulación. Hay nuevas oportunidades abiertas."
+  },
+  "closedNote": {
+    "noResponse": "Esta postulación se cerró sin respuesta. Todavía se le puede escribir a {{firstName}}.",
+    "filled": "Esta oportunidad se cubrió. Todavía se le puede escribir a {{firstName}}.",
+    "withdrawn": "{{firstName}} retiró esta postulación. Todavía se le puede escribir a {{firstName}}.",
+    "pastReview": "Esta postulación ya pasó la etapa de revisión. Todavía se le puede escribir a {{firstName}}."
+  },
+  "role": {
+    "fallbackTitle": "Oportunidad"
+  },
+  "category": {
+    "women": "Damas",
+    "men": "Caballeros",
+    "girls": "Juveniles damas",
+    "boys": "Juveniles caballeros",
+    "mixed": "Mixto"
+  },
+  "dates": {
+    "months_one": "{{count}} mes",
+    "months_other": "{{count}} meses",
+    "months_many": "{{count}} meses",
+    "startsImmediately": "Empieza de inmediato",
+    "startsOn": "Empieza el {{date}}",
+    "postedToday": "Publicada hoy",
+    "postedYesterday": "Publicada ayer",
+    "postedDaysAgo_one": "Publicada hace {{count}} día",
+    "postedDaysAgo_other": "Publicada hace {{count}} días",
+    "postedDaysAgo_many": "Publicada hace {{count}} días",
+    "closedOn": "Cerrada el {{date}}",
+    "closed": "Cerrada",
+    "closesToday": "Cierra hoy",
+    "closesTomorrow": "Cierra mañana",
+    "closesInDays_one": "Cierra en {{count}} día",
+    "closesInDays_other": "Cierra en {{count}} días",
+    "closesInDays_many": "Cierra en {{count}} días",
+    "closesOn": "Cierra el {{date}}",
+    "noDeadline": "Sin fecha límite · cierra cuando se cubre",
+    "applyBy": "Postulaciones hasta el {{date}}",
+    "appliedOn": "Postulación del {{date}}",
+    "appliedToday": "Postulación de hoy",
+    "appliedDays": "Postulación hace {{days}} d",
+    "appliedWeeks": "Postulación hace {{weeks}} sem"
+  },
+  "benefits": {
+    "housing": {
+      "label": "Alojamiento",
+      "detail": "A cargo del club"
+    },
+    "flights": {
+      "label": "Pasajes",
+      "detail": "Cubiertos"
+    },
+    "job": {
+      "label": "Trabajo",
+      "detail": "Trabajo organizado a la par del hockey"
+    },
+    "insurance": {
+      "label": "Seguro",
+      "detail": "A cargo del club"
+    },
+    "bonuses": {
+      "label": "Premios",
+      "detail": "Premios por rendimiento"
+    },
+    "visa": {
+      "label": "Visa",
+      "detail": "Trámite gestionado por el club"
+    },
+    "car": {
+      "label": "Auto",
+      "detail": "A cargo del club"
+    },
+    "equipment": {
+      "label": "Equipamiento",
+      "detail": "Indumentaria y palo incluidos"
+    },
+    "meals": {
+      "label": "Comidas",
+      "detail": "A cargo del club"
+    },
+    "education": {
+      "label": "Estudios",
+      "detail": "Estudio a la par del hockey"
+    },
+    "paid": {
+      "label": "Pago",
+      "detail": "El club paga por la temporada"
+    },
+    "compensationNotStated": "Pago sin especificar",
+    "notListed": "Condiciones sin detallar · consultar al club",
+    "paidOrUnpaid": "Con o sin pago",
+    "euPassport": "Pasaporte de la UE"
+  },
+  "filters": {
+    "package": {
+      "paid": "Pago",
+      "housing": "Alojamiento",
+      "flights": "Pasajes",
+      "job": "Trabajo",
+      "insurance": "Seguro",
+      "bonuses": "Premios",
+      "visa": "Visa",
+      "car": "Auto",
+      "equipment": "Equipamiento"
+    },
+    "chips": {
+      "all": "Todas",
+      "women": "Damas",
+      "men": "Caballeros",
+      "mixed": "Mixto",
+      "paid": "Pago",
+      "housing": "Alojamiento",
+      "flights": "Pasajes",
+      "noEuPassport": "Sin pasaporte de la UE"
+    },
+    "title": "Filtros",
+    "reset": "Restablecer",
+    "type": "Tipo",
+    "playerOpportunities": "Oportunidades para jugadores/as",
+    "coachOpportunities": "Oportunidades para entrenadores/as",
+    "positionHeading": "Posición",
+    "position": {
+      "any": "Cualquiera",
+      "goalkeeper": "Arquero/a",
+      "defender": "Defensor/a",
+      "midfielder": "Volante",
+      "forward": "Delantero/a"
+    },
+    "categoryHeading": "Categoría",
+    "category": {
+      "women": "Damas",
+      "men": "Caballeros",
+      "mixed": "Mixto"
+    },
+    "packageHeading": "Condiciones",
+    "passportsOnly": "Solo oportunidades a las que puedo acceder con mis pasaportes",
+    "show_one": "Mostrar {{count}} oportunidad",
+    "show_other": "Mostrar {{count}} oportunidades",
+    "show_many": "Mostrar {{count}} oportunidades",
+    "passportHint": "{{nationality}} · {{eligible}} de {{total}} oportunidades abiertas"
+  },
+  "roleLifecycle": {
+    "closed": "Oportunidad cerrada.",
+    "closedFilled": "Oportunidad cerrada como cubierta.",
+    "closedFilledTold": "Oportunidad cerrada como cubierta. Ya se avisó a quienes se postularon.",
+    "closedNoneTold_one": "Oportunidad cerrada. No se pudo avisar a {{count}} persona.",
+    "closedNoneTold_other": "Oportunidad cerrada. No se pudo avisar a {{count}} personas.",
+    "closedNoneTold_many": "Oportunidad cerrada. No se pudo avisar a {{count}} personas.",
+    "closedSomeTold_one": "Oportunidad cerrada. Se avisó a {{count}} persona; no se pudo avisar a {{failed}}.",
+    "closedSomeTold_other": "Oportunidad cerrada. Se avisó a {{count}} personas; no se pudo avisar a {{failed}}.",
+    "closedSomeTold_many": "Oportunidad cerrada. Se avisó a {{count}} personas; no se pudo avisar a {{failed}}.",
+    "closedAllTold_one": "Oportunidad cerrada. Se avisó a {{count}} persona.",
+    "closedAllTold_other": "Oportunidad cerrada. Se avisó a {{count}} personas.",
+    "closedAllTold_many": "Oportunidad cerrada. Se avisó a {{count}} personas.",
+    "reopened": "Oportunidad reabierta.",
+    "closeNotFilled": "No se cubrió / ya no hace falta",
+    "hasSigning": "Esta oportunidad tiene una incorporación confirmada, así que no se puede eliminar. Se puede cerrar.",
+    "deadlineInvalid": "La fecha no es válida.",
+    "deadlinePast": "La fecha límite no puede ser anterior a hoy.",
+    "deadlineTooFar": "La fecha límite tiene que estar dentro de los próximos 2 años."
+  },
+  "apply": {
+    "forPlayers": "Esta oportunidad es para jugadores/as.",
+    "forCoaches": "Esta oportunidad es para entrenadores/as.",
+    "clubFallback": "el club",
+    "noteOptional": "{{heading}} (opcional)",
+    "addNationality": "Agregar nacionalidad",
+    "blocked": {
+      "passport": "{{club}} pide pasaporte de la UE y en tu perfil figura {{nationality}}, así que esta oportunidad no puede recibir tu postulación. Igual se le puede escribir al club.",
+      "passportNotEu": "{{club}} pide pasaporte de la UE y el de tu perfil no lo es, así que esta oportunidad no puede recibir tu postulación. Igual se le puede escribir al club.",
+      "womensTeams": "Esta oportunidad es para equipos de damas, así que no puede recibir tu postulación. Igual se le puede escribir al club.",
+      "mensTeams": "Esta oportunidad es para equipos de caballeros, así que no puede recibir tu postulación. Igual se le puede escribir al club.",
+      "otherCategory": "Esta oportunidad es para otra categoría de equipo, así que no puede recibir tu postulación. Igual se le puede escribir al club.",
+      "passportFooter": "No se envió nada. Los pasaportes se cambian desde Editar perfil. Con un pasaporte de la UE más adelante, esta oportunidad vuelve a quedar disponible.",
+      "categoryFooter": "No se envió nada. La categoría de equipo se cambia desde Editar perfil."
+    },
+    "availableNow": "Ahora",
+    "duration": {
+      "fullSeason": "Temporada completa",
+      "halfSeason": "Media temporada",
+      "shortTerm": "Corto plazo",
+      "flexible": "Flexible"
+    },
+    "contactLater": "Visible cuando el club responda",
+    "errors": {
+      "signedOut": "Para postularse hay que iniciar sesión.",
+      "ownOpportunity": "No es posible postularse a una oportunidad propia.",
+      "network": "Error de red. Conviene revisar la conexión y volver a intentar."
+    },
+    "alreadyApplied": "Ya hay una postulación tuya en esta oportunidad.",
+    "sentAria": "Postulación enviada",
+    "rowAria": "{{label}}: {{value}}. Editar",
+    "sentIconAria": "Enviada",
+    "sendingAria": "Enviando",
+    "sendButton": "Enviar postulación",
+    "dialogAria": "Postulación: {{club}}",
+    "titleNamed": "Postularse en {{club}}",
+    "titleAria": "Postularse en {{club}}",
+    "title": "Postularse",
+    "close": "Cerrar",
+    "seesNamed": "{{name}} va a ver la tarjeta de tu perfil. No hace falta enviar nada que ya tenga.",
+    "seesNamedVideo": "{{name}} va a ver la tarjeta de tu perfil y tu video de highlights. No hace falta enviar nada que ya tenga.",
+    "seesClub": "El club va a ver la tarjeta de tu perfil. No hace falta enviar nada que ya tenga.",
+    "seesClubVideo": "El club va a ver la tarjeta de tu perfil y tu video de highlights. No hace falta enviar nada que ya tenga.",
+    "yourProfile": "Tu perfil",
+    "highlight": "Highlights",
+    "notePlaceholderNamed": "Agregar una nota para {{name}}",
+    "notePlaceholderClub": "Agregar una nota para el club",
+    "notePlaceholderNamedOptional": "Agregar una nota para {{name}} (opcional)",
+    "notePlaceholderClubOptional": "Agregar una nota para el club (opcional)",
+    "maxCharacters": "Máximo 500 caracteres",
+    "optionalMaxCharacters": "Opcional · máximo 500 caracteres",
+    "cancel": "Cancelar",
+    "clubWillSee": "Lo que va a ver el club · tocar un dato para editarlo",
+    "highlightIncludedTitle": "Tu video de highlights va incluido",
+    "highlightIncludedAria": "Video de highlights incluido",
+    "rows": {
+      "availableFrom": "Disponible desde",
+      "passport": "Pasaporte",
+      "contact": "Contacto"
+    },
+    "footer": "Tu perfil, tu trayectoria y tus highlights se envían automáticamente. La postulación se puede retirar en cualquier momento desde Postulaciones."
+  },
+  "eligibility": {
+    "euPassport": "Esta oportunidad pide pasaporte de la UE.",
+    "womensTeams": "Esta oportunidad es para equipos de damas.",
+    "mensTeams": "Esta oportunidad es para equipos de caballeros.",
+    "addNationality": "Con la nacionalidad cargada en tu perfil, los clubes pueden confirmar si esta oportunidad encaja.",
+    "addGender": "Con el género cargado en tu perfil, los clubes pueden confirmar si esta oportunidad encaja.",
+    "addNationalityAndGender": "Con la nacionalidad y el género cargados en tu perfil, los clubes pueden confirmar si esta oportunidad encaja."
+  },
+  "mustHave": {
+    "compensation": {
+      "paid": "Esta oportunidad es paga, pero tu perfil dice que la búsqueda es de oportunidades pagas.",
+      "unpaidDevelopment": "Esta oportunidad es sin pago / de desarrollo, pero tu perfil dice que la búsqueda es de oportunidades pagas.",
+      "either": "Esta oportunidad puede ser con o sin pago, pero tu perfil dice que la búsqueda es de oportunidades pagas.",
+      "other": "Esta oportunidad figura como {{compensation}}, pero tu perfil dice que la búsqueda es de oportunidades pagas.",
+      "notStated": "Esta oportunidad es de desarrollo, pero tu perfil dice que la búsqueda es de oportunidades pagas."
+    },
+    "location": "Esta oportunidad es en {{country}}, un país que hoy no está en tus preferencias de mudanza.",
+    "startsIn": "Esta oportunidad empieza en {{date}}, antes de tu fecha de disponibilidad.",
+    "startsBefore": "Esta oportunidad empieza antes de tu fecha de disponibilidad.",
+    "position": "Esta oportunidad pide la posición {{wanted}}; la de tu perfil es {{own}}.",
+    "specialists": "Esta oportunidad busca {{skills}}, algo que no figura en tu perfil."
+  },
+  "identity": {
+    "clubFallback": "Club",
+    "coachFallback": "Entrenador/a",
+    "offersNamed": "Lo que ofrece {{name}}",
+    "offersClub": "Lo que ofrece el club",
+    "wordsNamed": "En palabras de {{name}}",
+    "wordsClub": "En palabras del club",
+    "noteNamed": "Una nota para {{name}}",
+    "noteClub": "Una nota para el club",
+    "messageNamed": "Escribir a {{name}}",
+    "messageClub": "Escribir al club",
+    "askNamed": "Para consultar a {{name}} al postularse",
+    "askClub": "Para consultar al club al postularse",
+    "reviewsNamed": "{{name}} la revisa y responde por acá",
+    "reviewsClub": "El club la revisa y responde por acá",
+    "onBehalf": "{{name}} publicó esta oportunidad en nombre de {{club}}. Los mensajes le llegan a quien la publicó.",
+    "postedBy": "Publicada por {{name}}",
+    "clubPostedBy": "{{club}} · publicada por {{name}}",
+    "coachNamed": "Entrenador/a {{name}}",
+    "sentNamed": "{{name}} va a revisar tu perfil. Hockia avisa cuando haya respuesta. El seguimiento está en Postulaciones.",
+    "sentClub": "El club va a revisar tu perfil. Hockia avisa cuando haya respuesta. El seguimiento está en Postulaciones.",
+    "asksClub": "Lo que busca el club",
+    "asksCoach": "Lo que busca"
+  },
+  "level": {
+    "elite": "Élite / Internacional",
+    "highPerformance": "Alto rendimiento",
+    "competitive": "Competitivo",
+    "development": "Desarrollo"
+  },
+  "compensation": {
+    "paid": "Pago",
+    "unpaidDevelopment": "Sin pago / Desarrollo",
+    "either": "Cualquiera"
+  },
+  "recruitmentProblem": {
+    "replacePlayer": "Reemplazar a alguien clave del plantel",
+    "raiseLevel": "Subir el nivel del equipo",
+    "bestAvailable": "Lo mejor disponible, sin importar de dónde",
+    "youngTalent": "Talento joven con potencial",
+    "leadership": "Sumar liderazgo / experiencia",
+    "urgent": "Necesidad urgente"
+  },
+  "quality": {
+    "compensation": {
+      "label": "Pago",
+      "hint": "Es uno de los filtros más usados. Hasta un rango es mejor que nada."
+    },
+    "housing": {
+      "label": "Alojamiento",
+      "hint": "La primera pregunta de quien se muda para jugar."
+    },
+    "flights": {
+      "label": "Pasajes",
+      "hint": "Muestra apoyo a quienes llegan desde otro país."
+    },
+    "description": {
+      "label": "Descripción completa (más de 300 caracteres)",
+      "hint": "Sirve contar sobre el equipo, la temporada y los objetivos."
+    },
+    "startDate": {
+      "label": "Fecha de inicio",
+      "hint": "Permite evaluar si los tiempos cierran."
+    },
+    "level": {
+      "label": "Nivel buscado",
+      "hint": "Evita postulaciones que no encajan."
+    },
+    "clubLogo": {
+      "label": "Escudo del club",
+      "hint": "Las publicaciones con escudo se ven más reales y reciben más visitas."
+    },
+    "deadline": {
+      "label": "Fecha límite de postulación",
+      "hint": "Marca los tiempos y ordena las expectativas."
+    }
+  },
+  "list": {
+    "newTag": "Nueva",
+    "rails": {
+      "forYouTitle": "Oportunidades para tu perfil",
+      "forYouSubtitle": "Coinciden con tu posición, equipo y pasaporte",
+      "paidHousingTitle": "Pagas y con alojamiento",
+      "paidHousingSubtitle": "Contratos que incluyen dónde vivir",
+      "closingSoonTitle": "Cierran pronto",
+      "closingSoonSubtitle_one": "Para postularse en {{count}} día",
+      "closingSoonSubtitle_other": "Para postularse en los próximos {{count}} días",
+      "closingSoonSubtitle_many": "Para postularse en los próximos {{count}} días"
+    },
+    "paidChip": "€ Pago",
+    "featuredEyebrow": "OPORTUNIDAD DESTACADA",
+    "featuredAria": "Oportunidad destacada: {{title}} en {{club}}",
+    "cardAria": "{{title}} en {{club}}",
+    "cardAriaApplied": "{{title}} en {{club}}, postulación enviada",
+    "railCardAria": "{{title}} en {{club}}",
+    "postedByCapsule": "<label>Publicada por</label><name>{{name}}</name>",
+    "appliedTag": "Postulación enviada",
+    "seeAll": "Ver todas",
+    "railPrevious": "Oportunidades anteriores",
+    "railMore": "Más oportunidades",
+    "documentTitle": "Oportunidades",
+    "unknownClub": "Club sin nombre",
+    "loadFailed": "No se pudieron cargar las oportunidades. Conviene revisar la conexión y volver a intentar.",
+    "tabTitle": "Oportunidades de hockey sobre césped para jugadores/as y entrenadores/as en todo el mundo | Hockia",
+    "clubSubtitleNamed": "{{name}} · tus oportunidades",
+    "clubSubtitle": "Tus oportunidades",
+    "title": "Oportunidades",
+    "postOpportunity": "Publicar una oportunidad",
+    "filters": "Filtros",
+    "aiTipShort": "Hockia AI responde cualquier consulta",
+    "aiTip": "Nuevo: Hockia AI responde cualquier consulta",
+    "segmentAria": "Oportunidades",
+    "tabs": {
+      "opportunities": "Oportunidades",
+      "applied": "Postulaciones",
+      "mine": "Mis oportunidades",
+      "mineShort": "Mías",
+      "open": "Oportunidades abiertas",
+      "openShort": "Abiertas"
+    },
+    "quickFiltersAria": "Filtros rápidos",
+    "filtersCount": "Filtros · {{count}}",
+    "subtitleUmpire": "Lo que buscan los clubes en toda la red de Hockia.",
+    "subtitle": "Oportunidades abiertas de clubes y entrenadores/as",
+    "subtitleCount_one": "{{count}} oportunidad abierta de clubes y entrenadores/as",
+    "subtitleCount_other": "{{count}} oportunidades abiertas de clubes y entrenadores/as",
+    "subtitleCount_many": "{{count}} oportunidades abiertas de clubes y entrenadores/as",
+    "umpireTitle": "Por ahora, solo lectura para árbitros/as",
+    "umpireBody": "Las oportunidades de acá son búsquedas de jugadores/as y entrenadores/as para planteles. Se puede ver lo que arman los clubes, pero la postulación está oculta. Las oportunidades de arbitraje y las evaluaciones van a estar acá cuando se habiliten.",
+    "myApplicationsChip": "Mis postulaciones ×",
+    "myApplicationsChipAria": "Quitar el filtro de mis postulaciones",
+    "clearFilters": "Quitar filtros",
+    "newAvailableTitle_one": "Hay una oportunidad nueva",
+    "newAvailableTitle_other": "Hay {{count}} oportunidades nuevas",
+    "newAvailableTitle_many": "Hay {{count}} oportunidades nuevas",
+    "newAvailableBody_one": "Se acaba de publicar una oportunidad nueva.",
+    "newAvailableBody_other": "Se publicaron oportunidades nuevas desde que se abrió esta página.",
+    "newAvailableBody_many": "Se publicaron oportunidades nuevas desde que se abrió esta página.",
+    "updating": "Actualizando...",
+    "viewLatest": "Ver las últimas",
+    "errorTitle": "Algo salió mal",
+    "tryAgain": "Reintentar",
+    "emptyAppliedTitle": "Todavía no hay postulaciones",
+    "emptyTitle": "No se encontraron oportunidades",
+    "emptyAppliedBody": "Las oportunidades con postulación enviada aparecen acá.",
+    "emptyFilteredBody": "Con otros filtros pueden aparecer más resultados",
+    "emptyBody": "No hay oportunidades disponibles en este momento",
+    "clearFiltersButton": "Quitar filtros",
+    "postHintCoach": "Desde una cuenta de entrenador/a se pueden publicar oportunidades para sumar jugadores/as y cuerpo técnico.",
+    "postHintClub": "Desde una cuenta de club se pueden publicar oportunidades para atraer jugadores/as y entrenadores/as.",
+    "postOpportunityButton": "Publicar una oportunidad",
+    "allOpen": "Todas las oportunidades abiertas",
+    "sortClosingSoon": "Cierran pronto",
+    "sortNewest": "Más nuevas",
+    "noMatch": "Ninguna oportunidad coincide con estos filtros",
+    "resetFilters": "Restablecer filtros"
+  },
+  "sent": {
+    "title": "Postulación enviada",
+    "fullMatchTip": "Buen momento para sumar un video de partido completo. Es lo que más piden los clubes después de una postulación.",
+    "fallbackLine": "{{club}} ya tiene tu perfil, tu trayectoria y tus highlights. La respuesta llega a Mensajes.",
+    "steps": {
+      "sentTitle": "Enviada",
+      "sentDetail": "Hoy, {{time}}",
+      "reviewNamedTitle": "{{name}} la revisa",
+      "reviewClubTitle": "El club la revisa",
+      "reviewDetail": "La respuesta llega a Mensajes",
+      "answerTitle": "Llega la respuesta",
+      "answerDetail": "En preselección o esta vez no"
+    },
+    "clubPostedBy": "{{club}} · publicada por {{name}}",
+    "whatHappensNext": "Qué sigue",
+    "viewApplications": "Ver mis postulaciones",
+    "backToList": "Volver a oportunidades",
+    "backToRole": "Volver a la oportunidad"
+  },
+  "coachEmpty": {
+    "title": "No hay oportunidades abiertas para entrenadores/as en este momento",
+    "alertsTitle": "Alertas de oportunidades para entrenadores/as",
+    "alertsDescription": "Notificación y email cuando una oportunidad encaja con tu perfil",
+    "beReady": "Para llegar bien a la próxima",
+    "careerTitle": "Sumar la trayectoria como entrenador/a",
+    "careerDetail": "Los clubes miran primero la trayectoria. Todavía no hay nada cargado.",
+    "referenceTitle": "Pedir una referencia",
+    "referenceDetail": "De alguien del plantel, del cuerpo técnico o de un club con quien hubo trabajo en común.",
+    "recentlyClosed": "Cerradas hace poco"
+  },
+  "road": {
+    "yourApplication": "Tu postulación",
+    "skippedStep": "{{label}} · sin este paso",
+    "withdrawFailed": "No se pudo retirar la postulación. Se puede volver a intentar.",
+    "confirmSigning": "Confirmar incorporación",
+    "seeOffer": "Ver la oferta",
+    "withdrawApplication": "Retirar postulación",
+    "withdrawing": "Retirando…",
+    "withdraw": "Retirar",
+    "keepIt": "Mantenerla"
+  },
+  "detail": {
+    "linkCopied": "Enlace copiado",
+    "shareFailed": "No se pudo compartir esta oportunidad",
+    "startsImmediately": "De inmediato",
+    "applyByOpen": "Abierta",
+    "deadlinePassed": "Fecha límite vencida",
+    "untilFilled": "Hasta que se cubra",
+    "coach": "Entrenador/a",
+    "moreOptions": "Más opciones",
+    "closedLabel": "Cerrada",
+    "hiringClub": "Club que busca",
+    "postedBy": "Publicada por",
+    "yourApplication": "Tu postulación",
+    "clubNote": "La nota del club",
+    "noteFrom": "De {{club}}",
+    "closedTitle": "Esta oportunidad está cerrada",
+    "closedBody": "Ya no recibe postulaciones.",
+    "declineNoteTitle": "Esta vez no · La nota del club",
+    "facts": {
+      "team": "Equipo",
+      "coachingOpportunity": "Oportunidad para entrenador/a",
+      "senior": "Mayores",
+      "position": "Posición",
+      "required": "Requisito",
+      "starts": "Inicio",
+      "applyBy": "Postulaciones hasta"
+    },
+    "asks": {
+      "position": "Posición",
+      "positionRequired": "{{position}} · requisito",
+      "category": "Categoría",
+      "passport": "Pasaporte",
+      "euPassportRequired": "Se requiere pasaporte de la UE",
+      "euPassportMissing": "Se requiere pasaporte de la UE · no figura en tu perfil",
+      "passportAny": "Cualquiera",
+      "level": "Nivel",
+      "specialist": "Especialista",
+      "available": "Disponibilidad"
+    },
+    "youMatch": "Tu perfil coincide con la posición, el equipo y el pasaporte de esta oportunidad",
+    "howApplyingWorks": "Cómo funciona la postulación",
+    "steps": {
+      "send": "Se envía tu perfil, sin CV",
+      "updates": "Cada novedad aparece en Postulaciones"
+    },
+    "contactPrivate": "Los datos de contacto quedan privados hasta que el club responda.",
+    "applied": "Postulación enviada",
+    "share": "Compartir",
+    "close": "Cerrar",
+    "viewApplications": "Ver mis postulaciones",
+    "seeOpen": "Ver oportunidades abiertas",
+    "wordsLess": "Menos",
+    "wordsMore": "Más",
+    "messageClubAria": "Escribir al club",
+    "apply": "Postularse",
+    "backToList": "Oportunidades"
+  },
+  "timeline": {
+    "applied": "Postulación enviada",
+    "viewed": "El club vio tu postulación",
+    "respondBy": "El club tiene hasta el {{date}} para responder.",
+    "title": "Tu postulación",
+    "clubNote": "La nota del club"
+  },
+  "applications": {
+    "documentTitle": "Mis postulaciones",
+    "title": "Mis postulaciones",
+    "backFallback": "Oportunidades",
+    "unavailable": "Oportunidad ya no disponible",
+    "readClubNote": "Leer la nota del club",
+    "appliedOn": "Postulación del {{date}}",
+    "segmentAria": "Estado de las postulaciones",
+    "active": "Activas",
+    "archived": "Archivadas",
+    "emptyActiveTitle": "No hay postulaciones activas",
+    "emptyArchivedTitle": "Todavía no hay nada archivado",
+    "emptyActiveBody": "Las postulaciones aparecen acá junto con la respuesta del club.",
+    "emptyArchivedBody": "Las postulaciones que no avanzaron y las oportunidades cerradas quedan acá con su resultado.",
+    "browse": "Ver oportunidades abiertas",
+    "noReplyTitle": "¿Dos semanas sin respuesta?",
+    "noReplyBody": "Un mensaje al club sirve para consultar en qué quedó la postulación.",
+    "messageClub": "Escribir a {{club}}"
+  },
+  "quickFilters": {
+    "player": "Jugador/a",
+    "coach": "Entrenador/a",
+    "allTypes": "Todos los tipos",
+    "category": "Categoría",
+    "position": {
+      "goalkeeper": "Arquero/a",
+      "defender": "Defensor/a",
+      "midfielder": "Volante",
+      "forward": "Delantero/a"
+    },
+    "more": "Más",
+    "clearAll": "Borrar todo"
+  },
+  "card": {
+    "playerOpening": "Búsqueda de jugador/a",
+    "coachOpening": "Búsqueda de entrenador/a",
+    "coachPill": "Entrenador/a",
+    "playerPill": "Jugador/a",
+    "coachBadge": "Entrenador/a",
+    "clubBadge": "Club",
+    "recruitingFor": "Busca para",
+    "startsImmediately": "Empieza de inmediato",
+    "startsOn": "Empieza en {{date}}",
+    "posted": "Publicada {{when}}",
+    "moreBenefits": "+{{count}} más"
+  },
+  "overlay": {
+    "notSpecified": "Sin especificar",
+    "playerTag": "Jugador/a",
+    "coachTag": "Entrenador/a",
+    "deadlinePassed": "Fecha límite vencida",
+    "dialogAriaTitled": "{{title}} · detalles de la oportunidad",
+    "dialogAria": "Detalles de la oportunidad",
+    "close": "Cerrar",
+    "coachBadge": "Entrenador/a",
+    "urgent": "URGENTE",
+    "coachListed": "PUBLICADA POR ENTRENADOR/A",
+    "clubListed": "PUBLICADA POR EL CLUB",
+    "share": "Compartir oportunidad",
+    "moreOptions": "Más opciones",
+    "closedLabel": "Cerrada",
+    "solving": "Objetivo: {{problem}}",
+    "startsImmediately": "Empieza de inmediato",
+    "startsOn": "Empieza en {{date}}",
+    "about": "Sobre esta oportunidad",
+    "benefits": "Beneficios incluidos",
+    "additionalBenefits": "Otros beneficios",
+    "requirementsEu": "Requisitos",
+    "requirements": "Requisitos",
+    "euPassportRequired": "Se requiere pasaporte de la UE",
+    "deadline": "Fecha límite de postulación",
+    "contact": "Contacto",
+    "viewApplicants": "Ver postulaciones",
+    "closedApplicantTitle": "Esta oportunidad está cerrada",
+    "closedVisitorTitle": "Esta oportunidad está cerrada",
+    "closedVisitorBody": "Ya no recibe postulaciones. <link>Ver oportunidades abiertas</link>",
+    "messageClub": "Escribir al club",
+    "youApplied": "Postulación enviada",
+    "cantApplyTitle": "Esta oportunidad no admite tu postulación",
+    "applyNow": "Postularse ›",
+    "onlyCoaches": "A esta oportunidad solo pueden postularse entrenadores/as.",
+    "onlyPlayers": "A esta oportunidad solo pueden postularse jugadores/as.",
+    "viewProfile": "Ver perfil",
+    "viewClub": "Ver club",
+    "done": "Listo",
+    "completeProfile": "Completar perfil",
+    "headsUp": "La postulación sigue siendo posible, con esto a tener en cuenta:",
+    "postedOn": "Publicada el {{date}}"
+  },
+  "detailPage": {
+    "documentTitle": "{{title}} • Oportunidades",
+    "documentTitleLoading": "Oportunidad",
+    "tabTitleLoading": "Oportunidad de hockey sobre césped | Hockia",
+    "tabTitle": "{{title}} en {{club}} | Hockia",
+    "tabTitleNoClub": "{{title}} | Hockia",
+    "loadFailedTitle": "No se pudo cargar esta oportunidad",
+    "retry": "Reintentar",
+    "notFoundTitle": "No se encontró la oportunidad",
+    "notFoundBody": "Puede que esta oportunidad se haya eliminado.",
+    "browse": "Ver oportunidades",
+    "wallTitleApply": "Iniciar sesión para postularse",
+    "wallTitleMessage": "Iniciar sesión para escribir",
+    "wallMessage": "Para postularse a esta oportunidad hay que iniciar sesión o crear una cuenta gratis en Hockia."
+  },
+  "manage": {
+    "menu": {
+      "publish": "Publicar oportunidad",
+      "close": "Cerrar oportunidad",
+      "reopen": "Reabrir oportunidad",
+      "edit": "Editar detalles",
+      "duplicate": "Duplicar",
+      "deleteDraft": "Eliminar borrador",
+      "deletePermanently": "Eliminar definitivamente",
+      "openAria": "Abrir menú de la oportunidad"
+    },
+    "toasts": {
+      "loadFailed": "No se pudieron cargar las oportunidades. Conviene actualizar la página.",
+      "duplicated": "Oportunidad duplicada como borrador.",
+      "duplicateFailed": "No se pudo duplicar la oportunidad. Se puede volver a intentar.",
+      "reopenFailed": "No se pudo reabrir la oportunidad. Se puede volver a intentar.",
+      "published": "¡Oportunidad publicada!",
+      "publishFailed": "No se pudo publicar la oportunidad. Se puede volver a intentar.",
+      "deleted": "Oportunidad eliminada.",
+      "deleteFailed": "No se pudo eliminar la oportunidad. Se puede volver a intentar."
+    },
+    "unknownClub": "Club sin nombre",
+    "copyTitle": "{{title}} (copia)",
+    "status": {
+      "draft": "Borrador",
+      "published": "Publicada",
+      "closed": "Cerrada"
+    },
+    "dateTbd": "A definir",
+    "titleReadOnly": "Oportunidades abiertas",
+    "title": "Gestionar oportunidades",
+    "liveCount_one": "{{count}} oportunidad publicada",
+    "liveCount_other": "{{count}} oportunidades publicadas",
+    "liveCount_many": "{{count}} oportunidades publicadas",
+    "totalCount_one": "{{count}} oportunidad en total",
+    "totalCount_other": "{{count}} oportunidades en total",
+    "totalCount_many": "{{count}} oportunidades en total",
+    "add": "Agregar",
+    "filter": {
+      "all": "Todas",
+      "drafts": "Borradores",
+      "published": "Publicadas",
+      "closed": "Cerradas"
+    },
+    "emptyTitle": "Todavía no hay oportunidades",
+    "emptyBodyCoach": "La primera oportunidad es el punto de partida para sumar talento al equipo",
+    "emptyBodyClub": "La primera oportunidad es el punto de partida para sumar talento al club",
+    "createFirst": "Crear la primera oportunidad",
+    "emptyReadOnlyTitle": "No hay oportunidades abiertas",
+    "emptyReadOnlyBody": "Este perfil todavía no publicó oportunidades. Con seguir el perfil, las novedades llegan apenas se publiquen.",
+    "playerBadge": "Jugador/a",
+    "coachBadge": "Entrenador/a",
+    "locationTbd": "Lugar a definir",
+    "startTbd": "Inicio a definir",
+    "applicants_one": "{{count}} postulación",
+    "applicants_other": "{{count}} postulaciones",
+    "applicants_many": "{{count}} postulaciones",
+    "draftHint": "Borrador — se publica cuando esté lista para salir.",
+    "signInToApply": "Iniciar sesión para postularse",
+    "applied": "✓ Postulación enviada",
+    "applyNow": "Postularse",
+    "playersOnly": "Solo jugadores/as",
+    "coachesOnly": "Solo entrenadores/as",
+    "viewDetailsAria": "Ver detalles de la oportunidad",
+    "loading": {
+      "publish": "Publicando oportunidad...",
+      "close": "Cerrando oportunidad...",
+      "delete": "Eliminando oportunidad...",
+      "duplicate": "Duplicando oportunidad..."
+    }
+  }
+}

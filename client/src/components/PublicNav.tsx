@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { Menu, X, Globe, Users, Briefcase, LogIn, UserPlus, Mail } from 'lucide-react'
 import { useContactModal } from '@/lib/contact'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface PublicNavProps {
   /** Whether to use transparent background (for hero sections) */
@@ -22,11 +23,12 @@ interface PublicNavProps {
 export default function PublicNav({ transparent = true }: PublicNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const openContact = useContactModal((s) => s.open)
+  const t = useCommonT()
 
   const navLinks = [
-    { href: '/world', label: 'Hockey World', icon: Globe },
-    { href: '/opportunities', label: 'Opportunities', icon: Briefcase },
-    { href: '/community', label: 'Community', icon: Users },
+    { href: '/world', label: t('publicNav.world'), icon: Globe },
+    { href: '/opportunities', label: t('publicNav.opportunities'), icon: Briefcase },
+    { href: '/community', label: t('publicNav.community'), icon: Users },
   ]
 
   return (
@@ -89,7 +91,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               }`}
             >
               <LogIn className="w-4 h-4" />
-              Sign In
+              {t('publicNav.signIn')}
             </Link>
             <Link
               to="/signup"
@@ -97,7 +99,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
             >
               <UserPlus className="w-4 h-4" />
-              Join Now
+              {t('publicNav.join')}
             </Link>
           </div>
 
@@ -109,7 +111,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
                 ? 'text-white hover:bg-white/10'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
-            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={isMobileMenuOpen ? t('publicNav.closeMenu') : t('publicNav.openMenu')}
           >
             {isMobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -156,7 +158,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
                 }`}
               >
                 <LogIn className="w-5 h-5" />
-                Sign In
+                {t('publicNav.signIn')}
               </Link>
               
               <Link
@@ -165,7 +167,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
                 className="flex items-center justify-center gap-2 mx-4 mt-2 px-5 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-base font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
               >
                 <UserPlus className="w-5 h-5" />
-                Join Now
+                {t('publicNav.join')}
               </Link>
 
               {/* Support / business contact — intentionally subtle, not a CTA. */}
@@ -179,7 +181,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
                 }`}
               >
                 <Mail className="w-4 h-4" />
-                Contact Us
+                {t('publicNav.contact')}
               </button>
             </div>
           </div>

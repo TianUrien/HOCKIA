@@ -1,6 +1,8 @@
 import { ShieldAlert } from 'lucide-react'
 import Modal from './Modal'
 import Button from './Button'
+import { Trans } from 'react-i18next'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 
 interface ClubClaimConfirmModalProps {
   isOpen: boolean
@@ -41,6 +43,7 @@ export default function ClubClaimConfirmModal({
   isCreating = false,
   loading = false,
 }: ClubClaimConfirmModalProps) {
+  const t = useOnboardingT()
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md" showClose={!loading}>
       <div className="p-6 md:p-7">
@@ -49,23 +52,25 @@ export default function ClubClaimConfirmModal({
         </div>
 
         <h2 className="text-center text-lg font-semibold text-gray-900">
-          {isCreating ? 'Confirm new club claim' : 'Confirm club claim'}
+          {isCreating ? t('claim.confirm.titleCreate') : t('claim.confirm.titleClaim')}
         </h2>
 
         <p className="mt-3 text-sm text-gray-600">
-          You are about to claim{' '}
-          <span className="font-semibold text-gray-900">{clubName}</span> as its
-          official representative on Hockia. This means you’ll be able to post
-          opportunities, accept members, and represent the club to the community.
+          <Trans
+            t={t}
+            i18nKey="claim.confirm.body"
+            components={{ club: <span className="font-semibold text-gray-900">{clubName}</span> }}
+          />
         </p>
 
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-          <p className="font-semibold">Please confirm you have authority.</p>
+          <p className="font-semibold">{t('claim.confirm.authorityTitle')}</p>
           <p className="mt-1 leading-relaxed">
-            Misrepresenting a club you are not authorised to act for can result in
-            account termination and removal of the listing. Your profile will be
-            shown as <span className="font-medium">pending verification</span>{' '}
-            until our team confirms the claim.
+            <Trans
+              t={t}
+              i18nKey="claim.confirm.authorityBody"
+              components={{ pending: <span className="font-medium" /> }}
+            />
           </p>
         </div>
 
@@ -76,7 +81,7 @@ export default function ClubClaimConfirmModal({
             disabled={loading}
             type="button"
           >
-            Cancel
+            {t('claim.confirm.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -84,7 +89,7 @@ export default function ClubClaimConfirmModal({
             disabled={loading}
             type="button"
           >
-            {loading ? 'Claiming…' : 'Confirm and claim'}
+            {loading ? t('claim.confirm.claiming') : t('claim.confirm.confirm')}
           </Button>
         </div>
       </div>

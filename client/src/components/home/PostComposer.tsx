@@ -4,6 +4,7 @@ import { useAuthStore } from '@/lib/auth'
 import { Avatar } from '@/components'
 import { PostComposerModal } from './PostComposerModal'
 import type { HomeFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface PostComposerProps {
   onPostCreated: (item: HomeFeedItem) => void
@@ -15,6 +16,7 @@ interface PostComposerProps {
  * screen is where the writing happens.
  */
 export function PostComposer({ onPostCreated }: PostComposerProps) {
+  const t = useHomeT()
   const { user, profile } = useAuthStore()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -35,13 +37,13 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
           onClick={() => setIsModalOpen(true)}
           className="min-h-[44px] flex-1 text-left text-row text-ink-4 transition-colors hover:text-ink-3"
         >
-          What&apos;s new?
+          {t('composerStrip.prompt')}
         </button>
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
           className="-mr-2 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-ink-2 transition-colors hover:bg-surface-muted"
-          aria-label="Add a photo or video"
+          aria-label={t('composerStrip.addMedia')}
         >
           <Camera className="h-6 w-6" strokeWidth={1.8} />
         </button>

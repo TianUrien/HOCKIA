@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { SocialButton } from '@/components/ui/SocialButton'
 import { ContinueInBrowser } from './ContinueInBrowser'
 import { getRuntimePlatform } from '@/lib/appVersion'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /** Rebrand page 26: Apple first in the iOS app (HIG); Google first on Android and the web. */
 const providerOrder: Array<'apple' | 'google'> = getRuntimePlatform() === 'ios-native' ? ['apple', 'google'] : ['google', 'apple']
@@ -43,6 +44,7 @@ interface OAuthButtonsProps {
 }
 
 export function OAuthButtons({ intent, next, onError, className, appearance = 'app' }: OAuthButtonsProps) {
+  const t = useAuthT()
   const showFacebook = useFacebookLoginEnabled()
   const [handoff, setHandoff] = useState<{ browserName: string | null; provider: 'Google' | 'Facebook' } | null>(null)
 
@@ -62,7 +64,7 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
       // The sign-in guard refused (too many attempts, or the bot check failed): its message is the copy.
       if (err instanceof Error && err.name === 'AuthGuardRefused') { onError(err.message); return }
       logger.error(`${provider} OAuth error:`, err)
-      onError(oauthErrorMessage(err instanceof Error && err.name === 'OAuthProviderError' ? err.message : null, 'Sign-in failed. Please try again.'))
+      onError(oauthErrorMessage(err instanceof Error && err.name === 'OAuthProviderError' ? err.message : null, t('errors.oauthFailed')))
     })
   }
 
@@ -70,12 +72,12 @@ export function OAuthButtons({ intent, next, onError, className, appearance = 'a
     <div className={cn(appearance === 'web' ? 'space-y-4' : 'space-y-3', className)}>
       {providerOrder.map((provider) => (
         <SocialButton key={provider} provider={provider} appearance={appearance} onClick={() => start(provider)}>
-          {provider === 'apple' ? 'Continue with Apple' : 'Continue with Google'}
+          {provider === 'apple' ? t('oauth.continueApple') : t('oauth.continueGoogle')}
         </SocialButton>
       ))}
       {showFacebook && (
         <SocialButton provider="facebook" appearance={appearance} onClick={() => start('facebook')}>
-          Continue with Facebook
+          {t('oauth.continueFacebook')}
         </SocialButton>
       )}
       {handoff && <ContinueInBrowser browserName={handoff.browserName} providerLabel={handoff.provider} />}

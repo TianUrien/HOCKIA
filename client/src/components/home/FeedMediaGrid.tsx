@@ -6,6 +6,7 @@ import { useNearViewport } from '@/hooks/useNearViewport'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 import type { ImageSize } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface FeedMediaGridProps {
   media: PostMediaItem[]
@@ -46,6 +47,7 @@ function MediaItem({
   /** First tile of a card near the top of the feed: load now. */
   eager?: boolean
 }) {
+  const t = useHomeT()
   const mediaType = item.media_type ?? 'image'
   const [imgLoaded, setImgLoaded] = useState(false)
   // LQIP blur-up ONLY on the full-width single image (a heavy, above-fold,
@@ -57,7 +59,7 @@ function MediaItem({
     return (
       <button
         type="button"
-        aria-label={`Play video · ${alt}`}
+        aria-label={t('mediaGrid.playVideoAria', { title: alt })}
         className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
         onClick={onClick}
       >
@@ -80,7 +82,7 @@ function MediaItem({
   return (
     <button
       type="button"
-      aria-label={`View image · ${alt}`}
+      aria-label={t('mediaGrid.viewImageAria', { title: alt })}
       className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
       onClick={onClick}
     >
@@ -107,7 +109,9 @@ function MediaItem({
   )
 }
 
-export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedMediaGridProps) {
+export function FeedMediaGrid({ media, onImageClick, altPrefix: altPrefixProp }: FeedMediaGridProps) {
+  const t = useHomeT()
+  const altPrefix = altPrefixProp ?? t('mediaGrid.defaultAlt')
   const [overflowExpanded, setOverflowExpanded] = useState(false)
 
   const handleImageClick = useCallback(
@@ -119,7 +123,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
 
   // Per-item alt: "Post by Author Name — image 2 of 5".
   const altFor = (i: number, total: number) =>
-    total > 1 ? `${altPrefix} · image ${i + 1} of ${total}` : altPrefix
+    total > 1 ? t('mediaGrid.imageAlt', { title: altPrefix, number: i + 1, total }) : altPrefix
 
   if (!media || media.length === 0) return null
 

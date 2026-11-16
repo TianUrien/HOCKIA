@@ -1,1 +1,231 @@
-{}
+{
+  "page": {
+    "documentTitle": "Settings",
+    "title": "Settings",
+    "sectionsLabel": "Settings sections",
+    "navAccount": "Account",
+    "navNotifications": "Notifications",
+    "navPrivacy": "Privacy",
+    "navSupport": "Help and feedback",
+    "navLegal": "Legal",
+    "navAbout": "About",
+    "signingOut": "Signing out…",
+    "logOut": "Log out",
+    "account": "Account",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "support": "Support",
+    "legal": "Legal",
+    "about": "About"
+  },
+  "account": {
+    "loginEmail": "Login email",
+    "verified": "Verified",
+    "emailSent": "Confirmation sent to your new email. Check both inboxes to confirm the change.",
+    "newEmailPlaceholder": "New email address",
+    "changeEmail": "Change",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm",
+    "passwordUpdated": "Password updated. All other sessions have been signed out.",
+    "updating": "Updating...",
+    "updatePassword": "Update password",
+    "deleteAccount": "Delete account"
+  },
+  "errors": {
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordWeak": "Password must include uppercase, lowercase, and a number",
+    "passwordMismatch": "Passwords do not match",
+    "currentPasswordMissing": "Please enter your current password",
+    "currentPasswordWrong": "Current password is incorrect",
+    "passwordFailed": "Failed to update password",
+    "emailSame": "Please enter a different email address",
+    "emailFailed": "Failed to update email",
+    "pushFailedDesktop": "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for Hockia in your iOS Settings.",
+    "pushFailed": "Couldn't update push notifications. If it keeps failing, check Notifications for Hockia in your phone's settings.",
+    "saveFailed": "Could not save that. Please try again.",
+    "contactEmailInvalid": "Enter an email like name@club.com, or leave it empty."
+  },
+  "emails": {
+    "opportunitiesTitle": "Opportunity notifications",
+    "opportunitiesBody": "Email when new opportunities are published",
+    "applicationsTitle": "Application notifications",
+    "applicationsBody": "Email when players apply to your opportunities",
+    "friendsTitle": "Friend request emails",
+    "friendsBody": "Email when someone sends you a friend request",
+    "referencesTitle": "Reference request emails",
+    "referencesBody": "Email when someone requests a reference from you",
+    "messagesTitle": "Message email digests",
+    "messagesBody": "Email digest for unread messages (max once every 6 hours)",
+    "pushTitle": "Push notifications",
+    "pushUnsupported": "Not supported on this device",
+    "pushBlocked": "Blocked. Enable notifications in your device settings",
+    "pushBody": "Receive notifications even when the app is closed",
+    "profileViewsTitle": "Profile view emails",
+    "profileViewsBody": "Daily email summary of who viewed your profile",
+    "updated": "Preferences updated"
+  },
+  "privacy": {
+    "anonymousTitle": "Anonymous browsing",
+    "anonymousBody": "When enabled, you won't appear in other users' \"Who viewed your profile\" lists",
+    "anonymousOn": "Anonymous browsing: on",
+    "anonymousOff": "Anonymous browsing: off",
+    "lastActiveTitle": "Show last active",
+    "lastActiveBody": "When enabled, people you chat with see “Active today” in the conversation header. Turn off to hide it.",
+    "lastActiveOn": "Show last active: on",
+    "lastActiveOff": "Show last active: off",
+    "blockedTitle": "Blocked accounts"
+  },
+  "links": {
+    "contactSupport": "Contact support",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "developers": "For developers"
+  },
+  "fullMatch": {
+    "title": "Who can watch your full matches",
+    "body": "Applies to all your full matches. You can still change a single video from your profile's media.",
+    "recruitersTitle": "Clubs & coaches",
+    "recruitersBody": "Clubs and coaches who recruit. Highlights and reels stay public.",
+    "publicTitle": "Everyone on Hockia",
+    "publicBody": "Anyone on Hockia can watch them."
+  },
+  "sheet": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…"
+  },
+  "hub": {
+    "parent": "Profile",
+    "title": "Settings",
+    "fallbackName": "Your profile",
+    "signedInWith": "Signed in with {{provider}}",
+    "clubAdmin": "Club · admin",
+    "roleSignedIn": "{{role}} · signed in with {{provider}}",
+    "providerEmail": "email",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "deleteAccount": "Delete account",
+    "madeFor": "Hockia · Made for field hockey"
+  },
+  "club": {
+    "label": "Club",
+    "clubLeague": "Club & league",
+    "squad": "Squad & invites",
+    "contactEmail": "Contact email"
+  },
+  "contactEmail": {
+    "title": "Contact email",
+    "placeholder": "name@club.com"
+  },
+  "availability": {
+    "label": "Availability",
+    "footer": "Clubs filter by this. Your week asks you to confirm it now and then.",
+    "openToPlay": "Open to play",
+    "openToPlayBody": "Shown on your profile and in Community.",
+    "on": "On",
+    "off": "Off",
+    "openToCoach": "Open to coach",
+    "openToCoachBody": "Shown on your profile and in Community.",
+    "openToOpportunities": "Open to opportunities",
+    "openToOpportunitiesBody": "Clubs and coaches can reach out about opportunities.",
+    "lookingFor": "Looking for",
+    "notSet": "Not set",
+    "brandPartnerships": "Brand partnerships",
+    "brandPartnershipsBody": "Let brands find you and invite you as an ambassador."
+  },
+  "lookingFor": {
+    "title": "Looking for",
+    "hint": "Clubs filter by this.",
+    "paid": "Paid opportunities",
+    "development": "Development opportunities",
+    "either": "Paid or development opportunities",
+    "other": "{{preference}} opportunities"
+  },
+  "preferences": {
+    "label": "Preferences",
+    "notifications": "Notifications",
+    "perType": "Per type",
+    "privacy": "Privacy",
+    "everyone": "Everyone",
+    "clubsCoaches": "Clubs & coaches"
+  },
+  "accountGroup": {
+    "label": "Account",
+    "dobFooterPlayer": "Used for your age on your profile and to keep club search 18+. Only your age is shown, never the date.",
+    "dobFooter": "Used for your age on your profile. Only your age is shown, never the date.",
+    "emailSignIn": "Email & sign-in",
+    "emailValue": "Email",
+    "dob": "Date of birth",
+    "languages": "Languages"
+  },
+  "support": {
+    "label": "Support",
+    "help": "Help centre",
+    "feedback": "Send feedback",
+    "legal": "Terms & privacy policy"
+  },
+  "legal": {
+    "label": "Terms and privacy policy",
+    "title": "Terms & privacy policy",
+    "terms": "Terms of service",
+    "privacy": "Privacy policy"
+  },
+  "notifications": {
+    "parent": "Settings",
+    "title": "Notifications",
+    "channels": "Channels",
+    "channelsFooter": "Turn push off and nothing below arrives that way. In-app notifications always stay on.",
+    "channelsFooterEmail": "Turn push off and nothing below arrives that way. In-app notifications always stay on. Email goes to {{email}}. Choose what arrives per type below.",
+    "pushTitle": "Push notifications",
+    "pushUnsupported": "Not available on this device",
+    "pushBlocked": "Blocked in your phone’s settings",
+    "pushOnDevice": "On this device",
+    "tellMe": "Tell me about",
+    "colPush": "Push",
+    "colEmail": "Email",
+    "tellMeFooter": "Push and Email move together for now. Each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.",
+    "pushSwitch": "{{title}} · push",
+    "emailSwitch": "{{title}} · email"
+  },
+  "kinds": {
+    "messagesTitle": "Messages",
+    "messagesBody": "From clubs, coaches and friends.",
+    "applicationsTitle": "My applications",
+    "applicationsBody": "A club replied, shortlisted you, or an opportunity closed.",
+    "opportunitiesTitle": "New opportunities",
+    "opportunitiesBody": "New opportunities for your position, team and passports.",
+    "friendsTitle": "Friend requests",
+    "friendsBody": "New requests and accepted ones.",
+    "referencesTitle": "References",
+    "referencesBody": "A friend asks for one, or writes you one.",
+    "profileViewsTitle": "Profile views",
+    "profileViewsBody": "Weekly summary of who looked at you."
+  },
+  "mobilePrivacy": {
+    "parent": "Settings",
+    "title": "Privacy",
+    "fullMatchLabel": "Who can watch your full matches",
+    "fullMatchFooter": "Applies to all your full matches. You can still change a single video in Manage media.",
+    "recruitersTitle": "Clubs & coaches",
+    "recruitersBody": "Clubs and coaches who recruit. Highlights and reels stay public.",
+    "publicTitle": "Everyone on Hockia",
+    "publicBody": "Anyone on Hockia can watch them.",
+    "visibility": "Visibility",
+    "anonymous": "Browse anonymously",
+    "anonymousBody": "Clubs won’t see that you looked at them, and you won’t see who looked at you.",
+    "lastActive": "Show when I was last active",
+    "lastActiveBody": "“Active today” in Chat.",
+    "contactEmail": "Show my contact email",
+    "contactEmailBody": "Off: clubs see it only once they reply to your application.",
+    "safety": "Safety",
+    "safetyFooter": "Blocked members can’t message you, see your profile, or find you in Community.",
+    "blocked": "Blocked members",
+    "none": "None"
+  },
+  "blocked": {
+    "parent": "Privacy",
+    "title": "Blocked members"
+  }
+}

@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel, feedbackMessageKind } from '@/lib/applicationStatus'
 import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
 import { dayFirst } from '@/lib/dayFirst'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
@@ -94,6 +95,7 @@ async function fetchResponseSettings() {
 }
 
 export default function ApplicationTimeline({ opportunityId }: ApplicationTimelineProps) {
+  const t = useOpportunitiesT()
   const { user } = useAuthStore()
   const [currentStatus, setCurrentStatus] = useState<string | null>(null)
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
@@ -239,10 +241,10 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
 
   const nodes: TimelineNode[] = []
   if (appliedAt) {
-    nodes.push({ key: 'applied', icon: Send, label: 'You applied', date: appliedAt, dotClass: 'bg-hockia-primary' })
+    nodes.push({ key: 'applied', icon: Send, label: t('timeline.applied'), date: appliedAt, dotClass: 'bg-hockia-primary' })
   }
   if (firstViewedAt) {
-    nodes.push({ key: 'viewed', icon: Eye, label: 'The club viewed your application', date: firstViewedAt, dotClass: 'bg-brand-primary' })
+    nodes.push({ key: 'viewed', icon: Eye, label: t('timeline.viewed'), date: firstViewedAt, dotClass: 'bg-brand-primary' })
   }
   if (responded && currentStatus) {
     const badge = playerApplicationStatusBadge(currentStatus)
@@ -262,10 +264,10 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
     nodes.push({
       key: 'awaiting',
       icon: Clock,
-      label: applicationStatusLabel('pending') ?? 'In review',
+      label: applicationStatusLabel('pending') ?? t('status.pending'),
       date: null,
       dotClass: 'bg-gray-300',
-      subtext: deadline ? `The club has until ${formatDate(deadline)} to respond.` : null,
+      subtext: deadline ? t('timeline.respondBy', { date: formatDate(deadline) }) : null,
     })
   }
 
@@ -273,7 +275,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
 
   return (
     <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-      <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Your application</h4>
+      <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{t('timeline.title')}</h4>
       <ol>
         {nodes.map((node, idx) => {
           const Icon = node.icon
@@ -292,7 +294,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
                 {node.subtext && <p className="mt-1 text-xs text-gray-500">{node.subtext}</p>}
                 {node.message && node.messageKind === 'club' ? (
                   <div className="mt-1.5 rounded-lg bg-white p-2.5 ring-1 ring-gray-100" data-testid="timeline-club-note">
-                    <p className="text-xs font-semibold text-gray-500">The club’s note</p>
+                    <p className="text-xs font-semibold text-gray-500">{t('timeline.clubNote')}</p>
                     <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-700">{node.message}</p>
                   </div>
                 ) : node.message ? (

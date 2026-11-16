@@ -7,6 +7,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { useFullMatchPrivacyNotice } from '@/hooks/useFullMatchPrivacyNotice'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * One-time notice (Phase 1 · step 3): full matches now default to clubs and
@@ -18,6 +19,7 @@ import { useFullMatchPrivacyNotice } from '@/hooks/useFullMatchPrivacyNotice'
  *   banner — desktop v1 player dashboard, a full-width strip
  */
 export function FullMatchPrivacyNotice({ variant = 'card', className }: { variant?: 'card' | 'banner'; className?: string }) {
+  const t = useHomeT()
   const { noticeId, resolveNotice } = useFullMatchPrivacyNotice()
   const { user, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
@@ -34,10 +36,10 @@ export function FullMatchPrivacyNotice({ variant = 'card', className }: { varian
       setConfirming(false)
       await resolveNotice(true)
       void refreshProfile()
-      addToast('Your full matches are now public.', 'success')
+      addToast(t('fullMatchNotice.madePublicToast'), 'success')
     } catch (err) {
       logger.error('[FullMatchPrivacyNotice] make public failed', err)
-      addToast('Could not save that. Please try again.', 'error')
+      addToast(t('fullMatchNotice.saveFailedToast'), 'error')
     } finally {
       setSaving(false)
     }
@@ -62,9 +64,9 @@ export function FullMatchPrivacyNotice({ variant = 'card', className }: { varian
             <Lock className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 id="full-match-privacy-title" className="text-body font-semibold text-ink-1">Your full matches are now for clubs and coaches</h2>
+            <h2 id="full-match-privacy-title" className="text-body font-semibold text-ink-1">{t('fullMatchNotice.title')}</h2>
             <p className="mt-0.5 text-secondary text-ink-2">
-              Only clubs and coaches who recruit can watch your full matches. Highlights stay public. You can change this any time in Settings → Privacy.
+              {t('fullMatchNotice.body')}
             </p>
           </div>
         </div>
@@ -74,36 +76,36 @@ export function FullMatchPrivacyNotice({ variant = 'card', className }: { varian
             onClick={() => void resolveNotice(false)}
             className="h-9 rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white transition-opacity active:opacity-80"
           >
-            Keep it
+            {t('fullMatchNotice.keep')}
           </button>
           <button
             type="button"
             onClick={() => setConfirming(true)}
             className={cn('h-9 rounded-full px-4 text-secondary font-semibold text-ink-1 transition-colors', banner ? 'bg-surface-grouped hover:bg-[#e9e9ef]' : 'bg-white active:bg-[#e9e9ef]')}
           >
-            Make them public
+            {t('fullMatchNotice.makePublic')}
           </button>
         </div>
       </section>
 
-      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel="Make your full matches public">
+      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={t('fullMatchNotice.confirmAria')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Make your full matches public?</h2>
-          <p className="mt-1.5 text-row text-ink-2">Anyone on Hockia will be able to watch your full matches. You can switch back any time in Settings → Privacy.</p>
+          <h2 className="text-title text-ink-1">{t('fullMatchNotice.confirmTitle')}</h2>
+          <p className="mt-1.5 text-row text-ink-2">{t('fullMatchNotice.confirmBody')}</p>
           <button
             type="button"
             disabled={saving}
             onClick={() => void makePublic()}
             className="mt-5 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60"
           >
-            {saving ? 'Saving…' : 'Make them public'}
+            {saving ? t('fullMatchNotice.saving') : t('fullMatchNotice.confirmCta')}
           </button>
           <button
             type="button"
             onClick={() => setConfirming(false)}
             className="mt-2 flex h-[50px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1"
           >
-            Cancel
+            {t('fullMatchNotice.cancel')}
           </button>
         </div>
       </BottomSheet>

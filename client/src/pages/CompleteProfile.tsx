@@ -28,7 +28,9 @@ import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { showsClubSetup } from '@/lib/clubSetup'
 import { markOnboardingCompletedOnDevice } from '@/lib/overlaySequence'
-import { legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft } from '@/lib/onboardingV2'
+import { legacyWizardDraftKey, parseWizardDraft, serializeWizardDraft, tOnboardingEnglish } from '@/lib/onboardingV2'
+import { Trans } from 'react-i18next'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { Button as UiButton } from '@/components/ui/Button'
@@ -69,6 +71,7 @@ type OfficiatingSpecialization = 'outdoor' | 'indoor' | 'both' | ''
  */
 export default function CompleteProfile() {
   const navigate = useNavigate()
+  const t = useOnboardingT()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const profilePrefilledRef = useRef(false)
   const contactPrefilledRef = useRef<string | null>(null)
@@ -214,15 +217,15 @@ export default function CompleteProfile() {
 
   const stepLabels: Record<UserRole, Record<WizardStep, string>> = {
     player: {
-      1: 'About you',
-      2: 'Where you are based',
-      3: 'Your game',
+      1: t('complete.steps.aboutYou'),
+      2: t('complete.steps.whereBased'),
+      3: t('complete.steps.yourGame'),
     },
     coach: { 1: '', 2: '', 3: '' },
     umpire: {
-      1: 'About you',
-      2: 'Where you are based',
-      3: 'Your officiating credentials',
+      1: t('complete.steps.aboutYou'),
+      2: t('complete.steps.whereBased'),
+      3: t('complete.steps.credentials'),
     },
     club: { 1: '', 2: '', 3: '' },
     brand: { 1: '', 2: '', 3: '' },
@@ -267,7 +270,7 @@ export default function CompleteProfile() {
     }
 
     if (!user) {
-      setError('No user session found. Please sign in again.')
+      setError(t('complete.errors.noSession'))
       return
     }
 
@@ -292,7 +295,7 @@ export default function CompleteProfile() {
       if (!session) {
         onboardingBreadcrumb('role_selected.no_session', { role: selectedRole })
         setSessionExpired(true)
-        setError('Your sign-in has expired. Sign in again to finish setting up your profile.')
+        setError(t('complete.errors.signInExpired'))
         profileCreationMutexRef.current = false
         return
       }
@@ -308,7 +311,7 @@ export default function CompleteProfile() {
         if (rpcError && /requires authentication/i.test(rpcError.message)) {
           onboardingBreadcrumb('role_selected.no_session', { role: selectedRole, after: 'retry' })
           setSessionExpired(true)
-          setError('Your sign-in has expired. Sign in again to finish setting up your profile.')
+          setError(t('complete.errors.signInExpired'))
           profileCreationMutexRef.current = false
           return
         }
@@ -319,7 +322,7 @@ export default function CompleteProfile() {
           role: selectedRole,
           stage: 'createProfileForOAuth',
         }, 'CompleteProfile.handleRoleSelection.rpc')
-        throw new Error(`Failed to create profile: ${rpcError.message}`)
+        throw new Error(t('complete.errors.createFailedDetail', { message: rpcError.message }))
       }
 
       logger.debug('[COMPLETE_PROFILE] Profile created successfully', { profileId: newProfile?.id })
@@ -350,7 +353,7 @@ export default function CompleteProfile() {
         stage: 'handleRoleSelectionCatch',
       }, 'CompleteProfile.handleRoleSelection.catch')
       logger.error('[COMPLETE_PROFILE] Error creating profile:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create profile. Please try again.')
+      setError(err instanceof Error ? err.message : t('complete.errors.createFailed'))
       // Release mutex on error so user can retry
       profileCreationMutexRef.current = false
     } finally {
@@ -626,7 +629,7 @@ export default function CompleteProfile() {
 
       const validation = validateImage(file, { maxFileSizeMB: 5 })
       if (!validation.valid) {
-        setError(validation.error || 'Invalid image')
+        setError(validation.error || t('complete.errors.invalidImage'))
         return
       }
 
@@ -667,7 +670,7 @@ export default function CompleteProfile() {
         hasUser: Boolean(user?.id),
       }, 'CompleteProfile.handleAvatarUpload.catch')
       logger.error('Error uploading avatar:', err)
-      setError('We couldn\'t upload this image. Please use PNG or JPG up to 5MB.')
+      setError(t('complete.errors.uploadFailed'))
     } finally {
       setUploadingAvatar(false)
     }
@@ -683,7 +686,7 @@ export default function CompleteProfile() {
         }
       } catch (err) {
         logger.error('Native image picker error:', err)
-        setError('Could not access camera or photos. Please check app permissions.')
+        setError(t('complete.errors.pickerFailed'))
       }
       return
     }
@@ -733,7 +736,7 @@ export default function CompleteProfile() {
       setFormData(formForValidation)
     }
 
-    const stepError = validateOnboardingStep(currentStep, userRole, formForValidation)
+    const stepError = validateOnboardingStep(currentStep, userRole, formForValidation, t)
     if (stepError) {
       setError(stepError)
       // Emit so we can see which step + which validation rule users get stuck on.
@@ -741,7 +744,8 @@ export default function CompleteProfile() {
         step: 'wizard_step_validation_failed',
         role: userRole,
         wizard_step: currentStep,
-        reason: stepError,
+        // The funnel keeps the English reason whatever the interface language.
+        reason: validateOnboardingStep(currentStep, userRole, formForValidation, tOnboardingEnglish),
       })
       return
     }
@@ -764,34 +768,34 @@ export default function CompleteProfile() {
   // React state hasn't re-rendered yet.
   const validateForm = (form: typeof formData = formData): string | null => {
     if (userRole === 'player') {
-      if (!form.fullName.trim()) return 'Full name is required.'
-      if (!form.city.trim()) return 'Base location is required.'
-      if (!form.nationalityCountryId) return 'Nationality is required.'
-      if (!form.position) return 'Position is required.'
-      if (!form.playingCategory) return 'Please select your playing category.'
+      if (!form.fullName.trim()) return t('validation.fullName')
+      if (!form.city.trim()) return t('validation.location')
+      if (!form.nationalityCountryId) return t('validation.nationality')
+      if (!form.position) return t('validation.position')
+      if (!form.playingCategory) return t('validation.playingCategory')
       if (form.secondaryPosition && form.secondaryPosition === form.position) {
-        return 'Primary and secondary positions must be different.'
+        return t('validation.positionsDiffer')
       }
     } else if (userRole === 'umpire') {
-      if (!form.fullName.trim()) return 'Full name is required.'
-      if (!form.city.trim()) return 'Base location is required.'
-      if (!form.nationalityCountryId) return 'Nationality is required.'
+      if (!form.fullName.trim()) return t('validation.fullName')
+      if (!form.city.trim()) return t('validation.location')
+      if (!form.nationalityCountryId) return t('validation.nationality')
       // Umpiring categories are optional per Phase 3 product direction.
-      if (!form.umpireLevel.trim()) return 'Please add your umpire level.'
-      if (!form.federation.trim()) return 'Please add the federation you officiate with.'
-      if (!form.officiatingSpecialization) return 'Please choose outdoor, indoor, or both.'
+      if (!form.umpireLevel.trim()) return t('validation.umpireLevel')
+      if (!form.federation.trim()) return t('validation.federation')
+      if (!form.officiatingSpecialization) return t('validation.officiating')
       if (form.languages.length === 0) {
-        return 'Please add at least one language you can officiate in.'
+        return t('validation.languages')
       }
     } else if (userRole === 'club') {
-      if (!form.clubName.trim()) return 'Club name is required.'
-      if (!form.city.trim()) return 'City is required.'
-      if (!form.nationalityCountryId) return 'Country is required.'
-      if (!form.contactEmail.trim()) return 'Contact email is required.'
+      if (!form.clubName.trim()) return t('validation.clubName')
+      if (!form.city.trim()) return t('validation.city')
+      if (!form.nationalityCountryId) return t('validation.country')
+      if (!form.contactEmail.trim()) return t('validation.contactEmail')
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(form.contactEmail)) {
-        return 'Please enter a valid email address.'
+        return t('validation.emailInvalid')
       }
     }
     return null
@@ -841,18 +845,18 @@ export default function CompleteProfile() {
 
     try {
       if (!user) {
-        throw new Error('Session not found')
+        throw new Error(t('complete.errors.sessionMissing'))
       }
 
       if (!userRole) {
-        throw new Error('Profile role not found')
+        throw new Error(t('complete.errors.roleMissing'))
       }
 
       // Never write set-up data over a row that was not loaded: with a null
       // profile this submit would overwrite name / position and null the
       // avatar of a member whose fetch merely failed (release audit 2026-10-05).
       if (!profile) {
-        throw new Error('Your profile has not loaded yet. Please try again.')
+        throw new Error(t('complete.errors.profileNotLoaded'))
       }
 
       // Refresh the session before making auth-dependent calls.
@@ -982,7 +986,7 @@ export default function CompleteProfile() {
             stage: 'ensureProfileExistsBeforeSubmit',
           }, 'CompleteProfile.handleSubmit.createProfile')
           logger.error('Failed to create missing profile:', createError)
-          throw new Error('Could not create your profile. Please try signing out and back in.')
+          throw new Error(t('complete.errors.profileCreate'))
         }
       }
 
@@ -994,15 +998,15 @@ export default function CompleteProfile() {
       if (isPersonRole) {
         const dob = formData.dateOfBirth || formSnapshot.dateOfBirth || ''
         if (!dob) {
-          throw new Error('Please enter your date of birth. Hockia is an 18+ platform.')
+          throw new Error(t('complete.errors.dobRequired'))
         }
         const { data: dobResult, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
         if (dobError) {
-          throw new Error('Could not save your date of birth. Please try again.')
+          throw new Error(t('complete.errors.dobSave'))
         }
         const outcome = (dobResult as { outcome?: string } | null)?.outcome
         if (outcome === 'invalid_dob') {
-          throw new Error('That date of birth doesn’t look right. Please check it.')
+          throw new Error(t('complete.errors.dobInvalid'))
         }
         if (outcome === 'frozen') {
           // Under 18: account frozen server-side; do NOT complete onboarding.
@@ -1026,7 +1030,7 @@ export default function CompleteProfile() {
           updatedFields: lastUpdatedFields,
         }, 'CompleteProfile.handleSubmit.updateProfile')
         logger.error('Error updating profile:', updateError)
-        throw new Error(`Failed to update profile: ${updateError.message}`)
+        throw new Error(t('complete.errors.updateFailedDetail', { message: updateError.message }))
       }
 
       logger.debug('Profile updated successfully')
@@ -1048,7 +1052,7 @@ export default function CompleteProfile() {
           }, 'CompleteProfile.handleSubmit.verifyProfileFetch')
         }
         logger.error('Error fetching updated profile:', fetchError)
-        throw new Error('Profile updated but could not verify. Please refresh the page.')
+        throw new Error(t('complete.errors.verifyFailed'))
       }
 
       logger.debug('Updated profile verified:', verifiedProfile)
@@ -1092,7 +1096,7 @@ export default function CompleteProfile() {
         updatedFields: lastUpdatedFields,
       }, 'CompleteProfile.handleSubmit.catch')
       logger.error('Complete profile error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to complete profile. Please try again.')
+      setError(err instanceof Error ? err.message : t('complete.errors.completeFailed'))
     } finally {
       setLoading(false)
     }
@@ -1104,7 +1108,7 @@ export default function CompleteProfile() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
+          <p className="text-gray-600">{t('complete.status.loading')}</p>
         </div>
       </div>
     )
@@ -1120,15 +1124,15 @@ export default function CompleteProfile() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Error</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('complete.status.noUserTitle')}</h2>
           <p className="text-gray-600 mb-6">
-            {'No session found. Please sign in again.'}
+            {t('complete.status.noUserBody')}
           </p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
-            Back to Home
+            {t('complete.status.noUserHome')}
           </button>
         </div>
       </div>
@@ -1145,14 +1149,14 @@ export default function CompleteProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4" data-testid="profile-load-error">
         <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">We couldn’t load your profile</h2>
-          <p className="text-gray-600 mb-6">Check your connection and try again. Nothing has been changed.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('complete.status.loadErrorTitle')}</h2>
+          <p className="text-gray-600 mb-6">{t('complete.status.loadErrorBody')}</p>
           <button
             type="button"
             onClick={() => void fetchProfile(user.id, { force: true })}
             className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
-            Retry
+            {t('complete.status.loadErrorRetry')}
           </button>
           <SetupSignOut placement="footer" />
         </div>
@@ -1264,7 +1268,7 @@ export default function CompleteProfile() {
       <div className="absolute inset-0 overflow-hidden">
         <img
           src="/hero-desktop.webp"
-          alt="Field Hockey"
+          alt={t('complete.header.heroAlt')}
           className="w-full h-full object-cover"
           loading="lazy"
         />
@@ -1283,7 +1287,7 @@ export default function CompleteProfile() {
               <SetupSignOut className="text-white/80 active:text-white" />
             </div>
             <p className="text-white/90 text-sm">
-              Complete your profile to get started
+              {t('complete.header.tagline')}
             </p>
             {userRole === 'club' && (
               <div className="mt-3 flex items-center gap-3">
@@ -1294,7 +1298,7 @@ export default function CompleteProfile() {
                   />
                 </div>
                 <span className="text-white/80 text-xs font-medium whitespace-nowrap">
-                  Step {showClubClaimStep ? '1' : '2'} of 2
+                  {t('complete.header.clubStep', { current: showClubClaimStep ? '1' : '2' })}
                 </span>
               </div>
             )}
@@ -1315,12 +1319,12 @@ export default function CompleteProfile() {
           {(userRole !== 'club' || !showClubClaimStep) && (
           <form onSubmit={handleSubmit} className="p-8 md:max-h-[80vh] md:overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {userRole === 'player' && 'Complete Player Profile'}
-              {userRole === 'umpire' && 'Complete Umpire Profile'}
-              {userRole === 'club' && 'Complete Club Profile'}
+              {userRole === 'player' && t('complete.form.titlePlayer')}
+              {userRole === 'umpire' && t('complete.form.titleUmpire')}
+              {userRole === 'club' && t('complete.form.titleClub')}
             </h3>
             <p className="text-gray-600 mb-6">
-              {isWizardFlow ? `Step ${currentStep} of 3 · ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
+              {isWizardFlow ? t('complete.form.wizardStep', { current: currentStep, label: stepLabels[userRole][currentStep] }) : t('complete.form.intro')}
             </p>
 
             {/* Step indicator — umpire wizard only.
@@ -1332,16 +1336,16 @@ export default function CompleteProfile() {
             {isWizardFlow && (
               <ol
                 className="mb-6 flex items-center gap-2"
-                aria-label="Profile completion steps"
+                aria-label={t('complete.form.stepsLabel')}
               >
                 {([1, 2, 3] as WizardStep[]).map((step, idx) => {
                   const isCompleted = step < currentStep
                   const isActive = step === currentStep
-                  const statusText = isCompleted
-                    ? 'completed'
+                  const statusKey = isCompleted
+                    ? 'complete.steps.statusCompleted'
                     : isActive
-                    ? 'current step'
-                    : 'not started'
+                    ? 'complete.steps.statusCurrent'
+                    : 'complete.steps.statusNotStarted'
                   return (
                     <li key={step} className="flex items-center flex-1">
                       <div
@@ -1358,7 +1362,7 @@ export default function CompleteProfile() {
                           {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
                         </span>
                         <span className="sr-only">
-                          {`Step ${step} of 3, ${stepLabels[userRole][step]}, ${statusText}`}
+                          {t(statusKey, { step, label: stepLabels[userRole][step] })}
                         </span>
                       </div>
                       {idx < 2 && (
@@ -1387,7 +1391,7 @@ export default function CompleteProfile() {
             {(!isWizardFlow || currentStep === 1) && (
             <div className="mb-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Profile Photo <span className="text-gray-500">(Optional)</span>
+                <Trans t={t} i18nKey="complete.photo.label" components={{ optional: <span className="text-gray-500" /> }} />
               </label>
               <div className="flex items-center gap-4">
                 <div
@@ -1395,7 +1399,7 @@ export default function CompleteProfile() {
                   className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center cursor-pointer hover:from-purple-200 hover:to-indigo-200 transition-all overflow-hidden border-2 border-white shadow-md"
                 >
                   {avatarUrl ? (
-                    <img src={getImageUrl(avatarUrl, 'avatar-md') ?? avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" loading="eager" decoding="async" />
+                    <img src={getImageUrl(avatarUrl, 'avatar-md') ?? avatarUrl} alt={t('complete.photo.previewAlt')} className="w-full h-full object-cover" loading="eager" decoding="async" />
                   ) : (
                     <Camera className="w-8 h-8 text-purple-600" />
                   )}
@@ -1410,15 +1414,15 @@ export default function CompleteProfile() {
                     {uploadingAvatar ? (
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                        Uploading...
+                        {t('complete.photo.uploading')}
                       </span>
                     ) : avatarUrl ? (
-                      'Change Photo'
+                      t('complete.photo.change')
                     ) : (
-                      'Upload Photo'
+                      t('complete.photo.upload')
                     )}
                   </button>
-                  <p className="text-xs text-gray-500 mt-1">PNG or JPG, up to 5MB</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('complete.photo.hint')}</p>
                 </div>
               </div>
               <input
@@ -1428,7 +1432,7 @@ export default function CompleteProfile() {
                 onChange={handleAvatarUpload}
                 className="hidden"
                 disabled={uploadingAvatar}
-                aria-label="Upload profile photo"
+                aria-label={t('complete.photo.inputLabel')}
               />
             </div>
             )}
@@ -1448,28 +1452,28 @@ export default function CompleteProfile() {
                   {currentStep === 1 && (
                     <>
                       <Input
-                        label="Full Name"
+                        label={t('complete.umpire.fullName')}
                         icon={<User className="w-5 h-5" />}
-                        placeholder="Enter your full name"
+                        placeholder={t('complete.umpire.fullNamePlaceholder')}
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         required
                       />
 
                       <CountrySelect
-                        label="Nationality"
+                        label={t('complete.umpire.nationality')}
                         value={formData.nationalityCountryId}
                         onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                        placeholder="Select your nationality"
+                        placeholder={t('complete.umpire.nationalityPlaceholder')}
                         showNationality
                         required
                       />
 
                       <CountrySelect
-                        label="Secondary Nationality (Optional)"
+                        label={t('complete.umpire.secondNationality')}
                         value={formData.nationality2CountryId}
                         onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
-                        placeholder="Select secondary nationality"
+                        placeholder={t('complete.umpire.secondNationalityPlaceholder')}
                         showNationality
                       />
                     </>
@@ -1478,9 +1482,9 @@ export default function CompleteProfile() {
                   {currentStep === 2 && (
                     <>
                       <LocationAutocomplete
-                        label="Base Location (City, State/Province)"
+                        label={t('complete.umpire.location')}
                         icon={<MapPin className="w-5 h-5" />}
-                        placeholder="e.g., Port Jervis, NY"
+                        placeholder={t('complete.umpire.locationPlaceholder')}
                         value={formData.city}
                         onChange={handleLocationChange}
                         onLocationSelect={handleLocationSelect}
@@ -1490,7 +1494,7 @@ export default function CompleteProfile() {
                       />
 
                       <DateOfBirthPicker
-                        label="Date of Birth"
+                        label={t('complete.umpire.dateOfBirth')}
                         required
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
@@ -1502,14 +1506,14 @@ export default function CompleteProfile() {
                   {currentStep === 3 && (
                     <>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">
-                        Officiating credentials
+                        {t('complete.umpire.credentialsHeading')}
                       </p>
 
                       <div>
                         <label id="umpiring-categories-label" className="block text-sm font-medium text-gray-700 mb-2">
-                          Umpiring Categories <span className="text-gray-400 font-normal">(optional)</span>
+                          <Trans t={t} i18nKey="complete.umpire.categories" components={{ optional: <span className="text-gray-400 font-normal" /> }} />
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">Which categories do you umpire or want to umpire?</p>
+                        <p className="text-xs text-gray-500 mb-3">{t('complete.umpire.categoriesHint')}</p>
                         <MultiCategorySelector
                           idPrefix="umpiring-categories"
                           value={formData.umpiringCategories.length > 0 ? formData.umpiringCategories : null}
@@ -1520,10 +1524,10 @@ export default function CompleteProfile() {
                       {/* Level + Federation datalists — free text with suggestions */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="umpire-level">
-                          Umpire level <span className="text-red-500">*</span>
+                          {t('complete.umpire.level')} <span className="text-red-500">*</span>
                         </label>
                         <p className="text-xs text-gray-500 mb-2">
-                          e.g., FIH International, National Panel, Regional. Pick a suggestion or type your own.
+                          {t('complete.umpire.levelHint')}
                         </p>
                         <input
                           id="umpire-level"
@@ -1531,7 +1535,7 @@ export default function CompleteProfile() {
                           list="umpire-level-suggestions"
                           value={formData.umpireLevel}
                           onChange={(e) => setFormData({ ...formData, umpireLevel: e.target.value })}
-                          placeholder="Start typing…"
+                          placeholder={t('complete.umpire.levelPlaceholder')}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
@@ -1545,10 +1549,10 @@ export default function CompleteProfile() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="umpire-federation">
-                          Federation <span className="text-red-500">*</span>
+                          {t('complete.umpire.federation')} <span className="text-red-500">*</span>
                         </label>
                         <p className="text-xs text-gray-500 mb-2">
-                          The body you are registered or active with.
+                          {t('complete.umpire.federationHint')}
                         </p>
                         <input
                           id="umpire-federation"
@@ -1556,7 +1560,7 @@ export default function CompleteProfile() {
                           list="federation-suggestions"
                           value={formData.federation}
                           onChange={(e) => setFormData({ ...formData, federation: e.target.value })}
-                          placeholder="e.g., FIH, England Hockey, CAH"
+                          placeholder={t('complete.umpire.federationPlaceholder')}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
@@ -1571,7 +1575,7 @@ export default function CompleteProfile() {
                       {/* Umpiring since (year) */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="umpire-since">
-                          Umpiring since (year)
+                          {t('complete.umpire.since')}
                         </label>
                         <input
                           id="umpire-since"
@@ -1581,7 +1585,7 @@ export default function CompleteProfile() {
                           max={new Date().getFullYear()}
                           value={formData.umpireSince}
                           onChange={(e) => setFormData({ ...formData, umpireSince: e.target.value })}
-                          placeholder="e.g., 2018"
+                          placeholder={t('complete.umpire.sincePlaceholder')}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                           autoComplete="off"
                         />
@@ -1590,14 +1594,14 @@ export default function CompleteProfile() {
                       {/* Specialization */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Specialization <span className="text-red-500">*</span>
+                          {t('complete.umpire.specialization')} <span className="text-red-500">*</span>
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           {(['outdoor', 'indoor', 'both'] as const).map((value) => {
                             const labels: Record<typeof value, string> = {
-                              outdoor: 'Outdoor',
-                              indoor: 'Indoor',
-                              both: 'Outdoor & Indoor',
+                              outdoor: t('complete.umpire.specOutdoor'),
+                              indoor: t('complete.umpire.specIndoor'),
+                              both: t('complete.umpire.specBoth'),
                             }
                             const active = formData.officiatingSpecialization === value
                             return (
@@ -1620,7 +1624,7 @@ export default function CompleteProfile() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3" htmlFor="umpire-languages">
-                          Languages <span className="text-red-500">*</span>
+                          {t('complete.umpire.languages')} <span className="text-red-500">*</span>
                         </label>
 
                         {/* Selected chips */}
@@ -1640,7 +1644,7 @@ export default function CompleteProfile() {
                                       languages: formData.languages.filter((l) => l !== lang),
                                     })
                                   }
-                                  aria-label={`Remove ${lang}`}
+                                  aria-label={t('complete.umpire.removeLanguage', { language: lang })}
                                   className="text-hockia-primary hover:text-[#6B20D4]"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -1660,7 +1664,7 @@ export default function CompleteProfile() {
                             list="language-suggestions"
                             value={formData.pendingLanguage}
                             onChange={(e) => setFormData({ ...formData, pendingLanguage: e.target.value })}
-                            placeholder="e.g., English, Spanish, Dutch"
+                            placeholder={t('complete.umpire.languagePlaceholder')}
                             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                             autoComplete="off"
                             onKeyDown={(e) => {
@@ -1694,7 +1698,7 @@ export default function CompleteProfile() {
                             disabled={!formData.pendingLanguage.trim()}
                             className="px-4 py-3 rounded-lg bg-hockia-primary text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           >
-                            Add
+                            {t('complete.umpire.addLanguage')}
                           </button>
                         </div>
                         <datalist id="language-suggestions">
@@ -1702,7 +1706,7 @@ export default function CompleteProfile() {
                             <option key={lang} value={lang} />
                           ))}
                         </datalist>
-                        <p className="text-xs text-gray-400 mt-2">Press Enter or tap Add. You can edit this later.</p>
+                        <p className="text-xs text-gray-400 mt-2">{t('complete.umpire.languagesHint')}</p>
                       </div>
                     </>
                   )}
@@ -1713,18 +1717,18 @@ export default function CompleteProfile() {
               {userRole === 'club' && (
                 <>
                   <Input
-                    label="Club Name"
+                    label={t('complete.club.name')}
                     icon={<Building2 className="w-5 h-5" />}
-                    placeholder="Enter your club name"
+                    placeholder={t('complete.club.namePlaceholder')}
                     value={formData.clubName}
                     onChange={(e) => setFormData({ ...formData, clubName: e.target.value })}
                     required
                   />
 
                   <LocationAutocomplete
-                    label="City"
+                    label={t('complete.club.city')}
                     icon={<MapPin className="w-5 h-5" />}
-                    placeholder="Club location"
+                    placeholder={t('complete.club.cityPlaceholder')}
                     value={formData.city}
                     onChange={handleLocationChange}
                     onLocationSelect={handleLocationSelect}
@@ -1734,52 +1738,52 @@ export default function CompleteProfile() {
                   />
 
                   <CountrySelect
-                    label="Country"
+                    label={t('complete.club.country')}
                     value={formData.nationalityCountryId}
                     onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                    placeholder="Select country"
+                    placeholder={t('complete.club.countryPlaceholder')}
                     disabled={!showClubClaimStep && !!formData.nationalityCountryId}
                     required
                   />
 
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">League Information</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">{t('complete.club.leagueHeading')}</p>
 
                   <Input
-                    label="Year Founded (Optional)"
+                    label={t('complete.club.yearFounded')}
                     type="number"
-                    placeholder="YYYY"
+                    placeholder={t('complete.club.yearPlaceholder')}
                     value={formData.yearFounded}
                     onChange={(e) => setFormData({ ...formData, yearFounded: e.target.value })}
                   />
 
                   <Input
-                    label="Women's League (Optional)"
-                    placeholder="e.g. Serie A1"
+                    label={t('complete.club.womensLeague')}
+                    placeholder={t('complete.club.womensLeaguePlaceholder')}
                     value={formData.womensLeagueDivision}
                     onChange={(e) => setFormData({ ...formData, womensLeagueDivision: e.target.value })}
                   />
 
                   <Input
-                    label="Men's League (Optional)"
-                    placeholder="e.g. Premier Division"
+                    label={t('complete.club.mensLeague')}
+                    placeholder={t('complete.club.mensLeaguePlaceholder')}
                     value={formData.mensLeagueDivision}
                     onChange={(e) => setFormData({ ...formData, mensLeagueDivision: e.target.value })}
                   />
 
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Contact & About</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">{t('complete.club.contactHeading')}</p>
 
                   <Input
-                    label="Website (Optional)"
+                    label={t('complete.club.website')}
                     type="url"
-                    placeholder="https://yourclub.com"
+                    placeholder={t('complete.club.websitePlaceholder')}
                     value={formData.website}
                     onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   />
 
                   <Input
-                    label="Contact Email"
+                    label={t('complete.club.contactEmail')}
                     type="email"
-                    placeholder="contact@club.com"
+                    placeholder={t('complete.club.contactEmailPlaceholder')}
                     value={formData.contactEmail}
                     onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                     required
@@ -1787,12 +1791,12 @@ export default function CompleteProfile() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Club Bio (Optional)
+                      {t('complete.club.bio')}
                     </label>
                     <textarea
                       value={formData.clubBio}
                       onChange={(e) => setFormData({ ...formData, clubBio: e.target.value })}
-                      placeholder="Tell us about your club..."
+                      placeholder={t('complete.club.bioPlaceholder')}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       rows={4}
                     />
@@ -1809,7 +1813,7 @@ export default function CompleteProfile() {
                   disabled={loading}
                   className="px-6"
                 >
-                  Back
+                  {t('complete.form.back')}
                 </UiButton>
               )}
 
@@ -1824,7 +1828,7 @@ export default function CompleteProfile() {
                   disabled={loading}
                   className="px-6"
                 >
-                  Back
+                  {t('complete.form.back')}
                 </UiButton>
               )}
 
@@ -1836,7 +1840,7 @@ export default function CompleteProfile() {
                   disabled={loading}
                   className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                 >
-                  Next
+                  {t('complete.form.next')}
                 </Button>
               )}
 
@@ -1847,7 +1851,7 @@ export default function CompleteProfile() {
                   disabled={loading}
                   className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                 >
-                  {loading ? 'Saving Profile...' : 'Complete Profile'}
+                  {loading ? t('complete.form.saving') : t('complete.form.submit')}
                 </Button>
               )}
             </div>

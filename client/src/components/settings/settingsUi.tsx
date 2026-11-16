@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CONTACT_EMAIL_SWITCH_HELP, CONTACT_EMAIL_SWITCH_LABEL } from '@/lib/clubSettingsCopy'
 import { switchTrackClass } from '@/components/ui/switchClasses'
+import { useSettingsT } from '@/i18n/ns/settings'
 
 /**
  * iOS grouped-list pieces for the phone Settings screens (Figma Settings v2 ·
@@ -88,14 +89,15 @@ export function ContactEmailPublicRow({ checked, disabled, onChange }: { checked
 
 /** Cancel + Save under an edit sheet: Cancel closes without saving
  *  (tap-outside and Escape still close too). */
-export function SheetActions({ onCancel, onSave, saving, saveLabel = 'Save' }: { onCancel: () => void; onSave: () => void; saving?: boolean; saveLabel?: string }) {
+export function SheetActions({ onCancel, onSave, saving, saveLabel }: { onCancel: () => void; onSave: () => void; saving?: boolean; saveLabel?: string }) {
+  const t = useSettingsT()
   return (
     <div className="flex gap-3">
       <button type="button" onClick={onCancel} disabled={saving} className="flex h-[50px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1 disabled:opacity-60">
-        Cancel
+        {t('sheet.cancel')}
       </button>
       <button type="button" onClick={onSave} disabled={saving} className="flex h-[50px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">
-        {saving ? 'Saving…' : saveLabel}
+        {saving ? t('sheet.saving') : saveLabel ?? t('sheet.save')}
       </button>
     </div>
   )

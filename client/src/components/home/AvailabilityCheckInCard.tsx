@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * AvailabilityCheckInCard — Loop Layer L2 (v5 plan).
@@ -60,27 +61,27 @@ interface CheckInCopy {
   rationale: string
 }
 
-function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
+function buildCopy(role: Role, recruitsForTeam: boolean, t: ReturnType<typeof useHomeT>): CheckInCopy {
   switch (role) {
     case 'player':
       return {
-        question: 'Are you still open to play?',
-        rationale: 'Confirming weekly keeps your profile fresh. Clubs trust active players.',
+        question: t('checkIn.player.question'),
+        rationale: t('checkIn.player.rationale'),
       }
     case 'coach':
       return recruitsForTeam
         ? {
-            question: 'Still recruiting players?',
-            rationale: 'A weekly check keeps your candidate searches relevant.',
+            question: t('checkIn.coachRecruiting.question'),
+            rationale: t('checkIn.coachRecruiting.rationale'),
           }
         : {
-            question: 'Still open to coaching opportunities?',
-            rationale: 'Confirming weekly keeps your profile fresh. Clubs trust active coaches.',
+            question: t('checkIn.coach.question'),
+            rationale: t('checkIn.coach.rationale'),
           }
     case 'umpire':
       return {
-        question: 'Still active as an umpire?',
-        rationale: 'A weekly confirmation keeps your matches and references current.',
+        question: t('checkIn.umpire.question'),
+        rationale: t('checkIn.umpire.rationale'),
       }
   }
 }
@@ -95,6 +96,7 @@ export function AvailabilityCheckInCard({
   onClick,
   onDismiss,
 }: AvailabilityCheckInCardProps) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
   const setProfile = useAuthStore((state) => state.setProfile)
@@ -106,7 +108,7 @@ export function AvailabilityCheckInCard({
   if (!role || !['player', 'coach', 'umpire'].includes(role)) return null
 
   const recruitsForTeam = readBoolean(item.metadata, ['current_state', 'coach_recruits_for_team'])
-  const copy = buildCopy(role, recruitsForTeam)
+  const copy = buildCopy(role, recruitsForTeam, t)
 
   const handleConfirm = async () => {
     if (busy) return
@@ -164,8 +166,8 @@ export function AvailabilityCheckInCard({
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Confirmed. Thanks for checking in.</p>
-            <p className="text-xs text-gray-600 mt-0.5">Your profile stays fresh for another 60 days.</p>
+            <p className="text-sm font-semibold text-gray-900">{t('checkIn.confirmedTitle')}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{t('checkIn.confirmedBody')}</p>
           </div>
         </div>
       </article>
@@ -182,7 +184,7 @@ export function AvailabilityCheckInCard({
         onClick={handleDismiss}
         disabled={busy}
         className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40"
-        aria-label="Dismiss"
+        aria-label={t('checkIn.dismiss')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -193,7 +195,7 @@ export function AvailabilityCheckInCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
-            Weekly check-in
+            {t('checkIn.eyebrow')}
           </p>
           <h3 className="text-base font-semibold text-gray-900 leading-snug">{copy.question}</h3>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">{copy.rationale}</p>
@@ -206,7 +208,7 @@ export function AvailabilityCheckInCard({
               className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary text-white px-4 py-1.5 text-xs font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <Zap className="w-3 h-3" aria-hidden="true" />
-              Yes, still open
+              {t('checkIn.confirm')}
             </button>
             <button
               type="button"
@@ -215,7 +217,7 @@ export function AvailabilityCheckInCard({
               className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white text-gray-700 px-4 py-1.5 text-xs font-semibold hover:bg-gray-50 transition-colors disabled:opacity-60"
             >
               <Edit2 className="w-3 h-3" aria-hidden="true" />
-              Not right now
+              {t('checkIn.notNow')}
             </button>
           </div>
         </div>

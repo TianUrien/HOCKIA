@@ -5,7 +5,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useUndoToast } from '@/lib/undoToast'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { withdrawnApplicationMessage } from '@/lib/applicationStatus'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
@@ -445,7 +445,7 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
           return
         }
         queryClient.setQueryData(queryKey, before)
-        addToast(withdrawn ? WITHDRAWN_APPLICATION_MESSAGE : 'Couldn’t save that change. Please try again.', withdrawn ? 'info' : 'error')
+        addToast(withdrawn ? withdrawnApplicationMessage() : 'Couldn’t save that change. Please try again.', withdrawn ? 'info' : 'error')
       })
       showUndo({ applicationId: app.id, text: `${firstName} moved to Maybe`, onUndo: () => queryClient.setQueryData(queryKey, before) })
       return

@@ -6,7 +6,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useUndoToast } from '@/lib/undoToast'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { withdrawnApplicationMessage } from '@/lib/applicationStatus'
 import { useShortlists } from '@/hooks/useShortlists'
 import { useProfileInviteAction } from '@/hooks/useInvites'
 import { effectiveContextRow, useRecruitingContext } from '@/hooks/useRecruitingContext'
@@ -229,7 +229,7 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
       holdDecision({ kind: 'status', applicationId: application.id, status: 'shortlisted', metadata }, (ok, withdrawn) => {
         if (ok) { trackDbEvent('applicant_status_change', 'application', application.id, { new_status: 'shortlisted', reason: null }); return }
         queryClient.setQueryData<ClubViewApplication | null>(key, (a) => (a ? { ...a, status: prev } : a))
-        addToast(withdrawn ? WITHDRAWN_APPLICATION_MESSAGE : 'Couldn’t save that decision. Please try again.', withdrawn ? 'info' : 'error')
+        addToast(withdrawn ? withdrawnApplicationMessage() : 'Couldn’t save that decision. Please try again.', withdrawn ? 'info' : 'error')
       })
       showUndo({
         applicationId: application.id,

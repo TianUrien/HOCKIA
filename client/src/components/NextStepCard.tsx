@@ -1,4 +1,5 @@
 import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react'
+import { useHomeT } from '@/i18n/ns/home.core'
 
 type BucketLike = {
   id: string
@@ -45,6 +46,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
   loading = false,
   onBucketAction,
 }: NextStepCardProps<TBucket>) {
+  const t = useHomeT()
   if (loading) return null
   if (buckets.length === 0) return null
 
@@ -61,7 +63,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
 
       <div className="relative">
         {/* No progress bar or percentage (audit A2): the next missing item only. */}
-        <p className="text-sm font-semibold text-gray-900 mb-4">Your profile</p>
+        <p className="text-sm font-semibold text-gray-900 mb-4">{t('profileStep.heading')}</p>
 
         {/* Body — celebratory state when complete, next-step CTA otherwise */}
         {isComplete ? (
@@ -71,13 +73,13 @@ export default function NextStepCard<TBucket extends BucketLike>({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 mb-0.5">
-                Profile complete
+                {t('profileStep.completeEyebrow')}
               </p>
               <h3 className="text-base font-semibold text-gray-900 leading-snug">
-                Your profile is fully built
+                {t('profileStep.completeTitle')}
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed mt-1">
-                Keep it up to date as your season changes.
+                {t('profileStep.completeBody')}
               </p>
             </div>
           </div>
@@ -88,7 +90,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
-                Next step
+                {t('profileStep.nextEyebrow')}
               </p>
               <h3 className="text-base font-semibold text-gray-900 leading-snug">
                 {nextBucket.label}
@@ -103,7 +105,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
                 onClick={() => onBucketAction?.(nextBucket)}
                 className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
               >
-                Get started
+                {t('profileStep.cta')}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

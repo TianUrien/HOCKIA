@@ -8,6 +8,7 @@ import { blockMember } from '@/lib/blockMember'
 import { canReport, type ReportSubject } from '@/lib/report'
 import { getShareOrigin } from '@/lib/profileShare'
 import { logger } from '@/lib/logger'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * ⋯ on EVERY feed card (Figma H10; App Store 1.2 / Play UGC): Share post ·
@@ -30,13 +31,14 @@ interface FeedCardMenuProps {
 }
 
 export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemoveTag, ownerItems = [], onShare }: FeedCardMenuProps) {
+  const t = useHomeT()
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
   const [reporting, setReporting] = useState(false)
   const [confirmBlock, setConfirmBlock] = useState(false)
   const isOwner = Boolean(viewerId && authorId && viewerId === authorId)
   const url = `${getShareOrigin()}${sharePath}`
-  const name = authorName || 'this member'
+  const name = authorName || t('cardMenu.fallbackName')
 
   const share = async () => {
     if (onShare) { onShare(); return }
@@ -48,9 +50,9 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('cardMenu.linkCopied'), 'success')
     } catch {
-      addToast('Could not copy the link', 'error')
+      addToast(t('cardMenu.copyFailed'), 'error')
     }
   }
   const block = async () => {
@@ -58,16 +60,16 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
     if (!viewerId || !authorId) return
     try {
       await blockMember(viewerId, authorId)
-      addToast(`${name} has been blocked`, 'success')
+      addToast(t('cardMenu.blockedToast', { name }), 'success')
     } catch (err) {
       logger.error('[FeedCardMenu] block failed', err)
-      addToast('Failed to block. Please try again.', 'error')
+      addToast(t('cardMenu.blockFailed'), 'error')
     }
   }
 
   const items: MoreMenuItem[] = [
-    { key: 'share', label: 'Share post', onSelect: () => void share() },
-    { key: 'copy', label: 'Copy link', onSelect: () => void copy() },
+    { key: 'share', label: t('cardMenu.share'), onSelect: () => void share() },
+    { key: 'copy', label: t('cardMenu.copyLink'), onSelect: () => void copy() },
   ]
   if (isOwner) {
     items.push(...ownerItems)
@@ -75,17 +77,17 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
     if (onRemoveTag) {
       items.push({
         key: 'untag',
-        label: 'Remove my tag',
-        description: 'The post stays up without your name and photo.',
+        label: t('cardMenu.removeTag'),
+        description: t('cardMenu.removeTagHint'),
         destructive: true,
         onSelect: onRemoveTag,
       })
     }
     if (report && canReport(viewerId, authorId)) {
-      items.push({ key: 'report', label: 'Report post', destructive: true, onSelect: () => setReporting(true) })
+      items.push({ key: 'report', label: t('cardMenu.report'), destructive: true, onSelect: () => setReporting(true) })
     }
     if (authorId && !onRemoveTag) {
-      items.push({ key: 'block', label: `Block ${name}`, destructive: true, onSelect: () => setConfirmBlock(true) })
+      items.push({ key: 'block', label: t('cardMenu.block', { name }), destructive: true, onSelect: () => setConfirmBlock(true) })
     }
   }
 
@@ -93,7 +95,7 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
     <>
       <MoreMenu
         items={items}
-        label="Post options"
+        label={t('cardMenu.menuLabel')}
         triggerClassName="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-1 transition-colors hover:bg-surface-muted"
         iconClassName="h-[22px] w-[22px]"
         testId="feed-card-menu"
@@ -105,9 +107,9 @@ export function FeedCardMenu({ authorId, authorName, sharePath, report, onRemove
         isOpen={confirmBlock}
         onClose={() => setConfirmBlock(false)}
         onConfirm={block}
-        title={`Block ${name}?`}
-        message="You won't see each other's posts, comments or profile, and they can't message you. They aren't told."
-        confirmLabel="Block"
+        title={t('cardMenu.blockTitle', { name })}
+        message={t('cardMenu.blockBody')}
+        confirmLabel={t('cardMenu.blockConfirm')}
         variant="danger"
         testId="feed-card-block-confirm"
       />

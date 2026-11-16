@@ -13,13 +13,30 @@ import { cn } from '@/lib/utils'
  * 2026-11-15). Language names are shown in their own language on purpose, so
  * the switch can be found without reading the current one.
  */
-export function LanguageSwitch({ className, showNote = true }: { className?: string; showNote?: boolean }) {
+export function LanguageSwitch({ className, showNote = true, variant = 'segmented' }: { className?: string; showNote?: boolean; variant?: 'segmented' | 'pill' }) {
   const t = useCommonT()
   const [value, setValue] = useState<UiLanguage>(currentLanguage())
 
   const onChange = (next: UiLanguage) => {
     setValue(next)
     void chooseLanguage(next)
+  }
+
+  // One small button naming the OTHER language, for screens with no room
+  // for the two-option control (the native welcome screen).
+  if (variant === 'pill') {
+    const other: UiLanguage = value === 'en' ? 'es' : 'en'
+    return (
+      <button
+        type="button"
+        lang={other}
+        onClick={() => onChange(other)}
+        data-testid="language-switch"
+        className={cn('min-h-[36px] rounded-full bg-white/80 px-3.5 text-secondary font-medium text-ink-1 shadow-sm backdrop-blur', className)}
+      >
+        {t(other === 'es' ? 'language.spanish' : 'language.english')}
+      </button>
+    )
   }
 
   return (

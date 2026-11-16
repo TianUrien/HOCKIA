@@ -18,6 +18,7 @@ import { getCaptchaToken, CAPTCHA_FAILED_COPY } from '@/lib/captcha'
 import { getAnonymousId } from '@/lib/analyticsIdentity'
 import { getAppVersion, getRuntimePlatform } from '@/lib/appVersion'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
+import { tAuth } from '@/i18n/ns/auth'
 
 export type GuardKind = 'oauth_start' | 'password_signin' | 'signup' | 'magic_link' | 'password_reset'
 
@@ -81,8 +82,7 @@ async function post(body: Record<string, unknown>, keepalive = false): Promise<u
 /** "Too many attempts" with the wait the server gave, rounded up to minutes. */
 export function rateLimitedCopy(retryAfterSeconds: number | null | undefined): string {
   const minutes = Math.ceil((retryAfterSeconds ?? 0) / 60)
-  if (minutes <= 1) return 'Too many attempts. Please try again in a minute.'
-  return `Too many attempts. Please try again in ${minutes} minutes.`
+  return tAuth('errors.rateLimited', { count: Math.max(1, minutes) })
 }
 
 function decide(answer: unknown): GuardDecision | 'captcha_required' {

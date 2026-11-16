@@ -8,7 +8,7 @@ import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
 import { levelSoughtLabel, compensationLabel, recruitmentProblemLabel } from '@/lib/opportunityIntent'
 import { specialistSkillLabels } from '@/lib/specialistSkills'
-import { APPLICATION_TONE_CLASS, applicationStatusPill, closedRoleView, formatDurationText, roleTeamLabel } from '@/lib/opportunityCopy'
+import { APPLICATION_TONE_CLASS, BENEFIT_TILES, applicationStatusPill, closedRoleView, formatDurationText, roleTeamLabel } from '@/lib/opportunityCopy'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { MoreMenu } from '@/components/safety/MoreMenu'
@@ -19,6 +19,11 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
 import ApplicationTimeline from './ApplicationTimeline'
 import { dayFirst } from '@/lib/dayFirst'
+import { Trans } from 'react-i18next'
+import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
+import { positionLabel } from '@/lib/identity'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -44,17 +49,18 @@ interface VacancyDetailViewProps {
   ownApplicationSlot?: ReactNode
 }
 
-const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
-  housing: { icon: Home, label: 'Housing', iconColor: 'text-ink-2' },
-  car: { icon: Car, label: 'Car', iconColor: 'text-hockia-primary' },
-  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-hockia-primary' },
-  flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
-  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-hockia-primary' },
-  job: { icon: Briefcase, label: 'Job', iconColor: 'text-hockia-primary' },
-  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-hockia-primary' },
-  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-hockia-primary' },
-  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-hockia-primary' },
-  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-hockia-primary' },
+// The words come from BENEFIT_TILES (lib/opportunityCopy), the one owner of benefit labels.
+const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; iconColor: string }> = {
+  housing: { icon: Home, iconColor: 'text-ink-2' },
+  car: { icon: Car, iconColor: 'text-hockia-primary' },
+  visa: { icon: GlobeIcon, iconColor: 'text-hockia-primary' },
+  flights: { icon: Plane, iconColor: 'text-purple-500' },
+  meals: { icon: Utensils, iconColor: 'text-hockia-primary' },
+  job: { icon: Briefcase, iconColor: 'text-hockia-primary' },
+  insurance: { icon: Shield, iconColor: 'text-hockia-primary' },
+  education: { icon: GraduationCap, iconColor: 'text-hockia-primary' },
+  bonuses: { icon: DollarSign, iconColor: 'text-hockia-primary' },
+  equipment: { icon: Dumbbell, iconColor: 'text-hockia-primary' },
 }
 
 function getClubAbbreviation(name: string): string {
@@ -100,6 +106,7 @@ export default function VacancyDetailView({
   ownApplicationSlot,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
+  const t = useOpportunitiesT()
   const { user, profile } = useAuthStore()
   const { countries } = useCountries()
   const [isVisible, setIsVisible] = useState(false)
@@ -161,11 +168,11 @@ export default function VacancyDetailView({
   }
 
   // "9 Jul 2026" — day first with the year (lib/dayFirst): "Posted on …", "Apply by …".
-  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? 'Not specified'
+  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? t('overlay.notSpecified')
 
   const formatShortDate = (dateString: string | null) => {
     if (!dateString) return null
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    return new Date(dateString).toLocaleDateString(isEnglish() ? 'en-US' : intlLocale(), { month: 'short', year: 'numeric' })
   }
 
   const isImmediate = !vacancy.start_date
@@ -175,12 +182,13 @@ export default function VacancyDetailView({
   // stays player-only.
   const tags: string[] = []
   const isPlayerOpportunity = vacancy.opportunity_type === 'player'
-  if (isPlayerOpportunity) tags.push('Player')
-  if (vacancy.opportunity_type === 'coach') tags.push('Coach')
+  if (isPlayerOpportunity) tags.push(t('overlay.playerTag'))
+  if (vacancy.opportunity_type === 'coach') tags.push(t('overlay.coachTag'))
   const teamLabel = roleTeamLabel(vacancy.gender)
   if (teamLabel) tags.push(teamLabel)
   if (isPlayerOpportunity && vacancy.position) {
-    tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+    const titleCased = vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    tags.push(isEnglish() ? titleCased : positionLabel(vacancy.position) ?? titleCased)
   }
   // Matching Increment #3/#4 — surface recruiter intent on the opportunity.
   // The level sought is the recruiter's private yardstick: only the publisher
@@ -204,7 +212,7 @@ export default function VacancyDetailView({
     } else {
       // A lapsed deadline is informational only — the opportunity stays open
       // (and applyable) until the creator closes it by status.
-      deadlineText = 'Deadline passed'
+      deadlineText = t('overlay.deadlinePassed')
     }
   }
 
@@ -229,7 +237,7 @@ export default function VacancyDetailView({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={vacancy.title ? `${vacancy.title} · opportunity details` : 'Opportunity details'}
+      aria-label={vacancy.title ? t('overlay.dialogAriaTitled', { title: vacancy.title }) : t('overlay.dialogAria')}
       className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ease-out ${isVisible ? 'bg-black/50' : 'bg-black/0'}`}
     >
       {/* The padded wrapper is what visually fills the dimmed area, so the
@@ -246,7 +254,7 @@ export default function VacancyDetailView({
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full transition-colors shadow-sm"
-            aria-label="Close"
+            aria-label={t('overlay.close')}
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -280,7 +288,7 @@ export default function VacancyDetailView({
                   <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" loading="eager" fetchPriority="high" role="club" />
                   <div className="mt-2 flex items-center gap-1.5">
                     <span className="text-lg font-bold text-gray-900">{clubName}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-role-coach-bg text-role-coach-ink border border-role-coach-ink/20">Coach</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-role-coach-bg text-role-coach-ink border border-role-coach-ink/20">{t('overlay.coachBadge')}</span>
                   </div>
                 </button>
                 {worldClub ? (
@@ -316,31 +324,31 @@ export default function VacancyDetailView({
                 {isUrgent && !closed && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-warning-soft text-status-warning border border-status-warning/30">
                     <AlertTriangle className="w-3 h-3" />
-                    URGENT
+                    {t('overlay.urgent')}
                   </span>
                 )}
                 {cardType !== 'club' ? (
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-role-coach-bg text-role-coach-ink border border-role-coach-ink/20">
-                    COACH LISTED
+                    {t('overlay.coachListed')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                    CLUB LISTED
+                    {t('overlay.clubListed')}
                   </span>
                 )}
               </div>
               <div className="flex items-center">
-                <button type="button" onClick={handleShareClick} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Share opportunity">
+                <button type="button" onClick={handleShareClick} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label={t('overlay.share')}>
                   <Share2 className="w-[18px] h-[18px]" />
                 </button>
-                {showMore && <MoreMenu items={[report.item]} label="More options" triggerClassName="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" iconClassName="w-[18px] h-[18px]" testId="role-more-menu" />}
+                {showMore && <MoreMenu items={[report.item]} label={t('overlay.moreOptions')} triggerClassName="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" iconClassName="w-[18px] h-[18px]" testId="role-more-menu" />}
               </div>
             </div>
 
             {/* Title */}
             {closed && (
               <span className="mb-2 inline-flex items-center rounded-full bg-surface-grouped px-2.5 py-1 text-xs font-semibold text-ink-2" data-testid="role-closed-label">
-                Closed
+                {t('overlay.closedLabel')}
               </span>
             )}
             <h1 className={`text-2xl font-bold mb-4 leading-tight ${closed ? 'text-ink-2' : 'text-gray-900'}`}>
@@ -350,7 +358,7 @@ export default function VacancyDetailView({
             {/* Recruitment problem (Matching Increment #4) — what they're solving. */}
             {recruitmentProblem && (
               <p className="-mt-2 mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#5b16b8]">
-                <Flag className="w-4 h-4" /> Solving: {recruitmentProblem}
+                <Flag className="w-4 h-4" /> {t('overlay.solving', { problem: recruitmentProblem })}
               </p>
             )}
 
@@ -363,7 +371,7 @@ export default function VacancyDetailView({
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 flex-shrink-0" />
-                  <span>{isImmediate ? 'Starts immediately' : `Starts ${formatShortDate(vacancy.start_date)}`}</span>
+                  <span>{isImmediate ? t('overlay.startsImmediately') : t('overlay.startsOn', { date: formatShortDate(vacancy.start_date) })}</span>
                 </div>
               </div>
               {formatDurationText(vacancy.duration_text) && (
@@ -388,7 +396,7 @@ export default function VacancyDetailView({
               <>
                 <div className="border-t border-gray-100 my-5" />
                 <div className="mb-5">
-                  <h2 className="text-base font-semibold text-gray-900 mb-2">About this opportunity</h2>
+                  <h2 className="text-base font-semibold text-gray-900 mb-2">{t('overlay.about')}</h2>
                   <p className="text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
                 </div>
               </>
@@ -397,7 +405,7 @@ export default function VacancyDetailView({
             {/* Benefits */}
             {vacancy.benefits && vacancy.benefits.length > 0 && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Benefits included</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{t('overlay.benefits')}</p>
                 <div className="flex items-center flex-wrap gap-2.5">
                   {vacancy.benefits.map((benefit) => {
                     const config = BENEFIT_CONFIG[benefit.toLowerCase()]
@@ -406,7 +414,7 @@ export default function VacancyDetailView({
                     return (
                       <span key={benefit} className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200">
                         <Icon className={`w-4 h-4 ${config.iconColor}`} />
-                        {config.label}
+                        {BENEFIT_TILES[benefit.toLowerCase()]?.label}
                       </span>
                     )
                   })}
@@ -417,7 +425,7 @@ export default function VacancyDetailView({
             {/* Custom Benefits */}
             {vacancy.custom_benefits && vacancy.custom_benefits.length > 0 && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Additional benefits</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{t('overlay.additionalBenefits')}</p>
                 <ul className="space-y-1.5">
                   {vacancy.custom_benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
@@ -432,10 +440,10 @@ export default function VacancyDetailView({
             {/* EU Passport Requirement */}
             {vacancy.eu_passport_required === true && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Requirements</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{t('overlay.requirementsEu')}</p>
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-eu-soft text-eu-ink border border-eu-ink/20">
                   <Flag className="w-4 h-4 text-eu-ink" />
-                  EU Passport Required
+                  {t('overlay.euPassportRequired')}
                 </span>
               </div>
             )}
@@ -443,7 +451,7 @@ export default function VacancyDetailView({
             {/* Requirements */}
             {vacancy.requirements && vacancy.requirements.length > 0 && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Requirements</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{t('overlay.requirements')}</p>
                 <ul className="space-y-1.5">
                   {vacancy.requirements.map((req, i) => (
                     <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
@@ -458,7 +466,7 @@ export default function VacancyDetailView({
             {/* Deadline — never on a closed role (it no longer takes applications). */}
             {vacancy.application_deadline && !closed && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Application deadline</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t('overlay.deadline')}</p>
                 <div className="flex items-center gap-2 text-[15px] text-gray-600">
                   <Calendar className="w-4 h-4 text-red-500" />
                   <span className="font-medium">{formatDate(vacancy.application_deadline)}</span>
@@ -470,7 +478,7 @@ export default function VacancyDetailView({
             {/* Contact */}
             {(vacancy.contact_email || vacancy.contact_phone) && (
               <div className="mb-5">
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Contact</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">{t('overlay.contact')}</p>
                 <div className="space-y-1.5">
                   {vacancy.contact_email && (
                     <div className="flex items-center gap-2 text-[15px]">
@@ -515,14 +523,14 @@ export default function VacancyDetailView({
                   className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 text-base font-semibold inline-flex items-center justify-center gap-2"
                 >
                   <Users className="w-4 h-4" />
-                  View applicants
+                  {t('overlay.viewApplicants')}
                 </Button>
               ) : closedView === 'applicant' ? (
                 // Closed with an application: grey, the status in the one set
                 // of words (applicationStatusPill); the timeline below carries
                 // the dates and the club's message.
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="own-application">
-                  <p className="text-sm font-semibold text-ink-2">This opportunity is closed</p>
+                  <p className="text-sm font-semibold text-ink-2">{t('overlay.closedApplicantTitle')}</p>
                   {(() => {
                     const pill = applicationStatusPill(applicationStatus ?? 'pending', null, false)
                     return (
@@ -539,7 +547,7 @@ export default function VacancyDetailView({
                       data-testid="closed-message-club"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Message the club
+                      {t('overlay.messageClub')}
                     </button>
                   )}
                 </div>
@@ -547,19 +555,20 @@ export default function VacancyDetailView({
                 <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="role-closed-notice">
                   <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-semibold text-gray-800">This opportunity is closed</p>
+                    <p className="font-semibold text-gray-800">{t('overlay.closedVisitorTitle')}</p>
                     <p className="text-gray-600 mt-0.5">
-                      It&rsquo;s no longer taking applications.{' '}
-                      <button type="button" onClick={() => { onClose(); navigate('/opportunities') }} className="font-semibold text-hockia-primary hover:underline">
-                        See open opportunities
-                      </button>
+                      <Trans
+                        t={t}
+                        i18nKey="overlay.closedVisitorBody"
+                        components={{ link: <button type="button" onClick={() => { onClose(); navigate('/opportunities') }} className="font-semibold text-hockia-primary hover:underline" /> }}
+                      />
                     </p>
                   </div>
                 </div>
               ) : hasApplied && applicationStatus === 'withdrawn' ? (
                 // Withdrawn (D4): one grey state, no "You applied" tick. Message the club still works.
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-line bg-surface-grouped" data-testid="own-application-withdrawn">
-                  <span className="font-semibold text-sm text-ink-2">Withdrawn</span>
+                  <span className="font-semibold text-sm text-ink-2">{APPLICATION_STATUS_LABELS.withdrawn}</span>
                   {onMessage && (
                     <button
                       type="button"
@@ -568,7 +577,7 @@ export default function VacancyDetailView({
                       data-testid="open-message-club"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Message the club
+                      {t('overlay.messageClub')}
                     </button>
                   )}
                 </div>
@@ -580,7 +589,7 @@ export default function VacancyDetailView({
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-hockia-primary/15 bg-hockia-primary/5" data-testid="own-application-open">
                   <div className="flex items-center gap-2 font-semibold text-sm text-hockia-primary">
                     <CheckCircle className="w-4 h-4" />
-                    You applied
+                    {t('overlay.youApplied')}
                   </div>
                   {(() => {
                     const pill = applicationStatusPill(applicationStatus ?? 'pending', null, true)
@@ -598,7 +607,7 @@ export default function VacancyDetailView({
                       data-testid="open-message-club"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Message the club
+                      {t('overlay.messageClub')}
                     </button>
                   )}
                   {ownApplicationSlot && <div className="mt-2 w-full text-left">{ownApplicationSlot}</div>}
@@ -609,13 +618,13 @@ export default function VacancyDetailView({
                 <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-line bg-surface-subtle">
                   <Info className="w-4 h-4 text-ink-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-semibold text-ink-1">You can&rsquo;t apply to this opportunity</p>
+                    <p className="font-semibold text-ink-1">{t('overlay.cantApplyTitle')}</p>
                     <p className="text-ink-2 mt-0.5">{eligibility.reason}</p>
                   </div>
                 </div>
               ) : onApply ? (
                 <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 text-base font-semibold">
-                  Apply Now &rsaquo;
+                  {t('overlay.applyNow')}
                 </Button>
               ) : (
                 // No Apply path for this viewer (role doesn't match, or an
@@ -626,14 +635,14 @@ export default function VacancyDetailView({
                   <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-gray-600">
                     {vacancy.opportunity_type === 'coach'
-                      ? 'Only coaches can apply to this opportunity.'
-                      : 'Only players can apply to this opportunity.'}
+                      ? t('overlay.onlyCoaches')
+                      : t('overlay.onlyPlayers')}
                   </p>
                 </div>
               )}
               {!hideClubProfileButton && !isPublisher && (
                 <Button onClick={handleClubClick} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
-                  {publisherRole === 'coach' ? 'View profile' : 'View club'}
+                  {publisherRole === 'coach' ? t('overlay.viewProfile') : t('overlay.viewClub')}
                 </Button>
               )}
               {isPublisher && (
@@ -642,7 +651,7 @@ export default function VacancyDetailView({
                 // listing, which is a separate action (dashboard → Manage
                 // Opportunities → Close).
                 <Button onClick={onClose} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
-                  Done
+                  {t('overlay.done')}
                 </Button>
               )}
             </div>
@@ -668,7 +677,7 @@ export default function VacancyDetailView({
                     onClick={() => { onClose(); navigate('/dashboard/profile') }}
                     className="font-semibold underline underline-offset-2 hover:text-brand-text"
                   >
-                    Complete profile
+                    {t('overlay.completeProfile')}
                   </button>
                 </div>
               </div>
@@ -682,7 +691,7 @@ export default function VacancyDetailView({
               <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-line bg-surface-subtle">
                 <Info className="w-4 h-4 text-ink-2 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-ink-1">
-                  <p className="font-semibold">You can still apply, but heads up:</p>
+                  <p className="font-semibold">{t('overlay.headsUp')}</p>
                   <ul className="mt-1 list-disc pl-4 space-y-0.5 text-ink-2">
                     {mustHaveWarnings.map((w, i) => (
                       <li key={i}>{w}</li>
@@ -694,7 +703,7 @@ export default function VacancyDetailView({
 
             {/* Timestamp */}
             <p className="mt-5 text-xs text-gray-400 text-center">
-              Posted on {formatDate(vacancy.created_at)}
+              {t('overlay.postedOn', { date: formatDate(vacancy.created_at) })}
             </p>
           </div>
         </div>

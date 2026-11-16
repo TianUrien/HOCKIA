@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { SmoothImage } from '@/components/ui/SmoothImage'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface CarouselImage {
   url: string
@@ -13,6 +14,7 @@ interface FeedImageCarouselProps {
 }
 
 export function FeedImageCarousel({ images, altPrefix }: FeedImageCarouselProps) {
+  const t = useHomeT()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
 
@@ -43,7 +45,7 @@ export function FeedImageCarousel({ images, altPrefix }: FeedImageCarouselProps)
                 src={getImageUrl(img.url, 'feed-full') ?? undefined}
                 srcSet={getImageSrcSet(img.url, 'feed-full') ?? undefined}
                 sizes="(max-width: 640px) 100vw, 640px"
-                alt={`${altPrefix} - image ${i + 1}`}
+                alt={t('carousel.imageAlt', { title: altPrefix, number: i + 1 })}
                 eager={i < 2}
                 className="object-cover"
               />
@@ -58,7 +60,7 @@ export function FeedImageCarousel({ images, altPrefix }: FeedImageCarouselProps)
             <button
               key={i}
               type="button"
-              aria-label={`Go to image ${i + 1}`}
+              aria-label={t('carousel.goToImage', { number: i + 1 })}
               className={`w-2 h-2 rounded-full transition-colors ${
                 i === currentSlide ? 'bg-indigo-500' : 'bg-gray-300'
               }`}

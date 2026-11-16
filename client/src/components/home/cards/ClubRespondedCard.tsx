@@ -1,6 +1,8 @@
 import { Zap } from 'lucide-react'
 import { FeedCard, FeedCardAction, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { ClubRespondedFeedItem } from '@/types/homeFeed'
+import { Trans } from 'react-i18next'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface Props {
   item: ClubRespondedFeedItem
@@ -12,6 +14,7 @@ interface Props {
  * players that the club is actively triaging → apply now.
  */
 export function ClubRespondedCard({ item }: Props) {
+  const t = useHomeT()
   // Vacancies can be coach-published — then club_id/club_name carry the
   // COACH's profile, and the club route 404s ("Club profile not found").
   // author_role comes from the RPC merge; 'club' fallback = cached payloads.
@@ -30,10 +33,10 @@ export function ClubRespondedCard({ item }: Props) {
         profilePath={path}
       />
       <FeedCardCaption icon={<Zap />}>
-        Reviewed <span className="font-semibold text-gray-900">{n}</span> {n === 1 ? 'application' : 'applications'} this week
+        <Trans t={t} i18nKey="cards.clubResponded.caption" count={n} components={{ b: <span className="font-semibold text-gray-900" /> }} />
       </FeedCardCaption>
       <FeedCardFooter>
-        <FeedCardAction to={path}>{publisherRole === 'coach' ? 'View coach' : 'View club'}</FeedCardAction>
+        <FeedCardAction to={path}>{publisherRole === 'coach' ? t('cards.clubResponded.viewCoach') : t('cards.clubResponded.viewClub')}</FeedCardAction>
       </FeedCardFooter>
     </FeedCard>
   )

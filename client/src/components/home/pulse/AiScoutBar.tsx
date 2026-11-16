@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * AI scout bar (Home V2 Phase 2, Q7: replaces the keyword pill for club +
@@ -12,6 +13,7 @@ const MODULE_ID = 'ai_scout_bar'
 const POSITION = 1
 
 export function AiScoutBar() {
+  const t = useHomeT()
   const showAi = useHockiaAiSheet((s) => s.show)
   const [query, setQuery] = useState('')
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
@@ -37,13 +39,13 @@ export function AiScoutBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={'Ask the AI scout: "available defenders with EU passport"'}
+          placeholder={t('aiScout.placeholder')}
           className="min-w-0 flex-1 bg-transparent text-sm text-[#14141c] placeholder:text-gray-400 focus:outline-none"
-          aria-label="Ask the AI scout"
+          aria-label={t('aiScout.inputAria')}
         />
         <button
           type="submit"
-          aria-label="Search with AI scout"
+          aria-label={t('aiScout.submitAria')}
           className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-hockia-primary hover:text-white"
         >
           <ArrowRight className="h-4 w-4" />

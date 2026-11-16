@@ -8,6 +8,7 @@ import { FeedAuthorContext, useFeedAuthorContext } from '@/hooks/useFeedAuthorCo
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
 import type { HomeFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * Lightweight error boundary for individual feed items.
@@ -51,6 +52,7 @@ interface HomeFeedProps {
  * - Cards are white surfaces on the page ground; media inset and rounded.
  */
 export function HomeFeed({ prependItemRef }: HomeFeedProps) {
+  const t = useHomeT()
   const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed()
   const sentinelRef = useRef<HTMLDivElement>(null)
   const feedTopRef = useRef<HTMLDivElement>(null)
@@ -121,9 +123,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-hockia-primary text-white text-sm font-medium rounded-full shadow-lg hover:opacity-90 active:scale-95 transition-all duration-200 animate-slideDown"
             >
               <ArrowUp className="w-4 h-4" />
-              {newCount === 1
-                ? '1 new post'
-                : `${newCount > 99 ? '99+' : newCount} new posts`}
+              {newCount > 99 ? t('feed.newPostsOverflow') : t('feed.newPosts', { count: newCount })}
             </button>
           </div>
         )}
@@ -137,7 +137,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
               onClick={() => void refetch()}
               className="mt-2 px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors"
             >
-              Try again
+              {t('feed.retry')}
             </button>
           </div>
         )}
@@ -148,10 +148,10 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
             <div className="text-center mb-6">
               <Rss className="w-12 h-12 text-gray-500 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                Welcome to your feed
+                {t('feed.empty.title')}
               </h3>
               <p className="text-sm text-gray-500">
-                Your feed fills up as the community grows. In the meantime, start exploring:
+                {t('feed.empty.body')}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -163,8 +163,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                   <Briefcase className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Browse opportunities</p>
-                  <p className="text-xs text-gray-500">Find your next move</p>
+                  <p className="text-sm font-medium text-gray-900">{t('feed.empty.opportunitiesTitle')}</p>
+                  <p className="text-xs text-gray-500">{t('feed.empty.opportunitiesBody')}</p>
                 </div>
               </Link>
               <Link
@@ -175,8 +175,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                   <MessageSquare className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Join the Community</p>
-                  <p className="text-xs text-gray-500">Ask questions, share knowledge</p>
+                  <p className="text-sm font-medium text-gray-900">{t('feed.empty.communityTitle')}</p>
+                  <p className="text-xs text-gray-500">{t('feed.empty.communityBody')}</p>
                 </div>
               </Link>
               <Link
@@ -187,8 +187,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                   <Shield className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Explore clubs</p>
-                  <p className="text-xs text-gray-500">Discover clubs across 8 countries</p>
+                  <p className="text-sm font-medium text-gray-900">{t('feed.empty.clubsTitle')}</p>
+                  <p className="text-xs text-gray-500">{t('feed.empty.clubsBody')}</p>
                 </div>
               </Link>
               <Link
@@ -199,8 +199,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                   <Search className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Find people</p>
-                  <p className="text-xs text-gray-500">Connect with players and coaches</p>
+                  <p className="text-sm font-medium text-gray-900">{t('feed.empty.peopleTitle')}</p>
+                  <p className="text-xs text-gray-500">{t('feed.empty.peopleBody')}</p>
                 </div>
               </Link>
             </div>

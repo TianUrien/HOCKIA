@@ -5,6 +5,7 @@ import { profilePathForRole } from '@/lib/feedPaths'
 import { FeedCardMenu } from '../FeedCardMenu'
 import { PostHeader, ShareButton } from '../PostParts'
 import type { VideoAddedFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 const NativeVideoPlayer = lazy(() => import('@/components/media/NativeVideoPlayer'))
 
@@ -27,6 +28,7 @@ function shareProfile(item: VideoAddedFeedItem) {
  * videos are PHASE 2 (spec 65:329).
  */
 export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
+  const t = useHomeT()
   const full = item.kind === 'full_match'
   const title = cleanTitle(item)
   const profilePath = profilePathForRole(item.uploader_role, item.uploader_id)
@@ -39,7 +41,7 @@ export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
         name={item.uploader_name}
         avatarUrl={item.uploader_avatar_url}
         role={item.uploader_role}
-        subtitle={full ? `Full match · public · ${age}` : `Highlight · ${age}`}
+        subtitle={full ? t('feedV1.video.subtitleFullMatch', { age }) : t('feedV1.video.subtitleHighlight', { age })}
         profilePath={profilePath}
         menu={
           <FeedCardMenu
@@ -55,14 +57,14 @@ export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
           videoId={item.video_id}
           title={title ?? undefined}
           durationSeconds={item.duration_seconds}
-          feed={{ label: full ? 'FULL MATCH' : 'HIGHLIGHT', frameClassName: full ? 'aspect-video' : 'aspect-[4/5]', playSize: full ? 56 : 64 }}
+          feed={{ label: full ? t('feedV1.video.badgeFullMatch') : t('feedV1.video.badgeHighlight'), frameClassName: full ? 'aspect-video' : 'aspect-[4/5]', playSize: full ? 56 : 64 }}
         />
       </Suspense>
       {full && (
         // Uploader's title, never a score (no score data exists — ruling 11 Oct).
         <div className="flex items-center gap-2.5 px-4 pt-3">
-          <p className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-ink-1">{title ?? 'Full match'}</p>
-          <p className="shrink-0 text-secondary text-ink-3">Public match</p>
+          <p className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-ink-1">{title ?? t('feedV1.video.fullMatchTitle')}</p>
+          <p className="shrink-0 text-secondary text-ink-3">{t('feedV1.video.publicMatch')}</p>
         </div>
       )}
       {!full && title && <p className="px-4 pt-3 text-secondary text-ink-1">{title}</p>}

@@ -43,6 +43,8 @@ describe('Toast message correctness', () => {
   it('publish action toast says "Opportunity published successfully!"', () => {
     const source = readFileSync(TAB_SOURCE, 'utf-8')
 
-    expect(source).toContain('Opportunity published successfully!')
+    // The words live in the opportunities catalog since the Spanish localization.
+    expect(source).toContain("tOpportunities('manage.toasts.published')")
+    expect(readFileSync(resolve(__dirname, '..', 'locales', 'en', 'opportunities.json'), 'utf-8')).toContain('"published": "Opportunity published successfully!"')
   })
 })

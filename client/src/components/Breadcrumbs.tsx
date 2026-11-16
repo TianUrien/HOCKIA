@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
+import { useCommonT } from '@/i18n/ns/common'
 
 export interface BreadcrumbItem {
   label: string
@@ -12,10 +13,11 @@ interface BreadcrumbsProps {
 }
 
 export default function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
+  const t = useCommonT()
   if (items.length === 0) return null
 
   return (
-    <nav aria-label="Breadcrumb" className={`flex items-center gap-1.5 text-sm ${className}`}>
+    <nav aria-label={t('breadcrumbs.label')} className={`flex items-center gap-1.5 text-sm ${className}`}>
       {items.map((item, i) => {
         const isLast = i === items.length - 1
 

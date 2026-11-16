@@ -62,7 +62,7 @@ import {
   removeThisDevicePushSubscription,
   safePushPath,
 } from '@/lib/nativePush'
-import { APPLICATION_MOVED_ON_MESSAGE, isApplicationMovedOnError } from '@/lib/applicationStatus'
+import { applicationMovedOnMessage, isApplicationMovedOnError } from '@/lib/applicationStatus'
 import { holdDecision, UNDO_WINDOW_MS } from '@/lib/pendingDecisions'
 
 beforeEach(() => {
@@ -168,7 +168,7 @@ describe('decline 409 invalid_status', () => {
     expect(await isApplicationMovedOnError({ context: moved })).toBe(true)
     expect(await isApplicationMovedOnError({ context: withdrawn })).toBe(false)
     expect(await isApplicationMovedOnError(new Error('x'))).toBe(false)
-    expect(APPLICATION_MOVED_ON_MESSAGE).not.toMatch(/error|fail/i)
+    expect(applicationMovedOnMessage()).not.toMatch(/error|fail/i)
   })
 
   it('reports movedOn to the caller instead of a generic failure', async () => {

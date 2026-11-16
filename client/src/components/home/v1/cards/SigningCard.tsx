@@ -15,6 +15,7 @@ import { FeedCardMenu } from '../FeedCardMenu'
 import { CommentButton, CongratsPill, LikeButton, PostHeader, ShareButton } from '../PostParts'
 import { useHomeV1 } from '../homeV1Context'
 import type { SigningMetadata, UserPostFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * New signing (Figma 60:193 — UNION card, player/coach + club): an author
@@ -22,6 +23,7 @@ import type { SigningMetadata, UserPostFeedItem } from '@/types/homeFeed'
  * The tagged member gets "Remove my tag" in ⋯ (H16).
  */
 export function SigningCard({ item }: { item: UserPostFeedItem }) {
+  const t = useHomeT()
   const meta = item.metadata as SigningMetadata
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
@@ -30,7 +32,7 @@ export function SigningCard({ item }: { item: UserPostFeedItem }) {
   const { deletePost } = useUserPosts()
   const [sharing, setSharing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const clubName = meta.club_name || item.author_name || 'Club'
+  const clubName = meta.club_name || item.author_name || t('feedV1.signing.clubFallback')
   const isTagged = Boolean(viewerId && meta.person_profile_id === viewerId)
 
   const like = useCallback(async () => {
@@ -42,17 +44,17 @@ export function SigningCard({ item }: { item: UserPostFeedItem }) {
 
   const untag = async () => {
     const res = await removeSigningTag(item.post_id)
-    if (!res.success) { addToast(res.error ?? 'Could not remove your tag', 'error'); return }
+    if (!res.success) { addToast(res.error ?? t('feedV1.signing.untagFailed'), 'error'); return }
     // The card falls back to a plain club post (H16).
     patchItem(item.feed_item_id, { metadata: { ...meta, person_name: null, person_avatar_url: null, person_profile_id: null, person_role: null } } as Partial<UserPostFeedItem>)
-    addToast('Your tag was removed', 'success')
+    addToast(t('feedV1.signing.untagged'), 'success')
   }
 
   const remove = async () => {
     setConfirmDelete(false)
     const res = await deletePost(item.post_id)
     if (res.success) removeItem(item.feed_item_id)
-    else addToast(res.error ?? 'Could not delete the post', 'error')
+    else addToast(res.error ?? t('feedV1.signing.deleteFailed'), 'error')
   }
 
   return (
@@ -73,7 +75,7 @@ export function SigningCard({ item }: { item: UserPostFeedItem }) {
             report={{ subject: 'post', contentId: item.post_id }}
             onRemoveTag={isTagged ? () => void untag() : undefined}
             onShare={() => setSharing(true)}
-            ownerItems={[{ key: 'delete', label: 'Delete post', destructive: true, icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setConfirmDelete(true) }]}
+            ownerItems={[{ key: 'delete', label: t('feedV1.signing.deletePost'), destructive: true, icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setConfirmDelete(true) }]}
           />
         }
       />
@@ -117,9 +119,9 @@ export function SigningCard({ item }: { item: UserPostFeedItem }) {
         isOpen={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         onConfirm={remove}
-        title="Delete this post?"
-        message="It will be removed from Home and your profile."
-        confirmLabel="Delete"
+        title={t('feedV1.signing.deleteTitle')}
+        message={t('feedV1.signing.deleteBody')}
+        confirmLabel={t('feedV1.signing.deleteConfirm')}
         variant="danger"
       />
     </article>

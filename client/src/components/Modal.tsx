@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useAnimatedPresence } from '@/hooks/useAnimatedPresence'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface ModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, children, className, showClose = true }: ModalProps) {
+  const t = useCommonT()
   const dialogRef = useRef<HTMLDivElement>(null)
   const { mounted, status } = useAnimatedPresence(isOpen)
   const closing = status === 'closing'
@@ -69,7 +71,7 @@ export default function Modal({ isOpen, onClose, children, className, showClose 
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Close modal"
+            aria-label={t('modal.close')}
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
