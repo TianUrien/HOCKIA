@@ -1,6 +1,6 @@
 # Spanish glossary and style
 
-Added 2026-11-16 (Claude Code). Status: **draft, awaiting founder review**. Variant decided by the founder on 2026-11-15: neutral Latin American Spanish, hockey vocabulary as used in Argentina, phrased so the "vos or tú" choice rarely arises.
+Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder review**; the style rules below are decided. Review (founder decision 2026-11-16): the founder checks the key screens of each stage on staging. Variant decided by the founder on 2026-11-15: neutral Latin American Spanish, hockey vocabulary as used in Argentina, phrased so the "vos or tú" choice rarely arises.
 
 ## Style
 
@@ -10,7 +10,7 @@ Added 2026-11-16 (Claude Code). Status: **draft, awaiting founder review**. Vari
 - No "usted". Warm and direct.
 - Sentence case. Opening "¿" and "¡" always.
 - Never promise outcomes. "May" is "puede", never "va a". Do not strengthen or soften a claim while translating.
-- Gender: **open founder decision (D5)**. Until it is answered, follow the recommended default: rephrase around the person ("Perfil verificado", "Quienes se postularon"), prefer words without gender ("deportista", "integrante", "plantel"), and use a doublet ("Jugador/a") only for role names. Never pick a form from a member's data.
+- Gender (founder decision 2026-11-16): rephrase around the person ("Perfil verificado", "Quienes se postularon"), prefer words without gender ("deportista", "integrante", "plantel"), and use a doublet ("Jugador/a") only for role names. No generic masculine, no "x", "@" or "e" endings. Never pick a form from a member's data.
 - No middle dot or decorative dots added in Spanish copy beyond what the English has.
 - Product and feature names stay as they are: Hockia, Hockia AI.
 
