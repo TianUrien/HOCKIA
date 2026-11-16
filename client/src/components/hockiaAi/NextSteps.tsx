@@ -14,6 +14,11 @@ import {
 import type { SocialPlatform } from '@/lib/socialLinks'
 import { ChoiceCard, type Choice } from './ChoiceCard'
 import { MascotAvatar, type MascotState } from './mascot'
+
+/** Only an object URL of the picked file or an https image is shown as the preview. */
+function previewSrc(url: string): string | undefined {
+  return url.startsWith('blob:') || url.startsWith('https:') ? url : undefined
+}
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 /** The plan as a choice card: the most useful step recommended, "Other" asks anything. */
@@ -149,7 +154,7 @@ function PhotoStep({ facts, onDone }: { facts: ProfileFacts | null; onDone: () =
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setPick({ kind: 'file', file: f, preview: URL.createObjectURL(f) }); e.target.value = '' }} data-testid="ai-photo-input" />
       {pick ? (
         <div className="flex flex-col items-center gap-3 rounded-[18px] border border-line bg-white p-4" data-testid="ai-photo-preview">
-          <img src={pick.kind === 'gallery' ? pick.url : pick.preview} alt={t('photo.previewAlt')} className="h-40 w-40 rounded-full object-cover" />
+          <img src={previewSrc(pick.kind === 'gallery' ? pick.url : pick.preview)} alt={t('photo.previewAlt')} className="h-40 w-40 rounded-full object-cover" />
           <p className="text-[13px] text-ink-2">{t('photo.previewNote')}</p>
           <div className="flex w-full gap-2">
             <button type="button" onClick={() => setPick(null)} disabled={saving} className="flex-1 rounded-full border border-line py-2.5 text-[15px] font-semibold text-ink-1">{t('photo.chooseAnother')}</button>
