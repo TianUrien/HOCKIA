@@ -994,5 +994,23 @@
     "invitationPending": "Invitation pending",
     "optionsFor": "Options for {{name}}",
     "optionsForMember": "Options for member"
+  },
+  "scoutingToasts": {
+    "loadPlayersFailed": "Couldn’t load players. Pull to try again.",
+    "shortlistFailed": "Couldn’t shortlist. Please try again.",
+    "removeFailed": "Couldn’t remove. Please try again.",
+    "loadShortlistFailed": "Couldn’t load the shortlist.",
+    "playerFallback": "Player",
+    "saveChangeFailed": "Couldn’t save that change. Please try again.",
+    "movedToMaybe": "{{name}} moved to Maybe",
+    "removedFromShortlist": "{{name}} removed from the shortlist",
+    "noteSaveFailed": "Couldn’t save the note.",
+    "noteCleared": "Note cleared",
+    "noteSaved": "Note saved",
+    "thisPlayer": "This player",
+    "alreadyShortlistedFor": "{{name}} is already shortlisted for {{role}}",
+    "saveDecisionFailed": "Couldn’t save that decision. Please try again.",
+    "shortlisted": "{{name}} shortlisted",
+    "shortlistedFor": "{{name}} shortlisted for {{role}}"
   }
 }

@@ -601,6 +601,7 @@
     "newTitle": "Nueva oportunidad",
     "saving": "Guardando…",
     "saveDraft": "Guardar borrador",
+    "saveDraftShort": "Guardar",
     "stepOf": "Paso {{step}} de 3",
     "desktopTitle": "{{title}} · {{part}}",
     "form": {

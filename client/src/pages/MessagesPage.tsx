@@ -25,7 +25,7 @@ import { InboxActivity } from '@/components/inbox/InboxActivity'
 import { InboxRequestsSegment, InboxSegmentControl } from '@/components/inbox/InboxSegments'
 import { inboxSegmentFromPath, inboxSegmentPath, useRefreshInboxEdges, type InboxSegment } from '@/lib/inboxSegments'
 import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
-import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
+import { applicantChatEmpty } from '@/lib/clubInbox'
 import { ThreadSkeleton } from '@/components/ScreenSkeletons'
 import { invalidateConversationCaches, useConversationActions } from '@/lib/conversationActions'
 import { ConversationActionsSheet, type ConversationActionTarget } from '@/components/inbox/ConversationActionsSheet'
@@ -1286,7 +1286,7 @@ export default function MessagesPage() {
                 anchor={(location.state as { anchor?: unknown } | null)?.anchor === 'offer' ? 'offer' : undefined}
                 anchorApplicationId={typeof (location.state as { anchorApplicationId?: unknown } | null)?.anchorApplicationId === 'string' ? (location.state as { anchorApplicationId: string }).anchorApplicationId : null}
                 topSlot={clubV2Chat && chatApplication ? <ChatApplicationCard app={chatApplication.app} expiryDays={chatApplication.expiryDays} /> : undefined}
-                emptyState={clubV2Chat && chatApplication ? <ApplicantChatEmpty {...APPLICANT_CHAT_EMPTY} /> : undefined}
+                emptyState={clubV2Chat && chatApplication ? <ApplicantChatEmpty {...applicantChatEmpty()} /> : undefined}
                 hideReceipts={clubV2Chat}
                 onMessageSent={handleConversationMessageEvent}
                 onConversationCreated={handleConversationCreated}

@@ -252,5 +252,28 @@
     "days_one": "{{count}} d",
     "days_other": "{{count}} d",
     "days_many": "{{count}} d"
+  },
+  "recruitingTitles": {
+    "inviteReceived": "{{name}} te invitó a postularte",
+    "inviteDeclined": "{{name}} no aceptó tu invitación",
+    "offerSent": "{{name}} te envió una oferta",
+    "offerUpdated": "{{name}} actualizó su oferta",
+    "offerWithdrawn": "{{name}} retiró su oferta",
+    "offerAccepted": "{{name}} aceptó tu oferta",
+    "offerDeclined": "{{name}} no aceptó tu oferta",
+    "offerExpired": "Venció tu oferta a {{name}}",
+    "applicationWithdrawn": "{{name}} retiró su postulación",
+    "signingMarked": "Confirmar la incorporación con {{name}}",
+    "signingUndone": "{{name}} deshizo la incorporación",
+    "signingConfirmed": "{{name}} confirmó la incorporación",
+    "signingExpired": "{{name}} no confirmó la incorporación en 14 días",
+    "names": {
+      "aClub": "Un club",
+      "theClub": "El club",
+      "theClubLower": "el club",
+      "aPlayer": "Una persona",
+      "aPlayerLower": "una persona",
+      "thePlayer": "La persona"
+    }
   }
 }

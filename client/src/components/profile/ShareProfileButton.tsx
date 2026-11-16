@@ -75,7 +75,7 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
   const handleNativeShare = async () => {
     try {
       await navigator.share({
-        title: 'Hockia profile',
+        title: t('shareProfileButton.nativeTitle'),
         text: shareMessage(profile.role, url),
         url,
       })

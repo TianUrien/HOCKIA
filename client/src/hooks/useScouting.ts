@@ -14,6 +14,7 @@ import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useShortlists } from '@/hooks/useShortlists'
 import { markSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 import type { LeagueInput } from '@/lib/keyFacts'
 import type { FitState } from '@/lib/clubRecruiting'
 import type { Json } from '@/lib/database.types'
@@ -250,7 +251,7 @@ export function useFindPlayers(ctx: ContextLike | null, roleId: string | null) {
     },
   })
   const rows = useMemo(() => (query.data ?? []).filter((r) => !blockedIds.has(r.id)), [query.data, blockedIds])
-  return { rows, loading: query.isLoading, error: query.error ? 'Couldn’t load players. Pull to try again.' : null, refetch: query.refetch }
+  return { rows, loading: query.isLoading, error: query.error ? tRecruiting('scoutingToasts.loadPlayersFailed') : null, refetch: query.refetch }
 }
 
 // ── Saved membership + per-role shortlist writes ─────────────────────
@@ -310,14 +311,14 @@ export function useShortlistWrites(roleTitle: string | null) {
     if (!viewerId) return
     // Always the active role's list: a player may sit on several roles' lists.
     const target = await ensureList()
-    if (!target) { addToast('Couldn’t shortlist. Please try again.', 'error'); return }
+    if (!target) { addToast(tRecruiting('scoutingToasts.shortlistFailed'), 'error'); return }
     const temp: SavedRow = { id: `tmp-${playerId}`, saved_profile_id: playerId, shortlist_id: target.id, note: null, created_at: new Date().toISOString() }
     queryClient.setQueryData<SavedRow[]>(savedKey, (cur = []) => [...cur, temp])
     const { error } = await supabase.from('saved_profiles').insert({ owner_id: viewerId, saved_profile_id: playerId, shortlist_id: target.id })
     if (error && error.code !== '23505') {
       queryClient.setQueryData<SavedRow[]>(savedKey, (cur = []) => cur.filter((s) => s.id !== temp.id))
       reportSupabaseError('useShortlistWrites.add', error)
-      addToast('Couldn’t shortlist. Please try again.', 'error')
+      addToast(tRecruiting('scoutingToasts.shortlistFailed'), 'error')
       return
     }
     markSavedProfileId(viewerId, playerId)
@@ -335,7 +336,7 @@ export function useShortlistWrites(roleTitle: string | null) {
     if (error) {
       queryClient.setQueryData(savedKey, prev)
       reportSupabaseError('useShortlistWrites.remove', error)
-      addToast('Couldn’t remove. Please try again.', 'error')
+      addToast(tRecruiting('scoutingToasts.removeFailed'), 'error')
       return
     }
     void resyncSavedProfileIds(viewerId)
@@ -417,7 +418,7 @@ export function useRoleShortlist(ctx: ContextLike | null, roleId: string | null,
     },
   })
   const rows = useMemo(() => (query.data ?? []).filter((r) => !blockedIds.has(r.id)), [query.data, blockedIds])
-  return { list, rows, loading: query.isLoading || listsLoading, error: query.error ? 'Couldn’t load the shortlist.' : null, queryKey }
+  return { list, rows, loading: query.isLoading || listsLoading, error: query.error ? tRecruiting('scoutingToasts.loadShortlistFailed') : null, queryKey }
 }
 
 /** Remove from the shortlist (DEV NOTE 332:751) and edit the private note. */
@@ -432,7 +433,7 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
 
   const remove = useCallback(async (entry: ShortlistEntry) => {
     if (!viewerId) return
-    const firstName = entry.full_name?.trim().split(/\s+/)[0] || 'Player'
+    const firstName = entry.full_name?.trim().split(/\s+/)[0] || tRecruiting('scoutingToasts.playerFallback')
     const before = queryClient.getQueryData<ShortlistEntry[]>(queryKey)
     if (entry.shortlistedApp) {
       // Applicant → back to Maybe, held for the undo window. Never declines silently.
@@ -445,9 +446,9 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
           return
         }
         queryClient.setQueryData(queryKey, before)
-        addToast(withdrawn ? withdrawnApplicationMessage() : 'Couldn’t save that change. Please try again.', withdrawn ? 'info' : 'error')
+        addToast(withdrawn ? withdrawnApplicationMessage() : tRecruiting('scoutingToasts.saveChangeFailed'), withdrawn ? 'info' : 'error')
       })
-      showUndo({ applicationId: app.id, text: `${firstName} moved to Maybe`, onUndo: () => queryClient.setQueryData(queryKey, before) })
+      showUndo({ applicationId: app.id, text: tRecruiting('scoutingToasts.movedToMaybe', { name: firstName }), onUndo: () => queryClient.setQueryData(queryKey, before) })
       return
     }
     if (!entry.savedId) return
@@ -456,13 +457,13 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
     if (error) {
       queryClient.setQueryData(queryKey, before)
       reportSupabaseError('useShortlistEntryActions.remove', error)
-      addToast('Couldn’t remove. Please try again.', 'error')
+      addToast(tRecruiting('scoutingToasts.removeFailed'), 'error')
       return
     }
     void resyncSavedProfileIds(viewerId)
     trackDbEvent('shortlist.item_removed', 'shortlist_item', entry.savedId, { source: 'shortlist_v2' })
     void queryClient.invalidateQueries({ queryKey: ['scouting', 'saved', viewerId] })
-    addToast(`${firstName} removed from the shortlist`, 'success')
+    addToast(tRecruiting('scoutingToasts.removedFromShortlist', { name: firstName }), 'success')
   }, [viewerId, queryClient, queryKey, patch, addToast, showUndo])
 
   const setNote = useCallback(async (entry: ShortlistEntry, note: string | null) => {
@@ -473,11 +474,11 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
     if (error) {
       queryClient.setQueryData(queryKey, before)
       reportSupabaseError('useShortlistEntryActions.setNote', error)
-      addToast('Couldn’t save the note.', 'error')
+      addToast(tRecruiting('scoutingToasts.noteSaveFailed'), 'error')
       return
     }
     trackDbEvent('shortlist.note_saved', 'shortlist_item', entry.savedId, { has_note: note != null })
-    addToast(note == null ? 'Note cleared' : 'Note saved', 'success')
+    addToast(note == null ? tRecruiting('scoutingToasts.noteCleared') : tRecruiting('scoutingToasts.noteSaved'), 'success')
   }, [viewerId, queryClient, queryKey, patch, addToast])
 
   return { remove, setNote }

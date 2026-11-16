@@ -307,6 +307,21 @@
       "confirm": "Sí, confirmo la incorporación",
       "confirming": "Confirmando…",
       "notYet": "Todavía no"
+    },
+    "serverLines": {
+      "inviteFirstLine": "{{name}} te invitó a postularte a {{role}}.",
+      "markedYou": "{{name}} marcó tu incorporación para {{role}}. Al confirmarla en Hockia, se suma a tu trayectoria.",
+      "offerSent": "{{name}} te envió una oferta para {{role}}, abierta hasta el {{day}}. En Hockia se ven las condiciones y se responde.",
+      "offerUpdated": "{{name}} actualizó su oferta para {{role}}, abierta hasta el {{day}}. En Hockia se ven las condiciones y se responde.",
+      "applied": "{{name}} se postuló a {{role}}.",
+      "passedOn": "{{name}} no aceptó la invitación para {{role}}.",
+      "offerWithdrawn": "{{name}} retiró su oferta para {{role}}.",
+      "applicationWithdrawn": "{{name}} retiró su postulación a {{role}}.",
+      "offerAccepted": "{{name}} aceptó la oferta para {{role}}.",
+      "offerDeclined": "{{name}} no aceptó la oferta para {{role}}.",
+      "signingUndone": "{{name}} deshizo la incorporación para {{role}}.",
+      "signingConfirmed": "{{name}} confirmó la incorporación para {{role}}. Incorporación a través de Hockia.",
+      "yourRole": "tu oportunidad"
     }
   },
   "invites": {
@@ -610,5 +625,46 @@
     "requests": "Solicitudes",
     "activity": "Actividad",
     "ariaLabel": "Secciones de mensajes"
+  },
+  "clubInbox": {
+    "week": {
+      "toReview": "por revisar",
+      "views_one": "vista de perfil",
+      "views_many": "vistas de perfil",
+      "views_other": "vistas de perfil",
+      "openRoles_one": "oportunidad abierta",
+      "openRoles_many": "oportunidades abiertas",
+      "openRoles_other": "oportunidades abiertas"
+    },
+    "applied": "Se postuló",
+    "roleLineApplied": "{{base}} · {{applied}}",
+    "waitingTitle_one": "{{count}} persona espera una primera respuesta",
+    "waitingTitle_many": "{{count}} personas esperan una primera respuesta",
+    "waitingTitle_other": "{{count}} personas esperan una primera respuesta",
+    "waitingSubOne": "Se postuló a tus oportunidades.",
+    "waitingSubAll": "Todas se postularon a tus oportunidades.",
+    "waitingSubSome": "{{count}} de ellas se postularon a tus oportunidades.",
+    "cardTitle": "Postulación a {{role}}",
+    "cardTitleNone": "Postulación a una de tus oportunidades",
+    "status": {
+      "shortlisted": "en preselección",
+      "maybe": "marcada como tal vez",
+      "rejected": "no encaja",
+      "withdrawn": "retirada por el jugador o la jugadora",
+      "offered": "oferta enviada",
+      "accepted": "oferta aceptada",
+      "signed_pending_confirmation": "incorporación por confirmar",
+      "signed": "incorporación confirmada",
+      "offer_declined": "oferta rechazada",
+      "filled": "oportunidad cubierta"
+    },
+    "closesToday": "cierra hoy",
+    "daysLeft_one": "Queda {{count}} día para responder",
+    "daysLeft_many": "Quedan {{count}} días para responder",
+    "daysLeft_other": "Quedan {{count}} días para responder",
+    "closedOn": "cerrada sin respuesta el {{day}}",
+    "closed": "cerrada sin respuesta",
+    "emptyTitle": "Todavía no hay mensajes",
+    "emptyBody": "Un saludo corto hace mucho. La mayoría de quienes se postulan nunca recibe respuesta."
   }
 }

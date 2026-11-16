@@ -590,6 +590,7 @@
     "newTitle": "New opportunity",
     "saving": "Saving…",
     "saveDraft": "Save draft",
+    "saveDraftShort": "Save draft",
     "stepOf": "Step {{step}} of 3",
     "desktopTitle": "{{title}} · {{part}}",
     "form": {

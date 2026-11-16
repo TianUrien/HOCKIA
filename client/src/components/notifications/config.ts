@@ -27,6 +27,8 @@ import type { NotificationKind, NotificationRecord } from '@/lib/api/notificatio
 import { formatRelationshipType } from '@/lib/utils'
 import { positionLabel } from '@/lib/identity'
 import { tNotifications } from '@/i18n/ns/notifications'
+import { currentLanguage } from '@/i18n'
+import { recruitingTitle } from '@/lib/recruitingTitles'
 
 /** The content_removed notice names a comment, a post or a video. */
 const removedTitle = (type: string | null): string =>
@@ -84,7 +86,9 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
   // Prefer the structured position enum; the title split is a last resort and only
   // when the title actually has a "Position — Club" separator (else: neutral phrase).
   const humanPos = humanizePosition(getMetadataString(notification, 'position'))
-  const position = humanPos ?? titleHeadPosition(vacancyTitle) ?? tNotifications('applicationStatus.positionFallback')
+  // Shown in the active language ("Volante"); humanPos stays English for the headline match below.
+  const shownPos = currentLanguage() === 'es' ? positionLabel(getMetadataString(notification, 'position')) : humanPos
+  const position = shownPos ?? titleHeadPosition(vacancyTitle) ?? tNotifications('applicationStatus.positionFallback')
   // The role is named by its typed title (QA 2 Oct: "considered for Midfielder"
   // named no role); a generated headline yields the bare position (round 9).
   const typedTitle = vacancyTitle && !isGeneratedHeadline(vacancyTitle, humanPos) ? vacancyTitle.trim() : null
@@ -99,7 +103,7 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'filled': {
       // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
       // the position, then "The role".
-      const role = typedTitle ?? humanPos ?? tNotifications('applicationStatus.filledRoleFallback')
+      const role = typedTitle ?? shownPos ?? tNotifications('applicationStatus.filledRoleFallback')
       return { title: tNotifications('applicationStatus.filledTitle', { club }), body: tNotifications('applicationStatus.filledBody', { role }) }
     }
     default:
@@ -507,7 +511,10 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     icon: Handshake,
     get badgeText() { return tNotifications('kinds.recruitingUpdate.badge') },
     accentClassName: 'bg-surface-grouped text-ink-2',
-    getTitle: (notification) => getMetadataString(notification, 'title') || tNotifications('kinds.recruitingUpdate.title'),
+    getTitle: (notification) => {
+      const stored = getMetadataString(notification, 'title')
+      return (stored && recruitingTitle(getMetadataString(notification, 'event'), stored)) || tNotifications('kinds.recruitingUpdate.title')
+    },
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     getRoute: defaultConfig.getRoute,
   },

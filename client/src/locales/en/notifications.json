@@ -243,5 +243,28 @@
     "hours_other": "{{count}}h",
     "days_one": "{{count}}d",
     "days_other": "{{count}}d"
+  },
+  "recruitingTitles": {
+    "inviteReceived": "{{name}} invited you to apply",
+    "inviteDeclined": "{{name}} passed on your invite",
+    "offerSent": "{{name}} sent you an offer",
+    "offerUpdated": "{{name}} updated its offer",
+    "offerWithdrawn": "{{name}} withdrew its offer",
+    "offerAccepted": "{{name}} accepted your offer",
+    "offerDeclined": "{{name}} declined your offer",
+    "offerExpired": "Your offer to {{name}} expired",
+    "applicationWithdrawn": "{{name}} withdrew their application",
+    "signingMarked": "Confirm your signing with {{name}}",
+    "signingUndone": "{{name}} undid the signing",
+    "signingConfirmed": "{{name}} confirmed the signing",
+    "signingExpired": "{{name}} didn’t confirm the signing in 14 days",
+    "names": {
+      "aClub": "A club",
+      "theClub": "The club",
+      "theClubLower": "the club",
+      "aPlayer": "A player",
+      "aPlayerLower": "a player",
+      "thePlayer": "The player"
+    }
   }
 }

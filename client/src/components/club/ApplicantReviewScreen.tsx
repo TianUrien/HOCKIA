@@ -25,7 +25,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { usePublisherOrganisation } from '@/hooks/usePublisherOrganisation'
-import { COACH_SIGNING_NEEDS_CLUB_NOTE, coachSigningNeedsClub } from '@/lib/coachRoles'
+import { coachSigningNeedsClub, coachSigningNeedsClubNote } from '@/lib/coachRoles'
 import { cachedRoleApplicants, markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { UndoToast } from './UndoToast'
 import { useReviewRun } from '@/lib/reviewRun'
@@ -429,7 +429,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
   const mainAction = signingNeedsClub && roadAction === 'mark_signed' ? null : roadAction
   const menu = (review && onRoad ? roadMenu(review.status) : []).filter((item) => !(signingNeedsClub && item === 'mark_signed'))
   const waitingLine = review && onRoad
-    ? signingNeedsClub && roadAction === 'mark_signed' ? COACH_SIGNING_NEEDS_CLUB_NOTE : roadWaitingLine(review.status, firstName)
+    ? signingNeedsClub && roadAction === 'mark_signed' ? coachSigningNeedsClubNote() : roadWaitingLine(review.status, firstName)
     : null
 
   function renderPane() {
