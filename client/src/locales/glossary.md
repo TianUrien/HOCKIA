@@ -75,7 +75,7 @@ Search keeps accepting every regional synonym whatever word the interface shows.
 
 ## Wording still to confirm with the founder (Stage 1, 2026-11-16)
 
-- The tagline "Where field hockey sticks together." is "Donde el hockey sobre césped se mantiene unido." The pun is lost; it could stay in English.
+- Decided 2026-11-16 (founder): the brand tagline "Where field hockey sticks together." stays in English in the Spanish interface.
 - Headings in the infinitive ("Revisar la bandeja de entrada") read a little stiff; an alternative is a noun phrase ("Enlace enviado").
 - "Claim a club" is "Reclamar"; "registrar" is the alternative.
 - Application tags: "Postulación enviada" (Applied), "En preselección" (Shortlisted), "Con respuesta" (Replied), "Esta vez no" (Not this time).
@@ -94,7 +94,7 @@ Search keeps accepting every regional synonym whatever word the interface shows.
 
 ## Wording still to confirm with the founder (Stage 3, 2026-11-16)
 
-- Hockia AI speaks in the first person ("No encontré…", "Puedo ayudar…", "Filtré por tu categoría"). The sheet tagline "Your field hockey teammate" is "Tu compañía de equipo" (weak; "compañero/a" is the alternative).
+- Hockia AI speaks in the first person ("No encontré…", "Puedo ayudar…", "Filtré por tu categoría"). Decided 2026-11-16 (founder): the Hockia AI intro "Your field hockey teammate" is "Tu asistente de hockey sobre césped".
 - Group nouns in Hockia AI chips and club pushes use doublets ("jugadores/as", "entrenadores/as"); "deportistas" and "cuerpos técnicos" are the alternatives.
 - Hockia AI chat history summaries ("3 players found") are saved in English, so they show in English in a Spanish chat list.
 - Tapping a suggested question in Spanish sends the English prompt, so the member's own bubble shows English.
