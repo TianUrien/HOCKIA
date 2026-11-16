@@ -227,5 +227,173 @@
   "blocked": {
     "parent": "Privacidad",
     "title": "Cuentas bloqueadas"
+  },
+  "aboutApp": {
+    "version": "Versión",
+    "platform": "Plataforma",
+    "environment": "Entorno",
+    "webLatest": "Web — siempre la última",
+    "envProduction": "Producción",
+    "envStaging": "Staging",
+    "envDevelopment": "Desarrollo"
+  },
+  "deleteAccount": {
+    "confirmWord": "ELIMINAR",
+    "close": "Cerrar ventana",
+    "title": "¿Eliminar la cuenta?",
+    "body": "Esta acción es <strong>irreversible</strong>. Todos los datos del perfil, los mensajes y los archivos subidos se van a eliminar de forma permanente.",
+    "loseAccess": "⚠️ Se pierde el acceso a:",
+    "loseProfile": "• El perfil y toda la información personal",
+    "loseMessages": "• Todos los mensajes y conversaciones",
+    "loseMedia": "• Todas las fotos y archivos subidos",
+    "loseApplications": "• Postulaciones y oportunidades",
+    "loseCareer": "• Trayectoria y registros",
+    "typeToConfirm": "Escribir <word>{{word}}</word> para confirmar:",
+    "placeholder": "Escribir {{word}}",
+    "cancel": "Cancelar",
+    "deleting": "Eliminando...",
+    "confirm": "Eliminar de forma permanente",
+    "signedInAs": "Sesión iniciada como: <email>{{email}}</email>",
+    "deleted": "La cuenta se eliminó",
+    "errors": {
+      "noSession": "No hay una sesión activa. Hay que iniciar sesión de nuevo.",
+      "server": "Error del servidor ({{status}}). Intentar de nuevo.",
+      "failedStatus": "Error (estado {{status}})",
+      "failed": "No se pudo eliminar la cuenta",
+      "failedRetry": "No se pudo eliminar la cuenta. Intentar de nuevo."
+    }
+  },
+  "feedbackModal": {
+    "title": "Enviar comentarios",
+    "subtitle": "Para mejorar Hockia. Leemos cada mensaje.",
+    "close": "Cerrar comentarios",
+    "successTitle": "Gracias, lo recibimos.",
+    "successBody": "Si tenemos preguntas, nos vamos a poner en contacto.",
+    "done": "Listo",
+    "categoryQuestion": "¿Sobre qué es?",
+    "categories": {
+      "bug": {
+        "label": "Algo no funciona",
+        "description": "Un error o falla"
+      },
+      "confusing": {
+        "label": "Algo es confuso",
+        "description": "Diseño o texto poco claro"
+      },
+      "idea": {
+        "label": "Idea o función nueva",
+        "description": "Algo que falta"
+      },
+      "praise": {
+        "label": "Me encanta",
+        "description": "Lo que funciona bien"
+      },
+      "other": {
+        "label": "Otro",
+        "description": "Cualquier otra cosa"
+      }
+    },
+    "bodyLabel": "Más detalles",
+    "bodyPlaceholder": "Qué pasó, qué se esperaba, cualquier cosa que ayude a entenderlo…",
+    "charsNeeded_one": "Falta {{count}} carácter",
+    "charsNeeded_other": "Faltan {{count}} caracteres",
+    "charsNeeded_many": "Faltan {{count}} caracteres",
+    "charCount": "{{length}}/{{max}}",
+    "urgentLabel": "Es urgente (afecta mi trabajo)",
+    "urgentHint": "Usarlo con moderación para que la etiqueta de urgente siga sirviendo.",
+    "disclosure": "Con el mensaje incluimos: el rol, la página abierta y la hora. <strong>No</strong> tomamos capturas de pantalla ni datos de la consola.",
+    "cancel": "Cancelar",
+    "sending": "Enviando…",
+    "send": "Enviar comentarios",
+    "rateLimited": "Se enviaron muchos comentarios en poco tiempo. Intentar de nuevo en una hora.",
+    "sendFailed": "No se pudieron enviar los comentarios. Intentar de nuevo."
+  },
+  "ratingPrompt": {
+    "dismiss": "Descartar",
+    "thanksTitle": "¡Gracias!",
+    "thanksBody": "Los comentarios nos ayudan a mejorar Hockia.",
+    "title": "¿Qué tal Hockia?",
+    "body": "Los comentarios nos ayudan a mejorar la comunidad del hockey sobre césped.",
+    "starsLabel": "Calificar Hockia de 1 a 5 estrellas",
+    "star_one": "{{count}} estrella",
+    "star_other": "{{count}} estrellas",
+    "star_many": "{{count}} estrellas",
+    "positiveQuestion": "¡Gracias! 🎉 ¿Algo que guste mucho o que se quiera ver más?",
+    "negativeQuestion": "Gracias por la sinceridad. ¿Qué se puede mejorar?",
+    "optional": " (opcional)",
+    "positivePlaceholder": "¿Qué fue lo que más llamó la atención?",
+    "negativePlaceholder": "Qué haría que fuera mejor…",
+    "submitting": "Enviando…",
+    "submit": "Enviar comentarios",
+    "notNow": "Ahora no",
+    "notNowEarly": "Ahora no",
+    "failed": "No se pudieron enviar los comentarios. Intentar de nuevo."
+  },
+  "emailAction": {
+    "renewing": "Renovando la oportunidad…",
+    "recording": "Registrando la respuesta…",
+    "checking": "Revisando el enlace…",
+    "confirmReject": {
+      "title": "¿Marcar a {{name}} como No encaja?",
+      "titleNoName": "¿Marcar esta postulación como No encaja?",
+      "body": "Para {{title}}. Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
+      "bodyNoTitle": "Para tu oportunidad. Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
+      "confirm": "Sí, marcar como No encaja",
+      "review": "Revisar en Hockia"
+    },
+    "applicantFallback": "La persona postulada",
+    "reviewApplicants": "Revisar postulaciones en Hockia",
+    "openIn": "Abrir en Hockia",
+    "openHockia": "Abrir Hockia",
+    "renewed": {
+      "title": "Oportunidad renovada",
+      "body": "{{title}} vuelve a estar abierta.",
+      "bodyUntil": "{{title}} vuelve a estar abierta y recibe postulaciones hasta el {{date}}.",
+      "bodyNoTitle": "Tu oportunidad vuelve a estar abierta.",
+      "bodyNoTitleUntil": "Tu oportunidad vuelve a estar abierta y recibe postulaciones hasta el {{date}}."
+    },
+    "closed": {
+      "title": "Esta oportunidad sigue cerrada",
+      "body": "{{title}} se cerró desde la app, así que este enlace no cambió nada. Se puede volver a abrir en cualquier momento desde el panel.",
+      "bodyNoTitle": "Esta oportunidad se cerró desde la app, así que este enlace no cambió nada. Se puede volver a abrir en cualquier momento desde el panel."
+    },
+    "shortlisted": {
+      "title": "{{name}} pasó a la preselección",
+      "body": "Va a ver que está en la preselección de {{title}}.",
+      "bodyNoTitle": "Va a ver que está en la preselección de tu oportunidad."
+    },
+    "maybe": {
+      "title": "{{name}} quedó como Tal vez",
+      "body": "Se puede revisar de nuevo en cualquier momento. La postulación figura como en revisión."
+    },
+    "rejected": {
+      "title": "{{name}} quedó como No encaja",
+      "body": "Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio."
+    },
+    "alreadyHandled": {
+      "title": "Esta postulación ya tuvo respuesta",
+      "body": "La postulación de {{name}} ya no está pendiente: ya se respondió. No se cambió nada."
+    },
+    "used": {
+      "title": "Este enlace ya se usó",
+      "bodyRenew": "Esta oportunidad ya se renovó con este enlace. No se cambió nada.",
+      "body": "La respuesta quedó registrada la primera vez. No se cambió nada."
+    },
+    "expired": {
+      "title": "Este enlace venció",
+      "body": "Los enlaces de acción duran 14 días. Todavía se puede responder desde el panel."
+    },
+    "rateLimited": {
+      "title": "Demasiadas solicitudes",
+      "body": "Esperar un minuto y volver a abrir el enlace."
+    },
+    "error": {
+      "title": "Algo salió mal",
+      "body": "La respuesta no se registró. Volver a abrir el enlace o responder desde el panel."
+    },
+    "invalid": {
+      "title": "Este enlace no es válido",
+      "body": "Puede que el programa de email lo haya cortado. Se puede responder desde el panel."
+    }
   }
 }

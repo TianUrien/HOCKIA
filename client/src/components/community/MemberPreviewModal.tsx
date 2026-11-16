@@ -56,19 +56,12 @@ import { getUmpireActivity } from '@/lib/umpireActivity'
 import { resolveConversationRoute } from '@/lib/startConversation'
 import type { Profile } from './PeopleListView'
 import { MemberPreviewSheet } from './MemberPreviewSheet'
+import { useCommunityT } from '@/i18n/ns/community'
+import { useEnumsT } from '@/i18n/ns/enums'
 
-const BRAND_CATEGORY_LABELS: Record<string, string> = {
-  equipment: 'Equipment',
-  apparel: 'Apparel',
-  accessories: 'Accessories',
-  nutrition: 'Nutrition',
-  technology: 'Technology',
-  coaching: 'Coaching & Training',
-  recruiting: 'Recruiting',
-  media: 'Media',
-  services: 'Services',
-  other: 'Other',
-}
+const BRAND_CATEGORIES = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
+type BrandCategory = (typeof BRAND_CATEGORIES)[number]
+const isBrandCategory = (value: string): value is BrandCategory => (BRAND_CATEGORIES as readonly string[]).includes(value)
 
 interface MemberPreviewModalProps {
   member: Profile | null
@@ -76,6 +69,8 @@ interface MemberPreviewModalProps {
 }
 
 export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps) {
+  const t = useCommunityT()
+  const tEnums = useEnumsT()
   const { user, profile } = useAuthStore()
   // Recruiters = clubs + coaches who recruit for a team. Everyone else
   // (players, candidate coaches, umpires, brands) gets the half-sheet with
@@ -255,7 +250,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
       return
     }
     if (user.id === member.id) {
-      addToast('You cannot message yourself.', 'error')
+      addToast(t('previewModal.errors.messageSelf'), 'error')
       return
     }
     const targetId = member.id
@@ -280,7 +275,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     } catch (error) {
       if (activeMemberIdRef.current !== targetId) return
       logger.error('Error starting conversation from preview:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('previewModal.errors.messageFailed'), 'error')
     } finally {
       if (activeMemberIdRef.current === targetId) {
         setSendingMessage(false)
@@ -368,7 +363,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               type="button"
               onClick={requestClose}
               className="absolute top-2.5 right-3 w-9 h-9 rounded-full bg-white shadow-md ring-1 ring-gray-200 flex items-center justify-center text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition-colors active:scale-95"
-              aria-label="Close preview"
+              aria-label={t('previewModal.close')}
             >
               <X className="w-4 h-4" strokeWidth={2.5} />
             </button>
@@ -422,7 +417,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 />
                 {member.role === 'brand' && member.brand_category && (
                   <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                    {BRAND_CATEGORY_LABELS[member.brand_category] ?? member.brand_category}
+                    {isBrandCategory(member.brand_category) ? tEnums(`brandCategory.${member.brand_category}`) : member.brand_category}
                   </span>
                 )}
                 {/* Club Fit chip — recruiter-only. Hidden when viewer
@@ -498,7 +493,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {member.role === 'club' && member.year_founded && (
                 <div className="flex items-center gap-2 text-gray-700">
                   <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span>Founded {member.year_founded}</span>
+                  <span>{t('previewModal.founded', { year: member.year_founded })}</span>
                 </div>
               )}
 
@@ -512,7 +507,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {member.role === 'umpire' && member.umpire_since && (
                 <div className="flex items-center gap-2 text-gray-700">
                   <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span>Umpiring since {member.umpire_since}</span>
+                  <span>{t('previewModal.umpiringSince', { year: member.umpire_since })}</span>
                 </div>
               )}
 
@@ -570,7 +565,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                   categoryToBandTarget(member.playing_category ?? null),
                 ),
               })
-              const label = ev.isApplicable ? evidenceLevelLabel(ev.level) : 'Missing evidence'
+              const label = ev.isApplicable ? evidenceLevelLabel(ev.level) : t('previewModal.missingEvidence')
               const color = !ev.isApplicable
                 ? 'text-gray-400'
                 : ev.level === 'strong'
@@ -614,12 +609,12 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 {(member.accepted_reference_count ?? 0) > 0 && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2.5 py-1 text-xs font-medium text-gold">
                     <Shield className="w-3 h-3" />
-                    Trusted by {member.accepted_reference_count}
+                    {t('previewModal.trustedBy', { number: member.accepted_reference_count ?? 0 })}
                   </span>
                 )}
                 {(member.accepted_friend_count ?? 0) > 0 && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
-                    {member.accepted_friend_count} {member.accepted_friend_count === 1 ? 'friend' : 'friends'}
+                    {t('previewModal.friendCount', { count: member.accepted_friend_count ?? 0 })}
                   </span>
                 )}
               </div>
@@ -637,7 +632,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors"
                   >
                     <ExternalLink className="w-3 h-3" />
-                    Website
+                    {t('previewModal.website')}
                   </a>
                 )}
                 {member.brand_instagram_url && (
@@ -668,7 +663,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
             <div className="px-4 pb-3 flex justify-center">
               <QuickActionsRow
                 playerId={member.id}
-                playerName={member.full_name ?? 'this member'}
+                playerName={member.full_name ?? t('previewModal.thisMember')}
                 onMessage={() => void handleMessage()}
                 showAddFriend={member.role !== 'club' && member.role !== 'brand'}
                 className="w-full justify-center flex-wrap"
@@ -687,7 +682,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <User className="w-4 h-4" />
-              View profile
+              {t('previewModal.viewProfile')}
             </button>
           </div>
         </div>
@@ -696,11 +691,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={handleSignInPromptClose}
-        title={signInAction === 'message' ? 'Sign in to message' : 'Sign in to view profile'}
+        title={signInAction === 'message' ? t('previewModal.signIn.messageTitle') : t('previewModal.signIn.viewTitle')}
         message={
           signInAction === 'message'
-            ? 'Sign in or create a free Hockia account to connect with this member.'
-            : 'Sign in or create a free Hockia account to view member profiles.'
+            ? t('previewModal.signIn.messageBody')
+            : t('previewModal.signIn.viewBody')
         }
       />
     </>

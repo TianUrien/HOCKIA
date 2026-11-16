@@ -2,6 +2,7 @@ import { Instagram, Linkedin, Twitter, Facebook } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 import { TikTokIcon } from '@/components/icons/TikTokIcon'
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
 
 export type SocialPlatform = 'instagram' | 'tiktok' | 'linkedin' | 'twitter' | 'facebook'
 
@@ -84,10 +85,10 @@ export const validateSocialLinks = (links: SocialLinks): { valid: boolean; error
   
   for (const [key, value] of Object.entries(links)) {
     if (!validKeys.includes(key as SocialPlatform)) {
-      return { valid: false, error: `Invalid social platform: ${key}` }
+      return { valid: false, error: tProfileEdit('social.invalidPlatform', { platform: key }) }
     }
     if (value && !validateSocialUrl(value)) {
-      return { valid: false, error: `Invalid URL for ${key}. URLs must start with http:// or https://` }
+      return { valid: false, error: tProfileEdit('social.invalidUrl', { platform: key }) }
     }
   }
   

@@ -30,6 +30,7 @@ import { ThreadSkeleton } from '@/components/ScreenSkeletons'
 import { invalidateConversationCaches, useConversationActions } from '@/lib/conversationActions'
 import { ConversationActionsSheet, type ConversationActionTarget } from '@/components/inbox/ConversationActionsSheet'
 import { BlockMemberSheet, type BlockTarget } from '@/components/safety/BlockMemberSheet'
+import { tInbox, useInboxT } from '@/i18n/ns/inbox'
 
 interface ConversationDBRow {
   id: string
@@ -98,18 +99,19 @@ function backLabelFor(state: { returnTo?: unknown; from?: unknown; backLabel?: u
   // The opener names itself (Applicant review → the applicant's first name, D1.21).
   if (typeof state?.backLabel === 'string' && state.backLabel.trim()) return state.backLabel.trim()
   const path = typeof state?.returnTo === 'string' ? state.returnTo : typeof state?.from === 'string' ? state.from : null
-  if (!path) return 'Inbox'
-  if (/^\/(players|coaches|clubs|brands|umpires)\b/.test(path)) return 'Profile'
-  if (/^\/dashboard\b/.test(path)) return 'Profile'
-  if (/^\/opportunities\/[^/]+/.test(path)) return 'Opportunity'
-  if (/^\/opportunities\b/.test(path)) return 'Opportunities'
-  if (/^\/community\b/.test(path)) return 'Community'
-  if (/^\/inbox\b/.test(path)) return 'Inbox'
-  if (/^\/home\b/.test(path)) return 'Home'
-  return 'Back'
+  if (!path) return tInbox('messagesPage.back.inbox')
+  if (/^\/(players|coaches|clubs|brands|umpires)\b/.test(path)) return tInbox('messagesPage.back.profile')
+  if (/^\/dashboard\b/.test(path)) return tInbox('messagesPage.back.profile')
+  if (/^\/opportunities\/[^/]+/.test(path)) return tInbox('messagesPage.back.opportunity')
+  if (/^\/opportunities\b/.test(path)) return tInbox('messagesPage.back.opportunities')
+  if (/^\/community\b/.test(path)) return tInbox('messagesPage.back.community')
+  if (/^\/inbox\b/.test(path)) return tInbox('messagesPage.back.inbox')
+  if (/^\/home\b/.test(path)) return tInbox('messagesPage.back.home')
+  return tInbox('messagesPage.back.fallback')
 }
 
 export default function MessagesPage() {
+  const t = useInboxT()
   const { user, profile: viewerProfile } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
@@ -325,7 +327,7 @@ export default function MessagesPage() {
           feature: 'messaging_list',
           operation: 'fetch_conversations'
         })
-        setError('Failed to load conversations. Please try again.')
+        setError(tInbox('messagesPage.loadFailed'))
       } finally {
         if (options?.append) {
           setIsFetchingMoreConversations(false)
@@ -621,8 +623,8 @@ export default function MessagesPage() {
   // resolving its participant data.
   useDocumentTitle(
     selectedConversation?.otherParticipant?.full_name
-      ? `${selectedConversation.otherParticipant.full_name} • Messages`
-      : isPhone || !location.pathname.startsWith('/inbox') ? 'Messages' : 'Inbox',
+      ? t('messagesPage.documentTitleThread', { name: selectedConversation.otherParticipant.full_name })
+      : isPhone || !location.pathname.startsWith('/inbox') ? t('messagesPage.documentTitleMessages') : t('messagesPage.documentTitleInbox'),
   )
   const shouldHideGlobalHeader = Boolean(isMobile && hasActiveConversation)
   const conversationListKey = shouldHideGlobalHeader ? 'immersive-hidden' : 'list-visible'
@@ -1162,8 +1164,8 @@ export default function MessagesPage() {
                 audit B6), the segments on desktop, then search for Messages. */}
             <div className="flex-shrink-0 border-b border-line px-4 pb-3 pt-4">
               <div className="mb-3 flex items-center justify-between">
-                <h1 className="text-[22px] font-bold leading-7 text-ink-1">{isPhone ? 'Messages' : 'Inbox'}</h1>
-                <IconButton label="New message" onClick={() => setIsNewMessageModalOpen(true)}>
+                <h1 className="text-[22px] font-bold leading-7 text-ink-1">{isPhone ? t('messagesPage.titleMessages') : t('messagesPage.titleInbox')}</h1>
+                <IconButton label={t('messagesPage.newMessage')} onClick={() => setIsNewMessageModalOpen(true)}>
                   <Pencil className="h-[22px] w-[22px]" strokeWidth={1.8} />
                 </IconButton>
               </div>
@@ -1180,8 +1182,8 @@ export default function MessagesPage() {
                 <input
                   type="search"
                   data-keyboard-shortcut="search"
-                  placeholder="Search"
-                  aria-label="Search conversations"
+                  placeholder={t('messagesPage.searchPlaceholder')}
+                  aria-label={t('messagesPage.searchLabel')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-10 w-full rounded-[12px] bg-surface-muted pl-10 pr-10 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 [&::-webkit-search-cancel-button]:hidden"
@@ -1196,7 +1198,7 @@ export default function MessagesPage() {
                     type="button"
                     onClick={() => setSearchQuery('')}
                     className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ink-3"
-                    aria-label="Clear search"
+                    aria-label={t('messagesPage.clearSearch')}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1216,13 +1218,13 @@ export default function MessagesPage() {
                   <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3">
                     <MessageCircle className="w-7 h-7 text-red-400" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">Something went wrong</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">{t('messagesPage.errorTitle')}</h3>
                   <p className="text-sm text-gray-500 mb-4">{error}</p>
                   <button
                     onClick={() => fetchConversations({ force: true })}
                     className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
                   >
-                    Try again
+                    {t('messagesPage.retry')}
                   </button>
                 </div>
               ) : filteredConversations.length === 0 ? (
@@ -1230,9 +1232,9 @@ export default function MessagesPage() {
                   <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft">
                     <MessageCircle className="w-7 h-7 text-hockia-primary" />
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">No messages yet</h3>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">{t('messagesPage.emptyTitle')}</h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Start a conversation with someone in the community
+                    {t('messagesPage.emptyBody')}
                   </p>
                   <button
                     type="button"
@@ -1240,7 +1242,7 @@ export default function MessagesPage() {
                     className="inline-flex h-11 items-center gap-2 rounded-full bg-hockia-primary px-5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90"
                   >
                     <Plus className="w-4 h-4" />
-                    New message
+                    {t('messagesPage.emptyNewMessage')}
                   </button>
                 </div>
               ) : (
@@ -1264,7 +1266,7 @@ export default function MessagesPage() {
                         disabled={isFetchingMoreConversations}
                         className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
                       >
-                        {isFetchingMoreConversations ? 'Loading...' : 'Load more'}
+                        {isFetchingMoreConversations ? t('messagesPage.loadingMore') : t('messagesPage.loadMore')}
                       </button>
                     </div>
                   )}
@@ -1293,12 +1295,12 @@ export default function MessagesPage() {
                 onMarkUnread={selectedConversation.isPending ? undefined : () => void handleToggleUnread(selectedConversation.id, true)}
                 onDeleteConversation={selectedConversation.isPending ? undefined : () => handleRequestActions({
                   id: selectedConversation.id,
-                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || 'Hockia member',
+                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || t('messagesPage.memberFallback'),
                   unread: false,
                 }, true)}
                 onBlockMember={selectedConversation.otherParticipant?.id ? () => setBlockTarget({
                   id: selectedConversation.otherParticipant!.id,
-                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || 'this member',
+                  name: selectedConversation.otherParticipant?.full_name || selectedConversation.otherParticipant?.username || t('messagesPage.thisMember'),
                 }) : undefined}
               />
             ) : selectedConversationId ? (
@@ -1308,9 +1310,9 @@ export default function MessagesPage() {
                 <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
                   <MessageCircle className="h-8 w-8 text-ink-3" />
                 </div>
-                <h3 className="mb-1 text-[17px] font-semibold text-ink-1">Select a conversation</h3>
+                <h3 className="mb-1 text-[17px] font-semibold text-ink-1">{t('messagesPage.selectTitle')}</h3>
                 <p className="text-secondary text-ink-2">
-                  {segment === 'messages' ? 'Your conversations open here.' : 'Open Messages to read a conversation.'}
+                  {segment === 'messages' ? t('messagesPage.selectBody') : t('messagesPage.selectBodyOther')}
                 </p>
               </div>
             )}
@@ -1324,7 +1326,7 @@ export default function MessagesPage() {
         onClose={() => setActionTarget(null)}
         onToggleUnread={handleToggleUnread}
         onDelete={handleDeleteConversation}
-        onBlock={(t) => { if (t.otherId) setBlockTarget({ id: t.otherId, name: t.name }) }}
+        onBlock={(target) => { if (target.otherId) setBlockTarget({ id: target.otherId, name: target.name }) }}
       />
       <BlockMemberSheet target={blockTarget} onClose={() => setBlockTarget(null)} onBlocked={handleBlocked} />
 

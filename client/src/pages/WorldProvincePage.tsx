@@ -14,6 +14,7 @@ import { ArrowLeft, Building2, Trophy, CheckCircle, Clock, RefreshCw } from 'luc
 import { Header } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tWorld, useWorldT } from '@/i18n/ns/world'
 
 interface League {
   id: number
@@ -65,6 +66,7 @@ interface ClubLeagueRow {
 export default function WorldProvincePage() {
   const { countrySlug, provinceSlug } = useParams<{ countrySlug: string; provinceSlug: string }>()
   const navigate = useNavigate()
+  const t = useWorldT()
 
   const [country, setCountry] = useState<Country | null>(null)
   const [province, setProvince] = useState<Province | null>(null)
@@ -146,7 +148,7 @@ export default function WorldProvincePage() {
 
         if (!provinceError && provinceData) {
           setProvince(provinceData)
-          document.title = `${provinceData.name} | ${countryData.name} | Hockia`
+          document.title = tWorld('province.documentTitle', { province: provinceData.name, country: countryData.name })
           await fetchLeaguesAndClubData(provinceData.id)
         } else {
           navigate(`/world/${countrySlug}`, { replace: true })
@@ -315,11 +317,11 @@ export default function WorldProvincePage() {
         <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium mb-1">Unable to load region data</p>
-            <p className="text-sm text-gray-500 mb-4">Check your connection and try again</p>
+            <p className="text-gray-700 font-medium mb-1">{t('province.loadFailed')}</p>
+            <p className="text-sm text-gray-500 mb-4">{t('province.loadFailedHint')}</p>
             <div className="flex items-center justify-center gap-3">
               <Link to={`/world/${countrySlug}`} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                Back to Country
+                {t('province.backToCountry')}
               </Link>
               <button
                 type="button"
@@ -327,7 +329,7 @@ export default function WorldProvincePage() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
-                Retry
+                {t('province.retry')}
               </button>
             </div>
           </div>
@@ -342,13 +344,13 @@ export default function WorldProvincePage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6 text-center">
-          <p className="text-gray-600">Region not found</p>
+          <p className="text-gray-600">{t('province.notFound')}</p>
           <button
             type="button"
             onClick={() => navigate('/world')}
             className="mt-4 text-hockia-primary hover:underline"
           >
-            Back to World
+            {t('province.backToWorld')}
           </button>
         </main>
       </div>
@@ -366,7 +368,7 @@ export default function WorldProvincePage() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <span>{t('province.back')}</span>
         </button>
 
         {/* Header */}
@@ -375,7 +377,7 @@ export default function WorldProvincePage() {
             <div className="w-16 h-16 rounded-full border-2 border-line overflow-hidden">
               <img
                 src={flagUrl}
-                alt={`${country.name} flag`}
+                alt={t('province.flagAlt', { country: country.name })}
                 loading="lazy"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -392,7 +394,7 @@ export default function WorldProvincePage() {
             </div>
             <div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <Link to="/world" className="hover:text-gray-700">World</Link>
+                <Link to="/world" className="hover:text-gray-700">{t('province.breadcrumbWorld')}</Link>
                 <span>/</span>
                 <Link to={`/world/${countrySlug}`} className="text-hockia-primary hover:underline">
                   {country.name}
@@ -407,7 +409,7 @@ export default function WorldProvincePage() {
           <div className="hidden md:flex items-center gap-3">
             <div className="px-3 py-1.5 bg-hockia-primary/10 rounded-full text-sm text-hockia-primary font-medium">
               <Trophy className="w-4 h-4 inline mr-1" />
-              {leagues.length} {leagues.length === 1 ? 'league' : 'leagues'}
+              {t('province.leagueCount', { count: leagues.length })}
             </div>
           </div>
         </div>
@@ -425,7 +427,7 @@ export default function WorldProvincePage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Women
+              {t('province.women')}
             </button>
             <button
               type="button"
@@ -436,7 +438,7 @@ export default function WorldProvincePage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Men
+              {t('province.men')}
             </button>
           </div>
 
@@ -475,14 +477,14 @@ export default function WorldProvincePage() {
         ) : leagues.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
             <Trophy className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-500">No leagues found for {genderFilter === 'women' ? "women's" : "men's"} hockey</p>
+            <p className="text-gray-500">{genderFilter === 'women' ? t('province.noLeaguesWomen') : t('province.noLeaguesMen')}</p>
           </div>
         ) : clubs.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
             <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-500">No clubs in this league yet</p>
+            <p className="text-gray-500">{t('province.noClubs')}</p>
             <p className="text-sm text-gray-400 mt-1">
-              Clubs will appear here once they join the platform
+              {t('province.noClubsHint')}
             </p>
           </div>
         ) : (
@@ -532,12 +534,12 @@ export default function WorldProvincePage() {
                     {club.is_claimed ? (
                       <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                         <CheckCircle className="w-3 h-3" />
-                        Active
+                        {t('province.active')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
                         <Clock className="w-3 h-3" />
-                        Unclaimed
+                        {t('province.unclaimed')}
                       </span>
                     )}
                   </div>

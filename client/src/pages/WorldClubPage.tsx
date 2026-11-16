@@ -4,6 +4,10 @@ import { ArrowLeft, ExternalLink, Loader2, MapPin, Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { Header, Avatar, VerifiedBadge, PendingVerificationBadge } from '@/components'
+import { tWorld, useWorldT } from '@/i18n/ns/world'
+
+/** Separator between place names; punctuation, not copy. */
+const DOT = '·'
 
 /**
  * WorldClubPage — leaf-level page for a single world_clubs row.
@@ -45,6 +49,7 @@ type ClaimedProfileRow = {
 export default function WorldClubPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const t = useWorldT()
   const [club, setClub] = useState<ClubRow | null>(null)
   const [country, setCountry] = useState<CountryRow | null>(null)
   const [province, setProvince] = useState<ProvinceRow | null>(null)
@@ -83,7 +88,7 @@ export default function WorldClubPage() {
           return
         }
         setClub(clubData)
-        document.title = `${clubData.club_name} – Field Hockey Club | Hockia`
+        document.title = tWorld('worldClub.documentTitle', { club: clubData.club_name })
 
         // Fan out lookups sequentially. Each is a small single-row read
         // and the user-perceived load time is dominated by the initial
@@ -97,7 +102,7 @@ export default function WorldClubPage() {
             .maybeSingle()
           if (cancelled) return
           setCountry(data as CountryRow | null)
-          if (data?.name) document.title = `${clubData.club_name} – Field Hockey Club in ${data.name} | Hockia`
+          if (data?.name) document.title = tWorld('worldClub.documentTitleCountry', { club: clubData.club_name, country: data.name })
         }
         if (clubData.province_id) {
           const { data } = await supabase
@@ -152,7 +157,7 @@ export default function WorldClubPage() {
       <>
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading club" />
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label={t('worldClub.loading')} />
         </div>
       </>
     )
@@ -163,9 +168,9 @@ export default function WorldClubPage() {
       <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-lg font-semibold text-gray-900">Couldn’t load this club</p>
+          <p className="text-lg font-semibold text-gray-900">{t('worldClub.loadFailed')}</p>
           <p className="max-w-md text-sm text-gray-500">
-            Something went wrong reaching the directory. Check your connection and try again.
+            {t('worldClub.loadFailedBody')}
           </p>
           <div className="flex gap-3">
             <button
@@ -173,14 +178,14 @@ export default function WorldClubPage() {
               onClick={() => window.location.reload()}
               className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
             >
-              Try again
+              {t('worldClub.tryAgain')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/world')}
               className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
-              Back to World
+              {t('worldClub.backToWorld')}
             </button>
           </div>
         </div>
@@ -193,12 +198,12 @@ export default function WorldClubPage() {
       <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-lg font-semibold text-gray-900">Club not found</p>
+          <p className="text-lg font-semibold text-gray-900">{t('worldClub.notFound')}</p>
           <p className="max-w-md text-sm text-gray-500">
-            This club may have been removed from the directory. Browse the World to find clubs by country and province.
+            {t('worldClub.notFoundBody')}
           </p>
           <Link to="/world" className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]">
-            Go to World
+            {t('worldClub.goToWorld')}
           </Link>
         </div>
       </>
@@ -226,7 +231,7 @@ export default function WorldClubPage() {
             className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t('worldClub.back')}
           </button>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
@@ -257,7 +262,7 @@ export default function WorldClubPage() {
                       {province?.name && (
                         <Link to={provinceHref} className="hover:text-hockia-primary">{province.name}</Link>
                       )}
-                      {province?.name && country && <span>·</span>}
+                      {province?.name && country && <span>{DOT}</span>}
                       {country?.name && (
                         <span>{country.flag_emoji ? `${country.flag_emoji} ` : ''}{country.name}</span>
                       )}
@@ -269,13 +274,13 @@ export default function WorldClubPage() {
                     {menLeague && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-category-men-soft px-3 py-1 text-xs font-medium text-category-men">
                         <Trophy className="h-3 w-3" />
-                        Men: {menLeague.name}
+                        {t('worldClub.menLeague', { league: menLeague.name })}
                       </span>
                     )}
                     {womenLeague && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-category-women-soft px-3 py-1 text-xs font-medium text-category-women">
                         <Trophy className="h-3 w-3" />
-                        Women: {womenLeague.name}
+                        {t('worldClub.womenLeague', { league: womenLeague.name })}
                       </span>
                     )}
                   </div>
@@ -288,17 +293,17 @@ export default function WorldClubPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                      Claimed on Hockia
+                      {t('worldClub.claimed')}
                     </p>
                     <p className="mt-0.5 truncate text-sm text-gray-700">
-                      {claimedProfile?.full_name || 'View this club’s full profile, opportunities, and members.'}
+                      {claimedProfile?.full_name || t('worldClub.claimedFallback')}
                     </p>
                   </div>
                   <Link
                     to={claimedProfilePath}
                     className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
                   >
-                    View profile
+                    {t('worldClub.viewProfile')}
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -307,7 +312,7 @@ export default function WorldClubPage() {
 
             {!claimedProfilePath && (
               <p className="mt-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center text-xs text-gray-500">
-                This club hasn’t been claimed on Hockia yet.
+                {t('worldClub.notClaimed')}
               </p>
             )}
           </div>

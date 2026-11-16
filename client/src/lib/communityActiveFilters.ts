@@ -2,6 +2,8 @@ import type { CommunityFilters, SortOption } from '@/components/community/commun
 import { teamLabel } from '@/lib/communityCard'
 import { CATEGORY_LABELS } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
+import { tCommunity } from '@/i18n/ns/community'
+import { tEnums } from '@/i18n/ns/enums'
 
 /**
  * One removable active-filter chip shown below the Community search bar. Role is
@@ -16,6 +18,17 @@ export interface ActiveFilterChip {
 }
 
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+const POSITION_TOKENS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
+const OFFICIATING_TOKENS = ['outdoor', 'indoor', 'both'] as const
+const BRAND_CATEGORY_TOKENS = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
+
+const isOneOf = <T extends string>(list: readonly T[], value: string): value is T => (list as readonly string[]).includes(value)
+
+/** Chip text for a stored token: the catalog label when known, the title-cased token otherwise. */
+const positionChip = (pos: string) => (isOneOf(POSITION_TOKENS, pos) ? tEnums(`position.${pos}`) : titleCase(pos))
+const officiatingChip = (off: string) => (isOneOf(OFFICIATING_TOKENS, off) ? tCommunity(`filters.chip.officiating.${off}`) : titleCase(off))
+const brandCategoryChip = (cat: string) => (isOneOf(BRAND_CATEGORY_TOKENS, cat) ? tCommunity(`filters.chip.brandCategory.${cat}`) : titleCase(cat))
 
 /**
  * Evidence sort + "Enough evidence+" filter are recruiter tools (founder
@@ -50,7 +63,7 @@ export function getActiveFilterChips(
   const countryName = (id: number) => countries.find((c) => c.id === id)?.name ?? `#${id}`
 
   for (const pos of filters.position) {
-    chips.push({ id: `position:${pos}`, label: titleCase(pos), onRemove: () => update('position', filters.position.filter((p) => p !== pos)) })
+    chips.push({ id: `position:${pos}`, label: positionChip(pos), onRemove: () => update('position', filters.position.filter((p) => p !== pos)) })
   }
   for (const spec of filters.coachSpecializations) {
     const label = COACH_SPECIALIZATIONS.find((s) => s.value === spec)?.label ?? spec
@@ -60,37 +73,37 @@ export function getActiveFilterChips(
     chips.push({ id: `category:${cat}`, label: teamLabel(cat) ?? CATEGORY_LABELS[cat] ?? cat, onRemove: () => update('categories', filters.categories.filter((c) => c !== cat)) })
   }
   for (const off of filters.officiatingSpecializations) {
-    chips.push({ id: `officiating:${off}`, label: titleCase(off), onRemove: () => update('officiatingSpecializations', filters.officiatingSpecializations.filter((o) => o !== off)) })
+    chips.push({ id: `officiating:${off}`, label: officiatingChip(off), onRemove: () => update('officiatingSpecializations', filters.officiatingSpecializations.filter((o) => o !== off)) })
   }
   for (const id of filters.locationCountryIds) {
-    chips.push({ id: `loc:${id}`, label: `Based in ${countryName(id)}`, onRemove: () => update('locationCountryIds', filters.locationCountryIds.filter((x) => x !== id)) })
+    chips.push({ id: `loc:${id}`, label: tCommunity('filters.chip.basedIn', { country: countryName(id) }), onRemove: () => update('locationCountryIds', filters.locationCountryIds.filter((x) => x !== id)) })
   }
   if (filters.location.trim()) {
     chips.push({ id: 'locationText', label: filters.location.trim(), onRemove: () => update('location', '') })
   }
   for (const id of filters.nationalityCountryIds) {
-    chips.push({ id: `nat:${id}`, label: `${countryName(id)} nationality`, onRemove: () => update('nationalityCountryIds', filters.nationalityCountryIds.filter((x) => x !== id)) })
+    chips.push({ id: `nat:${id}`, label: tCommunity('filters.chip.nationality', { country: countryName(id) }), onRemove: () => update('nationalityCountryIds', filters.nationalityCountryIds.filter((x) => x !== id)) })
   }
   if (filters.euOnly) {
-    chips.push({ id: 'eu', label: 'EU-eligible', onRemove: () => update('euOnly', false) })
+    chips.push({ id: 'eu', label: tCommunity('filters.chip.euEligible'), onRemove: () => update('euOnly', false) })
   }
   if (filters.hasVideo) {
-    chips.push({ id: 'hasVideo', label: 'Has video', onRemove: () => update('hasVideo', false) })
+    chips.push({ id: 'hasVideo', label: tCommunity('filters.chip.hasVideo'), onRemove: () => update('hasVideo', false) })
   }
   if (evidenceFilterActive(filters, canUseEvidence)) {
-    chips.push({ id: 'evidence', label: 'Enough evidence+', onRemove: () => update('evidenceEnoughOnly', false) })
+    chips.push({ id: 'evidence', label: tCommunity('filters.chip.evidence'), onRemove: () => update('evidenceEnoughOnly', false) })
   }
   if (filters.availability !== 'all') {
-    const label = { play: 'Open to play', coach: 'Open to coach', recruiting: 'Recruiting', opportunities: 'Open to opportunities' }[filters.availability]
+    const label = tCommunity(`filters.chip.availability.${filters.availability}`)
     chips.push({ id: 'availability', label, onRemove: () => update('availability', 'all') })
   }
   if (filters.brandCategory) {
-    chips.push({ id: 'brandCategory', label: titleCase(filters.brandCategory), onRemove: () => update('brandCategory', null) })
+    chips.push({ id: 'brandCategory', label: brandCategoryChip(filters.brandCategory), onRemove: () => update('brandCategory', null) })
   }
   if (filters.clubOpportunityType) {
-    const label = filters.clubOpportunityType === 'player' ? 'Hiring players'
-      : filters.clubOpportunityType === 'coach' ? 'Hiring coaches'
-      : 'Open opportunities'
+    const label = filters.clubOpportunityType === 'player' ? tCommunity('filters.chip.hiringPlayers')
+      : filters.clubOpportunityType === 'coach' ? tCommunity('filters.chip.hiringCoaches')
+      : tCommunity('filters.chip.openOpportunities')
     chips.push({ id: 'clubOpportunity', label, onRemove: () => update('clubOpportunityType', null) })
   }
 

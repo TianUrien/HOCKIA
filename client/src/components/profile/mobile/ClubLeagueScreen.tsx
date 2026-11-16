@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
 import type { ClubProfileShape } from '@/pages/ClubDashboard'
 import { leagueBandNote } from '@/lib/clubProfileCopy'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { formatDayMonth, isEnglish } from '@/i18n/format'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -46,10 +48,13 @@ const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'O
 function monthDay(iso: string | null): string | null {
   if (!iso) return null
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
+  if (Number.isNaN(d.getTime())) return null
+  return isEnglish() ? `${MONTH[d.getMonth()]} ${d.getDate()}` : formatDayMonth(d, false)
 }
 
-export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, onLink }: ClubLeagueScreenProps) {
+export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack, onLink }: ClubLeagueScreenProps) {
+  const t = useProfileEditT()
+  const parent = parentLabel ?? t('leagueClub.parent')
   const setProfile = useAuthStore((s) => s.setProfile)
   const authProfile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
@@ -126,11 +131,11 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
       if (authProfile && authProfile.id === profile.id) {
         setProfile({ ...authProfile, mens_league_id: nextMen, womens_league_id: nextWomen, mens_league_division: byId(nextMen)?.name ?? null, womens_league_division: byId(nextWomen)?.name ?? null } as Profile)
       }
-      addToast('League updated', 'success')
+      addToast(t('leagueClub.toastUpdated'), 'success')
     } catch (err) {
       logger.error('[ClubLeagueScreen] save failed', err)
       setMenId(prevMen); setWomenId(prevWomen)
-      addToast('Could not save the league. Please try again.', 'error')
+      addToast(t('leagueClub.saveFailed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -138,13 +143,13 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
 
   const crest = club?.crestUrl ?? profile.avatar_url ?? null
   const crestSrc = crest ? getImageUrl(crest, 'avatar-sm') ?? crest : null
-  const linkedLine = club ? [[club.country?.flag, club.country?.name].filter(Boolean).join(' ') || null, club.claimedAt ? `linked ${monthDay(club.claimedAt)}` : null].filter(Boolean).join(' · ') : null
+  const linkedLine = club ? [[club.country?.flag, club.country?.name].filter(Boolean).join(' ') || null, club.claimedAt ? t('leagueClub.linkedOn', { date: monthDay(club.claimedAt) }) : null].filter(Boolean).join(' · ') : null
 
   const storedName = (side: Side) => (side === 'men' ? profile.mens_league_division : profile.womens_league_division)?.trim() || null
   // Same-named leagues carry their province on the row too ("Premier League · Victoria").
   const rowLabel = (side: Side, league: League | null) => {
     if (league) return league.province && leagues.filter((l) => l.name === league.name).length > 1 ? `${league.name} · ${league.province}` : league.name
-    return ((side === 'men' ? menId : womenId) !== null ? storedName(side) : null) ?? 'Not set'
+    return ((side === 'men' ? menId : womenId) !== null ? storedName(side) : null) ?? t('leagueClub.notSet')
   }
   const leagueRow = (side: Side, label: string, league: League | null, last: boolean) => (
     <div key={side}>
@@ -159,13 +164,13 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="club-league-screen">
-      <DetailNavBar parent={parent} onBack={onBack} trailing={<button type="button" onClick={onBack} className="text-body font-semibold text-hockia-primary">Done</button>} />
+      <DetailNavBar parent={parent} onBack={onBack} trailing={<button type="button" onClick={onBack} className="text-body font-semibold text-hockia-primary">{t('leagueClub.done')}</button>} />
       <div className="px-5 pb-2 pt-1.5">
-        <h1 className="text-title-xl text-ink-1">Club &amp; league</h1>
-        <p className="mt-1 text-[14px] leading-5 text-ink-2">What players see next to your name, and what fit compares a player’s level against.</p>
+        <h1 className="text-title-xl text-ink-1">{t('leagueClub.title')}</h1>
+        <p className="mt-1 text-[14px] leading-5 text-ink-2">{t('leagueClub.intro')}</p>
       </div>
 
-      <p className="px-5 pb-2 pt-[22px] text-caption font-semibold uppercase tracking-[0.04em] text-ink-2">Your club on Hockia</p>
+      <p className="px-5 pb-2 pt-[22px] text-caption font-semibold uppercase tracking-[0.04em] text-ink-2">{t('leagueClub.yourClub')}</p>
       <div className="px-5">
         {worldClubId ? (
           <div className="flex items-center gap-3 rounded-card bg-surface-grouped py-3 pl-3.5 pr-3" data-testid="club-league-linked">
@@ -177,17 +182,17 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
               {linkedLine && <span className="block truncate text-secondary text-ink-2">{linkedLine}</span>}
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-positive-soft px-2.5 py-1 text-caption font-semibold text-[#1b8a3f]">
-              <Check className="h-3 w-3" strokeWidth={3} /> Linked
+              <Check className="h-3 w-3" strokeWidth={3} /> {t('leagueClub.linked')}
             </span>
           </div>
         ) : (
           <div data-testid="club-league-unlinked">
             <div className="rounded-card bg-surface-grouped px-3.5 py-3">
-              <p className="text-[16px] font-medium leading-[21px] text-ink-1">Not linked yet</p>
-              <p className="text-secondary text-ink-2">Link your club so players see your league and fit can compare levels.</p>
+              <p className="text-[16px] font-medium leading-[21px] text-ink-1">{t('leagueClub.notLinkedTitle')}</p>
+              <p className="text-secondary text-ink-2">{t('leagueClub.notLinkedBody')}</p>
             </div>
             <button type="button" onClick={onLink} className="mt-3 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white" data-testid="club-league-link-cta">
-              Link your club
+              {t('leagueClub.linkCta')}
             </button>
           </div>
         )}
@@ -195,14 +200,14 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
 
       {worldClubId && (
         <>
-          <p className="px-5 pb-2 pt-[22px] text-caption font-semibold uppercase tracking-[0.04em] text-ink-2">Leagues</p>
+          <p className="px-5 pb-2 pt-[22px] text-caption font-semibold uppercase tracking-[0.04em] text-ink-2">{t('leagueClub.leagues')}</p>
           <div className="px-5">
             <div className="rounded-card bg-surface-grouped">
-              {leagueRow('men', 'Men’s teams', men, false)}
-              {leagueRow('women', 'Women’s teams', women, true)}
+              {leagueRow('men', t('leagueClub.menTeams'), men, false)}
+              {leagueRow('women', t('leagueClub.womenTeams'), women, true)}
             </div>
           </div>
-          <p className="px-9 pt-2 text-caption leading-4 text-ink-3">The league of your top team in each. It shows on your opportunities and profile.</p>
+          <p className="px-9 pt-2 text-caption leading-4 text-ink-3">{t('leagueClub.leaguesHint')}</p>
           {note && !loading && (
             <div className="mx-5 mt-3 flex items-start gap-2.5 rounded-card bg-surface-grouped px-3.5 py-3 text-secondary leading-[18px] text-ink-2" data-testid="club-league-band-note">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
@@ -214,16 +219,18 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
 
       {worldClubId && (
         <div className="px-5 pb-6 pt-4">
-          <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">Can’t find your league? Contact us</button>
+          <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">{t('leagueClub.contact')}</button>
         </div>
       )}
 
-      <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? 'Women’s teams league' : 'Men’s teams league'}>
+      <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? t('leagueClub.womenLeagueAria') : t('leagueClub.menLeagueAria')}>
         <div className="px-5 pb-6 pt-2">
-          <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">{picker === 'women' ? 'Women’s teams' : 'Men’s teams'}</h2>
-          <p className="mt-1 text-secondary text-ink-2">The league of your top {picker === 'women' ? 'women’s' : 'men’s'} team{club?.country ? ` in ${club.country.name}` : ''}.</p>
+          <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">{picker === 'women' ? t('leagueClub.womenTeams') : t('leagueClub.menTeams')}</h2>
+          <p className="mt-1 text-secondary text-ink-2">{picker === 'women'
+            ? (club?.country ? t('leagueClub.pickerWomenIn', { country: club.country.name }) : t('leagueClub.pickerWomen'))
+            : (club?.country ? t('leagueClub.pickerMenIn', { country: club.country.name }) : t('leagueClub.pickerMen'))}</p>
           <div className="mt-4 divide-y divide-line rounded-card bg-surface-grouped">
-            {[...leagues.map((l) => ({ id: l.id as number | null, name: l.name, tier: l.tier, province: l.province })), { id: null, name: 'Not set', tier: null, province: null }].map((opt) => {
+            {[...leagues.map((l) => ({ id: l.id as number | null, name: l.name, tier: l.tier, province: l.province })), { id: null, name: t('leagueClub.notSet'), tier: null, province: null }].map((opt) => {
               // Two leagues can share a name across provinces ("Premier League"
               // in Western Australia and Victoria) — the province tells them apart.
               const repeated = opt.id !== null && leagues.filter((l) => l.name === opt.name).length > 1
@@ -235,7 +242,7 @@ export default function ClubLeagueScreen({ profile, parent = 'Profile', onBack, 
                     {opt.name}
                     {repeated && opt.province && <span className="text-ink-3"> · {opt.province}</span>}
                   </span>
-                  {opt.tier !== null && <span className="shrink-0 text-caption text-ink-3">Tier {opt.tier}</span>}
+                  {opt.tier !== null && <span className="shrink-0 text-caption text-ink-3">{t('leagueClub.tier', { tier: opt.tier })}</span>}
                   {selected && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.5} />}
                 </button>
               )

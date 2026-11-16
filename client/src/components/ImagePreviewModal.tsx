@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useMediaT } from '@/i18n/ns/media'
 
 interface ImagePreviewModalProps {
   src: string
@@ -13,6 +14,7 @@ interface ImagePreviewModalProps {
 }
 
 export default function ImagePreviewModal({ src, alt, title, isOpen, onClose }: ImagePreviewModalProps) {
+  const t = useMediaT()
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
@@ -44,7 +46,7 @@ export default function ImagePreviewModal({ src, alt, title, isOpen, onClose }: 
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in"
       role="dialog"
       aria-modal="true"
-      aria-label={alt || title || 'Profile image preview'}
+      aria-label={alt || title || t('imagePreview.dialogLabel')}
       tabIndex={-1}
       onClick={onClose}
     >
@@ -54,7 +56,7 @@ export default function ImagePreviewModal({ src, alt, title, isOpen, onClose }: 
       >
         <button
           type="button"
-          aria-label="Close"
+          aria-label={t('imagePreview.close')}
           onClick={onClose}
           className="absolute -right-3 -top-3 rounded-full bg-white/90 p-2 text-gray-700 shadow-lg transition hover:bg-white"
         >
@@ -63,7 +65,7 @@ export default function ImagePreviewModal({ src, alt, title, isOpen, onClose }: 
         <div className="rounded-3xl bg-gradient-to-br from-gray-900/70 to-gray-800/40 p-4 shadow-2xl">
           <img
             src={src}
-            alt={alt || title || 'Profile image'}
+            alt={alt || title || t('imagePreview.imageAlt')}
             className="max-h-[75vh] w-full rounded-2xl object-contain"
           />
           {title ? (

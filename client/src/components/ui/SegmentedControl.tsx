@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { useCommonT } from '@/i18n/ns/common'
 
 export interface SegmentOption<T extends string> {
   value: T
@@ -36,6 +37,7 @@ export function SegmentedControl<T extends string>({
   ariaLabel,
   className,
 }: SegmentedControlProps<T>) {
+  const t = useCommonT()
   return (
     <div
       role="tablist"
@@ -45,7 +47,7 @@ export function SegmentedControl<T extends string>({
       {options.map((option) => {
         const active = option.value === value
         const withCount = (text: string) =>
-          typeof option.count === 'number' && option.count > 0 ? `${text} · ${option.count}` : text
+          typeof option.count === 'number' && option.count > 0 ? t('segmented.withCount', { label: text, count: option.count }) : text
         const label = withCount(option.label)
         return (
           <button
@@ -53,7 +55,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
-            aria-label={option.dot ? `${label}, new` : option.shortLabel ? label : undefined}
+            aria-label={option.dot ? t('segmented.newLabel', { label }) : option.shortLabel ? label : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
               'flex h-10 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-medium leading-[18px] transition-colors',

@@ -2,6 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
+import { type MemberLanguage, FOOTER_ES } from './member-language.ts'
 
 /**
  * Shared Email Template for Friend Request Notifications
@@ -78,8 +79,9 @@ export interface RecipientData {
   notify_friends: boolean
 }
 
-export function generateEmailHtml(requester: RequesterData): string {
-  const displayName = requester.full_name?.trim() || 'A Hockia member'
+export function generateEmailHtml(requester: RequesterData, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
+  const displayName = requester.full_name?.trim() || (es ? 'Alguien de Hockia' : 'A Hockia member')
   const location = requester.base_location?.trim() || null
 
   const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
@@ -93,7 +95,7 @@ export function generateEmailHtml(requester: RequesterData): string {
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,8 +108,8 @@ export function generateEmailHtml(requester: RequesterData): string {
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">New friend request</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Someone wants to connect with you on Hockia.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${es ? 'Nueva solicitud de amistad' : 'New friend request'}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Alguien quiere sumarte a sus amistades en Hockia.' : 'Someone wants to connect with you on Hockia.'}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -124,18 +126,20 @@ export function generateEmailHtml(requester: RequesterData): string {
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">View request &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Ver solicitud' : 'View request'} &rarr;</a>
     </p>
 
     <p style="color: #73707c; font-size: 14px; margin: 0;">
-      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View their profile</a> to learn more.
+      ${es
+        ? `En <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">su perfil</a> hay más información.`
+        : `<a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View their profile</a> to learn more.`}
     </p>
   </div>
 
   <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because you have a Hockia account.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
     </p>
   </div>
 
@@ -143,33 +147,34 @@ export function generateEmailHtml(requester: RequesterData): string {
 </html>`
 }
 
-export function generateEmailText(requester: RequesterData): string {
-  const displayName = requester.full_name?.trim() || 'A Hockia member'
+export function generateEmailText(requester: RequesterData, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
+  const displayName = requester.full_name?.trim() || (es ? 'Alguien de Hockia' : 'A Hockia member')
   const location = requester.base_location?.trim() || null
 
   const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const lines = [
-    'New friend request on Hockia',
+    es ? 'Nueva solicitud de amistad en Hockia' : 'New friend request on Hockia',
     '',
-    `${displayName} wants to connect with you on Hockia.`,
+    es ? `${displayName} quiere sumarte a sus amistades en Hockia.` : `${displayName} wants to connect with you on Hockia.`,
   ]
 
   if (location) {
-    lines.push(`Location: ${location}`)
+    lines.push(`${es ? 'Ubicación' : 'Location'}: ${location}`)
   }
 
   lines.push(
     '',
-    'View their request:',
+    es ? 'Ver solicitud:' : 'View their request:',
     `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming`,
     '',
-    'View their profile:',
+    es ? 'Ver perfil:' : 'View their profile:',
     profileUrl,
     '',
     '---',
-    "You're receiving this because you're on Hockia.",
-    `Manage preferences: ${UNSUBSCRIBE_URL}`
+    es ? FOOTER_ES.reason : "You're receiving this because you're on Hockia.",
+    `${es ? FOOTER_ES.manage : 'Manage preferences: '}${UNSUBSCRIBE_URL}`
   )
 
   return lines.join('\n')

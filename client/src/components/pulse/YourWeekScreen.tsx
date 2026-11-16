@@ -26,6 +26,9 @@ import { CheckInCard } from './CheckInCard'
 import { WeekTiles, type WeekTile } from './WeekTiles'
 import { WhoLookedAtYou } from './WhoLookedAtYou'
 import { WhatHappened } from './WhatHappened'
+import { Trans } from 'react-i18next'
+import { useCommunityT } from '@/i18n/ns/community'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * Your week v2 — the player Pulse screen (Figma New-Hockia 42:276; founder
@@ -48,6 +51,8 @@ const REFERENCES_PATH = '/dashboard/profile?tab=references'
 
 export function YourWeekScreen() {
   const location = useLocation()
+  const t = useCommunityT()
+  const tCommon = useCommonT()
   const profile = useAuthStore((s) => s.profile)
   const role = profile?.role ?? null
   const isTalent = role === 'player' || role === 'coach'
@@ -82,20 +87,20 @@ export function YourWeekScreen() {
   const newReference = useMemo(() => referenceArrivedThisWeek(refs.acceptedReferences), [refs.acceptedReferences])
 
   const tiles: WeekTile[] = [
-    { id: 'views', value: views, label: views === 1 ? 'Profile view' : 'Profile views', sub: viewsDeltaLine(views, priorViews), tone: views > priorViews ? 'positive' : 'grey' },
-    { id: 'recruiters', value: clubs + coaches, label: clubs + coaches === 1 ? 'Recruiter' : 'Recruiters', sub: recruitersLine(clubs, coaches) },
-    { id: 'roles', value: roles.roles.total, label: roles.roles.total === 1 ? 'New opportunity' : 'New opportunities', sub: newRolesLine(roles.roles.forPosition, position), to: '/opportunities' },
-    { id: 'replies', value: replies.length, label: replies.length === 1 ? 'Club reply' : 'Club replies', sub: clubReplyLine(replies.map((r) => r.club_name)), to: '/opportunities/applications' },
+    { id: 'views', value: views, label: t('pulse.week.tileViews', { count: views }), sub: viewsDeltaLine(views, priorViews), tone: views > priorViews ? 'positive' : 'grey' },
+    { id: 'recruiters', value: clubs + coaches, label: t('pulse.week.tileRecruiters', { count: clubs + coaches }), sub: recruitersLine(clubs, coaches) },
+    { id: 'roles', value: roles.roles.total, label: t('pulse.week.tileRoles', { count: roles.roles.total }), sub: newRolesLine(roles.roles.forPosition, position), to: '/opportunities' },
+    { id: 'replies', value: replies.length, label: t('pulse.week.tileReplies', { count: replies.length }), sub: clubReplyLine(replies.map((r) => r.club_name)), to: '/opportunities/applications' },
   ]
   const tilesLoading = vis.loading || roles.loading || apps.loading
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)]" data-testid="your-week-screen">
-      <DetailNavBar parent={backLabelFrom(location.state, 'Home')} fallbackPath="/home" />
+      <DetailNavBar parent={backLabelFrom(location.state, tCommon('nav.home'))} fallbackPath="/home" />
 
       <div className="mx-auto flex max-w-md flex-col gap-5 px-4 pb-8">
         <header className="px-1 pt-1">
-          <h1 className="text-large-title text-ink-1">Your week</h1>
+          <h1 className="text-large-title text-ink-1">{t('pulse.week.title')}</h1>
           <p className="mt-0.5 text-row text-ink-2" data-testid="week-range">{weekRangeLabel()}</p>
         </header>
 
@@ -110,8 +115,8 @@ export function YourWeekScreen() {
         {!viewers.loading && views > 0 && <WhoLookedAtYou rows={viewers.viewers} />}
 
         {newReference && (
-          <section aria-label="A first this week" className="rounded-card border border-gold-line bg-white p-4" data-testid="first-reference">
-            <p className="text-caption font-semibold uppercase tracking-[0.06em] text-gold">{refs.acceptedCount === 1 ? 'A first this week' : 'New this week'}</p>
+          <section aria-label={t('pulse.week.firstLabel')} className="rounded-card border border-gold-line bg-white p-4" data-testid="first-reference">
+            <p className="text-caption font-semibold uppercase tracking-[0.06em] text-gold">{refs.acceptedCount === 1 ? t('pulse.week.firstLabel') : t('pulse.week.newLabel')}</p>
             <Link to={REFERENCES_PATH} className="mt-2 flex items-center gap-3">
               <EntityAvatar
                 src={getImageUrl(newReference.profile?.avatarUrl, 'avatar-md') ?? newReference.profile?.avatarUrl}
@@ -121,14 +126,13 @@ export function YourWeekScreen() {
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-row font-semibold text-ink-1">
-                  {newReference.profile?.fullName ? `${newReference.profile.fullName} wrote you a reference` : 'You received a reference'}
+                  {newReference.profile?.fullName ? t('pulse.week.wroteReference', { name: newReference.profile.fullName }) : t('pulse.week.receivedReference')}
                 </span>
                 {newReference.endorsementText && <span className="block truncate text-secondary text-ink-2">“{newReference.endorsementText}”</span>}
               </span>
             </Link>
             <p className="mt-3 text-secondary text-ink-2">
-              Teammates can write you a reference ·{' '}
-              <Link to={REFERENCES_PATH} className="font-semibold text-hockia-primary">Ask</Link>
+              <Trans t={t} i18nKey="pulse.week.askHint" components={{ a: <Link to={REFERENCES_PATH} className="font-semibold text-hockia-primary" /> }} />
             </p>
           </section>
         )}

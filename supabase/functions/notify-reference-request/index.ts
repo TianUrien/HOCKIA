@@ -14,6 +14,7 @@ import {
   sendEmail,
 } from '../_shared/reference-request-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguage, relationshipLabel } from '../_shared/member-language.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 
 /**
@@ -209,13 +210,19 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Both accounts are real - proceeding with email')
 
-    const requesterName = requester.full_name?.trim() || 'Someone'
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    const nameFor = (lang: MemberLanguage) =>
+      requester.full_name?.trim() || (lang === 'es' ? 'Alguien' : 'Someone')
+    const requesterName = nameFor(language)
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
-    const templateVars = {
-      requester_name: requesterName,
-      relationship_type: reference.relationship_type || '',
+    const templateVars = (lang: MemberLanguage) => ({
+      requester_name: nameFor(lang),
+      relationship_type: lang === 'es'
+        ? relationshipLabel(reference.relationship_type, lang)
+        : reference.relationship_type || '',
       request_note: reference.request_note || '',
       requester_location: requester.base_location?.trim() || '',
       requester_avatar_url: requester.avatar_url || '',
@@ -223,32 +230,36 @@ Deno.serve(async (req: Request) => {
       cta_url: `${HOCKIA_BASE_URL}/references`,
       profile_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    }
+    })
 
     // Try DB template, fall back to hardcoded
     let subject: string
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'reference_request', templateVars)
+    const rendered = await renderTemplate(supabase, 'reference_request', templateVars, language)
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for reference_request')
+      logger.info('Using DB template for reference_request', { language: rendered.language })
     } else {
       emailHtml = generateEmailHtml(
         requester as RequesterData,
         reference.relationship_type,
-        reference.request_note
+        reference.request_note,
+        language,
       )
       emailText = generateEmailText(
         requester as RequesterData,
         reference.relationship_type,
-        reference.request_note
+        reference.request_note,
+        language,
       )
-      subject = `${requesterName} requested a reference on Hockia`
-      logger.info('Falling back to hardcoded template')
+      subject = language === 'es'
+        ? `${requesterName} te pidió una referencia en Hockia`
+        : `${requesterName} requested a reference on Hockia`
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     const result = await sendTrackedEmail({

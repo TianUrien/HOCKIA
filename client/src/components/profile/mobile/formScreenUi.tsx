@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 /**
  * Pieces shared by the D2 owner screens (Figma D2.3 Passports & permits,
@@ -13,16 +14,17 @@ export function CancelSaveBar({ title, onCancel, onSave, saving, saveDisabled }:
   saving?: boolean
   saveDisabled?: boolean
 }) {
+  const t = useProfileEditT()
   return (
     <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
       <div className="flex h-11 items-center px-4">
         <div className="flex w-[90px] items-center">
-          <button type="button" onClick={onCancel} className="h-11 text-body text-hockia-primary">Cancel</button>
+          <button type="button" onClick={onCancel} className="h-11 text-body text-hockia-primary">{t('mobileForm.cancel')}</button>
         </div>
         <h1 className="min-w-0 flex-1 truncate text-center text-body font-semibold text-ink-1">{title}</h1>
         <div className="flex w-[90px] items-center justify-end">
           <button type="button" onClick={onSave} disabled={saving || saveDisabled} className="h-11 text-body font-semibold text-hockia-primary disabled:opacity-40">
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('mobileForm.saving') : t('mobileForm.save')}
           </button>
         </div>
       </div>

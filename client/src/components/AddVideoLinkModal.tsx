@@ -9,6 +9,7 @@ import type { Profile } from '@/lib/supabase'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { invalidateProfile } from '@/lib/profile'
 import { validateAndNormalizeVideoUrl, videoEmbedUrl, videoPlatformLabel } from '@/lib/videoUrlValidator'
+import { useMediaT } from '@/i18n/ns/media'
 
 interface AddVideoLinkModalProps {
   isOpen: boolean
@@ -17,6 +18,7 @@ interface AddVideoLinkModalProps {
 }
 
 export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: AddVideoLinkModalProps) {
+  const t = useMediaT()
   const { user } = useAuthStore()
   const [videoUrl, setVideoUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -56,13 +58,13 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
 
   const handleSave = async () => {
     if (!videoUrl.trim()) {
-      setError('Please enter a video URL')
+      setError(t('videoLink.errors.empty'))
       return
     }
 
     const normalizedUrl = validateAndNormalizeUrl(videoUrl)
     if (!normalizedUrl) {
-      setError('Invalid video URL. Please use YouTube, Vimeo, or Google Drive links.')
+      setError(t('videoLink.errors.invalid'))
       return
     }
 
@@ -85,7 +87,7 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
       onClose()
     } catch (err) {
       logger.error('Error saving video:', err)
-      setError('Failed to save video. Please try again.')
+      setError(t('videoLink.errors.saveFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -106,12 +108,12 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 id={titleId} className="text-2xl font-bold text-gray-900">
-              {currentVideoUrl ? 'Manage Highlight Video' : 'Add Video Link'}
+              {currentVideoUrl ? t('videoLink.titleManage') : t('videoLink.titleAdd')}
             </h2>
             <button
               onClick={() => !isLoading && onClose()}
               className="text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
-              aria-label="Close modal"
+              aria-label={t('videoLink.close')}
               disabled={isLoading}
             >
               <X className="w-6 h-6" />
@@ -122,7 +124,7 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
         <div className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={videoUrlInputId}>
-              Video URL
+              {t('videoLink.urlLabel')}
             </label>
             <Input
               id={videoUrlInputId}
@@ -135,14 +137,14 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
               disabled={isLoading}
             />
             <p className="mt-2 text-xs text-gray-500">
-              Paste the full share link from YouTube, Vimeo, or Google Drive. We will normalize the URL automatically before saving.
+              {t('videoLink.urlHint')}
             </p>
             {error && (
               <p className="mt-2 text-sm text-red-600">{error}</p>
             )}
             {!error && videoUrl.trim() && !validateAndNormalizeUrl(videoUrl) && (
               <p className="mt-2 text-sm text-amber-600">
-                We don’t recognise this link. Use a YouTube, Vimeo, or Google Drive URL.
+                {t('videoLink.unrecognised')}
               </p>
             )}
           </div>
@@ -150,16 +152,16 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
           {videoUrl && validateAndNormalizeUrl(videoUrl) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Preview:
+                {t('videoLink.preview')}
               </label>
               <VideoPreview url={validateAndNormalizeUrl(videoUrl)!} />
             </div>
           )}
 
           <div className="rounded-lg border border-line bg-surface-subtle p-4">
-            <p className="text-sm font-medium text-ink-1">Supported platforms</p>
+            <p className="text-sm font-medium text-ink-1">{t('videoLink.platformsTitle')}</p>
             <p className="mt-1 text-sm text-ink-2">
-              YouTube (`youtube.com`, `youtu.be`), Vimeo (`vimeo.com`), and Google Drive (`drive.google.com`). If your link includes splash page parameters we will clean them up.
+              {t('videoLink.platformsBody')}
             </p>
           </div>
         </div>
@@ -170,7 +172,7 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
             onClick={() => !isLoading && onClose()}
             disabled={isLoading}
           >
-            Cancel
+            {t('videoLink.cancel')}
           </Button>
           <Button
             onClick={handleSave}
@@ -184,10 +186,10 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
+                {t('videoLink.saving')}
               </>
             ) : (
-              'Save Video'
+              t('videoLink.save')
             )}
           </Button>
         </div>
@@ -198,6 +200,7 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
 
 // Video Preview Component
 function VideoPreview({ url }: { url: string }) {
+  const t = useMediaT()
   // Only a real YouTube / Vimeo / Drive player is embedded, never the raw text.
   const embedUrl = videoEmbedUrl(url)
   const platform = videoPlatformLabel(url)
@@ -215,7 +218,7 @@ function VideoPreview({ url }: { url: string }) {
         className="absolute top-0 left-0 w-full h-full"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        title="Video preview"
+        title={t('videoLink.previewFrameTitle')}
       />
     </div>
   )

@@ -16,6 +16,8 @@ import { useAuthStore } from '@/lib/auth'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/questions'
 import { formatDistanceToNow } from 'date-fns'
 import type { Answer } from '@/types/questions'
+import { useCommunityT } from '@/i18n/ns/community'
+import { formatNumber, getDateFnsLocale } from '@/i18n/format'
 
 /** Role-aware public-profile path for a community author. /members/id/:id only
  *  resolves player/coach (it 404s for club/umpire/brand authors), so route by
@@ -31,6 +33,7 @@ function authorPath(role: string | null | undefined, id: string): string {
 }
 
 export default function QuestionDetailPage() {
+  const t = useCommunityT()
   const { questionId } = useParams<{ questionId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -92,13 +95,13 @@ export default function QuestionDetailPage() {
   }
 
   const handleDeleteAnswer = async (answerId: string) => {
-    if (!confirm('Are you sure you want to delete this answer?')) return
+    if (!confirm(t('questions.detail.confirmDeleteAnswer'))) return
     setAnswerMenuId(null)
     await deleteAnswer(answerId)
   }
 
   const handleDeleteQuestion = async () => {
-    if (!confirm('Are you sure you want to delete this question? This action cannot be undone.')) return
+    if (!confirm(t('questions.detail.confirmDeleteQuestion'))) return
     setShowQuestionMenu(false)
     const success = await deleteQuestion()
     if (success) {
@@ -149,11 +152,11 @@ export default function QuestionDetailPage() {
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Questions
+            {t('questions.detail.backToQuestions')}
           </Link>
           <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Question not found</h2>
-            <p className="text-gray-500">This question may have been deleted or doesn't exist.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('questions.detail.notFoundTitle')}</h2>
+            <p className="text-gray-500">{t('questions.detail.notFoundBody')}</p>
           </div>
         </main>
       </div>
@@ -162,7 +165,7 @@ export default function QuestionDetailPage() {
 
   const categoryColors = CATEGORY_COLORS[question.category]
   const categoryLabel = CATEGORY_LABELS[question.category]
-  const timeAgo = formatDistanceToNow(new Date(question.created_at), { addSuffix: true })
+  const timeAgo = formatDistanceToNow(new Date(question.created_at), { addSuffix: true, locale: getDateFnsLocale() })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -172,8 +175,8 @@ export default function QuestionDetailPage() {
         <Breadcrumbs
           className="mb-6"
           items={[
-            { label: 'Community', to: '/community' },
-            { label: 'Questions', to: '/community/questions' },
+            { label: t('questions.detail.breadcrumbCommunity'), to: '/community' },
+            { label: t('questions.detail.breadcrumbQuestions'), to: '/community/questions' },
             { label: question.title },
           ]}
         />
@@ -186,7 +189,7 @@ export default function QuestionDetailPage() {
               <button
                 onClick={() => setShowQuestionMenu(!showQuestionMenu)}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label="Question options"
+                aria-label={t('questions.detail.questionOptions')}
               >
                 <MoreVertical className="w-5 h-5 text-gray-500" />
               </button>
@@ -197,7 +200,7 @@ export default function QuestionDetailPage() {
                     className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete Question
+                    {t('questions.detail.deleteQuestion')}
                   </button>
                 </div>
               )}
@@ -226,7 +229,7 @@ export default function QuestionDetailPage() {
             <Link to={authorPath(question.author.role, question.author.id)} className="shrink-0">
               <Avatar
                 src={question.author.avatar_url}
-                alt={question.author.full_name || 'User'}
+                alt={question.author.full_name || t('questions.detail.authorFallbackAlt')}
                 size="md"
                 className="w-10 h-10"
                 role={question.author.role}
@@ -238,12 +241,12 @@ export default function QuestionDetailPage() {
                   to={authorPath(question.author.role, question.author.id)}
                   className="font-medium text-gray-900 hover:text-purple-600 transition-colors truncate"
                 >
-                  {question.author.full_name || 'Unknown'}
+                  {question.author.full_name || t('questions.detail.authorFallbackName')}
                 </Link>
                 <RoleBadge role={question.author.role} className="px-1.5 py-0.5 text-[10px] shrink-0" />
               </div>
               <p className="text-sm text-gray-500">
-                Asked {timeAgo}
+                {t('questions.detail.askedAgo', { timeAgo })}
               </p>
             </div>
           </div>
@@ -253,14 +256,14 @@ export default function QuestionDetailPage() {
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
-            {question.answer_count} {question.answer_count === 1 ? 'Answer' : 'Answers'}
+            {t('questions.detail.answerCount', { count: question.answer_count })}
           </h2>
 
           {question.answers.length > 0 ? (
             <div className="space-y-4">
               {question.answers.map((answer) => {
                 const isAnswerAuthor = user?.id === answer.author.id
-                const answerTimeAgo = formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })
+                const answerTimeAgo = formatDistanceToNow(new Date(answer.created_at), { addSuffix: true, locale: getDateFnsLocale() })
 
                 return (
                   <div
@@ -273,7 +276,7 @@ export default function QuestionDetailPage() {
                         <button
                           onClick={() => setAnswerMenuId(answerMenuId === answer.id ? null : answer.id)}
                           className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                          aria-label="Answer options"
+                          aria-label={t('questions.detail.answerOptions')}
                         >
                           <MoreVertical className="w-4 h-4 text-gray-500" />
                         </button>
@@ -284,14 +287,14 @@ export default function QuestionDetailPage() {
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                             >
                               <Pencil className="w-4 h-4" />
-                              Edit
+                              {t('questions.detail.editAnswer')}
                             </button>
                             <button
                               onClick={() => handleDeleteAnswer(answer.id)}
                               className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                             >
                               <Trash2 className="w-4 h-4" />
-                              Delete
+                              {t('questions.detail.deleteAnswer')}
                             </button>
                           </div>
                         )}
@@ -307,7 +310,7 @@ export default function QuestionDetailPage() {
                           className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-purple-500 focus-visible:ring-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-50 resize-none"
                           rows={4}
                           maxLength={1500}
-                          aria-label="Edit your answer"
+                          aria-label={t('questions.detail.editAnswerLabel')}
                           autoCapitalize="sentences"
                           spellCheck
                         />
@@ -316,14 +319,14 @@ export default function QuestionDetailPage() {
                             onClick={handleCancelAnswerEdit}
                             className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                           >
-                            Cancel
+                            {t('questions.detail.cancelEdit')}
                           </button>
                           <button
                             onClick={handleSaveAnswerEdit}
                             disabled={!editAnswerText.trim()}
                             className="px-4 py-2 text-sm font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
                           >
-                            Save
+                            {t('questions.detail.saveEdit')}
                           </button>
                         </div>
                       </div>
@@ -337,7 +340,7 @@ export default function QuestionDetailPage() {
                           <Link to={authorPath(answer.author.role, answer.author.id)} className="shrink-0">
                             <Avatar
                               src={answer.author.avatar_url}
-                              alt={answer.author.full_name || 'User'}
+                              alt={answer.author.full_name || t('questions.detail.authorFallbackAlt')}
                               size="sm"
                               className="w-8 h-8"
                               role={answer.author.role}
@@ -349,7 +352,7 @@ export default function QuestionDetailPage() {
                                 to={authorPath(answer.author.role, answer.author.id)}
                                 className="text-sm font-medium text-gray-900 hover:text-purple-600 transition-colors truncate"
                               >
-                                {answer.author.full_name || 'Unknown'}
+                                {answer.author.full_name || t('questions.detail.authorFallbackName')}
                               </Link>
                               <RoleBadge role={answer.author.role} className="px-1.5 py-0.5 text-[10px] shrink-0" />
                             </div>
@@ -364,21 +367,21 @@ export default function QuestionDetailPage() {
             </div>
           ) : (
             <div className="text-center py-8 bg-white rounded-xl border border-gray-200">
-              <p className="text-gray-500">No answers yet. Be the first to answer!</p>
+              <p className="text-gray-500">{t('questions.detail.noAnswers')}</p>
             </div>
           )}
         </div>
 
         {/* Answer form */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Answer</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('questions.detail.yourAnswer')}</h3>
           {user ? (
             <form onSubmit={handleSubmitAnswer}>
               <textarea
                 ref={answerTextareaRef}
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
-                placeholder="Share your knowledge or experience..."
+                placeholder={t('questions.detail.answerPlaceholder')}
                 rows={5}
                 maxLength={1500}
                 autoCapitalize="sentences"
@@ -387,7 +390,7 @@ export default function QuestionDetailPage() {
               />
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-gray-400">
-                  {answerText.length}/1,500
+                  {answerText.length}/{formatNumber(1500)}
                 </span>
                 <button
                   type="submit"
@@ -397,23 +400,23 @@ export default function QuestionDetailPage() {
                   {isSubmittingAnswer ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Posting...
+                      {t('questions.detail.posting')}
                     </>
                   ) : (
-                    'Post Answer'
+                    t('questions.detail.postAnswer')
                   )}
                 </button>
               </div>
             </form>
           ) : (
             <div className="text-center py-6">
-              <p className="text-gray-600 mb-4">Sign in to share your answer with the community.</p>
+              <p className="text-gray-600 mb-4">{t('questions.detail.signInBody')}</p>
               <button
                 onClick={() => setShowSignInPrompt(true)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
               >
                 <LogIn className="w-4 h-4" />
-                Sign in to Answer
+                {t('questions.detail.signInButton')}
               </button>
             </div>
           )}
@@ -424,8 +427,8 @@ export default function QuestionDetailPage() {
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to answer"
-        message="Sign in or create a free Hockia account to share your knowledge with the field hockey community."
+        title={t('questions.detail.signInPromptTitle')}
+        message={t('questions.detail.signInPromptMessage')}
       />
     </div>
   )

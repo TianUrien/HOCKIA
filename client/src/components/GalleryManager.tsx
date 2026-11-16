@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Trans } from 'react-i18next'
 import { Upload, Trash2, GripVertical, Edit2, X, Check, ArrowUp, ArrowDown, Loader2, ImageIcon, Play, Film, Clock, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -13,6 +14,9 @@ import { deleteStorageObject } from '@/lib/storage'
 import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull, imageFileExtension } from '@/lib/imageOptimization'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
+import { tMedia, useMediaT } from '@/i18n/ns/media'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 const FILE_INPUT_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const VIDEO_INPUT_ACCEPT = '.mp4,.mov,.webm,video/mp4,video/quicktime,video/webm'
@@ -112,35 +116,39 @@ const GALLERY_OPTIMIZE_OPTIONS: OptimizeOptions = {
   quality: 0.85,
 }
 
+// The copy fields are read through getters, so they follow the interface
+// language (a constant is built before the language is known).
 const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
-  club: {
+  club: withLazyText({
     bucket: 'club-media',
     table: 'club_media',
     ownerColumn: 'club_id',
     urlField: 'file_url',
-    title: 'Photo Gallery',
-    description: 'Manage your club photos',
-    emptyStateDescription: 'No photos yet',
-    addButtonLabel: 'Add Photos',
     optimizeUploads: true,
     optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
     maxFileSizeMB: 10,
     supportsVideo: false,
-  },
-  profile: {
+  } as const, {
+    title: () => tMedia('galleryManager.club.title'),
+    description: () => tMedia('galleryManager.club.description'),
+    emptyStateDescription: () => tMedia('galleryManager.club.empty'),
+    addButtonLabel: () => tMedia('galleryManager.club.add'),
+  }),
+  profile: withLazyText({
     bucket: 'gallery',
     table: 'gallery_photos',
     ownerColumn: 'user_id',
     urlField: 'photo_url',
-    title: 'Gallery',
-    description: 'Share photos and videos from matches, training, and your career',
-    emptyStateDescription: 'No photos or videos yet. Start building your gallery!',
-    addButtonLabel: 'Add Photo',
     optimizeUploads: true,
     optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
     maxFileSizeMB: 10,
     supportsVideo: true,
-  }
+  } as const, {
+    title: () => tMedia('galleryManager.profile.title'),
+    description: () => tMedia('galleryManager.profile.description'),
+    emptyStateDescription: () => tMedia('galleryManager.profile.empty'),
+    addButtonLabel: () => tMedia('galleryManager.profile.add'),
+  }),
 }
 
 /** player_videos.title has a 1–120 char CHECK. Derive one from the file name. */
@@ -158,13 +166,13 @@ function formatDuration(seconds: number): string {
 }
 
 /** video-delete's machine codes, in the user's language. */
-const VIDEO_DELETE_MESSAGES: Record<string, string> = {
-  video_in_use: 'This video is used by one of your posts. Delete the post first.',
-  forbidden: 'You can only delete your own videos.',
-  not_found: 'That video no longer exists.',
-  unauthenticated: 'Please sign in again and retry.',
-}
-const VIDEO_DELETE_FALLBACK = 'Failed to delete video. Please try again.'
+const VIDEO_DELETE_MESSAGES: Record<string, string> = lazyTextRecord({
+  video_in_use: () => tMedia('galleryManager.deleteErrors.inUse'),
+  forbidden: () => tMedia('galleryManager.deleteErrors.forbidden'),
+  not_found: () => tMedia('galleryManager.deleteErrors.notFound'),
+  unauthenticated: () => tMedia('galleryManager.deleteErrors.unauthenticated'),
+})
+const videoDeleteFallback = () => tMedia('galleryManager.deleteErrors.fallback')
 
 /** functions.invoke throws a FunctionsHttpError whose message is the static
  *  "non-2xx status code" — the real reason is only in the response body, and
@@ -173,9 +181,9 @@ async function videoDeleteErrorMessage(err: unknown): Promise<string> {
   const ctx = (err as { context?: Response }).context
   try {
     const body = ctx ? ((await ctx.clone().json()) as { error?: string }) : null
-    return (body?.error && VIDEO_DELETE_MESSAGES[body.error]) || VIDEO_DELETE_FALLBACK
+    return (body?.error && VIDEO_DELETE_MESSAGES[body.error]) || videoDeleteFallback()
   } catch {
-    return VIDEO_DELETE_FALLBACK
+    return videoDeleteFallback()
   }
 }
 
@@ -190,6 +198,7 @@ export default function GalleryManager({
   onCountChange,
   previewLimit,
 }: GalleryManagerProps) {
+  const t = useMediaT()
   const config = MODE_CONFIG[mode]
   const { user } = useAuthStore()
   const targetEntityId = entityId || user?.id
@@ -297,7 +306,7 @@ export default function GalleryManager({
       setMedia(merged)
     } catch (error) {
       logger.error('Error fetching gallery media:', error)
-      addToast('Unable to load gallery items. Please try again.', 'error')
+      addToast(tMedia('galleryManager.toasts.loadFailed'), 'error')
     } finally {
       setIsLoading(false)
     }
@@ -313,7 +322,7 @@ export default function GalleryManager({
 
   const validateFile = (file: File): string | null => {
     const validation = validateImage(file, { maxFileSizeMB: config.maxFileSizeMB })
-    return validation.valid ? null : validation.error || 'Invalid image'
+    return validation.valid ? null : validation.error || t('galleryManager.invalidImage')
   }
 
   /** Photos and videos share ONE 0-based order space (gallery_photos.order_index
@@ -377,7 +386,7 @@ export default function GalleryManager({
 
         if (listError || !fileExists || fileExists.length === 0) {
           logger.error('File upload verification failed:', { fileName, listError, fileExists })
-          throw new Error('File upload could not be verified. Please try again.')
+          throw new Error(t('galleryManager.uploadUnverified'))
         }
 
         const { data: urlData } = supabase.storage
@@ -419,7 +428,7 @@ export default function GalleryManager({
         )
       } catch (error) {
         logger.error('Error uploading file:', error)
-        const message = error instanceof Error ? error.message : 'Upload failed. Please use PNG or JPG up to 10MB.'
+        const message = error instanceof Error ? error.message : t('galleryManager.uploadFailed')
         setUploadProgress((prev) =>
           prev.map((item, idx) =>
             idx === i ? { ...item, status: 'error', error: message } : item
@@ -451,7 +460,7 @@ export default function GalleryManager({
 
     const validation = await validateVideoFull(file)
     if (!validation.valid) {
-      addToast(validation.error || 'Invalid video', 'error')
+      addToast(validation.error || t('galleryManager.invalidVideo'), 'error')
       return
     }
 
@@ -476,10 +485,10 @@ export default function GalleryManager({
 
     if (orderErr || !ordered || ordered.length === 0) {
       logger.error('Error setting gallery video order:', orderErr)
-      addToast('Video added, but we could not save its position. Drag it where you want it.', 'error')
+      addToast(t('galleryManager.toasts.videoPositionFailed'), 'error')
       return
     }
-    addToast('Video added to your gallery.', 'success')
+    addToast(t('galleryManager.toasts.videoAdded'), 'success')
   }
 
   const requestDelete = (mediaItem: NormalizedMedia) => {
@@ -514,12 +523,12 @@ export default function GalleryManager({
       }
 
       await fetchMedia()
-      addToast(pendingDelete.type === 'video' ? 'Video removed from gallery.' : 'Photo removed from gallery.', 'success')
+      addToast(pendingDelete.type === 'video' ? t('galleryManager.toasts.videoRemoved') : t('galleryManager.toasts.photoRemoved'), 'success')
       setPendingDelete(null)
     } catch (error) {
       logger.error('Error deleting media:', error)
       const message = error instanceof Error ? error.message : null
-      addToast(message || 'Failed to delete. Please try again.', 'error')
+      addToast(message || t('galleryManager.toasts.deleteFailed'), 'error')
     } finally {
       setDeletingId(null)
     }
@@ -572,7 +581,7 @@ export default function GalleryManager({
       if (rejected) throw rejected.error ?? new Error('Reorder was rejected')
     } catch (error) {
       logger.error('Error updating order:', error)
-      addToast('Failed to update order. Refresh and try again.', 'error')
+      addToast(t('galleryManager.toasts.reorderFailed'), 'error')
       await fetchMedia()
     }
   }
@@ -650,7 +659,7 @@ export default function GalleryManager({
       await fetchMedia()
     } catch (error) {
       logger.error('Error updating caption:', error)
-      addToast('Failed to update caption. Please try again.', 'error')
+      addToast(t('galleryManager.toasts.captionFailed'), 'error')
     } finally {
       setSavingCaptionId(null)
     }
@@ -741,7 +750,7 @@ export default function GalleryManager({
                 type="button"
               >
                 <Film className="h-5 w-5" />
-                Add Video
+                {t('galleryManager.addVideo')}
               </button>
             )}
             <input
@@ -751,7 +760,7 @@ export default function GalleryManager({
               multiple
               onChange={(e) => void handleFileUpload(e.target.files)}
               className="hidden"
-              aria-label="Upload photos"
+              aria-label={t('galleryManager.uploadPhotosLabel')}
             />
             {canAddVideo && (
               <input
@@ -760,7 +769,7 @@ export default function GalleryManager({
                 accept={VIDEO_INPUT_ACCEPT}
                 onChange={(e) => void handleVideoUpload(e.target.files)}
                 className="hidden"
-                aria-label="Upload video"
+                aria-label={t('galleryManager.uploadVideoLabel')}
               />
             )}
           </div>
@@ -775,11 +784,11 @@ export default function GalleryManager({
             <div className="flex items-start gap-3">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900">Video upload failed</p>
+                <p className="text-sm font-medium text-gray-900">{t('galleryManager.videoFailed')}</p>
                 <p className="mt-0.5 text-sm text-red-600">{videoError}</p>
               </div>
               <button type="button" onClick={resetVideo} className="text-sm font-medium text-gray-500 hover:text-gray-700">
-                Dismiss
+                {t('galleryManager.dismiss')}
               </button>
             </div>
           ) : (
@@ -787,15 +796,15 @@ export default function GalleryManager({
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Loader2 className="h-4 w-4 animate-spin text-hockia-primary" />
-                  {videoPhase === 'creating' && 'Preparing upload…'}
-                  {videoPhase === 'uploading' && 'Uploading video…'}
-                  {videoPhase === 'processing' && 'Processing video. This can take a minute.'}
+                  {videoPhase === 'creating' && t('galleryManager.videoPreparing')}
+                  {videoPhase === 'uploading' && t('galleryManager.videoUploading')}
+                  {videoPhase === 'processing' && t('galleryManager.videoProcessing')}
                 </span>
                 {videoPhase === 'uploading' && (
                   <span className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500">{videoProgress}%</span>
+                    <span className="text-sm text-gray-500">{t('galleryManager.percent', { progress: videoProgress })}</span>
                     <button type="button" onClick={cancelVideo} className="text-sm font-medium text-gray-500 hover:text-gray-700">
-                      Cancel
+                      {t('galleryManager.cancelVideo')}
                     </button>
                   </span>
                 )}
@@ -823,7 +832,7 @@ export default function GalleryManager({
                     ? '✓'
                     : item.status === 'error'
                     ? '✗'
-                    : `${item.progress}%`}
+                    : t('galleryManager.percent', { progress: item.progress })}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -866,14 +875,14 @@ export default function GalleryManager({
         >
           <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
           <p className="mb-1 font-medium text-gray-600">
-            Drag and drop photos here, or click to browse
+            {t('galleryManager.dropTitle')}
           </p>
           <p className="text-sm text-gray-500">
-            JPG/JPEG or PNG • Max {config.maxFileSizeMB}MB per file • Up to {MAX_BATCH_UPLOAD} files at once
+            {t('galleryManager.dropLimits', { maxMb: config.maxFileSizeMB, maxFiles: MAX_BATCH_UPLOAD })}
           </p>
           {canAddVideo && (
             <p className="mt-2 text-sm text-gray-500">
-              Videos: MP4, MOV or WebM • Up to 3 minutes. Use <span className="font-medium text-hockia-primary">Add Video</span>
+              <Trans t={t} i18nKey="galleryManager.dropVideos" components={{ b: <span className="font-medium text-hockia-primary" /> }} />
             </p>
           )}
         </div>
@@ -911,7 +920,7 @@ export default function GalleryManager({
                 // poster is decorative (alt=""), so name the button itself.
                 aria-label={
                   item.type === 'video'
-                    ? `Play video${item.caption ? `: ${item.caption}` : ''}`
+                    ? item.caption ? t('galleryManager.playVideoCaption', { caption: item.caption }) : t('galleryManager.playVideo')
                     : undefined
                 }
                 onClick={() => openPreview(item)}
@@ -952,8 +961,8 @@ export default function GalleryManager({
                     onKeyDown={(event) => event.stopPropagation()}
                     disabled={deletingId === item.id}
                     className="absolute right-2 top-2 rounded-lg bg-red-500 p-2 text-white shadow-lg transition-colors hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={item.type === 'video' ? 'Delete video' : 'Delete photo'}
-                    aria-label={item.type === 'video' ? 'Delete video' : 'Delete photo'}
+                    title={item.type === 'video' ? t('galleryManager.deleteVideo') : t('galleryManager.deletePhoto')}
+                    aria-label={item.type === 'video' ? t('galleryManager.deleteVideo') : t('galleryManager.deletePhoto')}
                     type="button"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -968,7 +977,7 @@ export default function GalleryManager({
                       type="text"
                       value={captionText}
                       onChange={(e) => setCaptionText(e.target.value.slice(0, 200))}
-                      placeholder="Caption (optional, max 200 chars)"
+                      placeholder={t('galleryManager.captionPlaceholder')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 text-sm"
                     />
                     {item.type === 'photo' && (
@@ -976,7 +985,7 @@ export default function GalleryManager({
                         type="text"
                         value={altText}
                         onChange={(e) => setAltText(e.target.value)}
-                        placeholder="Alt text for accessibility (optional)"
+                        placeholder={t('galleryManager.altPlaceholder')}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                       />
                     )}
@@ -990,12 +999,12 @@ export default function GalleryManager({
                         {savingCaptionId === item.id ? (
                           <span className="flex items-center justify-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Saving…
+                            {t('galleryManager.saving')}
                           </span>
                         ) : (
                           <span className="flex items-center justify-center gap-1">
                             <Check className="h-4 w-4" />
-                            Save
+                            {t('galleryManager.save')}
                           </span>
                         )}
                       </button>
@@ -1007,7 +1016,7 @@ export default function GalleryManager({
                       >
                         <span className="flex items-center justify-center gap-1">
                           <X className="h-4 w-4" />
-                          Cancel
+                          {t('galleryManager.cancelEdit')}
                         </span>
                       </button>
                     </div>
@@ -1024,7 +1033,7 @@ export default function GalleryManager({
                             type="button"
                           >
                             <ArrowUp className="h-4 w-4" />
-                            <span className="sr-only">Move item earlier</span>
+                            <span className="sr-only">{t('galleryManager.moveEarlier')}</span>
                           </button>
                           <button
                             onClick={() => moveMedia(item.id, 'down')}
@@ -1033,13 +1042,13 @@ export default function GalleryManager({
                             type="button"
                           >
                             <ArrowDown className="h-4 w-4" />
-                            <span className="sr-only">Move item later</span>
+                            <span className="sr-only">{t('galleryManager.moveLater')}</span>
                           </button>
                         </div>
                         <button
                           onClick={() => startEditingCaption(item)}
                           className="p-1 text-gray-400 transition-colors hover:text-purple-600"
-                          title="Edit caption"
+                          title={t('galleryManager.editCaption')}
                           type="button"
                         >
                           <Edit2 className="h-4 w-4" />
@@ -1047,7 +1056,7 @@ export default function GalleryManager({
                       </div>
                     )}
                     {item.caption && <p className="text-sm text-gray-600 line-clamp-2">{item.caption}</p>}
-                    <p className="text-xs text-gray-400">Uploaded {new Date(item.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-400">{t('galleryManager.uploadedOn', { date: new Date(item.createdAt).toLocaleDateString(isEnglish() ? undefined : intlLocale()) })}</p>
                   </>
                 )}
               </div>
@@ -1066,8 +1075,8 @@ export default function GalleryManager({
               }`}
             >
               <Upload className="h-8 w-8" />
-              <span className="text-sm font-medium">Add more photos</span>
-              <span className="text-xs text-gray-400">Drag files here or tap to browse</span>
+              <span className="text-sm font-medium">{t('galleryManager.addMore')}</span>
+              <span className="text-xs text-gray-400">{t('galleryManager.addMoreHint')}</span>
             </button>
           )}
         </div>
@@ -1081,7 +1090,7 @@ export default function GalleryManager({
             onClick={() => setGalleryExpanded((v) => !v)}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
           >
-            {galleryExpanded ? 'Show fewer' : `Show all ${media.length}`}
+            {galleryExpanded ? t('galleryManager.showFewer') : t('galleryManager.showAll', { total: media.length })}
           </button>
         </div>
       )}
@@ -1096,8 +1105,8 @@ export default function GalleryManager({
           <p className="text-gray-600">
             {readOnly
               ? config.supportsVideo
-                ? 'No photos or videos yet.'
-                : 'No photos yet.'
+                ? t('galleryManager.publicEmptyMedia')
+                : t('galleryManager.publicEmptyPhotos')
               : resolvedEmptyState}
           </p>
         </div>
@@ -1107,20 +1116,20 @@ export default function GalleryManager({
         isOpen={Boolean(pendingDelete)}
         onClose={() => setPendingDelete(null)}
         onConfirm={confirmDelete}
-        confirmLabel={pendingDelete?.type === 'video' ? 'Delete Video' : 'Delete Photo'}
+        confirmLabel={pendingDelete?.type === 'video' ? t('galleryManager.confirm.deleteVideo') : t('galleryManager.confirm.deletePhoto')}
         confirmTone="danger"
         confirmLoading={Boolean(deletingId)}
-        loadingLabel="Deleting..."
-        title={pendingDelete?.type === 'video' ? 'Remove video from gallery?' : 'Remove photo from gallery?'}
+        loadingLabel={t('galleryManager.confirm.deleting')}
+        title={pendingDelete?.type === 'video' ? t('galleryManager.confirm.titleVideo') : t('galleryManager.confirm.titlePhoto')}
         description={
           pendingDelete?.type === 'video'
-            ? 'This permanently deletes the video. It cannot be recovered.'
-            : 'This will permanently delete the image from your gallery.'
+            ? t('galleryManager.confirm.bodyVideo')
+            : t('galleryManager.confirm.bodyPhoto')
         }
         icon={<Trash2 className="h-6 w-6" />}
         body={pendingDelete ? (
           <div className="space-y-3 text-sm text-gray-600">
-            <p>Deleting this media removes it from every profile surface.</p>
+            <p>{t('galleryManager.confirm.everywhere')}</p>
             {pendingDelete.type === 'video' ? (
               <div className="flex h-48 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40">
                 <Film className="h-10 w-10 text-white/80" />
@@ -1166,6 +1175,7 @@ export default function GalleryManager({
  *  visual without the user uploading anything; the branded gradient is only
  *  the loading/failure fallback. */
 function VideoTile({ item }: { item: NormalizedMedia }) {
+  const t = useMediaT()
   const tileRef = useRef<HTMLDivElement>(null)
   // Mint only when the tile approaches the viewport: every mint is an edge-fn
   // call PLUS a Cloudflare token API call, and CF rate-limits that API. A
@@ -1203,7 +1213,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">
         <AlertCircle className="h-6 w-6 text-gray-400" />
-        <span className="text-xs">Removed for breaking the community rules</span>
+        <span className="text-xs">{t('galleryManager.tile.removed')}</span>
       </div>
     )
   }
@@ -1212,7 +1222,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">
         <AlertCircle className="h-6 w-6 text-red-400" />
-        <span className="text-xs">Processing failed. Delete and re-upload</span>
+        <span className="text-xs">{t('galleryManager.tile.failed')}</span>
       </div>
     )
   }
@@ -1221,7 +1231,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-600">
         <Clock className="h-6 w-6 animate-pulse" />
-        <span className="text-xs">Processing…</span>
+        <span className="text-xs">{t('galleryManager.tile.processing')}</span>
       </div>
     )
   }
@@ -1248,7 +1258,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
       </span>
       <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
         <Film className="h-3 w-3" />
-        Video
+        {t('galleryManager.tile.badge')}
       </span>
       {item.durationSeconds != null && (
         <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white">

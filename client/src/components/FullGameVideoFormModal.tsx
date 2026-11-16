@@ -9,6 +9,8 @@ import { fullMatchVisibilityOf } from '@/lib/recruiter'
 import { validateFullMatchUrl } from '@/lib/videoUrlValidator'
 import type { FullGameVideo, FullGameVideoVisibility } from '@/hooks/useFullGameVideos'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { useMediaT } from '@/i18n/ns/media'
+import { useEnumsT } from '@/i18n/ns/enums'
 
 /**
  * FullGameVideoFormModal — add or edit a single full match video.
@@ -45,6 +47,7 @@ interface FullGameVideoFormModalProps {
   }) => Promise<boolean>
 }
 
+// Stored values (English); their labels are translated where rendered.
 const POSITIONS = [
   '',
   'Goalkeeper',
@@ -61,6 +64,15 @@ export default function FullGameVideoFormModal({
   onSubmit,
 }: FullGameVideoFormModalProps) {
   // Bottom sheet on phones: lift it above the iOS keyboard.
+  const t = useMediaT()
+  const tEnum = useEnumsT()
+  const positionLabels: Record<string, string> = {
+    Goalkeeper: tEnum('position.goalkeeper'),
+    Defender: tEnum('position.defender'),
+    Midfielder: tEnum('position.midfielder'),
+    Forward: tEnum('position.forward'),
+    Other: t('fullGameForm.positionOther'),
+  }
   const kb = useKeyboardInset(isOpen)
   const { addToast } = useToastStore()
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -139,28 +151,28 @@ export default function FullGameVideoFormModal({
     setError('')
 
     if (!matchTitle.trim()) {
-      setError('Please enter a match title.')
+      setError(t('fullGameForm.errors.titleRequired'))
       return
     }
     if (matchTitle.trim().length > 120) {
-      setError('Match title must be 120 characters or fewer.')
+      setError(t('fullGameForm.errors.titleTooLong'))
       return
     }
 
     const normalizedUrl = validateFullMatchUrl(videoUrl)
     if (!normalizedUrl) {
-      setError('That link doesn\'t look right. Paste the full link to the match, starting with https://')
+      setError(t('fullGameForm.errors.badLink'))
       return
     }
 
     const shirtNum = shirtNumber.trim() ? Number(shirtNumber) : null
     if (shirtNum !== null && (Number.isNaN(shirtNum) || shirtNum < 0 || shirtNum > 99)) {
-      setError('Shirt number must be between 0 and 99.')
+      setError(t('fullGameForm.errors.shirtRange'))
       return
     }
     const minsNum = minutesPlayed.trim() ? Number(minutesPlayed) : null
     if (minsNum !== null && (Number.isNaN(minsNum) || minsNum < 0 || minsNum > 200)) {
-      setError('Minutes played must be between 0 and 200.')
+      setError(t('fullGameForm.errors.minutesRange'))
       return
     }
 
@@ -181,13 +193,13 @@ export default function FullGameVideoFormModal({
       })
 
       if (ok) {
-        addToast(isEditing ? 'Match video updated.' : 'Match video added.', 'success')
+        addToast(isEditing ? t('fullGameForm.toastUpdated') : t('fullGameForm.toastAdded'), 'success')
         onClose()
       } else {
-        setError('Could not save. Please try again.')
+        setError(t('fullGameForm.errors.saveFailed'))
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof Error ? err.message : t('fullGameForm.errors.saveFailed'))
     } finally {
       setIsSaving(false)
     }
@@ -209,10 +221,10 @@ export default function FullGameVideoFormModal({
         <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 sm:px-6">
           <div>
             <h2 id={titleId} className="text-lg font-semibold text-gray-900">
-              {isEditing ? 'Edit match video' : 'Add full match video'}
+              {isEditing ? t('fullGameForm.titleEdit') : t('fullGameForm.titleAdd')}
             </h2>
             <p className="mt-1 text-xs text-gray-500">
-              Add unedited match footage so clubs can evaluate you in real game conditions.
+              {t('fullGameForm.subtitle')}
             </p>
           </div>
           <button
@@ -220,7 +232,7 @@ export default function FullGameVideoFormModal({
             onClick={onClose}
             disabled={isSaving}
             className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-            aria-label="Close"
+            aria-label={t('fullGameForm.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -231,8 +243,8 @@ export default function FullGameVideoFormModal({
             <Input
               ref={inputRef}
               id={urlInputId}
-              label="Video link *"
-              placeholder="Link to the match (YouTube, Hockey TV, Veo…)"
+              label={t('fullGameForm.linkLabel')}
+              placeholder={t('fullGameForm.linkPlaceholder')}
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
               disabled={isSaving}
@@ -240,8 +252,8 @@ export default function FullGameVideoFormModal({
             />
 
             <Input
-              label="Match title *"
-              placeholder="e.g. Club A vs Club B"
+              label={t('fullGameForm.matchTitleLabel')}
+              placeholder={t('fullGameForm.matchTitlePlaceholder')}
               value={matchTitle}
               onChange={(e) => setMatchTitle(e.target.value)}
               disabled={isSaving}
@@ -250,15 +262,15 @@ export default function FullGameVideoFormModal({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
-                label="Match date"
+                label={t('fullGameForm.dateLabel')}
                 type="date"
                 value={matchDate}
                 onChange={(e) => setMatchDate(e.target.value)}
                 disabled={isSaving}
               />
               <Input
-                label="Competition"
-                placeholder="e.g. Belgian National 1"
+                label={t('fullGameForm.competitionLabel')}
+                placeholder={t('fullGameForm.competitionPlaceholder')}
                 value={competition}
                 onChange={(e) => setCompetition(e.target.value)}
                 disabled={isSaving}
@@ -268,16 +280,16 @@ export default function FullGameVideoFormModal({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
-                label="Your team"
-                placeholder="e.g. AHC Amsterdam"
+                label={t('fullGameForm.teamLabel')}
+                placeholder={t('fullGameForm.teamPlaceholder')}
                 value={playerTeam}
                 onChange={(e) => setPlayerTeam(e.target.value)}
                 disabled={isSaving}
                 maxLength={120}
               />
               <Input
-                label="Opponent"
-                placeholder="e.g. HC Bloemendaal"
+                label={t('fullGameForm.opponentLabel')}
+                placeholder={t('fullGameForm.opponentPlaceholder')}
                 value={opponentTeam}
                 onChange={(e) => setOpponentTeam(e.target.value)}
                 disabled={isSaving}
@@ -287,7 +299,7 @@ export default function FullGameVideoFormModal({
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Position</label>
+                <label className="mb-1 block text-xs font-medium text-gray-700">{t('fullGameForm.positionLabel')}</label>
                 <select
                   value={positionPlayed}
                   onChange={(e) => setPositionPlayed(e.target.value)}
@@ -296,13 +308,13 @@ export default function FullGameVideoFormModal({
                 >
                   {POSITIONS.map((p) => (
                     <option key={p} value={p}>
-                      {p || '—'}
+                      {p ? positionLabels[p] ?? p : '—'}
                     </option>
                   ))}
                 </select>
               </div>
               <Input
-                label="Shirt #"
+                label={t('fullGameForm.shirtLabel')}
                 type="number"
                 min={0}
                 max={99}
@@ -311,7 +323,7 @@ export default function FullGameVideoFormModal({
                 disabled={isSaving}
               />
               <Input
-                label="Minutes played"
+                label={t('fullGameForm.minutesLabel')}
                 type="number"
                 min={0}
                 max={200}
@@ -322,20 +334,20 @@ export default function FullGameVideoFormModal({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">Notes (optional)</label>
+              <label className="mb-1 block text-xs font-medium text-gray-700">{t('fullGameForm.notesLabel')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={isSaving}
                 maxLength={500}
                 rows={2}
-                placeholder="e.g. Tournament final, captained the team."
+                placeholder={t('fullGameForm.notesPlaceholder')}
                 className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 disabled:opacity-60"
               />
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-              <p className="mb-2 text-xs font-medium text-gray-700">Who can see this video?</p>
+              <p className="mb-2 text-xs font-medium text-gray-700">{t('fullGameForm.visibilityQuestion')}</p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-hockia-primary/40">
                   <input
@@ -348,8 +360,8 @@ export default function FullGameVideoFormModal({
                     className="mt-1"
                   />
                   <span>
-                    <span className="block font-medium text-gray-900">Public</span>
-                    <span className="block text-xs text-gray-500">Visible to anyone who views your profile.</span>
+                    <span className="block font-medium text-gray-900">{t('fullGameForm.publicLabel')}</span>
+                    <span className="block text-xs text-gray-500">{t('fullGameForm.publicHint')}</span>
                   </span>
                 </label>
                 <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-hockia-primary/40">
@@ -364,9 +376,9 @@ export default function FullGameVideoFormModal({
                   />
                   <span>
                     <span className="block font-medium text-gray-900 inline-flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Clubs &amp; coaches
+                      <Lock className="h-3 w-3" /> {t('fullGameForm.recruitersLabel')}
                     </span>
-                    <span className="block text-xs text-gray-500">Only clubs and coaches who recruit can watch.</span>
+                    <span className="block text-xs text-gray-500">{t('fullGameForm.recruitersHint')}</span>
                   </span>
                 </label>
               </div>
@@ -382,18 +394,18 @@ export default function FullGameVideoFormModal({
 
         <footer className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-3 sm:px-6">
           <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancel
+            {t('fullGameForm.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving…
+                {t('fullGameForm.saving')}
               </>
             ) : isEditing ? (
-              'Save changes'
+              t('fullGameForm.saveChanges')
             ) : (
-              'Add video'
+              t('fullGameForm.addVideo')
             )}
           </Button>
         </footer>

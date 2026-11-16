@@ -10,6 +10,7 @@ const getCaptchaToken = vi.fn()
 vi.mock('@/lib/captcha', () => ({
   getCaptchaToken: (...args: unknown[]) => getCaptchaToken(...args),
   CAPTCHA_FAILED_COPY: 'captcha failed copy',
+  captchaFailedCopy: () => 'captcha failed copy',
 }))
 
 import { guardCheck, guardReportFailedSignIn, rateLimitedCopy, setAuthGuardEnabledForTests } from '@/lib/authGuard'

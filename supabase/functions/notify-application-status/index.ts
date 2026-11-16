@@ -7,6 +7,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
+import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -131,6 +132,11 @@ Deno.serve(async (req: Request) => {
       return json(200, { message: 'Ignored - player not eligible' })
     }
 
+    // The player's interface language (profiles.ui_language), read on its
+    // own and failing to English. Spanish copy: client/src/locales/glossary.md.
+    const language = await readMemberLanguage(supabase, player.id)
+    const es = language === 'es'
+
     // ── Idempotency: one email per queue batch ──
     const { count: alreadySent } = await supabase
       .from('email_sends')
@@ -159,8 +165,8 @@ Deno.serve(async (req: Request) => {
     const rawEntries: StatusEntry[] = notifications
       .map((n: any) => ({
         status: n.metadata?.status,
-        vacancy_title: n.metadata?.vacancy_title ?? 'your opportunity',
-        club_name: n.metadata?.club_name ?? 'The team',
+        vacancy_title: n.metadata?.vacancy_title ?? (es ? 'la oportunidad' : 'your opportunity'),
+        club_name: n.metadata?.club_name ?? (es ? 'El equipo' : 'The team'),
         opportunity_id: n.metadata?.opportunity_id ?? null,
         application_id: n.metadata?.application_id ?? null,
         note: null,
@@ -194,7 +200,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = player.full_name?.split(' ')[0]?.trim() || 'there'
+    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
     const rejected = entries.filter((e) => e.status === 'rejected')
     const shortlisted = entries.filter((e) => e.status === 'shortlisted')
 
@@ -210,13 +216,33 @@ Deno.serve(async (req: Request) => {
       : []
 
     const single = entries.length === 1
-    const subject = single
+    const subject = es
+      ? single
+        ? (entries[0].status === 'shortlisted'
+            ? `Tu perfil está en la preselección de ${entries[0].club_name}`
+            : `Novedades sobre tu postulación a ${entries[0].vacancy_title}`)
+        : 'Novedades sobre tus postulaciones'
+      : single
       ? (entries[0].status === 'shortlisted'
           ? `You're on ${entries[0].club_name}'s shortlist`
           : `An update on your ${entries[0].vacancy_title} application`)
       : 'Updates on your applications'
 
-    const entryHtml = (e: StatusEntry) => e.status === 'shortlisted'
+    const entryHtmlEs = (e: StatusEntry) => e.status === 'shortlisted'
+      ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Tu perfil está en la preselección de ${escapeHtml(e.club_name)}</div>
+           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Es un buen momento para tener el perfil al día mientras revisan.</div>
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver oportunidad →</a>` : ''}
+         </td></tr>`
+      : `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">Esta vez no: ${escapeHtml(e.club_name)} eligió otra opción para ${escapeHtml(e.vacancy_title)}</div>
+           ${e.note
+             ? `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
+             : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y la oportunidad indicada está ahí afuera.</div>`}
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver tu postulación →</a>` : ''}
+         </td></tr>`
+
+    const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
@@ -231,28 +257,40 @@ Deno.serve(async (req: Request) => {
          </td></tr>`
 
     const html = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
           ${entries.map(entryHtml).join('')}
         </table>
-        ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
+        ${suggestionsHtml(suggestions, HOCKIA_BASE_URL, language)}
         <div style="margin-top:20px;">
-          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">Open Hockia</a>
+          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Abrir Hockia' : 'Open Hockia'}</a>
         </div>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Notification settings</a>
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
     </table>
   </td></tr></table>
 </body></html>`
 
-    const text = [
+    const text = es
+      ? [
+        `Hola, ${firstName}:`,
+        '',
+        ...shortlisted.map((e) => `⭐ Tu perfil está en la preselección de ${e.club_name} para ${e.vacancy_title}.`),
+        ...rejected.map((e) => e.note
+          ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"`
+          : `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Muchas veces depende del encaje, no del nivel.`),
+        suggestionsText(suggestions, HOCKIA_BASE_URL, language),
+        '',
+        `Abrir Hockia: ${HOCKIA_BASE_URL}/opportunities`,
+      ].join('\n')
+      : [
       `Hi ${firstName},`,
       '',
       ...shortlisted.map((e) => `⭐ You're on ${e.club_name}'s shortlist for ${e.vacancy_title}.`),
@@ -264,13 +302,16 @@ Deno.serve(async (req: Request) => {
       `Open Hockia: ${HOCKIA_BASE_URL}/opportunities`,
     ].join('\n')
 
-    const rendered = await renderTemplate(supabase, 'application_status', {
+    // A DB template is used only when it is in the member's language (no
+    // 'application_status' rows exist today; the code above is the email).
+    const renderedAny = await renderTemplate(supabase, 'application_status', {
       first_name: firstName,
       count: String(entries.length),
-      suggestions_html: suggestionsHtml(suggestions, HOCKIA_BASE_URL),
+      suggestions_html: suggestionsHtml(suggestions, HOCKIA_BASE_URL, language),
       cta_url: `${HOCKIA_BASE_URL}/opportunities`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    })
+    }, language)
+    const rendered = renderedAny && renderedAny.language === language ? renderedAny : null
 
     const result = await sendTrackedEmail({
       supabase,

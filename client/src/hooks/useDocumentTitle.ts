@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
+import { tCommon } from '@/i18n/ns/common'
 
 const SUFFIX = ' • Hockia'
-const DEFAULT_TITLE = 'Hockia – Where field hockey sticks together.'
 
 /**
  * Sets document.title for the current page and restores the default
@@ -27,7 +27,7 @@ export function useDocumentTitle(
     return () => {
       // Restore on unmount so a no-title page after this one doesn't
       // inherit a stale title. Falls back to the static index.html title.
-      document.title = previous || DEFAULT_TITLE
+      document.title = previous || tCommon('documentTitle.default')
     }
   }, [title, options?.raw])
 }

@@ -7,6 +7,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
+import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -25,6 +26,11 @@ import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
  * player's energy. (Strategic audit addendum #1, 2026-07-06.)
  * ============================================================================
  */
+
+const EXPIRY_EXPLAINER_EN =
+  "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:"
+const EXPIRY_EXPLAINER_ES =
+  'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nadie quede esperando. Algunas conversaciones simplemente siguen por otro lado. Esto es lo que está abierto ahora:'
 
 interface QueueRecord {
   id: string
@@ -122,6 +128,11 @@ Deno.serve(async (req: Request) => {
       return json(200, { message: 'Ignored - player not eligible' })
     }
 
+    // The player's interface language (profiles.ui_language), read on its
+    // own and failing to English. Spanish copy: client/src/locales/glossary.md.
+    const language = await readMemberLanguage(supabase, player.id)
+    const es = language === 'es'
+
     // ── Idempotency: one expiry email per (player, sweep day) ──
     const { count: alreadySent } = await supabase
       .from('email_sends')
@@ -148,8 +159,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const entries = apps.map((a: any) => ({
-      title: a.opportunity?.title ?? 'an opportunity',
-      publisher: a.opportunity?.club?.full_name ?? 'The club',
+      title: a.opportunity?.title ?? (es ? 'una oportunidad' : 'an opportunity'),
+      publisher: a.opportunity?.club?.full_name ?? (es ? 'El club' : 'The club'),
     }))
     const opportunityIds = apps.map((a: any) => a.opportunity_id).filter(Boolean)
 
@@ -157,10 +168,14 @@ Deno.serve(async (req: Request) => {
     const suggestions = await fetchSuggestions(supabase, player.id, opportunityIds, 3)
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = player.full_name?.split(' ')[0]?.trim() || 'there'
+    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
     const single = entries.length === 1
 
-    const subject = single
+    const subject = es
+      ? single
+        ? `Tu postulación a ${entries[0].title} se cerró`
+        : `Se cerraron ${entries.length} de tus postulaciones`
+      : single
       ? `Your application to ${entries[0].title} has closed`
       : `${entries.length} of your applications have closed`
 
@@ -169,34 +184,52 @@ Deno.serve(async (req: Request) => {
       .join('')
 
     const html = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.55;">
-          ${single
+          ${es
+            ? single
+              ? `Tu postulación a <strong>${escapeHtml(entries[0].title)}</strong> ya no está activa en Hockia.`
+              : `Estas postulaciones ya no están activas en Hockia:`
+            : single
             ? `Your application for <strong>${escapeHtml(entries[0].title)}</strong> is no longer active on Hockia.`
             : `These applications are no longer active on Hockia:`}
         </p>
         ${single ? '' : `<ul style="padding-left:18px;margin:8px 0;">${listHtml}</ul>`}
         <p style="font-size:14px;color:#3f3c4d;line-height:1.55;">
-          Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:
+          ${es ? EXPIRY_EXPLAINER_ES : EXPIRY_EXPLAINER_EN}
         </p>
-        ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
+        ${suggestionsHtml(suggestions, HOCKIA_BASE_URL, language)}
         <div style="margin-top:20px;">
-          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Browse open opportunities</a>
+          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Ver oportunidades abiertas' : 'Browse open opportunities'}</a>
         </div>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Notification settings</a>
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
     </table>
   </td></tr></table>
 </body></html>`
 
-    const text = [
+    const text = es
+      ? [
+        `Hola, ${firstName}:`,
+        '',
+        single
+          ? `Tu postulación a "${entries[0].title}" ya no está activa en Hockia.`
+          : `Estas postulaciones ya no están activas en Hockia:`,
+        ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
+        '',
+        'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nadie quede esperando. Algunas conversaciones simplemente siguen por otro lado.',
+        suggestionsText(suggestions, HOCKIA_BASE_URL, language),
+        '',
+        `Ver oportunidades abiertas: ${HOCKIA_BASE_URL}/opportunities`,
+      ].join('\n')
+      : [
       `Hi ${firstName},`,
       '',
       single
@@ -210,14 +243,17 @@ Deno.serve(async (req: Request) => {
       `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,
     ].join('\n')
 
-    const rendered = await renderTemplate(supabase, 'application_expiry', {
+    // A DB template is used only when it is in the member's language (no
+    // 'application_expiry' rows exist today; the code above is the email).
+    const renderedAny = await renderTemplate(supabase, 'application_expiry', {
       first_name: firstName,
       count: String(entries.length),
       titles_text: entries.map((e) => e.title).join(', '),
-      suggestions_html: suggestionsHtml(suggestions, HOCKIA_BASE_URL),
+      suggestions_html: suggestionsHtml(suggestions, HOCKIA_BASE_URL, language),
       cta_url: `${HOCKIA_BASE_URL}/opportunities`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    })
+    }, language)
+    const rendered = renderedAny && renderedAny.language === language ? renderedAny : null
 
     const result = await sendTrackedEmail({
       supabase,

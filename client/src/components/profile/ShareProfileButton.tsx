@@ -14,6 +14,7 @@ import {
   trackProfileShareInitiated,
   trackProfileShareCompleted,
 } from '@/lib/analytics'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface ShareProfileButtonProps {
   profile: ShareableProfile
@@ -30,6 +31,7 @@ interface ShareProfileButtonProps {
  * 4 channels: copy link, native share (when available), WhatsApp, email.
  */
 export default function ShareProfileButton({ profile, variant = 'full' }: ShareProfileButtonProps) {
+  const t = useProfileT()
   const [open, setOpen] = useState(false)
   const addToast = useToastStore((s) => s.addToast)
 
@@ -62,11 +64,11 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
         document.execCommand('copy')
         document.body.removeChild(ta)
       }
-      addToast('Profile link copied', 'success')
+      addToast(t('shareProfileButton.copied'), 'success')
       trackProfileShareCompleted(profile.role, 'copy_link')
       setOpen(false)
     } catch {
-      addToast('Could not copy link. Try selecting it manually.', 'error')
+      addToast(t('shareProfileButton.copyFailed'), 'error')
     }
   }
 
@@ -82,7 +84,7 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
     } catch (err) {
       // User dismissed the native sheet — silent. Real errors get a toast.
       const isAbort = err instanceof Error && err.name === 'AbortError'
-      if (!isAbort) addToast('Share failed. Try copy link instead.', 'error')
+      if (!isAbort) addToast(t('shareProfileButton.shareFailed'), 'error')
     }
   }
 
@@ -110,24 +112,23 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
             ? 'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:border-hockia-primary hover:text-hockia-primary'
             : 'inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:border-hockia-primary hover:text-hockia-primary sm:text-sm'
         }
-        aria-label="Share profile"
+        aria-label={t('shareProfileButton.button')}
       >
         <Share2 className="h-4 w-4" />
-        {variant === 'full' && <span>Share profile</span>}
+        {variant === 'full' && <span>{t('shareProfileButton.button')}</span>}
       </button>
 
       <Modal isOpen={open} onClose={() => setOpen(false)} className="max-w-sm">
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Share your Hockia profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('shareProfileButton.title')}</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Send your public profile link via any of the options below. The recipient
-            won’t need a Hockia account to view it.
+            {t('shareProfileButton.body')}
           </p>
 
           <div className="mt-5 space-y-2">
             <ShareRow
               icon={<LinkIcon className="h-5 w-5 text-gray-700" />}
-              label="Copy link"
+              label={t('shareProfileButton.copyLink')}
               hint={url}
               onClick={handleCopy}
               testId="share-channel-copy"
@@ -135,8 +136,8 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
             {supportsNativeShare && (
               <ShareRow
                 icon={<Smartphone className="h-5 w-5 text-gray-700" />}
-                label="Share via device"
-                hint="Use your device’s share sheet"
+                label={t('shareProfileButton.nativeLabel')}
+                hint={t('shareProfileButton.nativeHint')}
                 onClick={handleNativeShare}
                 testId="share-channel-native"
               />
@@ -144,14 +145,14 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
             <ShareRow
               icon={<MessageCircle className="h-5 w-5 text-emerald-600" />}
               label="WhatsApp"
-              hint="Open WhatsApp with a prefilled message"
+              hint={t('shareProfileButton.whatsappHint')}
               onClick={handleWhatsapp}
               testId="share-channel-whatsapp"
             />
             <ShareRow
               icon={<Mail className="h-5 w-5 text-ink-2" />}
-              label="Email"
-              hint="Open your email app with a prefilled message"
+              label={t('shareProfileButton.emailLabel')}
+              hint={t('shareProfileButton.emailHint')}
               onClick={handleEmail}
               testId="share-channel-email"
             />

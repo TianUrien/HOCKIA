@@ -195,7 +195,7 @@ describe('desktop media counts include uploaded videos', () => {
   it('the scouting card media line reads the same counts', () => {
     const src = read('../components/profile/ScoutingCard.tsx')
     expect(src).toContain('playerMediaCounts(profile, profileVideos)')
-    expect(src).toContain("`${highlightCount} highlight${highlightCount === 1 ? '' : 's'}`")
+    expect(src).toContain("t('scoutingCard.highlights', { count: highlightCount })")
   })
 })
 

@@ -19,8 +19,10 @@ import {
   SORT_OPTIONS,
 } from '@/types/questions'
 import type { QuestionCategory, QuestionSortOption, CreateQuestionInput } from '@/types/questions'
+import { useCommunityT } from '@/i18n/ns/community'
 
 export function QuestionsListView() {
+  const t = useCommunityT()
   const { user } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | null>(null)
   const [sortBy, setSortBy] = useState<QuestionSortOption>('latest')
@@ -96,15 +98,15 @@ export function QuestionsListView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Questions</h2>
-          <p className="text-gray-600">Ask the field hockey world.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('questions.list.title')}</h2>
+          <p className="text-gray-600">{t('questions.list.subtitle')}</p>
         </div>
         <button
           onClick={handleAskQuestionClick}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity shadow-md whitespace-nowrap"
         >
           <Plus className="w-5 h-5" />
-          Ask a Question
+          {t('questions.list.askButton')}
         </button>
       </div>
 
@@ -115,7 +117,7 @@ export function QuestionsListView() {
           type="text"
           value={searchInput}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Search questions by keyword or topic..."
+          placeholder={t('questions.list.searchPlaceholder')}
           className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500"
         />
         {searchInput && (
@@ -123,7 +125,7 @@ export function QuestionsListView() {
             type="button"
             onClick={clearSearch}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Clear search"
+            aria-label={t('questions.list.clearSearch')}
           >
             <X className="w-4 h-4 text-gray-400" />
           </button>
@@ -138,9 +140,9 @@ export function QuestionsListView() {
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory || null)}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[180px]"
-            title="Filter by category"
+            title={t('questions.list.filterByCategory')}
           >
-            <option value="">All Categories</option>
+            <option value="">{t('questions.list.allCategories')}</option>
             {QUESTION_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
                 {CATEGORY_LABELS[cat]}
@@ -156,7 +158,7 @@ export function QuestionsListView() {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as QuestionSortOption)}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-purple-500 cursor-pointer min-w-[140px]"
-            title="Sort questions"
+            title={t('questions.list.sortLabel')}
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -195,24 +197,24 @@ export function QuestionsListView() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {debouncedSearch
-                ? 'No questions found'
+                ? t('questions.list.emptySearchTitle')
                 : selectedCategory
-                  ? 'No questions in this category'
-                  : 'No questions yet'}
+                  ? t('questions.list.emptyCategoryTitle')
+                  : t('questions.list.emptyTitle')}
             </h3>
             <p className="text-gray-500 mb-6">
               {debouncedSearch
-                ? 'Try different keywords or clear your search.'
+                ? t('questions.list.emptySearchBody')
                 : selectedCategory
-                  ? 'Be the first to ask a question in this category!'
-                  : 'Start the conversation by asking the first question.'}
+                  ? t('questions.list.emptyCategoryBody')
+                  : t('questions.list.emptyBody')}
             </p>
             <button
               onClick={handleAskQuestionClick}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
             >
               <Plus className="w-5 h-5" />
-              Ask a Question
+              {t('questions.list.emptyAskButton')}
             </button>
           </div>
         </div>
@@ -247,8 +249,8 @@ export function QuestionsListView() {
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to ask a question"
-        message="Sign in or create a free Hockia account to ask questions to the field hockey community."
+        title={t('questions.list.signInTitle')}
+        message={t('questions.list.signInMessage')}
       />
     </div>
   )

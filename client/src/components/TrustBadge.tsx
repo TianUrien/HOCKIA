@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Shield, ArrowRight, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface TrustBadgeProps {
   /** Number of accepted references (denormalized profiles.accepted_reference_count). */
@@ -45,6 +46,7 @@ export default function TrustBadge({
   // with stronger visual treatment; this header pill was a third
   // duplicate ask on the same screen. `isOwner` is kept on the props
   // shape (call sites still pass it) but no longer changes behaviour.
+  const t = useProfileT()
   void isOwner
   if (count === 0) return null
 
@@ -69,12 +71,12 @@ export default function TrustBadge({
   // tooltip still understand the affordance — important because Capacitor
   // / iOS Safari do not render `title` on tap.
   const label = hasReferences
-    ? `Trusted by ${count}`
-    : 'Get references'
+    ? t('trustBadge.label', { count })
+    : t('trustBadge.getReferences')
 
   const tooltip = hasReferences
-    ? `${count} ${count === 1 ? 'person has' : 'people have'} vouched for you on Hockia. Tap to see endorsements.`
-    : 'References are vouches from coaches, teammates or clubs you\'re connected with. Tap to ask a connection.'
+    ? t('trustBadge.tooltip', { count })
+    : t('trustBadge.emptyTooltip')
 
   // Always render as a button when clickable; falls back to span when no
   // onClick is wired (defensive — should not happen in current usage).
@@ -121,6 +123,7 @@ export default function TrustBadge({
  * button toggles a small popover on tap (and on hover via the same `title`).
  */
 function TrustBadgeInfoButton({ tooltip, size }: { tooltip: string; size: 'sm' | 'md' }) {
+  const t = useProfileT()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLSpanElement | null>(null)
 
@@ -152,9 +155,9 @@ function TrustBadgeInfoButton({ tooltip, size }: { tooltip: string; size: 'sm' |
           e.stopPropagation()
           setOpen((v) => !v)
         }}
-        aria-label="What does this mean?"
+        aria-label={t('trustBadge.infoLabel')}
         aria-expanded={open ? 'true' : 'false'}
-        title="What does Trusted mean?"
+        title={t('trustBadge.infoTitle')}
         className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
       >
         <Info className={iconSize} aria-hidden="true" />

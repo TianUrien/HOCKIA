@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
 import type { Database } from '@/lib/database.types'
 
 export type UmpireAppointment = Database['public']['Tables']['umpire_appointments']['Row']
@@ -64,7 +65,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
       setAppointments(data ?? [])
     } catch (err) {
       logger.error('[useUmpireAppointments] fetch failed:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load matches')
+      setError(err instanceof Error ? err.message : tProfileEdit('umpireAppointments.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -89,7 +90,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return data
       } catch (err) {
         logger.error('[useUmpireAppointments] create failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to create match')
+        setError(err instanceof Error ? err.message : tProfileEdit('umpireAppointments.createFailed'))
         return null
       }
     },
@@ -111,7 +112,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return data
       } catch (err) {
         logger.error('[useUmpireAppointments] update failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to update match')
+        setError(err instanceof Error ? err.message : tProfileEdit('umpireAppointments.updateFailed'))
         return null
       }
     },
@@ -131,7 +132,7 @@ export function useUmpireAppointments({ userId }: UseUmpireAppointmentsOptions):
         return true
       } catch (err) {
         logger.error('[useUmpireAppointments] delete failed:', err)
-        setError(err instanceof Error ? err.message : 'Failed to delete match')
+        setError(err instanceof Error ? err.message : tProfileEdit('umpireAppointments.deleteFailed'))
         return false
       }
     },

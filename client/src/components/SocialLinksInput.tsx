@@ -1,4 +1,5 @@
 import { SOCIAL_PLATFORMS, type SocialLinks, type SocialPlatform } from '@/lib/socialLinks'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 interface SocialLinksInputProps {
   value: SocialLinks
@@ -7,6 +8,7 @@ interface SocialLinksInputProps {
 }
 
 export default function SocialLinksInput({ value, onChange, error }: SocialLinksInputProps) {
+  const t = useProfileEditT()
   const handleChange = (platform: SocialPlatform, url: string) => {
     const trimmedUrl = url.trim()
     const newLinks = { ...value }
@@ -23,10 +25,10 @@ export default function SocialLinksInput({ value, onChange, error }: SocialLinks
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
-        Social Media Links (Optional)
+        {t('social.title')}
       </label>
       <p className="text-xs text-gray-500 mb-3">
-        Add your social media profiles to help others connect with you.
+        {t('social.hint')}
       </p>
       
       <div className="space-y-3">
@@ -42,7 +44,7 @@ export default function SocialLinksInput({ value, onChange, error }: SocialLinks
                 onChange={(e) => handleChange(key, e.target.value)}
                 placeholder={placeholder}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
-                aria-label={`${label} URL`}
+                aria-label={t('social.inputLabel', { platform: label })}
               />
             </div>
           </div>

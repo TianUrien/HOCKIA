@@ -5,6 +5,7 @@ import type { ChatMessage } from '@/types/chat'
 import type { MessageDeliveryStatus } from '@/types/chat'
 import { EmptyState } from './EmptyState'
 import { isSameDay } from 'date-fns'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface MessageListProps {
   messages: ChatMessage[]
@@ -42,6 +43,7 @@ export function MessageList({
   hideReceipts = false,
   otherParticipantName = null
 }: MessageListProps) {
+  const t = useInboxT()
   const messageRefs = useRef(new Map<string, HTMLDivElement>())
 
   const meta = useMemo(() => {
@@ -122,7 +124,7 @@ export function MessageList({
     <div className="space-y-4">
       {isLoadingMore && (
         <div className="flex justify-center pb-4 text-xs font-medium uppercase tracking-wide text-ink-3">
-          Loading earlier messages...
+          {t('chat.loadingEarlier')}
         </div>
       )}
       {messages.map((message, index) => (

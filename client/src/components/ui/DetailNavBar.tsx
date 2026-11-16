@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface DetailNavBarProps {
   /** Name of the screen the chevron returns to ("Opportunities", "Home"). */
@@ -41,6 +42,7 @@ export function DetailNavBar({
   alwaysVisible = false,
 }: DetailNavBarProps) {
   const navigate = useNavigate()
+  const t = useCommonT()
   const back =
     onBack ??
     (() => {
@@ -53,7 +55,7 @@ export function DetailNavBar({
       <button
         type="button"
         onClick={back}
-        aria-label={`Back to ${parent}`}
+        aria-label={t('detailNav.backTo', { parent })}
         className={cn('flex h-11 shrink-0 items-center pr-2 text-[15px]', ANDROID_CHROME ? 'text-ink-1' : 'text-brand-text')}
       >
         <span className="flex h-11 w-11 items-center justify-center">

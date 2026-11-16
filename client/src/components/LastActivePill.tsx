@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/lib/auth'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface LastActivePillProps {
   /** ISO timestamp of profiles.last_active_at, or null/undefined if never seen. */
@@ -46,6 +47,7 @@ const DAY_MS = 24 * HOUR_MS
  */
 export default function LastActivePill({ lastActiveAt, showLastActive, className }: LastActivePillProps) {
   const viewer = useAuthStore((s) => s.user)
+  const t = useProfileT()
 
   // Anon-gate: never expose presence to logged-out viewers.
   if (!viewer) return null
@@ -63,11 +65,11 @@ export default function LastActivePill({ lastActiveAt, showLastActive, className
   // Bucket selection. Order matters — earliest match wins.
   let label: string
   if (ms < DAY_MS) {
-    label = 'Active today'
+    label = t('lastActivePill.today')
   } else if (ms < 7 * DAY_MS) {
-    label = 'Active this week'
+    label = t('lastActivePill.thisWeek')
   } else if (ms < 30 * DAY_MS) {
-    label = 'Active this month'
+    label = t('lastActivePill.thisMonth')
   } else {
     // >30 days — silent. No pill = no claim.
     return null

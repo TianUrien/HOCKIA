@@ -6,6 +6,7 @@ import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { withTimeout } from '@/lib/retry'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useAuthStore } from '@/lib/auth'
+import { tCommunity } from '@/i18n/ns/community'
 
 export interface PostImage {
   url?: string
@@ -97,7 +98,7 @@ export function useUserPosts() {
       }, { feature: 'user_posts', op: 'create' })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create post',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.createPost'),
       }
     }
   }, [invalidatePostQueriesAfterCreate, refreshAuthProfile])
@@ -133,7 +134,7 @@ export function useUserPosts() {
       }, { feature: 'user_posts', op: 'update' })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update post',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.updatePost'),
       }
     }
   }, [invalidatePostQueries])
@@ -164,7 +165,7 @@ export function useUserPosts() {
       })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to delete post',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.deletePost'),
       }
     }
   }, [invalidatePostQueries, refreshAuthProfile])
@@ -208,7 +209,7 @@ export function useUserPosts() {
       }, { feature: 'user_posts', op: 'create_transfer' })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create transfer post',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.createTransfer'),
       }
     }
   }, [invalidatePostQueriesAfterCreate])
@@ -249,7 +250,7 @@ export function useUserPosts() {
       }, { feature: 'user_posts', op: 'create_signing' })
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create signing post',
+        error: err instanceof Error ? err.message : tCommunity('posts.errors.createSigning'),
       }
     }
   }, [invalidatePostQueriesAfterCreate])

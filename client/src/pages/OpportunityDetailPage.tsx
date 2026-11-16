@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
+import { networkErrorCopy } from '@/lib/networkCopy'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
@@ -349,7 +349,7 @@ export default function OpportunityDetailPage() {
         <div className="flex items-center justify-center px-4" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="max-w-sm text-center" role="alert" data-testid="role-load-failed">
             <h1 className="text-[20px] font-semibold leading-6 text-ink-1">{t('detailPage.loadFailedTitle')}</h1>
-            <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
+            <p className="mt-2 text-row text-ink-2">{networkErrorCopy()}</p>
             <button
               type="button"
               onClick={retryLoad}

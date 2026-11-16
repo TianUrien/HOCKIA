@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { tInbox } from '@/i18n/ns/inbox'
 
 /** Shown word for word in the chat and in the in-app notice (server copy). */
 export const REMOVED_ACCOUNT_NOTICE =
   "An account that messaged you has been removed for spam. Hockia will never ask you for money. Don't send money, crypto or personal details to people you haven't met, and be careful if someone asks to move to WhatsApp or another app. If something feels off, tap Report."
+
+/** The same notice in the interface language (English is REMOVED_ACCOUNT_NOTICE, word for word). */
+export function removedAccountNotice(): string {
+  return tInbox('safety.removedAccount.notice')
+}
 
 const cache = new Map<string, boolean>()
 

@@ -3,6 +3,7 @@ import { Copy, Share2, Check, MessageSquareQuote } from 'lucide-react'
 import Modal from './Modal'
 import Button from './Button'
 import type { Profile } from '@/lib/supabase'
+import { tMedia, useMediaT } from '@/i18n/ns/media'
 
 interface RequestFeedbackModalProps {
   isOpen: boolean
@@ -16,16 +17,10 @@ interface RequestFeedbackModalProps {
 }
 
 function helperCopyFor(role: Profile['role'] | null | undefined): string {
-  if (role === 'umpire') {
-    return 'Send this to a colleague, umpire manager, coach, or club representative who can vouch for your officiating.'
-  }
-  if (role === 'club') {
-    return 'Send this to a player, coach, or visitor who knows your club. Comments help prospects evaluate culture, facilities, and professionalism.'
-  }
-  if (role === 'brand') {
-    return 'Send this to an ambassador, partner, or customer who knows your brand. Comments help the community evaluate trust and product fit.'
-  }
-  return 'Send this to a teammate, coach, or former club. Comments help clubs and coaches get a fuller picture of who you are on and off the pitch.'
+  if (role === 'umpire') return tMedia('feedbackRequest.helper.umpire')
+  if (role === 'club') return tMedia('feedbackRequest.helper.club')
+  if (role === 'brand') return tMedia('feedbackRequest.helper.brand')
+  return tMedia('feedbackRequest.helper.player')
 }
 
 function messageTemplateFor(
@@ -33,33 +28,12 @@ function messageTemplateFor(
   ownerName: string | null | undefined,
   profileUrl: string,
 ): string {
-  const intro = ownerName ? `Hey! ${ownerName.split(' ')[0]} here. ` : 'Hey! '
-  if (role === 'umpire') {
-    return (
-      `${intro}I'm building out my Hockia officiating profile and would love a short note from you ` +
-      `about working with me on the pitch. Even a couple of sentences helps tournaments and clubs get a fuller picture. ` +
-      `It takes 30 seconds:\n\n${profileUrl}`
-    )
-  }
-  if (role === 'club') {
-    return (
-      `${intro}We're building out our Hockia club page and would love a short comment from you ` +
-      `about your experience with us. Even a couple of sentences helps prospects get a fuller picture of our culture and setup. ` +
-      `It takes 30 seconds:\n\n${profileUrl}`
-    )
-  }
-  if (role === 'brand') {
-    return (
-      `${intro}We're building out our Hockia brand page and would love a short comment from you ` +
-      `about working with us. Even a couple of sentences helps the community get a fuller picture of who we are. ` +
-      `It takes 30 seconds:\n\n${profileUrl}`
-    )
-  }
-  return (
-    `${intro}I'm building out my Hockia profile and would love a short comment from you ` +
-    `about playing with me. Even a couple of sentences helps clubs and coaches get a fuller picture. ` +
-    `It takes 30 seconds:\n\n${profileUrl}`
-  )
+  const firstName = ownerName ? ownerName.split(' ')[0] : null
+  const vars = { firstName, url: profileUrl }
+  if (role === 'umpire') return firstName ? tMedia('feedbackRequest.message.umpireNamed', vars) : tMedia('feedbackRequest.message.umpire', vars)
+  if (role === 'club') return firstName ? tMedia('feedbackRequest.message.clubNamed', vars) : tMedia('feedbackRequest.message.club', vars)
+  if (role === 'brand') return firstName ? tMedia('feedbackRequest.message.brandNamed', vars) : tMedia('feedbackRequest.message.brand', vars)
+  return firstName ? tMedia('feedbackRequest.message.playerNamed', vars) : tMedia('feedbackRequest.message.player', vars)
 }
 
 /**
@@ -78,6 +52,7 @@ export default function RequestFeedbackModal({
   ownerName,
   profileRole,
 }: RequestFeedbackModalProps) {
+  const t = useMediaT()
   const defaultMessage = useMemo(
     () => messageTemplateFor(profileRole, ownerName, profileUrl),
     [profileRole, ownerName, profileUrl],
@@ -118,7 +93,7 @@ export default function RequestFeedbackModal({
     }
     try {
       await navigator.share({
-        title: 'Comment on my Hockia profile',
+        title: t('feedbackRequest.shareTitle'),
         text: message,
         url: profileUrl,
       })
@@ -131,7 +106,7 @@ export default function RequestFeedbackModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 pr-8">Ask for feedback</h2>
+        <h2 className="text-lg font-semibold text-gray-900 pr-8">{t('feedbackRequest.title')}</h2>
 
         <div className="flex items-start gap-3 rounded-xl bg-hockia-primary/5 border border-hockia-primary/15 p-3">
           <MessageSquareQuote className="w-5 h-5 text-hockia-primary flex-shrink-0 mt-0.5" />
@@ -142,20 +117,20 @@ export default function RequestFeedbackModal({
 
         <label className="block">
           <span className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1.5">
-            Your message
+            {t('feedbackRequest.messageLabel')}
           </span>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
             className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent resize-y"
-            aria-label="Message template"
+            aria-label={t('feedbackRequest.messageAria')}
           />
         </label>
 
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t('feedbackRequest.cancel')}
           </Button>
           <Button
             variant="outline"
@@ -165,12 +140,12 @@ export default function RequestFeedbackModal({
             {copied ? (
               <>
                 <Check className="w-4 h-4" />
-                Copied
+                {t('feedbackRequest.copied')}
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                Copy message
+                {t('feedbackRequest.copy')}
               </>
             )}
           </Button>
@@ -180,7 +155,7 @@ export default function RequestFeedbackModal({
             className="inline-flex items-center justify-center gap-2"
           >
             <Share2 className="w-4 h-4" />
-            {canNativeShare ? 'Share' : 'Share (copy)'}
+            {canNativeShare ? t('feedbackRequest.share') : t('feedbackRequest.shareCopy')}
           </Button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
 import type { UserPostFeedItem } from '@/types/homeFeed'
+import { tProfile } from '@/i18n/ns/profile'
 
 interface ProfilePostsPage {
   items: UserPostFeedItem[]
@@ -132,7 +133,7 @@ export function useProfilePosts(profileId: string): UseProfilePostsResult {
   let errorStr: string | null = null
   if (query.error) {
     logger.error('[useProfilePosts] Error fetching posts:', query.error)
-    errorStr = query.error instanceof Error ? query.error.message : 'Failed to load posts'
+    errorStr = query.error instanceof Error ? query.error.message : tProfile('useProfilePosts.loadFailed')
   }
 
   return {

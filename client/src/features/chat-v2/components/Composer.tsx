@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useMemo } from 'react'
 import { Send } from 'lucide-react'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface ComposerProps {
   value: string
@@ -15,6 +16,7 @@ interface ComposerProps {
 const WARNING_THRESHOLD = 0.9 // Show warning color at 90% of limit
 
 export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus, maxLength = 1000, textareaId }: ComposerProps) {
+  const t = useInboxT()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const characterCountState = useMemo(() => {
@@ -68,7 +70,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
       <div className="flex items-end gap-2">
         <div className="relative flex-1">
           <label htmlFor={textareaId} className="sr-only">
-            Message
+            {t('chat.composer.label')}
           </label>
           <textarea
             ref={textareaRef}
@@ -76,7 +78,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             value={value}
             rows={1}
             maxLength={maxLength}
-            placeholder="Message"
+            placeholder={t('chat.composer.placeholder')}
             inputMode="text"
             enterKeyHint="send"
             autoComplete="off"
@@ -105,7 +107,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
           onMouseDown={event => event.preventDefault()}
           onPointerDown={event => { if (event.pointerType !== 'mouse') event.preventDefault() }}
           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hockia-primary disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Send message"
+          aria-label={t('chat.composer.send')}
         >
           {sending ? (
             <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" aria-hidden="true">

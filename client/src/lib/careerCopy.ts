@@ -4,7 +4,24 @@
  * Legacy rows carry only a free-text `years` ("2020 - 2022") and no dates;
  * those are shown as written and are current only when the text says so.
  */
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+import { intlLocale, isEnglish } from '@/i18n/format'
+
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTH_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/** Short month name (0-based) in the interface language: "Jan" / "ene". */
+export function monthShort(month: number): string {
+  if (isEnglish()) return MONTH[month]
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'short', timeZone: 'UTC' }).format(Date.UTC(2000, month, 1)).replace(/\./g, '')
+}
+
+/** Full month name (0-based) for pickers: "January" / "Enero". */
+export function monthLong(month: number): string {
+  if (isEnglish()) return MONTH_LONG[month]
+  const name = new Intl.DateTimeFormat(intlLocale(), { month: 'long', timeZone: 'UTC' }).format(Date.UTC(2000, month, 1))
+  return name.charAt(0).toLocaleUpperCase(intlLocale()) + name.slice(1)
+}
 
 type Dated = { startDate: string | null; endDate: string | null; years: string | null }
 
@@ -43,7 +60,7 @@ export function tidyYears(text: string | null | undefined): string | null {
     return a.slice(0, 2) === b.slice(0, 2) && a !== b ? `${a} – ${b.slice(2)}` : a === b ? a : `${a} – ${b}`
   }
   const open = t.match(/^(\d{4})\s*[-–—]\s*(present|now|current)$/i)
-  if (open) return `${open[1]} – now`
+  if (open) return tProfileEdit('career.span.yearToNow', { year: open[1] })
   return t
 }
 
@@ -51,13 +68,13 @@ export function careerSpan(e: Dated, now = new Date()): string | null {
   const start = parts(e.startDate)
   const end = parts(e.endDate)
   if (!start) return tidyYears(e.years)
-  const from = `${MONTH[start.m]} ${start.y}`
-  if (!end && startsLater(e.startDate, now)) return `From ${from}`
-  if (!end) return `${from} – now`
-  if (end.y === start.y) return end.m === start.m ? from : `${MONTH[start.m]} – ${MONTH[end.m]} ${end.y}`
+  const from = `${monthShort(start.m)} ${start.y}`
+  if (!end && startsLater(e.startDate, now)) return tProfileEdit('career.span.from', { date: from })
+  if (!end) return tProfileEdit('career.span.toNow', { from })
+  if (end.y === start.y) return end.m === start.m ? from : tProfileEdit('career.span.sameYear', { startMonth: monthShort(start.m), endMonth: monthShort(end.m), year: end.y })
   const seasons = end.y - start.y + 1
-  if (seasons >= 4) return `${start.y} – ${end.y} · ${seasons} seasons`
-  return `${from} – ${MONTH[end.m]} ${end.y}`
+  if (seasons >= 4) return tProfileEdit('career.span.seasons', { start: start.y, end: end.y, count: seasons })
+  return tProfileEdit('career.span.range', { from, to: `${monthShort(end.m)} ${end.y}` })
 }
 
 /**

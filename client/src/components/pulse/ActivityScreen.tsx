@@ -18,10 +18,13 @@ import { WhoLookedAtYou } from './WhoLookedAtYou'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { AVAILABLE_RING } from '@/lib/homeEngagement'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { tHome } from '@/i18n/ns/home'
 import { trackNextStepAction } from '@/lib/homeInstrumentation'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useCommunityT } from '@/i18n/ns/community'
+import { useCommonT } from '@/i18n/ns/common'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
 const TIP_KEYS = new Set(['photo', 'career', 'complete', 'crest', 'umpire'])
@@ -37,6 +40,8 @@ const TIP_KEYS = new Set(['photo', 'career', 'complete', 'crest', 'umpire'])
 export function ActivityScreen() {
   const location = useLocation()
   const navigate = useNavigate()
+  const t = useCommunityT()
+  const tCommon = useCommonT()
   const profile = useAuthStore((s) => s.profile)
   const { steps, loading, run, dismiss, markDone } = useNextStep()
   const showAi = useHockiaAiSheet((st) => st.show)
@@ -77,9 +82,9 @@ export function ActivityScreen() {
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)]" data-testid="activity-screen">
-      <DetailNavBar parent={backLabelFrom(location.state, 'Home')} fallbackPath="/home" />
+      <DetailNavBar parent={backLabelFrom(location.state, tCommon('nav.home'))} fallbackPath="/home" />
       <div className="mx-auto flex max-w-md flex-col gap-3 px-4 pb-10">
-        <h1 className="px-1 pb-2 text-[22px] font-bold leading-7 text-ink-1">Your activity</h1>
+        <h1 className="px-1 pb-2 text-[22px] font-bold leading-7 text-ink-1">{t('pulse.activity.title')}</h1>
 
         {loading && [0, 1, 2].map((i) => <div key={i} className="h-[76px] animate-pulse rounded-[20px] bg-surface-muted" />)}
 
@@ -102,14 +107,14 @@ export function ActivityScreen() {
                 <span className="h-5 w-5 rounded-full bg-gradient-to-b from-[#34c759] to-[#1f9d45] shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)]" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">{checkIn.title.replace('Still open to play?', 'Still available to play?')}</span>
-                <span className="block text-secondary text-ink-2">Clubs see this on your profile.</span>
+                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">{checkIn.title === tHome('nextStep.checkIn.titlePlayer') ? t('pulse.activity.checkInTitle') : checkIn.title}</span>
+                <span className="block text-secondary text-ink-2">{t('pulse.activity.checkInBody')}</span>
                 <span className="mt-2.5 flex gap-2">
                   <button type="button" onClick={() => void confirm(checkIn)} disabled={busy === checkIn.key} className="h-9 rounded-full bg-hockia-primary px-4 text-[14px] font-semibold text-white disabled:opacity-60">
-                    Yes, available
+                    {t('pulse.activity.yesAvailable')}
                   </button>
                   <button type="button" onClick={() => void notNow(checkIn)} className="h-9 rounded-full border border-line bg-white px-4 text-[14px] font-semibold text-ink-1">
-                    Not now
+                    {t('pulse.activity.notNow')}
                   </button>
                 </span>
               </span>
@@ -130,9 +135,9 @@ export function ActivityScreen() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                  {recruiters > 0 ? `${recruiters} ${recruiters === 1 ? 'club' : 'clubs'} viewed your profile` : `${views} profile ${views === 1 ? 'view' : 'views'}`}
+                  {recruiters > 0 ? t('pulse.activity.clubsViewed', { count: recruiters }) : t('pulse.activity.profileViews', { count: views })}
                 </span>
-                <span className="block truncate text-secondary text-ink-2">This week · names shown when visible</span>
+                <span className="block truncate text-secondary text-ink-2">{t('pulse.activity.viewsHint')}</span>
               </span>
             </button>
             {showViewers && !viewers.loading && viewers.viewers.length > 0 && (
@@ -152,7 +157,7 @@ export function ActivityScreen() {
               />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                  {reference.profile?.fullName ? `${reference.profile.fullName.split(/\s+/)[0]} left you a reference` : 'You received a reference'}
+                  {reference.profile?.fullName ? t('pulse.activity.leftReference', { name: reference.profile.fullName.split(/\s+/)[0] }) : t('pulse.activity.receivedReference')}
                 </span>
                 {reference.endorsementText && <span className="block truncate text-secondary text-ink-2">“{reference.endorsementText}”</span>}
               </span>
@@ -174,8 +179,8 @@ export function ActivityScreen() {
 
         {nothing && (
           <div className="px-6 py-16 text-center">
-            <p className="text-body font-semibold text-ink-1">Nothing new this week</p>
-            <p className="mt-1 text-secondary text-ink-2">Opportunities, views and references will show up here.</p>
+            <p className="text-body font-semibold text-ink-1">{t('pulse.activity.emptyTitle')}</p>
+            <p className="mt-1 text-secondary text-ink-2">{t('pulse.activity.emptyBody')}</p>
           </div>
         )}
       </div>

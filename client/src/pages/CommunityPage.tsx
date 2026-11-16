@@ -44,27 +44,15 @@ import { RankedForControl } from '@/components/recruiting/RankedForControl'
 import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { BrandOffersSection } from '@/components/offers/OffersWhereYouLive'
+import { Trans } from 'react-i18next'
+import { useCommunityT } from '@/i18n/ns/community'
+import { formatNumber } from '@/i18n/format'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
 /** The search hint follows the tab (Brands said "players, coaches, clubs"; device lab 2026-10-27). */
-const SEARCH_HINT_BY_TAB: Partial<Record<CommunityTab, string>> = {
-  players: 'Search players',
-  coaches: 'Search coaches',
-  clubs: 'Search clubs',
-  umpires: 'Search umpires',
-  brands: 'Search brands',
-}
-
-const TITLE_BY_TAB: Record<CommunityTab, string> = {
-  all: 'Community',
-  players: 'Players',
-  coaches: 'Coaches',
-  clubs: 'Clubs',
-  umpires: 'Umpires',
-  brands: 'Brands',
-  questions: 'Questions',
-}
+// Catalog keys page.searchHint.<tab> (tabs listed here) and page.tabTitle.<tab>, translated at render.
+const SEARCH_HINT_TABS: readonly CommunityTab[] = ['players', 'coaches', 'clubs', 'umpires', 'brands']
 
 const ROLE_FILTER_BY_TAB: Record<Exclude<CommunityTab, 'questions' | 'all'>, 'player' | 'coach' | 'club' | 'umpire' | 'brand'> = {
   players: 'player',
@@ -75,6 +63,7 @@ const ROLE_FILTER_BY_TAB: Record<Exclude<CommunityTab, 'questions' | 'all'>, 'pl
 }
 
 export default function CommunityPage() {
+  const t = useCommunityT()
   const { tab } = useParams<{ tab?: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -184,7 +173,8 @@ export default function CommunityPage() {
     }
   }, [tab, navigate])
 
-  useDocumentTitle(TITLE_BY_TAB[activeTab])
+  const tabTitle = t(`page.tabTitle.${activeTab}`)
+  useDocumentTitle(tabTitle)
 
   const isMembers = activeTab !== 'questions'
 
@@ -374,7 +364,7 @@ export default function CommunityPage() {
           className={`fixed inset-x-0 top-0 z-30 border-b border-line bg-surface-base/[0.92] pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-opacity duration-150 ${compactHeader ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
           data-testid="community-compact-header"
         >
-          <p className="flex h-11 items-center justify-center text-[17px] font-semibold text-ink-1">Community</p>
+          <p className="flex h-11 items-center justify-center text-[17px] font-semibold text-ink-1">{t('page.compactTitle')}</p>
         </div>
       )}
 
@@ -383,13 +373,13 @@ export default function CommunityPage() {
           {/* Title row: "Community" + the filters button (members only).
               The badge shows how many filters are narrowing the grid. */}
           <div className="mb-2 flex items-center justify-between lg:mb-3">
-            <h1 ref={titleRef} className="text-large-title text-ink-1 lg:text-[22px] lg:leading-7">Community</h1>
+            <h1 ref={titleRef} className="text-large-title text-ink-1 lg:text-[22px] lg:leading-7">{t('page.title')}</h1>
             {isMembers && (
               <button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
                 aria-expanded={showFilters}
-                aria-label={activeFilterChips.length > 0 ? `Filters, ${activeFilterChips.length} active` : 'Filters'}
+                aria-label={activeFilterChips.length > 0 ? t('page.filtersActive', { count: activeFilterChips.length }) : t('page.filters')}
                 className={isPhone
                   ? `relative flex h-11 w-11 items-center justify-center rounded-full text-ink-1 transition-colors ${activeFilterChips.length > 0 ? 'bg-hockia-soft' : 'bg-surface-muted'} active:bg-surface-muted-pressed`
                   : 'relative -mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-1 transition-colors hover:bg-gray-200/60'}
@@ -426,7 +416,7 @@ export default function CommunityPage() {
                   data-keyboard-shortcut="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={SEARCH_HINT_BY_TAB[activeTab] ?? 'Search players, coaches, clubs'}
+                  placeholder={SEARCH_HINT_TABS.includes(activeTab) ? t(`page.searchHint.${activeTab as 'players'}`) : t('page.searchHintAll')}
                   className="min-h-[44px] w-full rounded-[12px] border-0 bg-surface-grouped py-2.5 pl-11 pr-10 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
                   autoComplete="off"
                   enterKeyHint="search"
@@ -438,7 +428,7 @@ export default function CommunityPage() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    aria-label="Clear search"
+                    aria-label={t('page.clearSearch')}
                     className="absolute right-1 top-1/2 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-lg text-gray-400 hover:text-gray-600"
                   >
                     ×
@@ -475,7 +465,7 @@ export default function CommunityPage() {
                       key={chip.id}
                       type="button"
                       onClick={chip.onRemove}
-                      aria-label={`Remove filter ${chip.label}`}
+                      aria-label={t('page.removeFilter', { label: chip.label })}
                       className="inline-flex items-center gap-1 pl-3 pr-2 py-1 rounded-full text-xs font-medium bg-purple-50 text-[#6B20D4] border border-purple-200 hover:bg-purple-100 transition-colors"
                     >
                       {chip.label}
@@ -487,7 +477,7 @@ export default function CommunityPage() {
                     onClick={clearFilters}
                     className="text-xs text-gray-500 hover:text-gray-700 font-medium underline underline-offset-2 ml-0.5"
                   >
-                    Clear all
+                    {t('page.clearAll')}
                   </button>
                 </div>
               )}
@@ -500,25 +490,25 @@ export default function CommunityPage() {
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-center justify-between gap-3">
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
                   {/* The heading follows the selected tab on every screen size (audit A9). */}
-                  {isNarrowed ? 'Matching members' : activeTab === 'all' ? 'All members' : TITLE_BY_TAB[activeTab]}
+                  {isNarrowed ? t('page.matchingMembers') : activeTab === 'all' ? t('page.allMembers') : tabTitle}
                   {(() => {
                     const displayed = isNarrowed || scopeNarrows ? filteredCount : totalCount
                     if (displayed === null) return null
-                    return <span className="font-semibold tabular-nums text-gray-500"> · {displayed.toLocaleString()}</span>
+                    return <span className="font-semibold tabular-nums text-gray-500"> · {formatNumber(displayed)}</span>
                   })()}
                 </h2>
                 <label className="relative flex flex-shrink-0 items-center text-[13px] font-semibold text-hockia-primary">
-                  <span className="sr-only">Sort by</span>
+                  <span className="sr-only">{t('page.sortBy')}</span>
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
-                    title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
+                    title={sort === 'newest' ? t('page.sortTitle.newest') : sort === 'evidence' ? t('page.sortTitle.evidence') : t('page.sortTitle.completeness')}
                     className="-my-1 min-h-[44px] cursor-pointer appearance-none border-0 bg-transparent py-0 pl-1 pr-6 [field-sizing:content] text-[13px] font-semibold text-hockia-primary focus:outline-none focus-visible:ring-0"
                   >
-                    <option value="newest">Newest</option>
-                    <option value="completeness">Most complete</option>
+                    <option value="newest">{t('page.sort.newest')}</option>
+                    <option value="completeness">{t('page.sort.completeness')}</option>
                     {canUseEvidence && (filters.role === 'player' || filters.role === 'coach') && (
-                      <option value="evidence">Strongest evidence</option>
+                      <option value="evidence">{t('page.sort.evidence')}</option>
                     )}
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-1 h-4 w-4" aria-hidden="true" />
@@ -537,11 +527,14 @@ export default function CommunityPage() {
                         scoped and everyone, instead of snapping. */}
                     <span key={scopeReshaping ? 'scoped' : 'everyone'} className="inline-block animate-fade-in">
                       {scopeReshaping ? (
-                        <>
-                          Showing <span className="font-semibold">{scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole)}</span>, ranked for your recruiting context.
-                        </>
+                        <Trans
+                          t={t}
+                          i18nKey="page.scopeBanner"
+                          values={{ scope: scopeBannerLine(scopeFilters(activeScopeRow, countries), scopedRole) }}
+                          components={{ b: <span className="font-semibold" /> }}
+                        />
                       ) : (
-                        <>Showing everyone. Your context still personalises ranking.</>
+                        <>{t('page.scopeEveryone')}</>
                       )}
                     </span>
                   </p>
@@ -550,7 +543,7 @@ export default function CommunityPage() {
                     onClick={() => (tabEscapesScope ? navigate(pathWithSearch(roleToPath(scopedRole), searchQuery)) : setShowEveryone((v) => !v))}
                     className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
                   >
-                    {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}
+                    {scopeReshaping ? t('page.showEveryone') : scopedRole === 'coach' ? t('page.showCoachesOnly') : t('page.showPlayersOnly')}
                   </button>
                 </div>
               )}

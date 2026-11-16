@@ -5,6 +5,7 @@ import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { fitHasConfirmedMiss, fitRows } from '@/lib/clubRecruiting'
 import { appliedLine } from '@/lib/profileD2'
 import type { ClubRole, ClubViewApplication, ClubViewFit } from '@/hooks/useClubViewOfPlayer'
+import { useWorldT } from '@/i18n/ns/world'
 
 /**
  * Club-only cards on a player's profile (Figma D2.1 club view 395:83):
@@ -13,13 +14,14 @@ import type { ClubRole, ClubViewApplication, ClubViewFit } from '@/hooks/useClub
  * Never rendered for players (the parent gates on isRecruitingViewer).
  */
 export function AppliedToCard({ application, onOpen }: { application: ClubViewApplication; onOpen: () => void }) {
+  const t = useWorldT()
   return (
     <button type="button" onClick={onOpen} className="flex w-full items-center gap-3 rounded-2xl bg-surface-grouped p-3.5 text-left" data-testid="applied-to-card">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-hockia-soft text-hockia-primary">
         <Briefcase className="h-5 w-5" strokeWidth={1.8} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-row font-semibold text-ink-1">Applied to {application.role.title}</span>
+        <span className="block text-row font-semibold text-ink-1">{t('club.viewCards.appliedTo', { title: application.role.title })}</span>
         <span className="block text-secondary text-ink-2">{appliedLine(application)}</span>
       </span>
       <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} />
@@ -34,6 +36,7 @@ export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }
   /** The profile's league is self-reported → "league is self-reported". */
   leagueSelfReported?: boolean
 }) {
+  const t = useWorldT()
   // Grey fit → no card (founder ruling: hidden when fit is grey) — except a
   // confirmed miss (wrong position / wrong category, round 6): the card shows
   // without a chip so the recruiter sees why.
@@ -42,7 +45,7 @@ export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }
   const rows = fitRows(fit.components, {
     roleGender: role.gender,
     playerCategoryLabel: categoryToDisplay(player.playing_category ?? null) || null,
-    firstName: player.full_name?.trim().split(/\s+/)[0] || 'this player',
+    firstName: player.full_name?.trim().split(/\s+/)[0] || t('club.viewCards.thisPlayer'),
     playerLeagueSelfReported: leagueSelfReported,
     lastActiveDays: lastDays,
     playerClub: player.current_club?.trim() || null,
@@ -51,7 +54,7 @@ export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }
   })
   // Names the role it measures (round 6): the active "Ranked for" role, else
   // the one applied to, else the only open role.
-  return <FitCard state={fit.state} rows={rows} title={`Fit for ${role.title}`} />
+  return <FitCard state={fit.state} rows={rows} title={t('club.viewCards.fitFor', { title: role.title })} />
 }
 
 export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRoleId, onPick, onClose }: {
@@ -62,11 +65,12 @@ export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRol
   onPick: (role: ClubRole) => void
   onClose: () => void
 }) {
+  const t = useWorldT()
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel="Shortlist for an opportunity">
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('club.viewCards.shortlistLabel')}>
       <div className="px-5 pb-3 pt-1">
-        <h2 className="text-title text-ink-1">Shortlist for which opportunity?</h2>
-        <p className="mt-1 text-secondary text-ink-2">Each opportunity keeps its own shortlist.</p>
+        <h2 className="text-title text-ink-1">{t('club.viewCards.shortlistTitle')}</h2>
+        <p className="mt-1 text-secondary text-ink-2">{t('club.viewCards.shortlistBody')}</p>
         <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="list">
           {roles.map((r) => {
             const done = shortlistedRoleIds.includes(r.id)
@@ -74,7 +78,7 @@ export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRol
               <button key={r.id} type="button" role="listitem" disabled={done} onClick={() => onPick(r)} className="flex min-h-[52px] w-full items-center gap-3 px-4 py-2.5 text-left disabled:opacity-60">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body text-ink-1">{r.title}</span>
-                  {appliedRoleId === r.id && <span className="block text-secondary text-ink-2">Applied to this opportunity</span>}
+                  {appliedRoleId === r.id && <span className="block text-secondary text-ink-2">{t('club.viewCards.appliedHere')}</span>}
                 </span>
                 {done && <Check className="h-5 w-5 text-hockia-primary" strokeWidth={2.4} />}
               </button>

@@ -14,6 +14,7 @@ import {
   type PermitInput,
 } from '@/lib/keyFacts'
 import { humanizeToken } from '@/lib/identity'
+import { tProfile } from '@/i18n/ns/profile'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
 /**
@@ -58,7 +59,7 @@ export function passportInputs(ids: (number | null | undefined)[], countries: Co
 export function permitInputs(permits: WorkPermitWithStatus[], countries: Country[]): PermitInput[] {
   return permits.map((p) => {
     const c = countries.find((x) => x.id === p.country_id)
-    return { countryName: c ? c.common_name || c.name : 'Unknown country', flag: c?.flag_emoji ?? null, type: p.type, validFrom: p.valid_from, expiresOn: p.expires_on }
+    return { countryName: c ? c.common_name || c.name : tProfile('useProfileKeyFacts.unknownCountry'), flag: c?.flag_emoji ?? null, type: p.type, validFrom: p.valid_from, expiresOn: p.expires_on }
   })
 }
 

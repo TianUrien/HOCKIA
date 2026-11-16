@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import CountrySelect from './CountrySelect'
 import { useCountries } from '@/hooks/useCountries'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 interface CountryNameSelectProps {
   label?: string
@@ -24,12 +25,13 @@ export default function CountryNameSelect({
   label,
   value,
   onChange,
-  placeholder = 'Select a country',
+  placeholder,
   required = false,
   error,
   disabled = false,
   className,
 }: CountryNameSelectProps) {
+  const t = useProfileEditT()
   const { countries, loading } = useCountries()
   const [countryId, setCountryId] = useState<number | null>(null)
 
@@ -71,7 +73,7 @@ export default function CountryNameSelect({
       label={label}
       value={countryId}
       onChange={handleChange}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t('countryNameSelect.placeholder')}
       required={required}
       error={error}
       disabled={disabled || loading}

@@ -15,6 +15,8 @@ import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
 import ProfileUnavailable from '@/components/profile/ProfileUnavailable'
 import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
+import { useProfileT } from '@/i18n/ns/profile'
+import { useEnumsT } from '@/i18n/ns/enums'
 
 type PublicProfileBase = Pick<
   Profile,
@@ -87,13 +89,16 @@ export default function PublicPlayerProfile() {
   })
   const [profile, setProfile] = useState<PublicProfile | null>(seededProfile)
   const [isLoading, setIsLoading] = useState(!seededProfile)
-  const [error, setError] = useState<string | null>(null)
+  const t = useProfileT()
+  const tEnum = useEnumsT()
+  // A catalog key, so the message follows the interface language.
+  const [error, setError] = useState<'invalidUrl' | 'notFound' | 'unavailable' | 'loadFailed' | null>(null)
 
   // Tab title resolves to the player/coach name once loaded; falls back
   // to a neutral "Player" / "Coach" while the fetch resolves so the tab
   // doesn't flash the static index.html title.
-  const profileRoleLabel = profile?.role === 'coach' ? 'Coach' : 'Player'
-  useDocumentTitle(profile?.full_name ? `${profile.full_name} • ${profileRoleLabel}` : profileRoleLabel)
+  const profileRoleLabel = profile?.role === 'coach' ? tEnum('role.coach') : tEnum('role.player')
+  useDocumentTitle(profile?.full_name ? t('publicPlayerProfile.documentTitle', { name: profile.full_name, role: profileRoleLabel }) : profileRoleLabel)
 
   // Pure: returns the block status, sets no state (so a late-resolving check from a
   // previous profile can't stamp an error onto the profile you navigated to).
@@ -114,7 +119,7 @@ export default function PublicPlayerProfile() {
     let cancelled = false
     const fetchProfile = async () => {
       if (!cacheKey) {
-        setError('Invalid profile URL')
+        setError('invalidUrl')
         setIsLoading(false)
         return
       }
@@ -175,14 +180,14 @@ export default function PublicPlayerProfile() {
 
         if (!typed) {
           setProfile(null)
-          setError('Profile not found.')
+          setError('notFound')
           return
         }
 
         // Test-profile gating (per viewer)
         if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
           setProfile(null)
-          setError('Profile not found.')
+          setError('notFound')
           return
         }
 
@@ -194,7 +199,7 @@ export default function PublicPlayerProfile() {
           rememberBlockedPair(currentUserProfile.id, typed.id, blocked)
           if (blocked) {
             setProfile(null)
-            setError('This profile is not available.')
+            setError('unavailable')
             return
           }
         }
@@ -203,7 +208,7 @@ export default function PublicPlayerProfile() {
       } catch (err) {
         if (cancelled) return
         logger.error('Error fetching profile:', err)
-        setError('Failed to load profile. Please try again.')
+        setError('loadFailed')
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -245,7 +250,7 @@ export default function PublicPlayerProfile() {
   if (error || !profile) {
     // Coach and player share this page; the URL says which noun to use.
     const noun = window.location.pathname.startsWith('/coaches') ? 'coach' : 'player'
-    return <ProfileUnavailable noun={noun} message={error} />
+    return <ProfileUnavailable noun={noun} message={error ? t(`publicPlayerProfile.errors.${error}`) : null} />
   }
 
   // Coerce nullable verification fields to the stricter shape the dashboard

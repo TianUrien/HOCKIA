@@ -898,5 +898,96 @@
       "moreAria_one": "{{count}} more players open to play",
       "moreAria_other": "{{count}} more players open to play"
     }
+  },
+  "engagement": {
+    "congratsFailed": "Could not send congrats",
+    "commentFailed": "Could not post your comment",
+    "deleteCommentFailed": "Could not delete the comment",
+    "commentsToggleFailed": "Could not change comments",
+    "removeTagFailed": "Could not remove your tag"
+  },
+  "aiNextSteps": {
+    "photo": {
+      "label": "Add a profile photo",
+      "fromGallery": "Pick one of your photos or upload a new one",
+      "description": "Clubs look at the photo first",
+      "invalidFile": "Use a JPG or PNG photo"
+    },
+    "passport": {
+      "label": "Add my passports",
+      "descriptionPlayer": "Clubs filter on nationality and EU",
+      "description": "Just the countries, never a document"
+    },
+    "bio": {
+      "label": "Write my bio",
+      "description": "I draft it from your profile; you choose and edit"
+    },
+    "improveBio": {
+      "label": "Improve my bio",
+      "description": "Yours is short; I suggest a fuller one"
+    },
+    "video": {
+      "label": "Add a highlights video",
+      "description": "Paste a YouTube or Vimeo link"
+    },
+    "career": {
+      "label": "Add my clubs",
+      "description": "From your CV or a few lines"
+    },
+    "links": {
+      "label": "Add my links",
+      "description": "Instagram, TikTok, LinkedIn…"
+    },
+    "position": {
+      "label": "Add my position",
+      "description": "One line is enough"
+    }
+  },
+  "goalOptions": {
+    "play_abroad": "Play abroad",
+    "move_up": "Move up a division",
+    "club_near_me": "Find a club where I live",
+    "get_sponsor": "Get a sponsor",
+    "keep_playing": "Keep playing well",
+    "coach_abroad": "Coach abroad",
+    "coach_higher": "Coach at a higher level",
+    "recruit_players": "Recruit players for my team",
+    "grow_coach": "Grow as a coach",
+    "fill_role": "Fill a spot this season",
+    "sign_abroad": "Sign players from abroad",
+    "find_coach": "Find a coach",
+    "find_sponsors": "Find sponsors",
+    "grow_club": "Grow our club",
+    "find_ambassadors": "Find ambassadors",
+    "reach_new_countries": "Reach players in new countries",
+    "reach_clubs": "Reach clubs",
+    "umpire_higher": "Umpire at a higher level",
+    "umpire_abroad": "Umpire abroad",
+    "build_record": "Build my record"
+  },
+  "goalRows": {
+    "abroad_one": "{{count}} open opportunity abroad",
+    "abroad_other": "{{count}} open opportunities abroad",
+    "abroadFor": {
+      "goalkeeper_one": "{{count}} open opportunity abroad for goalkeepers",
+      "goalkeeper_other": "{{count}} open opportunities abroad for goalkeepers",
+      "defender_one": "{{count}} open opportunity abroad for defenders",
+      "defender_other": "{{count}} open opportunities abroad for defenders",
+      "midfielder_one": "{{count}} open opportunity abroad for midfielders",
+      "midfielder_other": "{{count}} open opportunities abroad for midfielders",
+      "forward_one": "{{count}} open opportunity abroad for forwards",
+      "forward_other": "{{count}} open opportunities abroad for forwards"
+    },
+    "inCountry_one": "{{count}} open opportunity in {{country}}",
+    "inCountry_other": "{{count}} open opportunities in {{country}}",
+    "openRoles_one": "{{count}} open opportunity",
+    "openRoles_other": "{{count}} open opportunities",
+    "applicantsWaiting_one": "{{count}} applicant waiting",
+    "applicantsWaiting_other": "{{count}} applicants waiting",
+    "see": "See",
+    "review": "Review",
+    "postAnother": "Post another opportunity in under a minute",
+    "postFirst": "Post an opportunity in under a minute",
+    "postAction": "Post an opportunity"
   }
 }

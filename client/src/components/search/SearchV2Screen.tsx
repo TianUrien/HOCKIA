@@ -16,8 +16,8 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import {
   MAX_ROWS,
   MIN_QUERY_LENGTH,
-  SEARCH_PLACEHOLDER,
-  SEARCH_SCOPE_LINE,
+  searchPlaceholder,
+  searchScopeLine,
   askAiLabel,
   communityPathFor,
   memberMetaLine,
@@ -25,6 +25,10 @@ import {
   noMembersLabel,
   seeAllMembersLabel,
 } from '@/lib/searchV2'
+import { useWorldT } from '@/i18n/ns/world'
+
+/** Separator between facts; punctuation, not copy. */
+const DOT = '·'
 
 /**
  * Search v2, phone (Figma "New-Hockia" Search v2 42:195; founder rulings
@@ -36,7 +40,8 @@ import {
  * or reply times. Desktop keeps the v1 results page (pages/SearchPage.tsx).
  */
 export function SearchV2Screen() {
-  useDocumentTitle('Search')
+  const t = useWorldT()
+  useDocumentTitle(t('searchV2.documentTitle'))
   const navigate = useNavigate()
   const showAi = useHockiaAiSheet((s) => s.show)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -122,14 +127,14 @@ export function SearchV2Screen() {
           }}
         >
           <label className="relative flex h-10 min-w-0 flex-1 items-center">
-            <span className="sr-only">Search members</span>
+            <span className="sr-only">{t('searchV2.inputLabel')}</span>
             <Search className="pointer-events-none absolute left-3 h-[18px] w-[18px] text-ink-4" strokeWidth={2} aria-hidden="true" />
             <input
               ref={inputRef}
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={SEARCH_PLACEHOLDER}
+              placeholder={searchPlaceholder()}
               autoFocus
               autoComplete="off"
               autoCapitalize="none"
@@ -146,7 +151,7 @@ export function SearchV2Screen() {
               <button
                 type="button"
                 onClick={() => { setQuery(''); setDebounced(''); inputRef.current?.focus() }}
-                aria-label="Clear search"
+                aria-label={t('searchV2.clear')}
                 className="absolute right-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-4"
               >
                 <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink-4 text-white">
@@ -156,7 +161,7 @@ export function SearchV2Screen() {
             )}
           </label>
           <button type="button" onClick={cancel} className="h-11 shrink-0 text-body text-hockia-primary">
-            Cancel
+            {t('searchV2.cancel')}
           </button>
         </form>
       </div>
@@ -173,7 +178,7 @@ export function SearchV2Screen() {
           <span className="min-w-0 flex-1">
             <span className="block truncate text-body font-semibold text-ai-text">{askAiLabel(query)}</span>
             {/* Caption size so the whole scope line fits beside the tile at 390px. */}
-            <span className="block truncate text-caption text-ink-2">{SEARCH_SCOPE_LINE}</span>
+            <span className="block truncate text-caption text-ink-2">{searchScopeLine()}</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-ink-4" strokeWidth={1.75} aria-hidden="true" />
         </button>
@@ -181,16 +186,16 @@ export function SearchV2Screen() {
 
       {!hasQuery ? (
         <div className="px-4 pt-3">
-          {!showAiRow && <p className="pb-4 text-secondary text-ink-3">{SEARCH_SCOPE_LINE}</p>}
+          {!showAiRow && <p className="pb-4 text-secondary text-ink-3">{searchScopeLine()}</p>}
           {recentSearches.length > 0 && (
-            <section aria-label="Recent searches">
+            <section aria-label={t('searchV2.recentLabel')}>
               <div className="flex items-center justify-between pb-1">
                 <h2 className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-ink-3">
                   <Clock className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                  Recent
+                  {t('searchV2.recent')}
                 </h2>
                 <button type="button" onClick={clearAll} className="h-11 px-2 text-secondary font-medium text-hockia-primary">
-                  Clear
+                  {t('searchV2.clearRecent')}
                 </button>
               </div>
               <ul className="divide-y divide-line">
@@ -211,7 +216,7 @@ export function SearchV2Screen() {
           )}
         </div>
       ) : isLoading ? (
-        <ul aria-busy="true" aria-label="Loading results" data-testid="search-v2-skeleton">
+        <ul aria-busy="true" aria-label={t('searchV2.loading')} data-testid="search-v2-skeleton">
           {Array.from({ length: 5 }, (_, i) => (
             <li key={i} className="flex items-center gap-3 px-4 py-2.5">
               <Skeleton variant="circular" width={48} height={48} />
@@ -248,13 +253,13 @@ export function SearchV2Screen() {
                   >
                     <EntityAvatar src={avatar} name={row.full_name} role={row.role} size={48} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-semibold text-ink-1">{row.full_name || 'Member'}</span>
+                      <span className="block truncate text-body font-semibold text-ink-1">{row.full_name || t('searchV2.memberFallback')}</span>
                       {(meta || country) && (
                         <span className="flex items-center gap-1.5 text-secondary text-ink-2">
                           {meta && <span className="truncate">{meta}</span>}
                           {country && (
                             <>
-                              {meta && <span aria-hidden="true">·</span>}
+                              {meta && <span aria-hidden="true">{DOT}</span>}
                               <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" className="shrink-0" />
                             </>
                           )}

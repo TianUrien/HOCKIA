@@ -9,6 +9,7 @@ import { BlurImage } from '@/components/home/v1/BlurImage'
 import VerifiedBadge from '@/components/VerifiedBadge'
 import { cn } from '@/lib/utils'
 import { BackGlyph } from '@/components/ui/BackGlyph'
+import { useWorldT } from '@/i18n/ns/world'
 
 /**
  * Club hero (Figma PR6 106:256 / PR7 107:303): the club's cover photos
@@ -44,6 +45,7 @@ const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full bo
 
 export function ClubHero(props: ClubHeroProps) {
   const { crestUrl, crestColor, name, owner } = props
+  const t = useWorldT()
   // Low-resolution covers (< 600 px natural width) are dropped: the hero then
   // shows the crest-gradient cover with pitch lines (Batch C).
   const lowRes = useLowResCovers(props.photos, (u) => getImageUrl(u, 'lightbox') ?? u)
@@ -76,14 +78,14 @@ export function ClubHero(props: ClubHeroProps) {
 
       <div className="absolute inset-x-4 top-[max(env(safe-area-inset-top),12px)] flex items-center justify-between pt-1">
         {owner ? (
-          <button type="button" onClick={props.onEditCover} aria-label="Edit cover photos" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+          <button type="button" onClick={props.onEditCover} aria-label={t('club.hero.editCover')} className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         ) : (
-          <button type="button" onClick={props.onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
+          <button type="button" onClick={props.onBack} aria-label={t('club.hero.back')} className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
         )}
         <div className="flex items-center gap-2">
-          <button type="button" onClick={props.onShare} aria-label="Share profile" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+          <button type="button" onClick={props.onShare} aria-label={t('club.hero.share')} className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
           {owner ? (
-            <button type="button" onClick={props.onSettings} aria-label="Settings" className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+            <button type="button" onClick={props.onSettings} aria-label={t('club.hero.settings')} className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
           ) : props.moreMenu}
         </div>
       </div>
@@ -105,7 +107,7 @@ export function ClubHero(props: ClubHeroProps) {
             )}
           </div>
           {owner && (
-            <button type="button" onClick={props.onEditCrest} aria-label="Change crest" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
+            <button type="button" onClick={props.onEditCrest} aria-label={t('club.hero.changeCrest')} className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
               <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
             </button>
           )}
@@ -121,7 +123,7 @@ export function ClubHero(props: ClubHeroProps) {
       {props.recruiting && (
         <span className={cn('absolute right-4 bottom-[132px] inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] px-2.5 py-[5px] text-caption font-semibold text-white', GLASS)} data-testid="club-recruiting-pill">
           <span className="h-[7px] w-[7px] rounded-full bg-[#4ade80]" aria-hidden="true" />
-          Recruiting now
+          {t('club.hero.recruiting')}
         </span>
       )}
     </section>

@@ -2,6 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
+import { type MemberLanguage, FOOTER_ES, relationshipLabel } from './member-language.ts'
 
 /**
  * Reference Response Email Helpers
@@ -77,6 +78,16 @@ export function buildEndorserProfileUrl(
 }
 
 
+const REFERENCE_NO_TEXT_ES = 'No agregó un texto, pero la referencia ya se ve en tu perfil.'
+const REFERENCE_FOOTER_ES = 'Este email te llega porque alguien te dio una referencia en Hockia.'
+
+/** Subject when the DB template is unavailable. */
+export function referenceAcceptedSubject(endorserName: string, language: MemberLanguage = 'en'): string {
+  return language === 'es'
+    ? `${endorserName} te dio una referencia en Hockia`
+    : `${endorserName} vouched for you on Hockia`
+}
+
 /** Excerpt the endorsement to a sane preview length. The DB CHECK now
  *  caps endorsement_text at 800 chars (post-Phase 4 references-bug-bundle
  *  migration), so most will fit without trimming. Anything longer reads
@@ -91,10 +102,13 @@ function endorsementPreview(text: string | null, maxChars = 280): string | null 
 
 export function generateAcceptedEmailHtml(
   endorser: EndorserData,
-  relationshipType: string,
+  relationshipTypeRaw: string,
   endorsementText: string | null,
+  language: MemberLanguage = 'en',
 ): string {
-  const displayName = endorser.full_name?.trim() || 'A Hockia member'
+  const es = language === 'es'
+  const relationshipType = es ? relationshipLabel(relationshipTypeRaw, language) : relationshipTypeRaw
+  const displayName = endorser.full_name?.trim() || (es ? 'Alguien de Hockia' : 'A Hockia member')
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
 
   const avatarHtml = emailAvatarHtml(endorser.avatar_url, displayName, endorser.role)
@@ -103,11 +117,11 @@ export function generateAcceptedEmailHtml(
   const endorsementHtml = preview
     ? `
     <div style="background: #fbf4dc; border: 1px solid #c9a227; border-radius: 8px; padding: 12px 16px; margin-top: 12px;">
-      <p style="color: #8a6300; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">What ${escapeHtml(displayName)} wrote</p>
+      <p style="color: #8a6300; margin: 0 0 4px 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${es ? `Lo que escribió ${escapeHtml(displayName)}` : `What ${escapeHtml(displayName)} wrote`}</p>
       <p style="color: #8a6300; margin: 0; font-size: 14px; line-height: 1.5;">${escapeHtml(preview)}</p>
     </div>`
     : `
-    <p style="color: #6b6878; margin: 12px 0 0 0; font-size: 14px;">They didn't add a written endorsement, but the trust signal is live on your profile.</p>`
+    <p style="color: #6b6878; margin: 12px 0 0 0; font-size: 14px;">${es ? REFERENCE_NO_TEXT_ES : "They didn't add a written endorsement, but the trust signal is live on your profile."}</p>`
 
   const relationshipPill = relationshipType
     ? `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(relationshipType)}</span>`
@@ -115,7 +129,7 @@ export function generateAcceptedEmailHtml(
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -128,8 +142,8 @@ export function generateAcceptedEmailHtml(
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(displayName)} vouched for you on Hockia</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Their reference is now live on your profile.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(displayName)} ${es ? 'te dio una referencia en Hockia' : 'vouched for you on Hockia'}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Su referencia ya se ve en tu perfil.' : 'Their reference is now live on your profile.'}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -147,18 +161,18 @@ export function generateAcceptedEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile/references" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">See it on your profile &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile/references" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Ver en tu perfil' : 'See it on your profile'} &rarr;</a>
     </p>
 
     <p style="color: #73707c; font-size: 14px; margin: 0;">
-      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
+      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">${es ? `Ver el perfil de ${escapeHtml(displayName)}` : `View ${escapeHtml(displayName)}'s profile`}</a>
     </p>
   </div>
 
   <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because someone vouched for you on Hockia.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? REFERENCE_FOOTER_ES : "You're receiving this because someone vouched for you on Hockia."}<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
     </p>
   </div>
 
@@ -168,40 +182,43 @@ export function generateAcceptedEmailHtml(
 
 export function generateAcceptedEmailText(
   endorser: EndorserData,
-  relationshipType: string,
+  relationshipTypeRaw: string,
   endorsementText: string | null,
+  language: MemberLanguage = 'en',
 ): string {
-  const displayName = endorser.full_name?.trim() || 'A Hockia member'
+  const es = language === 'es'
+  const relationshipType = es ? relationshipLabel(relationshipTypeRaw, language) : relationshipTypeRaw
+  const displayName = endorser.full_name?.trim() || (es ? 'Alguien de Hockia' : 'A Hockia member')
   const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
   const preview = endorsementPreview(endorsementText)
 
   const lines = [
-    `${displayName} vouched for you on Hockia`,
+    es ? `${displayName} te dio una referencia en Hockia` : `${displayName} vouched for you on Hockia`,
     '',
-    `Their reference is now live on your profile.`,
+    es ? 'Su referencia ya se ve en tu perfil.' : `Their reference is now live on your profile.`,
   ]
 
   if (relationshipType) {
-    lines.push(`Relationship: ${relationshipType}`)
+    lines.push(`${es ? 'Relación' : 'Relationship'}: ${relationshipType}`)
   }
 
   if (preview) {
-    lines.push('', `What they wrote:`, `"${preview}"`)
+    lines.push('', es ? 'Lo que escribió:' : `What they wrote:`, `"${preview}"`)
   } else {
-    lines.push('', `They didn't add a written endorsement, but the trust signal is live on your profile.`)
+    lines.push('', es ? REFERENCE_NO_TEXT_ES : `They didn't add a written endorsement, but the trust signal is live on your profile.`)
   }
 
   lines.push(
     '',
-    'See it on your profile:',
+    es ? 'Ver en tu perfil:' : 'See it on your profile:',
     `${HOCKIA_BASE_URL}/dashboard/profile/references`,
     '',
-    `View ${displayName}'s profile:`,
+    es ? `Ver el perfil de ${displayName}:` : `View ${displayName}'s profile:`,
     profileUrl,
     '',
     '---',
-    "You're receiving this because someone vouched for you on Hockia.",
-    `Manage preferences: ${UNSUBSCRIBE_URL}`,
+    es ? REFERENCE_FOOTER_ES : "You're receiving this because someone vouched for you on Hockia.",
+    `${es ? FOOTER_ES.manage : 'Manage preferences: '}${UNSUBSCRIBE_URL}`,
   )
 
   return lines.join('\n')

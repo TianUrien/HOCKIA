@@ -1,0 +1,247 @@
+{
+  "actorFallback": "A Hockia member",
+  "applicationStatus": {
+    "clubFallback": "The club",
+    "positionFallback": "the opportunity",
+    "filledRoleFallback": "The opportunity",
+    "shortlistedTitle": "{{club}} shortlisted you",
+    "shortlistedBody": "You're being considered for {{role}}.",
+    "maybeTitle": "{{club}} replied to your application",
+    "maybeBody": "Open your application for {{position}} to see the update.",
+    "rejectedTitle": "{{club}} updated your application",
+    "rejectedBody": "Not this time for {{position}}.",
+    "filledTitle": "{{club}} filled the opportunity",
+    "filledBody": "{{role}} has been filled. Thanks for applying. New opportunities are open.",
+    "updatedTitle": "{{club}} updated your application",
+    "updatedBody": "Your application for {{position}} was updated."
+  },
+  "kinds": {
+    "default": {
+      "badge": "Notification",
+      "title": "You have a new update"
+    },
+    "friendRequestReceived": {
+      "badge": "Friend request",
+      "title": "{{name}} sent you a friend request"
+    },
+    "friendRequestAccepted": {
+      "badge": "Friendship update",
+      "title": "{{name}} accepted your friend request",
+      "description": "You can now view each other's activity."
+    },
+    "profileCommentCreated": {
+      "badge": "Profile comment",
+      "title": "{{name}} commented on your profile"
+    },
+    "userPostCommentReceived": {
+      "badge": "Post comment",
+      "title": "{{name}} commented on your post"
+    },
+    "feedItemCommentReceived": {
+      "badge": "Reference comment",
+      "title": "{{name}} commented on your reference"
+    },
+    "congratsReceived": {
+      "badge": "Congrats",
+      "title": "{{name}} congratulated you",
+      "titleWithOthers_one": "{{name}} and {{count}} other congratulated you",
+      "titleWithOthers_other": "{{name}} and {{count}} others congratulated you"
+    },
+    "signingTagged": {
+      "badge": "New signing",
+      "title": "{{name}} posted your signing 🎉",
+      "description": "Tap to see the post. You can remove your tag from its ⋯ menu."
+    },
+    "contentRemoved": {
+      "badge": "Community rules",
+      "titleComment": "Your comment was removed for breaking the community rules",
+      "titlePost": "Your post was removed for breaking the community rules",
+      "titleVideo": "Your video was removed for breaking the community rules"
+    },
+    "profileCommentReply": {
+      "badge": "Comment reply",
+      "title": "{{name}} replied to a profile comment"
+    },
+    "profileCommentLike": {
+      "badge": "Comment like",
+      "title": "{{name}} liked your profile comment",
+      "description": "Keep the conversation going!"
+    },
+    "referenceRequestReceived": {
+      "badge": "Reference request",
+      "title": "{{name}} requested a reference"
+    },
+    "referenceRequestAccepted": {
+      "badge": "Reference accepted",
+      "title": "{{name}} accepted your reference request"
+    },
+    "referenceRequestRejected": {
+      "badge": "Reference update",
+      "title": "{{name}} declined your reference request"
+    },
+    "referenceUpdated": {
+      "badge": "Reference updated",
+      "title": "{{name}} updated their reference"
+    },
+    "messageReceived": {
+      "badge": "Message",
+      "title": "{{name}} sent you a message",
+      "titleMany_one": "{{name}} sent {{count}} new message",
+      "titleMany_other": "{{name}} sent {{count}} new messages"
+    },
+    "conversationStarted": {
+      "badge": "Conversation",
+      "title": "{{name}} started a conversation"
+    },
+    "opportunityPublished": {
+      "badge": "New opportunity",
+      "title": "{{club}} published: {{title}}",
+      "clubFallback": "A club",
+      "titleNoRole": "A new opportunity was published"
+    },
+    "vacancyApplicationReceived": {
+      "badge": "New applicant",
+      "title": "New applicant for {{title}}",
+      "titleNoRole": "New opportunity applicant"
+    },
+    "vacancyApplicationStatus": {
+      "badge": "Application update"
+    },
+    "applicationsExpired": {
+      "badge": "Application update",
+      "title_one": "An application is no longer active",
+      "title_other": "{{count}} applications are no longer active",
+      "description": "Applications close automatically after a while without an update on Hockia. It’s never a reflection on you. Fresh opportunities are open now."
+    },
+    "applicantLastCall": {
+      "badge": "Last call",
+      "title": "Last day to answer an applicant",
+      "description": "An application closes tomorrow."
+    },
+    "applicantsClosingSoon": {
+      "badge": "Closing soon",
+      "title": "Players are waiting for your answer",
+      "description": "Some applications close soon."
+    },
+    "profileCompleted": {
+      "badge": "Profile milestone",
+      "title": "Your profile is complete",
+      "description": "Great work. Keep it fresh so the right people find you."
+    },
+    "accountVerified": {
+      "badge": "Account verified",
+      "title": "Your account has been verified",
+      "description": "You now have full access to the Hockia platform."
+    },
+    "ambassadorRequestReceived": {
+      "badge": "Ambassador invite",
+      "title": "{{name}} invited you to become a brand ambassador",
+      "description": "Review and respond to this invitation."
+    },
+    "ambassadorRequestAccepted": {
+      "badge": "Ambassador update",
+      "title": "{{name}} accepted your ambassador invitation",
+      "description": "They now appear on your brand profile."
+    },
+    "brandOfferApproved": {
+      "badge": "Offer live",
+      "title": "Your offer is live",
+      "titleChange": "Your changes are live",
+      "description": "\"{{title}}\" is now shown to members.",
+      "descriptionNoTitle": "It is now shown to members."
+    },
+    "brandOfferNotApproved": {
+      "badge": "Offer taken down",
+      "title": "Your offer needs a change",
+      "titleTakedown": "Your offer was taken down",
+      "takedownHead": "\"{{title}}\" was taken down.",
+      "takedownHeadNoTitle": "Your offer was taken down.",
+      "rejectedHead": "\"{{title}}\" wasn’t approved.",
+      "rejectedHeadNoTitle": "Your offer wasn’t approved.",
+      "withReason": "{{head}} Reason: {{reason}}. Edit and publish again."
+    },
+    "clubInvitationReceived": {
+      "badge": "Club invite",
+      "title": "{{name}} invited you to join their club"
+    },
+    "clubInvitationAccepted": {
+      "badge": "Club update",
+      "title": "{{name}} joined your club",
+      "description": "They now appear in your Members."
+    },
+    "profileViewed": {
+      "badge": "Profile views",
+      "title": "{{name}} viewed your profile",
+      "titleMany_one": "{{count}} person viewed your profile today",
+      "titleMany_other": "{{count}} people viewed your profile today",
+      "totalViews_one": "{{count}} total view",
+      "totalViews_other": "{{count}} total views"
+    },
+    "recruitingUpdate": {
+      "badge": "Recruiting",
+      "title": "Recruiting update"
+    },
+    "systemAnnouncement": {
+      "badge": "Announcement",
+      "title": "Hockia update"
+    }
+  },
+  "store": {
+    "friendRequestFailed": "Could not update the friend request. Please try again."
+  },
+  "badge": {
+    "unread_one": "{{count}} unread notification",
+    "unread_other": "{{count}} unread notifications"
+  },
+  "drawer": {
+    "title": "Notifications",
+    "subtitle": "Stay on top of your network.",
+    "search": "Search notifications",
+    "settings": "Notification settings",
+    "close": "Close notifications",
+    "markAllRead": "Mark all as read",
+    "filters": {
+      "all": "All",
+      "unread": "Unread"
+    },
+    "sections": {
+      "new": "New",
+      "earlier": "Earlier"
+    },
+    "memberFallback": "Hockia member",
+    "viewProfile": "View {{name}}'s profile",
+    "moreOptions": "More options",
+    "emptyUnread": "You have no new notifications right now.",
+    "emptySection": "You're all caught up. We'll let you know when something new arrives.",
+    "emptyAll": "You're all caught up. We'll let you know when something happens.",
+    "friendRequest": {
+      "confirm": "Confirm",
+      "remove": "Remove"
+    },
+    "ambassador": {
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "clubInvite": {
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "toasts": {
+      "friendRequestFailed": "Could not update the friend request. Please try again.",
+      "friendRequestAccepted": "Friend request accepted.",
+      "friendRequestDeclined": "Friend request declined.",
+      "ambassadorFailed": "Could not update the ambassador request. Please try again.",
+      "ambassadorAccepted": "Ambassador invitation accepted.",
+      "ambassadorDeclined": "Ambassador invitation declined."
+    }
+  },
+  "age": {
+    "now": "now",
+    "minutes_one": "{{count}}m",
+    "minutes_other": "{{count}}m",
+    "hours_one": "{{count}}h",
+    "hours_other": "{{count}}h",
+    "days_one": "{{count}}d",
+    "days_other": "{{count}}d"
+  }
+}

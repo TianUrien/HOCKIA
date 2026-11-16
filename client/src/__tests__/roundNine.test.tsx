@@ -150,7 +150,7 @@ describe('1 · the inbox preview of a recruiting line reads for its viewer, with
     expect(list).toContain('!preview.system')
     const inbox = src('components/inbox/InboxMessages.tsx')
     expect(inbox).toContain('recruitingPreview(row.last_message_content')
-    expect(inbox).toContain("mine && !line.system ? 'You: ' : ''")
+    expect(inbox).toContain("mine && !line.system ? t('messages.previewMine'")
   })
 })
 

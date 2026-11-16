@@ -1,0 +1,1295 @@
+{
+  "dashboardRouter": {
+    "loadError": {
+      "title": "Something went wrong loading your profile.",
+      "body": "Please try refreshing the page.",
+      "refresh": "Refresh"
+    },
+    "noProfile": {
+      "body": "No profile found. Please complete your profile.",
+      "complete": "Complete Profile"
+    },
+    "unknownRole": {
+      "title": "Something went wrong",
+      "body": "We couldn’t load your dashboard. Please refresh the page or contact support."
+    }
+  },
+  "playerDashboard": {
+    "ownerTitle": {
+      "profile": "Player dashboard",
+      "edit": "Edit profile",
+      "media": "Media",
+      "videos": "Videos",
+      "gallery": "Photos",
+      "journey": "Career history",
+      "references": "References",
+      "friends": "Connections",
+      "comments": "Comments",
+      "posts": "Posts",
+      "community": "My Network",
+      "passports": "Passports & permits",
+      "openToPlay": "Open to play"
+    },
+    "visitorTitle": {
+      "withSection": "{{name}} · {{section}}",
+      "media": "Media",
+      "videos": "Videos",
+      "gallery": "Photos",
+      "journey": "Career history",
+      "references": "References",
+      "friends": "Connections",
+      "comments": "Comments",
+      "posts": "Posts",
+      "community": "Community"
+    },
+    "message": {
+      "self": "You cannot message yourself.",
+      "failed": "Failed to start conversation. Please try again."
+    },
+    "nav": {
+      "back": "Back",
+      "backToProfile": "Back to profile",
+      "backToDashboard": "Back to dashboard"
+    },
+    "keyFacts": {
+      "permitFallbackOwner": "Your",
+      "hint": "Clubs see these six first. Complete profiles are suggested to clubs more often."
+    },
+    "portfolioNav": {
+      "career": "Career",
+      "references": "References",
+      "media": "Media",
+      "connections": "Connections",
+      "comments": "Comments",
+      "posts": "Posts"
+    },
+    "careerTitle": "Career history",
+    "friendsSignIn": {
+      "body": "Sign in to see {{name}}'s connections.",
+      "bodyNoName": "Sign in to see this member's connections.",
+      "button": "Sign in"
+    },
+    "signInPrompt": {
+      "title": "Sign in to message",
+      "message": "Sign in to message this player and see more about their profile."
+    }
+  },
+  "useProfileStrength": {
+    "basicInfo": {
+      "label": "Add your nationality and location",
+      "description": "Add your nationality and base location",
+      "unlockCopy": "Clubs filter by location when they search for players."
+    },
+    "position": {
+      "label": "Add your playing position",
+      "description": "Set your primary position so clubs can scout you",
+      "unlockCopy": "Recruiters filter by position. Set it to appear in their searches."
+    },
+    "photo": {
+      "label": "Add a profile photo",
+      "description": "Help clubs recognize you with a profile picture",
+      "unlockCopy": "Helps clubs put a face to your name."
+    },
+    "bio": {
+      "label": "Write a short bio",
+      "noun": "a bio",
+      "description": "Tell clubs about your game in your own words",
+      "unlockCopy": "A short bio lets clubs hear about your game from you."
+    },
+    "currentClub": {
+      "label": "Add your current club",
+      "description": "Show clubs where you currently play",
+      "unlockCopy": "Shows recruiters your current level and team."
+    },
+    "highlightVideo": {
+      "label": "Add your highlight video",
+      "noun": "a highlight video",
+      "description": "Show clubs what you can do on the pitch",
+      "unlockCopy": "Clubs see how you play, not just read about it."
+    },
+    "fullMatch": {
+      "label": "Upload full match footage",
+      "noun": "full match footage",
+      "description": "Add at least one full game video so recruiters can see you play across a whole match",
+      "unlockCopy": "Recruiters value full match footage above curated reels. It shows your work over a real game."
+    },
+    "journey": {
+      "label": "Add to your career history",
+      "description": "Add your clubs, milestones, or achievements",
+      "unlockCopy": "Shows where you have played and what you have achieved."
+    },
+    "gallery": {
+      "label": "Add a photo or video to your Gallery",
+      "description": "Build your visual portfolio for clubs to see",
+      "unlockCopy": "A visual portfolio beyond a single highlight clip."
+    },
+    "friends": {
+      "label": "Make your first connection",
+      "description": "Add a friend to start building your trusted circle",
+      "unlockCopy": "Coaches and clubs can see the teammates you play with."
+    },
+    "references": {
+      "label": "Get a trusted reference",
+      "noun": "trusted references",
+      "description": "Ask a coach or teammate to vouch for you",
+      "unlockCopy": "A coach or teammate vouching for you carries weight with clubs."
+    },
+    "availability": {
+      "label": "Mark yourself open to play",
+      "description": "Let clubs and coaches know you're open to play",
+      "unlockCopy": "Recruiters filter for \"Open to Play\". Without it, you may not appear in their searches."
+    }
+  },
+  "useCoachProfileStrength": {
+    "basic": {
+      "label": "Add your nationality and location",
+      "hint": "Add your nationality and base location",
+      "unlockCopy": "Clubs filter for coaches by location when they search.",
+      "actionLabel": "Edit Profile"
+    },
+    "focus": {
+      "label": "Set your coaching focus",
+      "hint": "Add your coaching specialization or the categories you coach",
+      "unlockCopy": "Head coach, assistant, age groups: clubs search by coaching focus.",
+      "actionLabel": "Set Focus"
+    },
+    "photo": {
+      "label": "Profile Photo",
+      "hint": "Upload a profile photo",
+      "unlockCopy": "Helps clubs put a face to your name.",
+      "actionLabel": "Add Photo"
+    },
+    "bio": {
+      "label": "Professional Bio",
+      "hint": "Add a bio about your coaching background",
+      "unlockCopy": "Gives clubs a feel for your coaching style and experience.",
+      "actionLabel": "Add Bio"
+    },
+    "currentClub": {
+      "label": "Add your current club",
+      "hint": "Add the club or team you currently coach",
+      "unlockCopy": "Shows clubs your current team and level.",
+      "actionLabel": "Add Club"
+    },
+    "journey": {
+      "label": "Career history",
+      "hint": "Add at least one experience entry",
+      "unlockCopy": "Shows where you have coached and the teams you have developed.",
+      "actionLabel": "Add Experience"
+    },
+    "gallery": {
+      "label": "Media Gallery",
+      "hint": "Upload at least one gallery photo",
+      "unlockCopy": "Match photos, training sessions, moments from your career.",
+      "actionLabel": "Add Media"
+    },
+    "friends": {
+      "label": "Make your first connection",
+      "hint": "Add a friend to start building your network",
+      "unlockCopy": "Clubs can see the players and coaches you are connected with.",
+      "actionLabel": "Add Connection"
+    },
+    "references": {
+      "label": "Get a trusted reference",
+      "hint": "Ask a player or fellow coach to vouch for you",
+      "unlockCopy": "Former players or clubs vouching for you builds trust fast.",
+      "actionLabel": "Get Reference"
+    },
+    "availability": {
+      "label": "Mark yourself open to coach",
+      "hint": "Let clubs know you are open to coaching opportunities",
+      "unlockCopy": "Recruiters filter for \"Open to Coach\". Set it to appear in their searches.",
+      "actionLabel": "Set Availability"
+    }
+  },
+  "coachDashboard": {
+    "ownerTitle": {
+      "profile": "Coach dashboard",
+      "media": "Media",
+      "journey": "Career history",
+      "references": "References",
+      "friends": "Connections",
+      "comments": "Comments",
+      "posts": "Posts",
+      "community": "My Network",
+      "opportunities": "Opportunities"
+    },
+    "visitorTitle": {
+      "withSection": "{{name}} · {{section}}",
+      "media": "Media",
+      "journey": "Career history",
+      "references": "References",
+      "friends": "Connections",
+      "comments": "Comments",
+      "posts": "Posts",
+      "community": "Community",
+      "opportunities": "Opportunities"
+    },
+    "errors": {
+      "messageSelf": "You cannot message yourself.",
+      "startConversation": "Failed to start conversation. Please try again.",
+      "recruiterMode": "Unable to enable recruiter mode. Please try again."
+    },
+    "back": "Back",
+    "backToProfile": "Back to profile",
+    "backToDashboard": "Back to dashboard",
+    "keyFactsHint": "Clubs see these six first. Complete profiles are suggested to clubs more often.",
+    "sectionNav": {
+      "career": "Career",
+      "references": "References",
+      "media": "Media",
+      "connections": "Connections",
+      "comments": "Comments",
+      "posts": "Posts"
+    },
+    "careerHistory": "Career history",
+    "signInToSeeConnections": "Sign in to see {{name}}'s connections.",
+    "thisMember": "this member",
+    "signIn": "Sign in",
+    "signInPrompt": {
+      "title": "Sign in to message",
+      "message": "Sign in to message this coach and see more about their profile."
+    }
+  },
+  "umpireDashboard": {
+    "specialization": {
+      "both": "Outdoor & Indoor",
+      "outdoor": "Outdoor",
+      "indoor": "Indoor"
+    },
+    "errors": {
+      "messageSelf": "You cannot message yourself.",
+      "startConversation": "Failed to start conversation. Please try again."
+    },
+    "documentTitle": {
+      "named": "{{name}} · Umpire | Hockia",
+      "anonymous": "Umpire | Hockia"
+    },
+    "tabs": {
+      "profile": "Profile",
+      "officiating": "Career history",
+      "gallery": "Gallery",
+      "references": "References",
+      "friends": "Friends",
+      "comments": "Comments",
+      "posts": "Posts"
+    },
+    "back": "Back",
+    "avatarAlt": "Umpire",
+    "networkView": {
+      "hint": "See how your profile looks to other Hockia members",
+      "label": "Network View",
+      "short": "View"
+    },
+    "edit": {
+      "label": "Edit Profile",
+      "short": "Edit"
+    },
+    "message": {
+      "sending": "Sending...",
+      "send": "Message"
+    },
+    "thisUmpire": "this umpire",
+    "ageShort": "{{age}}y",
+    "credentials": {
+      "title": "Add your officiating credentials",
+      "body": "Your level and federation are what clubs and fellow umpires look for first. Take a minute now. You can always refine it later.",
+      "add": "Add credentials"
+    },
+    "certification": {
+      "title": "Certification & Level",
+      "level": "Level",
+      "federation": "Federation",
+      "since": "Umpiring since",
+      "specialization": "Specialization",
+      "empty": "No certification details yet."
+    },
+    "about": "About",
+    "languages": "Languages",
+    "posts": "Posts",
+    "signInPrompt": {
+      "title": "Sign in to message",
+      "message": "Sign in to message this umpire and see more about their profile."
+    }
+  },
+  "networkCopy": {
+    "networkError": "Couldn’t reach Hockia. Check your connection and try again.",
+    "couldntLoad": {
+      "players": "Couldn’t load players",
+      "coaches": "Couldn’t load coaches",
+      "clubs": "Couldn’t load clubs",
+      "brands": "Couldn’t load brands",
+      "umpires": "Couldn’t load umpires",
+      "members": "Couldn’t load members"
+    }
+  },
+  "friendshipErrors": {
+    "blocked": "This person isn't accepting requests."
+  },
+  "useFriendsInCommon": {
+    "count_one": "{{count}} friend",
+    "count_other": "{{count}} friends",
+    "countWithNames_one": "{{count}} friend · {{names}}",
+    "countWithNames_other": "{{count}} friends · {{names}}"
+  },
+  "useFriendship": {
+    "toasts": {
+      "signInToConnect": "Sign in to connect with other members.",
+      "cannotRequestSelf": "You cannot send a friend request to yourself.",
+      "alreadyFriends": "You are already friends.",
+      "alreadySent": "Friend request already sent.",
+      "alreadyReceived": "This member already sent you a request. Check your notifications.",
+      "requestSent": "Friend request sent.",
+      "sendFailed": "Unable to send friend request. Please try again.",
+      "signInToManage": "Sign in to manage connections.",
+      "stateNotFound": "Friendship state not found.",
+      "updateFailed": "Unable to update friendship. Please try again.",
+      "noIncomingToAccept": "No incoming request to accept.",
+      "accepted": "Friend request accepted.",
+      "noIncomingToReject": "No incoming request to reject.",
+      "declined": "Friend request declined.",
+      "noPendingToCancel": "No pending request to cancel.",
+      "cancelled": "Friend request cancelled.",
+      "notConnected": "You are not connected yet.",
+      "removed": "Friend removed."
+    }
+  },
+  "useFriendRequests": {
+    "updateFailed": "Could not update the request. Please try again."
+  },
+  "friendsScreen": {
+    "memberFallback": "Hockia member",
+    "accept": "Accept",
+    "add": "Add",
+    "titleOwn": "Friends · {{total}}",
+    "titleNamed": "{{firstName}}’s friends",
+    "title": "Friends",
+    "parent": "Profile",
+    "addFriends": "Add friends",
+    "search": "Search friends",
+    "searchNamed": "Search {{firstName}}’s friends",
+    "joinToSeeNamed": "Join Hockia to see {{firstName}}’s friends",
+    "joinToSee": "Join Hockia to see their friends",
+    "membersOnly": "Friends lists are for members only.",
+    "join": "Join Hockia",
+    "loadFailed": "Friends could not be loaded. Pull back and try again.",
+    "emptyOwn": "No friends yet",
+    "emptyPublic": "No friends to show",
+    "findPeople": "Find people in Community",
+    "noMatch": "No one matches “{{query}}”.",
+    "inCommon": "In common · {{total}}",
+    "allFriends": "All friends",
+    "signInTitle": "Sign in to see friends"
+  },
+  "connectionsPreview": {
+    "title": "Connections",
+    "count_one": "{{count}} connection",
+    "count_other": "{{count}} connections",
+    "signIn": {
+      "playsWith": "Sign in to see who {{firstName}} plays with.",
+      "playsWithAnon": "Sign in to see who this member plays with.",
+      "connectsWith": "Sign in to see who {{firstName}} connects with.",
+      "connectsWithAnon": "Sign in to see who this member connects with.",
+      "otherVerb": "Sign in to see who {{firstName}} {{verb}}.",
+      "thisMember": "this member"
+    },
+    "signInButton": "Sign in",
+    "loadFailed": "Couldn't load connections right now.",
+    "empty": "No connections to show.",
+    "seeAll_one": "See all {{count}} connection",
+    "seeAll_other": "See all {{count}} connections"
+  },
+  "publicConnectionsPage": {
+    "title": "Connections",
+    "count_one": "{{count}} connection",
+    "count_other": "{{count}} connections",
+    "searchPlaceholder": "Search by name",
+    "searchLabel": "Search connections by name",
+    "filterLabel": "Filter connections by role",
+    "filters": {
+      "all": "All",
+      "players": "Players",
+      "coaches": "Coaches",
+      "clubs": "Clubs",
+      "umpires": "Umpires",
+      "brands": "Brands"
+    },
+    "noMatch": "No connections match your search.",
+    "emptyNamed": "{{firstName}} has no connections to show yet.",
+    "emptyAnon": "this member has no connections to show yet.",
+    "memberFallback": "Hockia member",
+    "loadingMore": "Loading…",
+    "showMore": "Show more ({{shown}} of {{total}})"
+  },
+  "recentlyConnectedCard": {
+    "rationale": {
+      "umpire": "References from coaches, fellow umpires and clubs appear on your profile and help assigners and clubs trust your background.",
+      "brand": "References from athletes, clubs and partners appear on your profile and help the community trust your brand.",
+      "default": "References from coaches, teammates and clubs appear on your profile and help clubs scouting on Hockia trust your background."
+    },
+    "connected": {
+      "recently": "Recently connected",
+      "today": "Connected today",
+      "yesterday": "Connected yesterday",
+      "daysAgo_one": "Connected {{count}} day ago",
+      "daysAgo_other": "Connected {{count}} days ago"
+    },
+    "dismiss": "Dismiss this nudge",
+    "askNamed": "Ask {{firstName}} for a reference?",
+    "askAnon": "Ask them for a reference?",
+    "askButton": "Ask to vouch"
+  },
+  "friendshipButton": {
+    "signInToManage": "Sign in with your Hockia profile to manage connections.",
+    "checking": "Checking...",
+    "addFriend": "Add Friend",
+    "blocked": "Blocked",
+    "accept": "Accept",
+    "decline": "Decline",
+    "friends": "Friends",
+    "requested": "Requested",
+    "removeFriend": "Remove Friend",
+    "cancelRequest": "Cancel Request"
+  },
+  "friendsTab": {
+    "toasts": {
+      "loadFailed": "Unable to load friends. Please try again.",
+      "askUnavailable": "That connection is no longer available. Pick someone from your list to send a reference request.",
+      "updateFailed": "Unable to update friendship. Please try again.",
+      "removed": "Connection removed.",
+      "removeFailed": "Could not remove connection. Please try again.",
+      "requestAccepted": "Connection request accepted.",
+      "requestDeclined": "Connection request declined.",
+      "requestCancelled": "Connection request cancelled."
+    },
+    "memberFallback": "Hockia Member",
+    "justNow": "just now",
+    "connectedWhen": "Connected {{when}}",
+    "requestedWhen": "Requested {{when}}",
+    "askVouchTitle": "Ask {{name}} to vouch for you on Hockia",
+    "askVouchTitleAnon": "Ask them to vouch for you on Hockia",
+    "askVouch": "Ask to vouch",
+    "remove": "Remove",
+    "accept": "Accept",
+    "reject": "Reject",
+    "cancelRequest": "Cancel Request",
+    "title": "Connections",
+    "subtitle": "People in your Hockia network build credibility.",
+    "count_one": "{{count}} connection",
+    "count_other": "{{count}} connections",
+    "findPeople": "Find people",
+    "incoming": {
+      "title": "Incoming requests",
+      "subtitle": "Approve or decline pending requests from other members.",
+      "emptyTitle": "No new requests right now",
+      "emptyBody": "Pending requests will show up here."
+    },
+    "sent": {
+      "title": "Sent",
+      "subtitle": "Track connection requests you've sent.",
+      "emptyTitle": "No pending requests",
+      "emptyBody": "You haven't sent any connection requests yet."
+    },
+    "accepted": {
+      "title": "Connections",
+      "subtitle": "Visible to all Hockia members for transparency.",
+      "emptyTitlePublic": "No connections listed yet",
+      "emptyTitleOwn": "No connections yet",
+      "emptyBodyPublic": "This member hasn't added any connections yet.",
+      "emptyBodyOwn": "Build your network by connecting with players, coaches, and clubs."
+    },
+    "removeModal": {
+      "title": "Remove connection",
+      "body": "{{name}} will be removed from your connections. You can always reconnect later.",
+      "bodyAnon": "this connection will be removed from your connections. You can always reconnect later.",
+      "confirm": "Remove connection",
+      "loading": "Removing..."
+    }
+  },
+  "commentsTab": {
+    "placeholder": {
+      "umpire": "Share a note about this umpire's officiating: fair decisions, professionalism, knowledge of the laws...",
+      "coach": "Tell clubs and players why this coach stands out...",
+      "club": "Share your experience with this club: culture, facilities, professionalism...",
+      "default": "Tell clubs, coaches, and players why this profile stands out..."
+    },
+    "empty": {
+      "title": "No comments yet",
+      "owner": "No comments yet. Ask a player, coach, or visitor to leave one.",
+      "umpire": "Be the first to share a note about this umpire.",
+      "club": "Be the first to share your experience with this club.",
+      "brand": "Be the first to share your experience with this brand.",
+      "default": "Be the first to share constructive feedback for this profile."
+    },
+    "subtitle": {
+      "umpire": "Peer notes from Hockia members.",
+      "club": "Notes from players, coaches, and visitors.",
+      "brand": "Notes from the Hockia community.",
+      "default": "Verified testimonials from Hockia members."
+    },
+    "ownerHint": {
+      "umpire": "You can't leave a comment on your own profile, but other members can. Ask a colleague, umpire manager, or coach to share one.",
+      "club": "You can't leave a comment on your own club page, but members can. Ask a player, coach, or visitor to share their experience.",
+      "brand": "You can't leave a comment on your own brand page, but members can. Ask an ambassador or partner to share their experience.",
+      "default": "You can't leave a comment on your own profile, but other members can. Ask a teammate or coach to share one."
+    },
+    "rating": {
+      "positive": {
+        "label": "Positive",
+        "description": "Highlight a standout quality or experience."
+      },
+      "neutral": {
+        "label": "Neutral",
+        "description": "Share balanced, factual feedback."
+      },
+      "negative": {
+        "label": "Needs Work",
+        "description": "Flag concerns respectfully for moderators."
+      }
+    },
+    "headerInfo": {
+      "title": "About comments",
+      "visible": "Visible to everyone who views this profile.",
+      "language": "Use clear, professional language and concrete observations.",
+      "rating": "Your rating helps clubs and coaches scan at a glance."
+    },
+    "composerInfo": {
+      "title": "Posting tips",
+      "constructive": "Stay constructive. Your profile name is shown with every comment.",
+      "specific": "Reference specific games, training moments, or character traits.",
+      "minimum": "Respect the minimum length and select a sentiment before submitting."
+    },
+    "toasts": {
+      "loadFailed": "Failed to load comments. Please try again.",
+      "signInRequired": "You need to sign in with a profile to leave a comment.",
+      "tooShort_one": "Comments must be at least {{count}} character.",
+      "tooShort_other": "Comments must be at least {{count}} characters.",
+      "sentimentToPost": "Select a sentiment to post your comment.",
+      "contentBlocked": "Content violates community guidelines.",
+      "posted": "Thanks for sharing feedback!",
+      "postFailed": "Unable to post your comment. Please try again.",
+      "sentimentToSave": "Select a sentiment before saving changes.",
+      "updated": "Your comment was updated.",
+      "updateFailed": "Unable to save your changes. Please try again.",
+      "deleted": "Comment deleted.",
+      "deleteFailed": "Unable to delete your comment. Please try again."
+    },
+    "title": "Comments",
+    "howItWorks": "How comments work",
+    "count_one": "{{count}} comment",
+    "count_other": "{{count}} comments",
+    "composer": {
+      "title": "Share your experience",
+      "tipsLabel": "Commenting tips",
+      "subtitle": "Give thoughtful, professional feedback.",
+      "fieldLabel": "Comment",
+      "guidelines": "Comments follow community guidelines. Moderators may hide content that violates the code of conduct.",
+      "posting": "Posting...",
+      "post": "Post Comment"
+    },
+    "minLength_one": "Min {{count}} character",
+    "minLength_other": "Min {{count}} characters",
+    "askForFeedback": "Ask for feedback",
+    "visitorPreview": "This is how other members see your comments section. Switch back to your dashboard to ask for feedback.",
+    "signInToComment": "Sign in with a Hockia profile to leave a public, attributed comment.",
+    "yourComment": "Your Comment",
+    "memberFallback": "Hockia member",
+    "formerMember": "Former Hockia member",
+    "unknownAuthor": "Unknown",
+    "friend": "Friend",
+    "report": "Report",
+    "otherComments": "Other Comments",
+    "edit": {
+      "fieldLabel": "Edit comment",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "deleteModal": {
+      "title": "Delete comment?",
+      "body": "This action cannot be undone.",
+      "confirm": "Delete",
+      "loading": "Deleting..."
+    }
+  },
+  "profileV2": {
+    "sponsorPlayer": "{{brand}} player",
+    "roleNew": "New",
+    "nextStep": {
+      "photoTitle": "Add a photo",
+      "photoSubtitle": "So clubs and players know it’s you.",
+      "photoCta": "Add",
+      "crestTitle": "Add your club crest",
+      "crestSubtitle": "Players look for it first",
+      "crestCta": "Add",
+      "logoTitle": "Add your logo",
+      "logoSubtitle": "Athletes recognise brands by it",
+      "logoCta": "Add",
+      "positionTitle": "Add your position",
+      "positionSubtitle": "Clubs search by position",
+      "positionCta": "Add",
+      "currentClubTitle": "Add your current club",
+      "currentClubSubtitle": "Shown as “Plays at”",
+      "currentClubCta": "Add",
+      "leagueTitle": "Add your league",
+      "leagueSubtitle": "Clubs read the level first",
+      "leagueCta": "Add",
+      "passportTitle": "Add your passport",
+      "passportSubtitle": "Clubs check eligibility",
+      "passportCta": "Add",
+      "baseLocationTitle": "Add where you’re based",
+      "baseLocationSubtitle": "Clubs near you find you",
+      "baseLocationCta": "Add",
+      "videoTitle": "Add a highlight video",
+      "videoSubtitle": "Show clubs how you play",
+      "videoCta": "Add",
+      "openToPlayTitle": "Set Open to play",
+      "openToPlaySubtitle": "Clubs filter by it",
+      "openToPlayCta": "Set",
+      "availabilityTitle": "Add when you’re available",
+      "availabilitySubtitle": "Clubs plan seasons ahead",
+      "availabilityCta": "Add",
+      "bioTitle": "Write a short bio",
+      "bioSubtitle": "Three lines about you",
+      "bioCta": "Write",
+      "careerTitle": "Add your first club",
+      "careerSubtitle": "Your career at a glance",
+      "careerCta": "Add",
+      "referencesTitle": "Ask for a reference",
+      "referencesSubtitle": "Friends on Hockia can write one",
+      "referencesCta": "Ask",
+      "workPermitTitle": "Add a work permit",
+      "workPermitSubtitle": "Opens more countries",
+      "workPermitCta": "Add",
+      "nationalityBaseTitle": "Add nationality and base",
+      "nationalityBaseSubtitle": "Clubs check eligibility",
+      "nationalityBaseCta": "Add",
+      "specializationTitle": "Add your specialization",
+      "specializationSubtitle": "Clubs search by it",
+      "specializationCta": "Add",
+      "galleryTitle": "Add photos",
+      "gallerySubtitle": "A few action shots",
+      "galleryCta": "Add",
+      "friendsTitle": "Add your first friend",
+      "friendsSubtitle": "Friends can write references",
+      "friendsCta": "Find",
+      "openToCoachTitle": "Set Open to coach",
+      "openToCoachSubtitle": "Clubs filter by it",
+      "openToCoachCta": "Set",
+      "levelTitle": "Add your umpire level",
+      "levelSubtitle": "Clubs and leagues look for it",
+      "levelCta": "Add",
+      "federationTitle": "Add your federation",
+      "federationSubtitle": "Shown on your profile",
+      "federationCta": "Add",
+      "availableTitle": "Say you’re open to umpire",
+      "availableSubtitle": "Leagues filter by it",
+      "availableCta": "Set",
+      "appointmentsTitle": "Add your latest match",
+      "appointmentsSubtitle": "Your officiating record",
+      "appointmentsCta": "Add",
+      "countryTitle": "Add your country",
+      "countrySubtitle": "Shown on your profile",
+      "countryCta": "Add",
+      "yearFoundedTitle": "Add the year founded",
+      "yearFoundedSubtitle": "Shown in About",
+      "yearFoundedCta": "Add",
+      "contactTitle": "Add a website or email",
+      "contactSubtitle": "So players can reach you",
+      "contactCta": "Add",
+      "mediaTitle": "Add club photos",
+      "mediaSubtitle": "Players look at the club first",
+      "mediaCta": "Add",
+      "postsTitle": "Write your first post",
+      "postsSubtitle": "Share club news",
+      "postsCta": "Post",
+      "linksTitle": "Add your website or Instagram",
+      "linksSubtitle": "Where athletes find you",
+      "linksCta": "Add",
+      "ambassadorsTitle": "Invite your first athlete",
+      "ambassadorsSubtitle": "Ambassadors show on your profile",
+      "ambassadorsCta": "Invite"
+    }
+  },
+  "profileD2": {
+    "action": {
+      "addPosition": "Add position",
+      "addClub": "Add club",
+      "addLeague": "Add league",
+      "addAvailability": "Add availability",
+      "addDate": "Add date",
+      "addPassport": "Add passport",
+      "addVideo": "Add video",
+      "addSpecialization": "Add specialization",
+      "addCategories": "Add categories",
+      "addAnother": "Add another"
+    },
+    "status": {
+      "shortlisted": "Shortlisted",
+      "maybe": "Marked maybe",
+      "rejected": "Not a fit",
+      "noResponse": "Closed without a reply"
+    },
+    "closesToday": "closes today",
+    "daysLeftToReply_one": "{{count}} day left to reply",
+    "daysLeftToReply_other": "{{count}} days left to reply"
+  },
+  "portfolioSectionNav": {
+    "label": "Profile sections"
+  },
+  "profileChrome": {
+    "back": "Back",
+    "share": "Share profile",
+    "sections": "Profile sections"
+  },
+  "profileHero": {
+    "addPhotos": "Add photos",
+    "changePhotos": "Change photos",
+    "back": "Back",
+    "share": "Share profile",
+    "settings": "Settings",
+    "photoPosition": "Photo {{index}} of {{count}}"
+  },
+  "profileSections": {
+    "commentsTitleCount": "Comments · {{count}}",
+    "commentsTitle": "Comments",
+    "commentsSeeAll": "See all",
+    "memberFallback": "Member",
+    "noComments": "No comments yet",
+    "writeComment": "Write a comment…",
+    "commentsSheet": "Comments"
+  },
+  "ownerArea": {
+    "editProfile": "Edit profile",
+    "previewAs": "Preview as…",
+    "previewSheet": "Preview as",
+    "previewTitle": "Preview your profile as…",
+    "cancel": "Cancel",
+    "onlyYou": "Only you see this · Your activity",
+    "applicantsToReview_one": "{{count}} applicant to review",
+    "applicantsToReview_other": "{{count}} applicants to review",
+    "noNewApplicants": "No new applicants",
+    "notRecruiting": "Not recruiting right now",
+    "openRoles_one": "{{count}} open opportunity",
+    "openRoles_other": "{{count}} open opportunities",
+    "openRolesWithNames_one": "{{count}} open opportunity · {{names}}",
+    "openRolesWithNames_other": "{{count}} open opportunities · {{names}}",
+    "postToReceive": "Post an opportunity and players can apply",
+    "reviewApplicants": "Review applicants",
+    "postOpportunity": "+ Post an opportunity",
+    "viewOpportunities": "View opportunities"
+  },
+  "umpireProfileV2": {
+    "anchors": {
+      "overview": "Overview",
+      "appointments": "Matches",
+      "references": "References",
+      "posts": "Posts",
+      "about": "About"
+    },
+    "spec": {
+      "both": "Outdoor & Indoor",
+      "outdoor": "Outdoor",
+      "indoor": "Indoor"
+    },
+    "nameFallback": "Hockia umpire",
+    "linkCopied": "Link copied",
+    "stats": {
+      "views_one": "profile view",
+      "views_other": "profile views",
+      "clubs_one": "club viewed",
+      "clubs_other": "clubs viewed",
+      "searches": "in searches"
+    },
+    "friends_one": "{{count}} friend",
+    "friends_other": "{{count}} friends",
+    "friendsInCommon_one": "{{count}} friend · {{common}} in common with you",
+    "friendsInCommon_other": "{{count}} friends · {{common}} in common with you",
+    "action": {
+      "friends": "Friends",
+      "requested": "Requested",
+      "accept": "Accept",
+      "addFriend": "Add friend",
+      "opening": "Opening…",
+      "message": "Message"
+    },
+    "addLevelLine": "Add your umpire level",
+    "previewPublic": "Someone on Hockia",
+    "previewPublicDetail": "What players, clubs and leagues see",
+    "statsEmpty": "Your stats appear here once people start viewing you",
+    "federation": {
+      "label": "Federation",
+      "add": "Add your federation",
+      "detail": "Affiliated federation"
+    },
+    "level": {
+      "label": "Level",
+      "add": "Add level",
+      "notSet": "Not set",
+      "since": "Since {{year}}"
+    },
+    "available": {
+      "label": "Available",
+      "open": "Open to umpire",
+      "notNow": "Not right now",
+      "detail": "Tournaments and leagues"
+    },
+    "matches": {
+      "titleCount": "Matches officiated · {{count}}",
+      "title": "Matches officiated",
+      "add": "+ Add",
+      "seeAll": "See all",
+      "empty": "No matches yet. Add the tournaments and finals you’ve officiated."
+    },
+    "references": {
+      "title": "References",
+      "seeAll_one": "See all {{count}}",
+      "seeAll_other": "See all {{count}}",
+      "ask": "Ask for one",
+      "empty": "No references yet. Players, coaches and clubs who are friends on Hockia can write one.",
+      "memberFallback": "Hockia member",
+      "verified": "✓ Verified on Hockia",
+      "verifiedOn": "✓ Verified on Hockia · {{date}}"
+    },
+    "posts": {
+      "title": "Posts & photos",
+      "add": "+ Add",
+      "seeAll": "See all {{count}}",
+      "empty": "No posts or photos yet."
+    },
+    "about": {
+      "title": "About",
+      "edit": "Edit",
+      "more": "More",
+      "noBio": "No bio yet",
+      "languages": "Languages"
+    },
+    "signInTitle": "Sign in to connect"
+  },
+  "playerProfileV2": {
+    "anchors": {
+      "overview": "Overview",
+      "roles": "Open opportunities",
+      "videos": "Videos",
+      "references": "References",
+      "career": "Career",
+      "posts": "Posts",
+      "about": "About"
+    },
+    "nameFallback": "Hockia member",
+    "linkCopied": "Link copied",
+    "stats": {
+      "views_one": "profile view",
+      "views_other": "profile views",
+      "clubs_one": "club viewed",
+      "clubs_other": "clubs viewed",
+      "searches": "in searches"
+    },
+    "available": {
+      "notLooking": "Not looking right now",
+      "openToCoach": "Open to coach",
+      "openToPlay": "Open to play",
+      "addWhen": "Add when you’re available"
+    },
+    "friends_one": "{{count}} friend",
+    "friends_other": "{{count}} friends",
+    "friendsInCommon_one": "{{count}} friend · {{common}} in common with you",
+    "friendsInCommon_other": "{{count}} friends · {{common}} in common with you",
+    "action": {
+      "friends": "Friends",
+      "requested": "Requested",
+      "accept": "Accept",
+      "addFriend": "Add friend",
+      "opening": "Opening…",
+      "message": "Message",
+      "shortlisted": "Shortlisted",
+      "shortlist": "Shortlist"
+    },
+    "menu": {
+      "requestSent": "Friend request sent",
+      "acceptRequest": "Accept friend request",
+      "addFriend": "Add friend"
+    },
+    "recruitingBadge": "Recruiting players",
+    "preview": {
+      "public": "Someone on Hockia",
+      "publicDetail": "What players and coaches see",
+      "club": "A club",
+      "clubDetail": "With the fit for their role"
+    },
+    "overview": {
+      "coachesAt": "Coaches at",
+      "playsAt": "Plays at",
+      "available": "Available",
+      "brandAthlete": "{{brand}} athlete ✓",
+      "videosClubsOnly": "Videos are shared with clubs"
+    },
+    "videos": {
+      "title": "Videos",
+      "seeAll": "See all {{count}}",
+      "addHighlight": "Add a highlight",
+      "linkedHighlight": "Linked highlight",
+      "versus": "vs {{team}}",
+      "fullMatch": "Full match",
+      "highlight": "Highlight",
+      "fullMatchLabel": "Full match",
+      "reel": "Reel"
+    },
+    "roles": {
+      "titleCount": "Open opportunities · {{count}}",
+      "title": "Open opportunities",
+      "post": "+ Post an opportunity",
+      "seeAll": "See all",
+      "empty": "No open opportunities right now.",
+      "seeAllCount_one": "See all {{count}} roles",
+      "seeAllCount_other": "See all {{count}} roles"
+    },
+    "references": {
+      "title": "References",
+      "seeAll_one": "See all {{count}}",
+      "seeAll_other": "See all {{count}}",
+      "askOne": "Ask for one",
+      "ask": "Ask for a reference",
+      "emptyCoach": "No references yet. Clubs, players and coaches who are friends on Hockia can write one.",
+      "emptyPlayer": "No references yet. Coaches and teammates who are friends on Hockia can write one.",
+      "memberFallback": "Hockia member",
+      "verified": "✓ Verified on Hockia",
+      "verifiedOn": "✓ Verified on Hockia · {{date}}"
+    },
+    "career": {
+      "title": "Career",
+      "seeAll": "See all {{count}}",
+      "addFirst": "Add your first club",
+      "fillWithAi": "Fill my profile with Hockia AI",
+      "fillWithAiDetail": "From your CV, photos, links or a few lines. You check it first."
+    },
+    "posts": {
+      "title": "Posts & photos",
+      "seeAll": "See all {{count}}",
+      "addFirst": "Add your first photo"
+    },
+    "about": {
+      "title": "About",
+      "edit": "Edit",
+      "more": "More",
+      "noBio": "No bio yet",
+      "writeBio": "Write a short bio",
+      "relocation": "Relocation"
+    }
+  },
+  "profileLongScroll": {
+    "versus": "vs {{team}}",
+    "fullMatch": "Full match",
+    "memberFallback": "Hockia member",
+    "verifiedReference": "Verified · written on Hockia",
+    "representativeTeam": "representative team",
+    "videos": {
+      "title": "Videos",
+      "seeAll": "See all {{count}}",
+      "manage": "Manage",
+      "addFirst": "Add your first highlight",
+      "highlights": "Highlights",
+      "linkedHighlight": "Linked highlight",
+      "highlight": "Highlight",
+      "fullMatches": "Full matches",
+      "clubsAndCoaches": "Clubs & coaches",
+      "reels": "Reels",
+      "reel": "Reel"
+    },
+    "career": {
+      "title": "Career",
+      "seeAll": "See all {{count}}",
+      "addFirst": "Add your first club"
+    },
+    "skills": {
+      "title": "Specialist skills",
+      "edit": "Edit",
+      "add": "Add your specialist skills"
+    },
+    "references": {
+      "title": "References",
+      "seeAll": "See all {{count}}",
+      "ask": "Ask for a reference",
+      "empty": "No references yet. References come from friends on Hockia. Coaches and teammates can write one.",
+      "seeAllButton_one": "See all {{count}} references",
+      "seeAllButton_other": "See all {{count}} references"
+    },
+    "friends": "Friends",
+    "photos": {
+      "title": "Photos",
+      "seeAll": "See all {{count}}",
+      "add": "Add photos",
+      "photoNumber": "Photo {{number}}"
+    },
+    "posts": {
+      "title": "Posts",
+      "seeAll": "See all {{count}}",
+      "newPost": "New post"
+    },
+    "about": {
+      "title": "About",
+      "edit": "Edit",
+      "writeBio": "Write a short bio",
+      "category": "Category",
+      "relocation": "Relocation"
+    }
+  },
+  "publicPlayerProfile": {
+    "documentTitle": "{{name}} • {{role}}",
+    "errors": {
+      "invalidUrl": "Invalid profile URL",
+      "notFound": "Profile not found.",
+      "unavailable": "This profile is not available.",
+      "loadFailed": "Failed to load profile. Please try again."
+    }
+  },
+  "publicUmpireProfile": {
+    "loading": "Loading umpire profile...",
+    "errors": {
+      "invalidUrl": "Invalid profile URL",
+      "notFound": "Umpire profile not found.",
+      "unavailable": "This profile is not available.",
+      "loadFailed": "Failed to load umpire profile. Please try again."
+    }
+  },
+  "signedThroughHockiaPill": {
+    "label": "Signed through Hockia"
+  },
+  "publicProfileFooterCTA": {
+    "eyebrow": "Powered by Hockia",
+    "title": "Create your Hockia profile",
+    "body": "Build your field hockey profile and share it with clubs, coaches, and the hockey community.",
+    "signUp": "Sign up"
+  },
+  "addPhotoPrompt": {
+    "title": "Add a photo",
+    "body": "So clubs and players know it’s you.",
+    "uploading": "Uploading…",
+    "add": "Add",
+    "dismiss": "Not now"
+  },
+  "verifiedBadge": {
+    "tooltip": "Verified by Hockia",
+    "tooltipWithDate": "Verified by Hockia · {{date}}",
+    "ariaLabel": "Verified profile"
+  },
+  "pendingVerificationBadge": {
+    "label": "Pending verification",
+    "tooltip": "Hockia hasn't verified this club's claim yet."
+  },
+  "lastActivePill": {
+    "today": "Active today",
+    "thisWeek": "Active this week",
+    "thisMonth": "Active this month"
+  },
+  "searchAppearancesCard": {
+    "title": "Search appearances",
+    "summary_one": "You appeared in <count>{{count}}</count> active search in the last <days>{{windowDays}} days</days>.",
+    "summary_other": "You appeared in <count>{{count}}</count> active searches in the last <days>{{windowDays}} days</days>.",
+    "chartLabel": "Daily appearances over the last {{windowDays}} days"
+  },
+  "publicViewBanner": {
+    "clubView": "<strong>Club view</strong> · how clubs see you",
+    "publicView": "<strong>Public view</strong> · how other members see you",
+    "done": "Done",
+    "title": "You are viewing your network profile.",
+    "body": "This is how other Hockia members see you.",
+    "back": "Back to My Profile"
+  },
+  "trustBadge": {
+    "label_one": "Trusted by {{count}}",
+    "label_other": "Trusted by {{count}}",
+    "getReferences": "Get references",
+    "tooltip_one": "{{count}} person has vouched for you on Hockia. Tap to see endorsements.",
+    "tooltip_other": "{{count}} people have vouched for you on Hockia. Tap to see endorsements.",
+    "emptyTooltip": "References are vouches from coaches, teammates or clubs you're connected with. Tap to ask a connection.",
+    "infoLabel": "What does this mean?",
+    "infoTitle": "What does Trusted mean?"
+  },
+  "profileUnavailable": {
+    "guestTitle": {
+      "club": "Sign in to view this club",
+      "player": "Sign in to view this player",
+      "coach": "Sign in to view this coach",
+      "umpire": "Sign in to view this umpire",
+      "profile": "Sign in to view this profile"
+    },
+    "guestBody": {
+      "club": "This club isn't publicly visible. Members can see full profiles, message, and connect.",
+      "player": "This player isn't publicly visible. Members can see full profiles, message, and connect.",
+      "coach": "This coach isn't publicly visible. Members can see full profiles, message, and connect.",
+      "umpire": "This umpire isn't publicly visible. Members can see full profiles, message, and connect.",
+      "profile": "This profile isn't publicly visible. Members can see full profiles, message, and connect."
+    },
+    "createProfile": "Create a free profile",
+    "logIn": "Log in",
+    "keepExploring": "Keep exploring",
+    "notFoundTitle": "Profile Not Found",
+    "notFoundBody": {
+      "club": "This club could not be found.",
+      "player": "This player could not be found.",
+      "coach": "This coach could not be found.",
+      "umpire": "This umpire could not be found.",
+      "profile": "This profile could not be found."
+    },
+    "goBack": "Go Back"
+  },
+  "profileActionMenu": {
+    "blockedToast": "{{name}} has been blocked",
+    "blockFailed": "Failed to block user. Please try again.",
+    "unblockedToast": "{{name}} has been unblocked",
+    "unblockFailed": "Failed to unblock user. Please try again.",
+    "reportNamed": "Report {{name}}",
+    "unblockNamed": "Unblock {{name}}",
+    "unblock": "Unblock",
+    "blockNamed": "Block {{name}}",
+    "block": "Block",
+    "blockTitle": "Block {{name}}?",
+    "blockBody": "They won't be able to find your profile, see your posts, or message you. You won't see their content either. Any existing friendship will be removed.",
+    "blocking": "Blocking...",
+    "blockConfirm": "Block",
+    "unblockTitle": "Unblock {{name}}?",
+    "unblockBody": "They'll be able to find your profile, see your posts, and message you again. If you want to be friends, you'll need to send a new friend request.",
+    "unblocking": "Unblocking...",
+    "unblockConfirm": "Unblock",
+    "cancel": "Cancel"
+  },
+  "profileFreshness": {
+    "periodDays_one": "{{count}} days",
+    "periodDays_other": "{{count}} days",
+    "periodWeeks_one": "{{count}} weeks",
+    "periodWeeks_other": "{{count}} weeks",
+    "periodMonths_one": "{{count}} months",
+    "periodMonths_other": "{{count}} months",
+    "journeyMessage": "Your last career history update was {{period}} ago. Add a recent moment to keep clubs current.",
+    "journeyCta": "Update career history",
+    "galleryMessage": "Your Gallery hasn't been updated in {{period}}. A fresh photo or clip shows you're active.",
+    "galleryCta": "Add to Gallery",
+    "bioMessage": "Your bio is {{period}} old. A refresh helps clubs see where you're at now.",
+    "bioCta": "Edit bio",
+    "postsMessage": "Your last post was {{period}} ago. A fresh update keeps followers engaged.",
+    "postsCta": "New post",
+    "productsMessage": "Your products haven't been updated in {{period}}. Refresh stock or add a new item.",
+    "productsCta": "Manage products",
+    "mediaMessage": "Club media hasn't been updated in {{period}}. Fresh photos show the club is active.",
+    "mediaCta": "Add media"
+  },
+  "profileViewersSection": {
+    "title": "Who viewed your profile",
+    "totalViews": "Total Views",
+    "uniqueViewers": "Unique Viewers",
+    "hideViewers": "Hide viewers",
+    "showViewers": "Show viewers",
+    "emptyTitle": "No profile views yet",
+    "emptyBody": "Share your profile to get discovered",
+    "brandFallback": "Brand",
+    "viewCount_one": "{{count}} views",
+    "viewCount_other": "{{count}} views",
+    "showLess": "Show less",
+    "seeAll_one": "See all {{count}} viewers",
+    "seeAll_other": "See all {{count}} viewers",
+    "anonymous_one": "+{{count}} anonymous viewer",
+    "anonymous_other": "+{{count}} anonymous viewers"
+  },
+  "profilePostsTab": {
+    "tryAgain": "Try again",
+    "emptyVisitor": "No posts yet.",
+    "emptyTitle": "No posts yet",
+    "emptyBody": "Share your first update with the Hockia community.",
+    "createPost": "Create a post",
+    "loadMore": "Load more"
+  },
+  "useProfilePosts": {
+    "loadFailed": "Failed to load posts"
+  },
+  "shareProfileButton": {
+    "copied": "Profile link copied",
+    "copyFailed": "Could not copy link. Try selecting it manually.",
+    "shareFailed": "Share failed. Try copy link instead.",
+    "button": "Share profile",
+    "title": "Share your Hockia profile",
+    "body": "Send your public profile link via any of the options below. The recipient won’t need a Hockia account to view it.",
+    "copyLink": "Copy link",
+    "nativeLabel": "Share via device",
+    "nativeHint": "Use your device’s share sheet",
+    "whatsappHint": "Open WhatsApp with a prefilled message",
+    "emailLabel": "Email",
+    "emailHint": "Open your email app with a prefilled message"
+  },
+  "keyFacts": {
+    "notGiven": "Not given",
+    "notSet": "Not set",
+    "selfReported": "self-reported",
+    "leagueSelfReported": "{{league}} · self-reported",
+    "leagueNotSet": "League not set",
+    "leagueNotGiven": "League not given",
+    "position": "Position",
+    "playsAt": "Plays at",
+    "available": "Available",
+    "passport": "Passport",
+    "video": "Video",
+    "age": "Age",
+    "specialization": "Specialization",
+    "categories": "Categories",
+    "coachesAt": "Coaches at",
+    "availableNow": "Available now",
+    "fromDay": "From {{day}}",
+    "noStartDate": "No start date",
+    "startDateNotGiven": "Start date not given",
+    "permitExpiredOn": "expired {{date}}",
+    "permitExpired": "expired",
+    "permitFrom": "from {{date}}",
+    "permitUntil": "until {{date}}",
+    "permitFromUntil": "from {{from}} until {{until}}",
+    "euPassport": "EU passport",
+    "noEuPassport": "No EU passport",
+    "fullMatches_one": "{{count}} full match",
+    "fullMatches_other": "{{count}} full matches",
+    "highlights_one": "{{count}} highlight",
+    "highlights_other": "{{count}} highlights",
+    "coachFallback": "Coach",
+    "anyCategory": "Any category",
+    "currentRole": "{{role}} · current role",
+    "openToCoach": "Open to coach"
+  },
+  "keyFactsGrid": {
+    "euTag": "EU passport",
+    "permitName": "{{flag}}{{country}} {{type}}",
+    "permitExpiredOn": "Your {{what}} expired on {{day}}. Clubs no longer see it.",
+    "permitExpired": "Your {{what}} expired. Clubs no longer see it.",
+    "permitExpiresOn": "Your {{what}} expires on {{day}}. Update it so clubs keep seeing it.",
+    "permitExpiresSoon": "Your {{what}} expires soon. Update it so clubs keep seeing it."
+  },
+  "useProfileKeyFacts": {
+    "unknownCountry": "Unknown country"
+  },
+  "scoutingCard": {
+    "availabilitySet": "Availability set",
+    "currentClub": "Current club",
+    "pastClubs": "Past clubs",
+    "listed_one": "{{count}} listed",
+    "listed_other": "{{count}} listed",
+    "more_one": " · +{{count}} more",
+    "more_other": " · +{{count}} more",
+    "selections": "Selections",
+    "references": "References",
+    "accepted_one": "1 accepted",
+    "accepted_other": "{{count}} accepted",
+    "highlights_one": "{{count}} highlight",
+    "highlights_other": "{{count}} highlights",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches",
+    "photos_one": "{{count}} photo",
+    "photos_other": "{{count}} photos",
+    "media": "Media",
+    "recruitmentPreferences": "Recruitment preferences",
+    "saved": "Saved",
+    "shortlist": "Shortlist",
+    "thisPlayer": "this player",
+    "seeJourney": "See full Journey →",
+    "signInPromptNamed": "<signin>Sign in</signin> to shortlist or message {{name}}.",
+    "signInPrompt": "<signin>Sign in</signin> to shortlist or message this player."
+  }
+}

@@ -18,6 +18,7 @@ import { logger } from '@/lib/logger'
 import { passwordHelp, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
 import { useAuthT } from '@/i18n/ns/auth'
+import { currentLanguage } from '@/i18n'
 
 /**
  * Create with email (Figma 04 Player 114:434): email, password ("At least 8
@@ -85,7 +86,8 @@ export default function CreateWithEmail() {
           emailRedirectTo: getAuthRedirectUrl(),
           // The confirmation link may open in another browser (in-app → Safari),
           // so the destination travels with the account, not only this tab.
-          data: { ...(acq ? { acq } : {}), ...(intent ? { [POST_AUTH_NEXT_KEY]: intent } : {}) },
+          // ui_language: the confirmation email is written in it (supabase/templates).
+          data: { ...(acq ? { acq } : {}), ...(intent ? { [POST_AUTH_NEXT_KEY]: intent } : {}), ui_language: currentLanguage() },
         },
       })
       if (signUpError) {

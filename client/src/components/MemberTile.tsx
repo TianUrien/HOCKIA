@@ -19,18 +19,12 @@ import { evidenceChecklist } from '@/lib/evidence'
 import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
 
-const BRAND_CATEGORY_LABELS: Record<string, string> = {
-  equipment: 'Equipment',
-  apparel: 'Apparel',
-  accessories: 'Accessories',
-  nutrition: 'Nutrition',
-  technology: 'Technology',
-  coaching: 'Coaching & Training',
-  recruiting: 'Recruiting',
-  media: 'Media',
-  services: 'Services',
-  other: 'Other',
-}
+import { useCommunityT } from '@/i18n/ns/community'
+import { useEnumsT } from '@/i18n/ns/enums'
+
+/** Brand category tokens with a label in the shared enums catalog (enums.brandCategory.<token>). */
+const BRAND_CATEGORY_TOKENS = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
+const isBrandCategoryToken = (value: string): value is typeof BRAND_CATEGORY_TOKENS[number] => (BRAND_CATEGORY_TOKENS as readonly string[]).includes(value)
 
 interface MemberTileProps {
   id: string
@@ -109,6 +103,8 @@ interface MemberTileProps {
 }
 
 export default function MemberTile(props: MemberTileProps) {
+  const t = useCommunityT()
+  const tEnums = useEnumsT()
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -253,7 +249,7 @@ export default function MemberTile(props: MemberTileProps) {
       if (!props.brandCategory) return null
       return {
         kind: 'category' as const,
-        label: BRAND_CATEGORY_LABELS[props.brandCategory] ?? props.brandCategory,
+        label: isBrandCategoryToken(props.brandCategory) ? tEnums(`brandCategory.${props.brandCategory}`) : props.brandCategory,
       }
     }
     if (props.role === 'umpire') {
@@ -287,7 +283,7 @@ export default function MemberTile(props: MemberTileProps) {
         className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
-          return `${name}. Tap to open profile.`
+          return t('memberTile.openLabel', { name })
         })()}
       >
         {/* Avatar — centered circle inside top padding. Replaces the
@@ -449,8 +445,8 @@ export default function MemberTile(props: MemberTileProps) {
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to view profile"
-        message="Sign in or create a free Hockia account to view member profiles."
+        title={t('memberTile.signInTitle')}
+        message={t('memberTile.signInBody')}
       />
     </>
   )

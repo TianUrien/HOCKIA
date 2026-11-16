@@ -1,4 +1,5 @@
 import { SOCIAL_PLATFORMS, type SocialLinks } from '@/lib/socialLinks'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 interface SocialLinksDisplayProps {
   links: SocialLinks | null | undefined
@@ -23,6 +24,7 @@ export default function SocialLinksDisplay({
   className = '',
   iconSize = 'md'
 }: SocialLinksDisplayProps) {
+  const t = useProfileEditT()
   // Filter to only show platforms with valid URLs
   const activeLinks = SOCIAL_PLATFORMS.filter(
     platform => links?.[platform.key]?.trim()
@@ -48,7 +50,7 @@ export default function SocialLinksDisplay({
             target="_blank"
             rel="noopener noreferrer"
             className={`${containerSizes[iconSize]} flex items-center justify-center rounded-full bg-gray-100 ${color} ${hoverColor} transition-all hover:scale-110 hover:shadow-md`}
-            aria-label={`Visit ${label} profile`}
+            aria-label={t('social.visit', { platform: label })}
             title={label}
           >
             <Icon className={iconSizes[iconSize]} />

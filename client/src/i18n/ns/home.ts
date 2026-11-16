@@ -1,7 +1,17 @@
-/** The full "home" catalog: import from here to translate home copy. */
+/** The full "home" catalog (core and rest): import from here to translate home copy.
+ * Nothing runs at import: the catalog is added the first time `tHome` or
+ * `useHomeT` is used (see ensureNamespace in i18n/index.ts).
+ */
+import { useTranslation } from 'react-i18next'
+import core from '@/locales/en/home.core.json'
 import en from '@/locales/en/home.json'
-import { registerNamespace } from '@/i18n'
+import { ensureNamespace, lazyFixedT } from '@/i18n'
 
-registerNamespace('home', en)
+/** For plain functions (lib helpers). Follows the active language. */
+export const tHome = /* @__PURE__ */ lazyFixedT('home', core, en)
 
-export { tHome, useHomeT } from './home.core'
+/** For components: re-renders when the language changes. */
+export function useHomeT() {
+  ensureNamespace('home', core, en)
+  return useTranslation('home').t
+}

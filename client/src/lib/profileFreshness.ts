@@ -17,6 +17,7 @@
  * - No DB writes, no migration. Dismissal with a 7-day cooldown lives in
  *   the component (localStorage), not here.
  */
+import { tProfile } from '@/i18n/ns/profile'
 
 export type FreshnessNudgeId =
   | 'journey-stale'
@@ -93,57 +94,57 @@ function buildNudge(
 ): FreshnessNudge {
   const weeks = Math.round(daysSince / 7)
   const period = weeks < 2
-    ? `${daysSince} days`
+    ? tProfile('profileFreshness.periodDays', { count: daysSince })
     : weeks < 8
-      ? `${weeks} weeks`
-      : `${Math.round(daysSince / 30)} months`
+      ? tProfile('profileFreshness.periodWeeks', { count: weeks })
+      : tProfile('profileFreshness.periodMonths', { count: Math.round(daysSince / 30) })
 
   switch (id) {
     case 'journey-stale':
       return {
         id,
-        message: `Your last career history update was ${period} ago. Add a recent moment to keep clubs current.`,
-        ctaLabel: 'Update career history',
+        message: tProfile('profileFreshness.journeyMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.journeyCta'),
         action: { type: 'tab', tab: 'journey' },
         daysSince,
       }
     case 'gallery-stale':
       return {
         id,
-        message: `Your Gallery hasn't been updated in ${period}. A fresh photo or clip shows you're active.`,
-        ctaLabel: 'Add to Gallery',
+        message: tProfile('profileFreshness.galleryMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.galleryCta'),
         action: { type: 'tab', tab: 'profile' },
         daysSince,
       }
     case 'bio-stale':
       return {
         id,
-        message: `Your bio is ${period} old. A refresh helps clubs see where you're at now.`,
-        ctaLabel: 'Edit bio',
+        message: tProfile('profileFreshness.bioMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.bioCta'),
         action: { type: 'edit-profile' },
         daysSince,
       }
     case 'posts-stale':
       return {
         id,
-        message: `Your last post was ${period} ago. A fresh update keeps followers engaged.`,
-        ctaLabel: 'New post',
+        message: tProfile('profileFreshness.postsMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.postsCta'),
         action: { type: 'tab', tab: 'posts' },
         daysSince,
       }
     case 'products-stale':
       return {
         id,
-        message: `Your products haven't been updated in ${period}. Refresh stock or add a new item.`,
-        ctaLabel: 'Manage products',
+        message: tProfile('profileFreshness.productsMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.productsCta'),
         action: { type: 'tab', tab: 'products' },
         daysSince,
       }
     case 'media-stale':
       return {
         id,
-        message: `Club media hasn't been updated in ${period}. Fresh photos show the club is active.`,
-        ctaLabel: 'Add media',
+        message: tProfile('profileFreshness.mediaMessage', { period }),
+        ctaLabel: tProfile('profileFreshness.mediaCta'),
         action: { type: 'tab', tab: 'overview' },
         daysSince,
       }

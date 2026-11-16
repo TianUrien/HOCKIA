@@ -11,6 +11,7 @@ import type { FitState } from '@/lib/clubRecruiting'
 import { BackGlyph } from '@/components/ui/BackGlyph'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * Profile v2 hero (Figma PR1 97:5 / PR2): the best photo full-bleed (540 pt),
@@ -54,6 +55,7 @@ const SCRIM =
 const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white', GLASS)
 
 export function ProfileHero({ photos, name, age, roleLine, place, nationalities = [], instagram, role, owner, fitPill, onBack, onShare, moreMenu, onCamera, onSettings, badge, roleLineAction }: ProfileHeroProps) {
+  const t = useProfileT()
   const [index, setIndex] = useState(0)
   const count = photos.length
   useEffect(() => { if (index >= count) setIndex(0) }, [count, index])
@@ -90,27 +92,27 @@ export function ProfileHero({ photos, name, age, roleLine, place, nationalities 
       {!current && owner && (
         // PR25: a new profile gets the dashed photo target in the hero itself.
         <button type="button" onClick={onCamera} className="absolute left-1/2 top-[34%] z-10 flex h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-white/50 bg-white/10 text-[13px] font-semibold text-white" data-testid="profile-hero-add-photos">
-          <Camera className="h-6 w-6" strokeWidth={1.6} /> Add photos
+          <Camera className="h-6 w-6" strokeWidth={1.6} /> {t('profileHero.addPhotos')}
         </button>
       )}
       <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: SCRIM }} aria-hidden="true" />
 
       <div className="absolute inset-x-4 top-[max(env(safe-area-inset-top),12px)] flex items-center justify-between pt-1">
         {owner ? (
-          <button type="button" onClick={onCamera} aria-label="Change photos" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+          <button type="button" onClick={onCamera} aria-label={t('profileHero.changePhotos')} className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         ) : (
-          <button type="button" onClick={onBack} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
+          <button type="button" onClick={onBack} aria-label={t('profileHero.back')} className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>
         )}
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onShare} aria-label="Share profile" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+          <button type="button" onClick={onShare} aria-label={t('profileHero.share')} className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
           {owner
-            ? <button type="button" onClick={onSettings} aria-label="Settings" className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+            ? <button type="button" onClick={onSettings} aria-label={t('profileHero.settings')} className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
             : moreMenu}
         </div>
       </div>
 
       {count > 1 && (
-        <div className="pointer-events-none absolute inset-x-4 top-[calc(max(env(safe-area-inset-top),12px)+56px)] flex gap-1" aria-label={`Photo ${index + 1} of ${count}`}>
+        <div className="pointer-events-none absolute inset-x-4 top-[calc(max(env(safe-area-inset-top),12px)+56px)] flex gap-1" aria-label={t('profileHero.photoPosition', { index: index + 1, count })}>
           {photos.map((p, i) => (
             <span key={p} className={cn('h-[3px] flex-1 rounded-[2px] transition-colors duration-150', i === index ? 'bg-white' : 'bg-white/40')} />
           ))}

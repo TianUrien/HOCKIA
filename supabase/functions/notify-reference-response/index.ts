@@ -11,8 +11,10 @@ import {
   createLogger,
   generateAcceptedEmailHtml,
   generateAcceptedEmailText,
+  referenceAcceptedSubject,
 } from '../_shared/reference-response-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { readMemberLanguage, relationshipLabel } from '../_shared/member-language.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 
 /**
@@ -233,7 +235,10 @@ Deno.serve(async (req: Request) => {
 
     logger.info('All checks passed - proceeding with email')
 
-    const endorserName = endorser.full_name?.trim() || 'Someone'
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    const es = language === 'es'
+    const endorserName = endorser.full_name?.trim() || (es ? 'Alguien' : 'Someone')
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = buildEndorserProfileUrl(endorser, HOCKIA_BASE_URL)
 
@@ -241,7 +246,7 @@ Deno.serve(async (req: Request) => {
       endorser_name: endorserName,
       endorser_avatar_url: endorser.avatar_url || '',
       endorser_profile_url: profileUrl,
-      relationship_type: reference.relationship_type || '',
+      relationship_type: es ? relationshipLabel(reference.relationship_type, language) : reference.relationship_type || '',
       endorsement_text: reference.endorsement_text || '',
       cta_url: `${HOCKIA_BASE_URL}/dashboard/profile/references`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
@@ -251,29 +256,34 @@ Deno.serve(async (req: Request) => {
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'reference_accepted', templateVars)
+    // A DB template is used only when it is in the member's language (no
+    // 'reference_accepted' rows exist today; the builders are the email).
+    const renderedAny = await renderTemplate(supabase, 'reference_accepted', templateVars, language)
+    const rendered = renderedAny && renderedAny.language === language ? renderedAny : null
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for reference_accepted')
+      logger.info('Using DB template for reference_accepted', { language })
     } else {
       emailHtml = generateAcceptedEmailHtml(
         endorser as EndorserData,
         reference.relationship_type,
         reference.endorsement_text,
+        language,
       )
       emailText = generateAcceptedEmailText(
         endorser as EndorserData,
         reference.relationship_type,
         reference.endorsement_text,
+        language,
       )
       // Subject is what determines open rate. Lead with the endorser's name
       // and a warm verb ("vouched for you") instead of the generic
       // "accepted your reference request" — references are a trust/scouting
       // signal on HOCKIA, the email should reflect that.
-      subject = `${endorserName} vouched for you on Hockia`
-      logger.info('Falling back to hardcoded template')
+      subject = referenceAcceptedSubject(endorserName, language)
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     const result = await sendTrackedEmail({

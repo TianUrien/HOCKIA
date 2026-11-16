@@ -1,4 +1,5 @@
 import { trackCtaClick } from '@/lib/analytics'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * StoreBadges — official App Store + Google Play download CTAs.
@@ -34,6 +35,7 @@ export default function StoreBadges({
   heightClass = 'h-11',
   source = 'landing_hero',
 }: StoreBadgesProps) {
+  const t = useCommonT()
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       <a
@@ -45,7 +47,7 @@ export default function StoreBadges({
       >
         <img
           src="/brand/badges/apple-app-store-badge.svg"
-          alt="Download Hockia on the App Store"
+          alt={t('storeBadges.appStore')}
           // Intrinsic size from the badge's own viewBox (119.664x40) so the
           // aspect ratio is known before load. Height is pinned by CSS, so
           // this changes nothing visually — it just removes the last images
@@ -66,7 +68,7 @@ export default function StoreBadges({
       >
         <img
           src="/brand/badges/google-play-badge.png"
-          alt="Get Hockia on Google Play"
+          alt={t('storeBadges.googlePlay')}
           // Raster badge (564x168 after the clear-space trim) — the one image
           // here that genuinely benefits from declared dimensions.
           width={564}

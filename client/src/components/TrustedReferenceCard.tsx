@@ -5,6 +5,7 @@ import RoleBadge from './RoleBadge'
 import { NationalityFlagsInline } from './DualNationalityDisplay'
 import { cn, formatRelationshipType } from '@/lib/utils'
 import type { ReferenceCard, PublicReferenceCard } from '@/hooks/useTrustedReferences'
+import { useMediaT } from '@/i18n/ns/media'
 
 type ReferenceLike = Pick<ReferenceCard, 'id' | 'relationshipType' | 'endorsementText' | 'profile'>
   | Pick<PublicReferenceCard, 'id' | 'relationshipType' | 'endorsementText' | 'profile'>
@@ -38,13 +39,15 @@ export default function TrustedReferenceCard({
   endorsementFallback,
   secondaryAction,
   showShield = true,
-  messageLabel = 'Message',
+  messageLabel: messageLabelProp,
   onOpenProfile,
   maxEndorsementLength = TRUNCATION_THRESHOLD,
 }: TrustedReferenceCardProps) {
+  const t = useMediaT()
   const [isExpanded, setIsExpanded] = useState(false)
+  const messageLabel = messageLabelProp ?? t('references.card.message')
 
-  const profileName = reference.profile?.fullName ?? 'Hockia Member'
+  const profileName = reference.profile?.fullName ?? t('references.card.fallbackName')
   const profileInitials = reference.profile?.fullName?.slice(0, 2) ?? 'PM'
   const hasNationality = Boolean(reference.profile?.nationalityCountryId)
   const profileDetails = useMemo(() => {
@@ -70,11 +73,11 @@ export default function TrustedReferenceCard({
 
   const endorsementDisplay = useMemo(() => {
     if (!hasEndorsement) return endorsementFallback ?? null
-    if (isExpanded || !needsTruncation) return `"${rawEndorsement}"`
+    if (isExpanded || !needsTruncation) return t('references.card.quote', { text: rawEndorsement })
     // Truncate at word boundary
     const truncated = rawEndorsement.slice(0, maxEndorsementLength).replace(/\s+\S*$/, '')
-    return `"${truncated}…"`
-  }, [rawEndorsement, hasEndorsement, endorsementFallback, isExpanded, needsTruncation, maxEndorsementLength])
+    return t('references.card.quoteTruncated', { text: truncated })
+  }, [rawEndorsement, hasEndorsement, endorsementFallback, isExpanded, needsTruncation, maxEndorsementLength, t])
 
   const handleOpenProfile = () => {
     if (!canNavigateProfile) return
@@ -111,7 +114,7 @@ export default function TrustedReferenceCard({
             type="button"
             onClick={handleOpenProfile}
             className="flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gold-line"
-            aria-label={`View ${profileName}'s profile`}
+            aria-label={t('references.card.viewProfile', { name: profileName })}
           >
             <Avatar
               src={reference.profile?.avatarUrl}
@@ -194,7 +197,7 @@ export default function TrustedReferenceCard({
               onClick={() => setIsExpanded(!isExpanded)}
               className="mt-2 text-sm font-medium text-gold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-line focus-visible:ring-offset-2"
             >
-              {isExpanded ? 'Show less' : 'Read more'}
+              {isExpanded ? t('references.card.showLess') : t('references.card.readMore')}
             </button>
           )}
         </div>
@@ -214,7 +217,7 @@ export default function TrustedReferenceCard({
               className="inline-flex items-center gap-2 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {messageLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
-              <span>{messageLoading ? 'Messaging…' : messageLabel}</span>
+              <span>{messageLoading ? t('references.card.messaging') : messageLabel}</span>
             </button>
           )}
           {secondaryAction}

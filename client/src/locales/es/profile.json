@@ -1,0 +1,1338 @@
+{
+  "dashboardRouter": {
+    "loadError": {
+      "title": "Algo salió mal al cargar tu perfil.",
+      "body": "Actualizar la página puede ayudar.",
+      "refresh": "Actualizar"
+    },
+    "noProfile": {
+      "body": "No se encontró un perfil. Falta completar el perfil.",
+      "complete": "Completar perfil"
+    },
+    "unknownRole": {
+      "title": "Algo salió mal",
+      "body": "No pudimos cargar tu panel. Actualizar la página o escribir a soporte puede ayudar."
+    }
+  },
+  "playerDashboard": {
+    "ownerTitle": {
+      "profile": "Panel de jugador/a",
+      "edit": "Editar perfil",
+      "media": "Multimedia",
+      "videos": "Videos",
+      "gallery": "Fotos",
+      "journey": "Trayectoria",
+      "references": "Referencias",
+      "friends": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones",
+      "community": "Mi red",
+      "passports": "Pasaportes y permisos",
+      "openToPlay": "Disponible para jugar"
+    },
+    "visitorTitle": {
+      "withSection": "{{name}} · {{section}}",
+      "media": "Multimedia",
+      "videos": "Videos",
+      "gallery": "Fotos",
+      "journey": "Trayectoria",
+      "references": "Referencias",
+      "friends": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones",
+      "community": "Comunidad"
+    },
+    "message": {
+      "self": "No se pueden enviar mensajes a tu propio perfil.",
+      "failed": "No se pudo iniciar la conversación. Intentar de nuevo."
+    },
+    "nav": {
+      "back": "Volver",
+      "backToProfile": "Volver al perfil",
+      "backToDashboard": "Volver al panel"
+    },
+    "keyFacts": {
+      "permitFallbackOwner": "país sin indicar",
+      "hint": "Los clubes ven primero estos seis datos. Los perfiles completos se sugieren a los clubes con más frecuencia."
+    },
+    "portfolioNav": {
+      "career": "Trayectoria",
+      "references": "Referencias",
+      "media": "Multimedia",
+      "connections": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones"
+    },
+    "careerTitle": "Trayectoria",
+    "friendsSignIn": {
+      "body": "Iniciar sesión para ver las conexiones de {{name}}.",
+      "bodyNoName": "Iniciar sesión para ver las conexiones de este perfil.",
+      "button": "Iniciar sesión"
+    },
+    "signInPrompt": {
+      "title": "Iniciar sesión para enviar mensajes",
+      "message": "Iniciar sesión para escribirle a esta persona y ver más de su perfil."
+    }
+  },
+  "useProfileStrength": {
+    "basicInfo": {
+      "label": "Agregar nacionalidad y ubicación",
+      "description": "Agregar tu nacionalidad y tu ciudad de residencia",
+      "unlockCopy": "Los clubes filtran por ubicación cuando buscan deportistas."
+    },
+    "position": {
+      "label": "Agregar tu posición",
+      "description": "Indicar tu posición principal para que los clubes puedan encontrarte",
+      "unlockCopy": "Quienes reclutan filtran por posición. Con la posición cargada, tu perfil puede aparecer en sus búsquedas."
+    },
+    "photo": {
+      "label": "Agregar una foto de perfil",
+      "description": "Una foto de perfil ayuda a que los clubes te reconozcan",
+      "unlockCopy": "Ayuda a que los clubes le pongan cara a tu nombre."
+    },
+    "bio": {
+      "label": "Escribir una bio corta",
+      "noun": "una bio",
+      "description": "Contarles a los clubes sobre tu juego con tus palabras",
+      "unlockCopy": "Una bio corta permite que los clubes conozcan tu juego a través tuyo."
+    },
+    "currentClub": {
+      "label": "Agregar tu club actual",
+      "description": "Mostrar a los clubes tu club actual",
+      "unlockCopy": "Muestra a quienes reclutan tu nivel y equipo actuales."
+    },
+    "highlightVideo": {
+      "label": "Agregar tu video de jugadas destacadas",
+      "noun": "un video de jugadas destacadas",
+      "description": "Mostrar a los clubes tu juego en la cancha",
+      "unlockCopy": "Los clubes ven tu juego, no solo leen sobre él."
+    },
+    "fullMatch": {
+      "label": "Subir un partido completo",
+      "noun": "partidos completos",
+      "description": "Agregar al menos un video de un partido completo para que quienes reclutan te vean jugar un partido entero",
+      "unlockCopy": "Quienes reclutan valoran los partidos completos más que los compilados. Muestran tu rendimiento en un partido real."
+    },
+    "journey": {
+      "label": "Sumar a tu trayectoria",
+      "description": "Agregar tus clubes, hitos o logros",
+      "unlockCopy": "Muestra tus clubes y tus logros."
+    },
+    "gallery": {
+      "label": "Agregar una foto o un video a tu galería",
+      "description": "Armar tu portfolio visual para que lo vean los clubes",
+      "unlockCopy": "Un portfolio visual más allá de un solo clip destacado."
+    },
+    "friends": {
+      "label": "Sumar tu primera conexión",
+      "description": "Agregar una amistad para empezar a armar tu círculo de confianza",
+      "unlockCopy": "Entrenadores/as y clubes pueden ver a quienes integran tu equipo."
+    },
+    "references": {
+      "label": "Conseguir una referencia de confianza",
+      "noun": "referencias de confianza",
+      "description": "Pedirle a alguien de tu cuerpo técnico o de tu equipo que te respalde",
+      "unlockCopy": "El respaldo de alguien de tu cuerpo técnico o de tu equipo tiene peso para los clubes."
+    },
+    "availability": {
+      "label": "Marcarte como disponible para jugar",
+      "description": "Avisar a clubes y cuerpos técnicos sobre tu disponibilidad para jugar",
+      "unlockCopy": "Quienes reclutan filtran por \"Disponible para jugar\". Sin esa marca, tu perfil puede no aparecer en sus búsquedas."
+    }
+  },
+  "useCoachProfileStrength": {
+    "basic": {
+      "label": "Agregar nacionalidad y ubicación",
+      "hint": "Agregar tu nacionalidad y tu ciudad de residencia",
+      "unlockCopy": "Los clubes filtran por ubicación cuando buscan entrenadores/as.",
+      "actionLabel": "Editar perfil"
+    },
+    "focus": {
+      "label": "Definir tu enfoque como entrenador/a",
+      "hint": "Agregar tu especialidad o las categorías a tu cargo",
+      "unlockCopy": "Principal, asistente, categorías: los clubes buscan según el enfoque de cada entrenador/a.",
+      "actionLabel": "Definir enfoque"
+    },
+    "photo": {
+      "label": "Foto de perfil",
+      "hint": "Subir una foto de perfil",
+      "unlockCopy": "Ayuda a que los clubes le pongan cara a tu nombre.",
+      "actionLabel": "Agregar foto"
+    },
+    "bio": {
+      "label": "Bio profesional",
+      "hint": "Agregar una bio sobre tu experiencia como entrenador/a",
+      "unlockCopy": "Da a los clubes una idea de tu estilo y tu experiencia.",
+      "actionLabel": "Agregar bio"
+    },
+    "currentClub": {
+      "label": "Agregar tu club actual",
+      "hint": "Agregar el club o equipo a tu cargo hoy",
+      "unlockCopy": "Muestra a los clubes tu equipo y nivel actuales.",
+      "actionLabel": "Agregar club"
+    },
+    "journey": {
+      "label": "Trayectoria",
+      "hint": "Agregar al menos una experiencia",
+      "unlockCopy": "Muestra los clubes y equipos de tu carrera como entrenador/a.",
+      "actionLabel": "Agregar experiencia"
+    },
+    "gallery": {
+      "label": "Galería multimedia",
+      "hint": "Subir al menos una foto a la galería",
+      "unlockCopy": "Fotos de partidos, entrenamientos y momentos de tu carrera.",
+      "actionLabel": "Agregar multimedia"
+    },
+    "friends": {
+      "label": "Sumar tu primera conexión",
+      "hint": "Agregar una amistad para empezar a armar tu red",
+      "unlockCopy": "Los clubes pueden ver a deportistas y entrenadores/as de tu red.",
+      "actionLabel": "Agregar conexión"
+    },
+    "references": {
+      "label": "Conseguir una referencia de confianza",
+      "hint": "Pedir respaldo a deportistas o a colegas del cuerpo técnico",
+      "unlockCopy": "El respaldo de deportistas o clubes de tu carrera genera confianza rápido.",
+      "actionLabel": "Pedir referencia"
+    },
+    "availability": {
+      "label": "Marcarte como disponible para entrenar",
+      "hint": "Avisar a los clubes sobre tu disponibilidad para oportunidades como entrenador/a",
+      "unlockCopy": "Quienes reclutan filtran por \"Disponible para entrenar\". Con esa marca, tu perfil puede aparecer en sus búsquedas.",
+      "actionLabel": "Definir disponibilidad"
+    }
+  },
+  "coachDashboard": {
+    "ownerTitle": {
+      "profile": "Panel de entrenador/a",
+      "media": "Multimedia",
+      "journey": "Trayectoria",
+      "references": "Referencias",
+      "friends": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones",
+      "community": "Mi red",
+      "opportunities": "Oportunidades"
+    },
+    "visitorTitle": {
+      "withSection": "{{name}} · {{section}}",
+      "media": "Multimedia",
+      "journey": "Trayectoria",
+      "references": "Referencias",
+      "friends": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones",
+      "community": "Comunidad",
+      "opportunities": "Oportunidades"
+    },
+    "errors": {
+      "messageSelf": "No se puede enviar un mensaje a tu propio perfil.",
+      "startConversation": "No se pudo iniciar la conversación. Intentar de nuevo.",
+      "recruiterMode": "No se pudo activar el modo reclutamiento. Intentar de nuevo."
+    },
+    "back": "Volver",
+    "backToProfile": "Volver al perfil",
+    "backToDashboard": "Volver al panel",
+    "keyFactsHint": "Los clubes ven primero estos seis datos. Los perfiles completos se sugieren a los clubes con más frecuencia.",
+    "sectionNav": {
+      "career": "Trayectoria",
+      "references": "Referencias",
+      "media": "Multimedia",
+      "connections": "Conexiones",
+      "comments": "Comentarios",
+      "posts": "Publicaciones"
+    },
+    "careerHistory": "Trayectoria",
+    "signInToSeeConnections": "Iniciar sesión para ver las conexiones de {{name}}.",
+    "thisMember": "este perfil",
+    "signIn": "Iniciar sesión",
+    "signInPrompt": {
+      "title": "Iniciar sesión para enviar mensajes",
+      "message": "Con una sesión iniciada se puede enviar un mensaje a este perfil de entrenador/a y ver más detalles."
+    }
+  },
+  "umpireDashboard": {
+    "specialization": {
+      "both": "Césped e indoor",
+      "outdoor": "Césped",
+      "indoor": "Indoor"
+    },
+    "errors": {
+      "messageSelf": "No se puede enviar un mensaje a tu propio perfil.",
+      "startConversation": "No se pudo iniciar la conversación. Intentar de nuevo."
+    },
+    "documentTitle": {
+      "named": "{{name}} · Árbitro/a | Hockia",
+      "anonymous": "Árbitro/a | Hockia"
+    },
+    "tabs": {
+      "profile": "Perfil",
+      "officiating": "Trayectoria",
+      "gallery": "Galería",
+      "references": "Referencias",
+      "friends": "Amistades",
+      "comments": "Comentarios",
+      "posts": "Publicaciones"
+    },
+    "back": "Volver",
+    "avatarAlt": "Árbitro/a",
+    "networkView": {
+      "hint": "Ver cómo se ve tu perfil para otras personas de Hockia",
+      "label": "Vista de la red",
+      "short": "Ver"
+    },
+    "edit": {
+      "label": "Editar perfil",
+      "short": "Editar"
+    },
+    "message": {
+      "sending": "Enviando...",
+      "send": "Mensaje"
+    },
+    "thisUmpire": "este perfil de arbitraje",
+    "ageShort": "{{age}} años",
+    "credentials": {
+      "title": "Agregar tus credenciales de arbitraje",
+      "body": "Tu nivel y tu federación son lo primero que miran los clubes y otras personas del arbitraje. Lleva un minuto, y siempre se puede ajustar después.",
+      "add": "Agregar credenciales"
+    },
+    "certification": {
+      "title": "Certificación y nivel",
+      "level": "Nivel",
+      "federation": "Federación",
+      "since": "Arbitra desde",
+      "specialization": "Especialidad",
+      "empty": "Todavía no hay datos de certificación."
+    },
+    "about": "Acerca de",
+    "languages": "Idiomas",
+    "posts": "Publicaciones",
+    "signInPrompt": {
+      "title": "Iniciar sesión para enviar mensajes",
+      "message": "Con una sesión iniciada se puede enviar un mensaje a este perfil de árbitro/a y ver más detalles."
+    }
+  },
+  "networkCopy": {
+    "networkError": "No se pudo conectar con Hockia. Revisar la conexión e intentar de nuevo.",
+    "couldntLoad": {
+      "players": "No se pudieron cargar las jugadoras y los jugadores",
+      "coaches": "No se pudo cargar el cuerpo técnico",
+      "clubs": "No se pudieron cargar los clubes",
+      "brands": "No se pudieron cargar las marcas",
+      "umpires": "No se pudo cargar el referato",
+      "members": "No se pudieron cargar los perfiles"
+    }
+  },
+  "friendshipErrors": {
+    "blocked": "Esta persona no está aceptando solicitudes."
+  },
+  "useFriendsInCommon": {
+    "count_one": "{{count}} amistad",
+    "count_other": "{{count}} amistades",
+    "count_many": "{{count}} amistades",
+    "countWithNames_one": "{{count}} amistad · {{names}}",
+    "countWithNames_other": "{{count}} amistades · {{names}}",
+    "countWithNames_many": "{{count}} amistades · {{names}}"
+  },
+  "useFriendship": {
+    "toasts": {
+      "signInToConnect": "Iniciar sesión para conectar con otras personas.",
+      "cannotRequestSelf": "No se puede enviar una solicitud de amistad a tu propio perfil.",
+      "alreadyFriends": "Esta amistad ya existe.",
+      "alreadySent": "La solicitud de amistad ya se envió.",
+      "alreadyReceived": "Esta persona ya te envió una solicitud. Revisar las notificaciones.",
+      "requestSent": "Solicitud de amistad enviada.",
+      "sendFailed": "No se pudo enviar la solicitud de amistad. Intentar de nuevo.",
+      "signInToManage": "Iniciar sesión para gestionar las conexiones.",
+      "stateNotFound": "No se encontró el estado de la amistad.",
+      "updateFailed": "No se pudo actualizar la amistad. Intentar de nuevo.",
+      "noIncomingToAccept": "No hay ninguna solicitud recibida para aceptar.",
+      "accepted": "Solicitud de amistad aceptada.",
+      "noIncomingToReject": "No hay ninguna solicitud recibida para rechazar.",
+      "declined": "Solicitud de amistad rechazada.",
+      "noPendingToCancel": "No hay ninguna solicitud pendiente para cancelar.",
+      "cancelled": "Solicitud de amistad cancelada.",
+      "notConnected": "Todavía no hay una amistad con esta persona.",
+      "removed": "Amistad eliminada."
+    }
+  },
+  "useFriendRequests": {
+    "updateFailed": "No se pudo actualizar la solicitud. Intentar de nuevo."
+  },
+  "friendsScreen": {
+    "memberFallback": "Integrante de Hockia",
+    "accept": "Aceptar",
+    "add": "Agregar",
+    "titleOwn": "Amistades · {{total}}",
+    "titleNamed": "Amistades de {{firstName}}",
+    "title": "Amistades",
+    "parent": "Perfil",
+    "addFriends": "Agregar amistades",
+    "search": "Buscar amistades",
+    "searchNamed": "Buscar amistades de {{firstName}}",
+    "joinToSeeNamed": "Unirse a Hockia para ver las amistades de {{firstName}}",
+    "joinToSee": "Unirse a Hockia para ver sus amistades",
+    "membersOnly": "Las listas de amistades son solo para integrantes.",
+    "join": "Unirse a Hockia",
+    "loadFailed": "No se pudieron cargar las amistades. Volver atrás e intentar de nuevo.",
+    "emptyOwn": "Todavía no hay amistades",
+    "emptyPublic": "No hay amistades para mostrar",
+    "findPeople": "Buscar personas en Comunidad",
+    "noMatch": "Nadie coincide con “{{query}}”.",
+    "inCommon": "En común · {{total}}",
+    "allFriends": "Todas las amistades",
+    "signInTitle": "Iniciar sesión para ver amistades"
+  },
+  "connectionsPreview": {
+    "title": "Conexiones",
+    "count_one": "{{count}} conexión",
+    "count_other": "{{count}} conexiones",
+    "count_many": "{{count}} conexiones",
+    "signIn": {
+      "playsWith": "Iniciar sesión para ver con quién juega {{firstName}}.",
+      "playsWithAnon": "Iniciar sesión para ver con quién juega este perfil.",
+      "connectsWith": "Iniciar sesión para ver las conexiones de {{firstName}}.",
+      "connectsWithAnon": "Iniciar sesión para ver las conexiones de este perfil.",
+      "otherVerb": "Iniciar sesión para ver las conexiones de {{firstName}} ({{verb}}).",
+      "thisMember": "este perfil"
+    },
+    "signInButton": "Iniciar sesión",
+    "loadFailed": "No se pudieron cargar las conexiones en este momento.",
+    "empty": "No hay conexiones para mostrar.",
+    "seeAll_one": "Ver {{count}} conexión",
+    "seeAll_other": "Ver las {{count}} conexiones",
+    "seeAll_many": "Ver las {{count}} conexiones"
+  },
+  "publicConnectionsPage": {
+    "title": "Conexiones",
+    "count_one": "{{count}} conexión",
+    "count_other": "{{count}} conexiones",
+    "count_many": "{{count}} conexiones",
+    "searchPlaceholder": "Buscar por nombre",
+    "searchLabel": "Buscar conexiones por nombre",
+    "filterLabel": "Filtrar conexiones por rol",
+    "filters": {
+      "all": "Todo",
+      "players": "Jugadores/as",
+      "coaches": "Entrenadores/as",
+      "clubs": "Clubes",
+      "umpires": "Árbitros/as",
+      "brands": "Marcas"
+    },
+    "noMatch": "Ninguna conexión coincide con la búsqueda.",
+    "emptyNamed": "{{firstName}} todavía no tiene conexiones para mostrar.",
+    "emptyAnon": "Este perfil todavía no tiene conexiones para mostrar.",
+    "memberFallback": "Integrante de Hockia",
+    "loadingMore": "Cargando…",
+    "showMore": "Ver más ({{shown}} de {{total}})"
+  },
+  "recentlyConnectedCard": {
+    "rationale": {
+      "umpire": "Las referencias de entrenadores/as, colegas del referato y clubes aparecen en tu perfil y ayudan a que quienes designan y los clubes confíen en tu trayectoria.",
+      "brand": "Las referencias de deportistas, clubes y organizaciones aliadas aparecen en tu perfil y ayudan a que la comunidad confíe en tu marca.",
+      "default": "Las referencias de entrenadores/as, integrantes de tu equipo y clubes aparecen en tu perfil y ayudan a que los clubes que buscan en Hockia confíen en tu trayectoria."
+    },
+    "connected": {
+      "recently": "Conexión reciente",
+      "today": "Conexión de hoy",
+      "yesterday": "Conexión de ayer",
+      "daysAgo_one": "Conexión de hace {{count}} día",
+      "daysAgo_other": "Conexión de hace {{count}} días",
+      "daysAgo_many": "Conexión de hace {{count}} días"
+    },
+    "dismiss": "Descartar esta sugerencia",
+    "askNamed": "¿Pedirle una referencia a {{firstName}}?",
+    "askAnon": "¿Pedirle una referencia?",
+    "askButton": "Pedir referencia"
+  },
+  "friendshipButton": {
+    "signInToManage": "Iniciar sesión con tu perfil de Hockia para gestionar las conexiones.",
+    "checking": "Comprobando...",
+    "addFriend": "Agregar amistad",
+    "blocked": "Bloqueo",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "friends": "Amistad",
+    "requested": "Solicitud enviada",
+    "removeFriend": "Eliminar amistad",
+    "cancelRequest": "Cancelar solicitud"
+  },
+  "friendsTab": {
+    "toasts": {
+      "loadFailed": "No se pudieron cargar las amistades. Intentar de nuevo.",
+      "askUnavailable": "Esa conexión ya no está disponible. Elegir a alguien de la lista para pedir una referencia.",
+      "updateFailed": "No se pudo actualizar la amistad. Intentar de nuevo.",
+      "removed": "Conexión eliminada.",
+      "removeFailed": "No se pudo eliminar la conexión. Intentar de nuevo.",
+      "requestAccepted": "Solicitud de conexión aceptada.",
+      "requestDeclined": "Solicitud de conexión rechazada.",
+      "requestCancelled": "Solicitud de conexión cancelada."
+    },
+    "memberFallback": "Integrante de Hockia",
+    "justNow": "recién",
+    "connectedWhen": "Conexión {{when}}",
+    "requestedWhen": "Solicitud enviada {{when}}",
+    "askVouchTitle": "Pedirle a {{name}} una referencia en Hockia",
+    "askVouchTitleAnon": "Pedir una referencia en Hockia",
+    "askVouch": "Pedir referencia",
+    "remove": "Eliminar",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "cancelRequest": "Cancelar solicitud",
+    "title": "Conexiones",
+    "subtitle": "Las personas de tu red en Hockia suman credibilidad.",
+    "count_one": "{{count}} conexión",
+    "count_other": "{{count}} conexiones",
+    "count_many": "{{count}} conexiones",
+    "findPeople": "Buscar personas",
+    "incoming": {
+      "title": "Solicitudes recibidas",
+      "subtitle": "Aprobar o rechazar las solicitudes pendientes de otras personas.",
+      "emptyTitle": "No hay solicitudes nuevas por ahora",
+      "emptyBody": "Las solicitudes pendientes van a aparecer acá."
+    },
+    "sent": {
+      "title": "Enviadas",
+      "subtitle": "Seguimiento de las solicitudes de conexión enviadas.",
+      "emptyTitle": "No hay solicitudes pendientes",
+      "emptyBody": "Todavía no hay solicitudes de conexión enviadas."
+    },
+    "accepted": {
+      "title": "Conexiones",
+      "subtitle": "Visibles para todas las personas en Hockia, por transparencia.",
+      "emptyTitlePublic": "Todavía no hay conexiones",
+      "emptyTitleOwn": "Todavía no hay conexiones",
+      "emptyBodyPublic": "Este perfil todavía no agregó conexiones.",
+      "emptyBodyOwn": "Armar tu red conectando con jugadores/as, entrenadores/as y clubes."
+    },
+    "removeModal": {
+      "title": "Eliminar conexión",
+      "body": "{{name}} se va a eliminar de tus conexiones. Siempre se puede volver a conectar más adelante.",
+      "bodyAnon": "Esta conexión se va a eliminar de tus conexiones. Siempre se puede volver a conectar más adelante.",
+      "confirm": "Eliminar conexión",
+      "loading": "Eliminando..."
+    }
+  },
+  "commentsTab": {
+    "placeholder": {
+      "umpire": "Compartir una nota sobre el arbitraje de este perfil: decisiones justas, profesionalismo, conocimiento del reglamento...",
+      "coach": "Contarles a clubes y jugadores/as por qué se destaca este perfil...",
+      "club": "Compartir tu experiencia con este club: cultura, instalaciones, profesionalismo...",
+      "default": "Contarles a clubes, entrenadores/as y jugadores/as por qué se destaca este perfil..."
+    },
+    "empty": {
+      "title": "Todavía no hay comentarios",
+      "owner": "Todavía no hay comentarios. Se le puede pedir uno a un/a jugador/a, entrenador/a o visitante.",
+      "umpire": "Este perfil todavía no tiene notas. Se puede compartir la primera.",
+      "club": "Este club todavía no tiene comentarios. Se puede compartir la primera experiencia.",
+      "brand": "Esta marca todavía no tiene comentarios. Se puede compartir la primera experiencia.",
+      "default": "Este perfil todavía no tiene comentarios. Se puede dejar el primero, con un aporte constructivo."
+    },
+    "subtitle": {
+      "umpire": "Notas de colegas en Hockia.",
+      "club": "Notas de jugadores/as, entrenadores/as y visitantes.",
+      "brand": "Notas de la comunidad de Hockia.",
+      "default": "Testimonios verificados de integrantes de Hockia."
+    },
+    "ownerHint": {
+      "umpire": "No se puede comentar en tu propio perfil, pero otras personas sí. Se le puede pedir uno a una persona colega, a quien designa o a un/a entrenador/a.",
+      "club": "No se puede comentar en la página de tu propio club, pero otras personas sí. Se le puede pedir a un/a jugador/a, entrenador/a o visitante que comparta su experiencia.",
+      "brand": "No se puede comentar en la página de tu propia marca, pero otras personas sí. Se le puede pedir a quien represente la marca o a una organización aliada que comparta su experiencia.",
+      "default": "No se puede comentar en tu propio perfil, pero otras personas sí. Se le puede pedir uno a alguien de tu equipo o a tu entrenador/a."
+    },
+    "rating": {
+      "positive": {
+        "label": "Positivo",
+        "description": "Destacar una cualidad o experiencia sobresaliente."
+      },
+      "neutral": {
+        "label": "Neutral",
+        "description": "Compartir una opinión equilibrada y basada en hechos."
+      },
+      "negative": {
+        "label": "A mejorar",
+        "description": "Señalar inquietudes con respeto para la moderación."
+      }
+    },
+    "headerInfo": {
+      "title": "Sobre los comentarios",
+      "visible": "Visibles para cualquier persona que vea este perfil.",
+      "language": "Usar un lenguaje claro y profesional, con observaciones concretas.",
+      "rating": "Tu valoración ayuda a clubes y entrenadores/as a hacerse una idea rápida."
+    },
+    "composerInfo": {
+      "title": "Consejos para publicar",
+      "constructive": "Mantener un tono constructivo. El nombre de tu perfil aparece en cada comentario.",
+      "specific": "Mencionar partidos, entrenamientos o rasgos de carácter concretos.",
+      "minimum": "Respetar el largo mínimo y elegir una valoración antes de enviar."
+    },
+    "toasts": {
+      "loadFailed": "No se pudieron cargar los comentarios. Intentar de nuevo.",
+      "signInRequired": "Para dejar un comentario hay que iniciar sesión con un perfil.",
+      "tooShort_one": "Los comentarios deben tener al menos {{count}} carácter.",
+      "tooShort_other": "Los comentarios deben tener al menos {{count}} caracteres.",
+      "tooShort_many": "Los comentarios deben tener al menos {{count}} caracteres.",
+      "sentimentToPost": "Elegir una valoración para publicar el comentario.",
+      "contentBlocked": "El contenido no cumple las normas de la comunidad.",
+      "posted": "¡Gracias por compartir tu opinión!",
+      "postFailed": "No se pudo publicar el comentario. Intentar de nuevo.",
+      "sentimentToSave": "Elegir una valoración antes de guardar los cambios.",
+      "updated": "Comentario actualizado.",
+      "updateFailed": "No se pudieron guardar los cambios. Intentar de nuevo.",
+      "deleted": "Comentario eliminado.",
+      "deleteFailed": "No se pudo eliminar el comentario. Intentar de nuevo."
+    },
+    "title": "Comentarios",
+    "howItWorks": "Cómo funcionan los comentarios",
+    "count_one": "{{count}} comentario",
+    "count_other": "{{count}} comentarios",
+    "count_many": "{{count}} comentarios",
+    "composer": {
+      "title": "Compartir tu experiencia",
+      "tipsLabel": "Consejos para comentar",
+      "subtitle": "Una opinión pensada y profesional.",
+      "fieldLabel": "Comentario",
+      "guidelines": "Los comentarios siguen las normas de la comunidad. La moderación puede ocultar contenido que no cumpla el código de conducta.",
+      "posting": "Publicando...",
+      "post": "Publicar comentario"
+    },
+    "minLength_one": "Mín. {{count}} carácter",
+    "minLength_other": "Mín. {{count}} caracteres",
+    "minLength_many": "Mín. {{count}} caracteres",
+    "askForFeedback": "Pedir opiniones",
+    "visitorPreview": "Así ven otras personas tu sección de comentarios. Para pedir opiniones, volver a tu panel.",
+    "signInToComment": "Iniciar sesión con un perfil de Hockia para dejar un comentario público y con tu nombre.",
+    "yourComment": "Tu comentario",
+    "memberFallback": "Integrante de Hockia",
+    "formerMember": "Ex integrante de Hockia",
+    "unknownAuthor": "Sin nombre",
+    "friend": "Amistad",
+    "report": "Reportar",
+    "otherComments": "Otros comentarios",
+    "edit": {
+      "fieldLabel": "Editar comentario",
+      "cancel": "Cancelar",
+      "saving": "Guardando…",
+      "save": "Guardar cambios",
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "deleteModal": {
+      "title": "¿Eliminar comentario?",
+      "body": "Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "loading": "Eliminando..."
+    }
+  },
+  "profileV2": {
+    "sponsorPlayer": "Deportista de {{brand}}",
+    "roleNew": "Nueva",
+    "nextStep": {
+      "photoTitle": "Agregar una foto",
+      "photoSubtitle": "Para que clubes y deportistas reconozcan tu perfil.",
+      "photoCta": "Agregar",
+      "crestTitle": "Agregar el escudo del club",
+      "crestSubtitle": "Es lo primero que se busca",
+      "crestCta": "Agregar",
+      "logoTitle": "Agregar tu logo",
+      "logoSubtitle": "Las marcas se reconocen por su logo",
+      "logoCta": "Agregar",
+      "positionTitle": "Agregar tu posición",
+      "positionSubtitle": "Los clubes buscan por posición",
+      "positionCta": "Agregar",
+      "currentClubTitle": "Agregar tu club actual",
+      "currentClubSubtitle": "Se muestra como “Juega en”",
+      "currentClubCta": "Agregar",
+      "leagueTitle": "Agregar tu liga",
+      "leagueSubtitle": "Los clubes miran primero el nivel",
+      "leagueCta": "Agregar",
+      "passportTitle": "Agregar tu pasaporte",
+      "passportSubtitle": "Los clubes revisan la elegibilidad",
+      "passportCta": "Agregar",
+      "baseLocationTitle": "Agregar tu lugar de residencia",
+      "baseLocationSubtitle": "Los clubes cercanos pueden encontrarte",
+      "baseLocationCta": "Agregar",
+      "videoTitle": "Agregar un video de jugadas",
+      "videoSubtitle": "Para mostrar tu juego a los clubes",
+      "videoCta": "Agregar",
+      "openToPlayTitle": "Activar Disponible para jugar",
+      "openToPlaySubtitle": "Los clubes filtran por esto",
+      "openToPlayCta": "Activar",
+      "availabilityTitle": "Agregar tu disponibilidad",
+      "availabilitySubtitle": "Los clubes planifican las temporadas con tiempo",
+      "availabilityCta": "Agregar",
+      "bioTitle": "Escribir una bio breve",
+      "bioSubtitle": "Tres líneas sobre tu recorrido",
+      "bioCta": "Escribir",
+      "careerTitle": "Agregar tu primer club",
+      "careerSubtitle": "Tu carrera de un vistazo",
+      "careerCta": "Agregar",
+      "referencesTitle": "Pedir una referencia",
+      "referencesSubtitle": "Tus amistades en Hockia pueden escribirla",
+      "referencesCta": "Pedir",
+      "workPermitTitle": "Agregar un permiso de trabajo",
+      "workPermitSubtitle": "Abre más países",
+      "workPermitCta": "Agregar",
+      "nationalityBaseTitle": "Agregar nacionalidad y lugar de residencia",
+      "nationalityBaseSubtitle": "Los clubes revisan la elegibilidad",
+      "nationalityBaseCta": "Agregar",
+      "specializationTitle": "Agregar tu especialización",
+      "specializationSubtitle": "Los clubes buscan por esto",
+      "specializationCta": "Agregar",
+      "galleryTitle": "Agregar fotos",
+      "gallerySubtitle": "Algunas fotos en acción",
+      "galleryCta": "Agregar",
+      "friendsTitle": "Sumar tu primera amistad",
+      "friendsSubtitle": "Las amistades pueden escribir referencias",
+      "friendsCta": "Buscar",
+      "openToCoachTitle": "Activar Disponible para entrenar",
+      "openToCoachSubtitle": "Los clubes filtran por esto",
+      "openToCoachCta": "Activar",
+      "levelTitle": "Agregar tu nivel de arbitraje",
+      "levelSubtitle": "Clubes y ligas lo buscan",
+      "levelCta": "Agregar",
+      "federationTitle": "Agregar tu federación",
+      "federationSubtitle": "Se muestra en tu perfil",
+      "federationCta": "Agregar",
+      "availableTitle": "Indicar disponibilidad para arbitrar",
+      "availableSubtitle": "Las ligas filtran por esto",
+      "availableCta": "Activar",
+      "appointmentsTitle": "Agregar tu último partido",
+      "appointmentsSubtitle": "Tu historial como árbitro/a",
+      "appointmentsCta": "Agregar",
+      "countryTitle": "Agregar tu país",
+      "countrySubtitle": "Se muestra en tu perfil",
+      "countryCta": "Agregar",
+      "yearFoundedTitle": "Agregar el año de fundación",
+      "yearFoundedSubtitle": "Se muestra en Información",
+      "yearFoundedCta": "Agregar",
+      "contactTitle": "Agregar un sitio web o email",
+      "contactSubtitle": "Para que puedan contactar al club",
+      "contactCta": "Agregar",
+      "mediaTitle": "Agregar fotos del club",
+      "mediaSubtitle": "Lo primero que se mira es el club",
+      "mediaCta": "Agregar",
+      "postsTitle": "Escribir la primera publicación",
+      "postsSubtitle": "Compartir novedades del club",
+      "postsCta": "Publicar",
+      "linksTitle": "Agregar tu sitio web o Instagram",
+      "linksSubtitle": "Donde te encuentran deportistas",
+      "linksCta": "Agregar",
+      "ambassadorsTitle": "Sumar tu primera persona embajadora",
+      "ambassadorsSubtitle": "Las personas embajadoras aparecen en tu perfil",
+      "ambassadorsCta": "Invitar"
+    }
+  },
+  "profileD2": {
+    "action": {
+      "addPosition": "Agregar posición",
+      "addClub": "Agregar club",
+      "addLeague": "Agregar liga",
+      "addAvailability": "Agregar disponibilidad",
+      "addDate": "Agregar fecha",
+      "addPassport": "Agregar pasaporte",
+      "addVideo": "Agregar video",
+      "addSpecialization": "Agregar especialización",
+      "addCategories": "Agregar categorías",
+      "addAnother": "Agregar otro"
+    },
+    "status": {
+      "shortlisted": "En preselección",
+      "maybe": "Marcada como tal vez",
+      "rejected": "No encaja",
+      "noResponse": "Cerrada sin respuesta"
+    },
+    "closesToday": "cierra hoy",
+    "daysLeftToReply_one": "{{count}} día para responder",
+    "daysLeftToReply_many": "{{count}} días para responder",
+    "daysLeftToReply_other": "{{count}} días para responder"
+  },
+  "portfolioSectionNav": {
+    "label": "Secciones del perfil"
+  },
+  "profileChrome": {
+    "back": "Volver",
+    "share": "Compartir perfil",
+    "sections": "Secciones del perfil"
+  },
+  "profileHero": {
+    "addPhotos": "Agregar fotos",
+    "changePhotos": "Cambiar fotos",
+    "back": "Volver",
+    "share": "Compartir perfil",
+    "settings": "Ajustes",
+    "photoPosition": "Foto {{index}} de {{count}}"
+  },
+  "profileSections": {
+    "commentsTitleCount": "Comentarios · {{count}}",
+    "commentsTitle": "Comentarios",
+    "commentsSeeAll": "Ver todo",
+    "memberFallback": "Integrante",
+    "noComments": "Todavía no hay comentarios",
+    "writeComment": "Escribir un comentario…",
+    "commentsSheet": "Comentarios"
+  },
+  "ownerArea": {
+    "editProfile": "Editar perfil",
+    "previewAs": "Ver como…",
+    "previewSheet": "Ver como",
+    "previewTitle": "Ver tu perfil como…",
+    "cancel": "Cancelar",
+    "onlyYou": "Solo visible para tu cuenta · Tu actividad",
+    "applicantsToReview_one": "{{count}} postulación para revisar",
+    "applicantsToReview_many": "{{count}} postulaciones para revisar",
+    "applicantsToReview_other": "{{count}} postulaciones para revisar",
+    "noNewApplicants": "No hay postulaciones nuevas",
+    "notRecruiting": "Sin búsquedas abiertas por ahora",
+    "openRoles_one": "{{count}} oportunidad abierta",
+    "openRoles_many": "{{count}} oportunidades abiertas",
+    "openRoles_other": "{{count}} oportunidades abiertas",
+    "openRolesWithNames_one": "{{count}} oportunidad abierta · {{names}}",
+    "openRolesWithNames_many": "{{count}} oportunidades abiertas · {{names}}",
+    "openRolesWithNames_other": "{{count}} oportunidades abiertas · {{names}}",
+    "postToReceive": "Al publicar una oportunidad, deportistas pueden postularse",
+    "reviewApplicants": "Revisar postulaciones",
+    "postOpportunity": "+ Publicar una oportunidad",
+    "viewOpportunities": "Ver oportunidades"
+  },
+  "umpireProfileV2": {
+    "anchors": {
+      "overview": "Resumen",
+      "appointments": "Partidos",
+      "references": "Referencias",
+      "posts": "Publicaciones",
+      "about": "Información"
+    },
+    "spec": {
+      "both": "Césped e indoor",
+      "outdoor": "Césped",
+      "indoor": "Indoor"
+    },
+    "nameFallback": "Árbitro/a de Hockia",
+    "linkCopied": "Enlace copiado",
+    "stats": {
+      "views_one": "vista del perfil",
+      "views_many": "vistas del perfil",
+      "views_other": "vistas del perfil",
+      "clubs_one": "visita de club",
+      "clubs_many": "visitas de clubes",
+      "clubs_other": "visitas de clubes",
+      "searches": "en búsquedas"
+    },
+    "friends_one": "{{count}} amistad",
+    "friends_many": "{{count}} amistades",
+    "friends_other": "{{count}} amistades",
+    "friendsInCommon_one": "{{count}} amistad · {{common}} en común",
+    "friendsInCommon_many": "{{count}} amistades · {{common}} en común",
+    "friendsInCommon_other": "{{count}} amistades · {{common}} en común",
+    "action": {
+      "friends": "Amistad",
+      "requested": "Solicitud enviada",
+      "accept": "Aceptar",
+      "addFriend": "Agregar amistad",
+      "opening": "Abriendo…",
+      "message": "Mensaje"
+    },
+    "addLevelLine": "Agregar tu nivel de arbitraje",
+    "previewPublic": "Alguien en Hockia",
+    "previewPublicDetail": "Lo que ven deportistas, clubes y ligas",
+    "statsEmpty": "Tus estadísticas aparecen acá cuando otras personas empiecen a ver tu perfil",
+    "federation": {
+      "label": "Federación",
+      "add": "Agregar tu federación",
+      "detail": "Federación afiliada"
+    },
+    "level": {
+      "label": "Nivel",
+      "add": "Agregar nivel",
+      "notSet": "Sin definir",
+      "since": "Desde {{year}}"
+    },
+    "available": {
+      "label": "Disponibilidad",
+      "open": "Disponible para arbitrar",
+      "notNow": "Por ahora no",
+      "detail": "Torneos y ligas"
+    },
+    "matches": {
+      "titleCount": "Partidos dirigidos · {{count}}",
+      "title": "Partidos dirigidos",
+      "add": "+ Agregar",
+      "seeAll": "Ver todo",
+      "empty": "Todavía no hay partidos. Se pueden agregar los torneos y las finales dirigidas."
+    },
+    "references": {
+      "title": "Referencias",
+      "seeAll_one": "Ver {{count}}",
+      "seeAll_many": "Ver las {{count}}",
+      "seeAll_other": "Ver las {{count}}",
+      "ask": "Pedir una",
+      "empty": "Todavía no hay referencias. Pueden escribirlas deportistas, cuerpos técnicos y clubes con amistad en Hockia.",
+      "memberFallback": "Integrante de Hockia",
+      "verified": "✓ Verificada en Hockia",
+      "verifiedOn": "✓ Verificada en Hockia · {{date}}"
+    },
+    "posts": {
+      "title": "Publicaciones y fotos",
+      "add": "+ Agregar",
+      "seeAll": "Ver todo ({{count}})",
+      "empty": "Todavía no hay publicaciones ni fotos."
+    },
+    "about": {
+      "title": "Información",
+      "edit": "Editar",
+      "more": "Más",
+      "noBio": "Todavía no hay bio",
+      "languages": "Idiomas"
+    },
+    "signInTitle": "Iniciar sesión para conectar"
+  },
+  "playerProfileV2": {
+    "anchors": {
+      "overview": "Resumen",
+      "roles": "Oportunidades abiertas",
+      "videos": "Videos",
+      "references": "Referencias",
+      "career": "Trayectoria",
+      "posts": "Publicaciones",
+      "about": "Información"
+    },
+    "nameFallback": "Integrante de Hockia",
+    "linkCopied": "Enlace copiado",
+    "stats": {
+      "views_one": "vista del perfil",
+      "views_many": "vistas del perfil",
+      "views_other": "vistas del perfil",
+      "clubs_one": "visita de club",
+      "clubs_many": "visitas de clubes",
+      "clubs_other": "visitas de clubes",
+      "searches": "en búsquedas"
+    },
+    "available": {
+      "notLooking": "Sin búsqueda por ahora",
+      "openToCoach": "Disponible para entrenar",
+      "openToPlay": "Disponible para jugar",
+      "addWhen": "Agregar tu disponibilidad"
+    },
+    "friends_one": "{{count}} amistad",
+    "friends_many": "{{count}} amistades",
+    "friends_other": "{{count}} amistades",
+    "friendsInCommon_one": "{{count}} amistad · {{common}} en común",
+    "friendsInCommon_many": "{{count}} amistades · {{common}} en común",
+    "friendsInCommon_other": "{{count}} amistades · {{common}} en común",
+    "action": {
+      "friends": "Amistad",
+      "requested": "Solicitud enviada",
+      "accept": "Aceptar",
+      "addFriend": "Agregar amistad",
+      "opening": "Abriendo…",
+      "message": "Mensaje",
+      "shortlisted": "En preselección",
+      "shortlist": "Preseleccionar"
+    },
+    "menu": {
+      "requestSent": "Solicitud de amistad enviada",
+      "acceptRequest": "Aceptar solicitud de amistad",
+      "addFriend": "Agregar amistad"
+    },
+    "recruitingBadge": "Buscando jugadores/as",
+    "preview": {
+      "public": "Alguien en Hockia",
+      "publicDetail": "Lo que ven deportistas y cuerpos técnicos",
+      "club": "Un club",
+      "clubDetail": "Con el encaje para su búsqueda"
+    },
+    "overview": {
+      "coachesAt": "Entrena en",
+      "playsAt": "Juega en",
+      "available": "Disponibilidad",
+      "brandAthlete": "Deportista de {{brand}} ✓",
+      "videosClubsOnly": "Los videos se comparten con clubes"
+    },
+    "videos": {
+      "title": "Videos",
+      "seeAll": "Ver todo ({{count}})",
+      "addHighlight": "Agregar un video de jugadas",
+      "linkedHighlight": "Video de jugadas enlazado",
+      "versus": "vs {{team}}",
+      "fullMatch": "Partido completo",
+      "highlight": "Jugadas",
+      "fullMatchLabel": "Partido completo",
+      "reel": "Reel"
+    },
+    "roles": {
+      "titleCount": "Oportunidades abiertas · {{count}}",
+      "title": "Oportunidades abiertas",
+      "post": "+ Publicar una oportunidad",
+      "seeAll": "Ver todo",
+      "empty": "No hay oportunidades abiertas por ahora.",
+      "seeAllCount_one": "Ver {{count}} oportunidad",
+      "seeAllCount_many": "Ver las {{count}} oportunidades",
+      "seeAllCount_other": "Ver las {{count}} oportunidades"
+    },
+    "references": {
+      "title": "Referencias",
+      "seeAll_one": "Ver {{count}}",
+      "seeAll_many": "Ver las {{count}}",
+      "seeAll_other": "Ver las {{count}}",
+      "askOne": "Pedir una",
+      "ask": "Pedir una referencia",
+      "emptyCoach": "Todavía no hay referencias. Pueden escribirlas clubes, deportistas y cuerpos técnicos con amistad en Hockia.",
+      "emptyPlayer": "Todavía no hay referencias. Pueden escribirlas cuerpos técnicos y compañeras o compañeros de equipo con amistad en Hockia.",
+      "memberFallback": "Integrante de Hockia",
+      "verified": "✓ Verificada en Hockia",
+      "verifiedOn": "✓ Verificada en Hockia · {{date}}"
+    },
+    "career": {
+      "title": "Trayectoria",
+      "seeAll": "Ver todo ({{count}})",
+      "addFirst": "Agregar tu primer club",
+      "fillWithAi": "Completar mi perfil con Hockia AI",
+      "fillWithAiDetail": "A partir de tu CV, fotos, enlaces o unas líneas. Todo se revisa antes de guardar."
+    },
+    "posts": {
+      "title": "Publicaciones y fotos",
+      "seeAll": "Ver todo ({{count}})",
+      "addFirst": "Agregar tu primera foto"
+    },
+    "about": {
+      "title": "Información",
+      "edit": "Editar",
+      "more": "Más",
+      "noBio": "Todavía no hay bio",
+      "writeBio": "Escribir una bio breve",
+      "relocation": "Traslado"
+    }
+  },
+  "profileLongScroll": {
+    "versus": "vs {{team}}",
+    "fullMatch": "Partido completo",
+    "memberFallback": "Integrante de Hockia",
+    "verifiedReference": "Verificada · escrita en Hockia",
+    "representativeTeam": "selección",
+    "videos": {
+      "title": "Videos",
+      "seeAll": "Ver todo ({{count}})",
+      "manage": "Gestionar",
+      "addFirst": "Agregar tu primer video de jugadas",
+      "highlights": "Jugadas",
+      "linkedHighlight": "Video de jugadas enlazado",
+      "highlight": "Jugadas",
+      "fullMatches": "Partidos completos",
+      "clubsAndCoaches": "Clubes y cuerpos técnicos",
+      "reels": "Reels",
+      "reel": "Reel"
+    },
+    "career": {
+      "title": "Trayectoria",
+      "seeAll": "Ver todo ({{count}})",
+      "addFirst": "Agregar tu primer club"
+    },
+    "skills": {
+      "title": "Habilidades específicas",
+      "edit": "Editar",
+      "add": "Agregar tus habilidades específicas"
+    },
+    "references": {
+      "title": "Referencias",
+      "seeAll": "Ver todo ({{count}})",
+      "ask": "Pedir una referencia",
+      "empty": "Todavía no hay referencias. Las referencias llegan de amistades en Hockia: pueden escribirlas cuerpos técnicos y compañeras o compañeros de equipo.",
+      "seeAllButton_one": "Ver {{count}} referencia",
+      "seeAllButton_many": "Ver las {{count}} referencias",
+      "seeAllButton_other": "Ver las {{count}} referencias"
+    },
+    "friends": "Amistades",
+    "photos": {
+      "title": "Fotos",
+      "seeAll": "Ver todo ({{count}})",
+      "add": "Agregar fotos",
+      "photoNumber": "Foto {{number}}"
+    },
+    "posts": {
+      "title": "Publicaciones",
+      "seeAll": "Ver todo ({{count}})",
+      "newPost": "Nueva publicación"
+    },
+    "about": {
+      "title": "Información",
+      "edit": "Editar",
+      "writeBio": "Escribir una bio breve",
+      "category": "Categoría",
+      "relocation": "Traslado"
+    }
+  },
+  "publicPlayerProfile": {
+    "documentTitle": "{{name}} • {{role}}",
+    "errors": {
+      "invalidUrl": "La URL del perfil no es válida",
+      "notFound": "No se encontró el perfil.",
+      "unavailable": "Este perfil no está disponible.",
+      "loadFailed": "No se pudo cargar el perfil. Intentar de nuevo."
+    }
+  },
+  "publicUmpireProfile": {
+    "loading": "Cargando el perfil de árbitro/a...",
+    "errors": {
+      "invalidUrl": "La URL del perfil no es válida",
+      "notFound": "No se encontró el perfil de árbitro/a.",
+      "unavailable": "Este perfil no está disponible.",
+      "loadFailed": "No se pudo cargar el perfil de árbitro/a. Intentar de nuevo."
+    }
+  },
+  "signedThroughHockiaPill": {
+    "label": "Incorporación a través de Hockia"
+  },
+  "publicProfileFooterCTA": {
+    "eyebrow": "Con la tecnología de Hockia",
+    "title": "Crear tu perfil en Hockia",
+    "body": "Un perfil de hockey sobre césped para compartir con clubes, cuerpos técnicos y toda la comunidad del hockey.",
+    "signUp": "Crear cuenta"
+  },
+  "addPhotoPrompt": {
+    "title": "Agregar una foto",
+    "body": "Así los clubes y otras personas del hockey pueden reconocerte.",
+    "uploading": "Subiendo…",
+    "add": "Agregar",
+    "dismiss": "Ahora no"
+  },
+  "verifiedBadge": {
+    "tooltip": "Verificado por Hockia",
+    "tooltipWithDate": "Verificado por Hockia · {{date}}",
+    "ariaLabel": "Perfil verificado"
+  },
+  "pendingVerificationBadge": {
+    "label": "Verificación pendiente",
+    "tooltip": "Hockia todavía no verificó el reclamo de este club."
+  },
+  "lastActivePill": {
+    "today": "Con actividad hoy",
+    "thisWeek": "Con actividad esta semana",
+    "thisMonth": "Con actividad este mes"
+  },
+  "searchAppearancesCard": {
+    "title": "Apariciones en búsquedas",
+    "summary_one": "Tu perfil apareció en <count>{{count}}</count> búsqueda activa en los últimos <days>{{windowDays}} días</days>.",
+    "summary_many": "Tu perfil apareció en <count>{{count}}</count> búsquedas activas en los últimos <days>{{windowDays}} días</days>.",
+    "summary_other": "Tu perfil apareció en <count>{{count}}</count> búsquedas activas en los últimos <days>{{windowDays}} días</days>.",
+    "chartLabel": "Apariciones diarias en los últimos {{windowDays}} días"
+  },
+  "publicViewBanner": {
+    "clubView": "<strong>Vista de club</strong> · cómo te ven los clubes",
+    "publicView": "<strong>Vista pública</strong> · cómo te ven otras personas de Hockia",
+    "done": "Listo",
+    "title": "Esta es la vista de tu perfil en la red.",
+    "body": "Así ven tu perfil otras personas de Hockia.",
+    "back": "Volver a mi perfil"
+  },
+  "trustBadge": {
+    "label_one": "{{count}} aval",
+    "label_many": "{{count}} avales",
+    "label_other": "{{count}} avales",
+    "getReferences": "Conseguir referencias",
+    "tooltip_one": "{{count}} persona te dio su aval en Hockia. Tocar para ver los avales.",
+    "tooltip_many": "{{count}} personas te dieron su aval en Hockia. Tocar para ver los avales.",
+    "tooltip_other": "{{count}} personas te dieron su aval en Hockia. Tocar para ver los avales.",
+    "emptyTooltip": "Las referencias son avales de cuerpos técnicos, compañeros/as de equipo o clubes de tu red. Tocar para pedir una a una conexión.",
+    "infoLabel": "¿Qué significa esto?",
+    "infoTitle": "¿Qué significa el aval?"
+  },
+  "profileUnavailable": {
+    "guestTitle": {
+      "club": "Iniciar sesión para ver este club",
+      "player": "Iniciar sesión para ver este perfil",
+      "coach": "Iniciar sesión para ver este perfil",
+      "umpire": "Iniciar sesión para ver este perfil",
+      "profile": "Iniciar sesión para ver este perfil"
+    },
+    "guestBody": {
+      "club": "Este club no es visible públicamente. Con una cuenta se pueden ver perfiles completos, enviar mensajes y conectar.",
+      "player": "Este perfil no es visible públicamente. Con una cuenta se pueden ver perfiles completos, enviar mensajes y conectar.",
+      "coach": "Este perfil no es visible públicamente. Con una cuenta se pueden ver perfiles completos, enviar mensajes y conectar.",
+      "umpire": "Este perfil no es visible públicamente. Con una cuenta se pueden ver perfiles completos, enviar mensajes y conectar.",
+      "profile": "Este perfil no es visible públicamente. Con una cuenta se pueden ver perfiles completos, enviar mensajes y conectar."
+    },
+    "createProfile": "Crear un perfil gratis",
+    "logIn": "Iniciar sesión",
+    "keepExploring": "Seguir explorando",
+    "notFoundTitle": "Perfil no encontrado",
+    "notFoundBody": {
+      "club": "No se encontró este club.",
+      "player": "No se encontró este perfil.",
+      "coach": "No se encontró este perfil.",
+      "umpire": "No se encontró este perfil.",
+      "profile": "No se encontró este perfil."
+    },
+    "goBack": "Volver"
+  },
+  "profileActionMenu": {
+    "blockedToast": "{{name}} quedó en tu lista de bloqueos",
+    "blockFailed": "No se pudo bloquear. Intentar de nuevo.",
+    "unblockedToast": "{{name}} ya no está en tu lista de bloqueos",
+    "unblockFailed": "No se pudo desbloquear. Intentar de nuevo.",
+    "reportNamed": "Reportar a {{name}}",
+    "unblockNamed": "Desbloquear a {{name}}",
+    "unblock": "Desbloquear",
+    "blockNamed": "Bloquear a {{name}}",
+    "block": "Bloquear",
+    "blockTitle": "¿Bloquear a {{name}}?",
+    "blockBody": "Esta persona no va a poder encontrar tu perfil, ver tus publicaciones ni enviarte mensajes. Su contenido tampoco va a aparecer en tu cuenta. Si había una amistad, se elimina.",
+    "blocking": "Bloqueando...",
+    "blockConfirm": "Bloquear",
+    "unblockTitle": "¿Desbloquear a {{name}}?",
+    "unblockBody": "Esta persona va a poder encontrar tu perfil, ver tus publicaciones y enviarte mensajes otra vez. Para volver a tener una amistad, hace falta enviar una nueva solicitud.",
+    "unblocking": "Desbloqueando...",
+    "unblockConfirm": "Desbloquear",
+    "cancel": "Cancelar"
+  },
+  "profileFreshness": {
+    "periodDays_one": "{{count}} día",
+    "periodDays_many": "{{count}} días",
+    "periodDays_other": "{{count}} días",
+    "periodWeeks_one": "{{count}} semana",
+    "periodWeeks_many": "{{count}} semanas",
+    "periodWeeks_other": "{{count}} semanas",
+    "periodMonths_one": "{{count}} mes",
+    "periodMonths_many": "{{count}} meses",
+    "periodMonths_other": "{{count}} meses",
+    "journeyMessage": "La última actualización de tu trayectoria fue hace {{period}}. Sumar un momento reciente mantiene a los clubes al día.",
+    "journeyCta": "Actualizar trayectoria",
+    "galleryMessage": "Tu galería no se actualiza desde hace {{period}}. Una foto o un video nuevo muestra actividad reciente.",
+    "galleryCta": "Agregar a la galería",
+    "bioMessage": "Tu bio tiene {{period}}. Actualizarla ayuda a que los clubes vean tu momento actual.",
+    "bioCta": "Editar bio",
+    "postsMessage": "Tu última publicación fue hace {{period}}. Una novedad mantiene el interés de quienes te siguen.",
+    "postsCta": "Nueva publicación",
+    "productsMessage": "Tus productos no se actualizan desde hace {{period}}. Se puede renovar el stock o agregar un artículo nuevo.",
+    "productsCta": "Gestionar productos",
+    "mediaMessage": "El contenido del club no se actualiza desde hace {{period}}. Las fotos nuevas muestran que el club está activo.",
+    "mediaCta": "Agregar contenido"
+  },
+  "profileViewersSection": {
+    "title": "Quién vio tu perfil",
+    "totalViews": "Visitas totales",
+    "uniqueViewers": "Personas distintas",
+    "hideViewers": "Ocultar visitas",
+    "showViewers": "Ver visitas",
+    "emptyTitle": "Todavía no hay visitas al perfil",
+    "emptyBody": "Compartir tu perfil ayuda a que te descubran",
+    "brandFallback": "Marca",
+    "viewCount_one": "{{count}} visita",
+    "viewCount_many": "{{count}} visitas",
+    "viewCount_other": "{{count}} visitas",
+    "showLess": "Ver menos",
+    "seeAll_one": "Ver {{count}} visita",
+    "seeAll_many": "Ver las {{count}} visitas",
+    "seeAll_other": "Ver las {{count}} visitas",
+    "anonymous_one": "+{{count}} visita anónima",
+    "anonymous_many": "+{{count}} visitas anónimas",
+    "anonymous_other": "+{{count}} visitas anónimas"
+  },
+  "profilePostsTab": {
+    "tryAgain": "Reintentar",
+    "emptyVisitor": "Todavía no hay publicaciones.",
+    "emptyTitle": "Todavía no hay publicaciones",
+    "emptyBody": "Una primera novedad para compartir con la comunidad de Hockia.",
+    "createPost": "Crear una publicación",
+    "loadMore": "Cargar más"
+  },
+  "useProfilePosts": {
+    "loadFailed": "No se pudieron cargar las publicaciones"
+  },
+  "shareProfileButton": {
+    "copied": "Enlace del perfil copiado",
+    "copyFailed": "No se pudo copiar el enlace. Probar seleccionándolo a mano.",
+    "shareFailed": "No se pudo compartir. Probar con Copiar enlace.",
+    "button": "Compartir perfil",
+    "title": "Compartir tu perfil de Hockia",
+    "body": "El enlace público de tu perfil se puede enviar con cualquiera de estas opciones. No hace falta una cuenta de Hockia para verlo.",
+    "copyLink": "Copiar enlace",
+    "nativeLabel": "Compartir desde el dispositivo",
+    "nativeHint": "Usar el menú para compartir del dispositivo",
+    "whatsappHint": "Abrir WhatsApp con un mensaje listo",
+    "emailLabel": "Email",
+    "emailHint": "Abrir la app de email con un mensaje listo"
+  },
+  "keyFacts": {
+    "notGiven": "Sin datos",
+    "notSet": "Sin completar",
+    "selfReported": "autodeclarada",
+    "leagueSelfReported": "{{league}} · autodeclarada",
+    "leagueNotSet": "Liga sin completar",
+    "leagueNotGiven": "Liga sin datos",
+    "position": "Posición",
+    "playsAt": "Juega en",
+    "available": "Disponibilidad",
+    "passport": "Pasaporte",
+    "video": "Video",
+    "age": "Edad",
+    "specialization": "Especialidad",
+    "categories": "Categorías",
+    "coachesAt": "Entrena en",
+    "availableNow": "Disponible ahora",
+    "fromDay": "Desde el {{day}}",
+    "noStartDate": "Sin fecha de inicio",
+    "startDateNotGiven": "Fecha de inicio sin datos",
+    "permitExpiredOn": "venció en {{date}}",
+    "permitExpired": "vencido",
+    "permitFrom": "desde {{date}}",
+    "permitUntil": "hasta {{date}}",
+    "permitFromUntil": "desde {{from}} hasta {{until}}",
+    "euPassport": "Pasaporte de la UE",
+    "noEuPassport": "Sin pasaporte de la UE",
+    "fullMatches_one": "{{count}} partido completo",
+    "fullMatches_many": "{{count}} partidos completos",
+    "fullMatches_other": "{{count}} partidos completos",
+    "highlights_one": "{{count}} jugada destacada",
+    "highlights_many": "{{count}} jugadas destacadas",
+    "highlights_other": "{{count}} jugadas destacadas",
+    "coachFallback": "Entrenador/a",
+    "anyCategory": "Cualquier categoría",
+    "currentRole": "{{role}} · rol actual",
+    "openToCoach": "Disponible para entrenar"
+  },
+  "keyFactsGrid": {
+    "euTag": "Pasaporte de la UE",
+    "permitName": "{{type}} de {{flag}}{{country}}",
+    "permitExpiredOn": "Tu {{what}} venció el {{day}}. Ya no aparece para los clubes.",
+    "permitExpired": "Tu {{what}} venció. Ya no aparece para los clubes.",
+    "permitExpiresOn": "Tu {{what}} vence el {{day}}. Con el dato al día, sigue visible para los clubes.",
+    "permitExpiresSoon": "Tu {{what}} vence pronto. Con el dato al día, sigue visible para los clubes."
+  },
+  "useProfileKeyFacts": {
+    "unknownCountry": "País desconocido"
+  },
+  "scoutingCard": {
+    "availabilitySet": "Disponibilidad indicada",
+    "currentClub": "Club actual",
+    "pastClubs": "Clubes anteriores",
+    "listed_one": "{{count}} en total",
+    "listed_many": "{{count}} en total",
+    "listed_other": "{{count}} en total",
+    "more_one": " · +{{count}} más",
+    "more_many": " · +{{count}} más",
+    "more_other": " · +{{count}} más",
+    "selections": "Selecciones",
+    "references": "Referencias",
+    "accepted_one": "1 aceptada",
+    "accepted_many": "{{count}} aceptadas",
+    "accepted_other": "{{count}} aceptadas",
+    "highlights_one": "{{count}} jugada destacada",
+    "highlights_many": "{{count}} jugadas destacadas",
+    "highlights_other": "{{count}} jugadas destacadas",
+    "matches_one": "{{count}} partido",
+    "matches_many": "{{count}} partidos",
+    "matches_other": "{{count}} partidos",
+    "photos_one": "{{count}} foto",
+    "photos_many": "{{count}} fotos",
+    "photos_other": "{{count}} fotos",
+    "media": "Multimedia",
+    "recruitmentPreferences": "Preferencias de incorporación",
+    "saved": "En preselección",
+    "shortlist": "Preseleccionar",
+    "thisPlayer": "este perfil",
+    "seeJourney": "Ver trayectoria completa →",
+    "signInPromptNamed": "<signin>Iniciar sesión</signin> para preseleccionar o enviar un mensaje a {{name}}.",
+    "signInPrompt": "<signin>Iniciar sesión</signin> para preseleccionar o enviar un mensaje a esta persona."
+  }
+}

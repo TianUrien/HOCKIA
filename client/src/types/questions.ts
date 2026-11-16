@@ -3,6 +3,8 @@
  * 
  * TypeScript definitions for the Community Q&A feature.
  */
+import { tCommunity } from '@/i18n/ns/community'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
 
 // Question categories matching the database enum
 export const QUESTION_CATEGORIES = [
@@ -18,17 +20,18 @@ export const QUESTION_CATEGORIES = [
 
 export type QuestionCategory = typeof QUESTION_CATEGORIES[number]
 
-// Human-readable labels for categories
-export const CATEGORY_LABELS: Record<QuestionCategory, string> = {
-  trials_club_selection: 'Trials & Club Selection',
-  visas_moving_abroad: 'Visas & Moving Abroad',
-  scholarships_universities: 'Scholarships & Universities',
-  highlights_visibility: 'Highlights & Visibility',
-  training_performance: 'Training & Performance',
-  coaching_development: 'Coaching & Development',
-  lifestyle_adaptation: 'Lifestyle & Adaptation',
-  other: 'Other / Not Sure',
-}
+// Human-readable labels for categories. Read through getters so each read
+// follows the interface language (a constant is built before it is known).
+export const CATEGORY_LABELS: Record<QuestionCategory, string> = lazyTextRecord({
+  trials_club_selection: () => tCommunity('questions.categories.trialsClubSelection'),
+  visas_moving_abroad: () => tCommunity('questions.categories.visasMovingAbroad'),
+  scholarships_universities: () => tCommunity('questions.categories.scholarshipsUniversities'),
+  highlights_visibility: () => tCommunity('questions.categories.highlightsVisibility'),
+  training_performance: () => tCommunity('questions.categories.trainingPerformance'),
+  coaching_development: () => tCommunity('questions.categories.coachingDevelopment'),
+  lifestyle_adaptation: () => tCommunity('questions.categories.lifestyleAdaptation'),
+  other: () => tCommunity('questions.categories.other'),
+})
 
 // Category badge colors (Tailwind classes)
 export const CATEGORY_COLORS: Record<QuestionCategory, { bg: string; text: string }> = {
@@ -46,8 +49,8 @@ export const CATEGORY_COLORS: Record<QuestionCategory, { bg: string; text: strin
 export type QuestionSortOption = 'latest' | 'most_answered'
 
 export const SORT_OPTIONS: { value: QuestionSortOption; label: string }[] = [
-  { value: 'latest', label: 'Latest' },
-  { value: 'most_answered', label: 'Most Answered' },
+  withLazyText({ value: 'latest' as QuestionSortOption }, { label: () => tCommunity('questions.sort.latest') }),
+  withLazyText({ value: 'most_answered' as QuestionSortOption }, { label: () => tCommunity('questions.sort.mostAnswered') }),
 ]
 
 // Author info (simplified profile)

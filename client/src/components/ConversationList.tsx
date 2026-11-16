@@ -6,6 +6,7 @@ import { identityLine } from '@/lib/identity'
 import { clubInboxRoleLine } from '@/lib/clubInbox'
 import type { ClubInboxRowMeta } from '@/hooks/useClubInbox'
 import { ConversationRow } from '@/components/inbox/ConversationRow'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface Conversation {
   id: string
@@ -52,6 +53,7 @@ export default function ConversationList({
   onToggleUnread,
   onRequestActions,
 }: ConversationListProps) {
+  const t = useInboxT()
   const isCompact = variant === 'compact'
   const parentRef = useRef<HTMLDivElement>(null)
   const rowVirtualizer = useVirtualizer({
@@ -85,14 +87,14 @@ export default function ConversationList({
           const isSelected = conversation.id === selectedConversationId
           const isUnread = (conversation.unreadCount || 0) > 0
           const isSentByMe = conversation.lastMessage?.sender_id === currentUserId
-          const otherParticipantLabel = conversation.otherParticipant?.full_name?.split(' ')[0] || conversation.otherParticipant?.username || 'Contact'
+          const otherParticipantLabel = conversation.otherParticipant?.full_name?.split(' ')[0] || conversation.otherParticipant?.username || t('list.contactFallback')
           // Server-posted recruiting lines are reworded for the club and shown without a sender prefix (lib/signing).
           const preview = conversation.lastMessage ? recruitingPreview(conversation.lastMessage.content, { isMine: isSentByMe, otherFirstName: otherParticipantLabel }) : null
-          const previewText = preview ? `${isSentByMe && !preview.system ? 'You: ' : ''}${preview.text}` : 'Say hello'
+          const previewText = preview ? (isSentByMe && !preview.system ? t('list.previewMine', { text: preview.text }) : preview.text) : t('list.sayHello')
           const participantName =
             conversation.otherParticipant?.full_name ||
             conversation.otherParticipant?.username ||
-            'Hockia member'
+            t('list.memberFallback')
           const role = conversation.otherParticipant?.role
           const meta = clubMeta?.get(conversation.id)
           const contextLine = meta ? clubInboxRoleLine(role, meta.detail, meta.applied) : role ? identityLine(role) : null

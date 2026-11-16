@@ -1,5 +1,7 @@
 import { differenceInCalendarDays, format, isSameDay } from 'date-fns'
 import { clockTime, dayFirst } from './dayFirst'
+import { getDateFnsLocale } from '@/i18n/format'
+import { tNotifications } from '@/i18n/ns/notifications'
 
 /**
  * Inbox row timestamps (app rule): the time today (the chat's clock,
@@ -13,7 +15,7 @@ export function formatInboxTime(iso: string | null | undefined, now: Date = new 
   if (Number.isNaN(date.getTime())) return ''
   if (isSameDay(date, now)) return clockTime(date)
   const days = differenceInCalendarDays(now, date)
-  if (days < 7) return format(date, 'EEE')
+  if (days < 7) return format(date, 'EEE', { locale: getDateFnsLocale() })
   return dayFirst(date, { now }) ?? ''
 }
 
@@ -23,17 +25,18 @@ export function formatActivityAge(iso: string | null | undefined, now: Date = ne
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
   const seconds = Math.max(0, Math.round((now.getTime() - date.getTime()) / 1000))
-  if (seconds < 60) return 'now'
+  if (seconds < 60) return tNotifications('age.now')
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
+  if (minutes < 60) return tNotifications('age.minutes', { count: minutes })
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours}h`
+  if (hours < 24) return tNotifications('age.hours', { count: hours })
   const days = Math.round(hours / 24)
-  if (days < 7) return `${days}d`
+  if (days < 7) return tNotifications('age.days', { count: days })
   return dayFirst(date, { now }) ?? ''
 }
 
-/** Activity day groups (rebrand page 19). "This week" = the last 7 days before today. */
+/** Activity day groups (rebrand page 19). "This week" = the last 7 days before today.
+ *  Returns a stable token; the screen translates it (InboxActivity). */
 export function activityGroup(createdAt: string, now = new Date()): 'Today' | 'This week' | 'Earlier' {
   const at = new Date(createdAt)
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())

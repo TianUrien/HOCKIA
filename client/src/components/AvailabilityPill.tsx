@@ -5,6 +5,7 @@ import {
   type AvailabilityRole,
   type AvailabilityFlags,
 } from '@/lib/availabilityLabel'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 type AvailabilitySize = 'sm' | 'md'
 
@@ -26,13 +27,13 @@ const VARIANT_GRADIENT: Record<AvailabilityVariant, string> = {
   partnerships: 'bg-role-brand-ink',
   recruiting: 'bg-role-club-ink',
 }
-const VARIANT_LABEL: Record<AvailabilityVariant, string> = {
-  play: 'Open to play',
-  coach: 'Open to coach',
-  umpire: 'Open to umpire',
-  partnerships: 'Open to partnerships',
-  recruiting: 'Recruiting',
-}
+const VARIANT_LABEL_KEY = {
+  play: 'availability.label.play',
+  coach: 'availability.label.coach',
+  umpire: 'availability.label.umpire',
+  partnerships: 'availability.label.partnerships',
+  recruiting: 'availability.label.recruiting',
+} as const satisfies Record<AvailabilityVariant, string>
 
 /**
  * AvailabilityPill — the positive availability badge. ONLY positive,
@@ -40,7 +41,8 @@ const VARIANT_LABEL: Record<AvailabilityVariant, string> = {
  * member cards, public profiles, dashboards, and search results.
  */
 export default function AvailabilityPill({ variant, label, size = 'md', className = '' }: AvailabilityPillProps) {
-  const text = label ?? VARIANT_LABEL[variant]
+  const t = useProfileEditT()
+  const text = label ?? t(VARIANT_LABEL_KEY[variant])
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-3 py-1 text-xs'
   const iconSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'
 

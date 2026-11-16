@@ -2,6 +2,7 @@
 import { positionLabel } from './display-labels.ts'
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML } from './email-brand.ts'
+import { type MemberLanguage, FOOTER_ES, spanishPositionLabel } from './member-language.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -32,6 +33,30 @@ export interface VacancyRecord {
   opportunity_type: string
 }
 
+/**
+ * A role's position as shown in the email: the app's English label
+ * ("head_coach" → "Head coach"), or the agreed Spanish word.
+ */
+export function vacancyPositionLabel(position: string | null, language: MemberLanguage = 'en'): string | null {
+  if (language === 'es') return spanishPositionLabel(position) ?? positionLabel(position)
+  return positionLabel(position)
+}
+
+/** The Spanish word for a position token, else the given English label. */
+export function spanishPositionOr(position: string | null, englishLabel: string): string {
+  return spanishPositionLabel(position) ?? englishLabel
+}
+
+/** Club name fallback when the club has no name. */
+export function unnamedClub(language: MemberLanguage = 'en'): string {
+  return language === 'es' ? 'Un club' : 'A club'
+}
+
+/** Subject when the DB template is unavailable. */
+export function vacancyFallbackSubject(title: string, language: MemberLanguage = 'en'): string {
+  return language === 'es' ? `Nueva oportunidad en Hockia: ${title}` : `New opportunity on Hockia: ${title}`
+}
+
 export interface VacancyPayload {
   type: 'INSERT' | 'UPDATE'
   table: 'opportunities'
@@ -40,10 +65,11 @@ export interface VacancyPayload {
   old_record: VacancyRecord | null
 }
 
-export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): string {
+export function generateEmailHtml(vacancy: VacancyRecord, clubName: string, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
   // Safe field extraction with fallbacks
   // "head_coach" → "Head coach" (the app's label), never the raw token.
-  const position = positionLabel(vacancy.position)
+  const position = es ? vacancyPositionLabel(vacancy.position, language) : positionLabel(vacancy.position)
   
   // Build location string, handling missing city or country
   const city = vacancy.location_city?.trim() || null
@@ -55,7 +81,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   const summary = vacancy.description?.trim()?.slice(0, 200) || null
   const hasMoreSummary = vacancy.description && vacancy.description.length > 200
   const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
-  const safeClubName = clubName?.trim() || 'A club'
+  const safeClubName = clubName?.trim() || unnamedClub(language)
 
   // Build details section conditionally
   const detailItems: string[] = []
@@ -70,7 +96,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -85,8 +111,8 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   <!-- Main Content -->
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">New opportunity posted</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">A new opportunity was just published that may be relevant to you.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${es ? 'Nueva oportunidad publicada' : 'New opportunity posted'}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Se publicó una nueva oportunidad que puede interesarte.' : 'A new opportunity was just published that may be relevant to you.'}</p>
 
     <!-- Vacancy Card -->
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -100,15 +126,15 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
     <!-- CTA -->
     <p style="margin: 0 0 24px 0;">
-      <a href="${escapeHtml(vacancyUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
+      <a href="${escapeHtml(vacancyUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Ver oportunidad' : 'View this opportunity'} &rarr;</a>
     </p>
   </div>
 
   <!-- Footer -->
   <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because you have a Hockia account.<br>
-      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
+      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6c2bd9; text-decoration: none;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
     </p>
   </div>
 
@@ -117,10 +143,11 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   `.trim()
 }
 
-export function generateEmailText(vacancy: VacancyRecord, clubName: string): string {
+export function generateEmailText(vacancy: VacancyRecord, clubName: string, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
   // Safe field extraction with fallbacks
   // "head_coach" → "Head coach" (the app's label), never the raw token.
-  const position = positionLabel(vacancy.position)
+  const position = es ? vacancyPositionLabel(vacancy.position, language) : positionLabel(vacancy.position)
   
   // Build location string, handling missing city or country
   const city = vacancy.location_city?.trim() || null
@@ -132,24 +159,24 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
   const summary = vacancy.description?.trim()?.slice(0, 200) || null
   const hasMoreSummary = vacancy.description && vacancy.description.length > 200
   const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
-  const safeClubName = clubName?.trim() || 'A club'
+  const safeClubName = clubName?.trim() || unnamedClub(language)
 
   // Build text content
   const lines: string[] = [
-    'New opportunity posted on Hockia',
+    es ? 'Nueva oportunidad publicada en Hockia' : 'New opportunity posted on Hockia',
     '',
-    'A new opportunity was just published that may be relevant to you.',
+    es ? 'Se publicó una nueva oportunidad que puede interesarte.' : 'A new opportunity was just published that may be relevant to you.',
     '',
     `${vacancy.title}`,
     `${safeClubName}`,
   ]
   
   if (position) {
-    lines.push(`Position: ${position}`)
+    lines.push(`${es ? 'Posición' : 'Position'}: ${position}`)
   }
   
   if (location) {
-    lines.push(`Location: ${location}`)
+    lines.push(`${es ? 'Ubicación' : 'Location'}: ${location}`)
   }
   
   if (summary) {
@@ -159,12 +186,12 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
   
   lines.push(
     '',
-    'View this opportunity:',
+    es ? 'Ver oportunidad:' : 'View this opportunity:',
     vacancyUrl,
     '',
     '---',
-    "You're receiving this because you have a Hockia account.",
-    `Notification settings: ${HOCKIA_BASE_URL}/settings`
+    es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account.",
+    `${es ? FOOTER_ES.manage : 'Notification settings: '}${HOCKIA_BASE_URL}/settings`
   )
 
   return lines.join('\n')

@@ -55,6 +55,13 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Recruiters | Quienes reclutan | |
 | Email | Email | Not "correo" |
 | Here | Acá | |
+| Outdoor (hockey) | Césped | "Césped e indoor" for both. Added in Stage 2 |
+| Connections | Conexiones | |
+| Coaches (as a group, not the role name) | Cuerpos técnicos | Avoids "entrenadores" alone; the role name stays "Entrenador/a" |
+| Endorse, vouch | Avalar, aval | |
+| Career history | Trayectoria | |
+| Media (photos and videos) | Multimedia | |
+| Junior / Senior (level) | Juveniles / Mayores | "Mayores" still to confirm |
 
 Search keeps accepting every regional synonym whatever word the interface shows.
 
@@ -66,3 +73,13 @@ Search keeps accepting every regional synonym whatever word the interface shows.
 - Application tags: "Postulación enviada" (Applied), "En preselección" (Shortlisted), "Con respuesta" (Replied), "Esta vez no" (Not this time).
 - "Senior" team level is "Mayores"; "Primera" or "Plantel superior" are alternatives.
 - The possessive "tu" and the pronoun "te" are used (same in every variant); no second-person verb forms are.
+
+## Wording still to confirm with the founder (Stage 2, 2026-11-16)
+
+- Message previews start with "Tú: {{text}}" for the member's own message ("You:"). "Vos:" is the alternative; the prefix cannot avoid a pronoun.
+- "Recruiting" (a club looking for people): "Incorporando" on cards, "Buscando incorporaciones" on the club header.
+- "Just now": "Recién" (Rioplatense) or "Hace un momento" (more neutral).
+- Delete account: Spanish members type "ELIMINAR" to confirm (English "DELETE").
+- Umpire level suggestions ("National", "Regional", "Club") stay English because the chosen word is saved on the profile and shown to everyone.
+- Emails: fallback greeting "Hola, integrante:" when there is no name; footer "Este email te llega por tu cuenta en Hockia."
+- Safety copy (block, report, removed accounts) was rewritten without second-person verbs; please read it for meaning.

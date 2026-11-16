@@ -5,6 +5,8 @@ import { logger } from '@/lib/logger'
 import StorageImage from './StorageImage'
 import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import Flag from './Flag'
+import { Trans } from 'react-i18next'
+import { useWorldT } from '@/i18n/ns/world'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -71,7 +73,7 @@ export default function WorldClubSearch({
   onClubSelect,
   onClubClear,
   selectedClubId,
-  placeholder = 'Search clubs...',
+  placeholder,
   label,
   required = false,
   error,
@@ -81,6 +83,7 @@ export default function WorldClubSearch({
   crestUrl = null,
   optional = false,
 }: WorldClubSearchProps) {
+  const t = useWorldT()
   const generatedId = useId()
   const inputId = externalId || `world-club-search-${generatedId}`
 
@@ -312,7 +315,7 @@ export default function WorldClubSearch({
         <label htmlFor={inputId} className={isField ? (optional ? fieldLabelRow : fieldLabel) : 'text-sm font-medium text-gray-700'}>
           {label}
           {required && <span className="text-red-500">*</span>}
-          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
+          {isField && optional && <span className={fieldOptionalTag}>{t('clubSearch.optional')}</span>}
         </label>
       )}
 
@@ -340,7 +343,7 @@ export default function WorldClubSearch({
           onFocus={() => { if (value.trim().length >= 2 && !isLinked) searchClubs(value) }}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('clubSearch.placeholder')}
           autoComplete="off"
           enterKeyHint="search"
           autoCapitalize="none"
@@ -356,7 +359,7 @@ export default function WorldClubSearch({
         {/* Right side: linked badge or clear */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-2">
           {isField && (isLinked ? (
-            <button type="button" onClick={handleClear} aria-label="Unlink club" className="flex h-9 w-9 items-center justify-center text-ink-3">
+            <button type="button" onClick={handleClear} aria-label={t('clubSearch.unlink')} className="flex h-9 w-9 items-center justify-center text-ink-3">
               <X className="h-4 w-4" />
             </button>
           ) : (
@@ -365,13 +368,13 @@ export default function WorldClubSearch({
           {!isField && isLinked && (
             <>
               <span className="mr-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
-                Linked
+                {t('clubSearch.linked')}
               </span>
               <button
                 type="button"
                 onClick={handleClear}
                 className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                title="Unlink club"
+                title={t('clubSearch.unlink')}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -393,7 +396,7 @@ export default function WorldClubSearch({
           linked, when the input is empty, or when an error is shown. */}
       {!error && !selectedClubId && value.trim().length > 0 && !disabled && (
         <p className={isField ? 'mt-1.5 text-caption text-ink-3' : 'mt-1 text-xs text-gray-500'}>
-          Tip: pick a suggestion or use <span className="font-medium">Add new club</span> so your club logo and links work.
+          <Trans t={t} i18nKey="clubSearch.tip" components={{ b: <span className="font-medium" /> }} />
         </p>
       )}
 
@@ -449,7 +452,7 @@ export default function WorldClubSearch({
                       {/* Tier badge */}
                       {tier != null && (
                         <span className="flex-shrink-0 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
-                          T{tier}
+                          {t('clubSearch.tier', { tier })}
                         </span>
                       )}
                     </button>
@@ -461,7 +464,7 @@ export default function WorldClubSearch({
 
           {results.length === 0 && !isSearching && value.trim().length >= 2 && (
             <div className="px-3 py-3 text-center text-sm text-gray-500">
-              No clubs found matching &ldquo;{value.trim()}&rdquo;
+              {t('clubSearch.noMatch', { query: value.trim() })}
             </div>
           )}
 
@@ -474,7 +477,7 @@ export default function WorldClubSearch({
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-indigo-600 transition-colors hover:bg-indigo-50"
               >
                 <Plus className="h-4 w-4" />
-                Add &ldquo;{value.trim()}&rdquo; to directory
+                {t('clubSearch.addToDirectory', { name: value.trim() })}
               </button>
             </div>
           )}
@@ -483,16 +486,16 @@ export default function WorldClubSearch({
           {showAddForm && (
             <div className="border-t border-gray-100 px-3 py-3 space-y-3">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Add to World Directory
+                {t('clubSearch.addFormTitle')}
               </p>
 
               {/* Country select */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Country<span className="text-red-500">*</span>
+                  {t('clubSearch.country')}<span className="text-red-500">*</span>
                 </label>
                 <select
-                  aria-label="Country"
+                  aria-label={t('clubSearch.countryLabel')}
                   value={addCountryId ?? ''}
                   onChange={e => {
                     const id = e.target.value ? Number(e.target.value) : null
@@ -500,7 +503,7 @@ export default function WorldClubSearch({
                   }}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
-                  <option value="">Select country...</option>
+                  <option value="">{t('clubSearch.selectCountry')}</option>
                   {addCountries.map(c => (
                     <option key={c.country_id} value={c.country_id}>
                       {c.flag_emoji ? `${c.flag_emoji} ` : ''}{c.country_name}
@@ -513,15 +516,15 @@ export default function WorldClubSearch({
               {addRegions.length > 0 && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Region (Optional)
+                    {t('clubSearch.region')}
                   </label>
                   <select
-                    aria-label="Region"
+                    aria-label={t('clubSearch.regionLabel')}
                     value={addRegionId ?? ''}
                     onChange={e => setAddRegionId(e.target.value ? Number(e.target.value) : null)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
-                    <option value="">No specific region</option>
+                    <option value="">{t('clubSearch.noRegion')}</option>
                     {addRegions.map(r => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
@@ -542,14 +545,14 @@ export default function WorldClubSearch({
                   ) : (
                     <Globe2 className="h-3.5 w-3.5" />
                   )}
-                  Add Club
+                  {t('clubSearch.addClub')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
                   className="rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100"
                 >
-                  Cancel
+                  {t('clubSearch.cancel')}
                 </button>
               </div>
             </div>

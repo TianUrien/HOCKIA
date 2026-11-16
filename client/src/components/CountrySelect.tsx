@@ -5,6 +5,7 @@ import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelR
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 interface CountrySelectProps {
   label?: string
@@ -36,7 +37,7 @@ export default function CountrySelect({
   label,
   value,
   onChange,
-  placeholder = 'Select a country',
+  placeholder,
   required = false,
   error,
   disabled = false,
@@ -46,6 +47,7 @@ export default function CountrySelect({
   presentation = 'dropdown',
   optional = false,
 }: CountrySelectProps) {
+  const t = useProfileEditT()
   const isField = appearance === 'field'
   const isList = presentation === 'list'
   const { countries, loading, getCountryById } = useCountries()
@@ -172,7 +174,7 @@ export default function CountrySelect({
             setHighlightedIndex(0)
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Search countries..."
+          placeholder={t('countrySelect.search')}
           className={cn(
             'w-full pl-9 pr-4 py-2 text-sm',
             'border border-gray-200 rounded-md',
@@ -197,11 +199,11 @@ export default function CountrySelect({
 
   const listBlock = loading ? (
     <div className="px-4 py-3 text-sm text-gray-500 text-center">
-      Loading countries...
+      {t('countrySelect.loading')}
     </div>
   ) : filteredCountries.length === 0 ? (
     <div className="px-4 py-3 text-sm text-gray-500 text-center">
-      No countries found
+      {t('countrySelect.empty')}
     </div>
   ) : (
     <ul
@@ -272,7 +274,7 @@ export default function CountrySelect({
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
-          {isField && optional && <span className={fieldOptionalTag}>Optional</span>}
+          {isField && optional && <span className={fieldOptionalTag}>{t('countrySelect.optional')}</span>}
         </label>
       )}
 
@@ -314,7 +316,7 @@ export default function CountrySelect({
                 </span>
               </>
             ) : (
-              placeholder
+              placeholder ?? t('countrySelect.placeholder')
             )}
           </span>
 
@@ -331,7 +333,7 @@ export default function CountrySelect({
                   }
                 }}
                 className="p-1 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-                aria-label="Clear selection"
+                aria-label={t('countrySelect.clear')}
               >
                 <X className="w-4 h-4 text-gray-400" />
               </span>

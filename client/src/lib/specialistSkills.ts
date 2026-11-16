@@ -9,6 +9,9 @@
  * so renaming a label is safe; renaming a value needs a data backfill.
  */
 
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+import { withLazyText } from '@/lib/opportunityLazyText'
+
 export interface SpecialistSkill {
   value: string
   label: string
@@ -19,26 +22,28 @@ export interface SpecialistSkill {
 
 // v1 vocabulary — terms real coaches/recruiters/players recognise across
 // international hockey. Deliberately short (≤8); expand only on demand.
-export const SPECIALIST_SKILLS: readonly SpecialistSkill[] = [
-  { value: 'drag_flicker', label: 'Drag Flicker' },
-  { value: 'penalty_corner', label: 'Penalty Corner Specialist' },
-  { value: 'playmaker', label: 'Playmaker' },
-  { value: 'target_forward', label: 'Target Forward' },
-  { value: 'defensive_leader', label: 'Defensive Leader' },
-  { value: 'sweeper_keeper', label: 'Sweeper Keeper', gkOnly: true },
-  { value: 'pressing', label: 'Pressing Specialist' },
-  { value: 'indoor', label: 'Indoor Hockey Specialist' },
-] as const
+// `label` is read in the interface language each time it is used.
+const skill = (value: string, label: () => string, gkOnly?: boolean): SpecialistSkill =>
+  withLazyText(gkOnly ? { value, gkOnly } : { value }, { label })
 
-const LABEL_BY_VALUE: Record<string, string> = Object.fromEntries(
-  SPECIALIST_SKILLS.map((s) => [s.value, s.label]),
-)
+export const SPECIALIST_SKILLS: readonly SpecialistSkill[] = [
+  skill('drag_flicker', () => tProfileEdit('skills.dragFlicker')),
+  skill('penalty_corner', () => tProfileEdit('skills.penaltyCorner')),
+  skill('playmaker', () => tProfileEdit('skills.playmaker')),
+  skill('target_forward', () => tProfileEdit('skills.targetForward')),
+  skill('defensive_leader', () => tProfileEdit('skills.defensiveLeader')),
+  skill('sweeper_keeper', () => tProfileEdit('skills.sweeperKeeper'), true),
+  skill('pressing', () => tProfileEdit('skills.pressing')),
+  skill('indoor', () => tProfileEdit('skills.indoor')),
+]
+
+const SKILL_BY_VALUE = new Map(SPECIALIST_SKILLS.map((s) => [s.value, s]))
 
 /** Human label for a stored specialist value; falls back to a title-cased
  *  version so an unknown/retired value still reads cleanly. */
 export function specialistSkillLabel(value: string): string {
   return (
-    LABEL_BY_VALUE[value] ??
+    SKILL_BY_VALUE.get(value)?.label ??
     value
       .split(/[\s_-]+/)
       .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))

@@ -11,6 +11,7 @@ import {
   type RatingDecision,
 } from '@/lib/appRating'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { useSettingsT } from '@/i18n/ns/settings'
 
 /**
  * Internal app rating prompt (Slice 1). A small, dismissible card — never a
@@ -38,6 +39,7 @@ function isCalmSurface(pathname: string): boolean {
 export default function AppRatingPrompt() {
   // The comment field sits low on the screen: rise above the iOS keyboard while typing.
   const kb = useKeyboardInset(true)
+  const t = useSettingsT()
   const location = useLocation()
   const calm = isCalmSurface(location.pathname)
 
@@ -121,7 +123,7 @@ export default function AppRatingPrompt() {
         type="button"
         onClick={handleDismiss}
         className="absolute right-2 top-2 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-        aria-label="Dismiss"
+        aria-label={t('ratingPrompt.dismiss')}
       >
         <X className="h-4 w-4" />
       </button>
@@ -129,20 +131,20 @@ export default function AppRatingPrompt() {
       {submitted ? (
         <div className="py-2 text-center">
           <div className="text-2xl">💜</div>
-          <p className="mt-1 text-sm font-semibold text-gray-900">Thank you!</p>
-          <p className="mt-0.5 text-xs text-gray-600">Your feedback helps us improve Hockia.</p>
+          <p className="mt-1 text-sm font-semibold text-gray-900">{t('ratingPrompt.thanksTitle')}</p>
+          <p className="mt-0.5 text-xs text-gray-600">{t('ratingPrompt.thanksBody')}</p>
         </div>
       ) : (
         <>
-          <h3 className="pr-6 text-base font-bold text-gray-900">Enjoying Hockia?</h3>
+          <h3 className="pr-6 text-base font-bold text-gray-900">{t('ratingPrompt.title')}</h3>
           <p className="mt-0.5 text-xs text-gray-600">
-            Your feedback helps us improve the field hockey community.
+            {t('ratingPrompt.body')}
           </p>
 
           <div
             className="mt-3 flex items-center gap-1.5"
             role="radiogroup"
-            aria-label="Rate Hockia from 1 to 5 stars"
+            aria-label={t('ratingPrompt.starsLabel')}
             onMouseLeave={() => setHover(0)}
           >
             {[1, 2, 3, 4, 5].map((n) => (
@@ -155,7 +157,7 @@ export default function AppRatingPrompt() {
                 onMouseEnter={() => setHover(n)}
                 onFocus={() => setHover(n)}
                 className="p-1 transition-transform hover:scale-110"
-                aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                aria-label={t('ratingPrompt.star', { count: n })}
               >
                 <Star
                   className={`h-7 w-7 ${n <= display ? 'fill-gold-line text-gold-line' : 'fill-transparent text-gray-500'}`}
@@ -167,14 +169,14 @@ export default function AppRatingPrompt() {
           {rating >= 1 && (
             <div className="mt-3">
               <label className="text-xs font-medium text-gray-700">
-                {isPositive ? 'Thanks! 🎉 Anything you love or want more of?' : 'Thanks for the honesty. What can we improve?'}
-                <span className="font-normal text-gray-400"> (optional)</span>
+                {isPositive ? t('ratingPrompt.positiveQuestion') : t('ratingPrompt.negativeQuestion')}
+                <span className="font-normal text-gray-400">{t('ratingPrompt.optional')}</span>
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
                 rows={2}
-                placeholder={isPositive ? 'What stood out for you?' : 'Tell us what would make it better…'}
+                placeholder={isPositive ? t('ratingPrompt.positivePlaceholder') : t('ratingPrompt.negativePlaceholder')}
                 className="mt-1.5 w-full resize-none rounded-lg border border-gray-200 p-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
               />
               <div className="mt-2 flex items-center gap-2">
@@ -184,19 +186,19 @@ export default function AppRatingPrompt() {
                   disabled={submitting}
                   className="flex-1 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
-                  {submitting ? 'Submitting…' : 'Submit feedback'}
+                  {submitting ? t('ratingPrompt.submitting') : t('ratingPrompt.submit')}
                 </button>
                 <button
                   type="button"
                   onClick={handleDismiss}
                   className="px-3 py-2.5 text-sm text-gray-500 transition-colors hover:text-gray-700"
                 >
-                  Not now
+                  {t('ratingPrompt.notNow')}
                 </button>
               </div>
               {submitError && (
                 <p className="mt-2 text-xs text-status-danger" role="alert">
-                  Couldn’t send your feedback. Please try again.
+                  {t('ratingPrompt.failed')}
                 </p>
               )}
             </div>
@@ -208,7 +210,7 @@ export default function AppRatingPrompt() {
               onClick={handleDismiss}
               className="mt-2 text-xs text-gray-400 transition-colors hover:text-gray-600"
             >
-              Not now
+              {t('ratingPrompt.notNowEarly')}
             </button>
           )}
         </>

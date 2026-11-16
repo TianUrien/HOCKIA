@@ -9,6 +9,7 @@ import { PostComposer } from '@/components/home/PostComposer'
 import { PostComposerModal } from '@/components/home/PostComposerModal'
 import { FeedSkeleton } from '@/components/home/FeedSkeleton'
 import type { HomeFeedItem, UserPostFeedItem } from '@/types/homeFeed'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface ProfilePostsTabProps {
   profileId: string
@@ -42,6 +43,7 @@ class PostItemErrorBoundary extends Component<
 }
 
 export default function ProfilePostsTab({ profileId, readOnly = false }: ProfilePostsTabProps) {
+  const t = useProfileT()
   const { items, isLoading, error, hasMore, loadMore, refetch, updateItemLike, removeItem, prependItem } = useProfilePosts(profileId)
   const [showComposerModal, setShowComposerModal] = useState(false)
 
@@ -82,7 +84,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
             onClick={() => void refetch()}
             className="mt-2 px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors"
           >
-            Try again
+            {t('profilePostsTab.tryAgain')}
           </button>
         </div>
       )}
@@ -92,21 +94,21 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
         <div className="text-center py-12">
           <FileText className="w-12 h-12 text-gray-500 mx-auto mb-4" />
           {readOnly ? (
-            <p className="text-gray-500">No posts yet.</p>
+            <p className="text-gray-500">{t('profilePostsTab.emptyVisitor')}</p>
           ) : (
             <>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No posts yet
+                {t('profilePostsTab.emptyTitle')}
               </h3>
               <p className="text-gray-500 mb-4">
-                Share your first update with the Hockia community.
+                {t('profilePostsTab.emptyBody')}
               </p>
               <button
                 type="button"
                 onClick={() => setShowComposerModal(true)}
                 className="px-5 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
               >
-                Create a post
+                {t('profilePostsTab.createPost')}
               </button>
             </>
           )}
@@ -144,7 +146,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
             onClick={handleLoadMore}
             className="px-6 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
           >
-            Load more
+            {t('profilePostsTab.loadMore')}
           </button>
         </div>
       )}

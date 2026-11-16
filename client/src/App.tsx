@@ -4,7 +4,13 @@ import { initializeAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
 import * as Sentry from '@sentry/react'
-import { ProtectedRoute, ErrorBoundary, Layout, SentryTestButton } from '@/components'
+// Direct imports, not the '@/components' barrel: through the barrel the bundler
+// kept every component with a top-level effect in the start-up chunk
+// (EditProfileModal, JourneyTab, CommentsTab... and their catalogs).
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import Layout from '@/components/Layout'
+import SentryTestButton from '@/components/SentryTestButton'
 import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'

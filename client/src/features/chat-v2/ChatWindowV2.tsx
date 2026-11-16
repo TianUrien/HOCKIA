@@ -13,6 +13,7 @@ import { EmptyState } from './components/EmptyState'
 import { RemovedAccountNotice } from './components/RemovedAccountNotice'
 import type { Conversation, ChatMessageEvent } from '@/types/chat'
 import { invalidateConversationCaches, setConversationMarkedUnread } from '@/lib/conversationActions'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 const NEW_MESSAGE_DISTANCE_THRESHOLD = 120
 const MAX_PENDING_BADGE = 9
@@ -68,6 +69,7 @@ export default function ChatWindowV2({
   onDeleteConversation,
   onBlockMember,
 }: ChatWindowV2Props) {
+  const t = useInboxT()
   const {
     messages,
     loading,
@@ -459,7 +461,7 @@ export default function ChatWindowV2({
           )}
           <NewMessagesToast
             visible={shouldShowNewToast}
-            label={`${pendingLabel} new message${pendingNewMessagesCount > 1 ? 's' : ''}`}
+            label={t('chat.newMessagesToast', { count: pendingNewMessagesCount, label: pendingLabel })}
             onClick={() => {
               setPendingNewMessagesCount(0)
               scrollToBottomSmooth()

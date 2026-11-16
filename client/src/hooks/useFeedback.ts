@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { captureFeedbackContext } from '@/lib/feedbackContext'
 import { trackFeedbackSubmitted } from '@/lib/analytics'
+import { tSettings } from '@/i18n/ns/settings'
 
 export type FeedbackCategory =
   | 'bug'
@@ -77,8 +78,8 @@ export function useFeedback(): {
         setStatus({
           kind: 'error',
           message: isRateLimited
-            ? 'You’ve submitted a lot recently. Try again in an hour.'
-            : 'Couldn’t send feedback. Please try again.',
+            ? tSettings('feedbackModal.rateLimited')
+            : tSettings('feedbackModal.sendFailed'),
           reason: isRateLimited ? 'rate_limited' : 'unknown',
         })
         return
@@ -103,7 +104,7 @@ export function useFeedback(): {
       logger.error('[useFeedback] unexpected error', err)
       setStatus({
         kind: 'error',
-        message: 'Couldn’t send feedback. Please try again.',
+        message: tSettings('feedbackModal.sendFailed'),
         reason: 'unknown',
       })
     }

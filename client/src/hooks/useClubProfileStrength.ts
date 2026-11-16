@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
+import { useWorldT } from '@/i18n/ns/world'
 
 export interface ProfileStrengthBucket {
   id: string
@@ -101,6 +102,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
   // the owner % equals the public card % (2d-bis). The old single "basic 35"
   // is split into the four canonical buckets (location 10 · country 5 · year 10
   // · contact 10), and posts + friends are added.
+  const t = useWorldT()
   const buckets: ProfileStrengthBucket[] = useMemo(() => {
     const logoComplete = hasClubLogo()
     const bioComplete = hasClubBio()
@@ -114,96 +116,96 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
     return [
       {
         id: 'logo',
-        label: 'Club Logo',
-        hint: 'Upload your club logo',
-        unlockCopy: 'A recognisable logo makes your club stand out in searches.',
+        label: t('club.strength.logo.label'),
+        hint: t('club.strength.logo.hint'),
+        unlockCopy: t('club.strength.logo.unlock'),
         weight: 15,
         completed: logoComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Add Logo',
+        actionLabel: t('club.strength.logo.action'),
       },
       {
         id: 'about',
-        label: 'About the Club',
-        hint: 'Add a description about your club',
-        unlockCopy: 'Players understand your story and what the club stands for.',
+        label: t('club.strength.about.label'),
+        hint: t('club.strength.about.hint'),
+        unlockCopy: t('club.strength.about.unlock'),
         weight: 20,
         completed: bioComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Add Description',
+        actionLabel: t('club.strength.about.action'),
       },
       {
         id: 'location',
-        label: 'Add your city',
-        hint: 'Set the club\'s base location',
-        unlockCopy: 'Players filter by location when looking for a club.',
+        label: t('club.strength.location.label'),
+        hint: t('club.strength.location.hint'),
+        unlockCopy: t('club.strength.location.unlock'),
         weight: 10,
         completed: Boolean(profile?.base_location?.trim()),
         actionId: 'edit-profile',
-        actionLabel: 'Add Location',
+        actionLabel: t('club.strength.location.action'),
       },
       {
         id: 'country',
-        label: 'Add your country',
-        hint: 'Set the club\'s country',
-        unlockCopy: 'Helps players in your country find you.',
+        label: t('club.strength.country.label'),
+        hint: t('club.strength.country.hint'),
+        unlockCopy: t('club.strength.country.unlock'),
         weight: 5,
         completed: Boolean(profile?.nationality_country_id),
         actionId: 'edit-profile',
-        actionLabel: 'Add Country',
+        actionLabel: t('club.strength.country.action'),
       },
       {
         id: 'year-founded',
-        label: 'Add the year founded',
-        hint: 'When was the club established?',
-        unlockCopy: 'Adds credibility and history to your profile.',
+        label: t('club.strength.yearFounded.label'),
+        hint: t('club.strength.yearFounded.hint'),
+        unlockCopy: t('club.strength.yearFounded.unlock'),
         weight: 10,
         completed: Boolean(profile?.year_founded),
         actionId: 'edit-profile',
-        actionLabel: 'Add Year',
+        actionLabel: t('club.strength.yearFounded.action'),
       },
       {
         id: 'contact',
-        label: 'Add a contact method',
-        hint: 'Add a public contact email or a website',
-        unlockCopy: 'Lets players and recruiters reach out about opportunities.',
+        label: t('club.strength.contact.label'),
+        hint: t('club.strength.contact.hint'),
+        unlockCopy: t('club.strength.contact.unlock'),
         weight: 10,
         completed: hasContact,
         actionId: 'edit-profile',
-        actionLabel: 'Add Contact',
+        actionLabel: t('club.strength.contact.action'),
       },
       {
         id: 'gallery',
-        label: 'Photo Gallery',
-        hint: 'Upload at least one photo to your gallery',
-        unlockCopy: 'Show your ground, training sessions, and match days.',
+        label: t('club.strength.gallery.label'),
+        hint: t('club.strength.gallery.hint'),
+        unlockCopy: t('club.strength.gallery.unlock'),
         weight: 15,
         completed: galleryComplete,
         actionId: 'gallery-section',
-        actionLabel: 'Add Photos',
+        actionLabel: t('club.strength.gallery.action'),
       },
       {
         id: 'posts',
-        label: 'Share your first post',
-        hint: 'Post an update to your club feed',
-        unlockCopy: 'An active club feed shows players you are alive and recruiting.',
+        label: t('club.strength.posts.label'),
+        hint: t('club.strength.posts.hint'),
+        unlockCopy: t('club.strength.posts.unlock'),
         weight: 10,
         completed: (profile?.post_count ?? 0) > 0,
         actionId: 'edit-profile',
-        actionLabel: 'Create Post',
+        actionLabel: t('club.strength.posts.action'),
       },
       {
         id: 'friends',
-        label: 'Make your first connection',
-        hint: 'Connect with players or coaches',
-        unlockCopy: 'Builds your club network on Hockia.',
+        label: t('club.strength.friends.label'),
+        hint: t('club.strength.friends.hint'),
+        unlockCopy: t('club.strength.friends.unlock'),
         weight: 5,
         completed: (profile?.accepted_friend_count ?? 0) > 0,
         actionId: 'edit-profile',
-        actionLabel: 'Add Connection',
+        actionLabel: t('club.strength.friends.action'),
       },
     ]
-  }, [hasClubLogo, hasClubBio, galleryCount, profile?.base_location, profile?.nationality_country_id, profile?.year_founded, profile?.contact_email, profile?.contact_email_public, profile?.website, profile?.post_count, profile?.accepted_friend_count])
+  }, [t, hasClubLogo, hasClubBio, galleryCount, profile?.base_location, profile?.nationality_country_id, profile?.year_founded, profile?.contact_email, profile?.contact_email_public, profile?.website, profile?.post_count, profile?.accepted_friend_count])
 
   // Calculate total percentage
   const percentage = useMemo(() => {

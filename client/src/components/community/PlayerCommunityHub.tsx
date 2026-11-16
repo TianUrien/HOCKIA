@@ -12,6 +12,7 @@ import CommunityReferencesSection from './CommunityReferencesSection'
 import ConnectionsSection from './ConnectionsSection'
 import type { Profile } from '@/lib/supabase'
 import { trackReferenceModalOpen } from '@/lib/analytics'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * PlayerCommunityHub — owner-side Community page assembly.
@@ -41,6 +42,7 @@ export default function PlayerCommunityHub({
   profile,
   highlightedCommentIds,
 }: PlayerCommunityHubProps) {
+  const t = useCommunityT()
   const navigate = useNavigate()
   const { profile: authProfile } = useAuthStore()
   const isOwner = authProfile?.id === profile.id
@@ -125,9 +127,9 @@ export default function PlayerCommunityHub({
     // by QA. Same fix applies to the visitor hub.
     <div className="space-y-4 pb-32">
       <header>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Network</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('hubs.player.title')}</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Build trust through connections, references and activity.
+          {t('hubs.player.subtitle')}
         </p>
       </header>
 

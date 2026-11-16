@@ -28,6 +28,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Trans } from 'react-i18next'
+import { useProfileT } from '@/i18n/ns/profile'
 import { Star, Bookmark, BookmarkCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -128,6 +130,7 @@ const EMPTY_COUNTS: EvidenceCounts = {
 
 
 export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardProps) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const { user, profile: viewerProfile } = useAuthStore()
   // Increment #2 — recruitment preferences are recruiter-facing only.
@@ -317,7 +320,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     if (!availLabel) return null // positive-or-hidden — no negative state
     return {
       label: availLabel.toUpperCase(),
-      sub: 'Availability set',
+      sub: t('scoutingCard.availabilitySet'),
       dotClass: 'bg-emerald-500',
       wrapperClass: 'bg-emerald-50 border-emerald-100',
       labelClass: 'text-emerald-800',
@@ -343,19 +346,19 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
 
   if (profile.current_club) {
     rows.push({
-      label: 'Current club',
+      label: t('scoutingCard.currentClub'),
       value: <span className="font-semibold text-gray-900">{profile.current_club}</span>,
     })
   }
 
   if (counts && counts.pastClubs > 0) {
     rows.push({
-      label: 'Past clubs',
+      label: t('scoutingCard.pastClubs'),
       value: (
         <span className="text-gray-900">
-          {counts.recentPastClub ?? `${counts.pastClubs} listed`}
+          {counts.recentPastClub ?? t('scoutingCard.listed', { count: counts.pastClubs })}
           {counts.pastClubs > 1 && counts.recentPastClub && (
-            <span className="text-gray-500"> · +{counts.pastClubs - 1} more</span>
+            <span className="text-gray-500">{t('scoutingCard.more', { count: counts.pastClubs - 1 })}</span>
           )}
         </span>
       ),
@@ -364,12 +367,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
 
   if (counts && counts.selections > 0) {
     rows.push({
-      label: 'Selections',
+      label: t('scoutingCard.selections'),
       value: (
         <span className="text-gray-900">
-          {counts.recentSelection ?? `${counts.selections} listed`}
+          {counts.recentSelection ?? t('scoutingCard.listed', { count: counts.selections })}
           {counts.selections > 1 && counts.recentSelection && (
-            <span className="text-gray-500"> · +{counts.selections - 1} more</span>
+            <span className="text-gray-500">{t('scoutingCard.more', { count: counts.selections - 1 })}</span>
           )}
         </span>
       ),
@@ -379,10 +382,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const refCount = profile.accepted_reference_count ?? 0
   if (refCount > 0) {
     rows.push({
-      label: 'References',
+      label: t('scoutingCard.references'),
       value: (
         <span className="text-gray-900">
-          {refCount === 1 ? '1 accepted' : `${refCount} accepted`}
+          {t('scoutingCard.accepted', { count: refCount })}
         </span>
       ),
     })
@@ -393,11 +396,11 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const galleryCount = counts?.galleryPhotos ?? 0
   if (highlightCount > 0 || galleryCount > 0 || fullGameCount > 0) {
     const mediaParts: string[] = []
-    if (highlightCount > 0) mediaParts.push(`${highlightCount} highlight${highlightCount === 1 ? '' : 's'}`)
-    if (fullGameCount > 0) mediaParts.push(`${fullGameCount} match${fullGameCount === 1 ? '' : 'es'}`)
-    if (galleryCount > 0) mediaParts.push(`${galleryCount} photo${galleryCount === 1 ? '' : 's'}`)
+    if (highlightCount > 0) mediaParts.push(t('scoutingCard.highlights', { count: highlightCount }))
+    if (fullGameCount > 0) mediaParts.push(t('scoutingCard.matches', { count: fullGameCount }))
+    if (galleryCount > 0) mediaParts.push(t('scoutingCard.photos', { count: galleryCount }))
     rows.push({
-      label: 'Media',
+      label: t('scoutingCard.media'),
       value: <span className="text-gray-900">{mediaParts.join(' · ')}</span>,
     })
   }
@@ -489,7 +492,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {showIntent && (
         <div className="mt-3 rounded-xl border border-gray-200 px-4 py-3">
           <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
-            Recruitment preferences
+            {t('scoutingCard.recruitmentPreferences')}
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {intent.rows.map((r) => (
@@ -541,12 +544,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
                 {savedState.isSaved ? (
                   <>
                     <BookmarkCheck className="h-4 w-4" />
-                    Saved
+                    {t('scoutingCard.saved')}
                   </>
                 ) : (
                   <>
                     <Bookmark className="h-4 w-4" />
-                    Shortlist
+                    {t('scoutingCard.shortlist')}
                   </>
                 )}
               </button>
@@ -564,7 +567,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             {canSave && (
               <MoreActionsMenu
                 playerId={profile.id}
-                playerName={profile.full_name ?? 'this player'}
+                playerName={profile.full_name ?? t('scoutingCard.thisPlayer')}
               />
             )}
             {showJourneyLink && (
@@ -573,7 +576,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
                 onClick={handleViewJourney}
                 className="ml-auto inline-flex items-center text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
               >
-                See full Journey →
+                {t('scoutingCard.seeJourney')}
               </button>
             )}
           </div>
@@ -590,14 +593,20 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {!user && hasAnyEvidence && (
         <div className="mt-5 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-500">
-            <button
-              type="button"
-              onClick={() => navigate('/signin')}
-              className="font-medium text-hockia-primary hover:underline"
-            >
-              Sign in
-            </button>
-            {' '}to shortlist or message {profile.full_name?.split(' ')[0] ?? 'this player'}.
+            <Trans
+              t={t}
+              i18nKey={profile.full_name != null ? 'scoutingCard.signInPromptNamed' : 'scoutingCard.signInPrompt'}
+              values={{ name: profile.full_name?.split(' ')[0] }}
+              components={{
+                signin: (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/signin')}
+                    className="font-medium text-hockia-primary hover:underline"
+                  />
+                ),
+              }}
+            />
           </p>
         </div>
       )}
@@ -609,7 +618,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             onClick={handleViewJourney}
             className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
-            See full Journey →
+            {t('scoutingCard.seeJourney')}
           </button>
         </div>
       )}

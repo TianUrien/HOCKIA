@@ -11,6 +11,7 @@ import { notifyBlockListChanged } from '@/hooks/useBlockedUsers'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { useReportAction } from '@/components/safety/useReportAction'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface ProfileActionMenuProps {
   targetId: string
@@ -38,6 +39,7 @@ interface ProfileActionMenuProps {
  * - Navigate away after blocking (profile becomes unavailable)
  */
 export default function ProfileActionMenu({ targetId, targetName, leadingItems = [], showBlock = true, triggerClassName, iconClassName, actionName, onBlocked }: ProfileActionMenuProps) {
+  const t = useProfileT()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
@@ -96,12 +98,12 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
         onBlocked()
         return
       }
-      addToast(`${targetName} has been blocked`, 'success')
+      addToast(t('profileActionMenu.blockedToast', { name: targetName }), 'success')
       // Navigate away — this profile is now unavailable to us
       navigate(-1)
     } catch (err) {
       logger.error('Block failed:', err)
-      addToast('Failed to block user. Please try again.', 'error')
+      addToast(t('profileActionMenu.blockFailed'), 'error')
     } finally {
       setLoadingBlock(false)
     }
@@ -121,20 +123,20 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
       // Friendship was severed by the original block; refresh the shared edge
       // cache so re-add affordances reflect the true (non-friend) state.
       invalidateFriendshipEdges()
-      addToast(`${targetName} has been unblocked`, 'success')
+      addToast(t('profileActionMenu.unblockedToast', { name: targetName }), 'success')
     } catch (err) {
       logger.error('Unblock failed:', err)
-      addToast('Failed to unblock user. Please try again.', 'error')
+      addToast(t('profileActionMenu.unblockFailed'), 'error')
     } finally {
       setLoadingBlock(false)
     }
   }
 
-  const items: MoreMenuItem[] = [...leadingItems, actionName ? { ...report.item, label: `Report ${actionName}` } : report.item]
+  const items: MoreMenuItem[] = [...leadingItems, actionName ? { ...report.item, label: t('profileActionMenu.reportNamed', { name: actionName }) } : report.item]
   if (showBlock) {
     items.push(blocked
-      ? { key: 'unblock', label: actionName ? `Unblock ${actionName}` : 'Unblock', icon: <ShieldCheck className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, onSelect: () => setShowUnblockConfirm(true) }
-      : { key: 'block', label: actionName ? `Block ${actionName}` : 'Block', icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, destructive: true, onSelect: () => setShowBlockConfirm(true) })
+      ? { key: 'unblock', label: actionName ? t('profileActionMenu.unblockNamed', { name: actionName }) : t('profileActionMenu.unblock'), icon: <ShieldCheck className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, onSelect: () => setShowUnblockConfirm(true) }
+      : { key: 'block', label: actionName ? t('profileActionMenu.blockNamed', { name: actionName }) : t('profileActionMenu.block'), icon: <Ban className={MENU_ICON_CLASS} strokeWidth={1.8} />, disabled: loadingBlock, destructive: true, onSelect: () => setShowBlockConfirm(true) })
   }
 
   return (
@@ -146,10 +148,9 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
       {showBlockConfirm && (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowBlockConfirm(false)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Block {targetName}?</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{t('profileActionMenu.blockTitle', { name: targetName })}</h3>
             <p className="text-sm text-gray-600 mb-5">
-              They won't be able to find your profile, see your posts, or message you.
-              You won't see their content either. Any existing friendship will be removed.
+              {t('profileActionMenu.blockBody')}
             </p>
             <div className="flex gap-3">
               <button
@@ -157,7 +158,7 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
                 onClick={() => setShowBlockConfirm(false)}
                 className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {t('profileActionMenu.cancel')}
               </button>
               <button
                 type="button"
@@ -165,7 +166,7 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
                 disabled={loadingBlock}
                 className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
-                {loadingBlock ? 'Blocking...' : 'Block'}
+                {loadingBlock ? t('profileActionMenu.blocking') : t('profileActionMenu.blockConfirm')}
               </button>
             </div>
           </div>
@@ -176,10 +177,9 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
       {showUnblockConfirm && (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowUnblockConfirm(false)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Unblock {targetName}?</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{t('profileActionMenu.unblockTitle', { name: targetName })}</h3>
             <p className="text-sm text-gray-600 mb-5">
-              They'll be able to find your profile, see your posts, and message you again.
-              If you want to be friends, you'll need to send a new friend request.
+              {t('profileActionMenu.unblockBody')}
             </p>
             <div className="flex gap-3">
               <button
@@ -187,7 +187,7 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
                 onClick={() => setShowUnblockConfirm(false)}
                 className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {t('profileActionMenu.cancel')}
               </button>
               <button
                 type="button"
@@ -195,7 +195,7 @@ export default function ProfileActionMenu({ targetId, targetName, leadingItems =
                 disabled={loadingBlock}
                 className="flex-1 py-2.5 bg-hockia-primary text-white rounded-lg text-sm font-medium hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
               >
-                {loadingBlock ? 'Unblocking...' : 'Unblock'}
+                {loadingBlock ? t('profileActionMenu.unblocking') : t('profileActionMenu.unblockConfirm')}
               </button>
             </div>
           </div>

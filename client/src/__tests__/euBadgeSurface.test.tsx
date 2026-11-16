@@ -40,7 +40,7 @@ describe('EuBadge surface', () => {
   })
   it('the deck details panel uses the light badge; the photo keeps the solid one', () => {
     const s = src('components/community/photo/MemberFullPreview.tsx')
-    expect(s).toContain('<EuBadge surface="light" /> EU passport')
+    expect(s).toContain('<EuBadge surface="light" /> {t(\'fullPreview.euPassport\')}')
     expect(s).toContain('<EuBadge surface="photo"')
   })
   it('no raw EU hex left in components', () => {

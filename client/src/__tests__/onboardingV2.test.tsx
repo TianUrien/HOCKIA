@@ -229,7 +229,7 @@ describe('route order: account first, then role, then set-up', () => {
 
     await waitFor(() => expect(mocks.signUp).toHaveBeenCalledTimes(1))
     const options = mocks.signUp.mock.calls[0][0].options
-    expect(options.data).toEqual({ acq: { src: 'test' } })
+    expect(options.data).toEqual({ acq: { src: 'test' }, ui_language: 'en' })
     expect(options.data.role).toBeUndefined()
     expect(options.data.dob).toBeUndefined()
     expect(localStorage.getItem('pending_role')).toBeNull()

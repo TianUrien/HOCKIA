@@ -16,6 +16,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
+import type { MemberLanguage } from './member-language.ts'
 
 const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
@@ -160,7 +161,8 @@ function renderPill(text: string): string {
   return `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(text)}</span>`
 }
 
-export function renderBlock(block: ContentBlock, vars: Record<string, string>): string {
+export function renderBlock(block: ContentBlock, vars: Record<string, string>, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
   const interpolate = (s: string | undefined) => s ? interpolateVariables(s, vars) : ''
   // For template text that is HTML on purpose (is_html), only the variable
   // VALUES are escaped; the template's own markup is kept.
@@ -209,7 +211,7 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
     }
 
     case 'user_card': {
-      const name = interpolate(block.name_var ? `{{${block.name_var}}}` : '') || 'User'
+      const name = interpolate(block.name_var ? `{{${block.name_var}}}` : '') || (es ? 'Alguien de Hockia' : 'User')
       const avatarUrl = vars[block.avatar_var || ''] || null
       const label = interpolate(block.label)
       const detailPills = (block.detail_vars || [])
@@ -252,7 +254,7 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
     }
 
     case 'button': {
-      const text = interpolate(block.text) || 'Learn more'
+      const text = interpolate(block.text) || (es ? 'Ver más' : 'Learn more')
       const url = safeHref(interpolate(block.url))
       if (!url) return ''
       return `
@@ -287,7 +289,9 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>): 
 
       const cards = conversations.map(conv => {
         const avatar = renderAvatarHtml(conv.sender_avatar_url, conv.sender_name, 40)
-        const messageLabel = conv.message_count === 1
+        const messageLabel = es
+          ? (conv.message_count === 1 ? '1 mensaje nuevo' : `${conv.message_count} mensajes nuevos`)
+          : conv.message_count === 1
           ? '1 new message'
           : `${conv.message_count} new messages`
 
@@ -413,7 +417,7 @@ ${bodyContent}
 export function renderContentBlocks(
   blocks: ContentBlock[],
   variables: Record<string, string>,
-  options?: { isOutreach?: boolean }
+  options?: { isOutreach?: boolean; language?: MemberLanguage }
 ): { html: string; text: string | null } {
   const isOutreach = options?.isOutreach ?? false
 
@@ -422,21 +426,23 @@ export function renderContentBlocks(
     return renderPlainOutreach(blocks, variables)
   }
 
+  const language = options?.language ?? 'en'
+  const es = language === 'es'
   const bodyContent = blocks
-    .map(block => renderBlock(block, variables))
+    .map(block => renderBlock(block, variables, language))
     .filter(Boolean)
     .join('\n    ')
 
   const settingsUrl = variables.settings_url || `${HOCKIA_BASE_URL}/settings`
 
   const footerHtml = `<p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because you have a Hockia account.<br>
-      <a href="${safeHref(settingsUrl)}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? 'Este email te llega por tu cuenta en Hockia.' : "You're receiving this because you have a Hockia account."}<br>
+      <a href="${safeHref(settingsUrl)}" style="color: #6c2bd9; text-decoration: none;">${es ? 'Ajustes de notificaciones' : 'Notification settings'}</a>
     </p>`
 
   const html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -464,17 +470,41 @@ export function renderContentBlocks(
   return { html, text: null }
 }
 
+/** Key of a template's Spanish row (migration 20261116120000_email_templates_spanish.sql). */
+export function spanishTemplateKey(templateKey: string): string {
+  return `${templateKey}__es`
+}
+
 /**
  * Full render pipeline: fetch template, validate variables, render HTML + interpolate text.
  * Returns null if template not found or not active.
+ *
+ * language 'es' (the recipient's profiles.ui_language) first looks for the
+ * active `<key>__es` row and falls back to the English row when it is
+ * missing or inactive; the layout text (footer) follows the row actually
+ * used. Variables built in code (headings, button labels) can be passed as a
+ * function of the language actually used, so a fallback to the English row
+ * (Spanish row not applied yet) gets English variables too, never a mix.
+ * The result's `language` says which row was used. English is unchanged.
  */
 export async function renderTemplate(
   supabase: SupabaseClient,
   templateKey: string,
-  variables: Record<string, string>
-): Promise<{ subject: string; html: string; text: string } | null> {
-  const template = await getActiveTemplate(supabase, templateKey)
+  variablesOrBuilder: Record<string, string> | ((language: MemberLanguage) => Record<string, string>),
+  language: MemberLanguage = 'en',
+): Promise<{ subject: string; html: string; text: string; language: MemberLanguage } | null> {
+  let template: EmailTemplate | null = null
+  let renderLanguage: MemberLanguage = 'en'
+  if (language === 'es') {
+    template = await getActiveTemplate(supabase, spanishTemplateKey(templateKey))
+    if (template) renderLanguage = 'es'
+  }
+  if (!template) template = await getActiveTemplate(supabase, templateKey)
   if (!template) return null
+
+  const variables = typeof variablesOrBuilder === 'function'
+    ? variablesOrBuilder(renderLanguage)
+    : variablesOrBuilder
 
   // Add settings_url if not provided
   if (!variables.settings_url) {
@@ -483,10 +513,10 @@ export async function renderTemplate(
 
   const isOutreach = template.template_key.startsWith('outreach_')
   const subject = interpolateVariables(template.subject_template, variables)
-  const { html } = renderContentBlocks(template.content_json, variables, { isOutreach })
+  const { html } = renderContentBlocks(template.content_json, variables, { isOutreach, language: renderLanguage })
   const text = template.text_template
     ? interpolateVariables(template.text_template, variables)
     : subject // Fallback plain text is just the subject
 
-  return { subject, html, text }
+  return { subject, html, text, language: renderLanguage }
 }

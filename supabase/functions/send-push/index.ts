@@ -4,7 +4,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { buildPushPayload, PUSH_PREFERENCE_COLUMNS, pushAllowed, shouldPushWebhookEvent } from './push-payload.ts'
+import { buildPushPayload, PUSH_PREFERENCE_COLUMNS, pushAllowed, pushLanguageOf, shouldPushWebhookEvent, unnamedActor } from './push-payload.ts'
 import { NEW_APPLICATIONS_PUSH_KIND, pushStandsDownForBatch } from '../_shared/club-reminders.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
 import { sendApnsNotification, isApnsConfigured } from './apns.ts'
@@ -151,8 +151,19 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // The recipient's interface language (profiles.ui_language, Spanish
+    // localization Stage 0). Read on its own and failing to English: before
+    // the column exists, or on any error, the push goes out in English as before.
+    const { data: languageRow, error: languageError } = await supabase
+      .from('profiles')
+      .select('ui_language')
+      .eq('id', recipientId)
+      .maybeSingle()
+    if (languageError) console.warn('[send-push] ui_language read failed, using English:', languageError.message)
+    const language = pushLanguageOf((languageRow as { ui_language?: string | null } | null)?.ui_language)
+
     // Get actor name for notification copy
-    let actorName = 'A HOCKIA member'
+    let actorName = unnamedActor(language)
     if (actorId) {
       const { data: actor } = await supabase
         .from('profiles')
@@ -176,7 +187,7 @@ Deno.serve(async (req: Request) => {
       .is('cleared_at', null)
 
     // Build push payload
-    const pushPayload = { ...buildPushPayload(kind, metadata, actorName, actorId), badge: unreadCount ?? 1 }
+    const pushPayload = { ...buildPushPayload(kind, metadata, actorName, actorId, language), badge: unreadCount ?? 1 }
     const payloadString = JSON.stringify(pushPayload)
 
     // Send to each device

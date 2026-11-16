@@ -12,6 +12,13 @@ import { activityGroup, formatActivityAge } from '@/lib/inboxTime'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
 import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
+import { useInboxT } from '@/i18n/ns/inbox'
+
+const GROUP_KEYS = {
+  Today: 'activity.groups.today',
+  'This week': 'activity.groups.thisWeek',
+  Earlier: 'activity.groups.earlier',
+} as const
 
 /**
  * Inbox › Activity (Figma 100:531): profile views, club replies, expired
@@ -22,6 +29,7 @@ import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
  * so nothing is fetched twice.
  */
 export function InboxActivity() {
+  const t = useInboxT()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const notifications = useNotificationStore((s) => s.notifications)
@@ -53,7 +61,7 @@ export function InboxActivity() {
     const friendshipId = notification.sourceEntityId
     if (!friendshipId) return
     const result = await respondToFriendRequest({ friendshipId, action })
-    if (result !== true) { const msg = typeof result === 'string' ? result : 'Could not update the request. Please try again.'; addToast(msg, friendRequestToastType(msg)) }
+    if (result !== true) { const msg = typeof result === 'string' ? result : t('activity.requestFailed'); addToast(msg, friendRequestToastType(msg)) }
   }
 
   if (loading && rows.length === 0) {
@@ -61,16 +69,16 @@ export function InboxActivity() {
   }
 
   return (
-    <section aria-label="Activity">
+    <section aria-label={t('activity.label')}>
       {unreadCount > 0 && (
         <div className="flex justify-end px-5 pb-1">
           <button type="button" onClick={() => void markAllRead()} className="flex h-9 items-center text-secondary font-semibold text-hockia-primary">
-            Mark all as read
+            {t('activity.markAllRead')}
           </button>
         </div>
       )}
       {rows.length === 0 ? (
-        <p className="px-5 py-8 text-center text-row text-ink-2">Nothing new yet. Profile views, club replies and references land here.</p>
+        <p className="px-5 py-8 text-center text-row text-ink-2">{t('activity.empty')}</p>
       ) : (
         <ul>
           {rows.map((notification, index) => {
@@ -81,7 +89,7 @@ export function InboxActivity() {
             const config = getNotificationConfig(notification)
             const unread = !notification.readAt
             const actor = notification.actor
-            const name = actor?.fullName || actor?.username || 'Hockia member'
+            const name = actor?.fullName || actor?.username || t('activity.memberFallback')
             const description = config.getDescription?.(notification)
             const route = resolveNotificationRoute(notification)
             const isFriendRequest = notification.kind === 'friend_request_received'
@@ -97,7 +105,7 @@ export function InboxActivity() {
             }
             return (
               <li key={notification.id}>
-                {header && <h3 className="px-5 pb-1 pt-4 text-micro font-semibold uppercase tracking-[0.06em] text-ink-3" data-testid="activity-group">{group}</h3>}
+                {header && <h3 className="px-5 pb-1 pt-4 text-micro font-semibold uppercase tracking-[0.06em] text-ink-3" data-testid="activity-group">{t(GROUP_KEYS[group])}</h3>}
                 <ActivityRow
                   className={lastInGroup ? 'is-last' : undefined}
                   leading={
@@ -119,7 +127,7 @@ export function InboxActivity() {
                         onClick={(e) => { e.stopPropagation(); answer('accept') }}
                         className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full' })}
                       >
-                        Accept
+                        {t('activity.accept')}
                       </button>
                       <button
                         type="button"
@@ -127,7 +135,7 @@ export function InboxActivity() {
                         onClick={(e) => { e.stopPropagation(); answer('decline') }}
                         className={buttonClassName({ variant: 'secondary', size: 'small', radius: 'rounded-full' })}
                       >
-                        Decline
+                        {t('activity.decline')}
                       </button>
                     </span>
                   )}

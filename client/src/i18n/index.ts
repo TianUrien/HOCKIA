@@ -10,7 +10,7 @@
  *
  * Outside React use `t` from here; inside components use `useTranslation`.
  */
-import i18n from 'i18next'
+import i18n, { type FlatNamespace, type TFunction } from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { logger } from '@/lib/logger'
 import enCommon from '@/locales/en/common.json'
@@ -91,6 +91,36 @@ export function registerNamespace(namespace: string, english: Catalog): void {
   // Deep merge: a namespace may arrive in two parts (its start-up core, then the rest).
   i18n.addResourceBundle('en', namespace, english, true, true)
   if (i18n.language === 'es') void loadSpanishNamespace(namespace)
+}
+
+const ensured = new WeakSet<Catalog>()
+
+/**
+ * Adds English catalogs the first time something reads from them. The
+ * namespace modules (i18n/ns/*) call this from their `t` and hook instead of
+ * registering at import: an import with a top-level effect is kept in the
+ * start-up chunk even when the bundler drops the component that imported it,
+ * which put whole screen catalogs into the first load (measured 2026-11-16).
+ * Silent: it can run during a render, so it must not make other components
+ * re-render. Deep merge, so a namespace may arrive in two parts (core, rest).
+ */
+export function ensureNamespace(namespace: string, ...catalogs: Catalog[]): void {
+  for (const english of catalogs) {
+    if (ensured.has(english)) continue
+    ensured.add(english)
+    i18n.addResourceBundle('en', namespace, english, true, true, { silent: true })
+  }
+  if (i18n.language === 'es') void loadSpanishNamespace(namespace)
+}
+
+/** A `t` for plain functions that adds its catalogs on first use. Call it with a pure annotation. */
+/* @__NO_SIDE_EFFECTS__ */
+export function lazyFixedT<N extends FlatNamespace>(namespace: N, ...catalogs: Catalog[]): TFunction<N> {
+  const translate = (...args: unknown[]): unknown => {
+    ensureNamespace(namespace, ...catalogs)
+    return (i18n.getFixedT(null, namespace) as unknown as (...a: unknown[]) => unknown)(...args)
+  }
+  return translate as unknown as TFunction<N>
 }
 
 export function currentLanguage(): UiLanguage {

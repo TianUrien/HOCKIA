@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * Anon-only footer CTA shown at the bottom of public profile pages.
@@ -10,6 +11,7 @@ import { useAuthStore } from '@/lib/auth'
  */
 export default function PublicProfileFooterCTA() {
   const user = useAuthStore((s) => s.user)
+  const t = useProfileT()
   if (user) return null
 
   return (
@@ -19,20 +21,19 @@ export default function PublicProfileFooterCTA() {
     >
       <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm md:p-8">
         <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">
-          Powered by Hockia
+          {t('publicProfileFooterCTA.eyebrow')}
         </p>
         <h2 className="mt-2 text-lg font-bold text-gray-900 md:text-xl">
-          Create your Hockia profile
+          {t('publicProfileFooterCTA.title')}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-gray-600">
-          Build your field hockey profile and share it with clubs, coaches, and
-          the hockey community.
+          {t('publicProfileFooterCTA.body')}
         </p>
         <Link
           to="/signup"
           className="mt-5 inline-flex items-center justify-center rounded-lg bg-hockia-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-[#6B20D4]"
         >
-          Sign up
+          {t('publicProfileFooterCTA.signUp')}
         </Link>
       </div>
     </div>

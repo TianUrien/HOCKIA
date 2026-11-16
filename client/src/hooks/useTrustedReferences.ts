@@ -3,6 +3,7 @@ import type { Json } from '@/lib/database.types'
 import type { Database } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tMedia } from '@/i18n/ns/media'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { extractErrorMessage } from '@/lib/utils'
@@ -199,7 +200,7 @@ export function useTrustedReferences(profileId: string) {
       // Don't show error toast if cancelled
       if (signal?.aborted) return
       logger.error('Failed to load references', error)
-      addToast('Unable to load references. Please try again.', 'error')
+      addToast(tMedia('references.toasts.loadFailed'), 'error')
       resetState()
     } finally {
       if (!signal?.aborted) {
@@ -241,12 +242,12 @@ export function useTrustedReferences(profileId: string) {
     async (params: { referenceId: string; relationshipType: string; requestNote?: string | null }) => {
       if (!isOwner) return false
       if (!params.referenceId) {
-        addToast('Select a connection to continue.', 'error')
+        addToast(tMedia('references.toasts.selectConnection'), 'error')
         return false
       }
 
       if (!canAddMore) {
-        addToast('You already have the maximum number of trusted references.', 'info')
+        addToast(tMedia('references.toasts.maxReached'), 'info')
         return false
       }
 
@@ -261,12 +262,12 @@ export function useTrustedReferences(profileId: string) {
         if (error) throw error
         trackDbEvent('reference_request', 'reference', params.referenceId, { relationship_type: params.relationshipType })
         trackReferenceRequestSent(authProfile?.role ?? 'unknown', params.relationshipType)
-        addToast('Reference request sent.', 'success')
+        addToast(tMedia('references.toasts.requestSent'), 'success')
         await fetchReferences()
         return true
       } catch (error) {
         logger.error('Failed to send reference request', error)
-        addToast(extractErrorMessage(error, 'Unable to send reference request. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, tMedia('references.toasts.requestFailed')), 'error')
         return false
       } finally {
         setMutating(null)
@@ -288,12 +289,12 @@ export function useTrustedReferences(profileId: string) {
         if (error) throw error
         trackDbEvent('reference_respond', 'reference', params.referenceId, { accepted: params.accept })
         trackReferenceRequestResponded(params.accept ? 'accept' : 'decline')
-        addToast(params.accept ? 'Reference accepted.' : 'Reference declined.', 'success')
+        addToast(params.accept ? tMedia('references.toasts.accepted') : tMedia('references.toasts.declined'), 'success')
         await fetchReferences()
         return true
       } catch (error) {
         logger.error('Failed to respond to reference request', error)
-        addToast(extractErrorMessage(error, 'Unable to update reference. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, tMedia('references.toasts.respondFailed')), 'error')
         // Refetch on error too — the bug-bundle migration's friendship-lost
         // re-check (#4a) means the request can fail because the requester is
         // no longer a friend. Without a refetch the now-orphaned pending row
@@ -320,12 +321,12 @@ export function useTrustedReferences(profileId: string) {
         const { error } = await supabase.rpc('remove_reference', { p_reference_id: referenceId })
         if (error) throw error
         trackDbEvent('reference_remove', 'reference', referenceId)
-        addToast('Reference removed.', 'success')
+        addToast(tMedia('references.toasts.removed'), 'success')
         await fetchReferences()
         return true
       } catch (error) {
         logger.error('Failed to remove reference', error)
-        addToast(extractErrorMessage(error, 'Unable to remove reference. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, tMedia('references.toasts.removeFailed')), 'error')
         return false
       } finally {
         setMutating(null)
@@ -341,12 +342,12 @@ export function useTrustedReferences(profileId: string) {
         const { error } = await supabase.rpc('withdraw_reference', { p_reference_id: referenceId })
         if (error) throw error
         trackDbEvent('reference_withdraw', 'reference', referenceId)
-        addToast('Reference withdrawn.', 'success')
+        addToast(tMedia('references.toasts.withdrawn'), 'success')
         await fetchReferences()
         return true
       } catch (error) {
         logger.error('Failed to withdraw reference', error)
-        addToast(extractErrorMessage(error, 'Unable to withdraw reference. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, tMedia('references.toasts.withdrawFailed')), 'error')
         return false
       } finally {
         setMutating(null)
@@ -366,12 +367,12 @@ export function useTrustedReferences(profileId: string) {
 
         if (error) throw error
         trackDbEvent('reference_edit', 'reference', referenceId)
-        addToast('Endorsement updated.', 'success')
+        addToast(tMedia('references.toasts.endorsementUpdated'), 'success')
         await fetchReferences()
         return true
       } catch (error) {
         logger.error('Failed to edit endorsement', error)
-        addToast(extractErrorMessage(error, 'Unable to update endorsement. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, tMedia('references.toasts.endorsementFailed')), 'error')
         return false
       } finally {
         setMutating(null)

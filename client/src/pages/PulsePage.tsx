@@ -4,6 +4,7 @@ import { PullToRefresh } from '@/components/PullToRefresh'
 import { queryClient } from '@/lib/queryClient'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * /pulse — "Your activity" (Figma H3 61:247). Founder ruling 11 Oct: it
@@ -13,7 +14,8 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
  */
 export default function PulsePage() {
   useScrollRestore()
-  useDocumentTitle('Your activity')
+  const t = useCommunityT()
+  useDocumentTitle(t('pulse.activity.documentTitle'))
   // Pulse hooks fetch on mount, not all through React Query — remounting is
   // how pull-to-refresh refreshes their numbers.
   const [refreshKey, setRefreshKey] = useState(0)

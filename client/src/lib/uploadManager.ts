@@ -5,6 +5,8 @@ import type { Upload as TusUpload } from 'tus-js-client'
 import { supabase } from './supabase'
 import { validateVideoFull } from './imageOptimization'
 import { logger } from './logger'
+import { tCommon } from '@/i18n/ns/common'
+
 
 // ---------------------------------------------------------------------------
 // Post video uploads go to CLOUDFLARE STREAM (not Supabase Storage).
@@ -87,18 +89,20 @@ function formatUploadError(raw: string): string {
     lower.includes('payload too large') ||
     lower.includes('content too large')
   )
-    return 'This file is too large. Videos must be under 100 MB.'
+    return tCommon('upload.errors.tooLarge100')
   if (lower.includes('mime type') || lower.includes('content type') || lower.includes('not allowed'))
-    return 'This file type is not supported. Use MP4, MOV, or WebM.'
+    return tCommon('upload.errors.typeNotSupported')
   if (lower.includes('network error') || lower.includes('failed to fetch'))
-    return 'Network error. Please check your connection and try again.'
+    return tCommon('upload.errors.network')
   if (lower.includes('provider_not_configured'))
-    return 'Video uploads are temporarily unavailable. Please try again later.'
+    return tCommon('upload.errors.unavailable')
   return raw
 }
 
-/** Shown when video-create-upload answers 429 (hourly upload limit). */
-export const VIDEO_UPLOAD_LIMIT_MESSAGE = 'You’ve started a lot of uploads in the last hour. Please try again a little later.'
+/** Shown when video-create-upload answers 429 (hourly upload limit). A function: the text follows the interface language. */
+export function videoUploadLimitMessage(): string {
+  return tCommon('upload.errors.hourlyLimit')
+}
 
 /** video-create-upload requires a 1–120 char title; derive one from the file. */
 function deriveTitle(file: File): string {
@@ -170,7 +174,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           // Step 1 — client-side validation (size / type / duration)
           const validation = await validateVideoFull(file)
           if (!validation.valid) {
-            updateUpload(id, { status: 'error', error: validation.error || 'Invalid video' })
+            updateUpload(id, { status: 'error', error: validation.error || tCommon('upload.errors.invalidVideo') })
             return
           }
           if (isCancelled()) return
@@ -197,12 +201,12 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
             try {
               reason = ctx ? ((await ctx.clone().json()) as { error?: string }).error ?? '' : ''
             } catch { /* body not JSON — fall through to the generic message */ }
-            if (ctx?.status === 429 || reason === 'rate_limited') throw new Error(VIDEO_UPLOAD_LIMIT_MESSAGE)
-            throw new Error(reason || 'Could not start the upload. Please try again.')
+            if (ctx?.status === 429 || reason === 'rate_limited') throw new Error(videoUploadLimitMessage())
+            throw new Error(reason || tCommon('upload.errors.couldNotStart'))
           }
           const created = data as { videoId?: string; tusUploadUrl?: string } | null
           if (!created?.videoId || !created?.tusUploadUrl) {
-            throw new Error('Could not start the upload. Please try again.')
+            throw new Error(tCommon('upload.errors.couldNotStart'))
           }
           if (isCancelled()) return
 
@@ -237,7 +241,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           for (;;) {
             if (isCancelled()) return
             if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-              throw new Error('Still processing. Check back in a few minutes.')
+              throw new Error(tCommon('upload.errors.stillProcessing'))
             }
             await new Promise((r) => setTimeout(r, POLL_MS))
             const { data: row } = await supabase
@@ -248,7 +252,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
             const status = (row as { status?: string } | null)?.status
             if (status === 'ready') break
             if (status === 'errored') {
-              throw new Error('Cloudflare could not process this video. Try a different file.')
+              throw new Error(tCommon('upload.errors.processingFailed'))
             }
           }
 
@@ -263,7 +267,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           get().uploads[id]?.onComplete?.(result)
         } catch (err) {
           if (isCancelled()) return
-          const message = err instanceof Error ? err.message : 'Upload failed'
+          const message = err instanceof Error ? err.message : tCommon('upload.errors.failed')
           logger.error('[UploadManager] Cloudflare upload pipeline error:', err)
           updateUpload(id, {
             status: 'error',

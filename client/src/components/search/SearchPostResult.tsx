@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom'
 import { Avatar, RoleBadge } from '@/components'
 import { getTimeAgo } from '@/lib/utils'
 import type { SearchPostResult as SearchPostResultType } from '@/hooks/useSearch'
+import { useWorldT } from '@/i18n/ns/world'
 
 interface SearchPostResultProps {
   result: SearchPostResultType
 }
 
 export function SearchPostResult({ result }: SearchPostResultProps) {
+  const t = useWorldT()
   const timeAgo = getTimeAgo(result.created_at, true)
 
   const profilePath = result.author_role === 'club'
@@ -41,7 +43,7 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
               to={profilePath}
               className="font-semibold text-gray-900 truncate text-sm hover:text-hockia-primary transition-colors"
             >
-              {result.author_name || 'Unknown'}
+              {result.author_name || t('searchResults.unknownAuthor')}
             </Link>
             <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
           </div>
@@ -56,10 +58,10 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
 
       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
         {result.like_count > 0 && (
-          <span>{result.like_count} like{result.like_count !== 1 ? 's' : ''}</span>
+          <span>{t('searchResults.likes', { count: result.like_count })}</span>
         )}
         {result.comment_count > 0 && (
-          <span>{result.comment_count} comment{result.comment_count !== 1 ? 's' : ''}</span>
+          <span>{t('searchResults.comments', { count: result.comment_count })}</span>
         )}
       </div>
     </div>

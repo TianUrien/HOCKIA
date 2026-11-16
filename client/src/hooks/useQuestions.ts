@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
+import { tCommunity } from '@/i18n/ns/community'
 import type {
   Question,
   QuestionWithAnswers,
@@ -40,7 +41,7 @@ function transformQuestion(row: Record<string, unknown>): Question {
       role: author.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
     } : {
       id: '',
-      full_name: 'Unknown',
+      full_name: tCommunity('questions.unknownAuthor'),
       avatar_url: null,
       role: 'player',
     },
@@ -63,7 +64,7 @@ function transformAnswer(row: Record<string, unknown>): Answer {
       role: author.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
     } : {
       id: '',
-      full_name: 'Unknown',
+      full_name: tCommunity('questions.unknownAuthor'),
       avatar_url: null,
       role: 'player',
     },
@@ -146,7 +147,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
       setHasMore(newQuestions.length === limit)
     } catch (err) {
       logger.error('[useQuestions] Fetch error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load questions')
+      setError(err instanceof Error ? err.message : tCommunity('questions.errors.loadList'))
     } finally {
       setIsLoading(false)
     }
@@ -174,7 +175,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        addToast('You must be logged in to ask a question', 'error')
+        addToast(tCommunity('questions.toasts.signInToAsk'), 'error')
         return null
       }
 
@@ -204,9 +205,9 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
 
       if (insertError) {
         if (insertError.message.includes('question_rate_limit_exceeded')) {
-          addToast('You can only ask 3 questions per day. Please try again later.', 'error')
+          addToast(tCommunity('questions.toasts.askLimit'), 'error')
         } else {
-          addToast('Failed to post question', 'error')
+          addToast(tCommunity('questions.toasts.postFailed'), 'error')
         }
         throw insertError
       }
@@ -217,7 +218,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
       setQuestions(prev => [newQuestion, ...prev])
       setTotalCount(prev => prev + 1)
       
-      addToast('Question posted successfully!', 'success')
+      addToast(tCommunity('questions.toasts.posted'), 'success')
       return newQuestion
     } catch (err) {
       logger.error('[useQuestions] Create error:', err)
@@ -241,7 +242,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
         .eq('id', questionId)
 
       if (updateError) {
-        addToast('Failed to update question', 'error')
+        addToast(tCommunity('questions.toasts.updateFailed'), 'error')
         throw updateError
       }
 
@@ -250,7 +251,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
         q.id === questionId ? { ...q, ...updates } as Question : q
       ))
 
-      addToast('Question updated', 'success')
+      addToast(tCommunity('questions.toasts.updated'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestions] Update error:', err)
@@ -267,7 +268,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
 
       if (deleteError) {
         logger.error('[useQuestions] Delete error:', deleteError)
-        addToast('Failed to delete question', 'error')
+        addToast(tCommunity('questions.toasts.deleteFailed'), 'error')
         throw deleteError
       }
 
@@ -275,7 +276,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
       setQuestions(prev => prev.filter(q => q.id !== questionId))
       setTotalCount(prev => prev - 1)
 
-      addToast('Question deleted', 'success')
+      addToast(tCommunity('questions.toasts.deleted'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestions] Delete error:', err)
@@ -371,7 +372,7 @@ export function useQuestionDetail(questionId: string | undefined) {
       })
     } catch (err) {
       logger.error('[useQuestionDetail] Fetch error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load question')
+      setError(err instanceof Error ? err.message : tCommunity('questions.errors.loadOne'))
     } finally {
       setIsLoading(false)
     }
@@ -387,7 +388,7 @@ export function useQuestionDetail(questionId: string | undefined) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        addToast('You must be logged in to answer', 'error')
+        addToast(tCommunity('questions.toasts.signInToAnswer'), 'error')
         return null
       }
 
@@ -414,9 +415,9 @@ export function useQuestionDetail(questionId: string | undefined) {
 
       if (insertError) {
         if (insertError.message.includes('answer_rate_limit_exceeded')) {
-          addToast('You can only post 10 answers per day. Please try again later.', 'error')
+          addToast(tCommunity('questions.toasts.answerLimit'), 'error')
         } else {
-          addToast('Failed to post answer', 'error')
+          addToast(tCommunity('questions.toasts.answerFailed'), 'error')
         }
         throw insertError
       }
@@ -430,7 +431,7 @@ export function useQuestionDetail(questionId: string | undefined) {
         answers: [...prev.answers, newAnswer],
       } : null)
 
-      addToast('Answer posted!', 'success')
+      addToast(tCommunity('questions.toasts.answerPosted'), 'success')
       return newAnswer
     } catch (err) {
       logger.error('[useQuestionDetail] Create answer error:', err)
@@ -449,7 +450,7 @@ export function useQuestionDetail(questionId: string | undefined) {
         .eq('id', answerId)
 
       if (updateError) {
-        addToast('Failed to update answer', 'error')
+        addToast(tCommunity('questions.toasts.answerUpdateFailed'), 'error')
         throw updateError
       }
 
@@ -461,7 +462,7 @@ export function useQuestionDetail(questionId: string | undefined) {
         ),
       } : null)
 
-      addToast('Answer updated', 'success')
+      addToast(tCommunity('questions.toasts.answerUpdated'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestionDetail] Update answer error:', err)
@@ -477,7 +478,7 @@ export function useQuestionDetail(questionId: string | undefined) {
         .eq('id', answerId)
 
       if (deleteError) {
-        addToast('Failed to delete answer', 'error')
+        addToast(tCommunity('questions.toasts.answerDeleteFailed'), 'error')
         throw deleteError
       }
 
@@ -488,7 +489,7 @@ export function useQuestionDetail(questionId: string | undefined) {
         answers: prev.answers.filter(a => a.id !== answerId),
       } : null)
 
-      addToast('Answer deleted', 'success')
+      addToast(tCommunity('questions.toasts.answerDeleted'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestionDetail] Delete answer error:', err)
@@ -511,14 +512,14 @@ export function useQuestionDetail(questionId: string | undefined) {
         .eq('id', questionId)
 
       if (updateError) {
-        addToast('Failed to update question', 'error')
+        addToast(tCommunity('questions.toasts.updateFailed'), 'error')
         throw updateError
       }
 
       // Update local state
       setQuestion(prev => prev ? { ...prev, ...updates } as QuestionWithAnswers : null)
 
-      addToast('Question updated', 'success')
+      addToast(tCommunity('questions.toasts.updated'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestionDetail] Update question error:', err)
@@ -537,12 +538,12 @@ export function useQuestionDetail(questionId: string | undefined) {
 
       if (deleteError) {
         logger.error('[useQuestionDetail] Delete question error:', deleteError)
-        addToast('Failed to delete question', 'error')
+        addToast(tCommunity('questions.toasts.deleteFailed'), 'error')
         throw deleteError
       }
 
       setQuestion(null)
-      addToast('Question deleted', 'success')
+      addToast(tCommunity('questions.toasts.deleted'), 'success')
       return true
     } catch (err) {
       logger.error('[useQuestionDetail] Delete question error:', err)

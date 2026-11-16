@@ -19,7 +19,7 @@ describe('Community offline', () => {
     expect(NETWORK_ERROR_COPY).toBe('Couldn’t reach Hockia. Check your connection and try again.')
     expect(src('pages/OpportunityDetailPage.tsx')).toContain("from '@/lib/networkCopy'")
     expect(src('pages/AuthScreen.tsx')).toContain("from '@/lib/networkCopy'")
-    expect(src('components/community/PeopleListView.tsx')).toContain('{NETWORK_ERROR_COPY}')
+    expect(src('components/community/PeopleListView.tsx')).toContain('{networkErrorCopy()}')
   })
 
   it('the error title follows the tab', () => {
@@ -36,7 +36,7 @@ describe('Community offline', () => {
   })
 
   it('the heading follows the selected tab on desktop too', () => {
-    expect(src('pages/CommunityPage.tsx')).toContain("activeTab === 'all' ? 'All members' : TITLE_BY_TAB[activeTab]")
+    expect(src('pages/CommunityPage.tsx')).toContain("activeTab === 'all' ? t('page.allMembers') : tabTitle")
   })
 
   it.each([
