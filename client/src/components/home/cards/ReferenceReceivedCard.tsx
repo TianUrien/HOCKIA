@@ -3,6 +3,8 @@ import { ShieldCheck } from 'lucide-react'
 import { Avatar } from '@/components'
 import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { ReferenceReceivedFeedItem } from '@/types/homeFeed'
+import { Trans } from 'react-i18next'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface ReferenceReceivedCardProps {
   item: ReferenceReceivedFeedItem
@@ -14,11 +16,12 @@ interface ReferenceReceivedCardProps {
  * receiver's profile, where the full reference + endorsement text live.
  */
 export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
+  const t = useHomeT()
   const receiverPath = profilePathForRole(item.role, item.profile_id)
   const refereePath = item.referee_role
     ? profilePathForRole(item.referee_role, item.referee_id)
     : null
-  const refereeName = item.referee_name || 'Unknown'
+  const refereeName = item.referee_name || t('cards.reference.unknownReferee')
 
   const referee = (
     <>
@@ -30,8 +33,14 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
         role={item.referee_role}
       />
       <span className="min-w-0 truncate text-[14px] leading-5">
-        <span className="font-semibold text-gray-900">{refereeName}</span>
-        <span className="text-gray-500"> vouched for {item.full_name || 'them'}</span>
+        <Trans
+          t={t}
+          i18nKey="cards.reference.vouched"
+          values={{ referee: refereeName, member: item.full_name || t('cards.reference.unknownMember') }}
+          tOptions={{ interpolation: { escapeValue: true } }}
+          shouldUnescape
+          components={{ name: <span className="font-semibold text-gray-900" />, rest: <span className="text-gray-500" /> }}
+        />
       </span>
     </>
   )
@@ -46,7 +55,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
         createdAt={item.created_at}
         profilePath={receiverPath}
       />
-      <FeedCardCaption icon={<ShieldCheck />}>Received a reference</FeedCardCaption>
+      <FeedCardCaption icon={<ShieldCheck />}>{t('cards.reference.caption')}</FeedCardCaption>
 
       <FeedCardBody>
         {refereePath ? (
@@ -63,7 +72,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
       </FeedCardBody>
 
       <FeedCardFooter>
-        <FeedCardAction to={receiverPath}>View profile</FeedCardAction>
+        <FeedCardAction to={receiverPath}>{t('cards.reference.viewProfile')}</FeedCardAction>
       </FeedCardFooter>
     </FeedCard>
   )

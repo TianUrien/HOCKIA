@@ -3,6 +3,7 @@ import { positionLabel } from '@/lib/identity'
 import { NationalityCardDisplay } from '@/components'
 import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { OpenToPlayConfirmedFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface Props {
   item: OpenToPlayConfirmedFeedItem
@@ -14,6 +15,7 @@ interface Props {
  * (never stacks), so it reads as a live availability signal.
  */
 export function OpenToPlayConfirmedCard({ item }: Props) {
+  const t = useHomeT()
   const profilePath = profilePathForRole(item.player_role, item.player_id)
   const hasDetails = Boolean(item.country_id || item.position || item.open_to_opportunities)
 
@@ -27,7 +29,7 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
         createdAt={item.created_at}
         profilePath={profilePath}
       />
-      <FeedCardCaption icon={<BadgeCheck />}>Open to play</FeedCardCaption>
+      <FeedCardCaption icon={<BadgeCheck />}>{t('cards.openToPlay.caption')}</FeedCardCaption>
 
       {hasDetails && (
         <FeedCardBody>
@@ -36,7 +38,7 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
             {item.position && <span>{positionLabel(item.position)}</span>}
             {item.open_to_opportunities && (
               <span className="inline-flex items-center rounded-full bg-hockia-primary/10 px-2 py-0.5 text-xs font-medium text-hockia-primary">
-                Open to opportunities
+                {t('cards.openToPlay.openToOpportunities')}
               </span>
             )}
           </div>
@@ -44,7 +46,7 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
       )}
 
       <FeedCardFooter>
-        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+        <FeedCardAction to={profilePath}>{t('cards.openToPlay.viewProfile')}</FeedCardAction>
       </FeedCardFooter>
     </FeedCard>
   )

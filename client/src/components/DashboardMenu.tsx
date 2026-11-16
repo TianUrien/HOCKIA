@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * DashboardMenu - Hamburger menu for Dashboard pages
@@ -16,6 +17,7 @@ import { useNotificationStore } from '@/lib/notifications'
 export default function DashboardMenu() {
   const navigate = useNavigate()
   const { signOut } = useAuthStore()
+  const t = useCommonT()
   const { addToast } = useToastStore()
   const toggleNotificationDrawer = useNotificationStore((state) => state.toggleDrawer)
   const closeNotificationsDrawer = () => toggleNotificationDrawer(false)
@@ -114,7 +116,7 @@ export default function DashboardMenu() {
       navigate('/')
     } catch (error) {
       logger.error('Failed to sign out', error)
-      addToast('Could not sign out. Please try again.', 'error')
+      addToast(t('dashboardMenu.signOutFailed'), 'error')
     }
   }
 
@@ -129,7 +131,7 @@ export default function DashboardMenu() {
             ? 'bg-gray-100 text-gray-900'
             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`}
-        aria-label={isOpen ? 'Close menu' : 'Open menu'}
+        aria-label={isOpen ? t('dashboardMenu.close') : t('dashboardMenu.open')}
       >
         {isOpen ? (
           <X className="w-5 h-5" />
@@ -157,7 +159,7 @@ export default function DashboardMenu() {
               role="menuitem"
             >
               <Settings className="w-5 h-5" />
-              Settings
+              {t('dashboardMenu.settings')}
             </button>
             <div className="h-px bg-gray-200 my-1" />
             <button
@@ -166,7 +168,7 @@ export default function DashboardMenu() {
               role="menuitem"
             >
               <LogOut className="w-5 h-5" />
-              Sign Out
+              {t('dashboardMenu.signOut')}
             </button>
           </div>,
           document.body

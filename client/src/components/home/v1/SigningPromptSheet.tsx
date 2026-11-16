@@ -9,6 +9,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { seasonLabel } from '@/lib/signing'
 import { roleTitle, signingDetail } from '@/lib/homeEngagement'
 import { NewSigningArt } from './NewSigningArt'
+import { useHomeT } from '@/i18n/ns/home'
 
 const WINDOW_DAYS = 21
 const DISMISS_KEY = 'hockia.signingPrompt.dismissed'
@@ -36,6 +37,7 @@ function dismiss(id: string) {
  * The tagged member is notified by the server (and must be 18+).
  */
 export function SigningPromptSheet() {
+  const t = useHomeT()
   const profile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const queryClient = useQueryClient()
@@ -94,23 +96,23 @@ export function SigningPromptSheet() {
     setPosting(true)
     const res = await createSigningPost(current.person.id, null, null, { role: current.role, season: current.season })
     setPosting(false)
-    if (!res.success) { addToast(res.error ?? 'Could not post the signing', 'error'); return }
+    if (!res.success) { addToast(res.error ?? t('signingPrompt.postFailed'), 'error'); return }
     dismiss(current.applicationId)
     setClosed((p) => new Set(p).add(current.applicationId))
-    addToast('Signing posted', 'success')
+    addToast(t('signingPrompt.postedToast'), 'success')
     void queryClient.invalidateQueries({ queryKey: ['home-feed'] })
   }
 
   return (
-    <BottomSheet open onClose={notNow} ariaLabel="Signing confirmed" initialFocus="panel">
+    <BottomSheet open onClose={notNow} ariaLabel={t('signingPrompt.title')} initialFocus="panel">
       <div className="px-4 pb-4 pt-1" data-testid="signing-prompt-sheet">
-        <h2 className="text-[22px] font-bold leading-7 text-ink-1">Signing confirmed</h2>
-        <p className="mt-1.5 text-[15px] leading-5 text-ink-2">Share it with the community? {first} is tagged and gets notified.</p>
+        <h2 className="text-[22px] font-bold leading-7 text-ink-1">{t('signingPrompt.title')}</h2>
+        <p className="mt-1.5 text-[15px] leading-5 text-ink-2">{t('signingPrompt.body', { name: first })}</p>
         <NewSigningArt
           className="mt-4"
           personName={current.person.full_name}
           personAvatarUrl={current.person.avatar_url}
-          clubName={profile.full_name ?? 'Your club'}
+          clubName={profile.full_name ?? t('signingPrompt.clubFallback')}
           clubCrestUrl={profile.avatar_url}
           detail={signingDetail({ signing_role: current.role, person_position: current.person.position, season: current.season })}
         />
@@ -120,10 +122,10 @@ export function SigningPromptSheet() {
           disabled={posting}
           className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-[17px] font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2 disabled:opacity-60"
         >
-          {posting && <Loader2 className="h-4 w-4 animate-spin" />} Post new signing
+          {posting && <Loader2 className="h-4 w-4 animate-spin" />} {t('signingPrompt.post')}
         </button>
         <button type="button" onClick={notNow} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-hockia-primary">
-          Not now
+          {t('signingPrompt.notNow')}
         </button>
       </div>
     </BottomSheet>

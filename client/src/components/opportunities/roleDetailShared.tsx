@@ -6,6 +6,8 @@ import { clubNoteFromFeedback, formatDurationText } from '@/lib/opportunityCopy'
 import { dayFirst } from '@/lib/dayFirst'
 import { daysUntil } from '@/lib/opportunityRails'
 import { getShareOrigin } from '@/lib/profileShare'
+import { tOpportunities } from '@/i18n/ns/opportunities'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 /**
  * The applicant's OWN application row (RLS: applicant_id = auth.uid()): the
@@ -44,9 +46,9 @@ export async function shareRole(vacancy: Vacancy, title: string, addToast: (mess
       return
     }
     await navigator.clipboard.writeText(url)
-    addToast('Link copied', 'success')
+    addToast(tOpportunities('detail.linkCopied'), 'success')
   } catch (err) {
-    if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this opportunity', 'error')
+    if (!(err instanceof Error && err.name === 'AbortError')) addToast(tOpportunities('detail.shareFailed'), 'error')
   }
 }
 
@@ -54,14 +56,14 @@ export async function shareRole(vacancy: Vacancy, title: string, addToast: (mess
 export function roleDates(vacancy: Vacancy) {
   const deadlineDays = daysUntil(vacancy.application_deadline)
   const startsValue = (() => {
-    if (!vacancy.start_date) return 'Immediately'
+    if (!vacancy.start_date) return tOpportunities('detail.startsImmediately')
     const d = new Date(vacancy.start_date)
-    return Number.isNaN(d.getTime()) ? 'Immediately' : d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+    return Number.isNaN(d.getTime()) ? tOpportunities('detail.startsImmediately') : d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric' })
   })()
   const duration = formatDurationText(vacancy.duration_text)
-  const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? 'Open' : 'Open'
+  const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? tOpportunities('detail.applyByOpen') : tOpportunities('detail.applyByOpen')
   const applyBySub = vacancy.application_deadline
-    ? (deadlineDays !== null && deadlineDays >= 0 ? closesSoonLabel(vacancy.application_deadline) : 'Deadline passed')
-    : 'Until filled'
+    ? (deadlineDays !== null && deadlineDays >= 0 ? closesSoonLabel(vacancy.application_deadline) : tOpportunities('detail.deadlinePassed'))
+    : tOpportunities('detail.untilFilled')
   return { deadlineDays, startsValue, duration, applyByValue, applyBySub }
 }

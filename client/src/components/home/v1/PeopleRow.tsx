@@ -5,6 +5,7 @@ import { SectionHeader } from './primitives'
 import { useHomeV1 } from './homeV1Context'
 import { useHomePeople, type PeopleKind } from './useHomePeople'
 import { HOME_V1_MODULES, recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { useHomeT } from '@/i18n/ns/home'
 
 const MODULE_BY_KIND: Record<PeopleKind, { id: string; position: number }> = {
   new: HOME_V1_MODULES.peopleNew,
@@ -12,11 +13,12 @@ const MODULE_BY_KIND: Record<PeopleKind, { id: string; position: number }> = {
   pymk: HOME_V1_MODULES.peoplePymk,
 }
 
-const COPY: Record<PeopleKind, { title: string; label: string; to: string; a11y: string }> = {
-  new: { title: 'New in the community', label: 'New in the community', to: '/community', a11y: 'new member' },
-  available: { title: 'Available now', label: 'Available now', to: '/community', a11y: 'available now' },
-  pymk: { title: 'People you may know', label: 'People you may know', to: '/community', a11y: 'you may know' },
-}
+// title / label / a11y are catalog keys, translated where the row renders.
+const COPY = {
+  new: { title: 'people.new.title', label: 'people.new.deckTitle', to: '/community', a11y: 'people.new.faceAria' },
+  available: { title: 'people.available.title', label: 'people.available.deckTitle', to: '/community', a11y: 'people.available.faceAria' },
+  pymk: { title: 'people.pymk.title', label: 'people.pymk.deckTitle', to: '/community', a11y: 'people.pymk.faceAria' },
+} as const satisfies Record<PeopleKind, { title: string; label: string; to: string; a11y: string }>
 
 /**
  * Faces row (Figma 60:158): 68 pt faces in a ring — brand gradient for new
@@ -24,6 +26,7 @@ const COPY: Record<PeopleKind, { title: string; label: string; to: string; a11y:
  * face → the Community deck with that list and order. Hidden when empty.
  */
 export function PeopleRow({ kind, className, module = MODULE_BY_KIND[kind] }: { kind: PeopleKind; className?: string; /** Which slot this row fills (header or end of feed) for impressions and clicks. */ module?: { id: string; position: number } }) {
+  const t = useHomeT()
   const { data, isLoading } = useHomePeople(kind)
   const { openDeck, openDeckByIds } = useHomeV1()
   const copy = COPY[kind]
@@ -35,22 +38,22 @@ export function PeopleRow({ kind, className, module = MODULE_BY_KIND[kind] }: { 
 
   const open = (i: number) => {
     trackModuleClick(module.id, module.position, 'member_deck')
-    if (data?.profiles) openDeck(data.profiles, i, copy.label)
-    else openDeckByIds(faces.map((f) => f.id), i, copy.label)
+    if (data?.profiles) openDeck(data.profiles, i, t(copy.label))
+    else openDeckByIds(faces.map((f) => f.id), i, t(copy.label))
   }
 
   return (
     <section ref={impressionRef} className={cn('flex flex-col gap-2 pb-4', className)} data-testid={`home-people-${kind}`}>
-      <SectionHeader title={copy.title} action="See all" to={copy.to} onLinkClick={() => trackModuleClick(module.id, module.position, copy.to)} />
+      <SectionHeader title={t(copy.title)} action={t('people.seeAll')} to={copy.to} onLinkClick={() => trackModuleClick(module.id, module.position, copy.to)} />
       <div className="flex gap-3.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {faces.map((f, i) => {
-          const first = (f.full_name ?? '').trim().split(/\s+/)[0] || 'Member'
+          const first = (f.full_name ?? '').trim().split(/\s+/)[0] || t('people.unnamedMember')
           return (
             <button
               key={f.id}
               type="button"
               onClick={() => open(i)}
-              aria-label={`${first}, ${copy.a11y}`}
+              aria-label={t(copy.a11y, { name: first })}
               className="flex w-[68px] shrink-0 flex-col items-center gap-1.5 transition-transform duration-300 active:scale-[0.97]"
             >
               <span

@@ -1,12 +1,14 @@
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Trans } from 'react-i18next'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { AuthHeading, AuthPage, FormError, OrDivider, TermsLine } from '@/components/auth/authUi'
 import { switchLink } from '@/components/auth/authClasses'
 import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { useAuthStore } from '@/lib/auth'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * First run — OAuth first (Figma "Landing v3" Sign up 127:2261 desktop /
@@ -25,6 +27,7 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
 export default function SignUp() {
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useAuthT()
   const { user, profile, loading: authLoading } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
 
@@ -44,19 +47,14 @@ export default function SignUp() {
       // Back to the landing page on the web, to Welcome in the app (Welcome
       // is the app's start since rebrand page 26).
       onBack={() => navigate('/')}
-      backLabel={Capacitor.isNativePlatform() ? 'Back to Welcome' : 'Back to home'}
+      backLabel={Capacitor.isNativePlatform() ? t('signUp.backWelcome') : t('signUp.backHome')}
       footerNote={<TermsLine tone="web" />}
       switchLine={
-        <>
-          Already a member?{' '}
-          <Link to={`/signin${search}`} className={switchLink}>
-            Log in
-          </Link>
-        </>
+        <Trans t={t} i18nKey="signUp.switchLine" components={{ a: <Link to={`/signin${search}`} className={switchLink} /> }} />
       }
     >
       {/* Rebrand page 26 · Join: account first, role next. */}
-      <AuthHeading title="Join Hockia" subtitle="Create your account first. You’ll choose your role next." />
+      <AuthHeading title={t('signUp.title')} subtitle={t('signUp.subtitle')} />
       <div className="mt-8 flex flex-col gap-3">
         <FormError>{error}</FormError>
         <OAuthButtons intent="signup" next={next} onError={setError} appearance="web" />
@@ -66,7 +64,7 @@ export default function SignUp() {
           onClick={() => navigate(`/signup/email${search}`)}
           className={webButtonClassName({ variant: 'secondary', size: 'large', block: true })}
         >
-          Create with email
+          {t('signUp.createWithEmail')}
         </button>
       </div>
     </AuthPage>

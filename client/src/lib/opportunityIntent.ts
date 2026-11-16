@@ -5,6 +5,9 @@
  * lens. DB stores the `value` keys.
  */
 
+import { tOpportunities } from '@/i18n/ns/opportunities.core'
+import { withLazyText } from '@/lib/opportunityLazyText'
+
 export interface IntentOption {
   value: string
   label: string
@@ -12,43 +15,41 @@ export interface IntentOption {
 
 /** Level of TALENT sought (not the club's own level). */
 export const LEVEL_SOUGHT_OPTIONS: readonly IntentOption[] = [
-  { value: 'elite', label: 'Elite / International' },
-  { value: 'high_performance', label: 'High Performance' },
-  { value: 'competitive', label: 'Competitive' },
-  { value: 'development', label: 'Development' },
+  withLazyText({ value: 'elite' }, { label: () => tOpportunities('level.elite') }),
+  withLazyText({ value: 'high_performance' }, { label: () => tOpportunities('level.highPerformance') }),
+  withLazyText({ value: 'competitive' }, { label: () => tOpportunities('level.competitive') }),
+  withLazyText({ value: 'development' }, { label: () => tOpportunities('level.development') }),
 ] as const
 
 export const COMPENSATION_OPTIONS: readonly IntentOption[] = [
-  { value: 'paid', label: 'Paid' },
-  { value: 'unpaid_development', label: 'Unpaid / Development' },
-  { value: 'either', label: 'Either' },
+  withLazyText({ value: 'paid' }, { label: () => tOpportunities('compensation.paid') }),
+  withLazyText({ value: 'unpaid_development' }, { label: () => tOpportunities('compensation.unpaidDevelopment') }),
+  withLazyText({ value: 'either' }, { label: () => tOpportunities('compensation.either') }),
 ] as const
 
 /** Coach-worded "what are you solving this season?" priority. */
 export const RECRUITMENT_PROBLEM_OPTIONS: readonly IntentOption[] = [
-  { value: 'replace_player', label: 'Replace a key player' },
-  { value: 'raise_level', label: 'Raise team level' },
-  { value: 'best_available', label: 'Best available anywhere' },
-  { value: 'young_talent', label: 'Young talent with potential' },
-  { value: 'leadership', label: 'Add leadership / experience' },
-  { value: 'urgent', label: 'Urgent need' },
+  withLazyText({ value: 'replace_player' }, { label: () => tOpportunities('recruitmentProblem.replacePlayer') }),
+  withLazyText({ value: 'raise_level' }, { label: () => tOpportunities('recruitmentProblem.raiseLevel') }),
+  withLazyText({ value: 'best_available' }, { label: () => tOpportunities('recruitmentProblem.bestAvailable') }),
+  withLazyText({ value: 'young_talent' }, { label: () => tOpportunities('recruitmentProblem.youngTalent') }),
+  withLazyText({ value: 'leadership' }, { label: () => tOpportunities('recruitmentProblem.leadership') }),
+  withLazyText({ value: 'urgent' }, { label: () => tOpportunities('recruitmentProblem.urgent') }),
 ] as const
 
-function labelMap(options: readonly IntentOption[]): Record<string, string> {
-  return Object.fromEntries(options.map((o) => [o.value, o.label]))
+// Looked up on every call: the option labels follow the interface language.
+function labelOf(options: readonly IntentOption[], value: string): string | undefined {
+  return options.find((o) => o.value === value)?.label
 }
-const LEVEL_LABELS = labelMap(LEVEL_SOUGHT_OPTIONS)
-const COMPENSATION_LABELS = labelMap(COMPENSATION_OPTIONS)
-const PROBLEM_LABELS = labelMap(RECRUITMENT_PROBLEM_OPTIONS)
 
 export function levelSoughtLabel(value: string | null | undefined): string | null {
-  return value ? (LEVEL_LABELS[value] ?? value) : null
+  return value ? (labelOf(LEVEL_SOUGHT_OPTIONS, value) ?? value) : null
 }
 export function compensationLabel(value: string | null | undefined): string | null {
-  return value ? (COMPENSATION_LABELS[value] ?? value) : null
+  return value ? (labelOf(COMPENSATION_OPTIONS, value) ?? value) : null
 }
 export function recruitmentProblemLabel(value: string | null | undefined): string | null {
-  return value ? (PROBLEM_LABELS[value] ?? value) : null
+  return value ? (labelOf(RECRUITMENT_PROBLEM_OPTIONS, value) ?? value) : null
 }
 
 /**

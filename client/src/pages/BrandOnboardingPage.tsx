@@ -15,9 +15,11 @@ import { submitSignupAttribution } from '@/lib/attribution'
 import { logger } from '@/lib/logger'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { supabase } from '@/lib/supabase'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 
 export default function BrandOnboardingPage() {
   const navigate = useNavigate()
+  const t = useOnboardingT()
   const { user, profile, loading: authLoading, fetchProfile } = useAuthStore()
   const { brand, isLoading: brandLoading, createBrand } = useMyBrand()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -94,9 +96,7 @@ export default function BrandOnboardingPage() {
           Sentry.captureException(toSentryError(healErr), {
             tags: { feature: 'brand_onboarding', operation: 'heal_half_state' },
           })
-          setHealError(
-            'Something went wrong restoring your brand onboarding. Please try again or contact support.',
-          )
+          setHealError(t('brand.errors.heal'))
           return
         }
         await fetchProfile(user.id, { force: true })
@@ -108,15 +108,13 @@ export default function BrandOnboardingPage() {
         Sentry.captureException(toSentryError(err), {
           tags: { feature: 'brand_onboarding', operation: 'heal_half_state' },
         })
-        setHealError(
-          'Something went wrong restoring your brand onboarding. Please try again or contact support.',
-        )
+        setHealError(t('brand.errors.heal'))
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile, healAttempt])
+  }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile, healAttempt, t])
 
   const retryHeal = () => {
     setHealError(null)
@@ -147,7 +145,7 @@ export default function BrandOnboardingPage() {
     // since data.country_id is nullable in BrandFormData; the form layer
     // already prevents reaching here with null, but defense-in-depth.
     if (data.country_id === null) {
-      setError('Please choose a country for your brand.')
+      setError(t('brand.errors.country'))
       return
     }
 
@@ -169,7 +167,8 @@ export default function BrandOnboardingPage() {
           tags: { ...tags, onboarding_stage: 'create_brand' },
           extra: { userId: user?.id ?? null, slug: data.slug, category: data.category },
         })
-        throw brandErr
+        // Sentry keeps the English message; the member reads theirs.
+        throw new Error(result.error || t('brand.errors.createFailed'))
       }
 
       Sentry.addBreadcrumb({
@@ -203,7 +202,7 @@ export default function BrandOnboardingPage() {
       navigate(`/brands/${result.slug}`, { replace: true })
     } catch (err) {
       logger.error('[BrandOnboardingPage] Error creating brand:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create brand')
+      setError(err instanceof Error ? err.message : t('brand.errors.createFailed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -216,17 +215,17 @@ export default function BrandOnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('brand.heal.title')}</h2>
           <p className="text-sm text-gray-600 mb-4">{healError}</p>
           <button
             type="button"
             onClick={retryHeal}
             className="w-full px-4 py-2 bg-hockia-primary text-white font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
           >
-            Try again
+            {t('brand.heal.retry')}
           </button>
           <p className="text-xs text-gray-500 mt-3">
-            If this keeps happening, contact support.
+            {t('brand.heal.contact')}
           </p>
         </div>
       </div>
@@ -248,7 +247,7 @@ export default function BrandOnboardingPage() {
       <div className="absolute inset-0">
         <img
           src="/hero-desktop.webp"
-          alt="Field Hockey"
+          alt={t('brand.page.heroAlt')}
           className="w-full h-full object-cover"
           loading="lazy"
         />
@@ -268,17 +267,17 @@ export default function BrandOnboardingPage() {
               />
             </div>
             <p className="text-white/90 text-sm">
-              Set up your brand profile
+              {t('brand.page.tagline')}
             </p>
           </div>
 
           {/* Form */}
           <div className="p-6 sm:p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Create Your Brand
+              {t('brand.page.title')}
             </h2>
             <p className="text-gray-600 mb-6">
-              Tell us about your brand to start connecting with athletes.
+              {t('brand.page.subtitle')}
             </p>
 
             {error && (
@@ -290,7 +289,7 @@ export default function BrandOnboardingPage() {
             <BrandForm
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
-              submitLabel="Create Brand"
+              submitLabel={t('brand.page.submit')}
               persistKey="onboarding"
             />
           </div>

@@ -1,0 +1,181 @@
+{
+  "status": {
+    "pending": "In review",
+    "shortlisted": "Shortlisted",
+    "maybe": "Replied",
+    "rejected": "Not this time",
+    "withdrawn": "Withdrawn",
+    "noResponse": "No reply",
+    "filled": "Opportunity filled",
+    "offered": "Offer",
+    "accepted": "Offer accepted",
+    "signedPendingConfirmation": "Confirm signing",
+    "signed": "Signed",
+    "roleClosed": "Opportunity closed",
+    "withdrawnMessage": "This player withdrew their application",
+    "movedOnMessage": "This application has already moved on, so it wasn’t declined",
+    "noReplyDays": "No reply · {{days}}d"
+  },
+  "statusReason": {
+    "positionFilled": "Position already filled",
+    "differentPosition": "Looking for a different position",
+    "differentLevel": "Looking for a different level",
+    "timing": "Timing didn't line up",
+    "location": "Location / relocation",
+    "eligibility": "Passport / eligibility",
+    "profileIncomplete": "Profile needs more detail",
+    "videoMissing": "Needs video / footage",
+    "other": "Other reason"
+  },
+  "reasonCopy": {
+    "positionFilled": "The position looks to be covered already. This is about timing, not your level. Openings still looking for your position may be a better fit.",
+    "differentPosition": "They're prioritising a different position for this opening. Opportunities matching your position are likely a stronger fit.",
+    "differentLevel": "They're looking for a different level for this particular opening. Keep building your profile and proven experience.",
+    "timing": "The timing or availability didn't line up for this one. It’s worth keeping them on your radar for the future.",
+    "location": "The location or relocation didn't work out for this opening.",
+    "eligibility": "There was a passport or eligibility consideration specific to this opening.",
+    "profileIncomplete": "Adding more detail to your profile could help clubs picture you faster next time.",
+    "videoMissing": "Clubs often want footage before moving forward. A highlight reel or full-match video could strengthen future applications."
+  },
+  "statusFallback": {
+    "shortlisted": "Good news: you've been shortlisted. Keep your profile sharp while the club reviews.",
+    "maybe": "The club replied. No final decision yet.",
+    "maybeWithReason": "The club replied. No final decision yet. {{reason}}",
+    "rejected": "Not this time. It often comes down to fit, not ability. Keep applying.",
+    "rejectedWithReason": "Not this time. {{reason}} Keep going. The right fit is out there.",
+    "noResponse": "This application is no longer active on Hockia. Applications close automatically after a while without an update here, so you're never left waiting. Your energy is better spent on what's open now.",
+    "filled": "This opportunity has been filled. Thanks for applying. New opportunities are open."
+  },
+  "closedNote": {
+    "noResponse": "This application closed without a reply. You can still message {{firstName}}.",
+    "filled": "This opportunity was filled. You can still message {{firstName}}.",
+    "withdrawn": "{{firstName}} withdrew this application. You can still message {{firstName}}.",
+    "pastReview": "This application is past review. You can still message {{firstName}}."
+  },
+  "role": {
+    "fallbackTitle": "Role"
+  },
+  "category": {
+    "women": "Women's",
+    "men": "Men's",
+    "girls": "Girls",
+    "boys": "Boys",
+    "mixed": "Mixed"
+  },
+  "dates": {
+    "months_one": "{{count}} month",
+    "months_other": "{{count}} months",
+    "startsImmediately": "Starts immediately",
+    "startsOn": "Starts {{date}}",
+    "postedToday": "Posted today",
+    "postedYesterday": "Posted yesterday",
+    "postedDaysAgo_one": "Posted {{count}} day ago",
+    "postedDaysAgo_other": "Posted {{count}} days ago",
+    "closedOn": "Closed {{date}}",
+    "closed": "Closed",
+    "closesToday": "Closes today",
+    "closesTomorrow": "Closes tomorrow",
+    "closesInDays_one": "Closes in {{count}} day",
+    "closesInDays_other": "Closes in {{count}} days",
+    "closesOn": "Closes {{date}}",
+    "noDeadline": "No deadline · closes when filled",
+    "applyBy": "Apply by {{date}}",
+    "appliedOn": "Applied {{date}}",
+    "appliedToday": "Applied today",
+    "appliedDays": "Applied {{days}}d",
+    "appliedWeeks": "Applied {{weeks}}w"
+  },
+  "benefits": {
+    "housing": {
+      "label": "Housing",
+      "detail": "Provided by the club"
+    },
+    "flights": {
+      "label": "Flights",
+      "detail": "Covered"
+    },
+    "job": {
+      "label": "Job",
+      "detail": "Work arranged alongside hockey"
+    },
+    "insurance": {
+      "label": "Insurance",
+      "detail": "Covered by the club"
+    },
+    "bonuses": {
+      "label": "Bonuses",
+      "detail": "Performance bonuses"
+    },
+    "visa": {
+      "label": "Visa",
+      "detail": "Sponsorship arranged"
+    },
+    "car": {
+      "label": "Car",
+      "detail": "Provided by the club"
+    },
+    "equipment": {
+      "label": "Equipment",
+      "detail": "Kit and stick provided"
+    },
+    "meals": {
+      "label": "Meals",
+      "detail": "Provided by the club"
+    },
+    "education": {
+      "label": "Education",
+      "detail": "Study alongside hockey"
+    },
+    "paid": {
+      "label": "Paid",
+      "detail": "The club pays for the season"
+    },
+    "compensationNotStated": "Compensation not stated",
+    "notListed": "Package not listed · ask the club",
+    "paidOrUnpaid": "Paid or unpaid",
+    "euPassport": "EU passport"
+  },
+  "filters": {
+    "package": {
+      "paid": "Paid",
+      "housing": "Housing",
+      "flights": "Flights",
+      "job": "Job",
+      "insurance": "Insurance",
+      "bonuses": "Bonuses",
+      "visa": "Visa",
+      "car": "Car",
+      "equipment": "Equipment"
+    }
+  },
+  "eligibility": {
+    "euPassport": "This opportunity requires an EU passport.",
+    "womensTeams": "This opportunity is for women's teams.",
+    "mensTeams": "This opportunity is for men's teams.",
+    "addNationality": "Add your nationality to your profile so clubs can confirm you're a fit for this opportunity.",
+    "addGender": "Add your gender to your profile so clubs can confirm you're a fit for this opportunity.",
+    "addNationalityAndGender": "Add your nationality and your gender to your profile so clubs can confirm you're a fit for this opportunity."
+  },
+  "level": {
+    "elite": "Elite / International",
+    "highPerformance": "High Performance",
+    "competitive": "Competitive",
+    "development": "Development"
+  },
+  "compensation": {
+    "paid": "Paid",
+    "unpaidDevelopment": "Unpaid / Development",
+    "either": "Either"
+  },
+  "recruitmentProblem": {
+    "replacePlayer": "Replace a key player",
+    "raiseLevel": "Raise team level",
+    "bestAvailable": "Best available anywhere",
+    "youngTalent": "Young talent with potential",
+    "leadership": "Add leadership / experience",
+    "urgent": "Urgent need"
+  },
+  "sent": {
+    "fullMatchTip": "Add a full match video now. It’s what clubs ask for most after an application."
+  }
+}

@@ -27,14 +27,10 @@ import { ANY_CATEGORY, CATEGORY_LABELS, COACH_UMPIRE_CATEGORIES, isValidCategory
 import { cn } from '@/lib/utils'
 import { SetupSignOut } from './SetupSignOut'
 import { AddPhotoPrompt } from '@/components/profile/AddPhotoPrompt'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 import {
-  COACH_CATEGORIES_HINT,
-  COACH_PHOTO_HELPER,
-  COACH_RECRUIT_HINT,
-  COACH_RECRUIT_OPTIONS,
-  COACH_RECRUIT_QUESTION,
-  COACH_STEP2_SUBTITLE,
-  OPEN_TO_COACH_HELPER,
+  getCoachRecruitOptions,
+  tOnboardingEnglish,
   coachAboutYouErrors,
   coachCoachingErrors,
   coachDraftKey,
@@ -80,6 +76,7 @@ type Step = 1 | 2
 const CATEGORY_CHIPS = COACH_UMPIRE_CATEGORIES
 
 export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
+  const t = useOnboardingT()
   const { user, profile, fetchProfile } = useAuthStore()
   const { getCountryById } = useCountries()
   const pendingCleanup = usePendingStorageCleanup()
@@ -177,7 +174,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
   const uploadPhoto = async (file: File | undefined) => {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
-    if (!check.valid) { setError(check.error ?? 'Invalid image'); return }
+    if (!check.valid) { setError(check.error ?? t('coach.photo.invalid')); return }
     setUploading(true)
     setError(null)
     try {
@@ -194,7 +191,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded', role: 'coach' })
     } catch (err) {
       logger.error('[CoachSetup] photo upload failed', err)
-      setError('We couldn’t upload this image. Please use PNG or JPG up to 5MB.')
+      setError(t('coach.photo.uploadFailed'))
     } finally {
       setUploading(false)
     }
@@ -206,7 +203,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
         if (result) await uploadPhoto(result.file)
       } catch (err) {
         logger.error('[CoachSetup] native picker failed', err)
-        setError('Could not access camera or photos. Please check app permissions.')
+        setError(t('coach.photo.pickerFailed'))
       }
       return
     }
@@ -220,16 +217,17 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
     const { error: createError } = await supabase.rpc('create_profile_for_new_user', { user_id: user.id, user_email: user.email || '', user_role: 'coach' })
     if (createError) {
       captureError(createError, 'ensureProfileExistsBeforeSubmit')
-      throw new Error('Could not create your profile. Please try signing out and back in.')
+      throw new Error(t('coach.errors.profileCreate'))
     }
   }
 
   // ── Step 1 → save About you ──
   const saveAboutYou = async () => {
     if (saving) return
-    const problems = coachAboutYouErrors(draft)
+    const problems = coachAboutYouErrors(draft, t)
     setAboutErrors(problems)
-    const first = Object.values(problems)[0]
+    // The funnel keeps the English reason whatever the interface language.
+    const first = Object.values(coachAboutYouErrors(draft, tOnboardingEnglish))[0]
     if (first) {
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'wizard_step_validation_failed', role: 'coach', wizard_step: 1, reason: first })
       return
@@ -244,9 +242,9 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       // set-up here — the refreshed profile flips AgeGate to its goodbye screen.
       if (!dobLocked) {
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: draft.dateOfBirth })
-        if (dobError) throw new Error('Could not save your date of birth. Please try again.')
+        if (dobError) throw new Error(t('coach.errors.dobSave'))
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (outcome === 'invalid_dob') throw new Error('That date of birth doesn’t look right. Please check it.')
+        if (outcome === 'invalid_dob') throw new Error(t('coach.errors.dobInvalid'))
         if (outcome === 'frozen') {
           await fetchProfile(user.id, { force: true })
           return
@@ -269,7 +267,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       }).eq('id', user.id)
       if (updateError) {
         captureError(updateError, 'saveAboutYou')
-        throw new Error('Could not save. Please try again.')
+        throw new Error(t('coach.errors.saveFailed'))
       }
       await pendingCleanup.flush()
       await fetchProfile(user.id, { force: true })
@@ -277,7 +275,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       setStep(2)
     } catch (err) {
       logger.error('[CoachSetup] step 1 save failed', err)
-      setError(err instanceof Error ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof Error ? err.message : t('coach.errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -287,9 +285,10 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
   const finish = async (mode: 'save' | 'skip') => {
     if (saving) return
     if (mode === 'save') {
-      const problems = coachCoachingErrors(draft)
+      const problems = coachCoachingErrors(draft, t)
       setCoachingErrors(problems)
-      const first = Object.values(problems)[0]
+      // The funnel keeps the English reason whatever the interface language.
+      const first = Object.values(coachCoachingErrors(draft, tOnboardingEnglish))[0]
       if (first) {
         trackDbEvent('onboarding_step', 'profile', user.id, { step: 'wizard_step_validation_failed', role: 'coach', wizard_step: 2, reason: first })
         return
@@ -334,7 +333,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       const { error: updateError } = await supabase.from('profiles').update(patch).eq('id', user.id)
       if (updateError) {
         captureError(updateError, mode === 'save' ? 'finishSave' : 'finishSkip')
-        throw new Error('Could not save. Please try again.')
+        throw new Error(t('coach.errors.saveFailed'))
       }
       trackDbEvent('onboarding_step', 'profile', user.id, {
         step: mode === 'save' ? 'wizard_step_completed' : 'wizard_step_skipped',
@@ -347,7 +346,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
       await onFinished()
     } catch (err) {
       logger.error('[CoachSetup] step 2 save failed', err)
-      setError(err instanceof Error ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof Error ? err.message : t('coach.errors.saveFailed'))
       setSaving(false)
     }
   }
@@ -362,23 +361,23 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
           noValidate
           className="flex flex-1 flex-col pt-4"
         >
-          <h1 className="text-title text-ink-1">About you</h1>
+          <h1 className="text-title text-ink-1">{t('coach.about.title')}</h1>
 
           <div className="mt-5 flex items-center gap-4">
             <button
               type="button"
               onClick={() => void pickPhoto()}
               disabled={uploading}
-              aria-label={avatar ? 'Change photo' : 'Add photo'}
+              aria-label={avatar ? t('coach.photo.change') : t('coach.photo.add')}
               className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-3 disabled:opacity-60"
             >
               {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <Camera className="h-7 w-7" strokeWidth={1.75} />}
             </button>
             <div className="min-w-0 flex-1">
               <Button variant="tonal" size="small" loading={uploading} onClick={() => void pickPhoto()}>
-                {avatar ? 'Change photo' : 'Add photo'}
+                {avatar ? t('coach.photo.change') : t('coach.photo.add')}
               </Button>
-              <p className="mt-1.5 text-caption text-ink-3">{COACH_PHOTO_HELPER}</p>
+              <p className="mt-1.5 text-caption text-ink-3">{t('coach.photo.helper')}</p>
             </div>
             <input
               ref={fileRef}
@@ -386,13 +385,13 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => void uploadPhoto(e.target.files?.[0])}
               className="hidden"
-              aria-label="Upload profile photo"
+              aria-label={t('coach.photo.inputLabel')}
             />
           </div>
 
           <div className="mt-6 space-y-4">
             <div>
-              <label htmlFor="coach-setup-name" className={fieldLabel}>Full name</label>
+              <label htmlFor="coach-setup-name" className={fieldLabel}>{t('coach.about.fullName')}</label>
               <input
                 id="coach-setup-name"
                 type="text"
@@ -410,51 +409,51 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
 
             {dobLocked ? (
               <div>
-                <span className={fieldLabel}>Date of birth</span>
+                <span className={fieldLabel}>{t('coach.about.dateOfBirth')}</span>
                 <p className={`${fieldReadOnly} justify-between`}>
                   {draft.dateOfBirth}
                   <Lock className="h-4 w-4 text-ink-4" aria-hidden="true" />
                 </p>
-                <p className="mt-1.5 text-caption text-ink-3">Locked after registration.</p>
+                <p className="mt-1.5 text-caption text-ink-3">{t('coach.about.dobLocked')}</p>
               </div>
             ) : (
               <div>
                 <DateOfBirthPicker
                   appearance="field"
-                  label="Date of birth"
+                  label={t('coach.about.dateOfBirth')}
                   value={draft.dateOfBirth}
                   onChange={(next) => set({ dateOfBirth: next })}
                   error={aboutErrors.dateOfBirth}
                   required
                 />
-                <p className="mt-1.5 text-caption text-ink-3">Can’t be changed later. Never shown on your profile. Only your age is.</p>
+                <p className="mt-1.5 text-caption text-ink-3">{t('coach.about.dobHint')}</p>
               </div>
             )}
 
             <CountrySelect
               appearance="field"
-              label="Nationality"
+              label={t('coach.about.nationality')}
               showNationality
               value={draft.nationalityCountryId}
               onChange={(id) => set({ nationalityCountryId: id })}
-              placeholder="Choose a country"
+              placeholder={t('coach.about.countryPlaceholder')}
               error={aboutErrors.nationality}
             />
 
             <CountrySelect
               appearance="field"
-              label="Second nationality"
+              label={t('coach.about.secondNationality')}
               optional
               showNationality
               value={draft.nationality2CountryId}
               onChange={(id) => set({ nationality2CountryId: id })}
-              placeholder="Add a second nationality"
+              placeholder={t('coach.about.secondNationalityPlaceholder')}
             />
 
             <LocationAutocomplete
               appearance="field"
-              label="Base location"
-              placeholder="City you’re based in"
+              label={t('coach.about.location')}
+              placeholder={t('coach.about.locationPlaceholder')}
               value={draft.location}
               onChange={(v) => set({ location: v, baseCity: '', baseCountryId: null, locationSelected: false })}
               onLocationSelect={(loc: LocationSelection) => set({ location: loc.displayName, baseCity: loc.city, baseCountryId: loc.countryId, locationSelected: true })}
@@ -467,7 +466,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
           </div>
 
           <div className="mt-auto pt-8">
-            <Button type="submit" block loading={saving}>Continue</Button>
+            <Button type="submit" block loading={saving}>{t('coach.about.continue')}</Button>
           </div>
         </form>
       </AuthShell>
@@ -477,10 +476,10 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
   return (
     <AuthShell
       step={{ current: 2, total: 2 }}
-      back={{ parent: 'About you', onBack: () => { setError(null); setCoachingErrors({}); setStep(1) } }}
+      back={{ parent: t('coach.coaching.back'), onBack: () => { setError(null); setCoachingErrors({}); setStep(1) } }}
       trailing={(
         <button type="button" onClick={() => void finish('skip')} disabled={saving} className="h-11 min-w-[44px] px-2 text-body text-hockia-primary disabled:opacity-40">
-          Skip
+          {t('coach.coaching.skip')}
         </button>
       )}
     >
@@ -489,8 +488,8 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
         noValidate
         className="flex flex-1 flex-col pt-4"
       >
-        <h1 className="text-title text-ink-1">Your coaching</h1>
-        <p className="mt-1.5 text-row text-ink-2">{COACH_STEP2_SUBTITLE}</p>
+        <h1 className="text-title text-ink-1">{t('coach.coaching.title')}</h1>
+        <p className="mt-1.5 text-row text-ink-2">{t('coach.coaching.subtitle')}</p>
 
         {/* End of onboarding (founder 2026-10-26): no photo yet → the Add a
             photo prompt; dismissible, never blocks Finish. */}
@@ -503,14 +502,14 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               onChange={(e) => void uploadPhoto(e.target.files?.[0])}
               className="hidden"
-              aria-label="Upload profile photo"
+              aria-label={t('coach.photo.inputLabel')}
             />
           </>
         )}
 
         <div className="mt-6 space-y-5">
           <div>
-            <label htmlFor="coach-setup-specialization" className={fieldLabel}>Specialization</label>
+            <label htmlFor="coach-setup-specialization" className={fieldLabel}>{t('coach.coaching.specialization')}</label>
             <select
               id="coach-setup-specialization"
               value={draft.specialization}
@@ -519,18 +518,18 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
               aria-invalid={Boolean(coachingErrors.specialization)}
               required
             >
-              <option value="">Choose your specialization</option>
+              <option value="">{t('coach.coaching.specializationPlaceholder')}</option>
               {COACH_SPECIALIZATIONS.map((s) => <option key={s.value} value={s.value}>{sentenceCaseLabel(s.label)}</option>)}
             </select>
             {draft.specialization === 'other' && (
               <div className="mt-3">
-                <label htmlFor="coach-setup-role-title" className={fieldLabel}>Role title</label>
+                <label htmlFor="coach-setup-role-title" className={fieldLabel}>{t('coach.coaching.roleTitle')}</label>
                 <input
                   id="coach-setup-role-title"
                   type="text"
                   value={draft.specializationCustom}
                   onChange={(e) => set({ specializationCustom: e.target.value })}
-                  placeholder="e.g. Team manager"
+                  placeholder={t('coach.coaching.roleTitlePlaceholder')}
                   className={cn(fieldInput, coachingErrors.specialization && fieldErrorRing)}
                   autoCapitalize="sentences"
                   maxLength={80}
@@ -543,8 +542,8 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
           </div>
 
           <div role="group" aria-labelledby="coach-setup-categories-label">
-            <p id="coach-setup-categories-label" className={fieldLabelText}>Coaching categories</p>
-            <p className="mt-1 text-secondary text-ink-2">{COACH_CATEGORIES_HINT}</p>
+            <p id="coach-setup-categories-label" className={fieldLabelText}>{t('coach.coaching.categories')}</p>
+            <p className="mt-1 text-secondary text-ink-2">{t('coach.coaching.categoriesHint')}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {CATEGORY_CHIPS.map((c) => (
                 <Chip
@@ -560,9 +559,9 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
 
           <WorldClubSearch
             appearance="field"
-            label="Current club"
+            label={t('coach.coaching.club')}
             optional
-            placeholder="Search your club"
+            placeholder={t('coach.coaching.clubPlaceholder')}
             value={draft.currentClub}
             onChange={(v) => set({ currentClub: v })}
             onClubSelect={(club) => set({ currentClub: club.club_name, currentWorldClubId: club.id })}
@@ -571,10 +570,10 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
           />
 
           <div role="radiogroup" aria-labelledby="coach-setup-recruit-label">
-            <p id="coach-setup-recruit-label" className={fieldLabelText}>{COACH_RECRUIT_QUESTION}</p>
-            <p className="mt-1 text-secondary text-ink-2">{COACH_RECRUIT_HINT}</p>
+            <p id="coach-setup-recruit-label" className={fieldLabelText}>{t('coach.coaching.recruitQuestion')}</p>
+            <p className="mt-1 text-secondary text-ink-2">{t('coach.coaching.recruitHint')}</p>
             <div className="mt-2 space-y-2">
-              {COACH_RECRUIT_OPTIONS.map((option) => {
+              {getCoachRecruitOptions(t).map((option) => {
                 const selected = draft.recruitsForTeam === option.value
                 return (
                   <button
@@ -603,9 +602,9 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
           {/* List item / Switch (Figma 472:186): muted card, SettingsRow + SettingsSwitch. */}
           <div className="overflow-hidden rounded-card bg-surface-muted" data-testid="open-to-coach-row">
             <SettingsRow
-              title="Open to coach"
-              subtitle={OPEN_TO_COACH_HELPER}
-              trailing={<SettingsSwitch checked={draft.openToCoach} onChange={() => set({ openToCoach: !draft.openToCoach })} label="Open to coach" />}
+              title={t('coach.coaching.openToCoach')}
+              subtitle={t('coach.coaching.openToCoachHelper')}
+              trailing={<SettingsSwitch checked={draft.openToCoach} onChange={() => set({ openToCoach: !draft.openToCoach })} label={t('coach.coaching.openToCoach')} />}
             />
           </div>
 
@@ -613,7 +612,7 @@ export default function CoachSetupFlow({ onFinished }: CoachSetupFlowProps) {
         </div>
 
         <div className="mt-auto pt-8">
-          <Button type="submit" block loading={saving}>Finish</Button>
+          <Button type="submit" block loading={saving}>{t('coach.coaching.finish')}</Button>
           <SetupSignOut placement="footer" />
         </div>
       </form>

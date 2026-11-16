@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react'
 import Button from './Button'
+import { useOnboardingT } from '@/i18n/ns/onboarding.core'
 
 interface CategoryConfirmationBannerProps {
   /** True when the user's profile has the category_confirmation_needed flag.
@@ -25,6 +26,7 @@ export default function CategoryConfirmationBanner({
   needsConfirmation,
   onConfirm,
 }: CategoryConfirmationBannerProps) {
+  const t = useOnboardingT()
   if (!needsConfirmation) return null
 
   return (
@@ -32,8 +34,7 @@ export default function CategoryConfirmationBanner({
       <div className="flex items-start gap-3">
         <Info className="w-5 h-5 text-hockia-primary flex-shrink-0 mt-0.5" />
         <p className="text-sm text-gray-800">
-          We&apos;ve updated Hockia to use hockey categories instead of gender.
-          Please confirm or update your category preferences.
+          {t('categoryBanner.body')}
         </p>
       </div>
       <Button
@@ -41,7 +42,7 @@ export default function CategoryConfirmationBanner({
         onClick={onConfirm}
         className="whitespace-nowrap flex-shrink-0"
       >
-        Update categories
+        {t('categoryBanner.action')}
       </Button>
     </div>
   )

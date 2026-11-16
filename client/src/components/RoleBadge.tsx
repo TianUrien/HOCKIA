@@ -1,4 +1,6 @@
 import { cn } from '@/lib/utils'
+import i18n from '@/i18n'
+import { useEnumsT } from '@/i18n/ns/enums'
 
 type RoleBadgeProps = {
   // All 5 HOCKIA roles explicitly listed so callers narrow correctly. The
@@ -25,11 +27,16 @@ const formatRoleLabel = (value: string) => {
 }
 
 export default function RoleBadge({ role, className }: RoleBadgeProps) {
+  const t = useEnumsT()
   if (!role) return null
 
   const normalizedRole = role.trim().toLowerCase()
   const baseClass = roleStyles[normalizedRole] ?? 'bg-gray-100 text-gray-600'
-  const label = formatRoleLabel(normalizedRole)
+  // The catalog's word for a known role; any other string keeps its own text.
+  const key = `role.${normalizedRole}`
+  const label = /^[a-z]+$/.test(normalizedRole) && i18n.exists(key, { ns: 'enums' })
+    ? t(key as never) as string
+    : formatRoleLabel(normalizedRole)
   if (!label) return null
 
   return (

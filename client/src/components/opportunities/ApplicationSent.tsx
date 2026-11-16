@@ -4,8 +4,10 @@ import { Check, Sparkles } from 'lucide-react'
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { showFullMatchNudge } from '@/lib/opportunityCopy'
+import { fullMatchTip, showFullMatchNudge } from '@/lib/opportunityCopy'
 import { sentLine, type RoleIdentity } from '@/lib/opportunityIdentity'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 interface ApplicationSentProps {
   clubName: string
@@ -26,9 +28,8 @@ interface ApplicationSentProps {
  * shown only to a player who has none yet. The tip speaks about clubs in
  * general and never about what other applicants were asked (privacy).
  */
-export const FULL_MATCH_TIP = 'Add a full match video now. It’s what clubs ask for most after an application.'
-
 export function ApplicationSent({ clubName, identity, roleLine, onClose }: ApplicationSentProps) {
+  const t = useOpportunitiesT()
   const navigate = useNavigate()
   const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
@@ -53,27 +54,26 @@ export function ApplicationSent({ clubName, identity, roleLine, onClose }: Appli
     return () => { cancelled = true }
   }, [userId, isPlayer, linkCount])
   const nudge = showFullMatchNudge(profile?.role, fullMatchCount)
-  const line = identity ? sentLine(identity) : `${clubName} has your profile, career and highlights. Their answer arrives in your Inbox.`
+  const line = identity ? sentLine(identity) : t('sent.fallbackLine', { club: clubName })
   const onList = location.pathname === '/opportunities'
-  const reviewer = identity?.postedBy ? identity.postedBy.firstName : 'The club'
   const steps = [
-    { title: 'Sent', detail: `Today, ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, dot: 'bg-positive' },
-    { title: `${reviewer} reviews it`, detail: 'The answer arrives in your Inbox', dot: 'bg-brand-primary' },
-    { title: 'You get an answer', detail: 'Shortlisted or not this time', dot: 'bg-ink-4' },
+    { title: t('sent.steps.sentTitle'), detail: t('sent.steps.sentDetail', { time: new Date().toLocaleTimeString(isEnglish() ? [] : intlLocale(), { hour: '2-digit', minute: '2-digit' }) }), dot: 'bg-positive' },
+    { title: identity?.postedBy ? t('sent.steps.reviewNamedTitle', { name: identity.postedBy.firstName }) : t('sent.steps.reviewClubTitle'), detail: t('sent.steps.reviewDetail'), dot: 'bg-brand-primary' },
+    { title: t('sent.steps.answerTitle'), detail: t('sent.steps.answerDetail'), dot: 'bg-ink-4' },
   ]
-  const subline = identity ? (identity.hiringClub ? (identity.postedBy ? `${identity.hiringClub.name} · posted by ${identity.postedBy.name}` : identity.hiringClub.name) : identity.displayName) : clubName
+  const subline = identity ? (identity.hiringClub ? (identity.postedBy ? t('sent.clubPostedBy', { club: identity.hiringClub.name, name: identity.postedBy.name }) : identity.hiringClub.name) : identity.displayName) : clubName
 
   return (
-    <div className="flex flex-col items-center px-5 pb-2 pt-3 text-center" role="status" aria-label="Application sent" data-testid="application-sent">
+    <div className="flex flex-col items-center px-5 pb-2 pt-3 text-center" role="status" aria-label={t('sent.title')} data-testid="application-sent">
       <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-positive-soft text-positive">
         <Check className="h-8 w-8" strokeWidth={2.5} />
       </span>
-      <h2 className="mt-4 text-title text-ink-1">Application sent</h2>
+      <h2 className="mt-4 text-title text-ink-1">{t('sent.title')}</h2>
       <p className="mt-2 text-[14px] leading-[19px] text-ink-2">{line}</p>
       {/* What happens next (rebrand page 20): when and what, never how long
           the club takes (players see no reply-time estimates). */}
       <div className="mt-5 w-full rounded-[16px] border border-line bg-white p-4 text-left shadow-card" data-testid="what-happens-next">
-        <p className="text-micro font-semibold uppercase tracking-[0.06em] text-ink-3">What happens next</p>
+        <p className="text-micro font-semibold uppercase tracking-[0.06em] text-ink-3">{t('sent.whatHappensNext')}</p>
         <ol className="mt-3">
           {steps.map((st, i) => (
             <li key={st.title} className="relative flex gap-3 pb-3 last:pb-0">
@@ -96,7 +96,7 @@ export function ApplicationSent({ clubName, identity, roleLine, onClose }: Appli
           data-testid="full-match-nudge"
         >
           <Sparkles className="h-[18px] w-[18px] shrink-0 text-hockia-primary" strokeWidth={1.8} aria-hidden="true" />
-          <span className="text-secondary text-ink-2">{FULL_MATCH_TIP}</span>
+          <span className="text-secondary text-ink-2">{fullMatchTip()}</span>
         </button>
       )}
       <button
@@ -105,7 +105,7 @@ export function ApplicationSent({ clubName, identity, roleLine, onClose }: Appli
         className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true, className: 'mt-5' })}
         data-testid="application-sent-view"
       >
-        View my applications
+        {t('sent.viewApplications')}
       </button>
       <button
         type="button"
@@ -114,7 +114,7 @@ export function ApplicationSent({ clubName, identity, roleLine, onClose }: Appli
         data-testid="application-sent-done"
       >
         {/* Closing returns to where the member applied: the list, or the opportunity (now showing Applied). */}
-        {onList ? 'Back to opportunities' : 'Back to the opportunity'}
+        {onList ? t('sent.backToList') : t('sent.backToRole')}
       </button>
     </div>
   )

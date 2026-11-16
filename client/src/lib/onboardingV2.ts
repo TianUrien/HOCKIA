@@ -8,8 +8,17 @@
  * set_open_to_play refuses "open" for anyone under 18, prevent_role_change
  * locks the role. Nothing here is the only place a rule exists.
  */
+import i18n from '@/i18n'
+import { tOnboarding } from '@/i18n/ns/onboarding.core'
 import { isAdultByDob } from '@/lib/openToPlay'
 import { withoutSensitiveDraftFields } from '@/lib/draftPrivacy'
+
+/** Translator for the onboarding catalog (the active language by default). */
+export type OnboardingT = typeof tOnboarding
+
+/** The English copy whatever the interface language. Only for values sent to
+ *  analytics (validation `reason`), so the funnel reads the same in every language. */
+export const tOnboardingEnglish: OnboardingT = i18n.getFixedT('en', 'onboarding')
 
 export type OnboardingRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -18,21 +27,20 @@ export const ONBOARDING_ROLES: readonly OnboardingRole[] = ['player', 'coach', '
 /** One line per role card. Player / coach / club / brand reuse the current
  *  /signup copy (still right). Umpire: the officiating-history line only —
  *  never "appointments" (founder ruling 2026-10-03). Gender-neutral. */
-export const ROLE_CARDS: ReadonlyArray<{ role: OnboardingRole; title: string; detail: string }> = [
-  { role: 'player', title: 'Player', detail: 'Build the profile that gets you found by clubs' },
-  { role: 'coach', title: 'Coach', detail: 'Find coaching opportunities, and recruit players if you also manage a team' },
-  { role: 'club', title: 'Club', detail: 'Recruit field hockey players with trust and context' },
-  { role: 'brand', title: 'Brand', detail: 'Build your brand in the hockey community' },
-  { role: 'umpire', title: 'Umpire', detail: 'Keep your officiating history in one place' },
-]
-
-export const ROLE_LOCK_COPY = 'You can’t change it later without support.'
+export function getRoleCards(t: OnboardingT = tOnboarding): ReadonlyArray<{ role: OnboardingRole; title: string; detail: string }> {
+  return [
+    { role: 'player', title: t('chooseRole.cards.playerTitle'), detail: t('chooseRole.cards.playerDetail') },
+    { role: 'coach', title: t('chooseRole.cards.coachTitle'), detail: t('chooseRole.cards.coachDetail') },
+    { role: 'club', title: t('chooseRole.cards.clubTitle'), detail: t('chooseRole.cards.clubDetail') },
+    { role: 'brand', title: t('chooseRole.cards.brandTitle'), detail: t('chooseRole.cards.brandDetail') },
+    { role: 'umpire', title: t('chooseRole.cards.umpireTitle'), detail: t('chooseRole.cards.umpireDetail') },
+  ]
+}
 
 /** "Continue as a player" / "Continue as an umpire"; "Continue" before a choice. */
-export function roleCtaLabel(role: OnboardingRole | null): string {
-  if (!role) return 'Continue'
-  const article = /^[aeiou]/.test(role) ? 'an' : 'a'
-  return `Continue as ${article} ${role}`
+export function roleCtaLabel(role: OnboardingRole | null, t: OnboardingT = tOnboarding): string {
+  if (!role) return t('chooseRole.continue')
+  return t(`chooseRole.continueAs.${role}`)
 }
 
 // ── Create with email ────────────────────────────────────────────────────────
@@ -42,20 +50,26 @@ export function roleCtaLabel(role: OnboardingRole | null): string {
  *  is how sign-up drifted: Sentry JAVASCRIPT-REACT-DC/DF, 2026-10-18).
  *  Settings and Reset password already enforce the same rule. */
 export const PASSWORD_MIN_LENGTH = 8
+/** English only: kept for the screens that still import it (Create with email,
+ *  Reset password, outside the onboarding migration). Use `passwordHelp()`. */
 export const PASSWORD_HELP = `At least ${PASSWORD_MIN_LENGTH} characters, with a lowercase letter, an uppercase letter and a number`
-const PASSWORD_MIX = 'Add a lowercase letter, an uppercase letter and a number.'
 
-export function passwordProblem(password: string): string | null {
-  if (password.length < PASSWORD_MIN_LENGTH) return `Use at least ${PASSWORD_MIN_LENGTH} characters.`
-  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) return PASSWORD_MIX
+/** The password rule in the interface language. */
+export function passwordHelp(t: OnboardingT = tOnboarding): string {
+  return t('password.help', { min: PASSWORD_MIN_LENGTH })
+}
+
+export function passwordProblem(password: string, t: OnboardingT = tOnboarding): string | null {
+  if (password.length < PASSWORD_MIN_LENGTH) return t('password.tooShort', { min: PASSWORD_MIN_LENGTH })
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) return t('password.mix')
   return null
 }
 
 /** Supabase's own password-policy refusal, in plain words (null for other errors). */
-export function passwordPolicyMessage(message: string | undefined): string | null {
+export function passwordPolicyMessage(message: string | undefined, t: OnboardingT = tOnboarding): string | null {
   if (!message) return null
-  if (/at least one character of each/i.test(message)) return PASSWORD_MIX
-  if (/password should be at least/i.test(message)) return `Use at least ${PASSWORD_MIN_LENGTH} characters.`
+  if (/at least one character of each/i.test(message)) return t('password.mix')
+  if (/password should be at least/i.test(message)) return t('password.tooShort', { min: PASSWORD_MIN_LENGTH })
   return null
 }
 
@@ -64,15 +78,11 @@ export function passwordPolicyMessage(message: string | undefined): string | nul
 export const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
 export type PlayerPosition = (typeof PLAYER_POSITIONS)[number]
 
-export const PHOTO_HELPER = 'A real match photo gets more profile views.'
-export const OPEN_TO_PLAY_HELPER = 'Clubs can see you and message you about opportunities.'
-/** Under 18: the switch is not offered and the copy promises nothing
- *  about being suggested — suggestions are 18+ AND open, server-side. */
+// Player set-up copy lives in the onboarding catalog (`player.*`). Under 18:
+// the Open to play switch is not offered and the copy promises nothing about
+// being suggested — suggestions are 18+ AND open, server-side.
 // Ruling 2026-10-16: the 18+ gate stays; juniors get the waitlist only (an
 // under-18 date of birth ends set-up on the age-gate screen).
-export const OPEN_TO_PLAY_UNDER_18 = 'Hockia is for players 18 and over, so we can’t create your account yet. Join the juniors waitlist and we’ll tell you when it opens.'
-/** Shown before a date of birth is entered. */
-export const OPEN_TO_PLAY_NEEDS_DOB = 'Add your date of birth to turn on Open to play.'
 
 export interface AboutYouDraft {
   fullName: string
@@ -83,12 +93,12 @@ export interface AboutYouDraft {
 }
 
 /** Step 1 gate. The age itself is decided by declare_date_of_birth. */
-export function aboutYouProblem(d: AboutYouDraft): string | null {
-  if (!d.fullName.trim()) return 'Please add your full name.'
-  if (!d.dateOfBirth) return 'Please add your date of birth.'
-  if (!d.playingCategory) return 'Choose the category you play in.'
-  if (!d.position) return 'Choose your position.'
-  if (d.secondaryPosition && d.secondaryPosition === d.position) return 'Your second position must be different from your first.'
+export function aboutYouProblem(d: AboutYouDraft, t: OnboardingT = tOnboarding): string | null {
+  if (!d.fullName.trim()) return t('player.errors.fullName')
+  if (!d.dateOfBirth) return t('player.errors.dateOfBirth')
+  if (!d.playingCategory) return t('player.errors.category')
+  if (!d.position) return t('player.errors.position')
+  if (d.secondaryPosition && d.secondaryPosition === d.position) return t('player.errors.secondPosition')
   return null
 }
 
@@ -158,28 +168,27 @@ export function serializeWizardDraft(step: WizardDraftStep, formData: Record<str
 // the recruit question is required with nothing preselected; Skip leaves
 // coach_recruits_for_team false and saves Open to coach ON.
 
-export const COACH_PHOTO_HELPER = 'A clear coaching photo gets more views.'
-export const COACH_STEP2_SUBTITLE = 'Step 2 of 2 · clubs filter coaches by these.'
-export const COACH_CATEGORIES_HINT = 'Pick every category you coach.'
-export const COACH_RECRUIT_QUESTION = 'Do you recruit players for a team?'
-export const COACH_RECRUIT_HINT = 'Yes adds My opportunities and Find players to your app. You can change this in Settings.'
-export const OPEN_TO_COACH_HELPER = 'Clubs can see you’re available and message you.'
+// The rest of the coach set-up copy lives in the onboarding catalog (`coach.*`).
 
-export const COACH_RECRUIT_OPTIONS: ReadonlyArray<{ value: boolean; title: string; detail: string }> = [
-  { value: true, title: 'Yes, I recruit for my team', detail: 'Post opportunities and review applicants for your club.' },
-  { value: false, title: 'Not right now', detail: 'Use Hockia for your own coaching career.' },
-]
+export function getCoachRecruitOptions(t: OnboardingT = tOnboarding): ReadonlyArray<{ value: boolean; title: string; detail: string }> {
+  return [
+    { value: true, title: t('coach.coaching.recruitYesTitle'), detail: t('coach.coaching.recruitYesDetail') },
+    { value: false, title: t('coach.coaching.recruitNoTitle'), detail: t('coach.coaching.recruitNoDetail') },
+  ]
+}
 
-export const COACH_ERRORS = {
-  fullName: 'Please add your full name.',
-  dateOfBirth: 'Please add your date of birth.',
-  nationality: 'Choose your nationality.',
-  location: 'Please add your base location.',
-  specialization: 'Please select your coaching specialization.',
-  specializationCustom: 'Please enter your role title.',
-  categories: 'Please select at least one coaching category.',
-  recruits: 'Choose one to finish.',
-} as const
+export function getCoachErrors(t: OnboardingT = tOnboarding) {
+  return {
+    fullName: t('coach.errors.fullName'),
+    dateOfBirth: t('coach.errors.dateOfBirth'),
+    nationality: t('coach.errors.nationality'),
+    location: t('coach.errors.location'),
+    specialization: t('coach.errors.specialization'),
+    specializationCustom: t('coach.errors.specializationCustom'),
+    categories: t('coach.errors.categories'),
+    recruits: t('coach.errors.recruits'),
+  }
+}
 
 export interface CoachAboutYouDraft {
   fullName: string
@@ -191,12 +200,13 @@ export interface CoachAboutYouDraft {
 export type CoachAboutYouField = 'fullName' | 'dateOfBirth' | 'nationality' | 'location'
 
 /** Step 1 gate, one message per field (inline footnotes). Empty = valid. */
-export function coachAboutYouErrors(d: CoachAboutYouDraft): Partial<Record<CoachAboutYouField, string>> {
+export function coachAboutYouErrors(d: CoachAboutYouDraft, t: OnboardingT = tOnboarding): Partial<Record<CoachAboutYouField, string>> {
   const errors: Partial<Record<CoachAboutYouField, string>> = {}
-  if (!d.fullName.trim()) errors.fullName = COACH_ERRORS.fullName
-  if (!d.dateOfBirth) errors.dateOfBirth = COACH_ERRORS.dateOfBirth
-  if (!d.nationalityCountryId) errors.nationality = COACH_ERRORS.nationality
-  if (!d.location.trim()) errors.location = COACH_ERRORS.location
+  const messages = getCoachErrors(t)
+  if (!d.fullName.trim()) errors.fullName = messages.fullName
+  if (!d.dateOfBirth) errors.dateOfBirth = messages.dateOfBirth
+  if (!d.nationalityCountryId) errors.nationality = messages.nationality
+  if (!d.location.trim()) errors.location = messages.location
   return errors
 }
 
@@ -211,12 +221,13 @@ export interface CoachCoachingDraft {
 export type CoachCoachingField = 'specialization' | 'categories' | 'recruits'
 
 /** Step 2 gate, one message per group (D6.6b). Empty = valid. */
-export function coachCoachingErrors(d: CoachCoachingDraft): Partial<Record<CoachCoachingField, string>> {
+export function coachCoachingErrors(d: CoachCoachingDraft, t: OnboardingT = tOnboarding): Partial<Record<CoachCoachingField, string>> {
   const errors: Partial<Record<CoachCoachingField, string>> = {}
-  if (!d.specialization) errors.specialization = COACH_ERRORS.specialization
-  else if (d.specialization === 'other' && !d.specializationCustom.trim()) errors.specialization = COACH_ERRORS.specializationCustom
-  if (d.categories.length === 0) errors.categories = COACH_ERRORS.categories
-  if (d.recruitsForTeam === null) errors.recruits = COACH_ERRORS.recruits
+  const messages = getCoachErrors(t)
+  if (!d.specialization) errors.specialization = messages.specialization
+  else if (d.specialization === 'other' && !d.specializationCustom.trim()) errors.specialization = messages.specializationCustom
+  if (d.categories.length === 0) errors.categories = messages.categories
+  if (d.recruitsForTeam === null) errors.recruits = messages.recruits
   return errors
 }
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { hapticLight, hapticSuccess } from '@/lib/haptics'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>
@@ -11,6 +12,7 @@ const THRESHOLD = 72
 const MAX_PULL = 120
 
 export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
+  const t = useCommonT()
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const touchStartY = useRef(0)
@@ -123,7 +125,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
           </span>
         </div>
       )}
-      {isRefreshing && <span className="sr-only" role="status">Refreshing</span>}
+      {isRefreshing && <span className="sr-only" role="status">{t('pullToRefresh.refreshing')}</span>}
       {children}
     </>
   )

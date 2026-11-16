@@ -1,13 +1,15 @@
 import { cn } from '@/lib/utils'
 import { euBadgeTone, type EuBadgeSurface } from '@/lib/euBadge'
 import { hasEuPassport, nationalityFlags, type NationalityCountry } from '@/lib/nationality'
+import { useCommonT } from '@/i18n/ns/common'
 
 /** The EU badge (Figma 189:14): EU blue at 85 %, radius 6, 11 semibold white. */
 
 export function EuBadge({ className, surface }: { className?: string; surface: EuBadgeSurface }) {
+  const t = useCommonT()
   return (
-    <span className={cn('inline-flex items-center rounded-[6px] px-1.5 py-[2px] text-micro font-semibold leading-[14px]', euBadgeTone(surface), className)} data-testid="eu-badge" data-surface={surface} aria-label="EU passport">
-      EU
+    <span className={cn('inline-flex items-center rounded-[6px] px-1.5 py-[2px] text-micro font-semibold leading-[14px]', euBadgeTone(surface), className)} data-testid="eu-badge" data-surface={surface} aria-label={t('nationality.euBadgeLabel')}>
+      {t('nationality.euBadge')}
     </span>
   )
 }
@@ -55,16 +57,17 @@ export function NationalityPills({ nationalities, className }: { nationalities: 
  */
 export interface PermitLine { text: string; detail?: string | null; flag?: string | null; amber?: boolean }
 
-export function NationalitiesTile({ nationalities, permits = [], missingLabel = 'Not given', onAdd }: { nationalities: NationalityCountry[]; permits?: PermitLine[]; missingLabel?: string; onAdd?: (() => void) | null }) {
+export function NationalitiesTile({ nationalities, permits = [], missingLabel, onAdd }: { nationalities: NationalityCountry[]; permits?: PermitLine[]; missingLabel?: string; onAdd?: (() => void) | null }) {
+  const t = useCommonT()
   return (
     <div className="flex w-full flex-col gap-2 rounded-[16px] bg-surface-subtle px-3.5 py-3" data-testid="nationalities-tile">
-      <span className="text-micro font-semibold uppercase text-ink-3">Nationalities, passports &amp; permits</span>
-      {nationalities.length === 0 && <span className="text-[16px] font-semibold leading-[21px] text-ink-3">{missingLabel}</span>}
+      <span className="text-micro font-semibold uppercase text-ink-3">{t('nationality.tileTitle')}</span>
+      {nationalities.length === 0 && <span className="text-[16px] font-semibold leading-[21px] text-ink-3">{missingLabel ?? t('nationality.notGiven')}</span>}
       {nationalities.map((c) => (
         <span key={c.id} className="flex items-center gap-2" data-testid="nationality-row">
           {c.flag && <span className="text-[16px] leading-[21px]" aria-hidden="true">{c.flag}</span>}
           <span className="min-w-0 flex-1 text-[16px] font-semibold leading-[21px] text-ink-1">{c.name}</span>
-          {c.isEu && <span className={cn('shrink-0 rounded-full px-2 py-[3px] text-caption font-semibold', euBadgeTone('light'))} data-testid="eu-passport-tag">EU passport</span>}
+          {c.isEu && <span className={cn('shrink-0 rounded-full px-2 py-[3px] text-caption font-semibold', euBadgeTone('light'))} data-testid="eu-passport-tag">{t('nationality.euPassportTag')}</span>}
         </span>
       ))}
       {permits.length > 0 && <span className="h-[0.5px] w-full bg-line" aria-hidden="true" />}
@@ -78,7 +81,7 @@ export function NationalitiesTile({ nationalities, permits = [], missingLabel = 
         </span>
       ))}
       {onAdd && (
-        <button type="button" onClick={onAdd} className="self-start text-secondary font-semibold text-brand-primary">{nationalities.length === 0 ? 'Add passport' : 'Add another'}</button>
+        <button type="button" onClick={onAdd} className="self-start text-secondary font-semibold text-brand-primary">{nationalities.length === 0 ? t('nationality.addPassport') : t('nationality.addAnother')}</button>
       )}
     </div>
   )

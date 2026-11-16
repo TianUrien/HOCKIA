@@ -20,7 +20,10 @@ import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { roleLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import { isRecruitableRole } from '@/lib/settingsRoles'
-import { OPPORTUNITY_PREF_LABEL } from '@/lib/candidateIntent'
+import { dayFirst } from '@/lib/dayFirst'
+import { LanguageSwitch } from '@/components/LanguageSwitch'
+import { useCommonT } from '@/i18n/ns/common'
+import { tSettings, useSettingsT } from '@/i18n/ns/settings'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { qk } from '@/lib/queryKeys'
 import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
@@ -40,23 +43,25 @@ function SquadSettingsRow({ clubId, onOpen }: { clubId: string | null; onOpen: (
       return rows && rows.length > 0 ? rows[0].total_count : 0
     },
   })
-  return <SettingsRow title="Squad & invites" subtitle={squadSettingsSubtitle(data)} onClick={onOpen} />
+  const t = useSettingsT()
+  return <SettingsRow title={t('club.squad')} subtitle={squadSettingsSubtitle(data)} onClick={onOpen} />
 }
 
 /** Club → Contact email (DEV NOTE 355:927: contact_email, contact_email_public, default private). */
 function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { open: boolean; onClose: () => void; email: string; isPublic: boolean; busy: boolean; onSave: (email: string | null, isPublic: boolean) => Promise<boolean> }) {
+  const t = useSettingsT()
   const [value, setValue] = useState(email)
   const [pub, setPub] = useState(isPublic)
   const [error, setError] = useState<string | null>(null)
   const save = async () => {
-    if (!isValidContactEmail(value)) { setError('Enter an email like name@club.com, or leave it empty.'); return }
+    if (!isValidContactEmail(value)) { setError(t('errors.contactEmailInvalid')); return }
     const trimmed = value.trim()
     if (await onSave(trimmed || null, trimmed ? pub : false)) onClose()
   }
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel="Contact email">
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('contactEmail.title')}>
       <div className="px-5 pb-3 pt-1" data-testid="contact-email-sheet">
-        <h2 className="text-title text-ink-1">Contact email</h2>
+        <h2 className="text-title text-ink-1">{t('contactEmail.title')}</h2>
         <p className="mt-1 text-secondary text-ink-2">{CONTACT_EMAIL_INTRO}</p>
         <input
           type="email"
@@ -65,8 +70,8 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
           autoCorrect="off"
           value={value}
           onChange={(e) => { setValue(e.target.value); setError(null) }}
-          placeholder="name@club.com"
-          aria-label="Contact email"
+          placeholder={t('contactEmail.placeholder')}
+          aria-label={t('contactEmail.title')}
           className="mt-3 h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30"
         />
         {error && <p role="alert" className="pt-1.5 text-[13px] text-red-600">{error}</p>}
@@ -90,24 +95,30 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
  */
 export type SettingsSection = 'hub' | 'notifications' | 'privacy' | 'blocked'
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 function longDate(iso: string | null | undefined): string | null {
-  const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null
-  return m ? `${Number(m[3])} ${MONTH[Number(m[2]) - 1]} ${m[1]}` : null
+  const m = iso ? /^\d{4}-\d{2}-\d{2}/.exec(iso) : null
+  return m ? dayFirst(m[0], { year: 'always' }) : null
 }
 /** Accurate DOB copy: the profile shows the age (key facts), never the date;
  *  for players it also keeps club-facing search 18+ (D2 search fence). */
-function dobFooter(isPlayer: boolean): string {
-  return isPlayer
-    ? 'Used for your age on your profile and to keep club search 18+. Only your age is shown, never the date.'
-    : 'Used for your age on your profile. Only your age is shown, never the date.'
+/** "Paid opportunities"; a value the catalog does not know is shown as stored. */
+function lookingForLabel(preference: string): string {
+  return preference === 'paid' || preference === 'development' || preference === 'either'
+    ? tSettings(`lookingFor.${preference}`)
+    : tSettings('lookingFor.other', { preference })
 }
 
-const PROVIDER: Record<string, string> = { google: 'Google', apple: 'Apple', email: 'email' }
+function dobFooter(isPlayer: boolean): string {
+  return isPlayer ? tSettings('accountGroup.dobFooterPlayer') : tSettings('accountGroup.dobFooter')
+}
 
-function Screen({ parent, title, onBack, children }: { parent: string; title: string; onBack: () => void; children: React.ReactNode }) {
+/** Sign-in providers shown by name; anything else reads as "email". */
+const PROVIDER: Record<string, string> = { google: 'Google', apple: 'Apple' }
+
+/** `id` names the screen in its test id; it stays the same in every language. */
+function Screen({ id, parent, title, onBack, children }: { id: string; parent: string; title: string; onBack: () => void; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-surface-grouped pb-28 lg:hidden" data-testid={`settings-${title.toLowerCase().replace(/\W+/g, '-')}`}>
+    <div className="min-h-screen bg-surface-grouped pb-28 lg:hidden" data-testid={`settings-${id}`}>
       <div className="sticky top-0 z-20 bg-surface-grouped pt-[env(safe-area-inset-top)]">
         <DetailNavBar parent={parent} onBack={onBack} />
       </div>
@@ -119,6 +130,8 @@ function Screen({ parent, title, onBack, children }: { parent: string; title: st
 
 function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   const navigate = useNavigate()
+  const t = useSettingsT()
+  const tc = useCommonT()
   const { user, profile, signOut } = useAuthStore()
   const { read, write, toggle, busy } = useProfileWriter()
   const [lookingFor, setLookingFor] = useState(false)
@@ -128,18 +141,21 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   const [signingOut, setSigningOut] = useState(false)
   const [contactEmail, setContactEmail] = useState(false)
 
-  const provider = PROVIDER[(user?.app_metadata?.provider as string | undefined) ?? 'email'] ?? 'email'
+  const providerName = PROVIDER[(user?.app_metadata?.provider as string | undefined) ?? 'email']
+  const provider = providerName ?? t('hub.providerEmail')
   const preference = read<string | null>('opportunity_preference', null)
   const fullMatches = read<string>('full_match_visibility', 'recruiters')
   const isPlayer = profile?.role === 'player'
   const languages = (profile?.languages ?? []).filter(Boolean)
+  const languageList = languages.join(' · ')
+  const languageGroupLabel = tc('language.label')
   const dob = longDate(profile?.date_of_birth)
-  const name = profile?.full_name?.trim() || 'Your profile'
+  const name = profile?.full_name?.trim() || t('hub.fallbackName')
   const recruitable = isRecruitableRole(profile?.role)
   const isClub = profile?.role === 'club'
 
   return (
-    <Screen parent="Profile" title="Settings" onBack={() => navigate('/dashboard/profile')}>
+    <Screen id="settings" parent={t('hub.parent')} title={t('hub.title')} onBack={() => navigate('/dashboard/profile')}>
       <SettingsGroup>
         <button type="button" onClick={() => navigate(isClub ? `${CLUB_EDIT_PATH}?from=settings` : '/dashboard/profile?action=edit')} className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left" data-testid="settings-identity">
           <EntityAvatar src={profile?.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null} name={name} role={profile?.role} size={64} />
@@ -147,14 +163,14 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
             // Figma D1.22: crest, club name, "Signed in with email", "Club · admin".
             <span className="min-w-0 flex-1">
               <span className="block truncate text-body font-semibold text-ink-1">{name}</span>
-              <span className="block truncate text-secondary text-ink-2">Signed in with {provider}</span>
-              <span className="block truncate text-secondary text-ink-3">Club · admin</span>
+              <span className="block truncate text-secondary text-ink-2">{t('hub.signedInWith', { provider })}</span>
+              <span className="block truncate text-secondary text-ink-3">{t('hub.clubAdmin')}</span>
             </span>
           ) : (
             <span className="min-w-0 flex-1">
               <span className="block truncate text-body font-semibold text-ink-1">{name}</span>
               <span className="block truncate text-secondary text-ink-2">{user?.email}</span>
-              <span className="block truncate text-secondary text-ink-3">{roleLabel(profile?.role)} · signed in with {provider}</span>
+              <span className="block truncate text-secondary text-ink-3">{t('hub.roleSignedIn', { role: roleLabel(profile?.role), provider })}</span>
             </span>
           )}
           {isClub && <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />}
@@ -162,55 +178,61 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
       </SettingsGroup>
 
       {isClub && (
-        <SettingsGroup label="Club" footer={CLUB_GROUP_FOOTER}>
-          <SettingsRow title="Club & league" subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league&from=settings')} />
+        <SettingsGroup label={t('club.label')} footer={CLUB_GROUP_FOOTER}>
+          <SettingsRow title={t('club.clubLeague')} subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league&from=settings')} />
           <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members?from=settings')} />
-          <SettingsRow title="Contact email" subtitle={contactEmailSubtitle(read<string | null>('contact_email', null), read<boolean>('contact_email_public', false))} onClick={() => setContactEmail(true)} />
+          <SettingsRow title={t('club.contactEmail')} subtitle={contactEmailSubtitle(read<string | null>('contact_email', null), read<boolean>('contact_email_public', false))} onClick={() => setContactEmail(true)} />
         </SettingsGroup>
       )}
 
       {recruitable && (
-      <SettingsGroup label="Availability" footer="Clubs filter by this. Your week asks you to confirm it now and then.">
+      <SettingsGroup label={t('availability.label')} footer={t('availability.footer')}>
         {isPlayer ? (
           // D2.4: players set Open to play on its own screen (switch + when + consent).
-          <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." value={read('open_to_play', false) ? 'On' : 'Off'} onClick={() => navigate('/dashboard/profile/open-to-play')} />
+          <SettingsRow title={t('availability.openToPlay')} subtitle={t('availability.openToPlayBody')} value={read('open_to_play', false) ? t('availability.on') : t('availability.off')} onClick={() => navigate('/dashboard/profile/open-to-play')} />
         ) : (
           // Coaches: their own flag (open_to_coach), same as the desktop availability strip.
-          <SettingsRow title="Open to coach" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to coach" checked={read('open_to_coach', false)} disabled={busy === 'open_to_coach'} onChange={() => void toggle('open_to_coach', false)} />} />
+          <SettingsRow title={t('availability.openToCoach')} subtitle={t('availability.openToCoachBody')} trailing={<SettingsSwitch label={t('availability.openToCoach')} checked={read('open_to_coach', false)} disabled={busy === 'open_to_coach'} onChange={() => void toggle('open_to_coach', false)} />} />
         )}
-        <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about opportunities." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
-        <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} opportunities` : 'Not set'} onClick={() => setLookingFor(true)} />
+        <SettingsRow title={t('availability.openToOpportunities')} subtitle={t('availability.openToOpportunitiesBody')} trailing={<SettingsSwitch label={t('availability.openToOpportunities')} checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
+        <SettingsRow title={t('availability.lookingFor')} subtitle={preference ? lookingForLabel(preference) : t('availability.notSet')} onClick={() => setLookingFor(true)} />
         {/* Players only, off by default: brands that sell where you live can invite you (2026-11-07). */}
-        {isPlayer && <SettingsRow title="Brand partnerships" subtitle="Let brands find you and invite you as an ambassador." onClick={() => navigate('/settings/brand-partnerships')} />}
+        {isPlayer && <SettingsRow title={t('availability.brandPartnerships')} subtitle={t('availability.brandPartnershipsBody')} onClick={() => navigate('/settings/brand-partnerships')} />}
       </SettingsGroup>
       )}
 
-      <SettingsGroup label="Preferences">
-        <SettingsRow title="Notifications" value="Per type" icon={<Bell className="h-4 w-4" strokeWidth={2} />} onClick={() => go('notifications')} />
-        <SettingsRow title="Privacy" value={isPlayer ? (fullMatches === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} onClick={() => go('privacy')} />
+      <SettingsGroup label={t('preferences.label')}>
+        <SettingsRow title={t('preferences.notifications')} value={t('preferences.perType')} icon={<Bell className="h-4 w-4" strokeWidth={2} />} onClick={() => go('notifications')} />
+        <SettingsRow title={t('preferences.privacy')} value={isPlayer ? (fullMatches === 'public' ? t('preferences.everyone') : t('preferences.clubsCoaches')) : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} onClick={() => go('privacy')} />
       </SettingsGroup>
 
-      <SettingsGroup label="Account" footer={isClub ? undefined : dobFooter(isPlayer)}>
-        <SettingsRow title="Email & sign-in" value={provider === 'email' ? 'Email' : provider} onClick={() => go('account')} />
-        {!isClub && dob && <SettingsRow title="Date of birth" value={dob} />}
-        {!isClub && languages.length > 0 && <SettingsRow title="Languages" subtitle={languages.join(' · ')} />}
+      <SettingsGroup label={languageGroupLabel}>
+        <div className="px-4 py-3">
+          <LanguageSwitch />
+        </div>
       </SettingsGroup>
 
-      <SettingsGroup label="Support">
-        <SettingsRow title="Help centre" icon={<HelpCircle className="h-4 w-4" strokeWidth={2} />} onClick={() => { window.location.href = 'mailto:team@inhockia.com' }} />
-        <SettingsRow title="Send feedback" icon={<MessageSquare className="h-4 w-4" strokeWidth={2} />} onClick={() => setFeedback(true)} />
-        <SettingsRow title="Terms & privacy policy" icon={<FileText className="h-4 w-4" strokeWidth={2} />} onClick={() => setLegal(true)} />
+      <SettingsGroup label={t('accountGroup.label')} footer={isClub ? undefined : dobFooter(isPlayer)}>
+        <SettingsRow title={t('accountGroup.emailSignIn')} value={providerName ?? t('accountGroup.emailValue')} onClick={() => go('account')} />
+        {!isClub && dob && <SettingsRow title={t('accountGroup.dob')} value={dob} />}
+        {!isClub && languages.length > 0 && <SettingsRow title={t('accountGroup.languages')} subtitle={languageList} />}
+      </SettingsGroup>
+
+      <SettingsGroup label={t('support.label')}>
+        <SettingsRow title={t('support.help')} icon={<HelpCircle className="h-4 w-4" strokeWidth={2} />} onClick={() => { window.location.href = 'mailto:team@inhockia.com' }} />
+        <SettingsRow title={t('support.feedback')} icon={<MessageSquare className="h-4 w-4" strokeWidth={2} />} onClick={() => setFeedback(true)} />
+        <SettingsRow title={t('support.legal')} icon={<FileText className="h-4 w-4" strokeWidth={2} />} onClick={() => setLegal(true)} />
       </SettingsGroup>
 
       <SettingsGroup>
-        <SettingsRow title={signingOut ? 'Signing out…' : 'Sign out'} chevron={false} onClick={() => { setSigningOut(true); void signOut().finally(() => setSigningOut(false)) }} />
+        <SettingsRow title={signingOut ? t('hub.signingOut') : t('hub.signOut')} chevron={false} onClick={() => { setSigningOut(true); void signOut().finally(() => setSigningOut(false)) }} />
       </SettingsGroup>
 
       {/* Last and quiet: Destructive (soft) Small opens the confirmation. */}
       <div className="mt-6 flex justify-center">
-        <button type="button" onClick={() => setDeleting(true)} className={buttonClassName({ variant: 'destructive', size: 'small', radius: 'rounded-full' })} data-testid="settings-delete-account">Delete account</button>
+        <button type="button" onClick={() => setDeleting(true)} className={buttonClassName({ variant: 'destructive', size: 'small', radius: 'rounded-full' })} data-testid="settings-delete-account">{t('hub.deleteAccount')}</button>
       </div>
-      <p className="pt-3 text-center text-caption text-ink-3">Hockia · Made for field hockey</p>
+      <p className="pt-3 text-center text-caption text-ink-3">{t('hub.madeFor')}</p>
 
       {isClub && contactEmail && (
         <ContactEmailSheet
@@ -223,14 +245,14 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         />
       )}
 
-      <BottomSheet open={lookingFor} onClose={() => setLookingFor(false)} ariaLabel="Looking for">
+      <BottomSheet open={lookingFor} onClose={() => setLookingFor(false)} ariaLabel={t('lookingFor.title')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Looking for</h2>
-          <p className="mt-1 text-secondary text-ink-2">Clubs filter by this.</p>
+          <h2 className="text-title text-ink-1">{t('lookingFor.title')}</h2>
+          <p className="mt-1 text-secondary text-ink-2">{t('lookingFor.hint')}</p>
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
             {(['paid', 'development', 'either'] as const).map((value) => (
               <button key={value} type="button" onClick={() => { void write({ opportunity_preference: value }, 'opportunity_preference'); setLookingFor(false) }} className="flex h-[50px] w-full items-center justify-between px-4 text-left text-body text-ink-1">
-                {OPPORTUNITY_PREF_LABEL[value]} opportunities
+                {t(`lookingFor.${value}`)}
                 {preference === value && <Check className="h-5 w-5 text-hockia-primary" strokeWidth={2.4} />}
               </button>
             ))}
@@ -238,12 +260,12 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={legal} onClose={() => setLegal(false)} ariaLabel="Terms and privacy policy">
+      <BottomSheet open={legal} onClose={() => setLegal(false)} ariaLabel={t('legal.label')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Terms &amp; privacy policy</h2>
+          <h2 className="text-title text-ink-1">{t('legal.title')}</h2>
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
-            <SettingsRow title="Terms of service" onClick={() => navigate('/terms')} />
-            <SettingsRow title="Privacy policy" onClick={() => navigate('/privacy-policy')} />
+            <SettingsRow title={t('legal.terms')} onClick={() => navigate('/terms')} />
+            <SettingsRow title={t('legal.privacy')} onClick={() => navigate('/privacy-policy')} />
           </div>
         </div>
       </BottomSheet>
@@ -254,14 +276,15 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   )
 }
 
-type Kind = { column: Extract<BoolColumn, `notify_${string}`>; title: string; subtitle: string; recruitableOnly?: boolean }
+/** `copy` is the key stem in the settings catalog: kinds.<copy>Title / kinds.<copy>Body. */
+type Kind = { column: Extract<BoolColumn, `notify_${string}`>; copy: 'messages' | 'applications' | 'opportunities' | 'friends' | 'references' | 'profileViews'; recruitableOnly?: boolean }
 const KINDS: Kind[] = [
-  { column: 'notify_messages', title: 'Messages', subtitle: 'From clubs, coaches and friends.' },
-  { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or an opportunity closed.', recruitableOnly: true },
-  { column: 'notify_opportunities', title: 'New opportunities', subtitle: 'New opportunities for your position, team and passports.', recruitableOnly: true },
-  { column: 'notify_friends', title: 'Friend requests', subtitle: 'New requests and accepted ones.' },
-  { column: 'notify_references', title: 'References', subtitle: 'A friend asks for one, or writes you one.' },
-  { column: 'notify_profile_views', title: 'Profile views', subtitle: 'Weekly summary of who looked at you.' },
+  { column: 'notify_messages', copy: 'messages' },
+  { column: 'notify_applications', copy: 'applications', recruitableOnly: true },
+  { column: 'notify_opportunities', copy: 'opportunities', recruitableOnly: true },
+  { column: 'notify_friends', copy: 'friends' },
+  { column: 'notify_references', copy: 'references' },
+  { column: 'notify_profile_views', copy: 'profileViews' },
 ]
 
 /** Clubs don't apply to roles, so no My applications / New roles for them. */
@@ -270,6 +293,7 @@ function kindsFor(role: string | null | undefined): Kind[] {
 }
 
 function Notifications({ back }: { back: () => void }) {
+  const t = useSettingsT()
   const { user, profile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const push = usePushSubscription()
@@ -290,38 +314,39 @@ function Notifications({ back }: { back: () => void }) {
       }
     } catch (err) {
       logger.error('[SettingsMobile] push toggle failed', err)
-      addToast("Couldn't update push notifications. If it keeps failing, check Notifications for Hockia in your phone's settings.", 'error')
+      addToast(t('errors.pushFailed'), 'error')
     }
   }
 
   return (
-    <Screen parent="Settings" title="Notifications" onBack={back}>
+    <Screen id="notifications" parent={t('notifications.parent')} title={t('notifications.title')} onBack={back}>
       {/* Push is the only channel that can be switched as a whole. Email has no
           master flag, so it is not a row — a row that looks like a setting but
           can't be changed teaches people to distrust the screen. */}
       <SettingsGroup
-        label="Channels"
-        footer={<>Turn push off and nothing below arrives that way. In-app notifications always stay on.{user?.email ? <> Email goes to {user.email}. Choose what arrives per type below.</> : null}</>}
+        label={t('notifications.channels')}
+        footer={user?.email ? t('notifications.channelsFooterEmail', { email: user.email }) : t('notifications.channelsFooter')}
       >
         <SettingsRow
-          title="Push notifications"
-          subtitle={!push.isSupported ? 'Not available on this device' : push.permission === 'denied' ? 'Blocked in your phone’s settings' : 'On this device'}
-          trailing={<SettingsSwitch label="Push notifications" checked={pushOn} disabled={!push.isSupported || push.loading || busy === 'notify_push'} onChange={() => void togglePush()} />}
+          title={t('notifications.pushTitle')}
+          subtitle={!push.isSupported ? t('notifications.pushUnsupported') : push.permission === 'denied' ? t('notifications.pushBlocked') : t('notifications.pushOnDevice')}
+          trailing={<SettingsSwitch label={t('notifications.pushTitle')} checked={pushOn} disabled={!push.isSupported || push.loading || busy === 'notify_push'} onChange={() => void togglePush()} />}
         />
       </SettingsGroup>
 
-      <SettingsGroup label="Tell me about" trailingLabels={['Push', 'Email']} footer="Push and Email move together for now. Each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.">
+      <SettingsGroup label={t('notifications.tellMe')} trailingLabels={[t('notifications.colPush'), t('notifications.colEmail')]} footer={t('notifications.tellMeFooter')}>
         {kindsFor(profile?.role).map((k) => {
           const on = read<boolean>(k.column, true)
+          const title = t(`kinds.${k.copy}Title`)
           return (
             <SettingsRow
               key={k.column}
-              title={k.title}
-              subtitle={k.subtitle}
+              title={title}
+              subtitle={t(`kinds.${k.copy}Body`)}
               trailing={
                 <span className="flex shrink-0 gap-2">
-                  <SettingsSwitch label={`${k.title} · push`} checked={on && pushOn} disabled={!pushOn || busy === k.column} onChange={() => void toggle(k.column, true)} />
-                  <SettingsSwitch label={`${k.title} · email`} checked={on} disabled={busy === k.column} onChange={() => void toggle(k.column, true)} />
+                  <SettingsSwitch label={t('notifications.pushSwitch', { title })} checked={on && pushOn} disabled={!pushOn || busy === k.column} onChange={() => void toggle(k.column, true)} />
+                  <SettingsSwitch label={t('notifications.emailSwitch', { title })} checked={on} disabled={busy === k.column} onChange={() => void toggle(k.column, true)} />
                 </span>
               }
             />
@@ -333,15 +358,16 @@ function Notifications({ back }: { back: () => void }) {
 }
 
 function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => void }) {
+  const t = useSettingsT()
   const { read, write, toggle, busy } = useProfileWriter()
   const { blockedIds } = useBlockedUsers()
   const { profile } = useAuthStore()
   const { resolveNotice } = useFullMatchPrivacyNotice()
   const visibility = read<string>('full_match_visibility', 'recruiters')
   const options = useMemo(() => [
-    { value: 'recruiters', title: 'Clubs & coaches', subtitle: 'Clubs and coaches who recruit. Highlights and reels stay public.' },
-    { value: 'public', title: 'Everyone on Hockia', subtitle: 'Anyone on Hockia can watch them.' },
-  ], [])
+    { value: 'recruiters', title: t('mobilePrivacy.recruitersTitle'), subtitle: t('mobilePrivacy.recruitersBody') },
+    { value: 'public', title: t('mobilePrivacy.publicTitle'), subtitle: t('mobilePrivacy.publicBody') },
+  ], [t])
   const choose = async (value: string) => {
     if (visibility === value) return
     // Answering here also answers the one-time notice, so it never re-asks.
@@ -349,9 +375,9 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
   }
 
   return (
-    <Screen parent="Settings" title="Privacy" onBack={back}>
+    <Screen id="privacy" parent={t('mobilePrivacy.parent')} title={t('mobilePrivacy.title')} onBack={back}>
       {profile?.role === 'player' && (
-        <SettingsGroup label="Who can watch your full matches" footer="Applies to all your full matches. You can still change a single video in Manage media.">
+        <SettingsGroup label={t('mobilePrivacy.fullMatchLabel')} footer={t('mobilePrivacy.fullMatchFooter')}>
           {options.map((o) => (
             <button key={o.value} type="button" role="radio" aria-checked={visibility === o.value} disabled={busy === 'full_match_visibility'} onClick={() => void choose(o.value)} className="flex w-full items-center gap-3 px-4 py-3 text-left" data-testid={`full-match-visibility-${o.value}`}>
               <span className="min-w-0 flex-1">
@@ -364,17 +390,17 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
         </SettingsGroup>
       )}
 
-      <SettingsGroup label="Visibility">
-        <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them, and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
-        <SettingsRow title="Show when I was last active" subtitle="“Active today” in Chat." trailing={<SettingsSwitch label="Show when I was last active" checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
+      <SettingsGroup label={t('mobilePrivacy.visibility')}>
+        <SettingsRow title={t('mobilePrivacy.anonymous')} subtitle={t('mobilePrivacy.anonymousBody')} trailing={<SettingsSwitch label={t('mobilePrivacy.anonymous')} checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
+        <SettingsRow title={t('mobilePrivacy.lastActive')} subtitle={t('mobilePrivacy.lastActiveBody')} trailing={<SettingsSwitch label={t('mobilePrivacy.lastActive')} checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
         {/* Clubs set their contact email under Settings › Club (D1.22). */}
         {profile?.role !== 'club' && (
-          <SettingsRow title="Show my contact email" subtitle="Off: clubs see it only once they reply to your application." trailing={<SettingsSwitch label="Show my contact email" checked={read('contact_email_public', false)} disabled={busy === 'contact_email_public'} onChange={() => void toggle('contact_email_public', false)} />} />
+          <SettingsRow title={t('mobilePrivacy.contactEmail')} subtitle={t('mobilePrivacy.contactEmailBody')} trailing={<SettingsSwitch label={t('mobilePrivacy.contactEmail')} checked={read('contact_email_public', false)} disabled={busy === 'contact_email_public'} onChange={() => void toggle('contact_email_public', false)} />} />
         )}
       </SettingsGroup>
 
-      <SettingsGroup label="Safety" footer="Blocked members can’t message you, see your profile, or find you in Community.">
-        <SettingsRow title="Blocked members" value={blockedIds.size === 0 ? 'None' : String(blockedIds.size)} onClick={() => go('blocked')} />
+      <SettingsGroup label={t('mobilePrivacy.safety')} footer={t('mobilePrivacy.safetyFooter')}>
+        <SettingsRow title={t('mobilePrivacy.blocked')} value={blockedIds.size === 0 ? t('mobilePrivacy.none') : String(blockedIds.size)} onClick={() => go('blocked')} />
       </SettingsGroup>
     </Screen>
   )
@@ -382,12 +408,13 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
 
 export default function SettingsMobile({ section }: { section: SettingsSection }) {
   const navigate = useNavigate()
+  const t = useSettingsT()
   const go = (s: SettingsSection | 'account') => navigate(s === 'hub' ? '/settings' : `/settings/${s}`)
   if (section === 'notifications') return <Notifications back={() => go('hub')} />
   if (section === 'privacy') return <Privacy back={() => go('hub')} go={go} />
   if (section === 'blocked') {
     return (
-      <Screen parent="Privacy" title="Blocked members" onBack={() => go('privacy')}>
+      <Screen id="blocked-members" parent={t('blocked.parent')} title={t('blocked.title')} onBack={() => go('privacy')}>
         <div className="mt-2 overflow-hidden rounded-card bg-white p-4"><BlockedAccountsList /></div>
       </Screen>
     )

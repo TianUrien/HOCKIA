@@ -3,6 +3,7 @@ import { Award, Check, UserPlus } from 'lucide-react'
 import { EntityAvatar } from './EntityAvatar'
 import { buttonClassName } from './buttonClasses'
 import type { RoleLike } from '@/lib/identity'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * List item / Friend (Figma "03 · Components" 555:4870): avatar 52, name,
@@ -38,31 +39,35 @@ interface FriendListItemProps {
   onOpen?: () => void
 }
 
+/** Between the meta line and the flags; the same in every language. */
+const FLAGS_SEPARATOR = ' · '
 const GREY_PILL = 'flex h-9 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2'
 const TONAL_SMALL = buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })
 
 function Trailing({ trailing, name }: { trailing: FriendTrailing; name: string }): ReactNode {
+  const t = useCommonT()
   switch (trailing.kind) {
     case 'ask':
-      return <button type="button" onClick={trailing.onClick} disabled={trailing.disabled} className={TONAL_SMALL} data-testid="friend-trailing-ask">Ask for reference</button>
+      return <button type="button" onClick={trailing.onClick} disabled={trailing.disabled} className={TONAL_SMALL} data-testid="friend-trailing-ask">{t('friendRow.ask')}</button>
     case 'requested':
-      return <span className={GREY_PILL} data-testid="friend-trailing-requested"><Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" /> Requested</span>
+      return <span className={GREY_PILL} data-testid="friend-trailing-requested"><Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" /> {t('friendRow.requested')}</span>
     case 'friends':
-      return <span className={GREY_PILL} data-testid="friend-trailing-friends"><Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" /> Friends</span>
+      return <span className={GREY_PILL} data-testid="friend-trailing-friends"><Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" /> {t('friendRow.friends')}</span>
     case 'add':
       return (
-        <button type="button" onClick={trailing.onClick} disabled={trailing.disabled} aria-label={`${trailing.label ?? 'Add'} ${name}`} className={TONAL_SMALL} data-testid="friend-trailing-add">
-          <UserPlus className="h-4 w-4" strokeWidth={2} aria-hidden="true" /> {trailing.label ?? 'Add'}
+        <button type="button" onClick={trailing.onClick} disabled={trailing.disabled} aria-label={t('friendRow.addLabel', { action: trailing.label ?? t('friendRow.add'), name })} className={TONAL_SMALL} data-testid="friend-trailing-add">
+          <UserPlus className="h-4 w-4" strokeWidth={2} aria-hidden="true" /> {trailing.label ?? t('friendRow.add')}
         </button>
       )
     case 'wrote':
-      return <span className="max-w-[45%] shrink-0 text-right text-secondary font-semibold text-gold" data-testid="friend-trailing-wrote">Wrote you a reference</span>
+      return <span className="max-w-[45%] shrink-0 text-right text-secondary font-semibold text-gold" data-testid="friend-trailing-wrote">{t('friendRow.wroteYou')}</span>
     default:
       return null
   }
 }
 
 export function FriendListItem({ name, avatarUrl, role, meta, flags, showReference = false, trailing, onOpen }: FriendListItemProps) {
+  const t = useCommonT()
   return (
     <li className="flex items-center gap-3 border-b border-line py-3 last:border-b-0" data-testid="friend-list-item">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
@@ -71,11 +76,11 @@ export function FriendListItem({ name, avatarUrl, role, meta, flags, showReferen
           <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
           <span className="flex min-w-0 items-center text-secondary text-ink-2">
             <span className="min-w-0 truncate">{meta}</span>
-            {flags && <span className="shrink-0 whitespace-pre"> · {flags}</span>}
+            {flags && <span className="shrink-0 whitespace-pre">{FLAGS_SEPARATOR}{flags}</span>}
           </span>
           {showReference && (
             <span className="mt-1 inline-flex h-[22px] items-center gap-1 rounded-full bg-gold-soft px-2 text-caption font-semibold text-gold" data-testid="friend-reference-pill">
-              <Award className="h-3 w-3" strokeWidth={2.2} aria-hidden="true" /> Wrote a reference
+              <Award className="h-3 w-3" strokeWidth={2.2} aria-hidden="true" /> {t('friendRow.wroteReference')}
             </span>
           )}
         </span>

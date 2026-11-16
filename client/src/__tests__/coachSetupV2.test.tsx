@@ -92,7 +92,7 @@ vi.mock('@/components/WorldClubSearch', () => ({
 
 import CoachSetupFlow from '@/components/onboarding/CoachSetupFlow'
 import {
-  COACH_ERRORS,
+  getCoachErrors,
   coachAboutYouErrors,
   coachCoachingErrors,
   coachDraftKey,
@@ -102,6 +102,9 @@ import {
   serializeWizardDraft,
   toggleCoachCategory,
 } from '@/lib/onboardingV2'
+
+// COACH_ERRORS became getCoachErrors() (copy now comes from the catalog).
+const COACH_ERRORS = getCoachErrors()
 
 const years = (n: number) => {
   const d = new Date()

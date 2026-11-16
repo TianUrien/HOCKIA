@@ -8,7 +8,8 @@
  *     satisfied by whatever plural forms the other language needs),
  *   - lacks a plural form its own grammar needs,
  *   - has a key English does not have,
- *   - has an empty value, or
+ *   - has an empty value,
+ *   - a start-up file uses a key that is not in its namespace's core file, or
  *   - uses different {{variables}} or <tags> than English.
  *
  * Usage: node scripts/check-locales.mjs [localesDir]
@@ -41,7 +42,8 @@ function pluralForms(language) {
 export function checkLocales(localesDir) {
   const problems = []
   const sourceDir = path.join(localesDir, 'en')
-  const namespaces = readdirSync(sourceDir).filter((f) => f.endsWith('.json'))
+  // en/<ns>.core.json is the start-up part of en/<ns>.json: one namespace, two files.
+  const namespaces = readdirSync(sourceDir).filter((f) => f.endsWith('.json') && !f.endsWith('.core.json'))
   const languages = readdirSync(localesDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && d.name !== 'en').map((d) => d.name)
 
@@ -54,6 +56,13 @@ export function checkLocales(localesDir) {
       const targetPath = path.join(localesDir, language, file)
       if (!existsSync(targetPath)) { problems.push(`${where}: file is missing`); continue }
       const source = flatten(JSON.parse(readFileSync(path.join(sourceDir, file), 'utf8')), '', new Map())
+      const corePath = path.join(sourceDir, file.replace(/\.json$/, '.core.json'))
+      if (existsSync(corePath)) {
+        for (const [key, value] of flatten(JSON.parse(readFileSync(corePath, 'utf8')), '', new Map())) {
+          if (source.has(key)) problems.push(`en/${file}: "${key}" is in both the core file and the main file`)
+          source.set(key, value)
+        }
+      }
       const target = flatten(JSON.parse(readFileSync(targetPath, 'utf8')), '', new Map())
       const sourceBases = new Map()
       for (const [key, value] of source) {
@@ -82,9 +91,38 @@ export function checkLocales(localesDir) {
   return problems
 }
 
+/**
+ * Start-up files import a namespace's core part only ('@/i18n/ns/<ns>.core').
+ * A key they use must be in en/<ns>.core.json, or English would be missing
+ * until the rest of the catalog loads with a lazy screen.
+ */
+export function checkCoreUsage(localesDir, srcDir) {
+  const problems = []
+  const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const full = path.join(dir, e.name)
+    if (e.isDirectory()) return ['__tests__', 'i18n', 'locales'].includes(e.name) ? [] : walk(full)
+    return /\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name) ? [full] : []
+  })
+  for (const file of walk(srcDir)) {
+    const text = readFileSync(file, 'utf8')
+    const match = /from '@\/i18n\/ns\/(\w+)\.core'/.exec(text)
+    if (!match) continue
+    const restPath = path.join(localesDir, 'en', `${match[1]}.json`)
+    if (!existsSync(restPath)) continue
+    const rest = [...flatten(JSON.parse(readFileSync(restPath, 'utf8')), '', new Map()).keys()]
+    for (const [, literal] of text.matchAll(/['"`]([A-Za-z][\w.]*)(?=['"`]|\$\{)/g)) {
+      const base = literal.replace(/\.$/, '')
+      const hit = rest.find((key) => key === base || baseOf(key) === base
+        || ((literal.includes('.')) && key.startsWith(`${base}.`)))
+      if (hit) problems.push(`${path.relative(srcDir, file)}: uses "${literal}" (${match[1]}), which is not in en/${match[1]}.core.json`)
+    }
+  }
+  return problems
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const dir = process.argv[2] ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'locales')
-  const problems = checkLocales(dir)
+  const problems = [...checkLocales(dir), ...checkCoreUsage(dir, path.join(dir, '..'))]
   if (problems.length) {
     console.error(`Locale check failed (${problems.length}):`)
     for (const p of problems) console.error(`  - ${p}`)

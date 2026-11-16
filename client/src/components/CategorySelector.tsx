@@ -6,6 +6,7 @@ import {
   type CoachUmpireCategory,
   isOpenToAny,
 } from '@/lib/hockeyCategories'
+import { useOnboardingT } from '@/i18n/ns/onboarding.core'
 
 const RADIO_GRID_CLASS =
   'grid grid-cols-2 sm:grid-cols-3 gap-2'
@@ -84,6 +85,7 @@ export function MultiCategorySelector({
   idPrefix = 'categories',
   disabled = false,
 }: MultiCategorySelectorProps) {
+  const t = useOnboardingT()
   const safeValue: CoachUmpireCategory[] = value ?? []
   const isAny = isOpenToAny(safeValue)
 
@@ -144,7 +146,7 @@ export function MultiCategorySelector({
         />
         <label htmlFor={`${idPrefix}-any`} className="text-sm text-gray-700 select-none cursor-pointer">
           {CATEGORY_LABELS.any}{' '}
-          <span className="text-gray-400 font-normal">(open to all categories)</span>
+          <span className="text-gray-400 font-normal">{t('categorySelector.anyHint')}</span>
         </label>
       </div>
     </div>

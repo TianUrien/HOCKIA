@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger'
 import { normalizeClubNameCasing } from '@/lib/clubNameCasing'
 import { Button } from '@/components'
 import ClubClaimConfirmModal from './ClubClaimConfirmModal'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 
 interface Region {
   id: number
@@ -73,6 +74,7 @@ interface ClubClaimStepProps {
 }
 
 export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubClaimStepProps) {
+  const t = useOnboardingT()
   // State - flow can skip 'region' step for countries without regions
   const [step, setStep] = useState<'country' | 'region' | 'club' | 'leagues'>('country')
   const [loading, setLoading] = useState(true)
@@ -147,12 +149,14 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
         )
       } catch (err) {
         logger.error('[ClubClaimStep] Failed to fetch countries:', err)
-        setError('Failed to load countries')
+        setError(t('claim.errors.countries'))
       } finally {
         setLoading(false)
       }
     }
     fetchCountries()
+    // Once on mount: a language change must not refetch the list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Handle country selection
@@ -191,7 +195,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
       }
     } catch (err) {
       logger.error('[ClubClaimStep] Failed to process country:', err)
-      setError('Failed to load data for this country')
+      setError(t('claim.errors.countryData'))
     } finally {
       setLoading(false)
     }
@@ -219,7 +223,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
       setStep('club')
     } catch (err) {
       logger.error('[ClubClaimStep] Failed to process region:', err)
-      setError('Failed to load clubs for this region')
+      setError(t('claim.errors.regionClubs'))
     } finally {
       setLoading(false)
     }
@@ -244,7 +248,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
       setStep('leagues')
     } catch (err) {
       logger.error('[ClubClaimStep] Failed to process region skip:', err)
-      setError('Failed to load data')
+      setError(t('claim.errors.data'))
     } finally {
       setLoading(false)
     }
@@ -264,7 +268,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
 
   const handleClubSelect = (club: WorldClub) => {
     if (club.is_claimed) {
-      setError('This club has already been claimed by another user.')
+      setError(t('claim.errors.alreadyClaimed'))
       return
     }
     setSelectedClub(club)
@@ -336,7 +340,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
 
         if (error) throw error
         if (data && !data.success) {
-          throw new Error(data.error || 'Failed to claim club')
+          throw new Error(data.error || t('claim.errors.claimFailed'))
         }
 
         const menLeague = leagues.find(l => l.id === menLeagueId)
@@ -369,7 +373,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
 
         if (error) throw error
         if (data && !data.success) {
-          throw new Error(data.error || 'Failed to create club')
+          throw new Error(data.error || t('claim.errors.createFailed'))
         }
 
         const menLeague = leagues.find(l => l.id === menLeagueId)
@@ -392,7 +396,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
       }
     } catch (err) {
       logger.error('[ClubClaimStep] Claim/create failed:', err)
-      setError(err instanceof Error ? err.message : 'Operation failed')
+      setError(err instanceof Error ? err.message : t('claim.errors.generic'))
     } finally {
       setLoading(false)
     }
@@ -451,8 +455,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
       {step === 'country' && (
         <div className="space-y-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Where is your club located?</h2>
-            <p className="text-gray-600">Select your country to find your club in our directory</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('claim.country.title')}</h2>
+            <p className="text-gray-600">{t('claim.country.subtitle')}</p>
           </div>
 
           {loading ? (
@@ -468,8 +472,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 type="search"
                 value={countrySearch}
                 onChange={e => setCountrySearch(e.target.value)}
-                placeholder="Search countries..."
-                aria-label="Search countries"
+                placeholder={t('claim.country.searchPlaceholder')}
+                aria-label={t('claim.country.searchLabel')}
                 autoComplete="off"
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-transparent focus-visible:ring-2 focus-visible:ring-hockia-primary"
               />
@@ -487,7 +491,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
                     <img
                       src={`https://flagcdn.com/w80/${(country.country_code ?? 'xx').toLowerCase()}.png`}
-                      alt={`${country.country_name ?? 'Country'} flag`}
+                      alt={country.country_name ? t('claim.country.flagAlt', { country: country.country_name }) : t('claim.country.flagAltUnknown')}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.currentTarget;
@@ -505,8 +509,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                     <span className="font-medium text-gray-900">{country.country_name}</span>
                     <span className="text-sm text-gray-500 ml-2">
                       {(country.total_leagues ?? 0) > 0
-                        ? `${country.total_leagues} ${country.total_leagues === 1 ? 'league' : 'leagues'}`
-                        : 'No leagues yet'}
+                        ? t('claim.country.leagues', { count: country.total_leagues ?? 0 })
+                        : t('claim.country.noLeagues')}
                     </span>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -520,7 +524,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               onClick={onSkip}
               className="w-full py-3 text-gray-600 hover:text-gray-900 text-sm"
             >
-              My country is not listed - continue without claiming
+              {t('claim.country.skip')}
             </button>
           </div>
         </div>
@@ -538,8 +542,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               />
               <span>{selectedCountry.country_name}</span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select your region</h2>
-            <p className="text-gray-600">Choose the region where your club is based</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('claim.region.title')}</h2>
+            <p className="text-gray-600">{t('claim.region.subtitle')}</p>
           </div>
 
           {loading ? (
@@ -574,8 +578,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 <Plus className="w-5 h-5 text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900">My region isn't listed</div>
-                <div className="text-sm text-gray-500">Create a new club</div>
+                <div className="font-medium text-gray-900">{t('claim.region.notListed')}</div>
+                <div className="text-sm text-gray-500">{t('claim.region.createNew')}</div>
               </div>
             </button>
           </div>
@@ -584,7 +588,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             onClick={handleBack}
             className="w-full py-3 text-gray-600 hover:text-gray-900 text-sm"
           >
-            ← Back to country selection
+            {t('claim.region.back')}
           </button>
         </div>
       )}
@@ -607,8 +611,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 </>
               )}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Find your club</h2>
-            <p className="text-gray-600">Search or scroll to find your club</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('claim.club.title')}</h2>
+            <p className="text-gray-600">{t('claim.club.subtitle')}</p>
           </div>
 
           {/* Search */}
@@ -616,7 +620,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="search"
-              placeholder="Search clubs..."
+              placeholder={t('claim.club.searchPlaceholder')}
               value={clubSearch}
               onChange={(e) => setClubSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
@@ -631,7 +635,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           {/* Club list */}
           <div className="max-h-64 overflow-y-auto space-y-2">
             {filteredClubs.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">No clubs found in this {selectedRegion ? 'region' : 'country'} yet</p>
+              <p className="text-center text-gray-500 py-4">{selectedRegion ? t('claim.club.emptyRegion') : t('claim.club.emptyCountry')}</p>
             ) : (
               filteredClubs.map(club => (
                 <button
@@ -650,7 +654,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   <div className="flex-1">
                     <span className="font-medium text-gray-900">{club.club_name}</span>
                     {club.is_claimed && (
-                      <span className="ml-2 text-xs text-ink-2 bg-surface-muted px-2 py-0.5 rounded-full">Claimed</span>
+                      <span className="ml-2 text-xs text-ink-2 bg-surface-muted px-2 py-0.5 rounded-full">{t('claim.club.claimed')}</span>
                     )}
                   </div>
                 </button>
@@ -664,14 +668,14 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-hockia-primary hover:text-hockia-primary transition-all"
           >
             <Plus className="w-5 h-5" />
-            <span>My club is not listed - create new</span>
+            <span>{t('claim.club.notListed')}</span>
           </button>
 
           <button
             onClick={handleBack}
             className="w-full py-3 text-gray-600 hover:text-gray-900 text-sm"
           >
-            ← Back to {selectedCountry?.has_regions ? 'region' : 'country'} selection
+            {selectedCountry?.has_regions ? t('claim.club.backToRegion') : t('claim.club.backToCountry')}
           </button>
         </div>
       )}
@@ -695,12 +699,12 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               )}
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {isCreatingNew ? 'Create your club' : `Claim ${selectedClub?.club_name}`}
+              {isCreatingNew ? t('claim.leagues.createTitle') : t('claim.leagues.claimTitle', { clubName: selectedClub?.club_name })}
             </h2>
             <p className="text-gray-600">
               {leagues.length > 0
-                ? 'Select the leagues your club plays in'
-                : 'Enter your club name to get started'}
+                ? t('claim.leagues.subtitleLeagues')
+                : t('claim.leagues.subtitleName')}
             </p>
           </div>
 
@@ -708,11 +712,11 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           {isCreatingNew && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Club Name
+                {t('claim.leagues.nameLabel')}
               </label>
               <input
                 type="text"
-                placeholder="Enter your club name"
+                placeholder={t('claim.leagues.namePlaceholder')}
                 value={newClubName}
                 onChange={(e) => setNewClubName(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
@@ -729,7 +733,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{selectedClub.club_name}</p>
-                <p className="text-sm text-gray-600">You are claiming this club</p>
+                <p className="text-sm text-gray-600">{t('claim.leagues.claiming')}</p>
               </div>
               <CheckCircle className="w-6 h-6 text-green-500 ml-auto" />
             </div>
@@ -741,20 +745,19 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               <div>
                 <label id="womens-league-label" className="block text-sm font-medium text-gray-700 mb-2">
                   <Trophy className="w-4 h-4 inline mr-1" />
-                  Women's League
+                  {t('claim.leagues.womens')}
                 </label>
-                <p className="text-xs text-gray-500 mb-1.5">Select the league for your main women's team.</p>
+                <p className="text-xs text-gray-500 mb-1.5">{t('claim.leagues.womensHint')}</p>
                 <select
                   aria-labelledby="womens-league-label"
                   value={womenLeagueId ?? ''}
                   onChange={(e) => setWomenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                 >
-                  <option value="">None / Not applicable</option>
+                  <option value="">{t('claim.leagues.none')}</option>
                   {leagues.map(league => (
                     <option key={league.id} value={league.id}>
-                      {league.name}
-                      {league.tier && ` (Tier ${league.tier})`}
+                      {league.tier ? t('claim.leagues.withTier', { name: league.name, tier: league.tier }) : league.name}
                     </option>
                   ))}
                 </select>
@@ -764,33 +767,32 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               <div>
                 <label id="mens-league-label" className="block text-sm font-medium text-gray-700 mb-2">
                   <Trophy className="w-4 h-4 inline mr-1" />
-                  Men's League
+                  {t('claim.leagues.mens')}
                 </label>
-                <p className="text-xs text-gray-500 mb-1.5">Select the league for your main men's team.</p>
+                <p className="text-xs text-gray-500 mb-1.5">{t('claim.leagues.mensHint')}</p>
                 <select
                   aria-labelledby="mens-league-label"
                   value={menLeagueId ?? ''}
                   onChange={(e) => setMenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                 >
-                  <option value="">None / Not applicable</option>
+                  <option value="">{t('claim.leagues.none')}</option>
                   {leagues.map(league => (
                     <option key={league.id} value={league.id}>
-                      {league.name}
-                      {league.tier && ` (Tier ${league.tier})`}
+                      {league.tier ? t('claim.leagues.withTier', { name: league.name, tier: league.tier }) : league.name}
                     </option>
                   ))}
                 </select>
               </div>
 
               <p className="text-xs text-gray-500 text-center">
-                If your club has multiple teams, you'll be able to add them later from your dashboard.
+                {t('claim.leagues.multiTeams')}
               </p>
             </>
           ) : (
             <div className="p-4 bg-surface-grouped border border-line rounded-xl">
               <p className="text-sm text-ink-2">
-                No leagues are available for your region yet. You can add league information later from your club dashboard.
+                {t('claim.leagues.noLeagues')}
               </p>
             </div>
           )}
@@ -801,14 +803,14 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               onClick={handleBack}
               className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              Back
+              {t('claim.leagues.back')}
             </button>
             <Button
               onClick={() => setShowClaimConfirm(true)}
               disabled={loading || (isCreatingNew && !newClubName.trim())}
               className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
             >
-              {loading ? 'Processing...' : isCreatingNew ? 'Create & Claim Club' : 'Claim Club'}
+              {loading ? t('claim.leagues.processing') : isCreatingNew ? t('claim.leagues.createAndClaim') : t('claim.leagues.claimButton')}
             </Button>
           </div>
         </div>
@@ -824,7 +826,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           // inline error and retry/cancel.
           setShowClaimConfirm(false)
         }}
-        clubName={selectedClub?.club_name ?? newClubName.trim() ?? 'this club'}
+        clubName={selectedClub?.club_name ?? newClubName.trim() ?? t('claim.leagues.fallbackClubName')}
         isCreating={isCreatingNew}
         loading={loading}
       />

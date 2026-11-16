@@ -1,7 +1,8 @@
 import { X, SlidersHorizontal } from 'lucide-react'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { opportunityGenderToDisplay, PLAYER_ROLE_GENDERS, type OpportunityGender } from '@/lib/hockeyCategories'
 
-const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
+const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
 
 /** Filter chip-row gender type. Phase 3d — accepts the full enum. */
 export type QuickFilterGender = 'all' | OpportunityGender
@@ -31,6 +32,7 @@ export default function OpportunityQuickFilters({
   secondaryFilterCount,
   onOpenMoreFilters,
 }: QuickFiltersProps) {
+  const t = useOpportunitiesT()
   const activeChip = 'flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-hockia-primary text-white border border-hockia-primary'
   const inactiveChip = 'flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-white text-gray-700 border border-gray-200 active:bg-gray-100'
 
@@ -61,12 +63,12 @@ export default function OpportunityQuickFilters({
           onClick={() => onSetType('all')}
           className={activeChip}
         >
-          {opportunityType === 'player' ? 'Player' : 'Coach'}
+          {opportunityType === 'player' ? t('quickFilters.player') : t('quickFilters.coach')}
           <X className="w-3.5 h-3.5" />
         </button>
       ) : (
         <button onClick={cycleType} className={inactiveChip}>
-          All Types
+          {t('quickFilters.allTypes')}
         </button>
       )}
 
@@ -82,7 +84,7 @@ export default function OpportunityQuickFilters({
           </button>
         ) : (
           <button onClick={cycleGender} className={inactiveChip}>
-            Category
+            {t('quickFilters.category')}
           </button>
         )
       )}
@@ -94,7 +96,7 @@ export default function OpportunityQuickFilters({
           onClick={() => onTogglePosition(pos)}
           className={position.includes(pos) ? activeChip : inactiveChip}
         >
-          {pos.charAt(0).toUpperCase() + pos.slice(1)}
+          {t(`quickFilters.position.${pos}`)}
           {position.includes(pos) && <X className="w-3.5 h-3.5" />}
         </button>
       ))}
@@ -109,7 +111,7 @@ export default function OpportunityQuickFilters({
         }`}
       >
         <SlidersHorizontal className="w-4 h-4" />
-        More
+        {t('quickFilters.more')}
         {secondaryFilterCount > 0 && (
           <span className="w-5 h-5 rounded-full bg-hockia-primary text-white text-[10px] font-bold flex items-center justify-center">
             {secondaryFilterCount}
@@ -123,7 +125,7 @@ export default function OpportunityQuickFilters({
           onClick={onClearAll}
           className="flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full text-sm font-medium text-red-500 bg-red-50 border border-red-100 active:bg-red-100"
         >
-          Clear all
+          {t('quickFilters.clearAll')}
         </button>
       )}
     </div>

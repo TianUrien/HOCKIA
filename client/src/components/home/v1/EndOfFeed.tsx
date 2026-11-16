@@ -3,6 +3,7 @@ import { useAuthStore } from '@/lib/auth'
 import { HOME_V1_MODULES, recordModuleImpression, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { PeopleRow } from './PeopleRow'
 import { RolesRail } from './RolesRail'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * End of feed (Figma H13 88:688): "You're all caught up" + People you may
@@ -10,6 +11,7 @@ import { RolesRail } from './RolesRail'
  * for players / open coaches — clubs get Available now instead.
  */
 export function EndOfFeed() {
+  const t = useHomeT()
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const clubSide = role === 'club'
   const impressionRef = useImpressionOnce(() => recordModuleImpression(HOME_V1_MODULES.endOfFeed.id, HOME_V1_MODULES.endOfFeed.position))
@@ -19,8 +21,8 @@ export function EndOfFeed() {
         <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-hockia-soft">
           <Check className="h-6 w-6 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
         </span>
-        <h2 className="text-body font-semibold text-ink-1">You’re all caught up</h2>
-        <p className="text-secondary text-ink-2">New signings and highlights will show up here.</p>
+        <h2 className="text-body font-semibold text-ink-1">{t('endOfFeed.title')}</h2>
+        <p className="text-secondary text-ink-2">{t('endOfFeed.body')}</p>
       </div>
       <PeopleRow kind="pymk" />
       {clubSide

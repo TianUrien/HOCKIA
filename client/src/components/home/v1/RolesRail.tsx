@@ -6,6 +6,7 @@ import { HOME_V1_MODULES, recordModuleImpression, trackModuleClick, useImpressio
 import { navState } from '@/lib/navSource'
 import { SectionHeader } from './primitives'
 import { RoleCoverCard } from './RoleCoverCard'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * "Roles for you" (Figma 60:295): players and open coaches only — clubs never
@@ -15,6 +16,7 @@ import { RoleCoverCard } from './RoleCoverCard'
  * same scroll (HomePage useScrollRestore) — one role design app-wide (17 Oct 2026).
  */
 export function RolesRail({ className, module = HOME_V1_MODULES.rolesRail }: { className?: string; /** Which slot this rail fills (in-feed or end of feed) for impressions and clicks. */ module?: { id: string; position: number } }) {
+  const t = useHomeT()
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const talent = role === 'player' || role === 'coach'
   const { items, loading } = useOpportunitiesForYou(talent, role === 'coach' ? 'coach' : 'player')
@@ -25,14 +27,14 @@ export function RolesRail({ className, module = HOME_V1_MODULES.rolesRail }: { c
 
   return (
     <section ref={impressionRef} className={className ?? 'flex flex-col gap-2 py-4'} data-testid="home-roles-rail">
-      <SectionHeader title="Opportunities for you" action="See all" to="/opportunities" onLinkClick={() => trackModuleClick(module.id, module.position, '/opportunities')} />
+      <SectionHeader title={t('rolesRail.title')} action={t('rolesRail.seeAll')} to="/opportunities" onLinkClick={() => trackModuleClick(module.id, module.position, '/opportunities')} />
       <div className="flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.slice(0, 10).map((o) => (
           <RoleCoverCard
             key={o.id}
             size="rail"
             clubId={o.club_id}
-            clubName={o.club_name ?? 'Club'}
+            clubName={o.club_name ?? t('rolesRail.clubFallback')}
             crestUrl={o.club_avatar_url}
             title={roleTitle(o.position, o.gender, o.title)}
             subtitle={o.club_name ?? ''}

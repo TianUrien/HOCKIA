@@ -1,0 +1,405 @@
+{
+  "chooseRole": {
+    "title": "¿Cuál es tu rol?",
+    "subtitle": "Define cómo es tu perfil y lo que muestra Hockia. Después no se puede cambiar sin ayuda de soporte.",
+    "groupLabel": "Rol",
+    "signInAgain": "Volver a iniciar sesión",
+    "continue": "Continuar",
+    "continueAs": {
+      "player": "Continuar como jugador/a",
+      "coach": "Continuar como entrenador/a",
+      "club": "Continuar como club",
+      "brand": "Continuar como marca",
+      "umpire": "Continuar como árbitro/a"
+    },
+    "cards": {
+      "playerTitle": "Jugador/a",
+      "playerDetail": "Un perfil para que los clubes te encuentren",
+      "coachTitle": "Entrenador/a",
+      "coachDetail": "Encontrar oportunidades para entrenar y, con un equipo a cargo, sumar jugadores/as",
+      "clubTitle": "Club",
+      "clubDetail": "Sumar jugadores/as de hockey sobre césped con confianza y contexto",
+      "brandTitle": "Marca",
+      "brandDetail": "Construir tu marca en la comunidad del hockey",
+      "umpireTitle": "Árbitro/a",
+      "umpireDetail": "Todo tu historial de arbitraje en un solo lugar"
+    }
+  },
+  "signOut": {
+    "action": "Cerrar sesión",
+    "busy": "Cerrando sesión…"
+  },
+  "password": {
+    "help": "Al menos {{min}} caracteres, con una minúscula, una mayúscula y un número",
+    "tooShort": "Tiene que tener al menos {{min}} caracteres.",
+    "mix": "Tiene que incluir una minúscula, una mayúscula y un número."
+  },
+  "player": {
+    "photo": {
+      "changeAria": "Cambiar foto",
+      "addAria": "Agregar foto",
+      "change": "Cambiar foto",
+      "add": "Agregar una foto",
+      "uploading": "Subiendo…",
+      "helper": "Una foto real de partido consigue más visitas al perfil.",
+      "inputLabel": "Subir foto de perfil",
+      "invalid": "Imagen no válida",
+      "uploadFailed": "No pudimos subir esta imagen. Tiene que ser PNG o JPG de hasta 5 MB.",
+      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Conviene revisar los permisos de la app."
+    },
+    "about": {
+      "title": "Tus datos",
+      "fullName": "Nombre completo",
+      "dateOfBirth": "Fecha de nacimiento",
+      "dobLocked": "Bloqueada después del registro.",
+      "dobHint": "No se puede cambiar después. Nunca se muestra en tu perfil. Solo se muestra tu edad.",
+      "category": "Categoría",
+      "position": "Posición",
+      "secondPosition": "Segunda posición (opcional)",
+      "continue": "Continuar"
+    },
+    "errors": {
+      "fullName": "Falta tu nombre completo.",
+      "dateOfBirth": "Falta tu fecha de nacimiento.",
+      "category": "Falta elegir tu categoría de juego.",
+      "position": "Falta elegir tu posición.",
+      "secondPosition": "La segunda posición tiene que ser distinta de la primera.",
+      "dobSave": "No se pudo guardar tu fecha de nacimiento. Por favor, intentar de nuevo.",
+      "dobInvalid": "Esa fecha de nacimiento no parece correcta. Por favor, revisarla.",
+      "saveFailed": "No se pudo guardar. Por favor, intentar de nuevo."
+    },
+    "where": {
+      "back": "Tus datos",
+      "skip": "Omitir",
+      "title": "Club y ubicación",
+      "subtitle": "Todo es opcional. Se puede completar más tarde desde el perfil.",
+      "club": "Club actual",
+      "clubPlaceholder": "Buscar tu club",
+      "location": "Ubicación base",
+      "locationPlaceholder": "Ciudad de residencia",
+      "passport": "Pasaporte",
+      "secondPassport": "Segundo pasaporte",
+      "countryPlaceholder": "Elegir un país",
+      "addSecond": "Agregar otro",
+      "openToPlay": "Disponible para jugar",
+      "openToPlayHelper": "Los clubes pueden verte y escribirte por oportunidades.",
+      "under18": "Hockia es para jugadores/as de 18 años o más, así que todavía no podemos crear tu cuenta. Al sumarte a la lista de espera de juveniles, te avisamos cuando se abra. <waitlistLink>Lista de espera de juveniles</waitlistLink>",
+      "needsDob": "Para activar Disponible para jugar hace falta tu fecha de nacimiento.",
+      "continue": "Continuar"
+    }
+  },
+  "coach": {
+    "photo": {
+      "change": "Cambiar foto",
+      "add": "Agregar foto",
+      "helper": "Una foto clara entrenando consigue más visitas.",
+      "inputLabel": "Subir foto de perfil",
+      "invalid": "Imagen no válida",
+      "uploadFailed": "No pudimos subir esta imagen. Tiene que ser PNG o JPG de hasta 5 MB.",
+      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Conviene revisar los permisos de la app."
+    },
+    "about": {
+      "title": "Tus datos",
+      "fullName": "Nombre completo",
+      "dateOfBirth": "Fecha de nacimiento",
+      "dobLocked": "Bloqueada después del registro.",
+      "dobHint": "No se puede cambiar después. Nunca se muestra en tu perfil. Solo se muestra tu edad.",
+      "nationality": "Nacionalidad",
+      "countryPlaceholder": "Elegir un país",
+      "secondNationality": "Segunda nacionalidad",
+      "secondNationalityPlaceholder": "Agregar una segunda nacionalidad",
+      "location": "Ubicación base",
+      "locationPlaceholder": "Ciudad de residencia",
+      "continue": "Continuar"
+    },
+    "errors": {
+      "fullName": "Falta tu nombre completo.",
+      "dateOfBirth": "Falta tu fecha de nacimiento.",
+      "nationality": "Falta elegir tu nacionalidad.",
+      "location": "Falta tu ubicación base.",
+      "specialization": "Falta elegir tu especialización como entrenador/a.",
+      "specializationCustom": "Falta el nombre de tu rol.",
+      "categories": "Falta elegir al menos una categoría.",
+      "recruits": "Falta elegir una opción para terminar.",
+      "profileCreate": "No se pudo crear tu perfil. Puede ayudar cerrar sesión y volver a entrar.",
+      "dobSave": "No se pudo guardar tu fecha de nacimiento. Por favor, intentar de nuevo.",
+      "dobInvalid": "Esa fecha de nacimiento no parece correcta. Por favor, revisarla.",
+      "saveFailed": "No se pudo guardar. Por favor, intentar de nuevo."
+    },
+    "coaching": {
+      "back": "Tus datos",
+      "skip": "Omitir",
+      "title": "Tu trabajo como entrenador/a",
+      "subtitle": "Paso 2 de 2 · los clubes filtran entrenadores/as con estos datos.",
+      "specialization": "Especialización",
+      "specializationPlaceholder": "Elegir tu especialización",
+      "roleTitle": "Nombre del rol",
+      "roleTitlePlaceholder": "p. ej., Manager de equipo",
+      "categories": "Categorías a cargo",
+      "categoriesHint": "Elegir todas las categorías que correspondan.",
+      "club": "Club actual",
+      "clubPlaceholder": "Buscar tu club",
+      "recruitQuestion": "¿Tu rol incluye sumar jugadores/as a un equipo?",
+      "recruitHint": "Con Sí se agregan Mis oportunidades y Buscar jugadores/as a tu app. Se puede cambiar en Ajustes.",
+      "recruitYesTitle": "Sí, sumo jugadores/as a mi equipo",
+      "recruitYesDetail": "Publicar oportunidades y revisar postulaciones para tu club.",
+      "recruitNoTitle": "Por ahora no",
+      "recruitNoDetail": "Usar Hockia para tu propia carrera como entrenador/a.",
+      "openToCoach": "Disponible para entrenar",
+      "openToCoachHelper": "Los clubes pueden ver tu disponibilidad y escribirte.",
+      "finish": "Finalizar"
+    }
+  },
+  "complete": {
+    "errors": {
+      "noSession": "No se encontró una sesión. Hay que volver a iniciar sesión.",
+      "signInExpired": "La sesión venció. Hay que volver a iniciar sesión para terminar de armar tu perfil.",
+      "createFailedDetail": "No se pudo crear el perfil: {{message}}",
+      "createFailed": "No se pudo crear el perfil. Por favor, intentar de nuevo.",
+      "invalidImage": "Imagen no válida",
+      "uploadFailed": "No pudimos subir esta imagen. Tiene que ser PNG o JPG de hasta 5 MB.",
+      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Conviene revisar los permisos de la app.",
+      "sessionMissing": "No se encontró la sesión",
+      "roleMissing": "No se encontró el rol del perfil",
+      "profileNotLoaded": "Tu perfil todavía no cargó. Por favor, intentar de nuevo.",
+      "profileCreate": "No se pudo crear tu perfil. Puede ayudar cerrar sesión y volver a entrar.",
+      "dobRequired": "Falta tu fecha de nacimiento. Hockia es una plataforma para personas de 18 años o más.",
+      "dobSave": "No se pudo guardar tu fecha de nacimiento. Por favor, intentar de nuevo.",
+      "dobInvalid": "Esa fecha de nacimiento no parece correcta. Por favor, revisarla.",
+      "updateFailedDetail": "No se pudo actualizar el perfil: {{message}}",
+      "verifyFailed": "El perfil se actualizó, pero no se pudo verificar. Por favor, recargar la página.",
+      "completeFailed": "No se pudo completar el perfil. Por favor, intentar de nuevo."
+    },
+    "status": {
+      "loading": "Cargando tu perfil...",
+      "noUserTitle": "Error de perfil",
+      "noUserBody": "No se encontró una sesión. Hay que volver a iniciar sesión.",
+      "noUserHome": "Volver al inicio",
+      "loadErrorTitle": "No pudimos cargar tu perfil",
+      "loadErrorBody": "Conviene revisar la conexión e intentar de nuevo. No se cambió nada.",
+      "loadErrorRetry": "Reintentar"
+    },
+    "header": {
+      "heroAlt": "Hockey sobre césped",
+      "tagline": "Completar tu perfil para empezar",
+      "clubStep": "Paso {{current}} de 2"
+    },
+    "form": {
+      "titlePlayer": "Completar perfil de jugador/a",
+      "titleUmpire": "Completar perfil de árbitro/a",
+      "titleClub": "Completar perfil del club",
+      "wizardStep": "Paso {{current}} de 3 · {{label}}",
+      "intro": "Completar los datos a continuación",
+      "stepsLabel": "Pasos para completar el perfil",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "saving": "Guardando perfil...",
+      "submit": "Completar perfil"
+    },
+    "steps": {
+      "aboutYou": "Tus datos",
+      "whereBased": "Tu ubicación",
+      "yourGame": "Tu juego",
+      "credentials": "Tus credenciales de arbitraje",
+      "statusCompleted": "Paso {{step}} de 3, {{label}}, completado",
+      "statusCurrent": "Paso {{step}} de 3, {{label}}, paso actual",
+      "statusNotStarted": "Paso {{step}} de 3, {{label}}, sin empezar"
+    },
+    "photo": {
+      "label": "Foto de perfil <optional>(opcional)</optional>",
+      "previewAlt": "Vista previa de la foto",
+      "uploading": "Subiendo...",
+      "change": "Cambiar foto",
+      "upload": "Subir foto",
+      "hint": "PNG o JPG, hasta 5 MB",
+      "inputLabel": "Subir foto de perfil"
+    },
+    "umpire": {
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Nombre y apellido",
+      "nationality": "Nacionalidad",
+      "nationalityPlaceholder": "Elegir tu nacionalidad",
+      "secondNationality": "Segunda nacionalidad (opcional)",
+      "secondNationalityPlaceholder": "Elegir segunda nacionalidad",
+      "location": "Ubicación base (ciudad, provincia o estado)",
+      "locationPlaceholder": "p. ej., Rosario, Santa Fe",
+      "dateOfBirth": "Fecha de nacimiento",
+      "credentialsHeading": "Credenciales de arbitraje",
+      "categories": "Categorías de arbitraje <optional>(opcional)</optional>",
+      "categoriesHint": "Categorías con experiencia como árbitro/a o que te interesa arbitrar.",
+      "level": "Nivel de árbitro/a",
+      "levelHint": "p. ej., FIH International, National Panel, Regional. Se puede elegir una sugerencia o escribir otro.",
+      "levelPlaceholder": "Empezar a escribir…",
+      "federation": "Federación",
+      "federationHint": "El organismo donde está tu registro o tu actividad.",
+      "federationPlaceholder": "p. ej., FIH, England Hockey, CAH",
+      "since": "Árbitro/a desde (año)",
+      "sincePlaceholder": "p. ej., 2018",
+      "specialization": "Especialización",
+      "specOutdoor": "Césped",
+      "specIndoor": "Indoor",
+      "specBoth": "Césped e indoor",
+      "languages": "Idiomas",
+      "removeLanguage": "Quitar {{language}}",
+      "languagePlaceholder": "p. ej., English, Spanish, Dutch",
+      "addLanguage": "Agregar",
+      "languagesHint": "Con Enter o el botón Agregar. Se puede editar más tarde."
+    },
+    "club": {
+      "name": "Nombre del club",
+      "namePlaceholder": "Nombre de tu club",
+      "city": "Ciudad",
+      "cityPlaceholder": "Ubicación del club",
+      "country": "País",
+      "countryPlaceholder": "Elegir país",
+      "leagueHeading": "Información de ligas",
+      "yearFounded": "Año de fundación (opcional)",
+      "yearPlaceholder": "AAAA",
+      "womensLeague": "Liga femenina (opcional)",
+      "womensLeaguePlaceholder": "p. ej., Serie A1",
+      "mensLeague": "Liga masculina (opcional)",
+      "mensLeaguePlaceholder": "p. ej., Premier Division",
+      "contactHeading": "Contacto y presentación",
+      "website": "Sitio web (opcional)",
+      "websitePlaceholder": "https://miclub.com",
+      "contactEmail": "Email de contacto",
+      "contactEmailPlaceholder": "contacto@club.com",
+      "bio": "Presentación del club (opcional)",
+      "bioPlaceholder": "Unas líneas sobre tu club..."
+    }
+  },
+  "validation": {
+    "fullName": "El nombre completo es obligatorio.",
+    "nationality": "La nacionalidad es obligatoria.",
+    "location": "La ubicación base es obligatoria.",
+    "dateOfBirth": "La fecha de nacimiento es obligatoria. Hockia es una plataforma para personas de 18 años o más.",
+    "position": "La posición es obligatoria.",
+    "playingCategory": "Falta elegir tu categoría de juego.",
+    "positionsDiffer": "La posición principal y la secundaria tienen que ser distintas.",
+    "coachCategories": "Falta elegir al menos una categoría.",
+    "coachCategoriesInvalid": "Las categorías elegidas no son válidas.",
+    "coachSpecialization": "Falta elegir tu especialización como entrenador/a.",
+    "coachRoleTitle": "Falta el nombre de tu rol.",
+    "umpireCategoriesInvalid": "Las categorías de arbitraje no son válidas.",
+    "umpireLevel": "Falta tu nivel de árbitro/a.",
+    "federation": "Falta tu federación de arbitraje.",
+    "officiating": "Falta elegir césped, indoor o ambos.",
+    "languages": "Falta al menos un idioma para arbitrar.",
+    "clubName": "El nombre del club es obligatorio.",
+    "city": "La ciudad es obligatoria.",
+    "country": "El país es obligatorio.",
+    "contactEmail": "El email de contacto es obligatorio.",
+    "emailInvalid": "El email no es válido."
+  },
+  "claim": {
+    "errors": {
+      "countries": "No se pudieron cargar los países",
+      "countryData": "No se pudieron cargar los datos de este país",
+      "regionClubs": "No se pudieron cargar los clubes de esta región",
+      "data": "No se pudieron cargar los datos",
+      "alreadyClaimed": "Otra cuenta ya reclamó este club.",
+      "claimFailed": "No se pudo reclamar el club",
+      "createFailed": "No se pudo crear el club",
+      "generic": "No se pudo completar la operación"
+    },
+    "country": {
+      "title": "¿Dónde está tu club?",
+      "subtitle": "Elegir el país para buscar tu club en nuestro directorio",
+      "searchPlaceholder": "Buscar países...",
+      "searchLabel": "Buscar países",
+      "flagAlt": "Bandera de {{country}}",
+      "flagAltUnknown": "Bandera del país",
+      "leagues_one": "{{count}} liga",
+      "leagues_other": "{{count}} ligas",
+      "leagues_many": "{{count}} ligas",
+      "noLeagues": "Todavía sin ligas",
+      "skip": "Mi país no está en la lista - continuar sin reclamar un club"
+    },
+    "region": {
+      "title": "Tu región",
+      "subtitle": "Elegir la región donde está tu club",
+      "notListed": "Mi región no está en la lista",
+      "createNew": "Crear un club nuevo",
+      "back": "← Volver a elegir país"
+    },
+    "club": {
+      "title": "Buscar tu club",
+      "subtitle": "Con el buscador o recorriendo la lista",
+      "searchPlaceholder": "Buscar clubes...",
+      "emptyRegion": "Todavía no hay clubes en esta región",
+      "emptyCountry": "Todavía no hay clubes en este país",
+      "claimed": "Reclamado",
+      "notListed": "Mi club no está en la lista - crear uno nuevo",
+      "backToRegion": "← Volver a elegir región",
+      "backToCountry": "← Volver a elegir país"
+    },
+    "leagues": {
+      "createTitle": "Crear tu club",
+      "claimTitle": "Reclamar {{clubName}}",
+      "subtitleLeagues": "Elegir las ligas en las que juega tu club",
+      "subtitleName": "Para empezar, el nombre de tu club",
+      "nameLabel": "Nombre del club",
+      "namePlaceholder": "Nombre de tu club",
+      "claiming": "Este es el club a reclamar",
+      "womens": "Liga femenina",
+      "womensHint": "La liga del primer equipo femenino de tu club.",
+      "mens": "Liga masculina",
+      "mensHint": "La liga del primer equipo masculino de tu club.",
+      "none": "Ninguna / No corresponde",
+      "withTier": "{{name}} (Nivel {{tier}})",
+      "multiTeams": "Si tu club tiene varios equipos, se pueden agregar más tarde desde el panel.",
+      "noLeagues": "Todavía no hay ligas disponibles para tu región. La información de ligas se puede agregar más tarde desde el panel del club.",
+      "back": "Atrás",
+      "processing": "Procesando...",
+      "createAndClaim": "Crear y reclamar club",
+      "claimButton": "Reclamar club",
+      "fallbackClubName": "este club"
+    },
+    "confirm": {
+      "titleCreate": "Confirmar el reclamo del club nuevo",
+      "titleClaim": "Confirmar el reclamo del club",
+      "body": "Con este paso se reclama <club/> en calidad de representante oficial en Hockia. Eso permite publicar oportunidades, aceptar integrantes y representar al club ante la comunidad.",
+      "authorityTitle": "Al confirmar se declara tener autorización del club.",
+      "authorityBody": "Representar a un club sin autorización puede llevar al cierre de la cuenta y a la eliminación de la ficha. Tu perfil se muestra como <pending>pendiente de verificación</pending> hasta que nuestro equipo confirme el reclamo.",
+      "cancel": "Cancelar",
+      "claiming": "Reclamando…",
+      "confirm": "Confirmar y reclamar"
+    }
+  },
+  "brand": {
+    "errors": {
+      "heal": "Algo salió mal al recuperar el registro de tu marca. Por favor, intentar de nuevo o escribir a soporte.",
+      "country": "Falta elegir un país para tu marca.",
+      "createFailed": "No se pudo crear la marca"
+    },
+    "heal": {
+      "title": "Algo salió mal",
+      "retry": "Reintentar",
+      "contact": "Si sigue pasando, conviene escribir a soporte."
+    },
+    "page": {
+      "heroAlt": "Hockey sobre césped",
+      "tagline": "Armar el perfil de tu marca",
+      "title": "Crear tu marca",
+      "subtitle": "Con los datos de tu marca se puede empezar a conectar con deportistas.",
+      "submit": "Crear marca"
+    }
+  },
+  "categoryBanner": {
+    "body": "Hockia ahora usa categorías de hockey en lugar de género. Por favor, confirmar o actualizar tus categorías.",
+    "action": "Actualizar categorías"
+  },
+  "categorySelector": {
+    "anyHint": "(todas las categorías)"
+  },
+  "dateOfBirth": {
+    "day": "Día",
+    "month": "Mes",
+    "year": "Año"
+  },
+  "welcomeCard": {
+    "title": "Te damos la bienvenida a Hockia",
+    "body": "Armar tu perfil de hockey, aparecer ante clubes y entrenadores/as, y compartir tu perfil fuera de Hockia.",
+    "dismiss": "Cerrar mensaje de bienvenida"
+  }
+}

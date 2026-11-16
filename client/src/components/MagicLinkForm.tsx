@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Trans } from 'react-i18next'
 import { Mail, CheckCircle2 } from 'lucide-react'
 import Button from './Button'
 import Input from './Input'
 import { sendMagicLink, type MagicLinkIntent, type MagicLinkRole } from '@/lib/magicLink'
+import { useAuthT } from '@/i18n/ns/auth'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -32,6 +34,7 @@ export interface MagicLinkFormProps {
  */
 export default function MagicLinkForm({ intent, role, variant, onSent, compact = false, ctaLabel }: MagicLinkFormProps) {
   const navigate = useNavigate()
+  const t = useAuthT()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +58,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
     try {
       const result = await sendMagicLink({ email, role, intent })
       if (!result.ok) {
-        setError(result.error ?? 'Could not send the link.')
+        setError(result.error ?? t('magicLink.sendFailed'))
         if (result.userNotFound) setUserNotFound(true)
         return
       }
@@ -74,7 +77,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
     try {
       const result = await sendMagicLink({ email: sentTo, role, intent })
       if (!result.ok) {
-        setError(result.error ?? 'Could not resend the link.')
+        setError(result.error ?? t('magicLink.resendFailed'))
         return
       }
       setCooldown(RESEND_COOLDOWN_SECONDS)
@@ -103,9 +106,9 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
             <CheckCircle2 className={`w-5 h-5 ${variant === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold ${labelColor}`}>Check your inbox</p>
+            <p className={`text-sm font-semibold ${labelColor}`}>{t('magicLink.sentTitle')}</p>
             <p className={`text-xs mt-0.5 break-words ${subColor}`}>
-              We sent a sign-in link to <span className="font-medium">{sentTo}</span>. Tap it to continue.
+              <Trans t={t} i18nKey="magicLink.sentBody" values={{ email: sentTo }} components={{ email: <span className="font-medium" /> }} />
             </p>
           </div>
         </div>
@@ -121,7 +124,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
             disabled={cooldown > 0 || loading}
             className={`text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${linkColor}`}
           >
-            {cooldown > 0 ? `Resend in ${cooldown}s` : loading ? 'Resending…' : 'Resend link'}
+            {cooldown > 0 ? t('magicLink.resendIn', { seconds: cooldown }) : loading ? t('magicLink.resending') : t('magicLink.resend')}
           </button>
           <span className={`text-xs ${mutedColor}`}>·</span>
           <button
@@ -129,7 +132,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
             onClick={handleUseDifferentEmail}
             className={`text-xs font-medium transition-colors ${linkColor}`}
           >
-            Use a different email
+            {t('magicLink.differentEmail')}
           </button>
         </div>
       </div>
@@ -151,13 +154,13 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="you@example.com"
+        placeholder={t('fields.emailPlaceholder')}
         icon={<Mail className="w-4 h-4" />}
         className={inputClass}
         required
         autoComplete="email"
         inputMode="email"
-        aria-label="Email address for magic-link sign-in"
+        aria-label={t('magicLink.emailLabel')}
       />
 
       {error && !userNotFound && (
@@ -169,13 +172,13 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
           className={`text-xs rounded-lg p-2.5 ${variant === 'dark' ? 'bg-white/5 text-gray-200 border border-white/10' : 'bg-amber-50 text-amber-900 border border-amber-200'}`}
           role="alert"
         >
-          <p className="font-medium mb-1">No account found for this email.</p>
+          <p className="font-medium mb-1">{t('magicLink.notFound')}</p>
           <button
             type="button"
             onClick={() => navigate('/signup')}
             className={`font-semibold underline-offset-2 hover:underline ${variant === 'dark' ? 'text-[#c084fc]' : 'text-hockia-primary'}`}
           >
-            Create an account →
+            {t('magicLink.createAccount')}
           </button>
         </div>
       )}
@@ -186,7 +189,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
         className={variant === 'dark' ? 'w-full !h-10 !rounded-xl text-[13px] font-semibold' : 'w-full'}
         disabled={loading || !email.trim()}
       >
-        {loading ? 'Sending link…' : ctaLabel ?? 'Send me a magic link'}
+        {loading ? t('magicLink.sending') : ctaLabel ?? t('magicLink.send')}
       </Button>
     </form>
   )

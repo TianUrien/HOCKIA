@@ -19,6 +19,7 @@ import { derivePublicContactEmail } from '@/lib/profile'
 import type { Profile } from '@/lib/supabase'
 import type { SocialLinks } from '@/lib/socialLinks'
 import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * ClubHeroCard — the Club dashboard's identity hero. Mirrors the
@@ -77,12 +78,12 @@ interface ClubHeroCardProps {
   authProfileRole?: string | null
 }
 
-// Action-button verb per club bucket id. Defaults to "Add".
-const BUCKET_ACTION_LABEL: Record<string, string> = {
-  basic: 'Complete',
-  logo: 'Add',
-  about: 'Add',
-  gallery: 'Add',
+// Action-button verb (catalog key) per club bucket id. Defaults to "Add".
+const BUCKET_ACTION_KEY: Record<string, 'clubHero.actionComplete' | 'clubHero.actionAdd'> = {
+  basic: 'clubHero.actionComplete',
+  logo: 'clubHero.actionAdd',
+  about: 'clubHero.actionAdd',
+  gallery: 'clubHero.actionAdd',
 }
 
 export default function ClubHeroCard({
@@ -101,6 +102,7 @@ export default function ClubHeroCard({
   onMembersClick,
   authProfileRole,
 }: ClubHeroCardProps) {
+  const t = useHomeT()
   const [checklistOpen, setChecklistOpen] = useState(false)
   const friendCount = profile.accepted_friend_count ?? 0
   const isVerified = (profile as { is_verified?: boolean }).is_verified
@@ -108,8 +110,8 @@ export default function ClubHeroCard({
   const publicContact = derivePublicContactEmail(profile)
 
   const leagues: string[] = []
-  if (profile.womens_league_division) leagues.push(`Women: ${profile.womens_league_division}`)
-  if (profile.mens_league_division) leagues.push(`Men: ${profile.mens_league_division}`)
+  if (profile.womens_league_division) leagues.push(t('clubHero.leagueWomen', { division: profile.womens_league_division }))
+  if (profile.mens_league_division) leagues.push(t('clubHero.leagueMen', { division: profile.mens_league_division }))
 
   return (
     <section
@@ -136,7 +138,7 @@ export default function ClubHeroCard({
             <button
               type="button"
               onClick={onEdit}
-              aria-label="Change club logo"
+              aria-label={t('clubHero.changeLogo')}
               className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 text-hockia-primary hover:bg-gray-50 transition-colors"
             >
               <Camera className="h-3.5 w-3.5" />
@@ -162,7 +164,8 @@ export default function ClubHeroCard({
         {(!readOnly || friendCount > 0) && (
           <CredibilityStat
             icon={Users}
-            label="Connections"
+            label={t('clubHero.stats.connections')}
+            ariaLabel={onConnectionsClick ? t('clubHero.stats.viewConnections', { count: friendCount }) : t('clubHero.stats.connectionsCount', { count: friendCount })}
             count={friendCount}
             onClick={onConnectionsClick}
             testId="club-hero-connections"
@@ -171,7 +174,8 @@ export default function ClubHeroCard({
         {(!readOnly || (memberCount ?? 0) > 0) && (
           <CredibilityStat
             icon={UsersRound}
-            label="Members"
+            label={t('clubHero.stats.members')}
+            ariaLabel={onMembersClick ? t('clubHero.stats.viewMembers', { count: memberCount ?? 0 }) : t('clubHero.stats.membersCount', { count: memberCount ?? 0 })}
             count={memberCount ?? 0}
             onClick={onMembersClick}
             testId="club-hero-members"
@@ -201,12 +205,12 @@ export default function ClubHeroCard({
                   {sendingMessage ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                      Sending...
+                      {t('clubHero.sending')}
                     </>
                   ) : (
                     <>
                       <MessageCircle className="w-4 h-4 flex-shrink-0" />
-                      Message
+                      {t('clubHero.message')}
                     </>
                   )}
                 </button>
@@ -218,7 +222,7 @@ export default function ClubHeroCard({
               )}
             </div>
             {!isOwnProfile && (
-              <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />
+              <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? t('clubHero.fallbackName')} />
             )}
           </>
         ) : (
@@ -234,8 +238,8 @@ export default function ClubHeroCard({
                 className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
               >
                 <Eye className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden xs:inline">View public profile</span>
-                <span className="xs:hidden">View</span>
+                <span className="hidden xs:inline">{t('clubHero.viewPublic')}</span>
+                <span className="xs:hidden">{t('clubHero.viewPublicShort')}</span>
               </Button>
             )}
             {onEdit && (
@@ -246,8 +250,8 @@ export default function ClubHeroCard({
                 className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
               >
                 <Edit2 className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden xs:inline">Edit profile</span>
-                <span className="xs:hidden">Edit</span>
+                <span className="hidden xs:inline">{t('clubHero.editProfile')}</span>
+                <span className="xs:hidden">{t('clubHero.editProfileShort')}</span>
               </Button>
             )}
           </>
@@ -276,7 +280,7 @@ export default function ClubHeroCard({
               {profile.year_founded && (
                 <span className="inline-flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>Founded {profile.year_founded}</span>
+                  <span>{t('clubHero.founded', { year: profile.year_founded })}</span>
                 </span>
               )}
             </MetaRow>
@@ -327,7 +331,7 @@ export default function ClubHeroCard({
             return (
               <div className="min-w-0" data-testid="club-hero-next-step">
                 <h3 className="text-base font-semibold text-gray-900 leading-tight">
-                  {next ? `Next: ${next.label}` : 'Your club profile has every section filled in'}
+                  {next ? t('clubHero.nextStep', { label: next.label }) : t('clubHero.allComplete')}
                 </h3>
                 {next && (
                   <button
@@ -335,7 +339,7 @@ export default function ClubHeroCard({
                     onClick={() => onBucketAction?.(next)}
                     className="mt-2 inline-flex min-h-[44px] items-center text-sm font-semibold text-hockia-primary"
                   >
-                    {BUCKET_ACTION_LABEL[next.id] ?? 'Add'}
+                    {t(BUCKET_ACTION_KEY[next.id] ?? 'clubHero.actionAdd')}
                   </button>
                 )}
               </div>
@@ -352,7 +356,7 @@ export default function ClubHeroCard({
                 className="flex w-full items-center justify-center gap-1 text-sm font-medium text-hockia-primary hover:text-[#6B20D4] transition-colors py-1"
                 data-testid="club-hero-checklist-toggle"
               >
-                Full checklist
+                {t('clubHero.fullChecklist')}
                 {checklistOpen ? (
                   <ChevronUp className="h-4 w-4" aria-hidden="true" />
                 ) : (
@@ -389,7 +393,8 @@ interface ChecklistRowProps {
 }
 
 function ChecklistRow({ bucket, onAction }: ChecklistRowProps) {
-  const actionLabel = BUCKET_ACTION_LABEL[bucket.id] ?? 'Add'
+  const t = useHomeT()
+  const actionLabel = t(BUCKET_ACTION_KEY[bucket.id] ?? 'clubHero.actionAdd')
   return (
     <li className="flex items-center gap-3">
       {bucket.completed ? (
@@ -412,7 +417,7 @@ function ChecklistRow({ bucket, onAction }: ChecklistRowProps) {
       </span>
       {bucket.completed ? (
         <span className="flex-shrink-0 inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-          Completed
+          {t('clubHero.completed')}
         </span>
       ) : (
         <button
@@ -431,15 +436,13 @@ function ChecklistRow({ bucket, onAction }: ChecklistRowProps) {
 interface CredibilityStatProps {
   icon: React.ComponentType<{ className?: string }>
   label: string
+  ariaLabel: string
   count: number
   onClick?: () => void
   testId?: string
 }
 
-function CredibilityStat({ icon: Icon, label, count, onClick, testId }: CredibilityStatProps) {
-  const ariaLabel = onClick
-    ? `View ${count} ${label.toLowerCase()}`
-    : `${count} ${label.toLowerCase()}`
+function CredibilityStat({ icon: Icon, label, ariaLabel, count, onClick, testId }: CredibilityStatProps) {
   return (
     <button
       type="button"

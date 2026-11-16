@@ -23,6 +23,7 @@ import { coachSpecialtyLabel, humanizeToken, roleLabel } from '@/lib/identity'
 import { logger } from '@/lib/logger'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface HeroIdentityCardProps {
   profile: PlayerProfileShape
@@ -111,6 +112,7 @@ export default function HeroIdentityCard({
   onOpenToPlay,
   recruiterActions,
 }: HeroIdentityCardProps) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   // Brands have followers, not friends (audit A7): no Add friend for a brand viewer.
@@ -139,7 +141,7 @@ export default function HeroIdentityCard({
   const roleLine = detail ? `${roleLabel(role)} · ${detail}` : roleLabel(role)
 
   const isAvailable = isCoach ? profile.open_to_coach === true : profile.open_to_play === true
-  const availabilityLabel = isCoach ? 'Open to coach' : 'Open to play'
+  const availabilityLabel = isCoach ? t('hero.openToCoach') : t('hero.openToPlay')
   const isRecruiterMode = isCoach && profile.coach_recruits_for_team === true
 
   const socials = (full.social_links ?? null) as SocialLinks | null
@@ -158,11 +160,11 @@ export default function HeroIdentityCard({
     if (!url) return
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: profile.full_name ?? 'Hockia profile', url })
+        await navigator.share({ title: profile.full_name ?? t('hero.shareTitle'), url })
         return
       }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('hero.linkCopied'), 'success')
     } catch (err) {
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[HeroIdentityCard] share failed', err)
     }
@@ -175,10 +177,10 @@ export default function HeroIdentityCard({
   }
   const friendButton = (() => {
     if (!isVisitorView || viewerIsBrand) return null
-    if (friendship.isFriend) return { label: 'Friends', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-positive-soft text-positive', disabled: true }
-    if (friendship.isOutgoingRequest) return { label: 'Requested', icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-surface-grouped text-ink-2', disabled: true }
-    if (friendship.isIncomingRequest) return { label: 'Accept', icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
-    return { label: 'Add friend', icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
+    if (friendship.isFriend) return { label: t('hero.friend.friends'), icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-positive-soft text-positive', disabled: true }
+    if (friendship.isOutgoingRequest) return { label: t('hero.friend.requested'), icon: <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />, cls: 'bg-surface-grouped text-ink-2', disabled: true }
+    if (friendship.isIncomingRequest) return { label: t('hero.friend.accept'), icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
+    return { label: t('hero.friend.add'), icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
   })()
 
   // Club view (Figma D1.16 · DEV NOTE 355:899): Shortlist takes the primary
@@ -186,20 +188,20 @@ export default function HeroIdentityCard({
   const recruiterFriendItems: MoreMenuItem[] = recruiterActions && !recruiterActions.preview && friendButton && !friendship.isFriend
     ? [{
         key: 'friend',
-        label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend',
+        label: friendship.isOutgoingRequest ? t('hero.friend.menuSent') : friendship.isIncomingRequest ? t('hero.friend.menuAccept') : t('hero.friend.menuAdd'),
         icon: <UserPlus className={MENU_ICON_CLASS} strokeWidth={1.8} />,
         disabled: friendButton.disabled,
         onSelect: addFriend,
       }]
     : []
 
-  const stat = (value: number, label: string, onClick?: () => void) => (
+  const stat = (value: number, label: string, ariaLabel: string, onClick?: () => void) => (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
       className="flex flex-1 flex-col items-center gap-0.5 py-3 text-center active:bg-gray-200/60 first:rounded-l-card last:rounded-r-card"
-      aria-label={`${value} ${label}`}
+      aria-label={ariaLabel}
     >
       <span className="text-[20px] font-semibold leading-6 text-ink-1 tabular-nums">{value}</span>
       <span className="text-caption text-ink-2">{label}</span>
@@ -221,30 +223,30 @@ export default function HeroIdentityCard({
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-3">
           {glass ? (
             isOwnerView ? (
-              <IconButton variant="glass" label="Change cover photo" onClick={onEdit}>
+              <IconButton variant="glass" label={t('hero.changeCover')} onClick={onEdit}>
                 <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
               </IconButton>
             ) : (
-              <IconButton variant="glass" label="Back" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))}>
+              <IconButton variant="glass" label={t('hero.back')} onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))}>
                 <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
               </IconButton>
             )
           ) : isOwnerView ? (
-            <button type="button" onClick={onEdit} aria-label="Change cover photo" className={GLASS}>
+            <button type="button" onClick={onEdit} aria-label={t('hero.changeCover')} className={GLASS}>
               <Camera className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </button>
           ) : (
-            <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))} aria-label="Back" className={GLASS}>
+            <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/community'))} aria-label={t('hero.back')} className={GLASS}>
               <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
             </button>
           )}
           <div className="flex items-center gap-2">
             {glass ? (
-              <IconButton variant="glass" label="Share profile" onClick={() => void share()}>
+              <IconButton variant="glass" label={t('hero.share')} onClick={() => void share()}>
                 <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
               </IconButton>
             ) : (
-              <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
+              <button type="button" onClick={() => void share()} aria-label={t('hero.share')} className={GLASS}>
                 <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
               </button>
             )}
@@ -252,18 +254,18 @@ export default function HeroIdentityCard({
               <>
                 {/* Phone: the gear opens the Settings hub. Desktop keeps the sheet. */}
                 {glass ? (
-                  <IconButton variant="glass" label="Settings" onClick={() => navigate('/settings')} className="lg:hidden">
+                  <IconButton variant="glass" label={t('hero.settings')} onClick={() => navigate('/settings')} className="lg:hidden">
                     <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
                   </IconButton>
                 ) : (
-                  <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur lg:hidden">
+                  <button type="button" onClick={() => navigate('/settings')} aria-label={t('hero.settings')} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur lg:hidden">
                     <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
                   </button>
                 )}
                 <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
               </>
             )}
-            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
+            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? t('hero.fallbackName')} leadingItems={recruiterFriendItems} triggerClassName={glass ? 'flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md' : GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
       </div>
@@ -288,7 +290,7 @@ export default function HeroIdentityCard({
               <button
                 type="button"
                 onClick={onEdit}
-                aria-label="Change profile photo"
+                aria-label={t('hero.changePhoto')}
                 className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-hockia-primary text-white ring-2 ring-white"
               >
                 <Camera className="h-4 w-4" strokeWidth={1.6} />
@@ -307,7 +309,7 @@ export default function HeroIdentityCard({
               // coach recruits and is not open to coach.
               <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]" data-testid="hero-status-pill">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
-                {isAvailable ? availabilityLabel : 'Recruiting'}
+                {isAvailable ? availabilityLabel : t('hero.recruiting')}
               </span>
             ))}
           </div>
@@ -329,7 +331,7 @@ export default function HeroIdentityCard({
                 const href = socials?.[p.key] as string
                 const cls = `flex h-7 w-7 items-center justify-center ${SOCIAL_COLORS[p.key]}`
                 return isOwnerView ? (
-                  <button key={p.key} type="button" onClick={onEdit} aria-label={`Edit ${p.label}`} className={cls}><Icon className="h-[19px] w-[19px]" /></button>
+                  <button key={p.key} type="button" onClick={onEdit} aria-label={t('hero.editSocial', { platform: p.label })} className={cls}><Icon className="h-[19px] w-[19px]" /></button>
                 ) : (
                   <a key={p.key} href={href} target="_blank" rel="noopener noreferrer" aria-label={p.label} className={cls}><Icon className="h-[19px] w-[19px]" /></a>
                 )
@@ -406,19 +408,19 @@ export default function HeroIdentityCard({
           {isOwnerView && d2 ? (
             <>
               <button type="button" onClick={onEdit} className={pillButton('primary')}>
-                <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} /> Edit profile
+                <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} /> {t('hero.editProfile')}
               </button>
               <button type="button" onClick={onViewAsClub ?? onViewPublic} className={pillButton('secondary')}>
-                <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} /> View as club
+                <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} /> {t('hero.viewAsClub')}
               </button>
             </>
           ) : isOwnerView ? (
             <>
               <button type="button" onClick={onEdit} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white active:opacity-90">
-                Edit profile
+                {t('hero.editProfile')}
               </button>
               <button type="button" onClick={onViewPublic} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 active:bg-gray-200">
-                Public view
+                {t('hero.publicView')}
               </button>
             </>
           ) : recruiterActions ? (
@@ -431,15 +433,15 @@ export default function HeroIdentityCard({
                 className={`flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full text-[16px] font-semibold disabled:opacity-60 ${recruiterActions.shortlisted ? 'bg-hockia-soft text-hockia-primary' : 'bg-hockia-primary text-white'}`}
                 data-testid="shortlist-button"
               >
-                <Star className="h-[18px] w-[18px]" strokeWidth={1.8} fill={recruiterActions.shortlisted ? 'currentColor' : 'none'} /> {recruiterActions.shortlisted ? 'Shortlisted' : 'Shortlist'}
+                <Star className="h-[18px] w-[18px]" strokeWidth={1.8} fill={recruiterActions.shortlisted ? 'currentColor' : 'none'} /> {recruiterActions.shortlisted ? t('hero.shortlisted') : t('hero.shortlist')}
               </button>
               {recruiterActions.invite?.pill === 'invited' || recruiterActions.invite?.pill === 'passed' ? (
                 <span
                   className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-2"
-                  aria-label={recruiterActions.invite.pill === 'passed' ? 'Passed on this opportunity' : undefined}
+                  aria-label={recruiterActions.invite.pill === 'passed' ? t('hero.passedAria') : undefined}
                   data-testid={recruiterActions.invite.pill === 'passed' ? 'profile-passed-pill' : 'profile-invited-pill'}
                 >
-                  {recruiterActions.invite.pill === 'passed' ? 'Passed' : 'Invited'}
+                  {recruiterActions.invite.pill === 'passed' ? t('hero.passed') : t('hero.invited')}
                 </span>
               ) : recruiterActions.invite && !recruiterActions.invite.pill && recruiterActions.invite.invitable ? (
                 <button
@@ -450,7 +452,7 @@ export default function HeroIdentityCard({
                   className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-soft text-[16px] font-semibold text-hockia-primary disabled:opacity-50"
                   data-testid="profile-invite-button"
                 >
-                  Invite
+                  {t('hero.invite')}
                 </button>
               ) : null}
               <button
@@ -460,7 +462,7 @@ export default function HeroIdentityCard({
                 disabled={sendingMessage}
                 className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-60"
               >
-                <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
+                <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? t('hero.openingMessage') : t('hero.message')}
               </button>
             </>
           ) : isVisitorView && d2 ? (
@@ -482,7 +484,7 @@ export default function HeroIdentityCard({
               ))}
               {authProfileRole !== 'brand' && onMessage && (
                 <button type="button" onClick={onMessage} disabled={sendingMessage} className={pillButton('secondary')} data-testid="hero-message">
-                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
+                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? t('hero.openingMessage') : t('hero.message')}
                 </button>
               )}
             </>
@@ -495,7 +497,7 @@ export default function HeroIdentityCard({
               )}
               {authProfileRole !== 'brand' && onMessage && (
                 <button type="button" onClick={onMessage} disabled={sendingMessage} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-60">
-                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
+                  <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? t('hero.openingMessage') : t('hero.message')}
                 </button>
               )}
             </>
@@ -511,15 +513,15 @@ export default function HeroIdentityCard({
         ) : (
         /* Stats strip — the number opens the complete collection. */
         <div className="mt-3.5 flex divide-x divide-line rounded-card bg-surface-grouped">
-          {stat(friendCount, 'Friends', onFriendsClick)}
-          {stat(referenceCount, 'References', onReferencesClick)}
-          {stat(careerCount, 'Career', onCareerClick)}
-          {stat(videoCount, 'Videos', onVideosClick)}
+          {stat(friendCount, t('hero.stats.friends'), t('hero.stats.friendsAria', { count: friendCount }), onFriendsClick)}
+          {stat(referenceCount, t('hero.stats.references'), t('hero.stats.referencesAria', { count: referenceCount }), onReferencesClick)}
+          {stat(careerCount, t('hero.stats.career'), t('hero.stats.careerAria', { count: careerCount }), onCareerClick)}
+          {stat(videoCount, t('hero.stats.videos'), t('hero.stats.videosAria', { count: videoCount }), onVideosClick)}
         </div>
         )}
       </div>
 
-      <SignInPromptModal isOpen={signIn !== null} onClose={() => setSignIn(null)} title="Sign in to add friends" action="connect" />
+      <SignInPromptModal isOpen={signIn !== null} onClose={() => setSignIn(null)} title={t('hero.signInTitle')} action="connect" />
     </section>
   )
 }

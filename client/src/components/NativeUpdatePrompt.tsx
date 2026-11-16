@@ -3,6 +3,7 @@ import { Download, X } from 'lucide-react'
 import { Browser } from '@capacitor/browser'
 import { useAppUpdateCheck } from '@/hooks/useAppUpdateCheck'
 import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { useCommonT } from '@/i18n/ns/common'
 
 const SOFT_DISMISS_KEY = 'native-update-prompt-dismissed-at'
 const SOFT_DISMISS_WINDOW_MS = 24 * 60 * 60 * 1000 // re-show the soft banner after a day
@@ -16,6 +17,7 @@ const SOFT_DISMISS_WINDOW_MS = 24 * 60 * 60 * 1000 // re-show the soft banner af
  *  - 'soft'  → dismissible banner (a newer version is available)
  */
 export default function NativeUpdatePrompt() {
+  const t = useCommonT()
   const { status, storeUrl } = useAppUpdateCheck()
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -45,16 +47,16 @@ export default function NativeUpdatePrompt() {
           <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Download className="w-7 h-7 text-indigo-600" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Update required</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{t('nativeUpdate.requiredTitle')}</h2>
           <p className="text-sm text-gray-600 mb-5">
-            Please update Hockia to continue. This version is no longer supported.
+            {t('nativeUpdate.requiredBody')}
           </p>
           <button
             type="button"
             onClick={openStore}
             className="w-full py-3 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
-            <Download className="w-4 h-4" /> Update Hockia
+            <Download className="w-4 h-4" /> {t('nativeUpdate.updateApp')}
           </button>
         </div>
       </div>
@@ -70,7 +72,7 @@ export default function NativeUpdatePrompt() {
         type="button"
         onClick={dismiss}
         className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-        aria-label="Dismiss"
+        aria-label={t('nativeUpdate.dismiss')}
       >
         <X className="w-4 h-4 text-gray-500" />
       </button>
@@ -80,9 +82,9 @@ export default function NativeUpdatePrompt() {
           <Download className="w-5 h-5 text-indigo-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm">Update available</h3>
+          <h3 className="font-semibold text-gray-900 text-sm">{t('nativeUpdate.availableTitle')}</h3>
           <p className="text-xs text-gray-600 mt-0.5">
-            A new version of Hockia is available with the latest improvements.
+            {t('nativeUpdate.availableBody')}
           </p>
         </div>
       </div>
@@ -93,14 +95,14 @@ export default function NativeUpdatePrompt() {
           onClick={openStore}
           className="flex-1 py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
-          <Download className="w-4 h-4" /> Update now
+          <Download className="w-4 h-4" /> {t('nativeUpdate.updateNow')}
         </button>
         <button
           type="button"
           onClick={dismiss}
           className="px-3 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
-          Later
+          {t('nativeUpdate.later')}
         </button>
       </div>
     </div>

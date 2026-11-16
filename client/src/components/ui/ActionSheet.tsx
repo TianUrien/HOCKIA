@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { cn } from '@/lib/utils'
+import { useCommonT } from '@/i18n/ns/common'
 
 export interface ActionSheetItem {
   key: string
@@ -28,8 +29,9 @@ interface ActionSheetProps {
  * an action closes the sheet first, then runs it.
  */
 export function ActionSheet({ open, onClose, title, subtitle, items, testId }: ActionSheetProps) {
+  const t = useCommonT()
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel={title ?? 'Actions'} initialFocus="panel">
+    <BottomSheet open={open} onClose={onClose} ariaLabel={title ?? t('actionSheet.label')} initialFocus="panel">
       <div className="px-4 pb-2" data-testid={testId}>
         {(title || subtitle) && (
           <div className="px-1 pb-3 pt-1 text-center">
@@ -63,7 +65,7 @@ export function ActionSheet({ open, onClose, title, subtitle, items, testId }: A
           onClick={onClose}
           className="mt-2 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-surface-grouped text-[16px] font-semibold text-ink-1 active:bg-surface-muted"
         >
-          Cancel
+          {t('actionSheet.cancel')}
         </button>
       </div>
     </BottomSheet>

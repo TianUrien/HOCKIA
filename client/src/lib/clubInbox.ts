@@ -1,6 +1,6 @@
 import { identityLine, positionLabel } from '@/lib/identity'
 import { DEFAULT_EXPIRY_DAYS, daysLeftToReply, isDaysLeftUrgent } from '@/lib/clubRecruiting'
-import { ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
+import { roleClosedLabel } from '@/lib/applicationStatus'
 import { shortDayOf } from '@/lib/signing'
 
 /**
@@ -100,7 +100,7 @@ const STATUS_NOTE: Record<string, string> = {
 export function applicationCardDetail(app: ClubApplication, expiryDays = DEFAULT_EXPIRY_DAYS, now = new Date()): { text: string; urgent: boolean } {
   const applied = monthDay(app.appliedAt)
   const join = (tail: string | null) => [applied, tail].filter(Boolean).join(' · ')
-  if (app.status === 'pending' && !pendingOnOpenRole(app)) return { text: join(ROLE_CLOSED_LABEL), urgent: false }
+  if (app.status === 'pending' && !pendingOnOpenRole(app)) return { text: join(roleClosedLabel()), urgent: false }
   if (app.status === 'pending') {
     const days = daysLeftToReply(app.appliedAt, expiryDays, now)
     const tail = days === null ? null : days === 0 ? 'closes today' : days === 1 ? '1 day left to reply' : `${days} days left to reply`

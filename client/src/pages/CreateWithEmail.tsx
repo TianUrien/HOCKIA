@@ -9,14 +9,15 @@ import { supabase } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { getAttributionSnapshot } from '@/lib/attribution'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
-import { guardCheck } from '@/lib/authGuard'
+import { guardCheck, rateLimitedCopy } from '@/lib/authGuard'
 import { trackSignUp, trackSignUpStart } from '@/lib/analytics'
 import { POST_AUTH_NEXT_KEY, pendingRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
-import { PASSWORD_HELP, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
+import { passwordHelp, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * Create with email (Figma 04 Player 114:434): email, password ("At least 8
@@ -33,6 +34,7 @@ import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptch
  */
 export default function CreateWithEmail() {
   const navigate = useNavigate()
+  const t = useAuthT()
   // Get the bot check ready while the member types (lib/captcha).
   useEffect(() => { warmCaptcha('signup') }, [])
   const location = useLocation()
@@ -52,7 +54,7 @@ export default function CreateWithEmail() {
     setError(null)
     const trimmed = email.trim()
     if (!trimmed) {
-      setError('Please enter your email.')
+      setError(t('createAccount.emailMissing'))
       return
     }
     const problem = passwordProblem(password)
@@ -68,7 +70,7 @@ export default function CreateWithEmail() {
         return
       }
       if (!guard.allowed) {
-        setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
+        setError(guard.message ?? rateLimitedCopy(null))
         return
       }
       trackSignUpStart('email')
@@ -95,19 +97,19 @@ export default function CreateWithEmail() {
           extra: { payload: { emailDomain: trimmed.split('@')[1] ?? null } },
         })
         if (/already.registered|already.exists/i.test(signUpError.message)) {
-          setError('This email is already registered. Try logging in instead.')
+          setError(t('createAccount.alreadyRegistered'))
           return
         }
         if (/validate email|invalid format|invalid email/i.test(signUpError.message)) {
-          setError('That email address doesn’t look right. Please check it.')
+          setError(t('createAccount.emailInvalid'))
           return
         }
-        setError(extractErrorMessage(signUpError, 'Sign up failed. Please try again.'))
+        setError(extractErrorMessage(signUpError, t('createAccount.failed')))
         return
       }
       reportCaptchaCoverage('signup')
       if (!data.user) {
-        setError('No user data returned from signup.')
+        setError(t('createAccount.noUser'))
         return
       }
       trackSignUp('pending_role')
@@ -121,27 +123,27 @@ export default function CreateWithEmail() {
       navigate('/verify-email')
     } catch (err) {
       logger.error('Sign up error:', err)
-      setError(extractErrorMessage(err, 'Sign up failed. Please try again.'))
+      setError(extractErrorMessage(err, t('createAccount.failed')))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthShell back={{ parent: 'Join', onBack: () => navigate(`/signup${search}`) }}>
+    <AuthShell back={{ parent: t('shell.parentJoin'), onBack: () => navigate(`/signup${search}`) }}>
       <form onSubmit={submit} noValidate className="flex flex-1 flex-col pt-2">
         {/* Rebrand page 26 · Create with email */}
-        <h1 className="text-title text-ink-1">Create your account</h1>
-        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Use an email you check. Clubs reply there too.</p>
+        <h1 className="text-title text-ink-1">{t('createAccount.title')}</h1>
+        <p className="mt-2 text-[17px] leading-[22px] text-ink-2">{t('createAccount.subtitle')}</p>
         <div className="mt-6 space-y-4">
           <div>
-            <label htmlFor="signup-email" className={fieldLabel}>Email</label>
+            <label htmlFor="signup-email" className={fieldLabel}>{t('fields.email')}</label>
             <input
               id="signup-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('fields.emailPlaceholder')}
               className={fieldInput}
               autoComplete="email"
               inputMode="email"
@@ -151,7 +153,7 @@ export default function CreateWithEmail() {
             />
           </div>
           <div>
-            <label htmlFor="signup-password" className={fieldLabel}>Password</label>
+            <label htmlFor="signup-password" className={fieldLabel}>{t('fields.password')}</label>
             <div className="relative">
               <input
                 id="signup-password"
@@ -167,19 +169,19 @@ export default function CreateWithEmail() {
               <button
                 type="button"
                 onClick={() => setShown((v) => !v)}
-                aria-label={shown ? 'Hide password' : 'Show password'}
+                aria-label={shown ? t('fields.hidePassword') : t('fields.showPassword')}
                 className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3"
               >
                 {shown ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
-            <p id="signup-password-help" className="mt-1.5 text-caption text-ink-3">{PASSWORD_HELP}</p>
+            <p id="signup-password-help" className="mt-1.5 text-caption text-ink-3">{passwordHelp()}</p>
           </div>
           <FormError>{error}</FormError>
         </div>
         <div className="mt-auto space-y-3 pt-8">
           <Button type="submit" block loading={loading} disabled={!email.trim() || !password}>
-            Continue
+            {t('createAccount.continue')}
           </Button>
           <TermsLine />
         </div>

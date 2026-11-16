@@ -337,16 +337,22 @@ jobs:
           # Budget bumped 5500KB → 5800KB on 2026-11-11 (founder-approved) — library
           # updates that load on demand only (posthog-js, recharts; about +165KB raw).
           # First-load gate is unchanged (511KB).
+          # Budget bumped 5800KB → 6000KB on 2026-11-16 (founder-approved) — the
+          # Spanish interface: the translation runtime (about +63KB raw) and the
+          # player and coach path moved to catalogs (about +111KB raw: each
+          # string now also carries its key). Raw is 5847KB. Spanish text itself
+          # is JSON loaded on demand and is not counted. First-load gate is
+          # unchanged (547KB of 560KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5836800 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5800KB ($(( TOTAL_KB * 100 / 5800 ))%)"
+          if [ "$TOTAL_JS" -gt 6041600 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 6000KB ($(( TOTAL_KB * 100 / 6000 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.8MB
-          if [ "$TOTAL_JS" -gt 5939200 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5800KB"
+          # Secondary gate: raw total must stay under 6.0MB
+          if [ "$TOTAL_JS" -gt 6144000 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 6000KB"
             exit 1
           fi
 

@@ -54,7 +54,7 @@ vi.mock('@/hooks/useFriendsInCommon', () => ({
   useFriendsInCommon: (id: string | null) => ({ people: [], count: id ? mutual[id] ?? 0 : 0, loading: false }),
 }))
 
-let eligibility: { eligible: boolean; reason?: string } = { eligible: true }
+let eligibility: { eligible: boolean; reason?: string; code?: string } = { eligible: true }
 vi.mock('@/lib/opportunityEligibility', () => ({ checkOpportunityEligibility: () => eligibility }))
 
 let dots = { messages: false, requests: true, activity: false }
@@ -83,7 +83,8 @@ import { InboxRequests } from '@/components/inbox/InboxRequests'
 import { ActivityIconCircle, ActivityRow } from '@/components/ui/ActivityRow'
 import { MessageBubble } from '@/features/chat-v2/components/MessageBubble'
 import ApplyToVacancyModal from '@/components/ApplyToOpportunityModal'
-import { ApplicationSent, FULL_MATCH_TIP } from '@/components/opportunities/ApplicationSent'
+import { ApplicationSent } from '@/components/opportunities/ApplicationSent'
+import { fullMatchTip } from '@/lib/opportunityCopy'
 import { OpportunityDetailMobile } from '@/components/opportunities/OpportunityDetailMobile'
 import { applicationStatusPill, APPLICATION_TONE_TEXT } from '@/lib/opportunityCopy'
 import type { FriendRequest } from '@/hooks/useFriendRequests'
@@ -416,7 +417,7 @@ describe('Apply sheet', () => {
   })
 
   it('not eligible: a NEUTRAL callout with an info icon (never amber), Secondary "Message the club", Primary disabled', () => {
-    eligibility = { eligible: false, reason: 'This opportunity requires an EU passport.' }
+    eligibility = { eligible: false, code: 'eu_passport', reason: 'This opportunity requires an EU passport.' }
     sheet()
     const callout = screen.getByTestId('apply-not-eligible')
     expect(callout.className).toContain('bg-surface-muted')
@@ -458,10 +459,10 @@ describe('Application sent', () => {
   })
 
   it('the tip reads exactly as approved and says nothing about other applicants', async () => {
-    expect(FULL_MATCH_TIP).toBe('Add a full match video now. It’s what clubs ask for most after an application.')
+    expect(fullMatchTip()).toBe('Add a full match video now. It’s what clubs ask for most after an application.')
     sent()
     const tip = await screen.findByTestId('full-match-nudge')
-    expect(tip).toHaveTextContent(FULL_MATCH_TIP)
+    expect(tip).toHaveTextContent(fullMatchTip())
     expect(document.body.textContent).not.toMatch(/applicants/i)
   })
 })

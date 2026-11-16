@@ -7,11 +7,13 @@ import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
 import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
+import { useCommonT } from '@/i18n/ns/common'
 
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
  *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
 function NavDot({ className }: { className: string }) {
-  return <span aria-label="Unread" data-testid="header-unread-dot" className={`absolute h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white ${className}`} />
+  const t = useCommonT()
+  return <span aria-label={t('nav.unread')} data-testid="header-unread-dot" className={`absolute h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white ${className}`} />
 }
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
@@ -54,6 +56,7 @@ function useHideOnScroll(enabled: boolean) {
 }
 
 export default function Header({ mobileHidden = false, onNewPost, hideOnScroll = false }: { mobileHidden?: boolean; onNewPost?: () => void; hideOnScroll?: boolean } = {}) {
+  const t = useCommonT()
   const { hidden, edge } = useHideOnScroll(hideOnScroll)
   const {
     user,
@@ -140,7 +143,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               type="button"
               onClick={() => handleNavigate(user ? '/home' : '/')}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
-              aria-label="Hockia, go home"
+              aria-label={t('nav.goHome')}
             >
               {/* Phone: the ink wordmark only (the tab bar already says where
                   you are). Web (rebrand page 16): the horizontal ink lockup,
@@ -174,7 +177,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   type="button"
                   onClick={onNewPost}
                   className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
-                  aria-label="New post"
+                  aria-label={t('nav.newPost')}
                   data-testid="header-new-post"
                 >
                   <SquarePlus className="w-6 h-6" strokeWidth={1.8} />
@@ -186,7 +189,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               <button
                 onClick={() => handleNavigate('/search')}
                 className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
-                aria-label="Search"
+                aria-label={t('nav.search')}
               >
                 <Search className="w-[22px] h-[22px]" strokeWidth={1.75} />
               </button>
@@ -203,7 +206,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 onClick={() => handleNavigate('/signin')}
                 className="min-h-[44px] rounded-full bg-[#f4f1ff] px-4 text-sm font-semibold text-[#5b21b6] transition-colors active:bg-[#ede9ff]"
               >
-                Log in
+                {t('nav.logIn')}
               </button>
             </div>
           )}
@@ -215,12 +218,12 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 {/* Primary nav (rebrand page 16): text only; active = ink on a
                     soft violet pill. */}
                 {([
-                  { path: '/home', label: 'Home', dot: false },
-                  { path: '/community', label: 'Community', dot: false },
-                  { path: '/opportunities', label: 'Opportunities', dot: false },
+                  { path: '/home', label: t('nav.home'), dot: false },
+                  { path: '/community', label: t('nav.community'), dot: false },
+                  { path: '/opportunities', label: t('nav.opportunities'), dot: false },
                   // Web only (founder 2026-10-26, page 16); phones reach it from Community.
-                  { path: '/community/brands', label: 'Marketplace', dot: false },
-                  { path: '/inbox', label: 'Inbox', dot: inboxDot },
+                  { path: '/community/brands', label: t('nav.marketplace'), dot: false },
+                  { path: '/inbox', label: t('nav.inbox'), dot: inboxDot },
                 ]).map(({ path, label, dot }) => {
                   // Marketplace = Community › Brands, so Community is not lit there.
                   const onBrands = isActive('/community/brands')
@@ -251,12 +254,12 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   type="button"
                   onClick={() => handleNavigate('/search')}
                   className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
-                  aria-label="Search"
-                  title="Search"
+                  aria-label={t('nav.search')}
+                  title={t('nav.search')}
                   data-testid="header-search-desktop"
                 >
                   <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">Search players, clubs, opportunities</span>
+                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">{t('nav.searchHint')}</span>
                 </button>
 
                 {/* Hockia AI + Notifications. Marketplace is a text link in the
@@ -269,18 +272,18 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   onClick={hockiaAiOpen ? closeHockiaAi : openHockiaAi}
                   aria-pressed={hockiaAiOpen}
                   className={`relative ml-2 flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border text-[14px] font-semibold text-ai-text transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:border-ai-accent min-[1440px]:w-auto min-[1440px]:justify-start min-[1440px]:pl-1 min-[1440px]:pr-3.5 ${hockiaAiOpen ? 'border-ai-accent bg-ai-accent/20 ring-2 ring-ai-accent/30' : 'border-ai-accent/60 bg-ai-bg'}`}
-                  aria-label="Ask Hockia AI"
-                  title="Ask Hockia AI"
+                  aria-label={t('nav.askHockiaAi')}
+                  title={t('nav.askHockiaAi')}
                   data-testid="header-hockia-ai-desktop"
                 >
                   <img src="/hockia-ai/button_calm_96.webp" srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x" alt="" width={32} height={32} className="h-8 w-8 rounded-full" draggable={false} />
-                  <span className="hidden min-[1440px]:inline" aria-hidden="true">Ask Hockia AI</span>
+                  <span className="hidden min-[1440px]:inline" aria-hidden="true">{t('nav.askHockiaAi')}</span>
                 </button>
                 <button
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                  aria-label="Notifications"
-                  title="Notifications"
+                  aria-label={t('nav.notifications')}
+                  title={t('nav.notifications')}
                 >
                   <Bell className="w-5 h-5" />
                   {segmentDots.activity && <NavDot className="right-1.5 top-1.5" />}
@@ -296,8 +299,8 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
               <>
                 {/* Unauthenticated primary nav links */}
                 {([
-                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase },
-                  { path: '/community', label: 'Community', icon: Users },
+                  { path: '/opportunities', label: t('nav.opportunities'), icon: Briefcase },
+                  { path: '/community', label: t('nav.community'), icon: Users },
                 ]).map(({ path, label, icon: Icon }) => (
                   <button
                     key={path}
@@ -323,25 +326,25 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   type="button"
                   onClick={() => handleNavigate('/search')}
                   className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
-                  aria-label="Search"
-                  title="Search"
+                  aria-label={t('nav.search')}
+                  title={t('nav.search')}
                   data-testid="header-search-desktop"
                 >
                   <Search className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">Search players, clubs, opportunities</span>
+                  <span className="hidden truncate min-[1440px]:inline" aria-hidden="true">{t('nav.searchHint')}</span>
                 </button>
 
                 <button
                   onClick={() => handleNavigate('/')}
                   className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2"
                 >
-                  Sign In
+                  {t('nav.signIn')}
                 </button>
                 <button
                   onClick={() => handleNavigate('/signup')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Join Hockia
+                  {t('nav.join')}
                 </button>
               </>
             )}

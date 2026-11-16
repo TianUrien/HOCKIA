@@ -5,30 +5,38 @@
  * them). `pending` reads "In review"; My applications additionally shows
  * "No reply · Nd" / "Role closed" for a pending application (see
  * applicationStatusPill in lib/opportunityCopy).
+ *
+ * The values follow the interface language: each one is read from the
+ * catalog when it is used (lib/opportunityLazyText), never at import.
  */
-export const APPLICATION_STATUS_LABELS: Record<string, string> = {
-  pending: 'In review',
-  shortlisted: 'Shortlisted',
-  maybe: 'Replied',
-  rejected: 'Not this time',
-  withdrawn: 'Withdrawn',
-  no_response: 'No reply',
+import { tOpportunities } from '@/i18n/ns/opportunities.core'
+import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
+
+export const APPLICATION_STATUS_LABELS: Record<string, string> = lazyTextRecord({
+  pending: () => tOpportunities('status.pending'),
+  shortlisted: () => tOpportunities('status.shortlisted'),
+  maybe: () => tOpportunities('status.maybe'),
+  rejected: () => tOpportunities('status.rejected'),
+  withdrawn: () => tOpportunities('status.withdrawn'),
+  no_response: () => tOpportunities('status.noResponse'),
   // The club closed the role as filled (founder 2026-09-26: "Role filled",
   // grey — it's an outcome, not a verdict on the player).
-  filled: 'Opportunity filled',
+  filled: () => tOpportunities('status.filled'),
   // D4 · From yes to signed. offer_declined is a history row only (the
   // server puts the application straight back to shortlisted), so it reads
   // as Shortlisted if it is ever seen.
-  offered: 'Offer',
-  accepted: 'Offer accepted',
-  signed_pending_confirmation: 'Confirm signing',
-  signed: 'Signed',
-  offer_declined: 'Shortlisted',
-}
+  offered: () => tOpportunities('status.offered'),
+  accepted: () => tOpportunities('status.accepted'),
+  signed_pending_confirmation: () => tOpportunities('status.signedPendingConfirmation'),
+  signed: () => tOpportunities('status.signed'),
+  offer_declined: () => tOpportunities('status.shortlisted'),
+})
 
 /** A pending application whose role is no longer open (My applications pill,
  *  club chat card). */
-export const ROLE_CLOSED_LABEL = 'Opportunity closed'
+export function roleClosedLabel(): string {
+  return tOpportunities('status.roleClosed')
+}
 
 export function applicationStatusLabel(status: string | null | undefined): string | null {
   if (!status) return null
@@ -102,29 +110,27 @@ export interface ApplicationStatusReason {
 }
 
 export const APPLICATION_STATUS_REASONS: ApplicationStatusReason[] = [
-  { code: 'position_filled', label: 'Position already filled' },
-  { code: 'different_position', label: 'Looking for a different position' },
-  { code: 'different_level', label: 'Looking for a different level' },
-  { code: 'timing', label: "Timing didn't line up" },
-  { code: 'location', label: 'Location / relocation' },
-  { code: 'eligibility', label: 'Passport / eligibility' },
-  { code: 'profile_incomplete', label: 'Profile needs more detail' },
-  { code: 'video_missing', label: 'Needs video / footage' },
-  { code: 'other', label: 'Other reason' },
+  withLazyText({ code: 'position_filled' }, { label: () => tOpportunities('statusReason.positionFilled') }),
+  withLazyText({ code: 'different_position' }, { label: () => tOpportunities('statusReason.differentPosition') }),
+  withLazyText({ code: 'different_level' }, { label: () => tOpportunities('statusReason.differentLevel') }),
+  withLazyText({ code: 'timing' }, { label: () => tOpportunities('statusReason.timing') }),
+  withLazyText({ code: 'location' }, { label: () => tOpportunities('statusReason.location') }),
+  withLazyText({ code: 'eligibility' }, { label: () => tOpportunities('statusReason.eligibility') }),
+  withLazyText({ code: 'profile_incomplete' }, { label: () => tOpportunities('statusReason.profileIncomplete') }),
+  withLazyText({ code: 'video_missing' }, { label: () => tOpportunities('statusReason.videoMissing') }),
+  withLazyText({ code: 'other' }, { label: () => tOpportunities('statusReason.other') }),
 ]
-
-const REASON_LABEL_BY_CODE: Record<string, string> = Object.fromEntries(
-  APPLICATION_STATUS_REASONS.map((r) => [r.code, r.label]),
-)
 
 /** Club-facing label for a reason code (falls back to the raw code if unknown). */
 export function applicationReasonLabel(code: string | null | undefined): string | null {
   if (!code) return null
-  return REASON_LABEL_BY_CODE[code] ?? null
+  return APPLICATION_STATUS_REASONS.find((r) => r.code === code)?.label ?? null
 }
 
 /** Shown to a club that tries to change an application the player withdrew. */
-export const WITHDRAWN_APPLICATION_MESSAGE = 'This player withdrew their application'
+export function withdrawnApplicationMessage(): string {
+  return tOpportunities('status.withdrawnMessage')
+}
 
 /**
  * True when a status write was refused because the application is withdrawn:
@@ -147,7 +153,9 @@ export async function isWithdrawnApplicationError(err: unknown): Promise<boolean
 }
 
 /** Shown to a club whose decline arrived after the application already moved on (offer, signing…). */
-export const APPLICATION_MOVED_ON_MESSAGE = 'This application has already moved on, so it wasn’t declined'
+export function applicationMovedOnMessage(): string {
+  return tOpportunities('status.movedOnMessage')
+}
 
 /** True when application-feedback refused a decline with 409 invalid_status. */
 export async function isApplicationMovedOnError(err: unknown): Promise<boolean> {
@@ -175,21 +183,21 @@ export async function isApplicationMovedOnError(err: unknown): Promise<boolean> 
 export function applicationReasonPlayerCopy(code: string | null | undefined): string | null {
   switch (code) {
     case 'position_filled':
-      return 'The position looks to be covered already. This is about timing, not your level. Openings still looking for your position may be a better fit.'
+      return tOpportunities('reasonCopy.positionFilled')
     case 'different_position':
-      return "They're prioritising a different position for this opening. Opportunities matching your position are likely a stronger fit."
+      return tOpportunities('reasonCopy.differentPosition')
     case 'different_level':
-      return "They're looking for a different level for this particular opening. Keep building your profile and proven experience."
+      return tOpportunities('reasonCopy.differentLevel')
     case 'timing':
-      return "The timing or availability didn't line up for this one. It’s worth keeping them on your radar for the future."
+      return tOpportunities('reasonCopy.timing')
     case 'location':
-      return "The location or relocation didn't work out for this opening."
+      return tOpportunities('reasonCopy.location')
     case 'eligibility':
-      return 'There was a passport or eligibility consideration specific to this opening.'
+      return tOpportunities('reasonCopy.eligibility')
     case 'profile_incomplete':
-      return 'Adding more detail to your profile could help clubs picture you faster next time.'
+      return tOpportunities('reasonCopy.profileIncomplete')
     case 'video_missing':
-      return 'Clubs often want footage before moving forward. A highlight reel or full-match video could strengthen future applications.'
+      return tOpportunities('reasonCopy.videoMissing')
     case 'other':
       return null
     default:
@@ -211,24 +219,24 @@ export function applicationStatusFallbackMessage(
   const reasonCopy = applicationReasonPlayerCopy(reason)
   switch (status) {
     case 'shortlisted':
-      return "Good news: you've been shortlisted. Keep your profile sharp while the club reviews."
+      return tOpportunities('statusFallback.shortlisted')
     case 'maybe':
       return reasonCopy
-        ? `The club replied. No final decision yet. ${reasonCopy}`
-        : 'The club replied. No final decision yet.'
+        ? tOpportunities('statusFallback.maybeWithReason', { reason: reasonCopy })
+        : tOpportunities('statusFallback.maybe')
     case 'rejected':
       return reasonCopy
-        ? `Not this time. ${reasonCopy} Keep going. The right fit is out there.`
-        : 'Not this time. It often comes down to fit, not ability. Keep applying.'
+        ? tOpportunities('statusFallback.rejectedWithReason', { reason: reasonCopy })
+        : tOpportunities('statusFallback.rejected')
     case 'no_response':
       // No AI pass for expiries (application-feedback only covers real club
       // responses) — this deterministic line IS the player-facing message.
       // Neutral about the club: they may have answered off-platform.
-      return "This application is no longer active on Hockia. Applications close automatically after a while without an update here, so you're never left waiting. Your energy is better spent on what's open now."
+      return tOpportunities('statusFallback.noResponse')
     case 'filled':
       // Deterministic like no_response (application-feedback doesn't cover
       // it). Same words as the 'filled' notification.
-      return 'This opportunity has been filled. Thanks for applying. New opportunities are open.'
+      return tOpportunities('statusFallback.filled')
     default:
       return null
   }
@@ -260,10 +268,10 @@ export function isDecidableApplicationStatus(status: string | null | undefined):
 /** The grey note that replaces the decision bar on a closed application. */
 export function closedApplicationNote(status: string | null | undefined, firstName: string): string {
   switch (status) {
-    case 'no_response': return `This application closed without a reply. You can still message ${firstName}.`
-    case 'filled': return `This opportunity was filled. You can still message ${firstName}.`
-    case 'withdrawn': return `${firstName} withdrew this application. You can still message ${firstName}.`
-    default: return `This application is past review. You can still message ${firstName}.`
+    case 'no_response': return tOpportunities('closedNote.noResponse', { firstName })
+    case 'filled': return tOpportunities('closedNote.filled', { firstName })
+    case 'withdrawn': return tOpportunities('closedNote.withdrawn', { firstName })
+    default: return tOpportunities('closedNote.pastReview', { firstName })
   }
 }
 

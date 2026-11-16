@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { HOCKIA_PRIMARY, HOCKIA_SECONDARY } from '@/lib/brandTokens'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * CompletionArc — half-circle progress arc for the Hero card.
@@ -30,11 +31,13 @@ interface CompletionArcProps {
 
 export default function CompletionArc({
   percentage,
-  caption = 'Profile complete',
+  caption: captionProp,
   size = 140,
   loading = false,
   className,
 }: CompletionArcProps) {
+  const t = useHomeT()
+  const caption = captionProp ?? t('completionArc.caption')
   // Clamp + round so the SVG arithmetic is always well-defined.
   const pct = Math.max(0, Math.min(100, Math.round(percentage)))
 
@@ -54,7 +57,7 @@ export default function CompletionArc({
     <div
       className={cn('inline-flex flex-col items-center', className)}
       data-testid="completion-arc"
-      aria-label={loading ? caption : `${caption}: ${pct}%`}
+      aria-label={loading ? caption : t('completionArc.ariaLabel', { caption, percent: pct })}
     >
       <svg
         width={size}

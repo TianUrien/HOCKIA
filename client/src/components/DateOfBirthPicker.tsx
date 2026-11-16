@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { fieldErrorRing, fieldErrorText, fieldLabel, fieldSelectCompact } from '@/components/ui/fieldClasses'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { useOnboardingT } from '@/i18n/ns/onboarding.core'
 
 interface DateOfBirthPickerProps {
   label?: string
@@ -19,7 +21,15 @@ interface DateOfBirthPickerProps {
   appearance?: 'default' | 'field'
 }
 
+/** English month options, unchanged. Other languages come from Intl (see monthNames). */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Short month names in the interface language ("ene", "feb" in Spanish). */
+function monthNames(): string[] {
+  if (isEnglish()) return MONTHS
+  const format = new Intl.DateTimeFormat(intlLocale(), { month: 'short', timeZone: 'UTC' })
+  return MONTHS.map((_, i) => format.format(new Date(Date.UTC(2001, i, 15))).replace(/\./g, ''))
+}
 
 type Parts = { year: number | null; month: number | null; day: number | null }
 
@@ -59,6 +69,7 @@ function DateOfBirthPicker({
   minYear = new Date().getFullYear() - 100,
   appearance = 'default',
 }: DateOfBirthPickerProps) {
+  const t = useOnboardingT()
   const isField = appearance === 'field'
   const labelId = useId()
   const errorId = error ? `${labelId}-error` : undefined
@@ -120,35 +131,35 @@ function DateOfBirthPicker({
       )}
       <div role="group" aria-labelledby={label ? labelId : undefined} className="grid grid-cols-3 gap-2">
         <select
-          aria-label="Day"
+          aria-label={t('dateOfBirth.day')}
           className={selectClassName}
           value={day ?? ''}
           onChange={(e) => update({ day: e.target.value ? Number(e.target.value) : null })}
           {...(errorId && { 'aria-describedby': errorId })}
         >
-          <option value="">Day</option>
+          <option value="">{t('dateOfBirth.day')}</option>
           {days.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
         <select
-          aria-label="Month"
+          aria-label={t('dateOfBirth.month')}
           className={selectClassName}
           value={month ?? ''}
           onChange={(e) => update({ month: e.target.value ? Number(e.target.value) : null })}
         >
-          <option value="">Month</option>
-          {MONTHS.map((m, i) => (
-            <option key={m} value={i + 1}>{m}</option>
+          <option value="">{t('dateOfBirth.month')}</option>
+          {monthNames().map((m, i) => (
+            <option key={i} value={i + 1}>{m}</option>
           ))}
         </select>
         <select
-          aria-label="Year"
+          aria-label={t('dateOfBirth.year')}
           className={selectClassName}
           value={year ?? ''}
           onChange={(e) => update({ year: e.target.value ? Number(e.target.value) : null })}
         >
-          <option value="">Year</option>
+          <option value="">{t('dateOfBirth.year')}</option>
           {years.map((y) => (
             <option key={y} value={y}>{y}</option>
           ))}

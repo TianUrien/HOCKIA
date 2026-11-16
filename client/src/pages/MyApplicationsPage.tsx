@@ -13,6 +13,8 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { dayFirst } from '@/lib/dayFirst'
 import { APPLICATION_TONE_CLASS, applicationStatusPill, roleHeadline } from '@/lib/opportunityCopy'
+import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 type Segment = 'active' | 'closed'
 
@@ -28,8 +30,9 @@ type Segment = 'active' | 'closed'
  * them.
  */
 export default function MyApplicationsPage() {
+  const t = useOpportunitiesT()
   useScrollRestore()
-  useDocumentTitle('My applications')
+  useDocumentTitle(t('applications.documentTitle'))
   const navigate = useNavigate()
   const location = useLocation()
   const { rows, loading } = useMyApplicationsAll()
@@ -47,7 +50,7 @@ export default function MyApplicationsPage() {
     // Title first, then position · team (the role title was missing, so two
     // roles for the same position read identically).
     const role = r.title ? roleHeadline({ position: r.position, title: r.title, opportunity_type: r.opportunityType ?? 'player', gender: r.gender }) : null
-    const headline = role?.title ?? 'Opportunity no longer available'
+    const headline = role?.title ?? t('applications.unavailable')
     const sub = [r.club?.name, r.country].filter(Boolean).join(' · ')
     const applied = dayFirst(r.appliedAt)
     // Card (rebrand page 20 · My applications): crest, title, club, then
@@ -71,8 +74,8 @@ export default function MyApplicationsPage() {
           </span>
           {r.hasClubNote ? (
             <span className="flex w-full items-center gap-2 text-secondary" data-testid="club-note-line">
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS.grey}`}>Not this time</span>
-              <span className="truncate font-semibold text-hockia-primary">Read the club’s note</span>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS.grey}`}>{APPLICATION_STATUS_LABELS.rejected}</span>
+              <span className="truncate font-semibold text-hockia-primary">{t('applications.readClubNote')}</span>
             </span>
           ) : (
             <span className="flex w-full items-center justify-between gap-2 text-secondary">
@@ -80,7 +83,7 @@ export default function MyApplicationsPage() {
                 {pill.tone === 'neutral' && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />}
                 {pill.label}
               </span>
-              {applied && <span className="truncate text-caption text-ink-3" data-testid="application-applied">Applied {applied}</span>}
+              {applied && <span className="truncate text-caption text-ink-3" data-testid="application-applied">{t('applications.appliedOn', { date: applied })}</span>}
             </span>
           )}
         </button>
@@ -92,17 +95,17 @@ export default function MyApplicationsPage() {
     <div className="min-h-screen bg-surface-subtle">
       <Header mobileHidden />
       <main className="mx-auto max-w-2xl pb-24 pt-[calc(env(safe-area-inset-top)+0.5rem)] lg:pt-24">
-        <DetailNavBar parent={backLabelFrom(location.state, 'Opportunities')} title="My applications" fallbackPath="/opportunities" />
-        <h1 className="hidden px-5 pb-2 text-title text-ink-1 lg:block">My applications</h1>
+        <DetailNavBar parent={backLabelFrom(location.state, t('applications.backFallback'))} title={t('applications.title')} fallbackPath="/opportunities" />
+        <h1 className="hidden px-5 pb-2 text-title text-ink-1 lg:block">{t('applications.title')}</h1>
 
         <div className="px-5 pb-1.5 pt-2">
           <SegmentedControl<Segment>
-            ariaLabel="Application status"
+            ariaLabel={t('applications.segmentAria')}
             value={segment}
             onChange={setSegment}
             options={[
-              { value: 'active', label: 'Active', count: active.length },
-              { value: 'closed', label: 'Archived', count: closed.length },
+              { value: 'active', label: t('applications.active'), count: active.length },
+              { value: 'closed', label: t('applications.archived'), count: closed.length },
             ]}
           />
         </div>
@@ -111,13 +114,13 @@ export default function MyApplicationsPage() {
           <div><ConversationSkeleton /><ConversationSkeleton /></div>
         ) : list.length === 0 ? (
           <div className="px-5 py-12 text-center">
-            <p className="text-row font-semibold text-ink-1">{segment === 'active' ? 'No active applications' : 'Nothing archived yet'}</p>
+            <p className="text-row font-semibold text-ink-1">{segment === 'active' ? t('applications.emptyActiveTitle') : t('applications.emptyArchivedTitle')}</p>
             <p className="mt-1 text-secondary text-ink-2">
-              {segment === 'active' ? 'Opportunities you apply to show up here with the club’s answer.' : 'Opportunities you weren’t selected for, and closed opportunities, keep their outcome here.'}
+              {segment === 'active' ? t('applications.emptyActiveBody') : t('applications.emptyArchivedBody')}
             </p>
             {segment === 'active' && (
               <button type="button" onClick={() => navigate('/opportunities')} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'mt-4' })}>
-                Browse open opportunities
+                {t('applications.browse')}
               </button>
             )}
           </div>
@@ -130,9 +133,9 @@ export default function MyApplicationsPage() {
         {segment === 'active' && waitingLongest?.club && (
           <div className="px-5 pt-5">
             <div className="rounded-card bg-surface-muted px-4 py-3.5" data-testid="no-reply-help">
-              <p className="text-row font-semibold text-ink-1">No reply after two weeks?</p>
+              <p className="text-row font-semibold text-ink-1">{t('applications.noReplyTitle')}</p>
               <p className="mt-1 text-secondary text-ink-2">
-                Send the club a message to ask where your application stands.
+                {t('applications.noReplyBody')}
               </p>
               {/* Link button (Figma Button, Style: Link, Small): brand text, no chevron. */}
               <button
@@ -141,7 +144,7 @@ export default function MyApplicationsPage() {
                 className={buttonClassName({ variant: 'link', size: 'small', className: 'mt-1 !px-0' })}
                 data-testid="no-reply-message-link"
               >
-                Message {waitingLongest.club.name}
+                {t('applications.messageClub', { club: waitingLongest.club.name })}
               </button>
             </div>
           </div>

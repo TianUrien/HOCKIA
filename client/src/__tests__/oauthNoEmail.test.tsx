@@ -22,8 +22,11 @@ vi.mock('@/lib/auth', () => {
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 
-import { oauthErrorMessage, NO_EMAIL_MESSAGE } from '@/lib/oauthErrorMessage'
+import { oauthErrorMessage, noEmailMessage } from '@/lib/oauthErrorMessage'
 import AuthCallback from '@/pages/AuthCallback'
+
+// The message became a function (it follows the interface language); tests run in English.
+const NO_EMAIL_MESSAGE = noEmailMessage()
 
 describe('oauthErrorMessage', () => {
   it('names the missing email for the Supabase provider error', () => {

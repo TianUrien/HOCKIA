@@ -1,0 +1,902 @@
+{
+  "page": {
+    "documentTitle": "Home",
+    "newPost": "New post"
+  },
+  "topBar": {
+    "title": "Profile",
+    "shareTitle": "Hockia profile",
+    "linkCopied": "Link copied",
+    "share": "Share your profile"
+  },
+  "aboutMe": {
+    "title": "About me",
+    "edit": "Edit",
+    "viewMore": "View more",
+    "emptyVisitor": "No bio shared yet.",
+    "emptyOwner": "Share your playing style, ambitions, and what you’re looking for in a club."
+  },
+  "clubInfo": {
+    "title": "Club information",
+    "subtitle": "The facts players and coaches filter by",
+    "edit": "Edit",
+    "country": "Country",
+    "baseLocation": "Base location",
+    "yearFounded": "Year founded",
+    "website": "Website",
+    "leagues": "Leagues",
+    "contactEmail": "Contact email",
+    "leagueWomen": "Women: {{division}}",
+    "leagueMen": "Men: {{division}}",
+    "aboutHeading": "About the club",
+    "aboutEmpty": "Describe your club — its identity, ambitions, and what playing here is like.",
+    "historyHeading": "Club history"
+  },
+  "completionArc": {
+    "caption": "Profile complete",
+    "ariaLabel": "{{caption}}: {{percent}}%"
+  },
+  "dashboardCard": {
+    "ariaLabel": "{{title}} · {{cta}}"
+  },
+  "clubHero": {
+    "actionComplete": "Complete",
+    "actionAdd": "Add",
+    "leagueWomen": "Women: {{division}}",
+    "leagueMen": "Men: {{division}}",
+    "changeLogo": "Change club logo",
+    "stats": {
+      "connections": "Connections",
+      "members": "Members",
+      "viewConnections_one": "View {{count}} connections",
+      "viewConnections_other": "View {{count}} connections",
+      "connectionsCount_one": "{{count}} connections",
+      "connectionsCount_other": "{{count}} connections",
+      "viewMembers_one": "View {{count}} members",
+      "viewMembers_other": "View {{count}} members",
+      "membersCount_one": "{{count}} members",
+      "membersCount_other": "{{count}} members"
+    },
+    "sending": "Sending...",
+    "message": "Message",
+    "fallbackName": "this club",
+    "viewPublic": "View public profile",
+    "viewPublicShort": "View",
+    "editProfile": "Edit profile",
+    "editProfileShort": "Edit",
+    "founded": "Founded {{year}}",
+    "nextStep": "Next: {{label}}",
+    "allComplete": "Your club profile has every section filled in",
+    "fullChecklist": "Full checklist",
+    "completed": "Completed"
+  },
+  "hero": {
+    "openToCoach": "Open to coach",
+    "openToPlay": "Open to play",
+    "recruiting": "Recruiting",
+    "shareTitle": "Hockia profile",
+    "linkCopied": "Link copied",
+    "friend": {
+      "friends": "Friends",
+      "requested": "Requested",
+      "accept": "Accept",
+      "add": "Add friend",
+      "menuSent": "Friend request sent",
+      "menuAccept": "Accept friend request",
+      "menuAdd": "Add friend"
+    },
+    "changeCover": "Change cover photo",
+    "back": "Back",
+    "share": "Share profile",
+    "settings": "Settings",
+    "fallbackName": "this user",
+    "changePhoto": "Change profile photo",
+    "editSocial": "Edit {{platform}}",
+    "editProfile": "Edit profile",
+    "viewAsClub": "View as club",
+    "publicView": "Public view",
+    "shortlisted": "Shortlisted",
+    "shortlist": "Shortlist",
+    "passedAria": "Passed on this opportunity",
+    "passed": "Passed",
+    "invited": "Invited",
+    "invite": "Invite",
+    "openingMessage": "Opening…",
+    "message": "Message",
+    "stats": {
+      "friends": "Friends",
+      "references": "References",
+      "career": "Career",
+      "videos": "Videos",
+      "friendsAria_one": "{{count}} Friends",
+      "friendsAria_other": "{{count}} Friends",
+      "referencesAria_one": "{{count}} References",
+      "referencesAria_other": "{{count}} References",
+      "careerAria_one": "{{count}} Career",
+      "careerAria_other": "{{count}} Career",
+      "videosAria_one": "{{count}} Videos",
+      "videosAria_other": "{{count}} Videos"
+    },
+    "signInTitle": "Sign in to add friends"
+  },
+  "checkIn": {
+    "player": {
+      "question": "Are you still open to play?",
+      "rationale": "Confirming weekly keeps your profile fresh. Clubs trust active players."
+    },
+    "coachRecruiting": {
+      "question": "Still recruiting players?",
+      "rationale": "A weekly check keeps your candidate searches relevant."
+    },
+    "coach": {
+      "question": "Still open to coaching opportunities?",
+      "rationale": "Confirming weekly keeps your profile fresh. Clubs trust active coaches."
+    },
+    "umpire": {
+      "question": "Still active as an umpire?",
+      "rationale": "A weekly confirmation keeps your matches and references current."
+    },
+    "confirmedTitle": "Confirmed. Thanks for checking in.",
+    "confirmedBody": "Your profile stays fresh for another 60 days.",
+    "dismiss": "Dismiss",
+    "eyebrow": "Weekly check-in",
+    "confirm": "Yes, still open",
+    "notNow": "Not right now"
+  },
+  "brandSummary": {
+    "ariaLabel": "Your brand this month",
+    "waiting_one": "{{count}} person is waiting for your reply",
+    "waiting_other": "{{count}} people are waiting for your reply",
+    "oldestWrote": "The oldest wrote {{ago}}",
+    "reply": "Reply",
+    "offersTitle": "Your offers, last 30 days",
+    "market_one": "{{count}} members live where you sell",
+    "market_other": "{{count}} members live where you sell",
+    "marketUnknown": "See who you could reach",
+    "shownTo": "Shown to",
+    "storeVisits": "To your store",
+    "contacted": "Contacted"
+  },
+  "countryConfirm": {
+    "title": "Which country are you based in?",
+    "bodyWithPlace": "Your profile says {{place}}. Add your country so opportunities, clubs and offers near you can find you.",
+    "bodyWithGuess": "It looks like you’re in {{country}}. Add your country so opportunities, clubs and offers near you can find you.",
+    "body": "Add your country so opportunities, clubs and offers near you can find you.",
+    "saveFailed": "That didn’t save. Check your connection and try again.",
+    "yes": "Yes, {{country}}",
+    "chooseAnother": "Choose another",
+    "choose": "Choose your country",
+    "notNow": "Not now",
+    "sheetTitle": "Choose your country",
+    "search": "Search countries"
+  },
+  "feedCard": {
+    "unnamedClub": "A club",
+    "unnamedMember": "A member",
+    "viewProfileAria": "{{name}} · view profile"
+  },
+  "carousel": {
+    "imageAlt": "{{title}} - image {{number}}",
+    "goToImage": "Go to image {{number}}"
+  },
+  "referenceAsk": {
+    "bodyNamed": "Ask {{name}} to vouch for you. References from connections build trust fast.",
+    "body": "Ask your new connection to vouch for you. References from connections build trust fast.",
+    "dismiss": "Dismiss",
+    "eyebrow": "New connection",
+    "titleNamed": "Ask {{name}} for a reference?",
+    "title": "Ask your new connection for a reference?",
+    "cta": "Ask to vouch"
+  },
+  "fullMatchNotice": {
+    "madePublicToast": "Your full matches are now public.",
+    "saveFailedToast": "Could not save that. Please try again.",
+    "title": "Your full matches are now for clubs and coaches",
+    "body": "Only clubs and coaches who recruit can watch your full matches. Highlights stay public. You can change this any time in Settings → Privacy.",
+    "keep": "Keep it",
+    "makePublic": "Make them public",
+    "confirmAria": "Make your full matches public",
+    "confirmTitle": "Make your full matches public?",
+    "confirmBody": "Anyone on Hockia will be able to watch your full matches. You can switch back any time in Settings → Privacy.",
+    "saving": "Saving…",
+    "confirmCta": "Make them public",
+    "cancel": "Cancel"
+  },
+  "feed": {
+    "newPosts_one": "{{count}} new post",
+    "newPosts_other": "{{count}} new posts",
+    "newPostsOverflow": "99+ new posts",
+    "retry": "Try again",
+    "empty": {
+      "title": "Welcome to your feed",
+      "body": "Your feed fills up as the community grows. In the meantime, start exploring:",
+      "opportunitiesTitle": "Browse opportunities",
+      "opportunitiesBody": "Find your next move",
+      "communityTitle": "Join the Community",
+      "communityBody": "Ask questions, share knowledge",
+      "clubsTitle": "Explore clubs",
+      "clubsBody": "Discover clubs across 8 countries",
+      "peopleTitle": "Find people",
+      "peopleBody": "Connect with players and coaches"
+    }
+  },
+  "comments": {
+    "commentCount_one": "{{count}} comment",
+    "commentCount_other": "{{count}} comments",
+    "answerCount_one": "{{count}} answer",
+    "answerCount_other": "{{count}} answers",
+    "viewAllComments_one": "View all {{count}} comment",
+    "viewAllComments_other": "View all {{count}} comments",
+    "viewAllAnswers_one": "View all {{count}} answer",
+    "viewAllAnswers_other": "View all {{count}} answers",
+    "blockedFallback": "Content violates community guidelines.",
+    "unnamedAuthor": "Member",
+    "delete": "Delete",
+    "report": "Report",
+    "loading": "Loading…",
+    "answerPlaceholder": "Write an answer",
+    "commentPlaceholder": "Add a comment",
+    "sendAnswer": "Post answer",
+    "sendComment": "Post comment"
+  },
+  "composerStrip": {
+    "prompt": "What's new?",
+    "addMedia": "Add a photo or video"
+  },
+  "interactions": {
+    "answerCount_one": "{{count}} answer",
+    "answerCount_other": "{{count}} answers",
+    "like": "Like",
+    "unlike": "Unlike",
+    "likeWithCount_one": "Like, {{count}} like",
+    "likeWithCount_other": "Like, {{count}} likes",
+    "unlikeWithCount_one": "Unlike, {{count}} like",
+    "unlikeWithCount_other": "Unlike, {{count}} likes",
+    "answersAria": "Answers, {{total}}",
+    "commentsAriaWithTotal": "Comments, {{total}}",
+    "commentsAria": "Comments",
+    "share": "Share",
+    "answer": "Answer"
+  },
+  "mediaUploader": {
+    "videoAlt": "Video {{number}}",
+    "selectImage": "Select image file",
+    "selectVideo": "Select video file",
+    "addPhotos": "Add photos",
+    "addVideo": "Add video",
+    "hintPhotoOrVideo": "Photo or video",
+    "hintPhoto": "Photo",
+    "limitPhotoOrVideo": "Photo or video · up to {{max}}",
+    "limitPhotos": "Photos · up to {{max}}",
+    "uploadingVideo": "Uploading video...",
+    "uploading": "Uploading...",
+    "cancelUpload": "Cancel upload",
+    "uploadAlt": "Upload {{number}}",
+    "removeVideo": "Remove video {{number}}",
+    "removeImage": "Remove image {{number}}",
+    "mainBadge": "Main",
+    "addPhotoTile": "Photo",
+    "addVideoTile": "Video",
+    "cancel": "Cancel",
+    "footer": "{{used}}/{{max}} items · Photos: up to 10 MB",
+    "footerWithVideo": "{{used}}/{{max}} items · Photos: up to 10 MB · Video: up to 100 MB, 3 min"
+  },
+  "profileViews": {
+    "clubAndCoach": "{{clubs}} club and {{coaches}} coach viewed your profile this week",
+    "clubAndCoaches": "{{clubs}} club and {{coaches}} coaches viewed your profile this week",
+    "clubsAndCoach": "{{clubs}} clubs and {{coaches}} coach viewed your profile this week",
+    "clubsAndCoaches": "{{clubs}} clubs and {{coaches}} coaches viewed your profile this week",
+    "clubs_one": "{{count}} club viewed your profile this week",
+    "clubs_other": "{{count}} clubs viewed your profile this week",
+    "coaches_one": "{{count}} coach viewed your profile this week",
+    "coaches_other": "{{count}} coaches viewed your profile this week",
+    "subtitle": "Tap to see who they are and what made them stop by.",
+    "dismiss": "Dismiss",
+    "eyebrow": "This week",
+    "cta": "See viewers"
+  },
+  "pulseSection": {
+    "ariaLabel": "Pulse: what changed since your last visit",
+    "title": "Since you last visited",
+    "empty": "You're all caught up."
+  },
+  "celebration": {
+    "reference": {
+      "title": "First reference accepted",
+      "bodyNamed": "{{name}} endorsed your profile. Recruiters can see it now.",
+      "body": "A coach or peer endorsed your profile. Recruiters can see it now."
+    },
+    "highlight": {
+      "title": "Highlight video added",
+      "body": "Your profile now shows recruiters how you actually play."
+    },
+    "career": {
+      "title": "First career entry added",
+      "bodyNamed": "{{club}} is now part of your career history.",
+      "body": "Your career history just got its first entry."
+    },
+    "clubLink": {
+      "title": "Club connection verified",
+      "bodyNamed": "Your profile is now linked to {{club}}.",
+      "body": "Your profile is now linked to a verified club."
+    },
+    "dismiss": "Dismiss",
+    "cta": "View snapshot"
+  },
+  "yourWeek": {
+    "rolesLabel_one": "opportunity for you",
+    "rolesLabel_other": "opportunities for you",
+    "viewsLabel_one": "profile view",
+    "viewsLabel_other": "profile views",
+    "repliesLabel_one": "club reply",
+    "repliesLabel_other": "club replies",
+    "fitLabel": "fit your search",
+    "applicantsLabel_one": "new applicant",
+    "applicantsLabel_other": "new applicants",
+    "ariaLabel": "Your week: open Pulse",
+    "title": "Your week"
+  },
+  "shareSheet": {
+    "shareText": "{{name}} on Hockia",
+    "unnamedAuthor": "A member",
+    "sentToast": "Sent to {{name}}",
+    "sendFailed": "Failed to send post",
+    "shareFailed": "Failed to share post. Please try again.",
+    "linkCopied": "Link copied",
+    "systemShareFailed": "Could not open the share menu",
+    "title": "Share this post",
+    "unnamedMember": "Hockia member",
+    "sendToFriend": "Send to a friend",
+    "sentAria": "Sent to {{name}}",
+    "sendAria": "Send to {{name}}",
+    "copyLink": "Copy link",
+    "more": "More"
+  },
+  "lightbox": {
+    "videoLabel": "Video",
+    "dialogAria": "Media viewer",
+    "close": "Close",
+    "position": "{{current}} of {{total}}",
+    "photoLabel": "Photo",
+    "share": "Share",
+    "mediaAlt": "Post media {{number}}",
+    "mediaAltOfTotal": "Post media {{number}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "unnamedMember": "Hockia member",
+    "viewProfile": "View profile",
+    "unlike": "Unlike",
+    "like": "Like",
+    "comments": "Comments",
+    "pause": "Pause",
+    "play": "Play",
+    "unmute": "Unmute",
+    "mute": "Mute",
+    "fullscreen": "Fullscreen"
+  },
+  "mediaGrid": {
+    "playVideoAria": "Play video · {{title}}",
+    "viewImageAria": "View image · {{title}}",
+    "defaultAlt": "Post",
+    "imageAlt": "{{title}} · image {{number}} of {{total}}"
+  },
+  "composer": {
+    "errors": {
+      "imageUpload": "Failed to upload image",
+      "logoUpload": "Failed to upload club logo",
+      "transferRole": "Transfer mode is only available to players, coaches, and clubs.",
+      "personRequired": "Please select a player or coach",
+      "blockedFallback": "Content violates community guidelines.",
+      "signingFailed": "Failed to create signing post",
+      "clubRequired": "Please select or enter a club name",
+      "transferFailed": "Failed to create transfer post",
+      "empty": "Add text, a photo, or a video to publish.",
+      "tooLong": "Content exceeds {{max}} character limit",
+      "updateFailed": "Failed to update post",
+      "createFailed": "Failed to create post",
+      "saveFailed": "Failed to save post"
+    },
+    "title": {
+      "edit": "Edit post",
+      "signing": "Announce new signing",
+      "transfer": "Announce transfer",
+      "question": "Ask a question",
+      "post": "Create post"
+    },
+    "cancel": "Cancel",
+    "submitAria": {
+      "save": "Save changes",
+      "announce": "Announce",
+      "ask": "Ask",
+      "publish": "Publish post"
+    },
+    "submit": {
+      "save": "Save",
+      "announce": "Announce",
+      "ask": "Ask",
+      "post": "Post"
+    },
+    "audienceLine": "{{identity}} · Everyone on Hockia",
+    "kind": {
+      "groupAria": "Post type",
+      "post": "Post",
+      "question": "Question",
+      "signing": "New signing"
+    },
+    "signing": {
+      "personSearch": "Search for a player or coach...",
+      "personEmpty": "No players or coaches found",
+      "taggedAria": "Tagged {{name}}. Tap to change",
+      "personLabel": "Signing (tag a member)",
+      "roleLabel": "Role",
+      "rolePlaceholder": "Women's 1st team",
+      "seasonLabel": "Season",
+      "preview": "Preview",
+      "clubFallback": "Your club"
+    },
+    "transfer": {
+      "clubSearch": "Search for a club...",
+      "onHockia": "On Hockia",
+      "clubEmpty": "No clubs found",
+      "enterManually": "Club not listed? Enter manually",
+      "removeClub": "Remove selected club",
+      "manualTitle": "Enter club details",
+      "backToSearch": "Back to search",
+      "clubName": "Club name",
+      "logoAlt": "Club logo",
+      "removeLogo": "Remove club logo",
+      "addLogo": "Add club logo (optional)"
+    },
+    "draft": {
+      "restored": "Draft restored from your last session.",
+      "discard": "Discard"
+    },
+    "placeholder": {
+      "signing": "Share something about this signing... (optional)",
+      "transfer": "Share something about your transfer... (optional)",
+      "question": "What do you want to ask?"
+    },
+    "footer": {
+      "announcing": "Announcing...",
+      "posting": "Posting...",
+      "save": "Save changes",
+      "announceSigning": "Announce signing",
+      "announceTransfer": "Announce transfer",
+      "publish": "Publish post"
+    }
+  },
+  "cards": {
+    "brandPost": {
+      "verified": "Verified brand"
+    },
+    "brandProduct": {
+      "verified": "Verified brand",
+      "learnMore": "Learn more"
+    },
+    "clubResponded": {
+      "caption_one": "Reviewed <b>{{count}}</b> application this week",
+      "caption_other": "Reviewed <b>{{count}}</b> applications this week",
+      "viewCoach": "View coach",
+      "viewClub": "View club"
+    },
+    "memberJoined": {
+      "caption": "Joined Hockia",
+      "viewProfile": "View profile"
+    },
+    "milestone": {
+      "firstGalleryImage": "Added their first gallery photos",
+      "firstVideo": "Added their first highlight video",
+      "profileComplete": "Completed their profile",
+      "firstReference": "Received their first reference",
+      "viewPhoto": "View photo",
+      "galleryAlt": "Gallery",
+      "viewProfile": "View profile"
+    },
+    "openToPlay": {
+      "caption": "Open to play",
+      "openToOpportunities": "Open to opportunities",
+      "viewProfile": "View profile"
+    },
+    "opportunity": {
+      "caption": "New opportunity",
+      "openAria": "Open opportunity: {{title}}",
+      "official": "Official"
+    },
+    "reference": {
+      "unknownReferee": "Unknown",
+      "unknownMember": "them",
+      "vouched": "<name>{{referee}}</name><rest> vouched for {{member}}</rest>",
+      "caption": "Received a reference",
+      "viewProfile": "View profile"
+    },
+    "roleFilled": {
+      "caption": "Opportunity filled",
+      "viaHockia": "Filled via Hockia"
+    },
+    "videoAdded": {
+      "fullMatch": "Full match",
+      "highlight": "New highlight"
+    },
+    "mediaAdded": {
+      "caption_one": "Added {{count}} new photo",
+      "caption_other": "Added {{count}} new photos",
+      "viewAllAria": "View all {{total}} photos",
+      "viewPhotoAria": "View photo {{number}} of {{total}}"
+    },
+    "signing": {
+      "deleteConfirm": "Are you sure you want to delete this announcement?",
+      "deletePost": "Delete post",
+      "menuLabel": "Post options",
+      "caption": "New signing",
+      "unknownClub": "Unknown",
+      "altBy": "Signing announcement by {{name}}",
+      "alt": "Signing announcement"
+    },
+    "transfer": {
+      "deleteConfirm": "Are you sure you want to delete this announcement?",
+      "deletePost": "Delete post",
+      "menuLabel": "Post options",
+      "caption": "Transfer announcement",
+      "unknownAuthor": "Unknown",
+      "altBy": "Transfer announcement by {{name}}",
+      "alt": "Transfer announcement"
+    },
+    "post": {
+      "linkCopied": "Link copied to clipboard",
+      "shareFailed": "Could not share this post",
+      "editQuestion": "Edit question",
+      "editPost": "Edit post",
+      "deleteQuestion": "Delete question",
+      "deletePost": "Delete post",
+      "menuLabel": "Post options",
+      "seeMore": "See more",
+      "questionBadge": "Question",
+      "openQuestion": "Open question",
+      "altBy": "Post by {{name}}",
+      "alt": "Post image",
+      "seeAllAnswers": "See all answers",
+      "unnamedMember": "Member",
+      "topAnswerMeta": "· {{identity}} · Top answer",
+      "unknownAuthor": "Unknown",
+      "deleteQuestionTitle": "Delete this question?",
+      "deletePostTitle": "Delete this post?",
+      "deleteQuestionBody": "The question and its answers will be removed permanently. This can't be undone.",
+      "deletePostBody": "The post and its comments and likes will be removed permanently. This can't be undone.",
+      "deleteQuestionConfirm": "Delete question",
+      "deletePostConfirm": "Delete post"
+    }
+  },
+  "goal": {
+    "set": {
+      "ariaLabel": "Your goal",
+      "eyebrow": "Your goal",
+      "change": "Change"
+    },
+    "ask": {
+      "saveFailed": "Could not save your goal. Please try again.",
+      "ariaLabel": "What's your goal?",
+      "eyebrow": "Your goal",
+      "title": "What’s your goal?",
+      "body": "Pick up to three, or say it in your words. We use it to show you what helps. Only you see it.",
+      "other": "Other…",
+      "save": "That’s my goal · {{picked}} of {{max}}",
+      "cancel": "Cancel",
+      "later": "Later"
+    },
+    "other": {
+      "title": "Your goal, in your words",
+      "placeholder": "Play in Germany next season while I finish my degree",
+      "privacy": "Only you see this.",
+      "add": "Add to my goal",
+      "remove": "Remove from my goal"
+    }
+  },
+  "aiScout": {
+    "placeholder": "Ask the AI scout: \"available defenders with EU passport\"",
+    "inputAria": "Ask the AI scout",
+    "submitAria": "Search with AI scout"
+  },
+  "applicantsReview": {
+    "title_one": "{{count}} applicant waiting for a reply",
+    "title_other": "{{count}} applicants waiting for a reply",
+    "newBadge_one": "{{count}} new",
+    "newBadge_other": "{{count}} new",
+    "hint": "Answer every applicant."
+  },
+  "yourApplications": {
+    "title": "Your applications",
+    "activeChip_one": "{{count}} active",
+    "activeChip_other": "{{count}} active"
+  },
+  "playerHero": {
+    "player": {
+      "emptyHeadline": "Let clubs find you this week.",
+      "emptySub": "Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp. Active players get seen far more.",
+      "emptySubWhenOpen": "Clubs are most active on Mondays. Keep your profile sharp. Active players get seen far more."
+    },
+    "coach": {
+      "emptyHeadline": "Let clubs find you this week.",
+      "emptySub": "Clubs are most active on Mondays. Keep your coaching profile sharp and your availability current.",
+      "emptySubWhenOpen": "Clubs are most active on Mondays. Keep your coaching profile sharp and your availability current."
+    },
+    "label": "Your week on Hockia",
+    "streak": "{{days}}-day streak",
+    "recruiters_one": "{{count}} recruiter viewed your profile this week.",
+    "recruiters_other": "{{count}} recruiters viewed your profile this week.",
+    "views_one": "{{count}} profile view this week.",
+    "views_other": "{{count}} profile views this week.",
+    "delta": "▲ {{delta}} more than last week",
+    "tiles": {
+      "views": "Profile views",
+      "uniqueViewers": "Unique viewers",
+      "previews": "Previews"
+    },
+    "ctaViewers": "See who viewed you",
+    "ctaBoost": "Boost your visibility"
+  },
+  "opportunitiesForYou": {
+    "title": "Opportunities for you",
+    "seeAll": "See all"
+  },
+  "endOfFeed": {
+    "title": "You’re all caught up",
+    "body": "New signings and highlights will show up here."
+  },
+  "cardMenu": {
+    "fallbackName": "this member",
+    "linkCopied": "Link copied",
+    "copyFailed": "Could not copy the link",
+    "blockedToast": "{{name}} has been blocked",
+    "blockFailed": "Failed to block. Please try again.",
+    "share": "Share post",
+    "copyLink": "Copy link",
+    "removeTag": "Remove my tag",
+    "removeTagHint": "The post stays up without your name and photo.",
+    "report": "Report post",
+    "block": "Block {{name}}",
+    "menuLabel": "Post options",
+    "blockTitle": "Block {{name}}?",
+    "blockBody": "You won't see each other's posts, comments or profile, and they can't message you. They aren't told.",
+    "blockConfirm": "Block"
+  },
+  "signingArt": {
+    "headline": "NEW SIGNING",
+    "ariaLabel": "{{person}} and {{club}}"
+  },
+  "people": {
+    "new": {
+      "title": "New in the community",
+      "deckTitle": "New in the community",
+      "faceAria": "{{name}}, new member"
+    },
+    "available": {
+      "title": "Available now",
+      "deckTitle": "Available now",
+      "faceAria": "{{name}}, available now"
+    },
+    "pymk": {
+      "title": "People you may know",
+      "deckTitle": "People you may know",
+      "faceAria": "{{name}}, you may know"
+    },
+    "seeAll": "See all",
+    "unnamedMember": "Member"
+  },
+  "rolesRail": {
+    "title": "Opportunities for you",
+    "seeAll": "See all",
+    "clubFallback": "Club"
+  },
+  "nextStep": {
+    "ariaLabel": "Next step",
+    "stepAria": "{{title}}. {{cta}}",
+    "stepAriaWithSubtitle": "{{title}}, {{subtitle}}. {{cta}}",
+    "position": "{{current}} of {{total}}",
+    "photo": {
+      "title": "Add a photo",
+      "subtitle": "So clubs and players know it’s you.",
+      "cta": "Add"
+    },
+    "checkIn": {
+      "titleCoach": "Still open to coaching?",
+      "titlePlayer": "Still open to play?",
+      "subtitle": "Clubs see this on your profile",
+      "cta": "Yes"
+    },
+    "replied": {
+      "titleOne": "{{club}} replied",
+      "titleMany": "{{total}} clubs replied",
+      "clubFallback": "A club",
+      "cta": "Open"
+    },
+    "roles": {
+      "title_one": "{{count}} opportunity matches you",
+      "title_other": "{{count}} opportunities match you",
+      "cta": "See"
+    },
+    "views": {
+      "title_one": "{{count}} profile view",
+      "title_other": "{{count}} profile views",
+      "subtitle": "This week",
+      "cta": "View"
+    },
+    "career": {
+      "title": "Add your clubs",
+      "subtitle": "From your CV or a few lines",
+      "cta": "Start"
+    },
+    "complete": {
+      "title": "Complete your profile",
+      "subtitle": "{{percent}}% done · clubs filter on it",
+      "cta": "Edit"
+    },
+    "applicants": {
+      "title_one": "{{count}} applicant",
+      "title_other": "{{count}} applicants",
+      "cta": "Review"
+    },
+    "quiet": {
+      "title": "{{title}} has no applicants yet",
+      "subtitle": "Share it with your network",
+      "cta": "Open"
+    },
+    "available": {
+      "title_one": "{{count}} player available",
+      "title_other": "{{count}} players available",
+      "subtitle": "Open to play · fit your team",
+      "cta": "See"
+    },
+    "crest": {
+      "title": "Add your club crest",
+      "subtitle": "Players look for it first",
+      "cta": "Add"
+    },
+    "logo": {
+      "title": "Add your logo",
+      "subtitle": "Athletes recognise brands by it",
+      "cta": "Add"
+    },
+    "brand": {
+      "subtitleSearches_one": "This week · in {{count}} search",
+      "subtitleSearches_other": "This week · in {{count}} searches"
+    },
+    "umpire": {
+      "title": "Add your umpiring level",
+      "subtitle": "Clubs and leagues look for it",
+      "cta": "Add"
+    },
+    "week": {
+      "title": "Your week",
+      "subtitle": "See your activity",
+      "cta": "Activity"
+    }
+  },
+  "signingPrompt": {
+    "postFailed": "Could not post the signing",
+    "postedToast": "Signing posted",
+    "title": "Signing confirmed",
+    "body": "Share it with the community? {{name}} is tagged and gets notified.",
+    "clubFallback": "Your club",
+    "post": "Post new signing",
+    "notNow": "Not now"
+  },
+  "commentsSheet": {
+    "postFailed": "Could not post your comment",
+    "deleteFailed": "Could not delete the comment",
+    "toggleFailed": "Could not change comments",
+    "turnedOn": "Comments turned on",
+    "turnedOff": "Comments turned off",
+    "ariaLabel": "Comments",
+    "count_one": "{{count}} comment",
+    "count_other": "{{count}} comments",
+    "loading": "Loading comments",
+    "loadFailed": "Couldn’t load comments.",
+    "empty": "No comments yet. Say something nice.",
+    "emptyDisabled": "No comments.",
+    "viewProfileAria": "{{name}} — view profile",
+    "unnamedAuthor": "Member",
+    "reply": "Reply",
+    "more": "More",
+    "placeholder": "Add a comment…",
+    "inputAria": "Add a comment",
+    "send": "Post comment",
+    "disabledNote": "Comments are turned off for this post.",
+    "turnOn": "Turn on",
+    "actions": {
+      "ariaLabel": "Comment actions",
+      "reply": "Reply",
+      "report": "Report comment",
+      "delete": "Delete comment",
+      "turnOff": "Turn off comments for this post",
+      "turnOn": "Turn on comments for this post",
+      "cancel": "Cancel"
+    }
+  },
+  "postParts": {
+    "unnamedClub": "A club",
+    "unnamedMember": "A member",
+    "viewProfileAria": "{{name}} · view profile",
+    "like": "Like",
+    "unlike": "Unlike",
+    "likeWithTotal": "Like, {{total}}",
+    "unlikeWithTotal": "Unlike, {{total}}",
+    "comments": "Comments",
+    "commentsWithTotal": "Comments, {{total}}",
+    "share": "Share",
+    "congrats": {
+      "label": "Congrats",
+      "failed": "Could not send congrats",
+      "you": "You",
+      "youAndOthers": "You + {{others}}",
+      "sentAria": "Congrats sent. Tap to undo.",
+      "sentAriaWithOthers_one": "Congrats sent, with {{count}} others. Tap to undo.",
+      "sentAriaWithOthers_other": "Congrats sent, with {{count}} others. Tap to undo.",
+      "labelAriaWithCount_one": "{{label}}, {{count}} congrats",
+      "labelAriaWithCount_other": "{{label}}, {{count}} congrats"
+    }
+  },
+  "feedV1": {
+    "deckFailed": "Could not open these profiles",
+    "errorTitle": "Couldn’t load the feed",
+    "errorBody": "Pull down or try again.",
+    "retry": "Try again",
+    "loadingMore": "Loading more",
+    "opportunity": {
+      "clubFallback": "Club",
+      "chip": "OPEN ROLE"
+    },
+    "photos": {
+      "subtitle_one": "Added {{count}} photo · {{age}}",
+      "subtitle_other": "Added {{count}} photos · {{age}}",
+      "photoAria": "Photo {{number}} of {{total}}"
+    },
+    "reference": {
+      "viewProfileAria": "{{name}} — view profile",
+      "unnamedMember": "Member",
+      "nameFallback": "them",
+      "label": "Reference",
+      "congratsLabel": "Congrats {{name}}",
+      "congratsCount_one": "{{total}} congrats",
+      "congratsCount_other": "{{total}} congrats"
+    },
+    "signing": {
+      "clubFallback": "Club",
+      "untagFailed": "Could not remove your tag",
+      "untagged": "Your tag was removed",
+      "deleteFailed": "Could not delete the post",
+      "deletePost": "Delete post",
+      "deleteTitle": "Delete this post?",
+      "deleteBody": "It will be removed from Home and your profile.",
+      "deleteConfirm": "Delete"
+    },
+    "video": {
+      "subtitleFullMatch": "Full match · public · {{age}}",
+      "subtitleHighlight": "Highlight · {{age}}",
+      "badgeFullMatch": "FULL MATCH",
+      "badgeHighlight": "HIGHLIGHT",
+      "fullMatchTitle": "Full match",
+      "publicMatch": "Public match"
+    },
+    "newPosts_one": "{{count}} new post",
+    "newPosts_other": "{{count}} new posts",
+    "newPostsOverflow": "99+ new posts"
+  },
+  "digest": {
+    "swipeThrough": "Swipe through",
+    "unnamedMember": "Member",
+    "joined": {
+      "title_one": "{{count}} joined this week",
+      "title_other": "{{count}} joined this week",
+      "faceAria": "{{name}}, new member",
+      "moreAria_one": "{{count}} more new members",
+      "moreAria_other": "{{count}} more new members"
+    },
+    "openToPlay": {
+      "title_one": "{{count}} players are open to play",
+      "title_other": "{{count}} players are open to play",
+      "faceAria": "{{name}}, open to play",
+      "moreAria_one": "{{count}} more players open to play",
+      "moreAria_other": "{{count}} more players open to play"
+    }
+  }
+}

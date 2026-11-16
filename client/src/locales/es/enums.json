@@ -1,0 +1,66 @@
+{
+  "role": {
+    "player": "Jugador/a",
+    "coach": "Entrenador/a",
+    "club": "Club",
+    "umpire": "Árbitro/a",
+    "brand": "Marca",
+    "member": "Integrante"
+  },
+  "position": {
+    "goalkeeper": "Arquero/a",
+    "defender": "Defensor/a",
+    "midfielder": "Volante",
+    "forward": "Delantero/a"
+  },
+  "coachSpecialization": {
+    "head_coach": "Entrenador/a principal",
+    "assistant_coach": "Entrenador/a asistente",
+    "youth_coach": "Entrenador/a de juveniles",
+    "goalkeeper_coach": "Entrenador/a de arqueros/as",
+    "strength_conditioning": "Preparación física",
+    "performance_analyst": "Analista de rendimiento",
+    "sports_scientist": "Especialista en ciencias del deporte",
+    "other_coach": "Entrenador/a"
+  },
+  "category": {
+    "adult_women": "Damas",
+    "adult_men": "Caballeros",
+    "girls": "Juveniles damas",
+    "boys": "Juveniles caballeros",
+    "mixed": "Mixto",
+    "any": "Cualquier categoría"
+  },
+  "teamCategory": {
+    "adult_women": "Equipo de damas",
+    "adult_men": "Equipo de caballeros",
+    "girls": "Equipo juvenil de damas",
+    "boys": "Equipo juvenil de caballeros",
+    "mixed": "Equipo mixto"
+  },
+  "brandCategory": {
+    "equipment": "Equipamiento",
+    "apparel": "Indumentaria",
+    "accessories": "Accesorios",
+    "nutrition": "Nutrición",
+    "technology": "Tecnología",
+    "coaching": "Entrenamiento y formación",
+    "recruiting": "Reclutamiento",
+    "media": "Medios",
+    "services": "Servicios",
+    "other": "Otros"
+  },
+  "coachRoles": {
+    "openLine_one": "Oportunidades para entrenar · {{count}} abierta",
+    "openLine_many": "Oportunidades para entrenar · {{count}} abiertas",
+    "openLine_other": "Oportunidades para entrenar · {{count}} abiertas",
+    "postedLine_one": "Este año se publicó {{count}} oportunidad para entrenar en Hockia",
+    "postedLine_many": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",
+    "postedLine_other": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",
+    "closedOn": "Cerrada el {{date}}",
+    "recruitingFor": "Búsqueda para {{clubName}}",
+    "homeMine": "Mis oportunidades",
+    "homeAll": "Oportunidades",
+    "signingNeedsClub": "Para marcar una incorporación hace falta agregar el club al perfil."
+  }
+}

@@ -267,7 +267,10 @@ describe('12 · "You’re being considered for <role title>"', () => {
 // ── 13 · sentence case ──────────────────────────────────────────────────────
 describe('13 · "Starts immediately" on the desktop role page', () => {
   it('no title-case variant remains', () => {
-    expect(src('components/OpportunityDetailView.tsx')).toContain("'Starts immediately'")
+    // The words live in the opportunities catalog since the Spanish localization.
+    expect(src('components/OpportunityDetailView.tsx')).toContain("t('overlay.startsImmediately')")
+    expect(src('locales/en/opportunities.json')).toContain('"startsImmediately": "Starts immediately"')
+    expect(src('locales/en/opportunities.json')).not.toContain('Starts Immediately')
     expect(src('components/OpportunityDetailView.tsx')).not.toContain('Starts Immediately')
   })
 })

@@ -3,6 +3,7 @@ import { CountryDisplay } from '@/components'
 import DashboardCard from './DashboardCard'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { Profile } from '@/lib/supabase'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * ClubBasicInfoCard — Club-only Bento card. Mirrors the player/coach
@@ -53,6 +54,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 const Empty = () => <span className="text-gray-400 italic text-xs">—</span>
 
 export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBasicInfoCardProps) {
+  const t = useHomeT()
   const bio = profile.club_bio?.trim()
   const history = profile.club_history?.trim()
   const hasBio = Boolean(bio)
@@ -60,20 +62,20 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
   const publicContact = derivePublicContactEmail(profile)
 
   const leagues: string[] = []
-  if (profile.womens_league_division) leagues.push(`Women: ${profile.womens_league_division}`)
-  if (profile.mens_league_division) leagues.push(`Men: ${profile.mens_league_division}`)
+  if (profile.womens_league_division) leagues.push(t('clubInfo.leagueWomen', { division: profile.womens_league_division }))
+  if (profile.mens_league_division) leagues.push(t('clubInfo.leagueMen', { division: profile.mens_league_division }))
 
   return (
     <DashboardCard
       icon={IdCard}
-      title="Club information"
-      subtitle="The facts players and coaches filter by"
-      ctaLabel={!readOnly ? 'Edit' : undefined}
+      title={t('clubInfo.title')}
+      subtitle={t('clubInfo.subtitle')}
+      ctaLabel={!readOnly ? t('clubInfo.edit') : undefined}
       onCtaClick={!readOnly ? onEdit : undefined}
       testId="club-basic-info-card"
     >
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-        <Row label="Country">
+        <Row label={t('clubInfo.country')}>
           {profile.nationality_country_id || profile.nationality ? (
             <CountryDisplay
               countryId={profile.nationality_country_id}
@@ -85,15 +87,15 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
           )}
         </Row>
 
-        <Row label="Base location">
+        <Row label={t('clubInfo.baseLocation')}>
           {profile.base_location ? <span>{profile.base_location}</span> : <Empty />}
         </Row>
 
-        <Row label="Year founded">
+        <Row label={t('clubInfo.yearFounded')}>
           {profile.year_founded ? <span>{profile.year_founded}</span> : <Empty />}
         </Row>
 
-        <Row label="Website">
+        <Row label={t('clubInfo.website')}>
           {profile.website ? (
             <a
               href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
@@ -109,7 +111,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
           )}
         </Row>
 
-        <Row label="Leagues">
+        <Row label={t('clubInfo.leagues')}>
           {leagues.length > 0 ? (
             <div className="space-y-0.5">
               {leagues.map((l) => (
@@ -121,7 +123,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
           )}
         </Row>
 
-        <Row label="Contact email">
+        <Row label={t('clubInfo.contactEmail')}>
           {publicContact.shouldShow && publicContact.displayEmail ? (
             <a
               href={`mailto:${publicContact.displayEmail}`}
@@ -142,7 +144,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
       {(hasBio || !readOnly) && (
         <div className="mt-5 pt-5 border-t border-gray-100">
           <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
-            About the club
+            {t('clubInfo.aboutHeading')}
           </p>
           {hasBio ? (
             <p className="text-sm text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-line">
@@ -150,7 +152,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
             </p>
           ) : (
             <p className="text-sm text-gray-400 italic">
-              Describe your club — its identity, ambitions, and what playing here is like.
+              {t('clubInfo.aboutEmpty')}
             </p>
           )}
         </div>
@@ -159,7 +161,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
       {hasHistory && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
-            Club history
+            {t('clubInfo.historyHeading')}
           </p>
           <p className="text-sm text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-line">
             {history}

@@ -13,6 +13,7 @@ import { initialsOf } from '@/lib/communityCard'
 import { createComment, deleteComment, fetchComments, setCommentsEnabled, type FeedComment } from '@/lib/homeEngagement'
 import { cn } from '@/lib/utils'
 import type { CommentsRequest } from './homeV1Context'
+import { useHomeT } from '@/i18n/ns/home'
 
 const MAX = 500
 const LONG_PRESS_MS = 450
@@ -31,6 +32,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
   onCount: (count: number) => void
   onEnabled: (enabled: boolean) => void
 }) {
+  const t = useHomeT()
   const viewer = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const { blockedIds } = useBlockedUsers()
@@ -71,7 +73,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
     setSending(true)
     const res = await createComment(request.target, body)
     setSending(false)
-    if (!res.success) { addToast(res.error ?? 'Could not post your comment', 'error'); return }
+    if (!res.success) { addToast(res.error ?? t('commentsSheet.postFailed'), 'error'); return }
     const mine: FeedComment = {
       id: res.comment_id ?? `local-${Date.now()}`,
       post_id: request.target.id,
@@ -91,7 +93,7 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
   const remove = async (c: FeedComment) => {
     setActionsFor(null)
     const res = await deleteComment(request.target, c.id)
-    if (!res.success) { addToast(res.error ?? 'Could not delete the comment', 'error'); return }
+    if (!res.success) { addToast(res.error ?? t('commentsSheet.deleteFailed'), 'error'); return }
     setComments((prev) => (prev ?? []).filter((x) => x.id !== c.id))
     onCount(Math.max(0, (comments?.length ?? 1) - 1))
   }
@@ -100,16 +102,16 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
     setActionsFor(null)
     const next = !enabled
     const res = await setCommentsEnabled(request.target, next)
-    if (!res.success) { addToast(res.error ?? 'Could not change comments', 'error'); return }
+    if (!res.success) { addToast(res.error ?? t('commentsSheet.toggleFailed'), 'error'); return }
     setEnabled(next)
     onEnabled(next)
-    addToast(next ? 'Comments turned on' : 'Comments turned off', 'success')
+    addToast(next ? t('commentsSheet.turnedOn') : t('commentsSheet.turnedOff'), 'success')
   }
 
   const reply = (c: FeedComment) => {
     setActionsFor(null)
     const first = (c.author_name ?? '').trim().split(/\s+/)[0]
-    setText((t) => (first ? `@${first} ${t}` : t))
+    setText((prev) => (first ? `@${first} ${prev}` : prev))
     inputRef.current?.focus()
   }
 
@@ -125,19 +127,19 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
 
   return (
     <>
-      <BottomSheet open onClose={onClose} ariaLabel="Comments" className="min-h-[55dvh]">
+      <BottomSheet open onClose={onClose} ariaLabel={t('commentsSheet.ariaLabel')} className="min-h-[55dvh]">
         {/* Fills the sheet (≥ 55 % on open, grows with the thread) so the composer sits at the bottom. */}
         <div className="flex h-full min-h-[calc(55dvh-24px)] flex-col">
           <h2 className="px-4 pb-2 pt-1 text-body font-semibold tabular-nums text-ink-1">
-            {total === 1 ? '1 comment' : `${total} comments`}
+            {t('commentsSheet.count', { count: total })}
           </h2>
           <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3">
             {comments === null && !failed && (
-              <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-ink-4" aria-label="Loading comments" /></div>
+              <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-ink-4" aria-label={t('commentsSheet.loading')} /></div>
             )}
-            {failed && <p className="py-10 text-center text-secondary text-ink-2">Couldn’t load comments.</p>}
+            {failed && <p className="py-10 text-center text-secondary text-ink-2">{t('commentsSheet.loadFailed')}</p>}
             {comments !== null && visible.length === 0 && (
-              <p className="py-10 text-center text-secondary text-ink-2">{enabled ? 'No comments yet. Say something nice.' : 'No comments.'}</p>
+              <p className="py-10 text-center text-secondary text-ink-2">{enabled ? t('commentsSheet.empty') : t('commentsSheet.emptyDisabled')}</p>
             )}
             <ul className="flex flex-col gap-5">
               {visible.map((c) => {
@@ -151,17 +153,17 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
                     onTouchMove={endPress}
                     onContextMenu={(e) => { e.preventDefault(); setActionsFor(c) }}
                   >
-                    <Link to={path ?? '#'} className="shrink-0" aria-label={`${c.author_name ?? 'Member'} — view profile`}>
+                    <Link to={path ?? '#'} className="shrink-0" aria-label={t('commentsSheet.viewProfileAria', { name: c.author_name ?? t('commentsSheet.unnamedAuthor') })}>
                       <Avatar src={c.author_avatar} initials={initialsOf(c.author_name)} role={c.author_role ?? undefined} size="sm" />
                     </Link>
                     <div className="min-w-0 flex-1 select-none">
                       <p className="text-secondary text-ink-1">
-                        <span className="font-semibold">{c.author_name ?? 'Member'}</span>
+                        <span className="font-semibold">{c.author_name ?? t('commentsSheet.unnamedAuthor')}</span>
                         <span className="ml-1.5 text-ink-3">{formatActivityAge(c.created_at)}</span>
                       </p>
                       <p className="whitespace-pre-wrap break-words text-[15px] leading-5 text-ink-1">{c.content}</p>
                       <button type="button" onClick={() => (enabled ? reply(c) : setActionsFor(c))} className="-ml-1 min-h-[32px] px-1 text-caption font-semibold text-ink-3">
-                        {enabled ? 'Reply' : 'More'}
+                        {enabled ? t('commentsSheet.reply') : t('commentsSheet.more')}
                       </button>
                     </div>
                   </li>
@@ -179,12 +181,12 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, MAX))}
                   rows={1}
-                  placeholder="Add a comment…"
-                  aria-label="Add a comment"
+                  placeholder={t('commentsSheet.placeholder')}
+                  aria-label={t('commentsSheet.inputAria')}
                   className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent py-3 text-[15px] leading-5 text-ink-1 placeholder:text-ink-4 focus:outline-none"
                 />
                 {text.trim() && (
-                  <button type="button" onClick={() => void send()} disabled={sending} aria-label="Post comment" className="mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-hockia-primary text-white disabled:opacity-50">
+                  <button type="button" onClick={() => void send()} disabled={sending} aria-label={t('commentsSheet.send')} className="mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-hockia-primary text-white disabled:opacity-50">
                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" strokeWidth={2.5} />}
                   </button>
                 )}
@@ -192,27 +194,27 @@ export function CommentsSheet({ request, onClose, onCount, onEnabled }: {
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-              <p className="text-secondary text-ink-2">Comments are turned off for this post.</p>
-              {isOwner && <button type="button" onClick={() => void toggleEnabled()} className="min-h-[44px] text-secondary font-semibold text-hockia-primary">Turn on</button>}
+              <p className="text-secondary text-ink-2">{t('commentsSheet.disabledNote')}</p>
+              {isOwner && <button type="button" onClick={() => void toggleEnabled()} className="min-h-[44px] text-secondary font-semibold text-hockia-primary">{t('commentsSheet.turnOn')}</button>}
             </div>
           )}
         </div>
       </BottomSheet>
 
-      <BottomSheet open={Boolean(actionsFor)} onClose={() => setActionsFor(null)} ariaLabel="Comment actions">
+      <BottomSheet open={Boolean(actionsFor)} onClose={() => setActionsFor(null)} ariaLabel={t('commentsSheet.actions.ariaLabel')}>
         {actionsFor && (
           <div className="px-5 pb-4 pt-1">
             <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
-              {enabled && <ActionRow label="Reply" onClick={() => reply(actionsFor)} />}
+              {enabled && <ActionRow label={t('commentsSheet.actions.reply')} onClick={() => reply(actionsFor)} />}
               {viewer && actionsFor.author_id !== viewer.id && (
-                <ActionRow label="Report comment" destructive onClick={() => { setReporting(actionsFor); setActionsFor(null) }} />
+                <ActionRow label={t('commentsSheet.actions.report')} destructive onClick={() => { setReporting(actionsFor); setActionsFor(null) }} />
               )}
               {viewer && (actionsFor.author_id === viewer.id || isOwner) && (
-                <ActionRow label="Delete comment" destructive onClick={() => void remove(actionsFor)} />
+                <ActionRow label={t('commentsSheet.actions.delete')} destructive onClick={() => void remove(actionsFor)} />
               )}
-              {isOwner && <ActionRow label={enabled ? 'Turn off comments for this post' : 'Turn on comments for this post'} onClick={() => void toggleEnabled()} />}
+              {isOwner && <ActionRow label={enabled ? t('commentsSheet.actions.turnOff') : t('commentsSheet.actions.turnOn')} onClick={() => void toggleEnabled()} />}
             </div>
-            <button type="button" onClick={() => setActionsFor(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">Cancel</button>
+            <button type="button" onClick={() => setActionsFor(null)} className="mt-2.5 flex h-11 w-full items-center justify-center text-body font-semibold text-ink-1">{t('commentsSheet.actions.cancel')}</button>
           </div>
         )}
       </BottomSheet>

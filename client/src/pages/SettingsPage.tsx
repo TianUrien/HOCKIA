@@ -14,7 +14,8 @@ import {
   Code,
   LogOut,
   ExternalLink,
-  EyeOff
+  EyeOff,
+  Languages
 } from 'lucide-react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import Footer from '@/components/Footer'
@@ -35,18 +36,25 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage } from '@/lib/captcha'
 import { switchTrackClass } from '@/components/ui/switchClasses'
+import { LanguageSwitch } from '@/components/LanguageSwitch'
+import { useCommonT } from '@/i18n/ns/common'
+import { useSettingsT } from '@/i18n/ns/settings'
 
-const SETTINGS_NAV: { id: string; label: string }[] = [
-  { id: 'account', label: 'Account' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'privacy', label: 'Privacy' },
-  { id: 'support', label: 'Help and feedback' },
-  { id: 'legal', label: 'Legal' },
-  { id: 'about', label: 'About' },
-]
+/** `label` is a key in the settings catalog; the language entry uses the shared `language.label`. */
+const SETTINGS_NAV = [
+  { id: 'account', label: 'page.navAccount' },
+  { id: 'notifications', label: 'page.navNotifications' },
+  { id: 'privacy', label: 'page.navPrivacy' },
+  { id: 'language', label: null },
+  { id: 'support', label: 'page.navSupport' },
+  { id: 'legal', label: 'page.navLegal' },
+  { id: 'about', label: 'page.navAbout' },
+] as const
 
 export default function SettingsPage() {
-  useDocumentTitle('Settings')
+  const t = useSettingsT()
+  const languageLabel = useCommonT()('language.label')
+  useDocumentTitle(t('page.documentTitle'))
   const navigate = useNavigate()
   const { user, profile, refreshProfile, signOut } = useAuthStore()
   const isPhone = useMediaQuery('(max-width: 1023px)')
@@ -274,10 +282,7 @@ export default function SettingsPage() {
       // the toggle's own `loading` always resets (finally in subscribe/unsubscribe),
       // so it never stays stuck, but the user still deserves to know it failed.
       logger.error('Failed to toggle push notifications:', error)
-      addToast(
-        "Couldn't update push notifications. Please try again. If it keeps failing, check Notifications for Hockia in your iOS Settings.",
-        'error',
-      )
+      addToast(t('errors.pushFailedDesktop'), 'error')
     }
   }
 
@@ -363,21 +368,21 @@ export default function SettingsPage() {
     setPasswordSuccess(false)
 
     if (passwordForm.newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters')
+      setPasswordError(t('errors.passwordTooShort'))
       return
     }
     if (!/[a-z]/.test(passwordForm.newPassword) || !/[A-Z]/.test(passwordForm.newPassword) || !/\d/.test(passwordForm.newPassword)) {
-      setPasswordError('Password must include uppercase, lowercase, and a number')
+      setPasswordError(t('errors.passwordWeak'))
       return
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('Passwords do not match')
+      setPasswordError(t('errors.passwordMismatch'))
       return
     }
 
     if (!passwordForm.currentPassword) {
-      setPasswordError('Please enter your current password')
+      setPasswordError(t('errors.currentPasswordMissing'))
       return
     }
 
@@ -392,7 +397,7 @@ export default function SettingsPage() {
       })
 
       if (verifyError) {
-        throw new Error(captchaErrorMessage(verifyError.message) ?? 'Current password is incorrect')
+        throw new Error(captchaErrorMessage(verifyError.message) ?? t('errors.currentPasswordWrong'))
       }
       reportCaptchaCoverage('reverify')
 
@@ -415,7 +420,7 @@ export default function SettingsPage() {
 
       setTimeout(() => setPasswordSuccess(false), 3000)
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update password'
+      const errorMessage = error instanceof Error ? error.message : t('errors.passwordFailed')
       setPasswordError(errorMessage)
     } finally {
       setPasswordLoading(false)
@@ -429,7 +434,7 @@ export default function SettingsPage() {
 
     const trimmed = newEmail.trim().toLowerCase()
     if (!trimmed || trimmed === user?.email) {
-      setEmailError('Please enter a different email address')
+      setEmailError(t('errors.emailSame'))
       return
     }
 
@@ -442,7 +447,7 @@ export default function SettingsPage() {
       setEmailSuccess(true)
       setNewEmail('')
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update email'
+      const errorMessage = error instanceof Error ? error.message : t('errors.emailFailed')
       setEmailError(errorMessage)
     } finally {
       setEmailLoading(false)
@@ -551,11 +556,11 @@ export default function SettingsPage() {
 
       <main className="mx-auto max-w-[1100px] px-4 pb-32 pt-under-header-lg md:px-6">
         <div className="mb-6">
-          <h1 className="text-title text-ink-1">Settings</h1>
+          <h1 className="text-title text-ink-1">{t('page.title')}</h1>
         </div>
 
         <div className="grid grid-cols-[220px_minmax(0,1fr)] items-start gap-8">
-          <nav aria-label="Settings sections" className="sticky top-24 flex flex-col gap-1">
+          <nav aria-label={t('page.sectionsLabel')} className="sticky top-24 flex flex-col gap-1">
             {SETTINGS_NAV.map((item) => (
               <button
                 key={item.id}
@@ -564,7 +569,7 @@ export default function SettingsPage() {
                 aria-current={expandedSection === item.id ? 'page' : undefined}
                 className={`flex h-11 items-center rounded-full px-4 text-left text-[15px] font-medium transition-colors ${expandedSection === item.id ? 'bg-hockia-soft text-ink-1' : 'text-ink-2 hover:bg-surface-muted hover:text-ink-1'}`}
               >
-                {item.label}
+                {item.label ? t(item.label) : languageLabel}
               </button>
             ))}
             <button
@@ -574,7 +579,7 @@ export default function SettingsPage() {
               className="mt-2 flex h-11 items-center gap-2 rounded-full px-4 text-left text-[15px] font-medium text-status-danger transition-colors hover:bg-status-danger-soft disabled:opacity-50"
             >
               {signOutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-              {signOutLoading ? 'Signing out…' : 'Log out'}
+              {signOutLoading ? t('page.signingOut') : t('page.logOut')}
             </button>
           </nav>
 
@@ -587,7 +592,7 @@ export default function SettingsPage() {
             <SectionHeader 
               id="account" 
               icon={Mail} 
-              title="Account" 
+              title={t('page.account')} 
               iconBg="bg-surface-muted text-ink-2" 
             />
             
@@ -596,10 +601,10 @@ export default function SettingsPage() {
                 {/* Login Email */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600">Login email</span>
+                    <span className="text-sm font-medium text-gray-600">{t('account.loginEmail')}</span>
                     <span className="flex items-center gap-1 text-xs text-positive">
                       <CheckCircle className="w-3 h-3" />
-                      Verified
+                      {t('account.verified')}
                     </span>
                   </div>
                   <p className="text-gray-900 font-medium">{user.email}</p>
@@ -607,7 +612,7 @@ export default function SettingsPage() {
                   {emailSuccess ? (
                     <p className="text-xs text-positive mt-2 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
-                      Confirmation sent to your new email. Check both inboxes to confirm the change.
+                      {t('account.emailSent')}
                     </p>
                   ) : (
                     <form onSubmit={handleEmailChange} className="mt-3 flex gap-2">
@@ -615,7 +620,7 @@ export default function SettingsPage() {
                         type="email"
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
-                        placeholder="New email address"
+                        placeholder={t('account.newEmailPlaceholder')}
                         className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                         required
                       />
@@ -624,7 +629,7 @@ export default function SettingsPage() {
                         disabled={emailLoading}
                         className="px-4 py-2 text-sm font-medium text-white bg-hockia-primary rounded-lg hover:bg-[#6b1ed4] transition-colors disabled:opacity-50"
                       >
-                        {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change'}
+                        {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('account.changeEmail')}
                       </button>
                     </form>
                   )}
@@ -637,7 +642,7 @@ export default function SettingsPage() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-3">
                     <Lock className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-600">Change password</span>
+                    <span className="text-sm font-medium text-gray-600">{t('account.changePassword')}</span>
                   </div>
                   
                   <form onSubmit={handlePasswordChange} className="space-y-3">
@@ -647,7 +652,7 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
                       }
-                      placeholder="Current password"
+                      placeholder={t('account.currentPassword')}
                       className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                     />
                     <div className="grid grid-cols-2 gap-3">
@@ -657,7 +662,7 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setPasswordForm({ ...passwordForm, newPassword: e.target.value })
                         }
-                        placeholder="New password"
+                        placeholder={t('account.newPassword')}
                         className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       />
                       <input
@@ -666,7 +671,7 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
                         }
-                        placeholder="Confirm"
+                        placeholder={t('account.confirmPassword')}
                         className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus:border-transparent"
                       />
                     </div>
@@ -677,7 +682,7 @@ export default function SettingsPage() {
                     {passwordSuccess && (
                       <p className="text-xs text-positive flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Password updated. All other sessions have been signed out.
+                        {t('account.passwordUpdated')}
                       </p>
                     )}
 
@@ -686,7 +691,7 @@ export default function SettingsPage() {
                       disabled={passwordLoading}
                       className="w-full px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                     >
-                      {passwordLoading ? 'Updating...' : 'Update password'}
+                      {passwordLoading ? t('account.updating') : t('account.updatePassword')}
                     </button>
                   </form>
                 </div>
@@ -698,7 +703,7 @@ export default function SettingsPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Trash2 className="w-5 h-5 text-red-600" />
-                    <span className="text-red-700 font-medium">Delete account</span>
+                    <span className="text-red-700 font-medium">{t('account.deleteAccount')}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600" />
                 </button>
@@ -711,7 +716,7 @@ export default function SettingsPage() {
             <SectionHeader 
               id="notifications" 
               icon={Bell} 
-              title="Notifications" 
+              title={t('page.notifications')} 
               iconBg="bg-surface-muted text-ink-2" 
             />
             
@@ -721,9 +726,9 @@ export default function SettingsPage() {
                 {(profile.role === 'player' || profile.role === 'coach') && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Opportunity notifications</p>
+                      <p className="text-gray-900 font-medium text-sm">{t('emails.opportunitiesTitle')}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Email when new opportunities are published
+                        {t('emails.opportunitiesBody')}
                       </p>
                     </div>
                     <button
@@ -750,9 +755,9 @@ export default function SettingsPage() {
                 {profile.role === 'club' && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Application notifications</p>
+                      <p className="text-gray-900 font-medium text-sm">{t('emails.applicationsTitle')}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Email when players apply to your opportunities
+                        {t('emails.applicationsBody')}
                       </p>
                     </div>
                     <button
@@ -778,9 +783,9 @@ export default function SettingsPage() {
                 {/* Friend Request Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Friend request emails</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('emails.friendsTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Email when someone sends you a friend request
+                      {t('emails.friendsBody')}
                     </p>
                   </div>
                   <button
@@ -809,9 +814,9 @@ export default function SettingsPage() {
                 {profile.role !== 'club' && profile.role !== 'brand' && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
-                      <p className="text-gray-900 font-medium text-sm">Reference request emails</p>
+                      <p className="text-gray-900 font-medium text-sm">{t('emails.referencesTitle')}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Email when someone requests a reference from you
+                        {t('emails.referencesBody')}
                       </p>
                     </div>
                     <button
@@ -837,9 +842,9 @@ export default function SettingsPage() {
                 {/* Message Digest Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Message email digests</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('emails.messagesTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Email digest for unread messages (max once every 6 hours)
+                      {t('emails.messagesBody')}
                     </p>
                   </div>
                   <button
@@ -864,13 +869,13 @@ export default function SettingsPage() {
                 {/* Push Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Push notifications</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('emails.pushTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {!push.isSupported
-                        ? 'Not supported on this device'
+                        ? t('emails.pushUnsupported')
                         : push.permission === 'denied'
-                          ? 'Blocked. Enable notifications in your device settings'
-                          : 'Receive notifications even when the app is closed'}
+                          ? t('emails.pushBlocked')
+                          : t('emails.pushBody')}
                     </p>
                   </div>
                   <button
@@ -895,9 +900,9 @@ export default function SettingsPage() {
                 {/* Profile View Digest Emails -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Profile view emails</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('emails.profileViewsTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Daily email summary of who viewed your profile
+                      {t('emails.profileViewsBody')}
                     </p>
                   </div>
                   <button
@@ -922,7 +927,7 @@ export default function SettingsPage() {
                 {notificationSuccess && (
                   <p className="text-xs text-positive flex items-center gap-1 px-4">
                     <CheckCircle className="w-3 h-3" />
-                    Preferences updated
+                    {t('emails.updated')}
                   </p>
                 )}
               </div>
@@ -934,7 +939,7 @@ export default function SettingsPage() {
             <SectionHeader
               id="privacy"
               icon={EyeOff}
-              title="Privacy"
+              title={t('page.privacy')}
               iconBg="bg-surface-muted text-ink-2"
             />
 
@@ -943,16 +948,16 @@ export default function SettingsPage() {
                 <FullMatchVisibilitySetting />
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Anonymous browsing</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('privacy.anonymousTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      When enabled, you won't appear in other users' "Who viewed your profile" lists
+                      {t('privacy.anonymousBody')}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAnonymousBrowsingToggle}
                     disabled={loadingToggles.has('anonymous')}
-                    aria-label={`Anonymous browsing: ${browseAnonymously ? 'on' : 'off'}`}
+                    aria-label={browseAnonymously ? t('privacy.anonymousOn') : t('privacy.anonymousOff')}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
                       switchTrackClass(browseAnonymously)
                     } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
@@ -973,16 +978,16 @@ export default function SettingsPage() {
                     Chat (profiles never show activity, ruling 2026-10-11). */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Show last active</p>
+                    <p className="text-gray-900 font-medium text-sm">{t('privacy.lastActiveTitle')}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      When enabled, people you chat with see “Active today” in the conversation header. Turn off to hide it.
+                      {t('privacy.lastActiveBody')}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleShowLastActiveToggle}
                     disabled={loadingToggles.has('last-active')}
-                    aria-label={`Show last active: ${showLastActive ? 'on' : 'off'}`}
+                    aria-label={showLastActive ? t('privacy.lastActiveOn') : t('privacy.lastActiveOff')}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
                       switchTrackClass(showLastActive)
                     } ${loadingToggles.has('last-active') ? 'opacity-50' : ''}`}
@@ -1001,9 +1006,25 @@ export default function SettingsPage() {
 
                 {/* Blocked Accounts */}
                 <div className="mt-4">
-                  <p className="text-gray-900 font-medium text-sm mb-3">Blocked accounts</p>
+                  <p className="text-gray-900 font-medium text-sm mb-3">{t('privacy.blockedTitle')}</p>
                   <BlockedAccountsList />
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* LANGUAGE SECTION */}
+          <div className={sectionCard('language')}>
+            <SectionHeader
+              id="language"
+              icon={Languages}
+              title={languageLabel}
+              iconBg="bg-surface-muted text-ink-2"
+            />
+
+            {expandedSection === 'language' && (
+              <div className="px-4 pb-4">
+                <LanguageSwitch />
               </div>
             )}
           </div>
@@ -1013,7 +1034,7 @@ export default function SettingsPage() {
             <SectionHeader 
               id="support" 
               icon={HelpCircle} 
-              title="Support" 
+              title={t('page.support')} 
               iconBg="bg-surface-muted text-ink-2" 
             />
             
@@ -1022,7 +1043,7 @@ export default function SettingsPage() {
                 <LinkRow 
                   to="mailto:team@inhockia.com"
                   icon={Mail} 
-                  label="Contact support" 
+                  label={t('links.contactSupport')} 
                   external 
                 />
               </div>
@@ -1034,14 +1055,14 @@ export default function SettingsPage() {
             <SectionHeader 
               id="legal" 
               icon={Shield} 
-              title="Legal" 
+              title={t('page.legal')} 
               iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'legal' && (
               <div className="px-4 pb-4 space-y-1">
-                <LinkRow to="/privacy-policy" icon={Shield} label="Privacy Policy" />
-                <LinkRow to="/terms" icon={FileText} label="Terms of Service" />
+                <LinkRow to="/privacy-policy" icon={Shield} label={t('links.privacyPolicy')} />
+                <LinkRow to="/terms" icon={FileText} label={t('links.terms')} />
               </div>
             )}
           </div>
@@ -1051,14 +1072,14 @@ export default function SettingsPage() {
             <SectionHeader 
               id="about" 
               icon={Info} 
-              title="About" 
+              title={t('page.about')} 
               iconBg="bg-surface-muted text-ink-2" 
             />
             
             {expandedSection === 'about' && (
               <div className="px-4 pb-4 space-y-1">
                 <AboutAppCard />
-                <LinkRow to="/developers" icon={Code} label="For developers" />
+                <LinkRow to="/developers" icon={Code} label={t('links.developers')} />
               </div>
             )}
           </div>

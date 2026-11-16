@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Clock, X } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import type { FreshnessNudge, FreshnessNudgeId } from '@/lib/profileFreshness'
+import { useHomeT } from '@/i18n/ns/home.core'
 
 interface FreshnessCardProps {
   nudge: FreshnessNudge | null
@@ -55,6 +56,7 @@ function recordDismiss(id: FreshnessNudgeId): void {
  * the owner dismissed this nudge id within the cooldown window.
  */
 export default function FreshnessCard({ nudge, onAction }: FreshnessCardProps) {
+  const t = useHomeT()
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function FreshnessCard({ nudge, onAction }: FreshnessCardProps) {
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Dismiss this nudge"
+        aria-label={t('freshness.dismiss')}
         className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-ink-3 hover:text-ink-1 hover:bg-hockia-soft transition-colors"
       >
         <X className="w-4 h-4" />
@@ -89,7 +91,7 @@ export default function FreshnessCard({ nudge, onAction }: FreshnessCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
-            Keep it fresh
+            {t('freshness.eyebrow')}
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{nudge.message}</p>
           <button

@@ -9,6 +9,8 @@ import { logger } from '@/lib/logger'
 import { detectPlatform } from '@/lib/detectPlatform'
 import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
 import { COOKIE_BANNER_OVERLAY, INSTALL_OVERLAY, TERMS_GATE_OVERLAY, hasPriorAppSession, matchesRoutePrefix, recordAppVisit } from '@/lib/overlaySequence'
+import { useCommonT } from '@/i18n/ns/common'
+import { Trans } from 'react-i18next'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -54,6 +56,7 @@ async function persistInstallToDb(platform: 'ios' | 'android' | 'desktop'): Prom
 
 export default function InstallPrompt() {
   const location = useLocation()
+  const t = useCommonT()
   const [installState, setInstallState] = useState<InstallState>('idle')
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isDismissed, setIsDismissed] = useState(false)
@@ -211,7 +214,7 @@ export default function InstallPrompt() {
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Dismiss"
+          aria-label={t('install.dismiss')}
         >
           <X className="w-4 h-4 text-gray-500" />
         </button>
@@ -223,9 +226,9 @@ export default function InstallPrompt() {
             className="w-10 h-10 rounded-xl flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm">Install Hockia</h3>
+            <h3 className="font-semibold text-gray-900 text-sm">{t('install.title')}</h3>
             <p className="text-xs text-gray-600 mt-0.5">
-              Add to your home screen for the best experience
+              {t('install.iosBody')}
             </p>
           </div>
         </div>
@@ -233,11 +236,11 @@ export default function InstallPrompt() {
         <div className="mt-3 pt-3 border-t border-gray-100">
           <p className="text-xs text-gray-600 flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-100 rounded text-[10px] font-medium">1</span>
-            Tap <Share className="w-4 h-4 text-accent-blue inline mx-1" /> Share
+            <Trans t={t} i18nKey="install.iosStepShare" components={{ icon: <Share className="w-4 h-4 text-accent-blue inline mx-1" /> }} />
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-2 mt-2">
             <span className="inline-flex items-center justify-center w-5 h-5 bg-gray-100 rounded text-[10px] font-medium">2</span>
-            Tap <Plus className="w-4 h-4 text-gray-700 inline mx-1" /> Add to Home Screen
+            <Trans t={t} i18nKey="install.iosStepAdd" components={{ icon: <Plus className="w-4 h-4 text-gray-700 inline mx-1" /> }} />
           </p>
         </div>
       </div>
@@ -255,7 +258,7 @@ export default function InstallPrompt() {
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-        aria-label="Dismiss"
+        aria-label={t('install.dismiss')}
       >
         <X className="w-4 h-4 text-gray-500" />
       </button>
@@ -267,9 +270,9 @@ export default function InstallPrompt() {
           className="w-10 h-10 rounded-xl flex-shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm">Install Hockia</h3>
+          <h3 className="font-semibold text-gray-900 text-sm">{t('install.title')}</h3>
           <p className="text-xs text-gray-600 mt-0.5">
-            Get quick access from your home screen
+            {t('install.body')}
           </p>
         </div>
       </div>
@@ -279,7 +282,7 @@ export default function InstallPrompt() {
         className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
       >
         <Download className="w-4 h-4" />
-        Install App
+        {t('install.button')}
       </button>
     </div>
   )

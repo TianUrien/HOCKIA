@@ -22,6 +22,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { loadRoleDetail } from '@/lib/roleDetail'
 import { isNetworkFailureError } from '@/lib/sentryHelpers'
 import { RoleDetailSkeleton } from '@/components/ScreenSkeletons'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 /** The app's failed-load words (sign-in, Community): the connection, not the member. */
 
@@ -34,6 +35,7 @@ function isRowNotFound(error: unknown): boolean {
 }
 
 export default function OpportunityDetailPage() {
+  const t = useOpportunitiesT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -79,7 +81,7 @@ export default function OpportunityDetailPage() {
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   // One Join sheet for every gated trigger, the trigger named in the title.
-  const [wallTitle, setWallTitle] = useState('Sign in to apply')
+  const [wallAction, setWallAction] = useState<'apply' | 'message'>('apply')
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   /** The read failed (connection or server), not a missing role: offer Retry. */
@@ -89,7 +91,7 @@ export default function OpportunityDetailPage() {
   // Title resolves to the opportunity name once loaded; stays neutral
   // ("Opportunity") while fetching so the tab doesn't flash the static
   // "HOCKIA – Where field hockey sticks together." suffix during the load.
-  useDocumentTitle(opportunity?.title ? `${opportunity.title} • Opportunities` : 'Opportunity')
+  useDocumentTitle(opportunity?.title ? t('detailPage.documentTitle', { title: opportunity.title }) : t('detailPage.documentTitleLoading'))
   // Phone and desktop get different trees. The desktop OpportunityDetailView
   // is a dialog that pins the document (useBodyScrollLock) because it scrolls
   // inside its own fixed layer; the phone layout scrolls the document. Hiding
@@ -247,13 +249,17 @@ export default function OpportunityDetailPage() {
   // SEO: Update page title and meta tags for crawlers
   useEffect(() => {
     if (!opportunity || !club) {
-      document.title = 'Field Hockey Opportunity | Hockia'
+      document.title = t('detailPage.tabTitleLoading')
       return
     }
 
     // Dynamic page title
+    // The tab title follows the interface language; the tags crawlers and
+    // link previews read (description, og:*, twitter:*) stay in English.
     const pageTitle = `${opportunity.title} at ${club.full_name || 'Club'} | Hockia`
-    document.title = pageTitle
+    document.title = club.full_name
+      ? t('detailPage.tabTitle', { title: opportunity.title, club: club.full_name })
+      : t('detailPage.tabTitleNoClub', { title: opportunity.title })
 
     // Build meta description
     const location = [opportunity.location_city, opportunity.location_country].filter(Boolean).join(', ')
@@ -294,7 +300,7 @@ export default function OpportunityDetailPage() {
       if (twitterTitle) twitterTitle.setAttribute('content', 'Hockia | Field Hockey Community')
       if (twitterDesc) twitterDesc.setAttribute('content', defaultDesc)
     }
-  }, [opportunity, club])
+  }, [opportunity, club, t])
 
   // Track vacancy view
   useEffect(() => {
@@ -342,14 +348,14 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center px-4" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="max-w-sm text-center" role="alert" data-testid="role-load-failed">
-            <h1 className="text-[20px] font-semibold leading-6 text-ink-1">Couldn’t load this opportunity</h1>
+            <h1 className="text-[20px] font-semibold leading-6 text-ink-1">{t('detailPage.loadFailedTitle')}</h1>
             <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
             <button
               type="button"
               onClick={retryLoad}
               className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90"
             >
-              Try again
+              {t('detailPage.retry')}
             </button>
           </div>
         </div>
@@ -363,14 +369,14 @@ export default function OpportunityDetailPage() {
         <Header />
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
           <div className="text-center">
-            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">Opportunity not found</h1>
-            <p className="mb-6 text-row text-ink-2">This opportunity may have been removed.</p>
+            <h1 className="mb-2 text-[20px] font-semibold leading-6 text-ink-1">{t('detailPage.notFoundTitle')}</h1>
+            <p className="mb-6 text-row text-ink-2">{t('detailPage.notFoundBody')}</p>
             <button
               type="button"
               onClick={() => navigate('/opportunities')}
               className="inline-flex h-12 items-center justify-center rounded-full bg-brand-primary px-6 text-[16px] font-semibold text-white hover:opacity-90"
             >
-              Browse opportunities
+              {t('detailPage.browse')}
             </button>
           </div>
         </div>
@@ -386,7 +392,7 @@ export default function OpportunityDetailPage() {
   const handleApplyClick = () => {
     if (!user) {
       // Not authenticated - show the Join sheet
-      setWallTitle('Sign in to apply')
+      setWallAction('apply')
       setShowSignInPrompt(true)
     } else if (
       ((profile?.role === 'player' && opportunity.opportunity_type === 'player') ||
@@ -405,7 +411,7 @@ export default function OpportunityDetailPage() {
   // so anything else (an event) is ignored.
   const handleMessageClick = (anchor?: unknown) => {
     if (!user) {
-      setWallTitle('Sign in to message')
+      setWallAction('message')
       setShowSignInPrompt(true)
       return
     }
@@ -506,9 +512,9 @@ export default function OpportunityDetailPage() {
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title={wallTitle}
-        action={wallTitle.includes('message') ? 'message' : 'apply'}
-        message="Sign in or create a free Hockia account to apply to this opportunity."
+        title={wallAction === 'message' ? t('detailPage.wallTitleMessage') : t('detailPage.wallTitleApply')}
+        action={wallAction}
+        message={t('detailPage.wallMessage')}
       />
 
       {/* Apply Modal */}

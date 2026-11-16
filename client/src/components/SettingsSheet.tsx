@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import { useCommonT } from '@/i18n/ns/common'
 
 // Lazy-loaded — only pulled into the bundle when the user actually
 // opens the feedback modal. Cuts ~19KB from the main bundle (the
@@ -29,6 +30,7 @@ interface SettingsSheetProps {
 
 export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
   const navigate = useNavigate()
+  const t = useCommonT()
   const { profile, signOut } = useAuthStore()
   const { addToast } = useToastStore()
   const closeNotificationsDrawer = useNotificationStore((state) => state.toggleDrawer)
@@ -131,7 +133,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
       navigate('/')
     } catch (error) {
       logger.error('Failed to sign out', error)
-      addToast('Could not sign out. Please try again.', 'error')
+      addToast(t('settingsSheet.signOutFailed'), 'error')
     }
   }
 
@@ -142,10 +144,10 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         className={`relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${className}`}
-        aria-label="Settings"
+        aria-label={t('settingsSheet.trigger')}
         aria-haspopup="menu"
         aria-expanded={isOpen ? 'true' : 'false'}
-        title="Settings"
+        title={t('settingsSheet.trigger')}
         data-testid="settings-sheet-trigger"
       >
         <SettingsIcon className="w-5 h-5" />
@@ -163,7 +165,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
           >
             <div className="px-4 pb-2 pt-1">
               <p className="truncate text-sm font-semibold text-gray-900">
-                {profile.full_name ?? 'Your account'}
+                {profile.full_name ?? t('settingsSheet.fallbackName')}
               </p>
               {profile.username && (
                 <p className="truncate text-xs text-gray-500">@{profile.username}</p>
@@ -177,7 +179,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <SettingsIcon className="h-4 w-4" />
-              Settings
+              {t('settingsSheet.settings')}
             </button>
             <button
               type="button"
@@ -191,7 +193,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
               data-testid="settings-sheet-feedback"
             >
               <MessageSquarePlus className="h-4 w-4" />
-              Send feedback
+              {t('settingsSheet.feedback')}
             </button>
             <div className="my-1 h-px bg-gray-200" />
             <button
@@ -201,7 +203,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
-              Sign out
+              {t('settingsSheet.signOut')}
             </button>
           </div>,
           document.body,

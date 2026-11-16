@@ -5,6 +5,7 @@ import { useActivityPhotos } from '@/hooks/useActivityPhotos'
 import { FeedCard, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import { MediaLightbox } from '../MediaLightbox'
 import type { MediaAddedFeedItem, PostMediaItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 /** Longest the tapped tile waits for the full set before the viewer opens on
  *  the visible samples instead. */
@@ -27,6 +28,7 @@ interface Props {
  * opens on the visible samples instead.
  */
 export function MediaAddedCard({ item }: Props) {
+  const t = useHomeT()
   const profilePath = profilePathForRole(item.uploader_role, item.uploader_id)
   // Tiles whose image failed to load are dropped from the grid entirely —
   // a dead sample URL (photo deleted after upload; DB-side cleanup can
@@ -46,8 +48,8 @@ export function MediaAddedCard({ item }: Props) {
   const viewerOpen = tappedUrl !== null && settled
   useEffect(() => {
     if (tappedUrl === null || settled) return
-    const t = window.setTimeout(() => setStalled(true), VIEWER_WAIT_MS)
-    return () => window.clearTimeout(t)
+    const timer = window.setTimeout(() => setStalled(true), VIEWER_WAIT_MS)
+    return () => window.clearTimeout(timer)
   }, [tappedUrl, settled])
   const close = () => {
     setTappedUrl(null)
@@ -81,7 +83,7 @@ export function MediaAddedCard({ item }: Props) {
         profilePath={profilePath}
       />
       <FeedCardCaption icon={<Images />}>
-        Added {n} new {n === 1 ? 'photo' : 'photos'}
+        {t('cards.mediaAdded.caption', { count: n })}
       </FeedCardCaption>
 
       {urls.length > 0 && (
@@ -99,7 +101,7 @@ export function MediaAddedCard({ item }: Props) {
                   type="button"
                   onClick={() => setTappedUrl(u)}
                   aria-busy={loading || undefined}
-                  aria-label={isMore ? `View all ${n} photos` : `View photo ${i + 1} of ${n}`}
+                  aria-label={isMore ? t('cards.mediaAdded.viewAllAria', { total: n }) : t('cards.mediaAdded.viewPhotoAria', { number: i + 1, total: n })}
                   className="relative block aspect-square overflow-hidden bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-ring"
                 >
                   <img

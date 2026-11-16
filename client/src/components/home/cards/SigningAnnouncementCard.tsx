@@ -14,6 +14,7 @@ import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
 import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { UserPostFeedItem, SigningMetadata } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface SigningAnnouncementCardProps {
   item: UserPostFeedItem
@@ -22,6 +23,7 @@ interface SigningAnnouncementCardProps {
 }
 
 export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: SigningAnnouncementCardProps) {
+  const t = useHomeT()
   const { user } = useAuthStore()
   const { toggleLike } = usePostInteractions()
   const { deletePost } = useUserPosts()
@@ -84,23 +86,23 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
   }, [item.has_liked, item.like_count, item.post_id, onLikeUpdate, toggleLike])
 
   const handleDelete = useCallback(async () => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return
+    if (!confirm(t('cards.signing.deleteConfirm'))) return
 
     const result = await deletePost(item.post_id)
     if (result.success) {
       onDelete?.(item.feed_item_id)
     }
-  }, [item.post_id, item.feed_item_id, deletePost, onDelete])
+  }, [item.post_id, item.feed_item_id, deletePost, onDelete, t])
 
   const handleCommentCountChange = useCallback((newCount: number) => {
     setLocalCommentCount(newCount)
   }, [])
 
   const menuItems: MoreMenuItem[] = isOwner
-    ? [{ key: 'delete', label: 'Delete post', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: () => void handleDelete() }]
+    ? [{ key: 'delete', label: t('cards.signing.deletePost'), icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: () => void handleDelete() }]
     : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
-    <MoreMenu items={menuItems} label="Post options" title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
+    <MoreMenu items={menuItems} label={t('cards.signing.menuLabel')} title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
   ) : null
 
   return (
@@ -114,7 +116,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         profilePath={clubPath}
         right={menu}
       />
-      <FeedCardCaption icon={<ArrowRight />}>New signing</FeedCardCaption>
+      <FeedCardCaption icon={<ArrowRight />}>{t('cards.signing.caption')}</FeedCardCaption>
 
       {/* Signing visual: Person → Club */}
       <div className="px-4 pb-3 pt-1">
@@ -156,7 +158,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
             <div className="mt-2 flex min-h-[40px] items-start justify-center">
               <Link to={clubPath}>
                 <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
-                  {item.author_name || 'Unknown'}
+                  {item.author_name || t('cards.signing.unknownClub')}
                 </p>
               </Link>
             </div>
@@ -174,7 +176,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         <FeedCardMedia>
           <FeedMediaGrid
             media={sortedImages}
-            altPrefix={item.author_name ? `Signing announcement by ${item.author_name}` : 'Signing announcement'}
+            altPrefix={item.author_name ? t('cards.signing.altBy', { name: item.author_name }) : t('cards.signing.alt')}
             onImageClick={handleImageClick}
           />
         </FeedCardMedia>

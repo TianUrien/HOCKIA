@@ -3,6 +3,7 @@ import { brandCategoryLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandPostFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface BrandPostCardProps {
   item: BrandPostFeedItem
@@ -14,6 +15,7 @@ interface BrandPostCardProps {
  * by the brand category; the verified check sits in the header's right slot.
  */
 export function BrandPostCard({ item }: BrandPostCardProps) {
+  const t = useHomeT()
   return (
     <FeedCard testId="brand-post-card">
       <FeedCardHeader
@@ -25,7 +27,7 @@ export function BrandPostCard({ item }: BrandPostCardProps) {
         profilePath={`/brands/${item.brand_slug}`}
         subtitle={brandCategoryLabel(item.brand_category)}
         right={item.brand_is_verified ? (
-          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-positive" aria-label="Verified brand" />
+          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-positive" aria-label={t('cards.brandPost.verified')} />
         ) : undefined}
       />
 

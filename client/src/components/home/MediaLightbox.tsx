@@ -10,6 +10,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 // Cloudflare-backed video items play through the signed player (token minted at
 // render). Legacy Supabase-Storage MP4 items keep the raw <video> slide below.
@@ -50,7 +51,9 @@ interface MediaLightboxProps {
 /** Rubber-band resistance at carousel boundaries (0–1, lower = more resistance) */
 const EDGE_RESISTANCE = 0.3
 
-export function MediaLightbox({ images, initialIndex, onClose, author, caption, stats, onShare, videoLabel = 'Video', isOwner = false }: MediaLightboxProps) {
+export function MediaLightbox({ images, initialIndex, onClose, author, caption, stats, onShare, videoLabel: videoLabelProp, isOwner = false }: MediaLightboxProps) {
+  const t = useHomeT()
+  const videoLabel = videoLabelProp ?? t('lightbox.videoLabel')
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const dialogRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -191,7 +194,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
       className="fixed inset-0 z-[1000] flex flex-col"
       role="dialog"
       aria-modal="true"
-      aria-label="Media viewer"
+      aria-label={t('lightbox.dialogAria')}
       tabIndex={-1}
       onClick={onClose}
       style={{ backgroundColor: '#000' }}
@@ -200,7 +203,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
       <div className="relative z-10 flex items-center justify-between px-3 pb-2 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <button
           type="button"
-          aria-label="Close"
+          aria-label={t('lightbox.close')}
           onClick={(e) => {
             e.stopPropagation()
             onClose()
@@ -212,12 +215,12 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
         <span className="text-row font-semibold text-white" aria-live="polite">
           {(images[currentIndex]?.media_type ?? 'image') === 'video'
             ? videoLabel
-            : hasMultiple ? `${currentIndex + 1} of ${images.length}` : 'Photo'}
+            : hasMultiple ? t('lightbox.position', { current: currentIndex + 1, total: images.length }) : t('lightbox.photoLabel')}
         </span>
         {onShare ? (
           <button
             type="button"
-            aria-label="Share"
+            aria-label={t('lightbox.share')}
             onClick={(e) => { e.stopPropagation(); onShare() }}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
           >
@@ -272,7 +275,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
               ) : (
                 <LightboxImageSlide
                   media={media}
-                  alt={`Post media ${i + 1}${hasMultiple ? ` of ${images.length}` : ''}`}
+                  alt={hasMultiple ? t('lightbox.mediaAltOfTotal', { number: i + 1, total: images.length }) : t('lightbox.mediaAlt', { number: i + 1 })}
                   eager={Math.abs(i - currentIndex) <= 1}
                 />
               )}
@@ -284,7 +287,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
         {hasMultiple && !isFirst && (
           <button
             type="button"
-            aria-label="Previous"
+            aria-label={t('lightbox.previous')}
             onClick={(e) => {
               e.stopPropagation()
               goPrev()
@@ -297,7 +300,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
         {hasMultiple && !isLast && (
           <button
             type="button"
-            aria-label="Next"
+            aria-label={t('lightbox.next')}
             onClick={(e) => {
               e.stopPropagation()
               goNext()
@@ -326,7 +329,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
             <div className="flex items-center gap-2.5">
               <EntityAvatar src={author.avatarUrl} name={author.name} role={author.role} size={36} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-row font-semibold text-white">{author.name ?? 'Hockia member'}</p>
+                <p className="truncate text-row font-semibold text-white">{author.name ?? t('lightbox.unnamedMember')}</p>
                 <p className="truncate text-secondary text-[#d1d1d6]">{identityLine(author.role)}</p>
               </div>
               {author.profilePath && (
@@ -335,7 +338,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
                   onClick={onClose}
                   className="flex h-8 items-center rounded-full bg-white/20 px-4 text-secondary font-semibold text-white"
                 >
-                  View profile
+                  {t('lightbox.viewProfile')}
                 </Link>
               )}
             </div>
@@ -348,18 +351,18 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
                 onClick={stats.onToggleLike}
                 disabled={!stats.onToggleLike}
                 aria-pressed={stats.hasLiked}
-                aria-label={stats.hasLiked ? 'Unlike' : 'Like'}
+                aria-label={stats.hasLiked ? t('lightbox.unlike') : t('lightbox.like')}
                 className={`inline-flex items-center gap-1.5 ${stats.hasLiked ? 'text-hockia-soft' : 'text-white'}`}
               >
                 <Heart className={`h-[22px] w-[22px] ${stats.hasLiked ? 'fill-hockia-primary text-hockia-primary' : ''}`} strokeWidth={1.7} />
                 {stats.likeCount > 0 && <span className="text-[#d1d1d6]">{stats.likeCount}</span>}
               </button>
-              <button type="button" onClick={stats.onComment} aria-label="Comments" className="inline-flex items-center gap-1.5 text-white">
+              <button type="button" onClick={stats.onComment} aria-label={t('lightbox.comments')} className="inline-flex items-center gap-1.5 text-white">
                 <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.7} />
                 {stats.commentCount > 0 && <span className="text-[#d1d1d6]">{stats.commentCount}</span>}
               </button>
               {onShare && (
-                <button type="button" onClick={onShare} aria-label="Share" className="inline-flex items-center text-white">
+                <button type="button" onClick={onShare} aria-label={t('lightbox.share')} className="inline-flex items-center text-white">
                   <Share2 className="h-[22px] w-[22px]" strokeWidth={1.7} />
                 </button>
               )}
@@ -481,6 +484,7 @@ function LightboxVideoSlide({
   poster?: string | null
   isActive: boolean
 }) {
+  const t = useHomeT()
   const videoRef = useRef<HTMLVideoElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -673,7 +677,7 @@ function LightboxVideoSlide({
                 type="button"
                 onClick={(e) => { e.stopPropagation(); togglePlay() }}
                 className="text-white hover:text-white/80 transition-colors"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
+                aria-label={isPlaying ? t('lightbox.pause') : t('lightbox.play')}
               >
                 {isPlaying ? (
                   <Pause className="w-5 h-5" fill="white" />
@@ -692,7 +696,7 @@ function LightboxVideoSlide({
                   setIsMuted(video.muted)
                 }}
                 className="text-white hover:text-white/80 transition-colors"
-                aria-label={isMuted ? 'Unmute' : 'Mute'}
+                aria-label={isMuted ? t('lightbox.unmute') : t('lightbox.mute')}
               >
                 {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
@@ -706,7 +710,7 @@ function LightboxVideoSlide({
               type="button"
               onClick={handleFullscreen}
               className="text-white hover:text-white/80 transition-colors"
-              aria-label="Fullscreen"
+              aria-label={t('lightbox.fullscreen')}
             >
               <Maximize className="w-4.5 h-4.5" />
             </button>

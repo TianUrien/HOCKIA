@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { useOnboardingT } from '@/i18n/ns/onboarding'
 
 /**
  * Quiet "Sign out" for the set-up screens (release audit 2026-10-05).
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils'
  */
 export function SetupSignOut({ placement = 'nav', className }: { placement?: 'nav' | 'footer'; className?: string }) {
   const navigate = useNavigate()
+  const t = useOnboardingT()
   const [busy, setBusy] = useState(false)
 
   const signOut = async () => {
@@ -48,7 +50,7 @@ export function SetupSignOut({ placement = 'nav', className }: { placement?: 'na
         className,
       )}
     >
-      {busy ? 'Signing out…' : 'Sign out'}
+      {busy ? t('signOut.busy') : t('signOut.action')}
     </button>
   )
 }

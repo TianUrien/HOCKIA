@@ -15,6 +15,8 @@
  * growth ruling); this panel only shows what a stronger posting would add.
  */
 
+import { tOpportunities } from '@/i18n/ns/opportunities'
+
 export interface PostingQualityInput {
   compensation: string | null
   benefits: string[]
@@ -50,50 +52,50 @@ export function assessPostingQuality(input: PostingQualityInput): PostingQuality
   const checks: PostingQualityCheck[] = [
     {
       key: 'compensation',
-      label: 'Compensation',
-      hint: 'Players filter hard on this. Even a range beats silence.',
+      label: tOpportunities('quality.compensation.label'),
+      hint: tOpportunities('quality.compensation.hint'),
       met: !!input.compensation && input.compensation.trim() !== '',
     },
     {
       key: 'housing',
-      label: 'Housing',
-      hint: 'The #1 question for relocating players.',
+      label: tOpportunities('quality.housing.label'),
+      hint: tOpportunities('quality.housing.hint'),
       met: hasBenefit(input, 'hous'),
     },
     {
       key: 'flights',
-      label: 'Flights',
-      hint: 'Signals you support international recruits.',
+      label: tOpportunities('quality.flights.label'),
+      hint: tOpportunities('quality.flights.hint'),
       met: hasBenefit(input, 'flight'),
     },
     {
       key: 'description',
-      label: 'Rich description (300+ chars)',
-      hint: 'Tell players about the team, the season, the ambition.',
+      label: tOpportunities('quality.description.label'),
+      hint: tOpportunities('quality.description.hint'),
       met: (input.description ?? '').length >= 300,
     },
     {
       key: 'start_date',
-      label: 'Start date',
-      hint: 'Lets players judge whether the timing works.',
+      label: tOpportunities('quality.startDate.label'),
+      hint: tOpportunities('quality.startDate.hint'),
       met: !!input.start_date,
     },
     {
       key: 'level',
-      label: 'Level sought',
-      hint: 'Saves everyone mismatched applications.',
+      label: tOpportunities('quality.level.label'),
+      hint: tOpportunities('quality.level.hint'),
       met: !!input.level_sought && input.level_sought.trim() !== '',
     },
     {
       key: 'club_logo',
-      label: 'Club logo',
-      hint: 'Postings with branding look real and get more clicks.',
+      label: tOpportunities('quality.clubLogo.label'),
+      hint: tOpportunities('quality.clubLogo.hint'),
       met: input.club_has_logo,
     },
     {
       key: 'deadline',
-      label: 'Application deadline',
-      hint: 'Creates urgency and sets expectations.',
+      label: tOpportunities('quality.deadline.label'),
+      hint: tOpportunities('quality.deadline.hint'),
       met: !!input.application_deadline,
     },
   ]

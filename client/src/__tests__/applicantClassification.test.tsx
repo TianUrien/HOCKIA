@@ -197,8 +197,11 @@ describe('ApplicantCard — tier pill dropdown', () => {
 describe('Opportunities source — delete draft menu', () => {
   it('delete menu item is available for draft AND closed statuses', () => {
     expect(TAB_SOURCE).toContain("vacancy.status === 'closed' || vacancy.status === 'draft'")
-    expect(TAB_SOURCE).toContain("'Delete draft'")
-    expect(TAB_SOURCE).toContain("'Delete permanently'")
+    // The words live in the opportunities catalog since the Spanish localization.
+    const catalog = readFileSync(resolve(__dirname, '..', 'locales', 'en', 'opportunities.json'), 'utf-8')
+    expect(TAB_SOURCE).toContain("t('manage.menu.deleteDraft')")
+    expect(catalog).toContain('"deleteDraft": "Delete draft"')
+    expect(catalog).toContain('"deletePermanently": "Delete permanently"')
   })
 
   it('DeleteOpportunityModal has isDraft prop with draft-specific messaging', () => {

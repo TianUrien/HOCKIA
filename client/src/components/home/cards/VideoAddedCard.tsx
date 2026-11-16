@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Video } from 'lucide-react'
 import { FeedCard, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { VideoAddedFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 // Signed Cloudflare Stream player — mints a playback token from video_id and
 // enforces recruiters-only gating itself. Lazy so its player path stays off
@@ -21,7 +22,8 @@ interface Props {
  * so deleted/errored/now-private videos fail safe.
  */
 export function VideoAddedCard({ item }: Props) {
-  const label = item.kind === 'full_match' ? 'Full match' : 'New highlight'
+  const t = useHomeT()
+  const label = item.kind === 'full_match' ? t('cards.videoAdded.fullMatch') : t('cards.videoAdded.highlight')
   // A video with no title reaches the feed with its id in the title slot.
   // Never show an id: the label alone reads "New highlight" / "Full match".
   const title = item.title && item.title !== item.video_id && !UUID_RE.test(item.title) ? item.title : null

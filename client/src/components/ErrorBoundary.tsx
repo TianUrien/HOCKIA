@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { logger } from '@/lib/logger';
 import { recoverFromStaleChunk } from '@/lib/swUpdate';
+import { tCommon } from '@/i18n/ns/common';
 
 interface Props {
   children: ReactNode;
@@ -85,6 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private renderGenericFallback() {
+    const t = tCommon;
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full text-center">
@@ -105,15 +107,15 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Something went wrong
+              {t('errorBoundary.title')}
             </h2>
             <p className="text-gray-600 mb-6">
-              We're sorry, but something unexpected happened. Please try reloading the page.
+              {t('errorBoundary.body')}
             </p>
             {import.meta.env.DEV && this.state.error && (
               <details className="text-left mb-6">
                 <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
-                  Error details
+                  {t('errorBoundary.details')}
                 </summary>
                 <pre className="mt-2 text-xs bg-gray-100 p-3 rounded overflow-auto max-h-40">
                   {this.state.error.message}
@@ -127,13 +129,13 @@ export class ErrorBoundary extends Component<Props, State> {
               onClick={this.handleReload}
               className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              Reload Page
+              {t('errorBoundary.reload')}
             </button>
             <button
               onClick={this.handleReset}
               className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             >
-              Try Again
+              {t('errorBoundary.retry')}
             </button>
           </div>
         </div>
@@ -142,6 +144,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private renderStaleAssetFallback() {
+    const t = tCommon;
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full text-center">
@@ -162,17 +165,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Hockia has just been updated
+              {t('errorBoundary.updatedTitle')}
             </h2>
             <p className="text-gray-600 mb-6">
-              A new version of the app is available. Please reload the page to continue using Hockia.
+              {t('errorBoundary.updatedBody')}
             </p>
           </div>
           <button
             onClick={this.handleReload}
             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Reload Hockia
+            {t('errorBoundary.reloadApp')}
           </button>
         </div>
       </div>

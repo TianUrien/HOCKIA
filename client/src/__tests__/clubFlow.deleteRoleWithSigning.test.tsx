@@ -14,7 +14,7 @@ import { resolve } from 'path'
 import { vi } from 'vitest'
 import {
   isRoleHasSigningError,
-  ROLE_HAS_SIGNING_MESSAGE,
+  roleHasSigningMessage,
   SIGNING_LOCK_STATUSES,
 } from '@/lib/roleLifecycle'
 
@@ -147,7 +147,7 @@ describe('Delete a role with a signing — desktop Opportunities tab', () => {
     const card = await openMenuFor('Signed role')
     const del = within(card).getByRole('button', { name: 'Delete permanently' })
     expect(del).toBeDisabled()
-    expect(within(card).getByText(ROLE_HAS_SIGNING_MESSAGE)).toBeInTheDocument()
+    expect(within(card).getByText(roleHasSigningMessage())).toBeInTheDocument()
     // Reopen stays available on the closed role.
     expect(within(card).getByRole('button', { name: 'Reopen opportunity' })).toBeEnabled()
   })
@@ -157,7 +157,7 @@ describe('Delete a role with a signing — desktop Opportunities tab', () => {
     await waitFor(() => expect(fx.signingQuery).toHaveLength(2))
     const card = await openMenuFor('Plain role')
     expect(within(card).getByRole('button', { name: 'Delete permanently' })).toBeEnabled()
-    expect(within(card).queryByText(ROLE_HAS_SIGNING_MESSAGE)).toBeNull()
+    expect(within(card).queryByText(roleHasSigningMessage())).toBeNull()
   })
 
   it('maps a server refusal to the founder sentence, not the generic failure', async () => {
@@ -172,7 +172,7 @@ describe('Delete a role with a signing — desktop Opportunities tab', () => {
     await userEvent.click(within(card).getByRole('button', { name: 'Delete permanently' }))
     await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
 
-    await waitFor(() => expect(addToast).toHaveBeenCalledWith(ROLE_HAS_SIGNING_MESSAGE, 'info'))
+    await waitFor(() => expect(addToast).toHaveBeenCalledWith(roleHasSigningMessage(), 'info'))
     expect(fx.deleted).toEqual(['opp-plain'])
     expect(addToast).not.toHaveBeenCalledWith('Failed to delete opportunity. Please try again.', 'error')
     // The menu now shows the delete as off for that role.

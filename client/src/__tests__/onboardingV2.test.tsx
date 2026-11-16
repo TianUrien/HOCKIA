@@ -138,7 +138,10 @@ import CompleteProfile from '@/pages/CompleteProfile'
 import PlayerSetupFlow from '@/components/onboarding/PlayerSetupFlow'
 import TermsGate from '@/components/TermsGate'
 import AgeGate from '@/components/AgeGate'
-import { ROLE_CARDS, roleCtaLabel, passwordProblem, passwordPolicyMessage, aboutYouProblem, offersOpenToPlay } from '@/lib/onboardingV2'
+import { getRoleCards, roleCtaLabel, passwordProblem, passwordPolicyMessage, aboutYouProblem, offersOpenToPlay } from '@/lib/onboardingV2'
+
+// ROLE_CARDS became getRoleCards() (copy now comes from the catalog).
+const ROLE_CARDS = getRoleCards()
 
 function LocationProbe() {
   const { pathname } = useLocation()

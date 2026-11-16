@@ -3,6 +3,7 @@ import { AlertTriangle, X } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * In-app confirmation dialog for destructive actions. Replaces the
@@ -41,11 +42,12 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'danger',
   testId,
 }: ConfirmDialogProps) {
+  const t = useCommonT()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
 
@@ -113,7 +115,7 @@ export default function ConfirmDialog({
           onClick={onClose}
           disabled={isSubmitting}
           className="absolute top-3 right-3 p-1 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-          aria-label="Close dialog"
+          aria-label={t('confirmDialog.close')}
           type="button"
         >
           <X className="w-5 h-5 text-gray-500" />
@@ -142,7 +144,7 @@ export default function ConfirmDialog({
             disabled={isSubmitting}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
           >
-            {cancelLabel}
+            {cancelLabel ?? t('confirmDialog.cancel')}
           </button>
           <button
             type="button"
@@ -153,10 +155,10 @@ export default function ConfirmDialog({
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Working…
+                {t('confirmDialog.working')}
               </span>
             ) : (
-              confirmLabel
+              confirmLabel ?? t('confirmDialog.confirm')
             )}
           </button>
         </div>

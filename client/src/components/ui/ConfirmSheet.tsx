@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { logger } from '@/lib/logger'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * Danger confirmation as a bottom sheet (Figma Button / Danger, Large 48;
@@ -39,7 +40,8 @@ interface ConfirmSheetProps {
   initialFocus?: 'first' | 'panel'
 }
 
-export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, tone = 'danger', cancelLabel = 'Cancel', busyLabel = 'Working…', testId, initialFocus = 'first' }: ConfirmSheetProps) {
+export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirmLabel, tone = 'danger', cancelLabel, busyLabel, testId, initialFocus = 'first' }: ConfirmSheetProps) {
+  const t = useCommonT()
   const [busy, setBusy] = useState(false)
 
   const confirm = async () => {
@@ -66,10 +68,10 @@ export function ConfirmSheet({ open, onClose, onConfirm, title, message, confirm
           className={`mt-5 flex h-12 w-full items-center justify-center rounded-full text-[16px] font-semibold text-white disabled:opacity-60 ${tone === 'primary' ? 'bg-hockia-primary active:opacity-90' : 'bg-status-danger active:bg-status-danger-strong'}`}
           data-testid={testId ? `${testId}-yes` : undefined}
         >
-          {busy ? busyLabel : confirmLabel}
+          {busy ? busyLabel ?? t('confirmSheet.working') : confirmLabel}
         </button>
         <button type="button" onClick={onClose} disabled={busy} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1 disabled:opacity-60">
-          {cancelLabel}
+          {cancelLabel ?? t('confirmSheet.cancel')}
         </button>
       </div>
     </BottomSheet>

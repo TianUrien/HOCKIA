@@ -8,6 +8,8 @@ import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { hasPersistedSession } from '@/lib/persistedSession'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import { buttonClassName } from '@/components/ui/buttonClasses'
+import { LanguageSwitch } from '@/components/LanguageSwitch'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * NativeWelcome — the first screen of the iOS / Android apps.
@@ -40,6 +42,7 @@ import { buttonClassName } from '@/components/ui/buttonClasses'
 export default function NativeWelcome() {
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useAuthT()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()
 
   const redirectTo =
@@ -180,10 +183,16 @@ export default function NativeWelcome() {
         </div>
       </div>
 
+      {/* English / Español: a small pill in the top corner, clear of the artwork's subjects. */}
+      <LanguageSwitch
+        variant="pill"
+        className="absolute right-4 top-[calc(12px+env(safe-area-inset-top,0px))] z-20"
+      />
+
       {/* ── Brand: the vertical ink lockup + tagline ───────────────────── */}
       <div className="relative z-10 flex shrink-0 flex-col items-center gap-4 px-6">
         <img src="/brand/lockup/hockia-lockup-vertical-ink.svg" alt="Hockia" width={152} height={107} className="h-[107px] w-[152px]" />
-        <h1 className="text-center text-[17px] leading-[1.45] tracking-[-0.005em] text-ink-2">Where field hockey sticks together.</h1>
+        <h1 className="text-center text-[17px] leading-[1.45] tracking-[-0.005em] text-ink-2">{t('welcome.tagline')}</h1>
       </div>
 
       <div className="min-h-[24px] flex-1" />
@@ -199,14 +208,14 @@ export default function NativeWelcome() {
           className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}
           data-testid="welcome-get-started"
         >
-          Get started
+          {t('welcome.getStarted')}
         </Link>
         <Link
           to="/signin"
           className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })}
           data-testid="welcome-log-in"
         >
-          I already have an account
+          {t('welcome.haveAccount')}
         </Link>
       </div>
     </div>

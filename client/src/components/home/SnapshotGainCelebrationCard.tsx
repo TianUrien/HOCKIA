@@ -4,6 +4,7 @@ import { Sparkles, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { profilePath } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * SnapshotGainCelebrationCard — first Pulse card type (v5 plan, Phase 1B.3).
@@ -51,7 +52,7 @@ function readString(metadata: PulseItem['metadata'], key: string): string | null
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
 
-function buildCopy(item: PulseItem): CelebrationCopy | null {
+function buildCopy(item: PulseItem, t: ReturnType<typeof useHomeT>): CelebrationCopy | null {
   const signal = readString(item.metadata, 'signal')
   if (!isCelebrationSignal(signal)) return null
 
@@ -59,33 +60,33 @@ function buildCopy(item: PulseItem): CelebrationCopy | null {
     case 'first_reference': {
       const name = readString(item.metadata, 'endorser_name')
       return {
-        title: 'First reference accepted',
+        title: t('celebration.reference.title'),
         subtitle: name
-          ? `${name} endorsed your profile. Recruiters can see it now.`
-          : 'A coach or peer endorsed your profile. Recruiters can see it now.',
+          ? t('celebration.reference.bodyNamed', { name })
+          : t('celebration.reference.body'),
       }
     }
     case 'first_highlight_video':
       return {
-        title: 'Highlight video added',
-        subtitle: 'Your profile now shows recruiters how you actually play.',
+        title: t('celebration.highlight.title'),
+        subtitle: t('celebration.highlight.body'),
       }
     case 'first_career_entry': {
       const club = readString(item.metadata, 'club_name')
       return {
-        title: 'First career entry added',
+        title: t('celebration.career.title'),
         subtitle: club
-          ? `${club} is now part of your career history.`
-          : 'Your career history just got its first entry.',
+          ? t('celebration.career.bodyNamed', { club })
+          : t('celebration.career.body'),
       }
     }
     case 'first_world_club_link': {
       const club = readString(item.metadata, 'club_name')
       return {
-        title: 'Club connection verified',
+        title: t('celebration.clubLink.title'),
         subtitle: club
-          ? `Your profile is now linked to ${club}.`
-          : 'Your profile is now linked to a verified club.',
+          ? t('celebration.clubLink.bodyNamed', { club })
+          : t('celebration.clubLink.body'),
       }
     }
   }
@@ -96,10 +97,11 @@ export function SnapshotGainCelebrationCard({
   onClick,
   onDismiss,
 }: SnapshotGainCelebrationCardProps) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
 
-  const copy = useMemo(() => buildCopy(item), [item])
+  const copy = useMemo(() => buildCopy(item, t), [item, t])
 
   if (!copy) return null
 
@@ -123,7 +125,7 @@ export function SnapshotGainCelebrationCard({
         type="button"
         onClick={handleDismiss}
         className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-        aria-label="Dismiss"
+        aria-label={t('celebration.dismiss')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -140,7 +142,7 @@ export function SnapshotGainCelebrationCard({
             onClick={handleView}
             className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary rounded-lg hover:opacity-90 transition-opacity"
           >
-            View snapshot
+            {t('celebration.cta')}
           </button>
         </div>
       </div>
