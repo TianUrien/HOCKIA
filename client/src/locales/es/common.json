@@ -10,5 +10,11 @@
     "title": "Sin conexión",
     "body": "Lo que ya cargó se puede seguir leyendo. Los mensajes y las postulaciones se pueden enviar al recuperar la conexión.",
     "retry": "Reintentar"
+  },
+  "language": {
+    "label": "Idioma",
+    "english": "English",
+    "spanish": "Español (beta)",
+    "betaNote": "El español está en beta: algunas pantallas siguen en inglés."
   }
 }

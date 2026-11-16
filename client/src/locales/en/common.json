@@ -10,5 +10,11 @@
     "title": "You’re offline",
     "body": "You can still read what’s loaded. Send messages or applications when you’re back online.",
     "retry": "Try again"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "spanish": "Español (beta)",
+    "betaNote": "Spanish is in beta: some screens are still in English."
   }
 }

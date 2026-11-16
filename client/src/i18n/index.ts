@@ -42,7 +42,8 @@ void i18n.use(initReactI18next).init({
   initAsync: false,
   interpolation: { escapeValue: false },
   returnNull: false,
-  react: { useSuspense: false },
+  // 'added': screens re-render when a Spanish catalog arrives after them.
+  react: { useSuspense: false, bindI18nStore: 'added' },
   saveMissing: true,
   missingKeyHandler: (languages, namespace, key) => {
     const id = `${namespace}:${key}`
@@ -98,8 +99,9 @@ export function currentLanguage(): UiLanguage {
 /** Switches the interface language; resolves when the new catalogs are in. */
 export async function setLanguage(language: UiLanguage, options: { remember?: boolean } = {}): Promise<void> {
   if (language === 'es') {
-    const namespaces = Object.keys(i18n.getDataByLanguage('en') ?? ENGLISH)
-    await Promise.all([...namespaces.map(loadSpanishNamespace), loadDateFnsLocale(language).catch(() => undefined)])
+    // Every Spanish catalog, not only those whose screen has loaded: a lazy
+    // screen opened later is then Spanish on its first frame.
+    await Promise.all([...Object.keys(SPANISH_URLS).map(loadSpanishNamespace), loadDateFnsLocale(language).catch(() => undefined)])
   }
   await i18n.changeLanguage(language)
   if (typeof document !== 'undefined') document.documentElement.lang = language
@@ -112,17 +114,32 @@ function storedChoice(): string | null {
   try { return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) } catch { return null }
 }
 
+function resolveNow(profileChoice?: string | null): UiLanguage {
+  return resolveLanguage({
+    profileChoice,
+    storedChoice: typeof window === 'undefined' ? null : storedChoice(),
+    deviceLanguages: typeof navigator === 'undefined' ? [] : navigator.languages,
+  })
+}
+
+/** True when start-up must wait for catalogs before the first frame (anything but English). */
+export function startupNeedsCatalogs(): boolean {
+  return resolveNow() !== DEFAULT_LANGUAGE
+}
+
 /**
  * Picks the language for this session. Call at start-up (no profile yet) and
  * again when the profile loads or changes.
  */
 export function applyResolvedLanguage(profileChoice?: string | null): Promise<void> {
-  const next = resolveLanguage({
-    profileChoice,
-    storedChoice: typeof window === 'undefined' ? null : storedChoice(),
-    deviceLanguages: typeof navigator === 'undefined' ? [] : navigator.languages,
-  })
+  const next = resolveNow(profileChoice)
   return next === currentLanguage() ? Promise.resolve() : setLanguage(next)
+}
+
+/** The choice stored on this device, if it is a supported language. */
+export function storedLanguage(): UiLanguage | null {
+  const value = typeof window === 'undefined' ? null : storedChoice()
+  return isUiLanguage(value) ? value : null
 }
 
 /** Development only: `window.__hockiaPseudoLocale()` in the console. */
