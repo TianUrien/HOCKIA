@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { setLanguage } from '@/i18n'
 import type { UiLanguage } from './languages'
@@ -9,9 +7,15 @@ import type { UiLanguage } from './languages'
  * save it on the profile when signed in so emails and notifications can
  * follow it. The profile write is best-effort: the interface has already
  * switched, and the device choice is copied up on a later sign-in.
+ *
+ * The auth store and the Supabase client are loaded here, not at the top:
+ * the switch sits on the welcome screen, which must not pull in
+ * `lib/supabase` (it throws at import without its env vars, as in the CI
+ * unit job).
  */
 export async function chooseLanguage(language: UiLanguage): Promise<void> {
   await setLanguage(language, { remember: true })
+  const [{ useAuthStore }, { supabase }] = await Promise.all([import('@/lib/auth'), import('@/lib/supabase')])
   const { user, profile } = useAuthStore.getState()
   if (!user || !profile) return
   if ((profile as { ui_language?: string | null }).ui_language === language) return
