@@ -3,19 +3,16 @@
  * screen (Figma PR22).
  */
 import type { BrandCategory } from '@/hooks/useBrands'
+import { tEnums } from '@/i18n/ns/enums'
+import { tBrands } from '@/i18n/ns/brands'
+import { withLazyText } from '@/lib/opportunityLazyText'
 
-export const BRAND_CATEGORY_OPTIONS: { value: BrandCategory; label: string }[] = [
-  { value: 'equipment', label: 'Equipment' },
-  { value: 'apparel', label: 'Apparel' },
-  { value: 'accessories', label: 'Accessories' },
-  { value: 'nutrition', label: 'Nutrition' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'coaching', label: 'Coaching & Training' },
-  { value: 'recruiting', label: 'Recruiting' },
-  { value: 'media', label: 'Media' },
-  { value: 'services', label: 'Services' },
-  { value: 'other', label: 'Other' },
-]
+const BRAND_CATEGORIES: BrandCategory[] = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other']
+
+/** Category options; each label is read in the interface language when used. */
+export const BRAND_CATEGORY_OPTIONS: { value: BrandCategory; label: string }[] = BRAND_CATEGORIES.map((value) =>
+  withLazyText({ value }, { label: () => tEnums(`brandCategory.${value}`) }),
+)
 
 /**
  * Validate a website / social URL. Returns an error string, or null if OK.
@@ -39,16 +36,16 @@ export function validateBrandUrl(rawValue: string): string | null {
   try {
     parsed = new URL(candidate)
   } catch {
-    return 'That doesn\'t look like a valid URL.'
+    return tBrands('editLib.invalidUrl')
   }
   // Reject obvious garbage. Real domains have at least one dot AND don't
   // contain whitespace in the host.
   const host = parsed.hostname
   if (!host || host.includes(' ') || !host.includes('.')) {
-    return 'That doesn\'t look like a valid URL.'
+    return tBrands('editLib.invalidUrl')
   }
   if (/\s/.test(parsed.pathname)) {
-    return 'URLs cannot contain spaces.'
+    return tBrands('editLib.urlSpaces')
   }
   return null
 }
@@ -70,10 +67,10 @@ export function normalizeInstagram(raw: string): { url: string; error: null } | 
   if (!value) return { url: '', error: null }
   const fromUrl = value.match(/^(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/@?([^/?#\s]+)/i)
   if (fromUrl && IG_RESERVED.has(fromUrl[1].toLowerCase())) {
-    return { url: null, error: 'That’s a post link. Use your profile link or @handle.' }
+    return { url: null, error: tBrands('editLib.instagramPostLink') }
   }
   const handle = fromUrl ? fromUrl[1] : /[/:]/.test(value) || LOOKS_LIKE_SITE.test(value.replace(/^@/, '')) ? null : value.replace(/^@/, '')
-  if (!handle || !IG_HANDLE.test(handle)) return { url: null, error: 'Enter an Instagram handle (@yourbrand) or link.' }
+  if (!handle || !IG_HANDLE.test(handle)) return { url: null, error: tBrands('editLib.instagramInvalid') }
   return { url: `https://instagram.com/${handle}`, error: null }
 }
 

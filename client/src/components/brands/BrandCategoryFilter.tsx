@@ -5,25 +5,10 @@
  */
 
 import type { BrandCategory } from '@/hooks/useBrands'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { useBrandsT } from '@/i18n/ns/brands'
 
-interface CategoryOption {
-  value: BrandCategory | null
-  label: string
-}
-
-const CATEGORIES: CategoryOption[] = [
-  { value: null, label: 'All' },
-  { value: 'equipment', label: 'Equipment' },
-  { value: 'apparel', label: 'Apparel' },
-  { value: 'accessories', label: 'Accessories' },
-  { value: 'nutrition', label: 'Nutrition' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'coaching', label: 'Coaching & Training' },
-  { value: 'recruiting', label: 'Recruiting' },
-  { value: 'media', label: 'Media' },
-  { value: 'services', label: 'Services' },
-  { value: 'other', label: 'Other' },
-]
+const CATEGORIES: (BrandCategory | null)[] = [null, 'equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other']
 
 interface BrandCategoryFilterProps {
   value: BrandCategory | null
@@ -31,18 +16,20 @@ interface BrandCategoryFilterProps {
 }
 
 export function BrandCategoryFilter({ value, onChange }: BrandCategoryFilterProps) {
+  const t = useBrandsT()
+  const tEnum = useEnumsT()
   return (
     <div
       data-testid="brand-category-filter"
       className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"
     >
       {CATEGORIES.map((category) => {
-        const isActive = value === category.value
+        const isActive = value === category
         return (
           <button
-            key={category.value ?? 'all'}
+            key={category ?? 'all'}
             type="button"
-            onClick={() => onChange(category.value)}
+            onClick={() => onChange(category)}
             className={`
               px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
               ${
@@ -52,7 +39,7 @@ export function BrandCategoryFilter({ value, onChange }: BrandCategoryFilterProp
               }
             `}
           >
-            {category.label}
+            {category ? tEnum(`brandCategory.${category}`) : t('categoryFilter.all')}
           </button>
         )
       })}

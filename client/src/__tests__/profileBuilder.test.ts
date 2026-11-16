@@ -43,7 +43,8 @@ describe('Hockia AI · Fill my profile for me', () => {
     expect(lib).toContain("if (d.date_of_birth && !p.date_of_birth)") // DOB only when none is set
     expect(lib).toContain("rpc('declare_date_of_birth'")
     const ui = read('../components/hockiaAi/ProfileBuilder.tsx')
-    expect(ui).toContain('Never add ID documents or passport photos')
+    expect(ui).toContain("t('builder.noIdDocs')")
+    expect(read('../locales/en/hockiaAi.json')).toContain('Never add ID documents or passport photos')
     expect(ui).toContain('data-testid="builder-under18"')
     expect(ui.indexOf('saveProfileDraft(')).toBeGreaterThan(ui.indexOf('const saveAll'))
   })

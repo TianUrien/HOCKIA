@@ -1,4 +1,5 @@
 import type { CreateContextInput, UpdateContextInput } from '@/hooks/useRecruitingContext'
+import { tClub } from '@/i18n/ns/club'
 import { recruitingTarget, type RoleGender, type RoleLevel, type RolePosition } from '@/lib/postRole'
 
 /**
@@ -32,8 +33,8 @@ export function emptyContextDraft(): NewContextDraft {
 
 /** What stops Save: fit is measured against a team, so the team is required. */
 export function newContextProblem(d: NewContextDraft, kind: ContextKind): string | null {
-  if (!d.position) return kind === 'player' ? 'Pick a position.' : 'Pick a role.'
-  if (!d.gender) return 'Pick a team.'
+  if (!d.position) return kind === 'player' ? tClub('newContext.problems.position') : tClub('newContext.problems.role')
+  if (!d.gender) return tClub('newContext.problems.team')
   return null
 }
 

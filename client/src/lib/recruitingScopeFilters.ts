@@ -1,4 +1,5 @@
 import type { PlayingCategory } from './hockeyCategories'
+import { tRecruiting } from '@/i18n/ns/recruiting'
 import { playingCategoriesForTarget, type TargetCategory } from './recruitingContext'
 
 /** The slice of a recruiting_context row the Community filters read. */
@@ -60,7 +61,9 @@ export function scopeFilters(
 
 /** "women's players in Spain" — what the scoped grid is showing, for the banner. */
 export function scopeBannerLine(f: ScopeFilters, role: 'player' | 'coach'): string {
-  if (role === 'coach') return 'coaches'
-  const team = f.team === 'Women' ? 'women’s players' : f.team === 'Men' ? 'men’s players' : 'players'
-  return f.region ? `${team} in ${f.region}` : team
+  if (role === 'coach') return tRecruiting('scopeFilters.coaches')
+  const region = f.region
+  if (f.team === 'Women') return region ? tRecruiting('scopeFilters.womenInRegion', { region }) : tRecruiting('scopeFilters.women')
+  if (f.team === 'Men') return region ? tRecruiting('scopeFilters.menInRegion', { region }) : tRecruiting('scopeFilters.men')
+  return region ? tRecruiting('scopeFilters.playersInRegion', { region }) : tRecruiting('scopeFilters.players')
 }

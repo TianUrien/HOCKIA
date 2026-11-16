@@ -35,6 +35,7 @@ import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import MoreActionsMenu from './MoreActionsMenu'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface QuickActionsRowProps {
   playerId: string
@@ -75,6 +76,7 @@ export default function QuickActionsRow({
   messageOrigin = 'Community',
   className = '',
 }: QuickActionsRowProps) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const savedState = useIsProfileSaved(playerId)
@@ -103,8 +105,8 @@ export default function QuickActionsRow({
   }
 
   const labelSave = savedState.isSaved
-    ? `Remove ${playerName} from saved`
-    : `Save ${playerName}`
+    ? t('quickActions.removeSavedLabel', { name: playerName })
+    : t('quickActions.saveLabel', { name: playerName })
 
   return (
     <div className={['inline-flex items-center gap-1', className].join(' ')}>
@@ -116,16 +118,16 @@ export default function QuickActionsRow({
           disabled={savedState.mutating}
           label={labelSave}
           icon={savedState.isSaved ? BookmarkCheck : Bookmark}
-          text={savedState.isSaved ? 'Saved' : 'Save'}
+          text={savedState.isSaved ? t('quickActions.saved') : t('quickActions.save')}
         />
       )}
 
       <ActionButton
         compact={compact}
         onClick={handleMessage}
-        label={`Message ${playerName}`}
+        label={t('quickActions.messageLabel', { name: playerName })}
         icon={MessageSquare}
-        text="Message"
+        text={t('quickActions.message')}
       />
 
       {showAddFriend && (
@@ -147,27 +149,28 @@ export default function QuickActionsRow({
  *  relationship when the consumer opts in (showAddFriend), not for every
  *  compact tile. Reuses the same hook + states as FriendshipButton. */
 function AddFriendAction({ playerId, playerName, compact }: { playerId: string; playerName: string; compact: boolean }) {
+  const t = useRecruitingT()
   const { addToast } = useToastStore()
   const { mutating, isAuthenticated, isOwnProfile, isFriend, isOutgoingRequest, sendRequest } =
     useFriendship(playerId)
   if (isOwnProfile) return null
   if (isFriend) {
-    return <ActionButton compact={compact} active disabled icon={UserCheck} text="Friends" label={`Friends with ${playerName}`} onClick={() => {}} />
+    return <ActionButton compact={compact} active disabled icon={UserCheck} text={t('quickActions.friends')} label={t('quickActions.friendsLabel', { name: playerName })} onClick={() => {}} />
   }
   if (isOutgoingRequest) {
-    return <ActionButton compact={compact} disabled icon={Check} text="Requested" label={`Friend request sent to ${playerName}`} onClick={() => {}} />
+    return <ActionButton compact={compact} disabled icon={Check} text={t('quickActions.requested')} label={t('quickActions.requestedLabel', { name: playerName })} onClick={() => {}} />
   }
   return (
     <ActionButton
       compact={compact}
       disabled={mutating}
       icon={UserPlus}
-      text="Add friend"
-      label={`Add ${playerName} as a friend`}
+      text={t('quickActions.addFriend')}
+      label={t('quickActions.addFriendLabel', { name: playerName })}
       onClick={() =>
         isAuthenticated
           ? void sendRequest()
-          : addToast('Sign in with your Hockia profile to connect.', 'error')
+          : addToast(t('quickActions.signInToConnect'), 'error')
       }
     />
   )

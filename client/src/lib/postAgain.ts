@@ -1,5 +1,6 @@
 import type { Vacancy } from '@/lib/supabase'
 import type { PostRoleDraft } from '@/lib/postRole'
+import { tClub } from '@/i18n/ns/club'
 
 /**
  * Club speed CS3 · Post again (Figma 05 205:5722): a closed role seeds a NEW
@@ -19,5 +20,8 @@ export function postAgainDraft(d: PostRoleDraft): PostRoleDraft {
 /** "Closed 12 Sep · not filled" — the closed sheet and the start sheet rows. */
 export function closedRoleLine(closedAt: string | null | undefined, closedReason: string | null | undefined, dayOf: (iso: string) => string | null): string {
   const when = closedAt ? dayOf(closedAt) : null
-  return [when ? `Closed ${when}` : 'Closed', closedReason === 'filled' ? 'filled' : closedReason ? 'not filled' : null].filter(Boolean).join(' · ')
+  const closed = when ? tClub('postAgain.closedOn', { date: when }) : tClub('postAgain.closed')
+  if (closedReason === 'filled') return tClub('postAgain.withReason', { closed, reason: tClub('postAgain.filled') })
+  if (closedReason) return tClub('postAgain.withReason', { closed, reason: tClub('postAgain.notFilled') })
+  return closed
 }

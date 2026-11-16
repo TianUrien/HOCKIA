@@ -27,6 +27,8 @@ import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { useAuthStore } from '@/lib/auth'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { useEnumsT } from '@/i18n/ns/enums'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -101,28 +103,33 @@ interface RecruiterCandidateCardProps {
   priority?: boolean
 }
 
-const BRAND_CATEGORY_LABELS: Record<string, string> = {
-  equipment: 'Equipment',
-  apparel: 'Apparel',
-  accessories: 'Accessories',
-  nutrition: 'Nutrition',
-  technology: 'Technology',
-  coaching: 'Coaching & Training',
-  recruiting: 'Recruiting',
-  media: 'Media',
-  services: 'Services',
-  other: 'Other',
+type CardT = ReturnType<typeof useRecruitingT>
+type EnumsT = ReturnType<typeof useEnumsT>
+
+const BRAND_CATEGORIES = new Set([
+  'equipment', 'apparel', 'accessories', 'nutrition', 'technology',
+  'coaching', 'recruiting', 'media', 'services', 'other',
+])
+
+function brandCategoryLabel(te: EnumsT, category: string): string | null {
+  return BRAND_CATEGORIES.has(category) ? te(`brandCategory.${category}` as 'brandCategory.other') : null
 }
 
-/** Spell out the player position — never abbreviated, never omitted. */
-const POSITION_LABEL: Record<string, string> = {
-  goalkeeper: 'Goalkeeper',
-  defender: 'Defender',
-  defence: 'Defender',
-  midfield: 'Midfielder',
-  midfielder: 'Midfielder',
-  forward: 'Forward',
-  striker: 'Forward',
+/** Spell out the player position — never abbreviated, never omitted.
+ *  Raw token → the shared enums position key. */
+const POSITION_KEY: Record<string, 'goalkeeper' | 'defender' | 'midfielder' | 'forward'> = {
+  goalkeeper: 'goalkeeper',
+  defender: 'defender',
+  defence: 'defender',
+  midfield: 'midfielder',
+  midfielder: 'midfielder',
+  forward: 'forward',
+  striker: 'forward',
+}
+
+function positionLabel(te: EnumsT, raw: string): string {
+  const key = POSITION_KEY[raw.toLowerCase()]
+  return key ? te(`position.${key}`) : titleCase(raw)
 }
 
 function titleCase(raw: string): string {
@@ -132,37 +139,44 @@ function titleCase(raw: string): string {
     .trim()
 }
 
-function coachSpecLabel(member: RecruiterCardMember): string | null {
+/** Coach specialization tokens with their own tile wording ("Head Coach"). */
+const COACH_SPEC_KEYS = new Set([
+  'head_coach', 'assistant_coach', 'youth_coach', 'goalkeeper_coach',
+  'strength_conditioning', 'performance_analyst', 'sports_scientist', 'other', 'other_coach',
+])
+
+function coachSpecLabel(t: CardT, member: RecruiterCardMember): string | null {
   const custom = member.coach_specialization_custom?.trim()
   if (custom) return custom
   const raw = member.coach_specialization?.trim()
   if (!raw) return null
+  if (COACH_SPEC_KEYS.has(raw)) return t(`candidateCard.coachSpec.${raw}` as 'candidateCard.coachSpec.other')
   const human = titleCase(raw)
-  return /coach/i.test(human) ? human : `${human} Coach`
+  return /coach/i.test(human) ? human : t('candidateCard.coachSpecFallback', { spec: human })
 }
 
-function umpireLevelLabel(member: RecruiterCardMember): string | null {
+function umpireLevelLabel(t: CardT, member: RecruiterCardMember): string | null {
   const raw = member.umpire_level?.trim()
   if (!raw) return null
   const human = titleCase(raw)
-  return /umpire|official/i.test(human) ? human : `${human} Umpire`
+  return /umpire|official/i.test(human) ? human : t('candidateCard.umpireLevel', { level: human })
 }
 
 /** The role-defining noun under the name (line 4) — always present. */
-function detailLine(member: RecruiterCardMember): string {
+function detailLine(te: EnumsT, member: RecruiterCardMember): string {
   switch (member.role) {
     case 'coach':
-      return 'Coach'
+      return te('role.coach')
     case 'umpire':
-      return 'Umpire'
+      return te('role.umpire')
     case 'club':
-      return 'Club'
+      return te('role.club')
     case 'brand':
-      return member.brand_category ? BRAND_CATEGORY_LABELS[member.brand_category] ?? 'Brand' : 'Brand'
+      return (member.brand_category ? brandCategoryLabel(te, member.brand_category) : null) ?? te('role.brand')
     default: {
       const raw = member.position?.trim()
-      if (!raw) return 'Player'
-      return POSITION_LABEL[raw.toLowerCase()] ?? titleCase(raw)
+      if (!raw) return te('role.player')
+      return positionLabel(te, raw)
     }
   }
 }
@@ -184,42 +198,42 @@ function locationLine(member: RecruiterCardMember): string | null {
 }
 
 /** Role noun for the tile's second line: "Player", "Coach", "Club"… */
-function roleNoun(member: RecruiterCardMember): string {
+function roleNoun(te: EnumsT, member: RecruiterCardMember): string {
   switch (member.role) {
-    case 'coach': return 'Coach'
-    case 'umpire': return 'Umpire'
-    case 'club': return 'Club'
-    case 'brand': return 'Brand'
-    default: return 'Player'
+    case 'coach': return te('role.coach')
+    case 'umpire': return te('role.umpire')
+    case 'club': return te('role.club')
+    case 'brand': return te('role.brand')
+    default: return te('role.player')
   }
 }
 
 /** The tile's second line — "Player · Midfielder", "Club · Serie A Elite",
  *  "Coach · Goalkeeping Coach", "Brand · Equipment". */
-function tileDetail(member: RecruiterCardMember): string {
-  const noun = roleNoun(member)
+function tileDetail(t: CardT, te: EnumsT, member: RecruiterCardMember): string {
+  const noun = roleNoun(te, member)
   let fact: string | null = null
   switch (member.role) {
     case 'player': {
       const raw = member.position?.trim()
-      fact = raw ? (POSITION_LABEL[raw.toLowerCase()] ?? titleCase(raw)) : null
+      fact = raw ? positionLabel(te, raw) : null
       break
     }
     case 'coach':
-      fact = coachSpecLabel(member)
+      fact = coachSpecLabel(t, member)
       break
     case 'umpire':
-      fact = umpireLevelLabel(member)
+      fact = umpireLevelLabel(t, member)
       break
     case 'club':
       // The club's league on Hockia (its linked club's league), else where it is.
       fact = member.competition_name?.trim() || getPlayerLeagueName(member.current_world_club_id, null) || locationLine(member)
       break
     case 'brand':
-      fact = member.brand_category ? BRAND_CATEGORY_LABELS[member.brand_category] ?? null : null
+      fact = member.brand_category ? brandCategoryLabel(te, member.brand_category) : null
       break
   }
-  return fact && fact !== noun ? `${noun} · ${fact}` : noun
+  return fact && fact !== noun ? t('candidateCard.tileDetail', { role: noun, detail: fact }) : noun
 }
 
 /**
@@ -234,10 +248,12 @@ function tileDetail(member: RecruiterCardMember): string {
 export default function RecruiterCandidateCard({ member, verdict: verdictProp, fitState: fitStateProp = null, onPreview, opensProfile = false, priority = false }: RecruiterCandidateCardProps) {
   // Fit is club-only: a player viewer never gets a verdict, % or fit chip,
   // whatever the caller passes (Figma Card / Member, "Show fit" off).
+  const t = useRecruitingT()
+  const te = useEnumsT()
   const viewerIsPlayer = useAuthStore((s) => s.profile?.role === 'player')
   const verdict = viewerIsPlayer ? null : verdictProp
   const fitState = viewerIsPlayer ? null : fitStateProp
-  const name = member.full_name?.trim() || 'Unknown'
+  const name = member.full_name?.trim() || t('candidateCard.unknownName')
   const placeholderRole = isRoleAvatarRole(member.role) ? member.role : 'player'
 
   const isBrand = member.role === 'brand'
@@ -260,10 +276,12 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
   const badgeLabel = fitChipLabel(badgeState)
 
   // Round 6: say where the tap goes — the full profile or the preview.
-  const tapHint = opensProfile ? 'Opens profile.' : 'Tap to preview.'
+  const tapHint = opensProfile ? t('candidateCard.opensProfile') : t('candidateCard.tapToPreview')
+  const detail = detailLine(te, member)
   const ariaLabel = badgeLabel
-    ? `${name} · ${detailLine(member)}, ${badgeLabel}. ${tapHint}`
-    : `${name} · ${detailLine(member)}. ${tapHint}`
+    ? t('candidateCard.ariaWithFit', { name, detail, fit: badgeLabel, hint: tapHint })
+    : t('candidateCard.aria', { name, detail, hint: tapHint })
+  const tileLine = tileDetail(t, te, member)
 
   return (
     <button
@@ -296,10 +314,10 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
       <div className="min-w-0 px-1 pt-2">
         <h3 className="flex items-center gap-1 text-row font-semibold text-ink-1">
           <span className="truncate" title={name}>{name}</span>
-          {member.is_verified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-[#1D9E75]" aria-label="Verified" />}
+          {member.is_verified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-[#1D9E75]" aria-label={t('candidateCard.verified')} />}
         </h3>
-        <p className="mt-px truncate text-secondary text-ink-2" title={tileDetail(member)}>
-          {tileDetail(member)}
+        <p className="mt-px truncate text-secondary text-ink-2" title={tileLine}>
+          {tileLine}
         </p>
         <div className="mt-px flex h-[18px] items-center overflow-hidden text-secondary text-ink-3">
           {hasNationality ? (

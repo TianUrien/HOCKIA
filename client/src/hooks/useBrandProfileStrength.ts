@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { BrandDetail } from './useBrand'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 export interface ProfileStrengthBucket {
   id: string
@@ -40,6 +41,7 @@ interface UseBrandProfileStrengthOptions {
  * brands column — so those are dropped to keep one number everywhere.)
  */
 export function useBrandProfileStrength({ brand, ambassadorCount = 0 }: UseBrandProfileStrengthOptions) {
+  const t = useBrandsT()
   const buckets: ProfileStrengthBucket[] = useMemo(() => {
     const hasLogo = Boolean(brand?.logo_url?.trim())
     // Canonical scores bio when non-empty (NOT the old >=50-char gate).
@@ -52,56 +54,56 @@ export function useBrandProfileStrength({ brand, ambassadorCount = 0 }: UseBrand
     return [
       {
         id: 'logo',
-        label: 'Brand Logo',
-        hint: 'Upload your brand logo',
-        unlockCopy: 'A recognisable logo makes your brand stand out in searches.',
+        label: t('strength.logoLabel'),
+        hint: t('strength.logoHint'),
+        unlockCopy: t('strength.logoUnlock'),
         weight: 20,
         completed: hasLogo,
         actionId: 'edit-profile',
-        actionLabel: 'Add Logo',
+        actionLabel: t('strength.logoAction'),
       },
       {
         id: 'about',
-        label: 'About Your Brand',
-        hint: 'Write a description about your brand',
-        unlockCopy: 'Tell players and clubs what makes your brand worth following.',
+        label: t('strength.aboutLabel'),
+        hint: t('strength.aboutHint'),
+        unlockCopy: t('strength.aboutUnlock'),
         weight: 20,
         completed: hasBio,
         actionId: 'edit-profile',
-        actionLabel: 'Add Description',
+        actionLabel: t('strength.aboutAction'),
       },
       {
         id: 'contact',
-        label: 'Contact Info',
-        hint: 'Add your website or Instagram link',
-        unlockCopy: 'A direct way for people to reach you outside Hockia.',
+        label: t('strength.contactLabel'),
+        hint: t('strength.contactHint'),
+        unlockCopy: t('strength.contactUnlock'),
         weight: 20,
         completed: hasContact,
         actionId: 'edit-profile',
-        actionLabel: 'Add Contact',
+        actionLabel: t('strength.contactAction'),
       },
       {
         id: 'country',
-        label: 'Brand Country',
-        hint: 'Set your brand\'s country',
-        unlockCopy: 'Players favour brands they can buy from locally or that ship to their region.',
+        label: t('strength.countryLabel'),
+        hint: t('strength.countryHint'),
+        unlockCopy: t('strength.countryUnlock'),
         weight: 20,
         completed: hasCountry,
         actionId: 'edit-profile',
-        actionLabel: 'Add Country',
+        actionLabel: t('strength.countryAction'),
       },
       {
         id: 'ambassadors',
-        label: 'Ambassadors',
-        hint: 'Add at least one brand ambassador',
-        unlockCopy: 'Players associated with your brand bring their network with them.',
+        label: t('strength.ambassadorsLabel'),
+        hint: t('strength.ambassadorsHint'),
+        unlockCopy: t('strength.ambassadorsUnlock'),
         weight: 20,
         completed: hasAmbassadors,
         actionId: 'add-ambassador',
-        actionLabel: 'Add Ambassador',
+        actionLabel: t('strength.ambassadorsAction'),
       },
     ]
-  }, [brand, ambassadorCount])
+  }, [brand, ambassadorCount, t])
 
   // Calculate total percentage (canonical buckets sum to 100).
   const percentage = useMemo(() => {

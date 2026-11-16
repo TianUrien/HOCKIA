@@ -90,7 +90,7 @@ describe('Club speed CS7 · phone review moves on', () => {
   it('opens the next applicant To review after a decision, and counts N of M', () => {
     const src = read('../components/club/ApplicantReviewScreen.tsx')
     expect(src).toContain('else advance(prev)')
-    expect(src).toContain('{run + 1} of {reviewTotal} to review')
+    expect(src).toContain("t('applicantReview.counter', { current: run + 1, total: reviewTotal })")
     expect(src).toContain('<UndoToast aboveBar />')
     expect(read('../pages/ClubRecruitingRoutes.tsx')).toContain('<ApplicantReviewScreen key={applicationId}')
   })

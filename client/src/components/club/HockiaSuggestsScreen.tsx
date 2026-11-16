@@ -13,15 +13,12 @@ import { inviteLimitReason } from '@/lib/invites'
 import { roleTitle } from '@/lib/opportunityCopy'
 import { COMPOSER_MAX_LENGTH } from '@/lib/hockiaAi'
 import {
-  SUGGESTS_COMPOSER_PLACEHOLDER,
-  SUGGESTS_EMPTY,
-  SUGGESTS_FOOTNOTE,
-  SUGGESTS_LOAD_ERROR,
-  SUGGESTS_TITLE,
+  suggestsCopy,
   flagsFor,
   suggestsIntro,
 } from '@/lib/roleSuggestions'
 import { suggestionReasons } from '@/lib/suggestionReasons'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 // The invite sheet (D3.2) is its own chunk: opened on demand.
 const InviteSheet = lazy(() => import('./InviteSheet'))
@@ -34,6 +31,7 @@ const InviteSheet = lazy(() => import('./InviteSheet'))
  * D3 sheet and its limits). The composer opens D5.2. Club-side only; phone.
  */
 export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const { data, suggestions, loading, error } = useRoleSuggestions(roleId)
@@ -46,7 +44,7 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
   const limitReason = allowance.reached ? inviteLimitReason(allowance.limit) : null
   const [inviteFor, setInviteFor] = useState<InviteSheetPlayer | null>(null)
   const [draft, setDraft] = useState('')
-  const backLabel = role ? roleTitle({ position: role.position, title: role.title, opportunity_type: role.opportunity_type }) : 'Role'
+  const backLabel = role ? roleTitle({ position: role.position, title: role.title, opportunity_type: role.opportunity_type }) : t('hockiaSuggests.backFallback')
 
   const ask = () => {
     const q = draft.trim()
@@ -59,18 +57,18 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
       <div className="px-5 pb-3 pt-0.5">
         <h1 className="flex items-center gap-2 text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">
           <Sparkles className="h-6 w-6 shrink-0 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
-          {SUGGESTS_TITLE}
+          {suggestsCopy.title}
         </h1>
         {role && <p className="pt-1 text-[14px] leading-[19px] text-ink-2" data-testid="suggests-intro">{suggestsIntro(role.title, suggestions.length)}</p>}
       </div>
 
       {limitReason && suggestions.length > 0 && <InviteLimitNotice reason={limitReason} />}
-      {loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">Finding players…</p>}
-      {error && !loading && <p className="px-5 py-3 text-row text-ink-2">{SUGGESTS_LOAD_ERROR}</p>}
+      {loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">{t('hockiaSuggests.loading')}</p>}
+      {error && !loading && <p className="px-5 py-3 text-row text-ink-2">{suggestsCopy.loadError}</p>}
 
       {!loading && !error && suggestions.length === 0 && (
         <div className="px-5 pt-2">
-          <p className="rounded-card bg-surface-grouped p-4 text-row text-ink-2" role="status" data-testid="suggests-empty">{SUGGESTS_EMPTY}</p>
+          <p className="rounded-card bg-surface-grouped p-4 text-row text-ink-2" role="status" data-testid="suggests-empty">{suggestsCopy.empty}</p>
         </div>
       )}
 
@@ -108,11 +106,11 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
             data-testid="suggests-composer"
           >
             <label className="min-w-0 flex-1">
-              <span className="sr-only">Ask Hockia about these players</span>
+              <span className="sr-only">{t('hockiaSuggests.composerLabel')}</span>
               <input
                 value={draft}
                 onChange={(e) => { if (e.target.value.length <= COMPOSER_MAX_LENGTH) setDraft(e.target.value) }}
-                placeholder={SUGGESTS_COMPOSER_PLACEHOLDER}
+                placeholder={suggestsCopy.composerPlaceholder}
                 enterKeyHint="send"
                 className="block h-11 w-full rounded-[22px] bg-surface-grouped px-4 text-row text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
                 data-testid="suggests-composer-input"
@@ -120,7 +118,7 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
             </label>
             <button
               type="submit"
-              aria-label="Ask Hockia"
+              aria-label={t('hockiaSuggests.send')}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white"
               data-testid="suggests-composer-send"
             >
@@ -128,7 +126,7 @@ export default function HockiaSuggestsScreen({ roleId }: { roleId: string }) {
             </button>
           </form>
           )}
-          <p className={`${suggestions.length > 0 ? 'pt-3' : ''} text-caption leading-4 text-ink-3`} data-testid="suggests-footnote">{SUGGESTS_FOOTNOTE}</p>
+          <p className={`${suggestions.length > 0 ? 'pt-3' : ''} text-caption leading-4 text-ink-3`} data-testid="suggests-footnote">{suggestsCopy.footnote}</p>
         </div>
       )}
 

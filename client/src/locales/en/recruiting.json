@@ -1,0 +1,998 @@
+{
+  "roadToSigning": {
+    "title": "Road to signing",
+    "trialDoneLabel": "Trial or video call done",
+    "message": "Message"
+  },
+  "roleActions": {
+    "reopenFailed": "Could not reopen the opportunity. Try again.",
+    "findFailed": "Could not open the search. Try again.",
+    "moreLabel": "More actions for {{title}}",
+    "closedSheetLabel": "Closed opportunity actions",
+    "postAgain": "Post again",
+    "postAgainDetail": "A new opportunity with the same details. Dates and applicants start fresh. You check it before it goes live.",
+    "reopenThis": "Reopen this opportunity",
+    "reopenThisDetail": "Same opportunity and applicants, open again for 30 days",
+    "editClosed": "Edit opportunity",
+    "editClosedDetail": "Change the details; it stays closed",
+    "cancel": "Cancel",
+    "sheetLabel": "Opportunity actions",
+    "findPlayers": "Find players for this opportunity",
+    "findCoaches": "Find coaches for this opportunity",
+    "edit": "Edit opportunity",
+    "close": "Close opportunity",
+    "reopen": "Reopen opportunity"
+  },
+  "roleApplicants": {
+    "notFound": "This opportunity isn’t yours or no longer exists.",
+    "memberFallback": "Hockia member",
+    "loadFailed": "Couldn’t load applicants. Pull to try again."
+  },
+  "applicantsScreen": {
+    "chips": {
+      "toReviewCount_one": "To review · {{count}}",
+      "toReviewCount_other": "To review · {{count}}",
+      "toReview": "To review",
+      "shortlisted": "Shortlisted",
+      "maybe": "Maybe",
+      "notAFit": "Not a fit",
+      "closedCount_one": "Closed · {{count}}",
+      "closedCount_other": "Closed · {{count}}",
+      "closed": "Closed"
+    },
+    "caption": {
+      "pending": "Oldest first · each closes {{days}} days after it arrives",
+      "closed": "Closed without a reply after {{days}} days, filled, or withdrawn by the applicant",
+      "recent": "Most recent decision first"
+    },
+    "empty": {
+      "pending": "Nobody waiting. New applicants show up here.",
+      "shortlisted": "No one shortlisted yet.",
+      "maybe": "No one on maybe.",
+      "rejected": "No one declined.",
+      "closed": "None closed yet."
+    },
+    "cancel": "Cancel",
+    "deselectAll": "Deselect all",
+    "selectAll": "Select all",
+    "clubFallback": "Club",
+    "statusTabsLabel": "Application status",
+    "selectHint": "Select applicants to answer them together",
+    "select": "Select",
+    "newLabel": "New",
+    "invitedTag": "Invited",
+    "newTag": "New",
+    "footer": "Shortlist, Maybe or Decline. Anything you don’t answer closes after {{days}} days.",
+    "footerWithNote": "Shortlist, Maybe or Decline. Anything you don’t answer closes after {{days}} days. {{note}}.",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "bulkMaybe": "Maybe",
+    "bulkDeclineCount_one": "Not a fit · {{count}}",
+    "bulkDeclineCount_other": "Not a fit · {{count}}",
+    "bulkDecline": "Not a fit"
+  },
+  "applicantsDesktop": {
+    "chips": {
+      "toReviewCount_one": "To review · {{count}}",
+      "toReviewCount_other": "To review · {{count}}",
+      "toReview": "To review",
+      "shortlisted": "Shortlisted",
+      "maybe": "Maybe",
+      "notAFit": "Not a fit",
+      "closedCount_one": "Closed · {{count}}",
+      "closedCount_other": "Closed · {{count}}",
+      "closed": "Closed"
+    },
+    "caption": {
+      "pending": "Oldest first · each closes {{days}} days after it arrives",
+      "closed": "Closed without a reply after {{days}} days, filled, or withdrawn by the applicant",
+      "recent": "Most recent decision first"
+    },
+    "empty": {
+      "pending": "Nobody waiting. New applicants show up here.",
+      "shortlisted": "No one shortlisted yet.",
+      "maybe": "No one on maybe.",
+      "rejected": "No one declined.",
+      "closed": "None closed yet."
+    },
+    "cancel": "Cancel",
+    "deselectAll": "Deselect all",
+    "selectAll": "Select all",
+    "clubFallback": "Club",
+    "statusTabsLabel": "Application status",
+    "selectHint": "Select applicants to answer them together",
+    "select": "Select",
+    "newLabel": "New",
+    "invitedTag": "Invited",
+    "newTag": "New",
+    "footer": "Shortlist, Maybe or Decline. Anything you don’t answer closes after {{days}} days.",
+    "footerWithNote": "Shortlist, Maybe or Decline. Anything you don’t answer closes after {{days}} days. {{note}}.",
+    "bulkMaybe": "Maybe",
+    "bulkDeclineCount_one": "Not a fit · {{count}}",
+    "bulkDeclineCount_other": "Not a fit · {{count}}",
+    "bulkDecline": "Not a fit",
+    "errorTitle": "Can’t open these applicants",
+    "loadFailed": "Couldn’t load applicants. Please try again.",
+    "keyboardHint": "Keyboard: ↑ ↓ to move · S Shortlist · M Maybe · D Decline",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "selectionEmpty": "Tick the applicants you want to answer together.",
+    "pickOne": "Pick an applicant to review."
+  },
+  "applicantsList": {
+    "tiers": {
+      "unsorted": "Unsorted",
+      "topPick": "Top pick",
+      "maybe": "Maybe",
+      "offerSigning": "Offer & signing",
+      "notAFit": "Not a fit",
+      "expired": "Expired (no response)",
+      "filled": "Opportunity filled",
+      "withdrawn": "Withdrawn"
+    },
+    "documentTitleNamed": "Applicants · {{title}}",
+    "documentTitle": "Applicants",
+    "errors": {
+      "notFoundOrForbidden": "Opportunity not found or you do not have permission to view it.",
+      "loadFailed": "Failed to load applicants. Please try again.",
+      "updateFailed": "Failed to update status. Please try again.",
+      "notFound": "Opportunity not found."
+    },
+    "endorserFallback": "Hockia Member",
+    "loading": "Loading applicants...",
+    "errorTitle": "Error",
+    "backToDashboard": "Back to Dashboard",
+    "backToOpportunities": "Back to Opportunities",
+    "title": "Applicants for {{title}}",
+    "count_one": "{{count}} applicant",
+    "count_other": "{{count}} applicants",
+    "shown_one": "({{count}} shown)",
+    "shown_other": "({{count}} shown)",
+    "searchPlaceholder": "Search by name, location, nationality...",
+    "clearSearch": "Clear search",
+    "positionFilterLabel": "Filter by position",
+    "allPositions": "All positions",
+    "referencesUnavailable": "Reference data could not be loaded. Applicant references may not be shown.",
+    "empty": {
+      "title": "No Applicants Yet",
+      "body": "Applications will appear here once candidates start applying to this opportunity."
+    },
+    "noMatches": {
+      "title": "No matches",
+      "body": "No applicants match your current search or filter.",
+      "clear": "Clear filters"
+    }
+  },
+  "bulkDeclineSheet": {
+    "title_one": "Not a fit: {{count}} applicant",
+    "title_other": "Not a fit: {{count}} applicants",
+    "reasonHeading": "Reason",
+    "reasonLabel": "Reason",
+    "noteHeading": "Note · sent to each player",
+    "noteLabel": "Note to each player",
+    "previewFor": "Preview for {{name}}",
+    "footer": "Each player gets their own email with their own first name. The note also appears on their application, which shows “Not this time”.",
+    "send_one": "Send the note",
+    "send_other": "Send to {{count}}",
+    "cancel": "Cancel"
+  },
+  "declineSheet": {
+    "ariaLabel": "{{name}} is not a fit",
+    "title": "Not a fit: {{name}}",
+    "intro": "Pick a reason. Hockia writes {{name}} a kind note from it. Change anything before it goes.",
+    "introNoName": "Pick a reason. Hockia turns it into a kind note. Change anything before it goes.",
+    "reasonLabel": "Reason",
+    "drafting": "Drafting with Hockia AI…",
+    "drafted": "Drafted by Hockia AI · tap to edit",
+    "ownNote": "Your note",
+    "noteLabel": "Note to {{name}}",
+    "notePlaceholder": "Write a short note to {{name}}",
+    "footer": "This note appears on the application and in the email about it.",
+    "send": "Send the note",
+    "cancel": "Cancel"
+  },
+  "declineNotes": {
+    "reasons": {
+      "positionFilled": "Position filled",
+      "differentLevel": "Different level",
+      "timing": "Timing",
+      "location": "Location",
+      "eligibility": "Eligibility",
+      "other": "Other"
+    },
+    "why": {
+      "positionFilled": "We’ve filled this position",
+      "differentPosition": "We’re looking for a different position for this opportunity",
+      "differentLevel": "We’re looking for a different level for this opportunity",
+      "timing": "The timing doesn’t work for this opportunity",
+      "location": "The location doesn’t work for this opportunity",
+      "eligibility": "We need different eligibility for this opportunity",
+      "profileIncomplete": "We need a fuller profile for this opportunity",
+      "videoMissing": "We need match video for this opportunity",
+      "other": "We’ve decided to go another way for this opportunity",
+      "roleClosed": "We’ve closed this opportunity"
+    },
+    "thisOpportunity": "this opportunity",
+    "body": "thank you for applying to {{title}}. {{why}}, so we won’t move forward this time. We’d be glad to see you apply to our next roles.",
+    "greeting": "Hi {{name}},",
+    "greetingNoName": "Hello,",
+    "namesMore": "{{names}} and {{count}} more",
+    "bulkMaybe_one": "{{count}} applicant marked maybe",
+    "bulkMaybe_other": "{{count}} applicants marked maybe",
+    "bulkDeclined_one": "{{count}} applicant declined",
+    "bulkDeclined_other": "{{count}} applicants declined"
+  },
+  "undoToast": {
+    "undo": "Undo"
+  },
+  "inviteAction": {
+    "applied": "Applied",
+    "passed": "Passed",
+    "passedLabel": "Passed on this opportunity",
+    "invited": "Invited",
+    "invite": "Invite",
+    "inviteLabel": "Invite to apply",
+    "inviteLabelLimited": "Invite to apply · {{reason}}"
+  },
+  "inviteSheet": {
+    "title": "Invite {{name}} to apply",
+    "opportunityHeading": "Opportunity",
+    "passedActive": "{{name}} passed on {{role}}. Choose another opportunity.",
+    "playerFallback": "The player",
+    "loading": "Loading opportunities…",
+    "noRoles": "Post an opportunity first. An invite is always to one of your open opportunities.",
+    "roleLabel": "Role",
+    "passedOn": "Passed on this opportunity",
+    "changeRole": "Change opportunity",
+    "noteHeading": "Note",
+    "drafted": "Drafted from the opportunity · tap to edit",
+    "ownNote": "Your note",
+    "noteLabel": "Note to {{name}}",
+    "notePlaceholder": "Write a short note to {{name}}",
+    "sending": "Sending…",
+    "send": "Send invite"
+  },
+  "markSignedSheet": {
+    "ariaLabel": "Mark {{name}} as signed",
+    "title": "Mark {{name}} as signed?",
+    "closeRole": "Close {{role}}",
+    "staysOpen": "The opportunity stays open, for signing more players.",
+    "saving": "Saving…",
+    "confirm": "Mark as signed",
+    "notYet": "Not yet"
+  },
+  "offerSheet": {
+    "title": "Offer to {{name}}",
+    "intro": "Filled in from your opportunity. Change anything that’s different for {{name}}.",
+    "role": "Role",
+    "start": "Start",
+    "startDate": "Start date",
+    "length": "Length",
+    "pay": "Pay",
+    "notStated": "Not stated",
+    "package": "Package",
+    "none": "None",
+    "openUntil": "Open until",
+    "chooseDate": "Choose a date",
+    "notePlaceholder": "Add a note (optional)",
+    "noteLabel": "Note (optional)",
+    "sending": "Sending…",
+    "sendUpdated": "Send updated offer",
+    "send": "Send offer"
+  },
+  "inviteMembersModal": {
+    "errors": {
+      "createLink": "Could not create the invite link.",
+      "copy": "Could not copy. Long-press the link to copy it.",
+      "regenerate": "Could not regenerate the link."
+    },
+    "regenerated": "New invite link generated. The old one no longer works.",
+    "invitedToast": "Invitation sent to {{name}}.",
+    "invitedToastNoName": "Invitation sent to member.",
+    "title": "Invite members",
+    "close": "Close",
+    "intro": "Build your club’s roster. Players and coaches can accept to join.",
+    "tabLink": "Invite link",
+    "tabPerson": "Invite a person",
+    "linkHelp": "Share this link with your team. Anyone who opens it can accept and join your club.",
+    "generating": "Generating link…",
+    "copied": "Copied",
+    "copy": "Copy",
+    "regenerate": "Generate a new link",
+    "searchPlaceholder": "Search players and coaches by name",
+    "searching": "Searching…",
+    "typeName": "Type a name to find players and coaches.",
+    "noResults": "No players or coaches match “{{query}}”.",
+    "invited": "Invited",
+    "invite": "Invite"
+  },
+  "hockiaSuggests": {
+    "backFallback": "Role",
+    "loading": "Finding players…",
+    "composerLabel": "Ask Hockia about these players",
+    "send": "Ask Hockia"
+  },
+  "suggestionCard": {
+    "playerFallback": "Player",
+    "ariaLabel": "{{rank}}. {{name}}",
+    "reasonsLabel": "Why Hockia suggests this player",
+    "met": "Met",
+    "missing": "Not on the profile",
+    "removeShortlist": "Remove {{name}} from the shortlist",
+    "addShortlist": "Shortlist {{name}}"
+  },
+  "suggestRefine": {
+    "euPassport": "EU passport",
+    "availableFrom": "From {{date}}",
+    "playerFallback": "Player",
+    "chipsLabel": "Suggested next questions",
+    "composerLabel": "Ask Hockia AI",
+    "send": "Send"
+  },
+  "recruitConfirm": {
+    "back": "Opportunities",
+    "title": "Do you recruit players for a team?",
+    "body": "Posting opportunities is for coaches who recruit. Say yes and you also get Find players and a shortlist.",
+    "error": "That didn’t save. Check your connection and try again.",
+    "yes": "Yes, I recruit for a team",
+    "notNow": "Not now"
+  },
+  "fitCard": {
+    "title": "Fit for this opportunity",
+    "footer": "Only clubs & recruiting coaches see fit. It reads the profile and nothing else."
+  },
+  "rankedForPill": {
+    "prefix": "Ranked for",
+    "ariaLabel": "Ranked for {{label}}. Change the context"
+  },
+  "rankedForSheet": {
+    "title": "Ranked for",
+    "intro": "Narrows and ranks people for one context. Only you see this.",
+    "close": "Close",
+    "openRoles": "Your open opportunities",
+    "savedContexts": "Saved contexts",
+    "savedSearch": "Saved search",
+    "savedSearchRegion": "Saved search · {{region}}",
+    "noContext": "No context",
+    "noContextDetail": "Newest first, no fit",
+    "newContext": "New context",
+    "toReview": "{{count}} to review",
+    "noApplicants": "No applicants yet"
+  },
+  "rankedForControl": {
+    "coachingFallback": "Coaching opportunity"
+  },
+  "applicantReview": {
+    "menu": {
+      "markSigned": "Mark as signed",
+      "decline": "Not moving forward",
+      "withdrawOffer": "Withdraw offer",
+      "undoSigning": "Undo signing"
+    },
+    "errors": {
+      "unavailable": "This application isn’t available.",
+      "loadFailed": "Couldn’t load this application."
+    },
+    "playerFallback": "this player",
+    "roleFallback": "this opportunity",
+    "toasts": {
+      "offerUpdated": "Updated offer sent to {{name}}",
+      "offerSent": "Offer sent to {{name}}",
+      "askedToConfirm": "{{name}} will be asked to confirm",
+      "decisionFailed": "Couldn’t save that decision. Please try again.",
+      "declineFailed": "Couldn’t send the decline. Please try again."
+    },
+    "status": {
+      "new": "New",
+      "shortlisted": "Shortlisted",
+      "maybe": "Maybe",
+      "notAFit": "Not a fit"
+    },
+    "statusNote": {
+      "shortlisted": "You shortlisted this player.",
+      "maybe": "You marked this player maybe.",
+      "rejected": "You marked this application not a fit.",
+      "noResponse": "Closed without a reply.",
+      "filled": "This opportunity was filled.",
+      "withdrawn": "Withdrawn by the applicant."
+    },
+    "closesToday": "closes today",
+    "daysLeftToReply": "{{daysLeft}} to reply",
+    "appliedOn": "Applied {{date}}",
+    "menuMessage": "Message",
+    "viewFullProfile": "View full profile",
+    "decision": {
+      "notAFit": "Not a fit",
+      "maybe": "Maybe",
+      "shortlist": "Shortlist"
+    },
+    "messageName": "Message {{name}}",
+    "moreActions": "More actions",
+    "message": "Message",
+    "road": {
+      "makeOffer": "Make an offer",
+      "editOffer": "Edit offer",
+      "markSigned": "Mark as signed"
+    },
+    "inTheirWords": "In their words",
+    "facts": {
+      "age": "Age",
+      "basedIn": "Based in",
+      "club": "Club",
+      "passport_one": "Passport",
+      "passport_other": "Passports"
+    },
+    "videos": "Videos",
+    "seeAllVideos": "See all {{total}}",
+    "fullMatch": "Full match",
+    "versus": "vs {{team}}",
+    "minutes": "{{minutes}} min",
+    "career": "Career",
+    "seeAll": "See all",
+    "specialistSkills": "Specialist skills",
+    "references": "References",
+    "noReferences": "No references yet. References come from friends on Hockia. Coaches and teammates can write one.",
+    "cancel": "Cancel",
+    "confirm": {
+      "withdrawTitle": "Withdraw this offer?",
+      "undoTitle": "Undo the signing?",
+      "withdrawBody": "{{name}} is told the offer was withdrawn and goes back to Shortlisted.",
+      "undoBody": "{{name}} won’t be asked to confirm any more. You can mark the signing again later.",
+      "withdrawConfirm": "Withdraw offer",
+      "undoConfirm": "Undo signing",
+      "withdrawBusy": "Withdrawing…",
+      "undoBusy": "Undoing…"
+    },
+    "backToApplicants": "Back to applicants",
+    "counter": "{{current}} of {{total}} to review"
+  },
+  "clubFit": {
+    "state": {
+      "green": "Strong fit",
+      "yellow": "Possible fit",
+      "grey": "Lower fit"
+    },
+    "target": {
+      "men": "men",
+      "women": "women",
+      "mixed": "mixed"
+    },
+    "position": {
+      "striker": "Striker"
+    },
+    "reasons": {
+      "categoryMatch": "Plays {{category}}, which matches {{target}}'s team category.",
+      "categoryMismatch": "Plays {{category}}, which is different from your team's category.",
+      "categoryMissing": "Playing category not added yet. No match info.",
+      "levelComparable": "Plays at a comparable league level to your team.",
+      "levelDifferent": "Plays at a different league level from your team.",
+      "leagueMissing": "Current league not linked. Level comparison unavailable.",
+      "teamLevelMissing": "Your team's league level isn't set. Level comparison unavailable.",
+      "open": "Open to opportunities.",
+      "notOpen": "Not currently flagged open to opportunities.",
+      "positionMatch": "Plays {{position}}, which matches the position you're recruiting.",
+      "positionSecondary": "Plays {{position}} as a secondary position.",
+      "positionMismatch": "Primary position is {{position}}, not {{target}}.",
+      "positionMissing": "Position not added yet. No position match info.",
+      "specialistsAll_one": "Holds the specialism you're recruiting ({{skills}}).",
+      "specialistsAll_other": "Holds the specialisms you're recruiting ({{skills}}).",
+      "specialistsSome": "Holds {{skills}} (of the {{count}} sought).",
+      "specialistsNone": "Doesn't list the specialism you're recruiting."
+    },
+    "hardFail": {
+      "notGoalkeeper": "Plays {{position}}, not a goalkeeper. Goalkeeper is a specialist position, so this isn't a position fit.",
+      "position": "Plays {{position}}, not the {{target}} you require.",
+      "specialists_one": "Doesn't hold the required specialism ({{skills}}).",
+      "specialists_other": "Doesn't hold the required specialisms ({{skills}})."
+    }
+  },
+  "coachFit": {
+    "state": {
+      "green": "Strong fit",
+      "yellow": "Possible fit",
+      "grey": "Lower fit"
+    },
+    "target": {
+      "men": "men",
+      "women": "women",
+      "mixed": "mixed"
+    },
+    "specOther": "Other",
+    "reasons": {
+      "specMatch": "Specializes as {{spec}}, which matches the opportunity you're recruiting.",
+      "specMismatch": "Specializes as {{spec}}, not {{target}}.",
+      "specMissing": "Coaching specialization not added yet. No role match info.",
+      "openSearch": "Open coach search: ranked on team category, track record, and availability.",
+      "categoryMatch": "Coaches {{target}}'s teams, which matches your team category.",
+      "categoryMismatch": "Coaches a different team category from {{target}}'s.",
+      "categoryMissing": "Coaching categories not added yet. No category match info."
+    }
+  },
+  "interestFit": {
+    "label": {
+      "strong": "Strong interest",
+      "possible": "Possible interest",
+      "low": "Low interest"
+    },
+    "mobility": {
+      "excluded": "Excluded {{country}} from the countries they'd consider.",
+      "homeCountry": "Opportunity is in their home country.",
+      "homeOnlyNamed": "Only wants to stay in {{country}}.",
+      "homeOnly": "Only wants to stay in their home country.",
+      "prefersHome": "Prefers to stay in their home country.",
+      "relocateTo": "Open to relocating to {{country}}.",
+      "relocateNotListed": "Open to relocating, though {{country}} isn't in their listed countries.",
+      "relocate": "Open to relocating.",
+      "discuss": "Open to discussing relocation.",
+      "listed": "Lists {{country}} among countries they'd consider.",
+      "notListed": "{{country}} isn't among their listed countries.",
+      "notExcluded": "Hasn't excluded {{country}}."
+    },
+    "level": {
+      "thisLevel": "this level",
+      "provenMatch": "Has proven {{level}}, which matches what you're recruiting.",
+      "targetMatch": "Targeting {{level}}, which matches what you're recruiting.",
+      "stepUpProven": "A step up from the level they've proven.",
+      "stepUpTarget": "A step up from the level they say they're targeting.",
+      "wellAboveProven": "Well above the level they've proven.",
+      "wellAboveTarget": "Well above the level they say they're targeting.",
+      "belowProven": "Below the level they've proven.",
+      "belowProvenOverqualified": "Below the level they've proven, likely over-qualified.",
+      "belowTarget": "Below the level they say they're targeting.",
+      "wantsLower": "Though they say they want a lower level than this opening.",
+      "wantsHigher": "They say they want a higher level than this opening."
+    },
+    "comp": {
+      "openEither": "Open to paid or development.",
+      "openingEither": "This opening is open on compensation.",
+      "paidMatch": "Wants paid, and this is a paid opportunity.",
+      "developmentMatch": "Looking for a development opportunity, which matches.",
+      "wantsPaid": "Wants paid; this is a development opportunity.",
+      "developmentPaid": "Open to a development opportunity; this one is paid."
+    },
+    "availability": {
+      "inTime": "Available from {{date}}, in time for the start.",
+      "late": "Available from {{date}}, after the {{start}} start."
+    },
+    "hardFail": {
+      "excluded": "Excluded {{country}}, the location you require.",
+      "homeOnlyNamed": "Won't relocate to {{country}}. Only wants {{home}}.",
+      "homeOnly": "Won't relocate to {{country}}. Only wants their home country.",
+      "belowLevel": "Below the {{level}} level you require.",
+      "wantsPaid": "Wants paid; this is a development opportunity.",
+      "late": "Available from {{date}}, after the {{start}} start you require."
+    }
+  },
+  "candidateIntent": {
+    "relocation": {
+      "relocate": "Open to relocating",
+      "homeOnly": "Staying in home country",
+      "openToDiscuss": "Open to discuss"
+    },
+    "levelTarget": {
+      "top": "Highest level",
+      "competitive": "Competitive",
+      "development": "Development",
+      "any": "Any level"
+    },
+    "preference": {
+      "paid": "Paid",
+      "development": "Development",
+      "either": "Paid or development"
+    },
+    "duration": {
+      "fullSeason": "Full season",
+      "halfSeason": "Half season",
+      "shortTerm": "Short term",
+      "flexible": "Flexible"
+    },
+    "availableFrom": "From {{date}}",
+    "availableFromFor": "From {{date}} · {{duration}}",
+    "rows": {
+      "relocation": "Relocation",
+      "availability": "Availability",
+      "level": "Level target",
+      "lookingFor": "Looking for",
+      "openCountries": "Open to countries",
+      "excludedCountries": "Would not consider"
+    }
+  },
+  "evidence": {
+    "items": {
+      "matchVideo": "Match video",
+      "fullMatch": "Full match footage",
+      "fullMatchCount": "Full match footage ({{count}})",
+      "highlight": "Highlight reel",
+      "highlightDetail": "Highlight reel available",
+      "references_one": "{{count}} reference",
+      "references_other": "{{count}} references",
+      "referencesDetail_one": "{{count}} accepted reference",
+      "referencesDetail_other": "{{count}} accepted references",
+      "verified": "Verified",
+      "verifiedDetail": "Verified profile",
+      "provenLevel": "Proven level",
+      "levelCoach": "Coaches at a listed club & league",
+      "levelPlayer": "Plays at a listed club & league"
+    },
+    "reasons": {
+      "fullMatch": "Full match footage available.",
+      "fullMatchCount": "Full match footage available ({{count}} games).",
+      "highlight": "Highlight reel available.",
+      "references_one": "{{count}} accepted reference.",
+      "references_other": "{{count}} accepted references.",
+      "verified": "Admin-verified profile.",
+      "levelCoach": "Coaches at a listed club & league (provable level).",
+      "levelPlayer": "Plays at a listed club & league (provable level)."
+    },
+    "checklist": {
+      "fullMatch": "Full match footage",
+      "highlight": "Highlight video",
+      "referencesCount_one": "{{count}} reference",
+      "referencesCount_other": "{{count}} references",
+      "references": "References",
+      "club": "Current club",
+      "league": "League on record",
+      "career": "Career history",
+      "openToCoach": "Open to coach",
+      "openToPlay": "Open to play"
+    },
+    "level": {
+      "strong": "Strong evidence",
+      "moderate": "Enough evidence",
+      "limited": "Limited evidence",
+      "minimal": "Minimal evidence"
+    },
+    "tooltip": "Evidence Level reflects how much verifiable information this profile provides for evaluation: video, references, a provable level. It does not rate skill or talent.",
+    "missing": "Missing: {{items}}"
+  },
+  "recruiterVerdict": {
+    "tier": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "possible": "Possible",
+      "out": "Outside your context"
+    },
+    "limitedCoach": "Limited references & track record on file so far.",
+    "limitedPlayer": "Limited video & references on file so far."
+  },
+  "clubFitChip": {
+    "tooltip": "{{label}} — {{reasons}}",
+    "ariaClub": "Club fit: {{label}}. Tap for reasoning.",
+    "ariaCoach": "Coach fit: {{label}}. Tap for reasoning.",
+    "forTeam": " · for your {{target}}'s team",
+    "target": {
+      "men": "men",
+      "women": "women",
+      "mixed": "mixed"
+    },
+    "privacyPlayer": "Based on facts in this player's profile. Never published back to the player.",
+    "privacyCoach": "Based on facts in this coach's profile. Never published back to the coach."
+  },
+  "evidenceSignal": {
+    "tooltip": "{{tier}} — {{reasons}}",
+    "ariaExpandable": "Evidence: {{tier}}. Tap to see the full checklist.",
+    "aria": "Evidence: {{tier}}. {{reasons}}",
+    "heading": "{{tier}} <muted>· evidence on file</muted>",
+    "privacy": "Based on facts in this profile. Never shown to the candidate."
+  },
+  "hockeyContextLine": {
+    "missing": "Not added yet"
+  },
+  "interestSignal": {
+    "tooltip": "{{label}} — {{reasons}}",
+    "aria": "Interest: {{label}}. {{reasons}}"
+  },
+  "provenSignal": {
+    "tooltip": "{{tier}} — {{reasons}}",
+    "aria": "Evidence: {{tier}}. {{reasons}}"
+  },
+  "candidateCard": {
+    "unknownName": "Unknown",
+    "verified": "Verified",
+    "opensProfile": "Opens profile.",
+    "tapToPreview": "Tap to preview.",
+    "aria": "{{name}} · {{detail}}. {{hint}}",
+    "ariaWithFit": "{{name}} · {{detail}}, {{fit}}. {{hint}}",
+    "tileDetail": "{{role}} · {{detail}}",
+    "coachSpec": {
+      "head_coach": "Head Coach",
+      "assistant_coach": "Assistant Coach",
+      "youth_coach": "Youth Coach",
+      "goalkeeper_coach": "Goalkeeper Coach",
+      "strength_conditioning": "Strength Conditioning Coach",
+      "performance_analyst": "Performance Analyst Coach",
+      "sports_scientist": "Sports Scientist Coach",
+      "other": "Other Coach",
+      "other_coach": "Other Coach"
+    },
+    "coachSpecFallback": "{{spec}} Coach",
+    "umpireLevel": "{{level}} Umpire"
+  },
+  "fitExplain": {
+    "empty": "No fit to explain yet. Choose a context in Ranked for."
+  },
+  "verdictCard": {
+    "groupLabel": "Fit for your context",
+    "scoped": "For your context",
+    "general": "General fit",
+    "weightedFor": "Weighted for <strong>{{problem}}</strong>"
+  },
+  "moveToShortlist": {
+    "defaultTitle": "Move to…",
+    "loading": "Loading lists…",
+    "empty": "No lists yet. Create one below.",
+    "defaultTag": "default",
+    "currentTag": "current",
+    "namePlaceholder": "New list name",
+    "createAndAdd": "Create and add",
+    "newList": "New list"
+  },
+  "moreActions": {
+    "moreActions": "More actions",
+    "moveToList": "Move to list…",
+    "addNoteInList": "Add note in list",
+    "alreadyInList": "{{name}} is already in {{list}}",
+    "addFailed": "Could not add to that list",
+    "added": "{{name}} added to {{list}}",
+    "addToListTitle": "Add to list…"
+  },
+  "quickActions": {
+    "removeSavedLabel": "Remove {{name}} from saved",
+    "saveLabel": "Save {{name}}",
+    "saved": "Saved",
+    "save": "Save",
+    "messageLabel": "Message {{name}}",
+    "message": "Message",
+    "friends": "Friends",
+    "friendsLabel": "Friends with {{name}}",
+    "requested": "Requested",
+    "requestedLabel": "Friend request sent to {{name}}",
+    "addFriend": "Add friend",
+    "addFriendLabel": "Add {{name}} as a friend",
+    "signInToConnect": "Sign in with your Hockia profile to connect."
+  },
+  "recruiterCardActions": {
+    "saved": "Saved",
+    "save": "Save",
+    "removeSavedLabel": "Remove {{name}} from saved",
+    "saveLabel": "Save {{name}}",
+    "chat": "Chat",
+    "messageLabel": "Message {{name}}",
+    "addFriend": "Add friend",
+    "loadingFriendship": "Loading friendship status",
+    "friends": "Friends",
+    "friendsLabel": "Friends with {{name}}",
+    "requested": "Requested",
+    "requestedLabel": "Friend request sent to {{name}}",
+    "signInToConnect": "Sign in with your Hockia profile to connect.",
+    "addFriendLabel": "Add {{name}} as a friend"
+  },
+  "findPlayers": {
+    "filterOpen": "Open to play",
+    "filterFullMatch": "Full match",
+    "filterEu": "EU passport",
+    "filterNotApplied": "Not applied",
+    "activeToday": "Active today",
+    "activeYesterday": "Active yesterday",
+    "activeDaysAgo_one": "Active {{count}} days ago",
+    "activeDaysAgo_other": "Active {{count}} days ago",
+    "fullMatches_one": "{{count}} full match",
+    "fullMatches_other": "{{count}} full matches",
+    "highlights_one": "{{count}} highlight",
+    "highlights_other": "{{count}} highlights",
+    "careerEntries_one": "{{count}} career entry",
+    "careerEntries_other": "{{count}} career entries",
+    "careerShort_one": "{{count}} career",
+    "careerShort_other": "{{count}} career",
+    "age": "Age {{age}}",
+    "euPassport": "EU passport",
+    "availableFrom": "Available from {{day}}",
+    "noContext": "No context",
+    "customSearch": "Custom search",
+    "sourceAppliedToOn": "Applied to {{position}} · shortlisted {{day}}",
+    "sourceAppliedTo": "Applied to {{position}} · shortlisted",
+    "sourceAppliedOn": "Applied · shortlisted {{day}}",
+    "sourceApplied": "Applied · shortlisted",
+    "sourceScoutedOn": "Scouted · saved {{day}}",
+    "sourceScouted": "Scouted",
+    "shortlistHeader_one": "{{count}} player · only your club sees this",
+    "shortlistHeader_other": "{{count}} players · only your club sees this"
+  },
+  "findPlayersScreen": {
+    "backOpportunities": "Opportunities",
+    "title": "Find players",
+    "shortlistLink": "Shortlist",
+    "shortlistLinkCount": "Shortlist · {{count}}",
+    "filtersLabel": "Filters",
+    "levelUnknown": "{{league}} has no level on Hockia yet, so fit can’t compare levels. Players are ranked by full matches, highlights and career.",
+    "noContext": "No opportunity picked. Players are ranked by full matches, highlights and career. Pick an opportunity to see fit.",
+    "loading": "Finding players…",
+    "emptyFiltered": "No players match these filters.",
+    "empty": "No players to show yet.",
+    "removeNamed": "Remove {{name}} from the shortlist",
+    "removePlayer": "Remove player from the shortlist",
+    "shortlistNamed": "Shortlist {{name}}",
+    "shortlistPlayer": "Shortlist player",
+    "applied": "Applied"
+  },
+  "shortlistScreen": {
+    "backOpportunities": "Opportunities",
+    "title": "Shortlist",
+    "sourceTabs": "Shortlist source",
+    "chipAll": "All · {{count}}",
+    "chipApplied": "Applied · {{count}}",
+    "chipScouted": "Scouted · {{count}}",
+    "loading": "Loading…",
+    "emptyApplied": "No applicants shortlisted for this opportunity yet.",
+    "emptyScouted": "No one scouted for this opportunity yet.",
+    "emptyAll": "No one on this shortlist yet.",
+    "findPlayers": "Find players",
+    "messageNamed": "Message {{name}}",
+    "messagePlayer": "Message player",
+    "privacyNote": "Players are never told they’re on your shortlist. Notes are private to your club.",
+    "playerFallback": "Player",
+    "editNote": "Edit note",
+    "addNote": "Add note",
+    "removeApplied": "Remove (moves the application to Maybe)",
+    "remove": "Remove",
+    "noteLabel": "Note",
+    "noteTitle": "Note on {{firstName}}",
+    "noteTitleNoName": "Note on this player",
+    "noteHint": "Only your club sees this.",
+    "clearNote": "Clear",
+    "saveNote": "Save note"
+  },
+  "shortlistsIndex": {
+    "documentTitle": "Shortlists",
+    "signedOutTitle": "Sign in to manage shortlists",
+    "signedOutBody": "Group players you're scouting and triage them later.",
+    "signIn": "Sign in",
+    "back": "Back",
+    "title": "Shortlists",
+    "subtitle": "Group players you're scouting. Only you see these lists.",
+    "newList": "New list",
+    "namePlaceholder": "e.g. Women's pre-season trials",
+    "creating": "Creating…",
+    "create": "Create",
+    "cancel": "Cancel",
+    "confirmDeleteWithItems_one": "Delete \"{{name}}\" and remove {{count}} player from this list? This can't be undone.",
+    "confirmDeleteWithItems_other": "Delete \"{{name}}\" and remove {{count}} players from this list? This can't be undone.",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "renameLabel": "Rename shortlist {{name}}",
+    "renamePlaceholder": "Shortlist name",
+    "defaultBadge": "Default",
+    "playerCount_one": "{{count}} player",
+    "playerCount_other": "{{count}} players",
+    "saveName": "Save name",
+    "cancelRename": "Cancel rename",
+    "makeDefault": "Make this the default list",
+    "makeDefaultTitle": "Make default. Quick-saves land here",
+    "rename": "Rename",
+    "delete": "Delete",
+    "openList": "Open {{name}}",
+    "emptyTitle": "No shortlists yet",
+    "emptyBody": "Save a player from Community or create a list to group your prospects.",
+    "createFirst": "Create your first list"
+  },
+  "shortlistDetail": {
+    "statusUnsorted": "Unsorted",
+    "statusTopPick": "Top pick",
+    "statusMaybe": "Maybe",
+    "statusNotAFit": "Not a fit",
+    "documentTitle": "Shortlist",
+    "signedOutTitle": "Sign in to view shortlist",
+    "allShortlists": "All shortlists",
+    "titleFallback": "Shortlist",
+    "defaultBadge": "Default",
+    "countLine_one": "{{count}} player · only you see this.",
+    "countLine_other": "{{count}} players · only you see this.",
+    "unavailable": "Player no longer available",
+    "remove": "Remove",
+    "playerFallback": "Player",
+    "statusLabel": "Status",
+    "notePlaceholder": "Add a private note…",
+    "saving": "Saving…",
+    "openProfile": "Open profile",
+    "moveLabel": "Move to another shortlist",
+    "moveTo": "Move to…",
+    "removeFromList": "Remove from list",
+    "emptyTitle": "No players yet",
+    "emptyBody": "Save a player from Community, search, or any profile to add them here.",
+    "browseCommunity": "Browse Community"
+  },
+  "savedCandidates": {
+    "documentTitleCandidates": "Saved Candidates",
+    "documentTitleProfiles": "Saved Profiles",
+    "signedOutTitle": "Sign in to view saved profiles",
+    "signedOutBody": "Save people you discover and keep them organised for later.",
+    "signIn": "Sign in",
+    "back": "Back",
+    "title": "Saved",
+    "privacy": "Only you see who you saved. They’re never told.",
+    "errorRetry": "{{error}} — <button>try again</button>",
+    "emptyTitleCandidates": "No saved candidates yet",
+    "emptyTitleProfiles": "No saved profiles yet",
+    "emptyBodyCandidates": "Tap the bookmark icon on any player card in Community to save them here.",
+    "emptyBodyProfiles": "Tap the bookmark icon on any profile in Community to save them here.",
+    "browseCommunity": "Browse Community",
+    "unavailable": "This player is no longer available on Hockia.",
+    "openNamed": "Open {{name}}",
+    "openProfile": "Open profile",
+    "unnamed": "Unnamed",
+    "removeNamed": "Remove {{name}} from saved",
+    "removeTitle": "Remove from saved"
+  },
+  "clubSquadCopy": {
+    "settingsSubtitleUnknown": "Players and staff · your invite link",
+    "settingsSubtitleEmpty": "No members yet · share your invite link",
+    "settingsSubtitle_one": "{{count}} member · your invite link",
+    "settingsSubtitle_other": "{{count}} members · your invite link",
+    "notInvitable": "This person can’t be invited yet.",
+    "inviteFailed": "Could not send the invitation."
+  },
+  "clubSquad": {
+    "yourClub": "your club",
+    "joinCount_one": "{{count}} joined with this link",
+    "joinCount_other": "{{count}} joined with this link"
+  },
+  "clubSquadHook": {
+    "linkFailed": "Could not create the invite link.",
+    "loadFailed": "Couldn’t load your squad. Please try again.",
+    "searchFailed": "Search failed. Please try again."
+  },
+  "scopeFilters": {
+    "coaches": "coaches",
+    "women": "women’s players",
+    "men": "men’s players",
+    "players": "players",
+    "womenInRegion": "women’s players in {{region}}",
+    "menInRegion": "men’s players in {{region}}",
+    "playersInRegion": "players in {{region}}"
+  },
+  "squadScreen": {
+    "backProfile": "Profile",
+    "title": "Squad",
+    "subtitle": "Players and staff who wear your crest on their profile.",
+    "linkCopied": "Invite link copied",
+    "copyFailed": "Could not copy the link. Please try again.",
+    "shareText": "Join {{clubName}} on Hockia",
+    "shareTextNoName": "Join our club on Hockia",
+    "invitationSent": "Invitation sent to {{name}}",
+    "invitationSentNoName": "Invitation sent to them",
+    "linkRevoked": "Invite link revoked. It no longer works.",
+    "revokeFailed": "Could not revoke the link. Please try again.",
+    "invitationCancelled": "Invitation cancelled",
+    "memberRemoved": "{{name}} removed from your squad",
+    "memberRemovedNoName": "They removed from your squad",
+    "genericError": "Something went wrong. Please try again.",
+    "linkTitle": "Invite link",
+    "linkBody": "Anyone with it can ask to join. You approve each one.",
+    "linkOptions": "Invite link options",
+    "shareLink": "Share link",
+    "copy": "Copy",
+    "searchPlaceholder": "Invite someone on Hockia",
+    "clearSearch": "Clear search",
+    "searching": "Searching…",
+    "noMatches": "No players or coaches match “{{query}}”.",
+    "onYourSquad": "On your squad",
+    "invite": "Invite",
+    "loading": "Loading…",
+    "tryAgain": "Try again",
+    "emptyTitle": "No one yet",
+    "emptyBody": "Players who pick {{clubName}} as their current club show up here on their own. You can also invite them.",
+    "invitedSection": "Invited",
+    "membersSection": "Members · {{count}}",
+    "memberFallback": "Member",
+    "revokeBody": "The link stops working. Share or Copy makes a new one.",
+    "cancelBody": "{{name}} won’t be able to accept this invitation.",
+    "cancelBodyNoName": "They won’t be able to accept this invitation.",
+    "removeBody": "{{name}} will no longer show on your squad.",
+    "removeBodyNoName": "They will no longer show on your squad.",
+    "revokeLink": "Revoke link",
+    "cancelInvitation": "Cancel invitation",
+    "removeFromSquad": "Remove from squad",
+    "invitationPending": "Invitation pending",
+    "optionsFor": "Options for {{name}}",
+    "optionsForMember": "Options for member"
+  }
+}

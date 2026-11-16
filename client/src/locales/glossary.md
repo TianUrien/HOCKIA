@@ -61,6 +61,14 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Endorse, vouch | Avalar, aval | |
 | Career history | Trayectoria | |
 | Media (photos and videos) | Multimedia | |
+| Applicant | Postulante | Added in Stage 3 |
+| Top pick / Maybe / Not a fit / Unsorted (shortlist) | Primera opción / Tal vez / No encaja / Sin clasificar | |
+| Strong fit / Possible fit | Encaje alto / Encaje posible | Chips; "Encaja muy bien / Puede encajar" in sentences |
+| Must have / Nice to have | Imprescindible / Deseable | |
+| Ambassador | Embajador/a | Role-like doublet allowed |
+| Partnership | Alianza | |
+| Marketplace | Marketplace | Kept in English |
+| Near you | En la zona | |
 | Junior / Senior (level) | Juveniles / Mayores | "Mayores" still to confirm |
 
 Search keeps accepting every regional synonym whatever word the interface shows.
@@ -83,3 +91,14 @@ Search keeps accepting every regional synonym whatever word the interface shows.
 - Umpire level suggestions ("National", "Regional", "Club") stay English because the chosen word is saved on the profile and shown to everyone.
 - Emails: fallback greeting "Hola, integrante:" when there is no name; footer "Este email te llega por tu cuenta en Hockia."
 - Safety copy (block, report, removed accounts) was rewritten without second-person verbs; please read it for meaning.
+
+## Wording still to confirm with the founder (Stage 3, 2026-11-16)
+
+- Hockia AI speaks in the first person ("No encontré…", "Puedo ayudar…", "Filtré por tu categoría"). The sheet tagline "Your field hockey teammate" is "Tu compañía de equipo" (weak; "compañero/a" is the alternative).
+- Group nouns in Hockia AI chips and club pushes use doublets ("jugadores/as", "entrenadores/as"); "deportistas" and "cuerpos técnicos" are the alternatives.
+- Hockia AI chat history summaries ("3 players found") are saved in English, so they show in English in a Spanish chat list.
+- Tapping a suggested question in Spanish sends the English prompt, so the member's own bubble shows English.
+- Club decline notes and the club's AI decline draft are written in the club's language and reach the player as written.
+- "Recruiting" on the club side: "Buscando" in the context sheet, "Buscando incorporaciones" on the club header.
+- "Ranked for" is "Ranking para"; "Scouted" is "Por búsqueda".
+- Examples were localised, not translated: "Club Atlético San Isidro" for the club example, "Licencia de entrenador/a nivel B" for "UEFA B", "Rosario, Santa Fe" for the location example.

@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
 import { clearClubProfileScrollCache } from './useClubProfileScrollData'
+import { tClub } from '@/i18n/ns/club'
 
 /**
  * A club's photos (club_media) for the phone Manage media screen. Same paths
@@ -61,7 +62,7 @@ export function useClubMedia(clubId: string | null | undefined) {
       for (let i = 0; i < batch.length; i += 1) {
         const file = batch[i]
         const check = validateImage(file, { maxFileSizeMB: MAX_MB })
-        if (!check.valid) { failed.push(`${file.name}: ${check.error ?? 'invalid image'}`); continue }
+        if (!check.valid) { failed.push(`${file.name}: ${check.error ?? tClub('clubMedia.invalidImage')}`); continue }
         try {
           const optimized = await optimizeImage(file, OPTIMIZE)
           const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()

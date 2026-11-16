@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 
 import { ambassadorInviteError, personActionGate } from '@/lib/ambassadorInvite'
-import { BRAND_BROWSE_NOTE, COACH_ON_PLAYER_ROLE_NOTE, UMPIRE_BROWSE_NOTE, roleViewerGate } from '@/lib/roleViewerGate'
+import { brandBrowseNote, coachOnPlayerRoleNote, umpireBrowseNote, roleViewerGate } from '@/lib/roleViewerGate'
 import { CHECK_PROFILE_AGAINST_ROLE, aiIntroFor, exampleQueriesFor, recruiterExamples } from '@/lib/hockiaAi'
 
 const src = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8')
@@ -53,19 +53,19 @@ describe('roleViewerGate', () => {
     expect(g('coach', 'coach')).toMatchObject({ kind: 'applicant', applyCopy: true })
   })
   it('a coach on a player role gets the reason and keeps Message', () => {
-    expect(g('coach', 'player')).toEqual({ kind: 'wrong_type', note: COACH_ON_PLAYER_ROLE_NOTE, applyCopy: false, messageOnly: true })
-    expect(COACH_ON_PLAYER_ROLE_NOTE).toBe('This opportunity is for players. Coaching opportunities are in Opportunities.')
+    expect(g('coach', 'player')).toEqual({ kind: 'wrong_type', note: coachOnPlayerRoleNote(), applyCopy: false, messageOnly: true })
+    expect(coachOnPlayerRoleNote()).toBe('This opportunity is for players. Coaching opportunities are in Opportunities.')
   })
   it('brands and umpires browse only, with no apply copy', () => {
-    expect(g('brand', 'player')).toEqual({ kind: 'browse_only', note: BRAND_BROWSE_NOTE, applyCopy: false, messageOnly: true })
-    expect(g('umpire', 'player')).toEqual({ kind: 'browse_only', note: UMPIRE_BROWSE_NOTE, applyCopy: false, messageOnly: true })
+    expect(g('brand', 'player')).toEqual({ kind: 'browse_only', note: brandBrowseNote(), applyCopy: false, messageOnly: true })
+    expect(g('umpire', 'player')).toEqual({ kind: 'browse_only', note: umpireBrowseNote(), applyCopy: false, messageOnly: true })
   })
   it('the publisher and guests are unchanged', () => {
     expect(g('club', 'player', { isPublisher: true }).kind).toBe('publisher')
     expect(g(null, 'player', { signedIn: false })).toMatchObject({ kind: 'guest', applyCopy: true })
   })
   it('no note copy carries an em dash', () => {
-    for (const n of [COACH_ON_PLAYER_ROLE_NOTE, BRAND_BROWSE_NOTE, UMPIRE_BROWSE_NOTE]) expect(n).not.toContain('—')
+    for (const n of [coachOnPlayerRoleNote(), brandBrowseNote(), umpireBrowseNote()]) expect(n).not.toContain('—')
   })
 })
 

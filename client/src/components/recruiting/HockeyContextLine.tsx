@@ -17,6 +17,7 @@
  * make a 1-segment line look like the player has only one fact, when
  * really they have one out of three).
  */
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface HockeyContextLineProps {
   /** Player's current club display name (free-text from profile.current_club
@@ -30,8 +31,6 @@ interface HockeyContextLineProps {
   position?: string | null
   className?: string
 }
-
-const MISSING_LABEL = 'Not added yet'
 
 export default function HockeyContextLine({
   clubName,
@@ -60,8 +59,9 @@ export default function HockeyContextLine({
 }
 
 function Segment({ value }: { value: string | null | undefined }) {
+  const t = useRecruitingT()
   if (!value) {
-    return <span className="italic text-gray-400">{MISSING_LABEL}</span>
+    return <span className="italic text-gray-400">{t('hockeyContextLine.missing')}</span>
   }
   return <span>{value}</span>
 }

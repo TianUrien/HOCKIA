@@ -1,4 +1,5 @@
 import type { InvitePill } from '@/lib/invites'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * The row action of D3.1 (Figma 393:2; DEV NOTE 394:98): Invite for a player
@@ -22,16 +23,17 @@ export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied
   onInvite: () => void
   onApplied?: () => void
 }) {
+  const t = useRecruitingT()
   if (pill === 'applied') {
     return onApplied
-      ? <button type="button" onClick={onApplied} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']" data-testid="invite-pill-applied">Applied</button>
-      : <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</span>
+      ? <button type="button" onClick={onApplied} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']" data-testid="invite-pill-applied">{t('inviteAction.applied')}</button>
+      : <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">{t('inviteAction.applied')}</span>
   }
   if (pill === 'passed') {
-    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" aria-label="Passed on this opportunity" data-testid="invite-pill-passed">Passed</span>
+    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" aria-label={t('inviteAction.passedLabel')} data-testid="invite-pill-passed">{t('inviteAction.passed')}</span>
   }
   if (pill === 'invited') {
-    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-invited">Invited</span>
+    return <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-invited">{t('inviteAction.invited')}</span>
   }
   if (!invitable) return null
   return (
@@ -40,11 +42,11 @@ export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied
       onClick={onInvite}
       disabled={!!limitReason}
       title={limitReason ?? undefined}
-      aria-label={limitReason ? `Invite to apply · ${limitReason}` : 'Invite to apply'}
+      aria-label={limitReason ? t('inviteAction.inviteLabelLimited', { reason: limitReason }) : t('inviteAction.inviteLabel')}
       className="relative flex h-9 items-center rounded-full bg-hockia-soft px-4 text-row font-semibold text-hockia-primary before:absolute before:-inset-1 before:content-[''] disabled:opacity-40"
       data-testid="invite-button"
     >
-      Invite
+      {t('inviteAction.invite')}
     </button>
   )
 }

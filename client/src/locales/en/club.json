@@ -1,0 +1,868 @@
+{
+  "deleteOpportunity": {
+    "titleDraft": "Delete Draft",
+    "title": "Delete Opportunity Permanently",
+    "subtitle": "This action cannot be undone",
+    "closeAria": "Close modal",
+    "draftBody": "Are you sure you want to delete the draft \"<strong>{{title}}</strong>\"? This draft has not been published and has no applicants.",
+    "warning": "Warning: This will permanently delete:",
+    "listOpportunity": "The opportunity \"<strong>{{title}}</strong>\"",
+    "listApplications": "All applications submitted to this opportunity",
+    "listMedia": "Any related media or attachments",
+    "confirmBody": "Are you sure you want to permanently delete this opportunity? This action cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "confirm": "Delete Permanently"
+  },
+  "roleViewerGate": {
+    "coachOnPlayerRole": "This opportunity is for players. Coaching opportunities are in Opportunities.",
+    "playerOnCoachRole": "This opportunity is for coaches. Player opportunities are in Opportunities.",
+    "umpireBrowse": "You can browse opportunities here. Umpiring opportunities and assessments will live here when we open them.",
+    "brandBrowse": "You can browse opportunities here. Applying is for players and coaches."
+  },
+  "submitApplication": {
+    "ownOpportunity": "You can’t apply to your own opportunity.",
+    "coachesOnly": "Only coaches can apply to coach opportunities.",
+    "playersOnly": "Only players can apply to player opportunities.",
+    "roleRestricted": "You cannot apply to this opportunity due to role restrictions.",
+    "notEligible": "You are not eligible to apply to this opportunity.",
+    "failed": "Failed to submit application. Please try again."
+  },
+  "postRoleLib": {
+    "otherCoach": "Other",
+    "teams": {
+      "men": "Men",
+      "women": "Women",
+      "mixed": "Mixed",
+      "boys": "Boys",
+      "girls": "Girls"
+    },
+    "levels": {
+      "competitive": "Competitive",
+      "highPerformance": "High performance",
+      "elite": "Elite"
+    },
+    "skills": {
+      "dragFlicker": "Drag flicker",
+      "penaltyCorner": "Penalty corner",
+      "defensiveLeader": "Defensive leader",
+      "targetForward": "Target forward",
+      "pressing": "Pressing",
+      "playmaker": "Playmaker",
+      "indoor": "Indoor",
+      "sweeperKeeper": "Sweeper keeper"
+    },
+    "pay": {
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "either": "Either"
+    },
+    "duration": {
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months",
+      "fullSeason": "Full season",
+      "permanent": "Permanent"
+    },
+    "problems": {
+      "position": "Choose a position.",
+      "role": "Choose the role.",
+      "team": "Choose the team.",
+      "titleLength": "Keep the title to {{max}} characters.",
+      "skill": "Pick a specialist skill, or make it nice to have.",
+      "location": "Add where the opportunity is.",
+      "descriptionLength": "Keep “About the opportunity” to {{max}} characters."
+    },
+    "check": {
+      "subPlayer": "Step 3 of 3 · How players will see it",
+      "subCoach": "Step 3 of 3 · How coaches will see it",
+      "titlePlayer": "What players ask first",
+      "titleCoach": "What coaches ask first"
+    },
+    "levelHint": {
+      "player": "Used to rank applicants. Players don’t see it.",
+      "coach": "Used to rank applicants. Coaches don’t see it."
+    },
+    "offer": {
+      "whenPlayer": "Players mark when they’re free; we match it to your start.",
+      "packagePlayer": "Housing and flights are what relocating players ask about first.",
+      "euPassportPlayer": "Only players with an EU passport can apply.",
+      "whenCoach": "Coaches mark when they’re free; we match it to your start.",
+      "packageCoach": "Housing and visa support are what relocating coaches ask about first.",
+      "euPassportCoach": "Only coaches with an EU passport can apply."
+    },
+    "checklist": {
+      "coachWhen": "Start date and contract length",
+      "pay": "Pay",
+      "coachRelocation": "Housing and visa support",
+      "coachTeam": "Team and level",
+      "coachAbout": "A few lines about the opportunity and the squad",
+      "playerWhen": "Start date and length",
+      "playerRelocation": "Housing and flights",
+      "playerAbout": "A few lines about the team and the season"
+    },
+    "footnote": {
+      "availableFromStart": "available from the start date",
+      "basedIn": "based in {{city}}",
+      "team": "{{team}} team",
+      "euPassport": "EU passport",
+      "mustHave": "Must have: {{items}}.",
+      "alwaysRequired": "Always required: {{items}}.",
+      "restRanksPlayers": "Everything else ranks players, it doesn’t block them.",
+      "restRanksCoaches": "Everything else ranks coaches, it doesn’t block them.",
+      "nothingBlocksPlayers": "Nothing blocks players; everything here ranks them.",
+      "nothingBlocksCoaches": "Nothing blocks coaches; everything here ranks them."
+    },
+    "posted": {
+      "title": "{{position}} is live",
+      "titleFallback": "Your opportunity is live",
+      "bodyPlayer": "Players who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.",
+      "bodyCoach": "Coaches who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.",
+      "findPlayers": "Find players for this opportunity",
+      "findCoaches": "Find coaches for this opportunity",
+      "pushPlayers": "Know when players apply",
+      "pushCoaches": "Know when coaches apply"
+    },
+    "replyWindow_one": "Answer each applicant within {{count}} day. After that, their application closes on its own.",
+    "replyWindow_other": "Answer each applicant within {{count}} days. After that, their application closes on its own."
+  },
+  "createOpportunity": {
+    "mustHave": {
+      "on": "Must have",
+      "off": "Nice to have",
+      "positionAria": "Mark position as a must-have",
+      "specialistsAria": "Mark specialist skills as a must-have",
+      "levelAria": "Mark level as a must-have",
+      "compensationAria": "Mark compensation as a must-have",
+      "locationAria": "Mark location as a must-have",
+      "startDateAria": "Mark start date as a must-have"
+    },
+    "toasts": {
+      "draftRestored": "Opportunity draft restored.",
+      "draftUpdated": "Draft updated. Publish when you're ready to go live.",
+      "updated": "Opportunity updated successfully.",
+      "published": "Opportunity published. Candidates can apply now.",
+      "draftSaved": "Draft saved. Publish when you're ready to go live."
+    },
+    "errors": {
+      "title": "Title is required",
+      "position": "Position is required",
+      "category": "Category is required",
+      "city": "City is required",
+      "country": "Country is required",
+      "location": "Location is required",
+      "levelMustHave": "Pick a level before marking it must-have.",
+      "compensationMustHave": "Pick a compensation before marking it must-have.",
+      "startDateMustHave": "Set a start date before marking it must-have.",
+      "specialistsMustHave": "Add a specialist skill before marking it must-have.",
+      "signedOut": "You need to be signed in to manage opportunities.",
+      "fixFields": "Please fix the highlighted fields before saving.",
+      "saveFailedDetail": "Failed to save opportunity: {{detail}}",
+      "saveFailed": "Failed to save opportunity. Please try again."
+    },
+    "header": {
+      "edit": "Edit opportunity",
+      "postAgain": "Post again",
+      "create": "Create new opportunity",
+      "editSubtitle": "Update your opportunity details",
+      "postAgainSubtitle": "A new opportunity with the same details. Dates and applicants start fresh.",
+      "createPlayerSubtitle": "Create a new player position opportunity",
+      "createCoachSubtitle": "Create a new coaching position opportunity"
+    },
+    "closeAria": "Close modal",
+    "basic": {
+      "heading": "Basic information",
+      "type": "Opportunity type",
+      "typePlayer": "Player position",
+      "typeCoach": "Coach position",
+      "priority": "Priority level",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "title": "Opportunity title",
+      "titlePlaceholderPlayer": "e.g., Senior Women's First XI Opportunity",
+      "titlePlaceholderCoach": "e.g., Head coach, youth development",
+      "organization": "Organization / On behalf of",
+      "organizationPlaceholder": "e.g., Melbourne Hockey Club, Youth Academy",
+      "organizationHint": "The club, academy, or organization this opportunity is for. Shown on the card so applicants know who is hiring.",
+      "position": "Position",
+      "positionSelect": "Select position",
+      "assistantCoach": "Assistant Coach",
+      "youthCoach": "Youth Coach",
+      "category": "Category",
+      "categorySelect": "Select category",
+      "specialists": "Specialist skills wanted",
+      "specialistsHint": "Optional. The specialism you most need. We'll surface players who match.",
+      "description": "Description",
+      "descriptionPlaceholderPlayer": "Describe the player opportunity, training environment, and development pathway...",
+      "descriptionPlaceholderCoach": "Describe the coaching opportunity, responsibilities, and team environment..."
+    },
+    "intent": {
+      "heading": "What you're looking for",
+      "problem": "What are you solving this season?",
+      "problemAria": "Recruitment problem",
+      "optional": "Optional",
+      "level": "Level sought",
+      "compensation": "Compensation",
+      "footnote": "Level pre-fills from your club’s level. Change it if you’re recruiting above or below. Mark any criterion “Must have” to require it. Players who miss it read as “Outside your context”.",
+      "selectPlaceholder": "Select"
+    },
+    "location": {
+      "heading": "Location & Timeline",
+      "label": "Location",
+      "placeholder": "Search for a city...",
+      "startDate": "Start date",
+      "duration": "Duration",
+      "durationPlaceholder": "e.g., 12 months"
+    },
+    "requirements": {
+      "heading": "Requirements",
+      "euPassport": "EU Passport Required",
+      "removeAria": "Remove requirement",
+      "examplePlayer": "e.g., Minimum 3 years competitive experience, U18 age group",
+      "exampleCoach": "e.g., UEFA B coaching license, 5+ years coaching experience",
+      "addLabel": "Add requirement",
+      "placeholder": "Add a requirement...",
+      "addButton": "Add requirement"
+    },
+    "benefits": {
+      "heading": "Benefits package",
+      "housing": "Housing",
+      "car": "Car",
+      "visa": "Visa",
+      "flights": "Flights",
+      "meals": "Meals",
+      "job": "Job",
+      "insurance": "Insurance",
+      "education": "Education",
+      "bonuses": "Bonuses",
+      "equipment": "Equipment",
+      "included": "✓ Included",
+      "notIncluded": "✗ Not included",
+      "count_one": "{{count}} of {{total}} benefits added",
+      "count_other": "{{count}} of {{total}} benefits added"
+    },
+    "customBenefits": {
+      "heading": "Additional custom benefits",
+      "removeAria": "Remove benefit",
+      "addLabel": "Add custom benefit",
+      "placeholder": "e.g., Professional coaching and skill development",
+      "addButton": "Add custom benefit"
+    },
+    "application": {
+      "heading": "Application details",
+      "deadline": "Application deadline",
+      "email": "Contact email",
+      "phone": "Contact phone"
+    },
+    "strength": {
+      "heading": "Posting strength",
+      "complete": "Complete posting. This is what strong vacancies look like.",
+      "consider": "Complete postings attract more applicants. Consider adding:"
+    },
+    "footer": {
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "update": "Update opportunity",
+      "saveDraft": "Save as draft",
+      "publishing": "Publishing…",
+      "publish": "Publish now"
+    },
+    "discard": {
+      "title": "Discard this opportunity?",
+      "message": "Your unsaved changes will be lost.",
+      "confirm": "Discard",
+      "cancel": "Keep editing"
+    }
+  },
+  "youthRoles": {
+    "playerRoleMessage": "Player opportunities are for adult teams. Under-18 players can’t be recruited on Hockia.",
+    "coachTeamHint": "Boys and Girls are for coach and staff opportunities only."
+  },
+  "postAgain": {
+    "closed": "Closed",
+    "closedOn": "Closed {{date}}",
+    "filled": "filled",
+    "notFilled": "not filled",
+    "withReason": "{{closed}} · {{reason}}"
+  },
+  "newContext": {
+    "problems": {
+      "position": "Pick a position.",
+      "role": "Pick a role.",
+      "team": "Pick a team."
+    }
+  },
+  "clubMedia": {
+    "invalidImage": "invalid image"
+  },
+  "clubEditLib": {
+    "yearRange": "Choose a year between {{min}} and {{max}}.",
+    "linked": "Linked",
+    "linkedLeague": "Linked · {{league}}",
+    "photos_one": "{{count}} photo",
+    "photos_other": "{{count}} photos"
+  },
+  "clubSettings": {
+    "groupFooter": "Your league and crest show on your opportunities and profile. Recruiting lives in Opportunities.",
+    "notLinked": "Not linked yet · link your club",
+    "linkedLeague": "Linked · {{league}}",
+    "linkedNoLeague": "Linked · league not set",
+    "contactIntro": "So players and coaches can reach the club directly. Your sign-in email is never shown.",
+    "contactSwitchLabel": "Show on your profile",
+    "contactSwitchHelp": "Off: players message you on Hockia.",
+    "contactEmpty": "Private · players message you on Hockia",
+    "contactShown": "Shown on your profile · {{email}}",
+    "contactPrivate": "Private · {{email}}"
+  },
+  "manageMedia": {
+    "title": "Media",
+    "photosHeading": "Photos · {{count}}",
+    "cancel": "Cancel",
+    "done": "Done",
+    "reorder": "Reorder",
+    "emptyTitle": "Add photos of your club",
+    "emptyBody": "Your pitch, your teams, match days. The first photo is the cover on your profile.",
+    "photoAria": "Photo {{number}}",
+    "moveEarlier": "Move earlier",
+    "moveLater": "Move later",
+    "deletePhoto": "Delete photo",
+    "addPhotos": "Add photos",
+    "reorderHint": "Use the arrows to arrange; the first photo is your cover. Tap Done to save, or Cancel to keep everything as it was.",
+    "reorderHintRemove_one": "Use the arrows to arrange; the first photo is your cover. Tap Done to save and remove 1 photo, or Cancel to keep everything as it was.",
+    "reorderHintRemove_other": "Use the arrows to arrange; the first photo is your cover. Tap Done to save and remove {{count}} photos, or Cancel to keep everything as it was.",
+    "toasts": {
+      "added_one": "Photo added.",
+      "added_other": "{{count}} photos added.",
+      "addFailed": "Could not add {{file}}.",
+      "reorderFailed": "Could not save the new order.",
+      "removeFailed_one": "One photo could not be removed.",
+      "removeFailed_other": "{{count}} photos could not be removed.",
+      "removed_one": "Photo removed.",
+      "removed_other": "{{count}} photos removed."
+    },
+    "confirm": {
+      "title_one": "Remove 1 photo?",
+      "title_other": "Remove {{count}} photos?",
+      "body": "They disappear from your club profile. This cannot be undone.",
+      "remove": "Remove"
+    }
+  },
+  "clubEdit": {
+    "add": "Add",
+    "locked": "Locked",
+    "fallbackName": "Your club",
+    "sheetFallback": "Edit",
+    "fields": {
+      "name": "Name",
+      "year": "Year founded",
+      "country": "Country",
+      "city": "City",
+      "about": "About",
+      "website": "Website",
+      "links": "Social links",
+      "contact": "Contact email"
+    },
+    "errors": {
+      "saveFailed": "Could not save that. Please try again.",
+      "nameRequired": "The club name is required.",
+      "nameTooLong": "Keep the name under {{max}} characters.",
+      "countryRequired": "Choose a country.",
+      "cityRequired": "Choose the club’s city.",
+      "aboutTooLong": "Keep it under {{max}} characters.",
+      "websiteInvalid": "That website doesn’t look right (e.g. yourclub.com).",
+      "linksInvalid": "One of those links doesn’t look right.",
+      "emailInvalid": "That email doesn’t look right."
+    },
+    "crest": {
+      "invalidImage": "Invalid image",
+      "uploadFailed": "We couldn’t upload this image. Please use PNG or JPG up to 5MB.",
+      "pickerFailed": "Could not access camera or photos. Please check app permissions.",
+      "label": "Club crest",
+      "uploading": "Uploading…",
+      "change": "Change crest",
+      "add": "Add your crest"
+    },
+    "nav": {
+      "settings": "Settings",
+      "profile": "Profile",
+      "title": "Edit profile",
+      "done": "Done"
+    },
+    "groups": {
+      "identity": "Identity",
+      "location": "Location",
+      "hockey": "Hockey",
+      "about": "About",
+      "contact": "Contact"
+    },
+    "rows": {
+      "name": "Name",
+      "type": "Type",
+      "typeClub": "Club",
+      "year": "Year founded",
+      "country": "Country",
+      "city": "City",
+      "clubLeague": "Club & league",
+      "linkClub": "Link your club",
+      "about": "About",
+      "photos": "Photos",
+      "website": "Website",
+      "links": "Social links",
+      "contact": "Contact email"
+    },
+    "inputs": {
+      "name": "Club name",
+      "year": "Year founded",
+      "yearNotSet": "Not set",
+      "country": "Country",
+      "city": "City",
+      "about": "About",
+      "aboutPlaceholder": "Your club, your teams and the league you play in.",
+      "website": "Website",
+      "websitePlaceholder": "yourclub.com",
+      "contact": "Contact email",
+      "contactPlaceholder": "contact@yourclub.com"
+    }
+  },
+  "clubSetup": {
+    "title": "About your club",
+    "subtitle": "Step 1 of 2 · what players see next to every opportunity.",
+    "attest": "I’m 18 or over and I’m allowed to recruit for this club.",
+    "saving": "Saving…",
+    "continue": "Continue",
+    "crest": {
+      "invalidImage": "Invalid image",
+      "uploadFailed": "We couldn’t upload this image. Please use PNG or JPG up to 5MB.",
+      "pickerFailed": "Could not access camera or photos. Please check app permissions.",
+      "change": "Change crest",
+      "add": "Add your crest",
+      "hint": "A square crest reads best at small sizes."
+    },
+    "errors": {
+      "saveFailed": "Could not save your club. Please try again.",
+      "finishFailed": "Could not finish setting up. Please try again."
+    },
+    "fields": {
+      "name": "Club name",
+      "namePlaceholder": "Your club’s name",
+      "country": "Country",
+      "countryAria": "Country: {{value}}",
+      "countryAriaEmpty": "Country: choose",
+      "city": "City",
+      "cityAria": "City: {{value}}",
+      "cityAriaEmpty": "City: choose",
+      "choose": "Choose",
+      "year": "Year founded · optional",
+      "yearNotSet": "Not set"
+    },
+    "sheets": {
+      "country": "Country",
+      "city": "City",
+      "cityPlaceholder": "Where the club plays",
+      "done": "Done"
+    }
+  },
+  "closeRole": {
+    "failed": "Could not close the opportunity. Try again.",
+    "sheetAria": "Close this opportunity",
+    "title": "Close {{title}}?",
+    "outcomeAria": "Did you fill it?",
+    "filled": "Filled",
+    "filledSub": "We found someone",
+    "notFilled": "Not filled",
+    "notFilledSub": "No longer needed",
+    "tellTitle_one": "Tell the player still waiting",
+    "tellTitle_other": "Tell the {{count}} players still waiting",
+    "tellOn": "They see “Not this time” with this note",
+    "tellOffFilled": "They’ll still see the opportunity was filled",
+    "tellOff": "They’ll hear when their application closes",
+    "noteAria": "Note to each player",
+    "previewFor": "Preview for {{name}}",
+    "closing": "Closing…",
+    "confirmAndTell_one": "Close opportunity and tell {{count}} player",
+    "confirmAndTell_other": "Close opportunity and tell {{count}} players",
+    "confirm": "Close opportunity",
+    "cancel": "Cancel"
+  },
+  "postRoleStart": {
+    "title": "Post an opportunity",
+    "aiTitle": "Start with Hockia AI",
+    "aiSub": "Beta · say it in your own words",
+    "aiPlaceholder": "Left back for our men’s 1st team, paid, with housing, from January",
+    "aiAria": "Describe the opportunity in your own words",
+    "drafting": "Drafting your opportunity…",
+    "draft": "Draft my opportunity",
+    "aiNote": "Hockia AI fills in the opportunity, the offer and the description. Nothing is posted until you check it.",
+    "postAgain": "Post again",
+    "againRow": "{{title}} · {{team}} team",
+    "scratch": "Start from scratch",
+    "scratchSub": "The three steps, empty"
+  },
+  "rolePosted": {
+    "close": "Close",
+    "pushBody": "A notification for each applicant and before one closes.",
+    "turnOn": "Turn on",
+    "done": "Done"
+  },
+  "roleForm": {
+    "mustHaveAria": "{{label}}: must have",
+    "niceToHaveAria": "{{label}}: nice to have",
+    "mustHave": "Must have",
+    "niceToHave": "Nice to have"
+  },
+  "newContextSheet": {
+    "saved": "Context saved. Ranking for it now.",
+    "saveFailed": "Could not save the context. Try again.",
+    "title": "New context",
+    "intro": "A saved search for scouting without a posting. Only you see this.",
+    "close": "Close",
+    "position": "Position",
+    "role": "Role",
+    "positionMust": "Must have: players in this position rank first.",
+    "positionNice": "Nice to have: used to rank players, never hides them.",
+    "team": "Team",
+    "required": "Required",
+    "teamHint": "Fit is measured against this team.",
+    "name": "Name",
+    "optional": "Optional",
+    "nameHint": "Shown in Recruiting for. Without one, the position and team name it.",
+    "namePlaceholderPlayer": "Midfielder for next season",
+    "namePlaceholderCoach": "Coach for next season",
+    "level": "Level",
+    "skills": "Specialist skills",
+    "skillsHint": "Pick any that matter.",
+    "region": "Region",
+    "regionHint": "A city or region to rank nearby people first.",
+    "regionPlaceholder": "Dublin",
+    "saving": "Saving…",
+    "save": "Save and rank"
+  },
+  "postRole": {
+    "steps": {
+      "title1": "What are you looking for?",
+      "sub1": "Step 1 of 3 · The opportunity",
+      "part1": "The position",
+      "title2": "What do you offer?",
+      "sub2": "Step 2 of 3 · The offer",
+      "back2": "The opportunity",
+      "part2": "The offer",
+      "title3": "Check and post",
+      "sub3": "Step 3 of 3 · How players will see it",
+      "back3": "The offer",
+      "title3Edit": "Check and save"
+    },
+    "cover": {
+      "invalid": "Please use a JPG, PNG or WebP photo up to 10 MB.",
+      "uploadFailed": "We couldn’t upload this photo. Please use a JPG, PNG or WebP up to 10 MB.",
+      "label": "Cover · optional",
+      "uploading": "Uploading…",
+      "change": "Change",
+      "add": "Add photo",
+      "hasPhoto": "Looks great. We add a soft shade at the bottom so the title always reads.",
+      "remove": "Remove photo",
+      "noPhotoCoach": "No photo? We build a cover for you. It already looks finished.",
+      "noPhotoClub": "No photo? We build a cover from your crest in your club colours. It already looks finished."
+    },
+    "toasts": {
+      "draftSaved": "Draft saved",
+      "draftFailed": "Could not save the draft. Try again.",
+      "changesSaved": "Changes saved.",
+      "changesFailed": "Could not save the changes. Try again.",
+      "postFailed": "Could not post the opportunity. Try again.",
+      "aiFailed": "Could not draft it right now. Write a few lines instead."
+    },
+    "preview": {
+      "titlePlayer": "Your opportunity",
+      "titleCoach": "Coaching opportunity",
+      "club": "Your club",
+      "label": "Preview",
+      "live": "Live preview",
+      "howPlayers": "How players see it",
+      "howCoaches": "How coaches see it"
+    },
+    "backTo": "Back to {{step}}",
+    "back": "Back",
+    "cancel": "Cancel",
+    "checkTitle": "Check your opportunity",
+    "aiBadge": "Drafted by Hockia AI · Beta",
+    "againBadge": "Posted again · same details",
+    "editTitle": "Edit opportunity",
+    "newTitle": "New opportunity",
+    "saving": "Saving…",
+    "saveDraft": "Save draft",
+    "stepOf": "Step {{step}} of 3",
+    "desktopTitle": "{{title}} · {{part}}",
+    "form": {
+      "type": "Opportunity type",
+      "typePlayer": "Player",
+      "typeCoach": "Coach",
+      "position": "Position",
+      "role": "Role",
+      "positionMust": "Must have: players in this position rank first.",
+      "positionNice": "Nice to have: used to rank players, never blocks them.",
+      "team": "Team",
+      "alwaysRequired": "Always required",
+      "teamHint": "Players outside this team can’t apply.",
+      "title": "Title",
+      "optional": "Optional",
+      "titleHint": "The opportunity’s headline, shown above the position. Up to {{max}} characters.",
+      "titlePlaceholderPlayer": "Men’s 1st player",
+      "titlePlaceholderCoach": "Head coach, 1st team",
+      "onBehalf": "On behalf of",
+      "onBehalfHint": "The club or academy you’re recruiting for. Shown on the card so applicants know who’s hiring.",
+      "onBehalfPlaceholder": "e.g. Melbourne Hockey Club",
+      "level": "Level",
+      "skills": "Specialist skills",
+      "skillsHint": "Pick any that matter for this opportunity.",
+      "when": "When",
+      "start": "Start",
+      "immediately": "Immediately",
+      "startDate": "Start date",
+      "length": "Length",
+      "choose": "Choose",
+      "notSet": "Not set",
+      "where": "Where",
+      "fromClub": "From your club profile.",
+      "addCity": "Add a city",
+      "pay": "Pay",
+      "package": "Package",
+      "euPassport": "EU passport required",
+      "about": "About the opportunity",
+      "aboutPlaceholder": "Who you are, training days, the city, what the season looks like…"
+    },
+    "check": {
+      "aiNote": "I filled this in from what you wrote. Check each part, then post. Nothing is live yet.",
+      "againNote": "Same details as your closed opportunity. Dates and applicants start fresh. Add a start date if you have one, then post. Nothing is live yet.",
+      "editAria": "Edit {{section}}",
+      "done": "Done",
+      "edit": "Edit",
+      "needed": "Needed: {{items}}",
+      "optionalMissing": "Not set · optional: {{items}}"
+    },
+    "ai": {
+      "drafting": "Drafting…",
+      "redraft": "Redraft it with Hockia AI",
+      "draft": "Draft it with Hockia AI"
+    },
+    "saveChanges": "Save changes",
+    "posting": "Posting…",
+    "post": "Post opportunity",
+    "continue": "Continue",
+    "whereTitle": "Where is the opportunity?",
+    "wherePlaceholder": "Search for a city…",
+    "discard": {
+      "title": "Discard changes?",
+      "body": "The opportunity stays as it was.",
+      "confirm": "Discard",
+      "keep": "Keep editing"
+    },
+    "saveAsDraft": {
+      "title": "Save as draft?",
+      "body": "Keep what you’ve written and finish the opportunity later from Opportunities."
+    }
+  },
+  "recruitingCopy": {
+    "closesToday": "Closes today",
+    "daysLeft_one": "{{count}} day left",
+    "daysLeft_other": "{{count}} days left",
+    "closedNoReply_one": "{{count}} closed without a reply after {{days}} days",
+    "closedNoReply_other": "{{count}} closed without a reply after {{days}} days",
+    "closedFilled_one": "{{count}} closed when the opportunity was filled",
+    "closedFilled_other": "{{count}} closed when the opportunity was filled",
+    "withdrawn_one": "{{count}} withdrawn",
+    "withdrawn_other": "{{count}} withdrawn",
+    "closedSoFar_one": "{{count}} has closed without a reply on this opportunity so far",
+    "closedSoFar_other": "{{count}} have closed without a reply on this opportunity so far",
+    "noApplicants": "No applicants yet",
+    "applied_one": "{{count}} applied",
+    "applied_other": "{{count}} applied",
+    "appliedSince_one": "{{count}} applied since {{day}}",
+    "appliedSince_other": "{{count}} applied since {{day}}",
+    "waitingTitle_one": "{{count}} applicant waiting for a reply",
+    "waitingTitle_other": "{{count}} applicants waiting for a reply",
+    "oldestClosesToday": "The oldest closes today if you don’t answer.",
+    "oldestClosesIn_one": "The oldest closes in {{count}} day if you don’t answer.",
+    "oldestClosesIn_other": "The oldest closes in {{count}} days if you don’t answer.",
+    "fitStrong": "Strong fit",
+    "fitPossible": "Possible fit",
+    "positionOther": "Other",
+    "positionStrength": "Strength & conditioning",
+    "fit": {
+      "position": "Position",
+      "thisPosition": "this position",
+      "positionMatch": "Plays {{role}} · matches",
+      "positionSecond": "{{primary}} · plays {{role}} as a second position",
+      "positionSecondNoPrimary": "Another position · plays {{role}} as a second position",
+      "positionMiss": "{{primary}} · the opportunity is for a {{role}}",
+      "positionNone": "No position on the profile yet. The opportunity is for a {{role}}",
+      "category": "Category",
+      "categoryMatchTeam": "{{category}} · matches a {{team}} opportunity",
+      "categoryMatch": "{{category}} · matches this opportunity",
+      "categoryMissTeam": "{{category}} · the opportunity is for {{team}}",
+      "categoryMiss": "{{category}} · doesn’t match this opportunity",
+      "categoryNone": "No playing category on the profile yet",
+      "open": "Open to play",
+      "openYes": "Marked available",
+      "openNo": "Not marked available right now",
+      "level": "Level",
+      "levelSelfReported": "Can’t compare yet: league is self-reported",
+      "levelClubNoLeague": "Can’t compare yet. Club: {{club}} has no league on Hockia.",
+      "levelNoClub": "Can’t compare yet. No club with a league on the profile.",
+      "levelOwnUnknown": "Can’t compare yet. Your league has no level on Hockia.",
+      "levelClose": "Plays at a level close to yours",
+      "levelFurther": "Plays a little further from your level",
+      "levelDifferent": "Plays at a very different level"
+    },
+    "team": {
+      "men": "Men’s",
+      "women": "Women’s",
+      "mixed": "Mixed",
+      "boys": "Boys",
+      "girls": "Girls"
+    },
+    "declineReason": {
+      "positionFilled": "Position filled",
+      "differentPosition": "Different position",
+      "differentLevel": "Different level",
+      "timing": "Timing",
+      "location": "Location",
+      "eligibility": "Eligibility",
+      "profileIncomplete": "Profile incomplete",
+      "videoMissing": "Video missing",
+      "other": "Other"
+    },
+    "toast": {
+      "shortlisted": "{{name}} shortlisted",
+      "maybe": "{{name}} marked maybe",
+      "declined": "{{name}} declined"
+    }
+  },
+  "inviteLanding": {
+    "toastAlreadyMember": "You’re already a member.",
+    "toastJoined": "You joined {{clubName}}.",
+    "toastJoinedNoName": "You joined the club.",
+    "toastJoinFailed": "Could not join the club.",
+    "loading": "Loading invitation…",
+    "unavailableTitle": "Invite not available",
+    "unavailableBody": "This invite link is no longer valid. Ask the club for a new one.",
+    "goHome": "Go to Hockia",
+    "aClub": "A club",
+    "eyebrow": "Club invitation",
+    "title": "{{clubName}} invited you to join its squad",
+    "signedOutBody": "Sign in or create your Hockia profile to join this club.",
+    "createProfile": "Create my profile",
+    "haveAccount": "I already have an account",
+    "alreadyMember": "You’re already a member of {{clubName}}.",
+    "viewClub": "View club",
+    "ineligible": "Only players and coaches can join a club as a member.",
+    "joinBody": "Join {{clubName}} as a member. They’ll see you in their roster.",
+    "joining": "Joining…",
+    "join": "Join club"
+  },
+  "applicantCard": {
+    "fallbackName": "Applicant",
+    "applied": "Applied {{date}}",
+    "notePrefix": "Note: ",
+    "references_one": "{{count}} reference",
+    "references_other": "{{count}} references",
+    "tier": {
+      "topPick": "Top pick",
+      "maybe": "Maybe",
+      "notFit": "Not a fit"
+    },
+    "unsorted": "Unsorted",
+    "backAria": "Back to status options",
+    "reasonHeading": "Reason for “{{status}}” · optional",
+    "skipReason": "Skip — just set status",
+    "clear": "Clear",
+    "viewProfile": "View Profile"
+  },
+  "clubRoles": {
+    "starts": "Starts {{date}}",
+    "startsNow": "Starts immediately",
+    "outcome": {
+      "filledHockia": "Filled through Hockia",
+      "filled": "Filled",
+      "withoutHiring": "Closed without hiring",
+      "closed": "Closed"
+    },
+    "draft": "Draft",
+    "continue": "Continue",
+    "draftHint": "Only you can see this. Post it when it’s ready.",
+    "posted": "Posted {{date}}",
+    "closedOn": "Closed {{date}}",
+    "review_one": "Review {{count}} applicant",
+    "review_other": "Review {{count}} applicants",
+    "viewApplicants": "View applicants",
+    "noApplicants": "No applicants yet",
+    "openApplicantsAria": "Open applicants",
+    "stat": {
+      "toReview": "To review",
+      "shortlisted": "Shortlisted",
+      "notFit": "Not a fit"
+    },
+    "firstRun": {
+      "title": "Post your first opportunity",
+      "body": "Describe the opportunity once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.",
+      "post": "Post an opportunity",
+      "notReady": "Not ready to post? Find players and shortlist them first.",
+      "findPlayers": "Find players now"
+    },
+    "opportunities": "Opportunities",
+    "statusAria": "Opportunity status",
+    "segment": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "postOpportunity": "Post an opportunity",
+    "repliesHeading": "Your replies · last 30 days",
+    "repliesAria": "Applicants answered",
+    "postRole": "Post a role",
+    "noClosed": "No closed opportunities yet.",
+    "findPlayers": "Find players for this opportunity",
+    "shortlist": "Shortlist"
+  },
+  "dashboard": {
+    "docTitle": {
+      "profile": "Club dashboard",
+      "media": "Media",
+      "members": "Members",
+      "friends": "Connections",
+      "comments": "Comments",
+      "posts": "Posts",
+      "opportunities": "Opportunities",
+      "league": "Club & league",
+      "link": "Link your club",
+      "visitor": "{{name}} · {{section}}"
+    },
+    "toast": {
+      "complete": "Your club profile is now complete! Players and coaches see complete clubs first.",
+      "strengthUp": "Profile strength +{{increase}}%. Keep going!",
+      "messageSelf": "You cannot message yourself.",
+      "messageFailed": "Failed to start conversation. Please try again."
+    },
+    "parent": {
+      "editProfile": "Edit profile",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "back": "Back",
+    "backToProfile": "Back to profile",
+    "backToDashboard": "Back to dashboard",
+    "nav": {
+      "members": "Members",
+      "opportunities": "Opportunities",
+      "gallery": "Gallery",
+      "connections": "Connections",
+      "comments": "Comments",
+      "posts": "Posts"
+    },
+    "signIn": {
+      "title": "Sign in to message",
+      "message": "Sign in to message and follow this club."
+    },
+    "signInConnections": "Sign in to see {{clubName}}'s connections.",
+    "signInConnectionsNoName": "Sign in to see this club's connections.",
+    "signInButton": "Sign in"
+  }
+}

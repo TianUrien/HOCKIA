@@ -18,6 +18,7 @@ import {
 import { useOfferImpression } from '@/hooks/useMemberOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { chipTone } from '@/components/ui/chipClasses'
+import { useBrandsT } from '@/i18n/ns/brands'
 import { BrandLogo, OfferHero, PerkPill } from './OfferVisuals'
 
 /**
@@ -38,6 +39,7 @@ interface CardProps {
 }
 
 export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: CardProps) {
+  const t = useBrandsT()
   const navigate = useNavigate()
   const names = useCountryNames()
   const addToast = useToastStore((s) => s.addToast)
@@ -57,7 +59,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
     } catch (err) {
       logger.error('[MemberOfferCard] dismiss failed', err)
       setState('shown')
-      addToast('Could not hide this offer. Please try again.', 'error')
+      addToast(t('memberOfferCard.hideFailed'), 'error')
     }
   }
   const undo = async () => {
@@ -82,12 +84,12 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
     return (
       <div className="rounded-[24px] border border-line bg-white p-4" data-testid="member-offer-dismissed">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-body font-semibold text-ink-1">Got it. You&rsquo;ll see fewer offers like this.</p>
-          <button type="button" onClick={() => void undo()} className="-my-2 flex h-11 shrink-0 items-center text-body font-semibold text-brand-primary" data-testid="member-offer-undo">Undo</button>
+          <p className="text-body font-semibold text-ink-1">{t('memberOfferCard.dismissed')}</p>
+          <button type="button" onClick={() => void undo()} className="-my-2 flex h-11 shrink-0 items-center text-body font-semibold text-brand-primary" data-testid="member-offer-undo">{t('memberOfferCard.undo')}</button>
         </div>
         {state === 'dismissed' ? (
           <>
-            <p className="mt-1 text-row text-ink-2">Tell us why (optional, the brand only sees totals)</p>
+            <p className="mt-1 text-row text-ink-2">{t('memberOfferCard.whyPrompt')}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {DISMISS_REASONS.map((r) => (
                 <button key={r.value} type="button" onClick={() => void reason(r.value)} className={cn('h-9 rounded-full px-4 text-row', chipTone(false))}>
@@ -110,8 +112,8 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
   )
   const actions = (
     <div className="mt-3 flex items-center justify-between">
-      <button type="button" onClick={open} className="inline-flex h-11 items-center rounded-full bg-brand-soft px-5 text-body font-semibold text-brand-primary" data-testid="member-offer-see">See offer</button>
-      <button type="button" onClick={() => void notUseful()} className="flex h-11 items-center px-1 text-body text-ink-2" data-testid="member-offer-not-useful">Not useful</button>
+      <button type="button" onClick={open} className="inline-flex h-11 items-center rounded-full bg-brand-soft px-5 text-body font-semibold text-brand-primary" data-testid="member-offer-see">{t('memberOfferCard.seeOffer')}</button>
+      <button type="button" onClick={() => void notUseful()} className="flex h-11 items-center px-1 text-body text-ink-2" data-testid="member-offer-not-useful">{t('memberOfferCard.notUseful')}</button>
     </div>
   )
 
@@ -121,7 +123,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
         <button type="button" onClick={open} className="flex w-full items-start gap-3 text-left">
           <OfferHero url={offer.image_url} className="h-16 w-16 shrink-0 rounded-[14px]" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-secondary font-semibold text-ink-2">From brands · {offer.brand_name}</span>
+            <span className="block truncate text-secondary font-semibold text-ink-2">{t('memberOfferCard.fromBrandsBy', { brand: offer.brand_name })}</span>
             {offer.perk ? <PerkPill perk={offer.perk} className="mt-1 inline-block rounded-full bg-brand-soft px-2 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
             <span className="mt-0.5 block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</span>
             <span className="mt-0.5 block truncate text-row text-ink-2">{offer.body}</span>
@@ -136,9 +138,9 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
   return (
     <div ref={ref} className="overflow-hidden rounded-[24px] border border-line bg-white" data-testid="member-offer-card" data-surface={surface}>
       {offer.image_url ? (
-        <button type="button" onClick={open} className="relative block h-[130px] w-full" aria-label={`Open offer: ${offer.title}`}>
+        <button type="button" onClick={open} className="relative block h-[130px] w-full" aria-label={t('memberOfferCard.openOffer', { title: offer.title })}>
           <OfferHero url={offer.image_url} className="absolute inset-0 h-full w-full" />
-          <span className="absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-secondary font-semibold text-white backdrop-blur-sm">From brands</span>
+          <span className="absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-secondary font-semibold text-white backdrop-blur-sm">{t('memberOfferCard.fromBrands')}</span>
         </button>
       ) : null}
       <div className="p-4">
@@ -156,7 +158,7 @@ export function MemberOfferCard({ offer, surface, visitId, role, aiTopic }: Card
             <button type="button" onClick={open} className="flex w-full items-start gap-3 text-left">
               <BrandLogo name={offer.brand_name} url={offer.brand_logo_url} className="h-10 w-10 shrink-0 rounded-[12px]" initialsClassName="text-[14px]" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-secondary font-semibold text-ink-2">From brands · {offer.brand_name}</span>
+                <span className="block truncate text-secondary font-semibold text-ink-2">{t('memberOfferCard.fromBrandsBy', { brand: offer.brand_name })}</span>
                 {offer.perk ? <PerkPill perk={offer.perk} className="mt-1 inline-block rounded-full bg-brand-soft px-2 py-0.5 text-caption font-semibold text-brand-primary" /> : null}
                 <span className="mt-0.5 block text-[17px] font-bold leading-[22px] text-ink-1 line-clamp-2">{offer.title}</span>
               </span>

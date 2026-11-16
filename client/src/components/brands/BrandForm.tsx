@@ -16,6 +16,7 @@ import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
 import { BRAND_CATEGORY_OPTIONS as CATEGORY_OPTIONS, normalizeInstagram, validateBrandUrl } from '@/lib/brandEdit'
 import type { BrandDetail } from '@/hooks/useBrand'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface BrandFormProps {
   brand?: BrandDetail | null
@@ -90,9 +91,10 @@ export function BrandForm({
   brand,
   onSubmit,
   isSubmitting = false,
-  submitLabel = 'Save',
+  submitLabel,
   persistKey,
 }: BrandFormProps) {
+  const t = useBrandsT()
   const { user } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -238,11 +240,11 @@ export function BrandForm({
       setFormData((prev) => ({ ...prev, cover_url: urlData.publicUrl }))
     } catch (err) {
       logger.error('[BrandForm] Error uploading cover:', err)
-      setError(err instanceof Error ? err.message : 'Failed to upload cover')
+      setError(err instanceof Error ? err.message : t('brandForm.uploadCoverFailed'))
     } finally {
       setUploadingCover(false)
     }
-  }, [user])
+  }, [user, t])
 
   const handleLogoUpload = useCallback(async (file: File) => {
     if (!user) return
@@ -291,11 +293,11 @@ export function BrandForm({
       }))
     } catch (err) {
       logger.error('[BrandForm] Error uploading logo:', err)
-      setError(err instanceof Error ? err.message : 'Failed to upload logo')
+      setError(err instanceof Error ? err.message : t('brandForm.uploadLogoFailed'))
     } finally {
       setUploadingLogo(false)
     }
-  }, [user])
+  }, [user, t])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -313,49 +315,49 @@ export function BrandForm({
         }
       } catch (err) {
         logger.error('[BrandForm] Native image picker error:', err)
-        setError('Could not access camera or photos. Please check app permissions.')
+        setError(t('brandForm.pickerFailed'))
       }
       return
     }
     fileInputRef.current?.click()
-  }, [handleLogoUpload])
+  }, [handleLogoUpload, t])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
     if (!formData.name.trim()) {
-      setError('Brand name is required')
+      setError(t('brandForm.nameRequired'))
       return
     }
 
     if (!formData.category) {
-      setError('Please choose a category for your brand.')
+      setError(t('brandForm.categoryRequired'))
       return
     }
 
     if (!formData.country_id) {
-      setError('Please choose a country for your brand.')
+      setError(t('brandForm.countryRequired'))
       return
     }
 
     const trimmedSlug = formData.slug.trim()
     if (!trimmedSlug) {
-      setError('Brand URL slug is required')
+      setError(t('brandForm.slugRequired'))
       return
     }
 
     // Only validate slug rules on creation — existing brands cannot change their slug
     if (!brand) {
       if (RESERVED_SLUGS.has(trimmedSlug)) {
-        setError('That URL slug is reserved. Please pick another.')
+        setError(t('brandForm.slugReserved'))
         return
       }
 
       // Same regex as server-side validation in create_brand RPC
       const slugPattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/
       if (!slugPattern.test(trimmedSlug)) {
-        setError('URL slug must be lowercase letters, numbers, and hyphens only (no leading or trailing hyphen).')
+        setError(t('brandForm.slugFormat'))
         return
       }
 
@@ -364,11 +366,11 @@ export function BrandForm({
       // 'taken' or 'invalid' since the user last typed, block submit with
       // a clear message instead of letting it explode at create_brand time.
       if (slugStatus === 'taken') {
-        setError('That URL is already taken. Please choose another.')
+        setError(t('brandForm.slugTakenSubmit'))
         return
       }
       if (slugStatus === 'invalid') {
-        setError('That URL is not valid. Use lowercase letters, numbers and hyphens only.')
+        setError(t('brandForm.slugInvalidSubmit'))
         return
       }
     }
@@ -379,13 +381,13 @@ export function BrandForm({
     const websiteValidation = validateBrandUrl(formData.website_url)
     if (websiteValidation) {
       setWebsiteError(websiteValidation)
-      setError('Please fix the website URL before saving.')
+      setError(t('brandForm.fixWebsite'))
       return
     }
     const ig = normalizeInstagram(formData.instagram_url)
     if (ig.error !== null) {
       setInstagramError(ig.error)
-      setError('Please fix the Instagram handle before saving.')
+      setError(t('brandForm.fixInstagram'))
       return
     }
     try {
@@ -395,7 +397,7 @@ export function BrandForm({
       await onSubmit({ ...formData, instagram_url: ig.url, category: formData.category as BrandCategory })
       clearDraft() // Clear saved draft on successful submission
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save brand')
+      setError(err instanceof Error ? err.message : t('brandForm.saveFailed'))
     }
   }
 
@@ -410,7 +412,7 @@ export function BrandForm({
       {/* Logo Upload */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Brand Logo
+          {t('brandForm.logoLabel')}
         </label>
         <div className="flex items-center gap-4">
           <button
@@ -424,7 +426,7 @@ export function BrandForm({
             ) : formData.logo_url ? (
               <img
                 src={formData.logo_url}
-                alt="Brand logo"
+                alt={t('brandForm.logoAlt')}
                 className="w-full h-full object-contain p-2"
               />
             ) : (
@@ -432,8 +434,8 @@ export function BrandForm({
             )}
           </button>
           <div className="text-sm text-gray-500">
-            <p>Click to upload your brand logo</p>
-            <p>Recommended: Square image, at least 200x200px</p>
+            <p>{t('brandForm.logoHint')}</p>
+            <p>{t('brandForm.logoRecommended')}</p>
           </div>
         </div>
         <input
@@ -442,14 +444,14 @@ export function BrandForm({
           accept="image/*"
           onChange={handleFileChange}
           className="hidden"
-          aria-label="Upload brand logo"
+          aria-label={t('brandForm.uploadLogo')}
         />
       </div>
 
       {/* Cover (edit only — Figma PR22): one photo, tap to change */}
       {brand && (
         <div>
-          <span className="mb-2 block text-sm font-medium text-gray-700">Cover photo</span>
+          <span className="mb-2 block text-sm font-medium text-gray-700">{t('brandForm.coverLabel')}</span>
           <button
             type="button"
             onClick={() => coverInputRef.current?.click()}
@@ -460,14 +462,14 @@ export function BrandForm({
             {uploadingCover ? (
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
             ) : formData.cover_url ? (
-              <img src={formData.cover_url} alt="Brand cover" className="h-full w-full object-cover" />
+              <img src={formData.cover_url} alt={t('brandForm.coverAlt')} className="h-full w-full object-cover" />
             ) : (
-              <span className="flex flex-col items-center gap-1 text-sm text-gray-500"><Camera className="h-7 w-7 text-gray-400" /> Add a cover photo</span>
+              <span className="flex flex-col items-center gap-1 text-sm text-gray-500"><Camera className="h-7 w-7 text-gray-400" /> {t('brandForm.addCover')}</span>
             )}
           </button>
-          <p className="mt-1.5 text-xs text-gray-500">Tap the cover to change it. It shows at the top of your brand page.</p>
+          <p className="mt-1.5 text-xs text-gray-500">{t('brandForm.coverHint')}</p>
           {formData.cover_url && (
-            <button type="button" onClick={() => setFormData((prev) => ({ ...prev, cover_url: '' }))} className="mt-1 text-xs font-medium text-red-600">Remove cover</button>
+            <button type="button" onClick={() => setFormData((prev) => ({ ...prev, cover_url: '' }))} className="mt-1 text-xs font-medium text-red-600">{t('brandForm.removeCover')}</button>
           )}
           <input
             ref={coverInputRef}
@@ -475,7 +477,7 @@ export function BrandForm({
             accept="image/*"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleCoverUpload(f); e.target.value = '' }}
             className="hidden"
-            aria-label="Upload brand cover"
+            aria-label={t('brandForm.uploadCover')}
           />
         </div>
       )}
@@ -484,8 +486,8 @@ export function BrandForm({
       {brand && (
         <label className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3">
           <span>
-            <span className="block text-sm font-medium text-gray-900">Open to partners</span>
-            <span className="block text-xs text-gray-500">Players and clubs see you’re looking for ambassadors</span>
+            <span className="block text-sm font-medium text-gray-900">{t('brandForm.openToPartners')}</span>
+            <span className="block text-xs text-gray-500">{t('brandForm.openToPartnersHint')}</span>
           </span>
           <input
             type="checkbox"
@@ -500,13 +502,13 @@ export function BrandForm({
       {/* Brand Name */}
       <div>
         <label htmlFor="brand-name" className="block text-sm font-medium text-gray-700 mb-1">
-          Brand Name *
+          {t('brandForm.nameLabel')}
         </label>
         <Input
           id="brand-name"
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="Enter your brand name"
+          placeholder={t('brandForm.namePlaceholder')}
           required
         />
       </div>
@@ -514,7 +516,7 @@ export function BrandForm({
       {/* URL Slug */}
       <div>
         <label htmlFor="brand-slug" className="block text-sm font-medium text-gray-700 mb-1">
-          URL Slug *
+          {t('brandForm.slugLabel')}
         </label>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm">inhockia.com/brands/</span>
@@ -522,30 +524,30 @@ export function BrandForm({
             id="brand-slug"
             value={formData.slug}
             onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-            placeholder="your-brand"
+            placeholder={t('brandForm.slugPlaceholder')}
             required
             disabled={!!brand} // Slug cannot be changed after creation
           />
         </div>
         {!brand && (
           <p className="mt-1 text-xs text-gray-500">
-            This will be your brand's unique URL. It cannot be changed later.
+            {t('brandForm.slugHint')}
           </p>
         )}
         {!brand && slugStatus === 'checking' && (
-          <p className="mt-1 text-xs text-gray-400">Checking availability…</p>
+          <p className="mt-1 text-xs text-gray-400">{t('brandForm.slugChecking')}</p>
         )}
         {!brand && slugStatus === 'available' && (
-          <p className="mt-1 text-xs text-emerald-600">✓ Available</p>
+          <p className="mt-1 text-xs text-emerald-600">{t('brandForm.slugAvailable')}</p>
         )}
         {!brand && slugStatus === 'taken' && (
           <p className="mt-1 text-xs text-red-600">
-            That URL is already taken. Try a different one.
+            {t('brandForm.slugTaken')}
           </p>
         )}
         {!brand && slugStatus === 'invalid' && (
           <p className="mt-1 text-xs text-red-600">
-            URL must be lowercase letters, numbers and hyphens only (no leading/trailing hyphen).
+            {t('brandForm.slugInvalid')}
           </p>
         )}
       </div>
@@ -553,7 +555,7 @@ export function BrandForm({
       {/* Category */}
       <div>
         <label htmlFor="brand-category" className="block text-sm font-medium text-gray-700 mb-1">
-          Category *
+          {t('brandForm.categoryLabel')}
         </label>
         <select
           id="brand-category"
@@ -565,7 +567,7 @@ export function BrandForm({
           {/* Explicit placeholder so brands don't silently land on
               "Equipment" without realising. Browsers won't let `required`
               submit while value=""; submit-time validation also catches it. */}
-          <option value="" disabled>Choose a category…</option>
+          <option value="" disabled>{t('brandForm.categoryPlaceholder')}</option>
           {CATEGORY_OPTIONS.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -579,24 +581,24 @@ export function BrandForm({
           added the column + backfilled 8 existing brands. Without this field
           set, the brand would be invisible to every country filter. */}
       <CountrySelect
-        label="Country *"
+        label={t('brandForm.countryLabel')}
         value={formData.country_id}
         onChange={(country_id) => setFormData(prev => ({ ...prev, country_id }))}
-        placeholder="Where is your brand based?"
+        placeholder={t('brandForm.countryPlaceholder')}
         required
       />
 
       {/* Bio */}
       <div>
         <label htmlFor="brand-bio" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
-          <span>About</span>
+          <span>{t('brandForm.bioLabel')}</span>
           <span className="text-xs font-normal text-gray-400">{formData.bio.length}/2000</span>
         </label>
         <textarea
           id="brand-bio"
           value={formData.bio}
           onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value.slice(0, 2000) }))}
-          placeholder="Tell us about your brand..."
+          placeholder={t('brandForm.bioPlaceholder')}
           rows={4}
           maxLength={2000}
           autoCapitalize="sentences"
@@ -608,7 +610,7 @@ export function BrandForm({
       {/* Website */}
       <div>
         <label htmlFor="brand-website" className="block text-sm font-medium text-gray-700 mb-1">
-          Website
+          {t('brandForm.websiteLabel')}
         </label>
         <Input
           id="brand-website"
@@ -626,7 +628,7 @@ export function BrandForm({
             // Validate after auto-prefix so we evaluate the canonical shape.
             setWebsiteError(validateBrandUrl(value))
           }}
-          placeholder="www.your-brand.com"
+          placeholder={t('brandForm.websitePlaceholder')}
         />
         {websiteError && (
           <p className="mt-1 text-xs text-red-600">{websiteError}</p>
@@ -636,7 +638,7 @@ export function BrandForm({
       {/* Instagram */}
       <div>
         <label htmlFor="brand-instagram" className="block text-sm font-medium text-gray-700 mb-1">
-          Instagram
+          {t('brandForm.instagramLabel')}
         </label>
         <Input
           id="brand-instagram"
@@ -651,7 +653,7 @@ export function BrandForm({
             if (ig.url) setFormData(prev => ({ ...prev, instagram_url: ig.url }))
             setInstagramError(ig.error)
           }}
-          placeholder="@yourbrand or instagram.com/yourbrand"
+          placeholder={t('brandForm.instagramPlaceholder')}
         />
         {instagramError && (
           <p className="mt-1 text-xs text-red-600">{instagramError}</p>
@@ -668,10 +670,10 @@ export function BrandForm({
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
+              {t('brandForm.saving')}
             </>
           ) : (
-            submitLabel
+            submitLabel ?? t('brandForm.save')
           )}
         </Button>
       </div>

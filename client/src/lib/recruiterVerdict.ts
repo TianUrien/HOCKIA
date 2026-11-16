@@ -25,6 +25,8 @@
 
 import { recruitmentProblemLabel } from './opportunityIntent'
 import type { FitState } from './clubRecruiting'
+import { tRecruiting } from '@/i18n/ns/recruiting'
+import { lazyTextRecord } from './opportunityLazyText'
 
 /**
  * Action-led recommendation tiers — the lead answers "what should the
@@ -141,12 +143,13 @@ const DISPLAY_TIER_BY_VERDICT: Record<VerdictTier, VerdictDisplayTier> = {
   pass: 'out',
 }
 
-export const DISPLAY_TIER_LABELS: Record<VerdictDisplayTier, string> = {
-  excellent: 'Excellent',
-  good: 'Good',
-  possible: 'Possible',
-  out: 'Outside your context',
-}
+// Read through getters, so each read follows the interface language.
+export const DISPLAY_TIER_LABELS: Record<VerdictDisplayTier, string> = /* @__PURE__ */ lazyTextRecord({
+  excellent: () => tRecruiting('recruiterVerdict.tier.excellent'),
+  good: () => tRecruiting('recruiterVerdict.tier.good'),
+  possible: () => tRecruiting('recruiterVerdict.tier.possible'),
+  out: () => tRecruiting('recruiterVerdict.tier.out'),
+})
 
 /** The canonical display tier for a verdict — every card/sheet/profile reads
  *  this so the four-word vocabulary can never disagree across surfaces. */
@@ -326,8 +329,8 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
     // no video-upload surface, so don't mention video for them.
     caveats.push(
       input.candidateRole === 'coach'
-        ? 'Limited references & track record on file so far.'
-        : 'Limited video & references on file so far.',
+        ? tRecruiting('recruiterVerdict.limitedCoach')
+        : tRecruiting('recruiterVerdict.limitedPlayer'),
     )
   }
   // De-duplicate before capping: a must-have hard-fail reason can be the

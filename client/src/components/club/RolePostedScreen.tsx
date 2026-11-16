@@ -12,6 +12,7 @@ import { markPushAskDone } from '@/lib/pushAsk'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { IconButton } from '@/components/ui/IconButton'
 import { DEFAULT_EXPIRY_DAYS } from '@/lib/clubRecruiting'
+import { useClubT } from '@/i18n/ns/club'
 import { replyWindowLine, rolePostedCopy, type PostRoleDraft } from '@/lib/postRole'
 
 /**
@@ -58,6 +59,7 @@ function recordDismissal() {
 }
 
 export default function RolePostedScreen({ roleId }: Props) {
+  const t = useClubT()
   const navigate = useNavigate()
   const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
@@ -138,7 +140,7 @@ export default function RolePostedScreen({ roleId }: Props) {
   return (
     <div className="flex h-app-screen flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="role-posted-screen">
       <div className="flex h-11 shrink-0 items-center justify-end pr-2">
-        <IconButton label="Close" onClick={done}>
+        <IconButton label={t('rolePosted.close')} onClick={done}>
           <X className="h-6 w-6" strokeWidth={2} />
         </IconButton>
       </div>
@@ -166,10 +168,10 @@ export default function RolePostedScreen({ roleId }: Props) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold leading-5 text-ink-1">{copy.pushTitle}</p>
-                <p className="text-[13px] leading-[18px] text-ink-2">A notification for each applicant and before one closes.</p>
+                <p className="text-[13px] leading-[18px] text-ink-2">{t('rolePosted.pushBody')}</p>
               </div>
               <button type="button" onClick={() => void turnOn()} disabled={push.loading} className="flex h-[34px] shrink-0 items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60">
-                Turn on
+                {t('rolePosted.turnOn')}
               </button>
             </div>
           )}
@@ -181,7 +183,7 @@ export default function RolePostedScreen({ roleId }: Props) {
           {copy.findLabel}
         </button>
         <button type="button" onClick={done} className="flex h-[52px] w-full items-center justify-center rounded-full bg-surface-grouped px-[18px] text-[17px] font-semibold text-ink-1">
-          Done
+          {t('rolePosted.done')}
         </button>
       </div>
     </div>

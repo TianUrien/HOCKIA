@@ -3,15 +3,17 @@ import { Check, ArrowRight, Info } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import type { RecommendationRow } from '@/hooks/useDiscover'
+import { Trans } from 'react-i18next'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 // Match-strength pill — same vocabulary as the discover result cards so a
 // "Strong match" reads the same way wherever Hockia AI shows one.
 const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
-  label: string; pillBg: string; pillText: string
+  labelKey: 'discover.fitStrong' | 'discover.fitGood' | 'discover.fitMoreInfo'; pillBg: string; pillText: string
 }> = {
-  strong_match: { label: 'Strong match', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
-  possible_match: { label: 'Good match', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
-  needs_more_info: { label: 'Needs more info', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
+  strong_match: { labelKey: 'discover.fitStrong', pillBg: 'bg-emerald-50', pillText: 'text-emerald-700' },
+  possible_match: { labelKey: 'discover.fitGood', pillBg: 'bg-hockia-soft', pillText: 'text-brand-text' },
+  needs_more_info: { labelKey: 'discover.fitMoreInfo', pillBg: 'bg-gray-100', pillText: 'text-gray-600' },
 }
 
 // Triage badge — shown only when the owner has *already* labelled this
@@ -34,6 +36,7 @@ interface RecommendationCardProps {
  */
 export default function RecommendationCard({ rec }: RecommendationCardProps) {
   const navigate = useNavigate()
+  const t = useHockiaAiT()
   const fitPreset = FIT_LEVEL_PRESET[rec.fit_level]
   const triagePreset = rec.triage !== 'pending' ? TRIAGE_PRESET[rec.triage] : null
 
@@ -51,7 +54,7 @@ export default function RecommendationCard({ rec }: RecommendationCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-sm font-semibold text-gray-900 truncate">
-              {rec.applicant_name ?? 'Unknown'}
+              {rec.applicant_name ?? t('discover.unknown')}
             </span>
             <RoleBadge role={rec.applicant_role} className="flex-shrink-0" />
             {triagePreset && (
@@ -63,13 +66,13 @@ export default function RecommendationCard({ rec }: RecommendationCardProps) {
             )}
           </div>
           <p className="text-[11px] text-gray-500 mt-0.5 truncate">
-            For your <span className="font-medium text-gray-700">{rec.opening_title}</span> opening
+            <Trans t={t} i18nKey="discover.forOpening" values={{ title: rec.opening_title }} components={{ b: <span className="font-medium text-gray-700" /> }} />
           </p>
         </div>
         <span
           className={`flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${fitPreset.pillBg} ${fitPreset.pillText}`}
         >
-          {fitPreset.label}
+          {t(fitPreset.labelKey)}
         </span>
       </div>
 
@@ -104,7 +107,7 @@ export default function RecommendationCard({ rec }: RecommendationCardProps) {
         onClick={() => navigate(rec.navigate_to)}
         className="mt-3 w-full flex items-center justify-center gap-1 min-h-[44px] py-2 rounded-full bg-hockia-primary text-white text-secondary font-semibold hover:opacity-90 transition-opacity"
       >
-        Review applicant
+        {t('discover.reviewApplicant')}
         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
     </div>

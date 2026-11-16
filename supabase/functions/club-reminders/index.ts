@@ -24,6 +24,10 @@
  * database fences the people (hidden / minor / blocked / test) and makes every
  * send idempotent: each send is CLAIMED first (club_reminder_claim) and the
  * claim is released if Resend fails, so a re-run never double-sends.
+ *
+ * Language (Stage 3, 2026-11-16): the copy (email, push, in-app title and
+ * summary) is written in each publisher's interface language, read in one
+ * batch per run (readMemberLanguages: its own query, English on any failure).
  */
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
@@ -43,6 +47,7 @@ import {
   toApplicantItems,
 } from '../_shared/club-reminders.ts'
 import { renderNewApplicationsEmail, renderReminderEmail } from '../_shared/club-reminder-email.ts'
+import { type MemberLanguage, readMemberLanguages } from '../_shared/member-language.ts'
 
 type Mode = 'new_applications' | 'reminders'
 
@@ -91,6 +96,16 @@ Deno.serve(async (req: Request) => {
     const rows = (data ?? []) as unknown as CandidateRow[]
     const byPublisher = groupByPublisher(rows)
 
+    // Publisher languages for this run; the push-candidate publishers are added below.
+    const languages = new Map<string, MemberLanguage>()
+    const loadLanguages = async (ids: string[]) => {
+      const missing = ids.filter((id) => !languages.has(id))
+      if (missing.length === 0) return
+      for (const [id, lang] of await readMemberLanguages(supabase, missing)) languages.set(id, lang)
+    }
+    const langOf = (publisherId: string): MemberLanguage => languages.get(publisherId) ?? 'en'
+    if (!dryRun) await loadLanguages([...byPublisher.keys()])
+
     const stats = { mode, dryRun, publishers: byPublisher.size, emails: 0, pushes: 0, skipped: 0, failed: 0, notDue: 0 }
 
     for (const [publisherId, list] of byPublisher) {
@@ -116,7 +131,9 @@ Deno.serve(async (req: Request) => {
         logger.error('push candidates failed', { error: pushError.message })
         stats.failed += 1
       } else {
-        for (const [publisherId, list] of groupByPublisher((pushData ?? []) as unknown as CandidateRow[])) {
+        const pushGroups = groupByPublisher((pushData ?? []) as unknown as CandidateRow[])
+        if (!dryRun) await loadLanguages([...pushGroups.keys()])
+        for (const [publisherId, list] of pushGroups) {
           try {
             await runNewApplicationsPush(publisherId, list)
           } catch (err) {
@@ -136,7 +153,8 @@ Deno.serve(async (req: Request) => {
       const head = list[0]
       if (!newApplicationsDue(head.last_new_applications_email_at, now)) { stats.notDue += 1; return }
       const tz = timezoneForCountry(head.publisher_country_code)
-      const items = toApplicantItems(list, tz)
+      const lang = langOf(publisherId)
+      const items = toApplicantItems(list, tz, lang)
       if (items.length === 0 || !head.publisher_email) { stats.notDue += 1; return }
       if (dryRun) { stats.emails += 1; return }
 
@@ -150,7 +168,7 @@ Deno.serve(async (req: Request) => {
       if (claimError) throw new Error(`claim failed: ${claimError.message}`)
       if (!batchId) { stats.notDue += 1; return }
 
-      const email = renderNewApplicationsEmail({ items, baseUrl })
+      const email = renderNewApplicationsEmail({ items, baseUrl, lang })
       const result = await sendTrackedEmail({
         supabase, resendApiKey: resendApiKey!, to: head.publisher_email,
         subject: email.subject, html: email.html, text: email.text,
@@ -169,7 +187,8 @@ Deno.serve(async (req: Request) => {
       if (!newApplicationsDue(head.last_new_applications_email_at, now)) { stats.notDue += 1; return }
       const tz = timezoneForCountry(head.publisher_country_code)
       if (!newApplicationsPushAllowedNow(now, tz)) { stats.notDue += 1; return }
-      const items = toApplicantItems(list, tz)
+      const lang = langOf(publisherId)
+      const items = toApplicantItems(list, tz, lang)
       if (items.length === 0) { stats.notDue += 1; return }
       if (dryRun) { stats.pushes += 1; return }
 
@@ -183,7 +202,7 @@ Deno.serve(async (req: Request) => {
       if (claimError) throw new Error(`push claim failed: ${claimError.message}`)
       if (!batchId) { stats.notDue += 1; return }
 
-      const push = buildNewApplicationsPush(publisherId, items)
+      const push = buildNewApplicationsPush(publisherId, items, lang)
       const sent = await sendPush(push.record)
       // A skipped push (no device, push off) is a finished send; only a failed
       // call releases the claim so the next run retries it.
@@ -214,7 +233,8 @@ Deno.serve(async (req: Request) => {
 
     // ── day 10 / day 13 ───────────────────────────────────────────────────
     async function runReminders(publisherId: string, list: CandidateRow[]) {
-      const plan = planPublisherReminders(list, now)
+      const lang = langOf(publisherId)
+      const plan = planPublisherReminders(list, now, lang)
       if (!plan) return
       const head = list[0]
 
@@ -238,7 +258,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (plan.push) {
-        const n = buildReminderNotification(plan.push.kind, plan.push.lastCall, plan.pending)
+        const n = buildReminderNotification(plan.push.kind, plan.push.lastCall, plan.pending, lang)
         const { data: pushBatch, error: pushError } = await supabase.rpc('club_reminder_claim', {
           p_publisher_id: publisherId,
           p_channel: 'push',
@@ -267,6 +287,7 @@ Deno.serve(async (req: Request) => {
           closingSoon: plan.email.closingSoon,
           pending: plan.pending,
           baseUrl,
+          lang,
         })
         const result = await sendTrackedEmail({
           supabase, resendApiKey: resendApiKey!, to: head.publisher_email,

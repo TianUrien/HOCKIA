@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { setProductNeed, type Need } from '@/lib/marketplace'
+import { tBrands } from '@/i18n/ns/brands'
 
 export interface ProductImage {
   url: string
@@ -80,7 +81,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       setProducts(Array.isArray(parsed) ? parsed : [])
     } catch (err) {
       logger.error('[useBrandProducts] Error fetching products:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load products')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.productsLoad'))
       setProducts([])
     } finally {
       setIsLoading(false)
@@ -88,7 +89,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
   }, [brandId])
 
   const createProduct = useCallback(async (data: CreateProductInput) => {
-    if (!brandId) return { success: false, error: 'No brand ID' }
+    if (!brandId) return { success: false, error: tBrands('hookErrors.productsNoBrand') }
 
     try {
       const { data: result, error: rpcError } = await supabase.rpc('create_brand_product', {
@@ -110,7 +111,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       logger.error('[useBrandProducts] Error creating product:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create product',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.productCreate'),
       }
     }
   }, [brandId, fetchProducts])
@@ -134,7 +135,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       logger.error('[useBrandProducts] Error updating product:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update product',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.productUpdate'),
       }
     }
   }, [fetchProducts])
@@ -153,7 +154,7 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       logger.error('[useBrandProducts] Error deleting product:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to delete product',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.productDelete'),
       }
     }
   }, [fetchProducts])

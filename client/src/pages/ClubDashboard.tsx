@@ -33,6 +33,7 @@ import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useClubT } from '@/i18n/ns/club'
 // Club v2 phone screens: own chunks, so desktop never downloads them.
 const ClubProfileV2 = lazy(() => import('@/components/profile/v2/ClubProfileV2'))
 const ClubLeagueScreen = lazy(() => import('@/components/profile/mobile/ClubLeagueScreen'))
@@ -129,6 +130,7 @@ export default function ClubDashboard({
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
+  const t = useClubT()
 
   // Section comes from the URL route segment (PR2-style route promotion),
   // not a ?tab= param.
@@ -149,30 +151,30 @@ export default function ClubDashboard({
   // prefix with the club name so browser history is identifiable.
   const visitedName = readOnly ? profile?.full_name : null
   const ownerTabTitle: Record<TabType, string> = {
-    profile: 'Club dashboard',
-    media: 'Media',
-    members: 'Members',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    opportunities: 'Opportunities',
-    league: 'Club & league',
-    link: 'Link your club',
+    profile: t('dashboard.docTitle.profile'),
+    media: t('dashboard.docTitle.media'),
+    members: t('dashboard.docTitle.members'),
+    friends: t('dashboard.docTitle.friends'),
+    comments: t('dashboard.docTitle.comments'),
+    posts: t('dashboard.docTitle.posts'),
+    opportunities: t('dashboard.docTitle.opportunities'),
+    league: t('dashboard.docTitle.league'),
+    link: t('dashboard.docTitle.link'),
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
-    media: 'Media',
-    members: 'Members',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    opportunities: 'Opportunities',
+    media: t('dashboard.docTitle.media'),
+    members: t('dashboard.docTitle.members'),
+    friends: t('dashboard.docTitle.friends'),
+    comments: t('dashboard.docTitle.comments'),
+    posts: t('dashboard.docTitle.posts'),
+    opportunities: t('dashboard.docTitle.opportunities'),
     league: null,
     link: null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
-      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
+      ? t('dashboard.docTitle.visitor', { name: visitedName, section: visitorTabSuffix[activeTab] })
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)
@@ -390,13 +392,13 @@ export default function ClubDashboard({
     if (prev !== null && current > prev) {
       const increase = current - prev
       if (current >= 100) {
-        addToast('Your club profile is now complete! Players and coaches see complete clubs first.', 'success')
+        addToast(t('dashboard.toast.complete'), 'success')
       } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+        addToast(t('dashboard.toast.strengthUp', { increase }), 'success')
       }
     }
     prevPercentageRef.current = current
-  }, [strength.percentage, strength.loading, readOnly, addToast])
+  }, [strength.percentage, strength.loading, readOnly, addToast, t])
 
   // Adapt club buckets (actionId strings) to the Hero's
   // ProfileStrengthBucket shape (action objects). 'gallery-section'
@@ -483,7 +485,7 @@ export default function ClubDashboard({
     }
     if (!profileData) return
     if (user.id === profileData.id) {
-      addToast('You cannot message yourself.', 'error')
+      addToast(t('dashboard.toast.messageSelf'), 'error')
       return
     }
     setSendingMessage(true)
@@ -507,7 +509,7 @@ export default function ClubDashboard({
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('dashboard.toast.messageFailed'), 'error')
     } finally {
       setSendingMessage(false)
     }
@@ -529,7 +531,7 @@ export default function ClubDashboard({
   // Settings: ?from=edit&via=settings): back names and returns there.
   const fromSettings = searchParams.get('from') === 'settings'
   const editPath = searchParams.get('via') === 'settings' ? '/dashboard/club/edit?from=settings' : '/dashboard/club/edit'
-  const leafParent = fromEdit ? 'Edit profile' : fromSettings ? 'Settings' : 'Profile'
+  const leafParent = fromEdit ? t('dashboard.parent.editProfile') : fromSettings ? t('dashboard.parent.settings') : t('dashboard.parent.profile')
   const leafBack = () => (fromEdit ? navigate(editPath) : fromSettings ? navigate('/settings') : handleTabChange('profile'))
 
   return (
@@ -596,7 +598,7 @@ export default function ClubDashboard({
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
+            <span className="text-sm font-medium">{t('dashboard.back')}</span>
           </button>
         )}
 
@@ -611,7 +613,7 @@ export default function ClubDashboard({
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+              {readOnly ? t('dashboard.backToProfile') : t('dashboard.backToDashboard')}
             </span>
           </button>
         )}
@@ -661,18 +663,18 @@ export default function ClubDashboard({
               hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...((memberCount ?? 0) > 0
-                  ? [{ id: 'portfolio-members', label: 'Members' }]
+                  ? [{ id: 'portfolio-members', label: t('dashboard.nav.members') }]
                   : []),
-                { id: 'portfolio-opportunities', label: 'Opportunities' },
+                { id: 'portfolio-opportunities', label: t('dashboard.nav.opportunities') },
                 ...((clubMediaCount ?? 0) > 0
-                  ? [{ id: 'portfolio-media', label: 'Gallery' }]
+                  ? [{ id: 'portfolio-media', label: t('dashboard.nav.gallery') }]
                   : []),
                 ...(((profile as Profile).accepted_friend_count ?? 0) > 0
-                  ? [{ id: 'community-connections', label: 'Connections' }]
+                  ? [{ id: 'community-connections', label: t('dashboard.nav.connections') }]
                   : []),
-                { id: 'community-comments', label: 'Comments' },
+                { id: 'community-comments', label: t('dashboard.nav.comments') },
                 ...(((profile as Profile).post_count ?? 0) > 0
-                  ? [{ id: 'community-posts', label: 'Posts' }]
+                  ? [{ id: 'community-posts', label: t('dashboard.nav.posts') }]
                   : []),
               ]}
             />
@@ -773,14 +775,14 @@ export default function ClubDashboard({
                     // (reconciled Connections design — same as Player).
                     <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
                       <p className="text-sm text-gray-600">
-                        Sign in to see {profile.full_name ?? 'this club'}&apos;s connections.
+                        {profile.full_name ? t('dashboard.signInConnections', { clubName: profile.full_name }) : t('dashboard.signInConnectionsNoName')}
                       </p>
                       <button
                         type="button"
                         onClick={() => navigate('/signin')}
                         className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                       >
-                        Sign in
+                        {t('dashboard.signInButton')}
                       </button>
                     </div>
                   ) : readOnly ? (
@@ -841,8 +843,8 @@ export default function ClubDashboard({
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to message"
-        message="Sign in to message and follow this club."
+        title={t('dashboard.signIn.title')}
+        message={t('dashboard.signIn.message')}
       />
     </div>
   )

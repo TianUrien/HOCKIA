@@ -32,6 +32,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
+import { tCommon } from '@/i18n/ns/common'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 
 export interface SavedProfileSummary {
@@ -245,7 +246,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
 
   const toggle = useCallback(async () => {
     if (!viewerId) {
-      addToast('Sign in to save profiles', 'error')
+      addToast(tCommon('savedLists.signInToSave'), 'error')
       return
     }
     if (!profileId || isOwnProfile || mutating) return
@@ -265,7 +266,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
         if (error) {
           addLocally(profileId)
           reportSupabaseError('useIsProfileSaved.unsave', error, { profileId })
-          addToast('Could not remove from saved', 'error')
+          addToast(tCommon('savedLists.removeSavedFailed'), 'error')
           return
         }
       } else {
@@ -305,7 +306,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
         }
         if (!defaultListId) {
           removeLocally(profileId)
-          addToast('Could not create your saved list', 'error')
+          addToast(tCommon('savedLists.createSavedListFailed'), 'error')
           return
         }
         const { error } = await supabase
@@ -321,11 +322,11 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
           if (error.code !== '23505') {
             removeLocally(profileId)
             reportSupabaseError('useIsProfileSaved.save', error, { profileId })
-            addToast('Could not save profile', 'error')
+            addToast(tCommon('savedLists.saveProfileFailed'), 'error')
             return
           }
         } else {
-          addToast('Saved. See your saved list in the dashboard', 'success')
+          addToast(tCommon('savedLists.savedToast'), 'success')
         }
       }
     } finally {
@@ -397,7 +398,7 @@ export function useSavedProfilesList(): UseSavedProfilesListResult {
 
     if (fetchError) {
       reportSupabaseError('useSavedProfilesList', fetchError)
-      setError('Could not load saved players')
+      setError(tCommon('savedLists.savedLoadFailed'))
       setLoading(false)
       return
     }

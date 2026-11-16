@@ -12,6 +12,7 @@ import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
 import { useImpressionOnce, recordProductView } from '@/lib/homeInstrumentation'
 import type { BrandProduct } from '@/hooks/useBrandProducts'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface ProductCardProps {
   product: BrandProduct
@@ -28,6 +29,7 @@ export function ProductCard({
   onEdit,
   onDelete,
 }: ProductCardProps) {
+  const t = useBrandsT()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
@@ -88,7 +90,7 @@ export function ProductCard({
                 <div className="aspect-[4/3] bg-gray-100">
                   <img
                     src={getImageUrl(img.url, 'feed-full') ?? undefined}
-                    alt={`${product.name} - image ${i + 1}`}
+                    alt={t('productCard.imageAlt', { name: product.name, n: i + 1 })}
                     className="w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
@@ -105,7 +107,7 @@ export function ProductCard({
                 <button
                   key={i}
                   type="button"
-                  aria-label={`Go to image ${i + 1}`}
+                  aria-label={t('productCard.goToImage', { n: i + 1 })}
                   className={`w-2 h-2 rounded-full transition-colors ${
                     i === currentSlide ? 'bg-indigo-500' : 'bg-gray-300'
                   }`}
@@ -130,7 +132,7 @@ export function ProductCard({
                   setShowMenu(!showMenu)
                 }}
                 className="p-1.5 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
-                aria-label="Product actions"
+                aria-label={t('productCard.actions')}
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
@@ -146,7 +148,7 @@ export function ProductCard({
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <Pencil className="w-4 h-4" />
-                    Edit
+                    {t('productCard.edit')}
                   </button>
                   <button
                     type="button"
@@ -157,7 +159,7 @@ export function ProductCard({
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {t('productCard.delete')}
                   </button>
                 </div>
               )}
@@ -180,7 +182,7 @@ export function ProductCard({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
           >
-            Learn more
+            {t('productCard.learnMore')}
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}

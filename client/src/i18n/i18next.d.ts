@@ -16,6 +16,10 @@ import type community from '@/locales/en/community.json'
 import type inbox from '@/locales/en/inbox.json'
 import type notifications from '@/locales/en/notifications.json'
 import type world from '@/locales/en/world.json'
+import type recruiting from '@/locales/en/recruiting.json'
+import type club from '@/locales/en/club.json'
+import type brands from '@/locales/en/brands.json'
+import type hockiaAi from '@/locales/en/hockiaAi.json'
 
 declare module 'i18next' {
   interface CustomTypeOptions {
@@ -36,6 +40,10 @@ declare module 'i18next' {
       inbox: typeof inbox
       notifications: typeof notifications
       world: typeof world
+      recruiting: typeof recruiting
+      club: typeof club
+      brands: typeof brands
+      hockiaAi: typeof hockiaAi
     }
   }
 }

@@ -18,6 +18,7 @@
  */
 
 import { labelFor, labelForInline } from './display-labels.ts'
+import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
 
 export type OpportunityType = 'player' | 'coach'
 export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
@@ -441,24 +442,40 @@ const CATEGORY_LABELS: Record<OpportunityGender, string> = {
   Men: "Men's team", Women: "Women's team", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed',
 }
 
+// Spanish (Stage 3, client/src/locales/glossary.md).
+const BENEFIT_LABELS_ES: Record<string, string> = {
+  housing: 'Alojamiento', flights: 'Pasajes', visa: 'Visa', car: 'Auto', job: 'Trabajo',
+  insurance: 'Seguro', bonuses: 'Premios', equipment: 'Equipamiento', meals: 'Comidas',
+  education: 'Estudios',
+}
+
+const CATEGORY_LABELS_ES: Record<OpportunityGender, string> = {
+  Men: 'Caballeros', Women: 'Damas', Girls: 'Juveniles damas', Boys: 'Juveniles caballeros', Mixed: 'Mixto',
+}
+
 function clean(s: string | null | undefined, max = 80): string | null {
   if (!s) return null
   const t = s.replace(/\s+/g, ' ').trim().slice(0, max)
   return t || null
 }
 
-export function toOpportunityResult(row: OpportunityRow): OpportunityResult {
+export function toOpportunityResult(row: OpportunityRow, lang: MemberLanguage = currentAiLanguage()): OpportunityResult {
+  const es = lang === 'es'
+  const benefitTable = es ? BENEFIT_LABELS_ES : BENEFIT_LABELS
+  const categoryTable = es ? CATEGORY_LABELS_ES : CATEGORY_LABELS
   const location = [clean(row.location_city, 40), clean(row.location_country, 40)].filter(Boolean).join(', ')
   return {
     id: row.id,
-    title: clean(row.title, 120) ?? (row.position ? `${labelFor(row.position)} role` : 'Open role'),
-    position_label: row.position ? labelFor(row.position) : null,
-    category_label: row.gender ? CATEGORY_LABELS[row.gender] ?? null : null,
+    title: clean(row.title, 120) ?? (es
+      ? (row.position ? `Oportunidad: ${labelFor(row.position, lang)}` : 'Oportunidad abierta')
+      : (row.position ? `${labelFor(row.position, lang)} role` : 'Open role')),
+    position_label: row.position ? labelFor(row.position, lang) : null,
+    category_label: row.gender ? categoryTable[row.gender] ?? null : null,
     location_label: location || null,
     organization: clean(row.world_club_name) ?? clean(row.organization_name) ?? clean(row.club_name),
     logo_url: row.world_club_avatar_url ?? row.club_logo_url ?? null,
     benefit_labels: (row.benefits ?? [])
-      .map(b => BENEFIT_LABELS[b.toLowerCase()] ?? null)
+      .map(b => benefitTable[b.toLowerCase()] ?? null)
       .filter((b): b is string => !!b)
       .slice(0, 4),
     deadline: row.application_deadline ?? null,
@@ -467,7 +484,8 @@ export function toOpportunityResult(row: OpportunityRow): OpportunityResult {
 }
 
 /** "midfielder roles", "head coach roles", "open roles" — plural noun phrase. */
-export function describeRoleNoun(criteria: OpportunityCriteria): { plural: string; singular: string } {
+export function describeRoleNoun(criteria: OpportunityCriteria, lang: MemberLanguage = currentAiLanguage()): { plural: string; singular: string } {
+  if (lang === 'es') return describeRoleNounEs(criteria)
   const pos = criteria.positions.map(p => labelForInline(p))
   const head = pos.length === 0 ? 'open'
     : pos.length === 1 ? pos[0]
@@ -478,6 +496,26 @@ export function describeRoleNoun(criteria: OpportunityCriteria): { plural: strin
   return { plural: `${cat}${head} roles`, singular: `${cat}${head} role` }
 }
 
+/** "oportunidades de volante en Damas", "oportunidades abiertas". */
+function describeRoleNounEs(criteria: OpportunityCriteria): { plural: string; singular: string } {
+  const pos = criteria.positions.map(p => labelForInline(p, 'es'))
+  const what = pos.length === 0 ? ''
+    : pos.length === 1 ? pos[0]
+      : `${pos.slice(0, -1).join(', ')} o ${pos[pos.length - 1]}`
+  const cat = criteria.genders.length === 1 && criteria.genders[0] !== 'Mixed'
+    ? ` en ${CATEGORY_LABELS_ES[criteria.genders[0]]}`
+    : ''
+  if (!what) return { plural: `oportunidades abiertas${cat}`, singular: `oportunidad abierta${cat}` }
+  return { plural: `oportunidades de ${what}${cat}`, singular: `oportunidad de ${what}${cat}` }
+}
+
+function benefitsPhraseEs(criteria: OpportunityCriteria): string {
+  if (!criteria.benefits.length) return ''
+  const labels = criteria.benefits.map(b => (BENEFIT_LABELS_ES[b] ?? b).toLowerCase())
+  const joined = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`
+  return ` con ${joined}`
+}
+
 function benefitsPhrase(criteria: OpportunityCriteria): string {
   if (!criteria.benefits.length) return ''
   const labels = criteria.benefits.map(b => (BENEFIT_LABELS[b] ?? b).toLowerCase())
@@ -486,7 +524,13 @@ function benefitsPhrase(criteria: OpportunityCriteria): string {
 }
 
 /** Headline for a successful role search. Gender-neutral, count-of-roles only. */
-export function buildOpportunityMessage(count: number, criteria: OpportunityCriteria, geoLabel: string | null): string {
+export function buildOpportunityMessage(count: number, criteria: OpportunityCriteria, geoLabel: string | null, lang: MemberLanguage = currentAiLanguage()): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const n = count === 1 ? noun.singular : noun.plural
+    const where = geoLabel ? ` en ${geoLabel}` : ''
+    return `Hay ${count} ${n}${where}${benefitsPhraseEs(criteria)} a ${count === 1 ? 'la' : 'las'} que es posible postularse.`
+  }
   const noun = describeRoleNoun(criteria)
   const n = count === 1 ? noun.singular : noun.plural
   const where = geoLabel ? ` in ${geoLabel}` : ''
@@ -494,7 +538,15 @@ export function buildOpportunityMessage(count: number, criteria: OpportunityCrit
 }
 
 /** Copy when nothing matched even after widening geography. */
-export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLabel: string | null): string {
+export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLabel: string | null, lang: MemberLanguage = currentAiLanguage()): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const where = geoLabel ? ` en ${geoLabel}` : ''
+    const narrowed = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
+    return narrowed
+      ? `Por ahora no hay ${noun.plural}${where}${benefitsPhraseEs(criteria)} a las que sea posible postularse. Se publican oportunidades nuevas todo el tiempo. Se puede ampliar la búsqueda o ver todas las oportunidades abiertas.`
+      : `Por ahora no hay oportunidades abiertas${where} a las que sea posible postularse. Se publican oportunidades nuevas todo el tiempo. Mantener el perfil al día también ayuda a que los clubes te encuentren.`
+  }
   const noun = describeRoleNoun(criteria)
   const where = geoLabel ? ` in ${geoLabel}` : ''
   const hasNarrowing = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
@@ -514,7 +566,17 @@ export function buildIneligibleMessage(
   criteria: OpportunityCriteria,
   askedLabel: string | null,
   widened: { count: number; region: string | null } | null = null,
+  lang: MemberLanguage = currentAiLanguage(),
 ): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const where = askedLabel ? ` en ${askedLabel}` : ' en HOCKIA'
+    const head = `Hay ${noun.plural}${where}${benefitsPhraseEs(criteria)}, pero por ahora ninguna admite tu postulación`
+    if (!widened || widened.count === 0) return `${head}.`
+    const n = widened.count === 1 ? `1 ${noun.singular}` : `${widened.count} ${noun.plural}`
+    const elsewhere = widened.region ? `en otra parte de ${widened.region}` : 'en otras partes del mundo'
+    return `${head}. Hay ${n} ${elsewhere} a ${widened.count === 1 ? 'la' : 'las'} que es posible postularse.`
+  }
   const noun = describeRoleNoun(criteria)
   const where = askedLabel ? ` in ${askedLabel}` : ' on HOCKIA'
   const head = `There are ${noun.plural}${where}${benefitsPhrase(criteria)}, but none you can apply to right now`

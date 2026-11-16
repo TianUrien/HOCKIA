@@ -8,6 +8,8 @@ import { useCountryNames } from '@/hooks/useCountryNames'
 import { useMarketCountry, useMarketplace, useOpenMarketItem } from '@/hooks/useMarketplace'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { CountryChip, ItemMenuSheet, MarketRow, SuggestBrandSheet } from '@/components/marketplace/MarketParts'
+import { isEnglish } from '@/i18n/format'
+import { useBrandsT } from '@/i18n/ns/brands'
 import { NEEDS, isNeed, sortForList, trackMarket, type MarketItem } from '@/lib/marketplace'
 
 /**
@@ -16,6 +18,7 @@ import { NEEDS, isNeed, sortForList, trackMarket, type MarketItem } from '@/lib/
  * abroad. Ends with "Ask Hockia AI what to sort out for <Country>".
  */
 export default function NeedPage() {
+  const t = useBrandsT()
   const { need } = useParams()
   const navigate = useNavigate()
   const role = useAuthStore((s) => s.profile?.role ?? null)
@@ -41,18 +44,18 @@ export default function NeedPage() {
   if (role === 'brand') return <Navigate to="/community/brands" replace />
 
   const country = countryId != null ? names([countryId])[0] ?? null : null
-  const inCountry = country ? countryInSentence(country) : null
+  const inCountry = country ? (isEnglish() ? countryInSentence(country) : country) : null
   const moving = meta.key === 'moving_abroad'
 
   return (
     <div className="min-h-screen bg-surface-subtle" data-testid="need-page">
       <Header mobileHidden />
-      <DetailNavBar parent="Brands" fallbackPath="/community/brands" onBack={() => navigate(`/community/brands${countryId != null ? `?near=${countryId}` : ''}`)} />
+      <DetailNavBar parent={t('needPage.parent')} fallbackPath="/community/brands" onBack={() => navigate(`/community/brands${countryId != null ? `?near=${countryId}` : ''}`)} />
       <main className="mx-auto max-w-[760px] px-4 pb-28 lg:pt-under-header-lg">
         <h1 className="text-title-xl text-ink-1">{meta.label}</h1>
         <p className="mt-1 text-body text-ink-2">{meta.pageSubtitle}</p>
         <div className="mt-4">
-          <CountryChip label={moving ? 'Moving to' : 'Near you'} countryId={countryId} tone={moving ? 'soft' : 'outline'} onChange={setCountry} />
+          <CountryChip label={moving ? t('needPage.movingTo') : t('needPage.nearYou')} countryId={countryId} tone={moving ? 'soft' : 'outline'} onChange={setCountry} />
         </div>
 
         <div className="mt-5 space-y-3">
@@ -62,9 +65,9 @@ export default function NeedPage() {
             list.map((it) => <MarketRow key={it.id} item={it} surface="need_page" onOpen={() => void open(it)} onMenu={() => setMenuFor(it)} />)
           ) : (
             <div className="rounded-[20px] bg-white p-5" data-testid="need-page-empty">
-              <p className="text-body font-semibold text-ink-1">Nothing here{inCountry ? ` for ${inCountry}` : ''} yet</p>
-              <p className="mt-1 text-row text-ink-2">More brands are joining. Know one that should be here?</p>
-              <button type="button" onClick={() => setSuggestOpen(true)} className="mt-1 flex h-11 items-center text-body font-semibold text-brand-primary">Suggest a brand</button>
+              <p className="text-body font-semibold text-ink-1">{inCountry ? t('needPage.emptyTitleIn', { where: inCountry }) : t('needPage.emptyTitle')}</p>
+              <p className="mt-1 text-row text-ink-2">{t('needPage.emptyBody')}</p>
+              <button type="button" onClick={() => setSuggestOpen(true)} className="mt-1 flex h-11 items-center text-body font-semibold text-brand-primary">{t('needPage.suggest')}</button>
             </div>
           )}
         </div>
@@ -72,11 +75,11 @@ export default function NeedPage() {
         {inCountry ? (
           <button
             type="button"
-            onClick={() => showAi('header', 'chat', { text: moving ? `What should I sort out before moving to ${inCountry} to play?` : `What ${meta.label.toLowerCase()} do I need in ${inCountry}?`, send: false })}
+            onClick={() => showAi('header', 'chat', { text: moving ? t('needPage.aiMoving', { where: inCountry }) : t('needPage.aiNeed', { need: meta.label.toLowerCase(), where: inCountry }), send: false })}
             className="mt-5 flex w-full items-center rounded-full bg-brand-soft px-5 py-3.5 text-left text-body font-semibold text-brand-primary"
             data-testid="need-page-ask-ai"
           >
-            Ask Hockia AI what to sort out for {inCountry}
+            {t('needPage.askAi', { where: inCountry })}
           </button>
         ) : null}
       </main>

@@ -37,19 +37,24 @@ import Skeleton from '@/components/Skeleton'
 import BrandProfileV2 from '@/components/profile/v2/BrandProfileV2'
 import BrandEditScreen from '@/components/brands/BrandEditScreen'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useBrandsT } from '@/i18n/ns/brands'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { brandCount } from '@/lib/brandOffers'
 
 type TabType = 'overview' | 'products' | 'posts' | 'ambassadors' | 'followers'
 
-const TABS: { id: TabType; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'products', label: 'Products' },
-  { id: 'posts', label: 'Posts' },
-  { id: 'ambassadors', label: 'Ambassadors' },
-  { id: 'followers', label: 'Followers' },
+const TABS: { id: TabType }[] = [
+  { id: 'overview' },
+  { id: 'products' },
+  { id: 'posts' },
+  { id: 'ambassadors' },
+  { id: 'followers' },
 ]
 
 export default function BrandDashboard() {
   const navigate = useNavigate()
+  const t = useBrandsT()
+  const tEnums = useEnumsT()
   const { user, profile } = useAuthStore()
   const { brand, isLoading: brandLoading, updateBrand, refetch: refetchBrand } = useMyBrand()
   const { addToast } = useToastStore()
@@ -58,7 +63,7 @@ export default function BrandDashboard() {
 
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     const param = searchParams.get('tab') as TabType | null
-    return param && TABS.some(t => t.id === param) ? param : 'overview'
+    return param && TABS.some(tab => tab.id === param) ? param : 'overview'
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -224,7 +229,7 @@ export default function BrandDashboard() {
   // Sync tab with URL
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabType | null
-    if (tabParam && TABS.some(t => t.id === tabParam) && tabParam !== activeTab) {
+    if (tabParam && TABS.some(tab => tab.id === tabParam) && tabParam !== activeTab) {
       setActiveTab(tabParam)
     }
   }, [searchParams, activeTab])
@@ -250,12 +255,12 @@ export default function BrandDashboard() {
     if (percentage > before) {
       const increase = percentage - before
       if (percentage >= 100) {
-        addToast("Your brand profile is now complete!", 'success')
+        addToast(t('dashboard.toasts.complete'), 'success')
       } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+        addToast(t('dashboard.toasts.strength', { increase }), 'success')
       }
     }
-  }, [percentage, strengthLoading, addToast])
+  }, [percentage, strengthLoading, addToast, t])
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
@@ -268,7 +273,7 @@ export default function BrandDashboard() {
     if (isEdit && editingProduct) {
       const result = await updateProduct(editingProduct.id, data)
       if (result.success) {
-        addToast('Product updated', 'success')
+        addToast(t('dashboard.toasts.productUpdated'), 'success')
         setEditingProduct(null)
         strengthSnapshotRef.current = percentage
         await refreshStrength()
@@ -277,7 +282,7 @@ export default function BrandDashboard() {
     }
     const result = await createProduct(data as CreateProductInput)
     if (result.success) {
-      addToast('Product added', 'success')
+      addToast(t('dashboard.toasts.productAdded'), 'success')
       strengthSnapshotRef.current = percentage
       await refreshStrength()
     }
@@ -290,12 +295,12 @@ export default function BrandDashboard() {
     try {
       const result = await deleteProduct(productToDelete.id)
       if (!result.success) throw new Error(result.error)
-      addToast('Product deleted', 'success')
+      addToast(t('dashboard.toasts.productDeleted'), 'success')
       setProductToDelete(null)
       strengthSnapshotRef.current = percentage
       await refreshStrength()
     } catch {
-      addToast('Failed to delete product', 'error')
+      addToast(t('dashboard.toasts.productDeleteFailed'), 'error')
     } finally {
       setIsDeletingProduct(false)
     }
@@ -305,14 +310,14 @@ export default function BrandDashboard() {
     if (isEdit && editingPost) {
       const result = await updatePost(editingPost.id, data)
       if (result.success) {
-        addToast('Post updated', 'success')
+        addToast(t('dashboard.toasts.postUpdated'), 'success')
         setEditingPost(null)
       }
       return result
     }
     const result = await createPost(data as CreatePostInput)
     if (result.success) {
-      addToast('Post published', 'success')
+      addToast(t('dashboard.toasts.postPublished'), 'success')
     }
     return result
   }
@@ -323,10 +328,10 @@ export default function BrandDashboard() {
     try {
       const result = await deletePostFn(postToDelete.id)
       if (!result.success) throw new Error(result.error)
-      addToast('Post deleted', 'success')
+      addToast(t('dashboard.toasts.postDeleted'), 'success')
       setPostToDelete(null)
     } catch {
-      addToast('Failed to delete post', 'error')
+      addToast(t('dashboard.toasts.postDeleteFailed'), 'error')
     } finally {
       setIsDeletingPost(false)
     }
@@ -335,7 +340,7 @@ export default function BrandDashboard() {
   const handleAddAmbassador = async (playerId: string) => {
     const result = await addAmbassador(playerId)
     if (result.success) {
-      addToast('Ambassador request sent', 'success')
+      addToast(t('dashboard.toasts.ambassadorSent'), 'success')
       strengthSnapshotRef.current = percentage
       await refreshStrength()
     }
@@ -349,7 +354,7 @@ export default function BrandDashboard() {
       const result = await removeAmbassador(ambassadorToRemove.player_id)
       if (!result.success) throw new Error(result.error)
       addToast(
-        ambassadorToRemove.status === 'pending' ? 'Ambassador request cancelled' : 'Ambassador removed',
+        ambassadorToRemove.status === 'pending' ? t('dashboard.toasts.requestCancelled') : t('dashboard.toasts.ambassadorRemoved'),
         'success'
       )
       setAmbassadorToRemove(null)
@@ -357,7 +362,7 @@ export default function BrandDashboard() {
       await refreshStrength()
     } catch {
       addToast(
-        ambassadorToRemove.status === 'pending' ? 'Failed to cancel request' : 'Failed to remove ambassador',
+        ambassadorToRemove.status === 'pending' ? t('dashboard.toasts.cancelFailed') : t('dashboard.toasts.removeFailed'),
         'error'
       )
     } finally {
@@ -381,17 +386,17 @@ export default function BrandDashboard() {
       })
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to update brand')
+        throw new Error(result.error || t('dashboard.toasts.updateFailed'))
       }
 
-      addToast('Brand profile updated successfully', 'success')
+      addToast(t('dashboard.toasts.updated'), 'success')
       setShowEditModal(false)
       strengthSnapshotRef.current = percentage
       await refetchBrand()
       await refreshStrength()
     } catch (err) {
       logger.error('[BrandDashboard] Error updating brand:', err)
-      addToast(err instanceof Error ? err.message : 'Failed to update brand', 'error')
+      addToast(err instanceof Error ? err.message : t('dashboard.toasts.updateFailed'), 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -399,16 +404,9 @@ export default function BrandDashboard() {
 
   const getCategoryLabel = (category: string | null) => {
     if (!category) return null
-    const labels: Record<string, string> = {
-      equipment: 'Equipment',
-      apparel: 'Apparel',
-      accessories: 'Accessories',
-      nutrition: 'Nutrition',
-      services: 'Services',
-      technology: 'Technology',
-      other: 'Other',
-    }
-    return labels[category] || category
+    const known = ['equipment', 'apparel', 'accessories', 'nutrition', 'services', 'technology', 'other'] as const
+    type Known = (typeof known)[number]
+    return (known as readonly string[]).includes(category) ? tEnums(`brandCategory.${category as Known}`) : category
   }
 
   // Loading state
@@ -467,7 +465,7 @@ export default function BrandDashboard() {
               onPostUpdate={() => setShowAddPostModal(true)}
               onTogglePartners={async (next) => {
                 const res = await updateBrand({ open_to_partners: next })
-                if (!res.success) addToast(res.error ?? 'Could not save', 'error')
+                if (!res.success) addToast(res.error ?? t('dashboard.toasts.couldNotSave'), 'error')
               }}
               onOpenTab={(tab) => handleTabChange(tab)}
             />
@@ -508,8 +506,8 @@ export default function BrandDashboard() {
                     className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                   >
                     <Eye className="w-4 h-4 flex-shrink-0" />
-                    <span className="hidden xs:inline">Public View</span>
-                    <span className="xs:hidden">View</span>
+                    <span className="hidden xs:inline">{t('dashboard.header.publicView')}</span>
+                    <span className="xs:hidden">{t('dashboard.header.view')}</span>
                   </Button>
                   <Button
                     variant="primary"
@@ -518,8 +516,8 @@ export default function BrandDashboard() {
                     className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                   >
                     <Edit className="w-4 h-4 flex-shrink-0" />
-                    <span className="hidden xs:inline">Edit Brand</span>
-                    <span className="xs:hidden">Edit</span>
+                    <span className="hidden xs:inline">{t('dashboard.header.editBrand')}</span>
+                    <span className="xs:hidden">{t('dashboard.header.edit')}</span>
                   </Button>
                 </div>
               </div>
@@ -607,7 +605,7 @@ export default function BrandDashboard() {
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
           <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
             <ScrollableTabs
-              tabs={TABS}
+              tabs={TABS.map((tab) => ({ id: tab.id, label: t(`dashboard.tabs.${tab.id}`) }))}
               activeTab={activeTab}
               onTabChange={handleTabChange}
               className="gap-8 px-6"
@@ -623,7 +621,7 @@ export default function BrandDashboard() {
             {activeTab === 'products' && (
               <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Products & Services</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.products.title')}</h2>
                   <Button
                     variant="primary"
                     size="sm"
@@ -631,7 +629,7 @@ export default function BrandDashboard() {
                     className="gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Product
+                    {t('dashboard.products.add')}
                   </Button>
                 </div>
 
@@ -650,9 +648,9 @@ export default function BrandDashboard() {
                 ) : products.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                     <Package className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.products.emptyTitle')}</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
-                      Add products so players, clubs, and coaches can discover your brand and reach out for partnerships.
+                      {t('dashboard.products.emptyBody')}
                     </p>
                     <Button
                       variant="primary"
@@ -661,7 +659,7 @@ export default function BrandDashboard() {
                       className="gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Your First Product
+                      {t('dashboard.products.addFirst')}
                     </Button>
                   </div>
                 ) : (
@@ -686,8 +684,8 @@ export default function BrandDashboard() {
               <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Brand Announcements</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">Appear on your brand profile and in the global feed</p>
+                    <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.posts.title')}</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{t('dashboard.posts.subtitle')}</p>
                   </div>
                   <Button
                     variant="primary"
@@ -696,7 +694,7 @@ export default function BrandDashboard() {
                     className="gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    New Post
+                    {t('dashboard.posts.new')}
                   </Button>
                 </div>
 
@@ -713,9 +711,9 @@ export default function BrandDashboard() {
                 ) : posts.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                     <FileText className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.posts.emptyTitle')}</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
-                      Share updates, announcements, and news with your audience. Posts appear in the global brand feed.
+                      {t('dashboard.posts.emptyBody')}
                     </p>
                     <Button
                       variant="primary"
@@ -724,7 +722,7 @@ export default function BrandDashboard() {
                       className="gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Create Your First Post
+                      {t('dashboard.posts.createFirst')}
                     </Button>
                   </div>
                 ) : (
@@ -748,7 +746,7 @@ export default function BrandDashboard() {
                 {/* Home Feed Posts */}
                 {profile?.id && (
                   <div className="mt-8 pt-8 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Home Feed Posts</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.posts.homeFeed')}</h3>
                     <ProfilePostsTab profileId={profile.id} />
                   </div>
                 )}
@@ -760,14 +758,14 @@ export default function BrandDashboard() {
               <div className="space-y-6 animate-fade-in">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-900">Ambassadors</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.ambassadors.title')}</h2>
                     {ambassadorsTotal > 0 && (
-                      <span className="text-sm text-gray-500 sm:hidden">{ambassadorsTotal} total</span>
+                      <span className="text-sm text-gray-500 sm:hidden">{t('dashboard.total', { n: brandCount(ambassadorsTotal) })}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
                     {ambassadorsTotal > 0 && (
-                      <span className="text-sm text-gray-500 hidden sm:inline">{ambassadorsTotal} total</span>
+                      <span className="text-sm text-gray-500 hidden sm:inline">{t('dashboard.total', { n: brandCount(ambassadorsTotal) })}</span>
                     )}
                     <Button
                       variant="primary"
@@ -776,7 +774,7 @@ export default function BrandDashboard() {
                       className="gap-2 w-full sm:w-auto"
                     >
                       <Plus className="w-4 h-4" />
-                      Invite Ambassador
+                      {t('dashboard.ambassadors.invite')}
                     </Button>
                   </div>
                 </div>
@@ -796,9 +794,9 @@ export default function BrandDashboard() {
                 ) : ambassadors.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                     <Award className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No ambassadors yet</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.ambassadors.emptyTitle')}</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
-                      Invite the players you sponsor to become brand ambassadors. They'll appear on your public profile once they accept.
+                      {t('dashboard.ambassadors.emptyBody')}
                     </p>
                     <Button
                       variant="primary"
@@ -807,7 +805,7 @@ export default function BrandDashboard() {
                       className="gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Invite Your First Ambassador
+                      {t('dashboard.ambassadors.inviteFirst')}
                     </Button>
                   </div>
                 ) : (
@@ -816,7 +814,7 @@ export default function BrandDashboard() {
                     {pendingAmbassadors.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                          Pending Requests ({pendingAmbassadors.length})
+                          {t('dashboard.ambassadors.pendingHeading', { n: brandCount(pendingAmbassadors.length) })}
                         </h3>
                         <div className="space-y-3">
                           {pendingAmbassadors.map(ambassador => (
@@ -837,16 +835,16 @@ export default function BrandDashboard() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <p className="text-sm font-semibold text-gray-900 truncate">
-                                      {ambassador.full_name || 'Unknown'}
+                                      {ambassador.full_name || t('dashboard.unknown')}
                                     </p>
                                     <span className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white text-ink-2">
-                                      Pending
+                                      {t('dashboard.ambassadors.pending')}
                                     </span>
                                   </div>
                                   <p className="text-xs text-gray-500 truncate">
                                     {[ambassador.position, ambassador.current_club]
                                       .filter(Boolean)
-                                      .join(' \u00B7 ') || 'Player'}
+                                      .join(' \u00B7 ') || tEnums('role.player')}
                                   </p>
                                 </div>
                               </Link>
@@ -858,7 +856,7 @@ export default function BrandDashboard() {
                                   status: ambassador.status,
                                 })}
                                 className="shrink-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                aria-label="Cancel request"
+                                aria-label={t('dashboard.ambassadors.cancelAria')}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -873,7 +871,7 @@ export default function BrandDashboard() {
                       <div>
                         {pendingAmbassadors.length > 0 && (
                           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                            Active ({acceptedAmbassadors.length})
+                            {t('dashboard.ambassadors.activeHeading', { n: brandCount(acceptedAmbassadors.length) })}
                           </h3>
                         )}
                         <div className="space-y-3">
@@ -894,12 +892,12 @@ export default function BrandDashboard() {
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-gray-900 truncate">
-                                    {ambassador.full_name || 'Unknown'}
+                                    {ambassador.full_name || t('dashboard.unknown')}
                                   </p>
                                   <p className="text-xs text-gray-500 truncate">
                                     {[ambassador.position, ambassador.current_club]
                                       .filter(Boolean)
-                                      .join(' \u00B7 ') || 'Player'}
+                                      .join(' \u00B7 ') || tEnums('role.player')}
                                   </p>
                                 </div>
                                 <span className="hidden sm:inline-flex"><RoleBadge role="player" /></span>
@@ -912,7 +910,7 @@ export default function BrandDashboard() {
                                   status: ambassador.status,
                                 })}
                                 className="shrink-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                aria-label="Remove ambassador"
+                                aria-label={t('dashboard.ambassadors.removeAria')}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -934,7 +932,7 @@ export default function BrandDashboard() {
                           {ambassadorsLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            'Load more'
+                            t('dashboard.loadMore')
                           )}
                         </button>
                       </div>
@@ -948,9 +946,9 @@ export default function BrandDashboard() {
             {activeTab === 'followers' && (
               <div className="space-y-6 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Followers</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('dashboard.followers.title')}</h2>
                   {followersTotal > 0 && (
-                    <span className="text-sm text-gray-500">{followersTotal} total</span>
+                    <span className="text-sm text-gray-500">{t('dashboard.total', { n: brandCount(followersTotal) })}</span>
                   )}
                 </div>
 
@@ -969,9 +967,9 @@ export default function BrandDashboard() {
                 ) : followers.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                     <Users className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No followers yet</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboard.followers.emptyTitle')}</h3>
                     <p className="text-gray-600 max-w-md mx-auto">
-                      Share your brand profile to grow your audience. Athletes and clubs can follow your brand from your profile page.
+                      {t('dashboard.followers.emptyBody')}
                     </p>
                   </div>
                 ) : (
@@ -999,10 +997,10 @@ export default function BrandDashboard() {
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">
-                              {follower.full_name || 'Unknown'}
+                              {follower.full_name || t('dashboard.unknown')}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Followed {getTimeAgo(follower.followed_at, true)}
+                              {t('dashboard.followers.followed', { ago: getTimeAgo(follower.followed_at, true) })}
                             </p>
                           </div>
                           <RoleBadge role={follower.role} />
@@ -1022,7 +1020,7 @@ export default function BrandDashboard() {
                           {followersLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            'Load more'
+                            t('dashboard.loadMore')
                           )}
                         </button>
                       </div>
@@ -1054,12 +1052,12 @@ export default function BrandDashboard() {
             <div className="fixed inset-0 bg-black/50" onClick={() => setShowEditModal(false)} />
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Edit Brand Profile</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{t('dashboard.editModal.title')}</h2>
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
                   className="text-gray-400 hover:text-gray-600"
-                  aria-label="Close"
+                  aria-label={t('dashboard.editModal.close')}
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1071,7 +1069,7 @@ export default function BrandDashboard() {
                   brand={brand}
                   onSubmit={handleUpdateBrand}
                   isSubmitting={isSubmitting}
-                  submitLabel="Save Changes"
+                  submitLabel={t('dashboard.editModal.save')}
                 />
               </div>
             </div>
@@ -1094,9 +1092,9 @@ export default function BrandDashboard() {
       {productToDelete && (
         <ConfirmActionModal
           isOpen={Boolean(productToDelete)}
-          title="Delete Product"
-          description={`Are you sure you want to delete "${productToDelete.name}"? This action cannot be undone.`}
-          confirmLabel="Delete"
+          title={t('dashboard.confirm.deleteProductTitle')}
+          description={t('dashboard.confirm.deleteProductBody', { name: productToDelete.name })}
+          confirmLabel={t('dashboard.confirm.delete')}
           confirmTone="danger"
           onConfirm={handleDeleteProduct}
           onClose={() => setProductToDelete(null)}
@@ -1119,9 +1117,9 @@ export default function BrandDashboard() {
       {postToDelete && (
         <ConfirmActionModal
           isOpen={Boolean(postToDelete)}
-          title="Delete Post"
-          description="Are you sure you want to delete this post? This action cannot be undone."
-          confirmLabel="Delete"
+          title={t('dashboard.confirm.deletePostTitle')}
+          description={t('dashboard.confirm.deletePostBody')}
+          confirmLabel={t('dashboard.confirm.delete')}
           confirmTone="danger"
           onConfirm={handleDeletePost}
           onClose={() => setPostToDelete(null)}
@@ -1143,13 +1141,13 @@ export default function BrandDashboard() {
       {ambassadorToRemove && (
         <ConfirmActionModal
           isOpen={Boolean(ambassadorToRemove)}
-          title={ambassadorToRemove.status === 'pending' ? 'Cancel Request' : 'Remove Ambassador'}
+          title={ambassadorToRemove.status === 'pending' ? t('dashboard.confirm.cancelRequestTitle') : t('dashboard.confirm.removeTitle')}
           description={
             ambassadorToRemove.status === 'pending'
-              ? `Cancel the ambassador request to ${ambassadorToRemove.full_name || 'this player'}?`
-              : `Remove ${ambassadorToRemove.full_name || 'this player'} as a brand ambassador?`
+              ? (ambassadorToRemove.full_name ? t('dashboard.confirm.cancelRequestBody', { name: ambassadorToRemove.full_name }) : t('dashboard.confirm.cancelRequestBodyNoName'))
+              : (ambassadorToRemove.full_name ? t('dashboard.confirm.removeBody', { name: ambassadorToRemove.full_name }) : t('dashboard.confirm.removeBodyNoName'))
           }
-          confirmLabel={ambassadorToRemove.status === 'pending' ? 'Cancel Request' : 'Remove'}
+          confirmLabel={ambassadorToRemove.status === 'pending' ? t('dashboard.confirm.cancelRequestTitle') : t('dashboard.confirm.remove')}
           confirmTone="danger"
           onConfirm={handleRemoveAmbassador}
           onClose={() => setAmbassadorToRemove(null)}

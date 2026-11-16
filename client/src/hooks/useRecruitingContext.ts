@@ -40,6 +40,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { tCommon } from '@/i18n/ns/common'
 import type { Database } from '@/lib/database.types'
 
 export type RecruitingContextRow = Database['public']['Tables']['recruiting_context']['Row'] & {
@@ -265,7 +266,7 @@ async function doFetch(
   if (myToken !== latestFetchToken) return
   if (fetchError) {
     reportSupabaseError('useRecruitingContext.fetch', fetchError)
-    set({ error: 'Could not load recruiting contexts', loading: false })
+    set({ error: tCommon('savedLists.contextsLoadFailed'), loading: false })
     return
   }
   // Flatten the embedded role status onto the row (round 6: fallback
@@ -366,7 +367,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       // resets error:null at its start), THEN surface the error so it
       // survives for the toast/sheet.
       await refresh()
-      set({ error: 'Could not switch context' })
+      set({ error: tCommon('savedLists.contextSwitchFailed') })
       return
     }
     await refresh()
@@ -393,7 +394,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       .eq('is_active', true)
     if (updateError) {
       reportSupabaseError('useRecruitingContext.clearActive', updateError)
-      set({ error: 'Could not clear recruiting context' })
+      set({ error: tCommon('savedLists.contextClearFailed') })
       return
     }
     // Optimistic local flip so the chip + sheet update immediately,
@@ -425,7 +426,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     )
     if (rpcError) {
       reportSupabaseError('useRecruitingContext.create', rpcError)
-      set({ error: 'Could not save context' })
+      set({ error: tCommon('savedLists.contextSaveFailed') })
       return null
     }
     await refresh()
@@ -462,7 +463,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       // Reconcile the optimistic flip first (refresh resets error:null),
       // then surface the error so it survives.
       await refresh()
-      set({ error: 'Could not scope to this opportunity' })
+      set({ error: tCommon('savedLists.contextScopeFailed') })
       return null
     }
     await refresh()
@@ -486,7 +487,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       .eq('id', id)
     if (updateError) {
       reportSupabaseError('useRecruitingContext.update', updateError)
-      set({ error: 'Could not update context' })
+      set({ error: tCommon('savedLists.contextUpdateFailed') })
       return
     }
     await refresh()
@@ -502,7 +503,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       .eq('id', id)
     if (deleteError) {
       reportSupabaseError('useRecruitingContext.remove', deleteError)
-      set({ error: 'Could not delete context' })
+      set({ error: tCommon('savedLists.contextDeleteFailed') })
       return
     }
     await refresh()

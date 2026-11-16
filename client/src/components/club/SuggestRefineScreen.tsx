@@ -17,17 +17,15 @@ import { useClubInviteStatuses, useInviteAllowance } from '@/hooks/useInvites'
 import { getImageUrl } from '@/lib/imageUrl'
 import { inviteLimitReason } from '@/lib/invites'
 import { nationalityLine, type CountryLite } from '@/lib/findPlayers'
-import { CAP_REACHED_COPY, COMPOSER_MAX_LENGTH, CONNECTION_ERROR_COPY, TRY_AGAIN_CHIP } from '@/lib/hockiaAi'
+import { COMPOSER_MAX_LENGTH, TRY_AGAIN_CHIP, hockiaAiCopy } from '@/lib/hockiaAi'
 import {
-  REFINE_BACK,
-  REFINE_COMPOSER_PLACEHOLDER,
-  REFINE_NO_MATCH,
-  REFINE_TITLE,
+  suggestsCopy,
   refineCaption,
   type RoleSuggestion,
 } from '@/lib/roleSuggestions'
 import { monthYear } from '@/lib/suggestionReasons'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { tRecruiting, useRecruitingT } from '@/i18n/ns/recruiting'
 
 const InviteSheet = lazy(() => import('./InviteSheet'))
 
@@ -35,7 +33,7 @@ const InviteSheet = lazy(() => import('./InviteSheet'))
 function factsLine(s: RoleSuggestion): string | null {
   const ev = s.evidence
   const avail = ev.available_from ? monthYear(ev.available_from) : null
-  const parts = [ev.league_name, ev.eu_passport ? 'EU passport' : null, avail ? `From ${avail}` : null].filter((p): p is string => !!p)
+  const parts = [ev.league_name, ev.eu_passport ? tRecruiting('suggestRefine.euPassport') : null, avail ? tRecruiting('suggestRefine.availableFrom', { date: avail }) : null].filter((p): p is string => !!p)
   return parts.length ? parts.join(' · ') : null
 }
 
@@ -48,6 +46,7 @@ function factsLine(s: RoleSuggestion): string | null {
  * card. Counts toward the same daily question cap. Club-side only; phone.
  */
 export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
+  const t = useRecruitingT()
   // The composer is the last row of a 100dvh screen: keep it above the iOS keyboard.
   const kb = useKeyboardInset(true)
   const navigate = useNavigate()
@@ -84,33 +83,33 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
     // Full screen above the tab bar, Figma D5.2 has no tab bar.
     <div className="fixed inset-x-0 top-0 z-30 flex h-[100dvh] flex-col bg-white lg:hidden" style={kb.inset ? { paddingBottom: kb.inset } : undefined} data-testid="suggest-refine-screen">
       <div className="shrink-0 border-b border-line bg-white pt-[env(safe-area-inset-top)]">
-      <DetailNavBar parent={REFINE_BACK} title={REFINE_TITLE} showParent fallbackPath={`/dashboard/opportunities/${roleId}/suggested`} />
+      <DetailNavBar parent={suggestsCopy.refineBack} title={suggestsCopy.refineTitle} showParent fallbackPath={`/dashboard/opportunities/${roleId}/suggested`} />
       </div>
       {limitReason && <InviteLimitNotice reason={limitReason} />}
 
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
         <div className="flex flex-col gap-4">
-          {turns.map((t, ti) => {
+          {turns.map((turn, ti) => {
             const last = ti === turns.length - 1
-            const a = t.answer
+            const a = turn.answer
             const matches = a?.kind === 'answer' ? a.matchIds.map((id) => suggestions.find((s) => s.player_id === id)).filter((s): s is RoleSuggestion => !!s) : []
             return (
-              <div key={t.id} className="flex flex-col gap-3">
-                <UserBubble text={t.question} />
+              <div key={turn.id} className="flex flex-col gap-3">
+                <UserBubble text={turn.question} />
                 {!a && <SearchingIndicator />}
                 {a?.kind === 'cap_reached' && (
-                  <SoftErrorCard message={a.message || CAP_REACHED_COPY} suggestedActions={[]} onAction={() => undefined} />
+                  <SoftErrorCard message={a.message || hockiaAiCopy.capReached} suggestedActions={[]} onAction={() => undefined} />
                 )}
                 {a?.kind === 'error' && (
                   <SoftErrorCard
-                    message={CONNECTION_ERROR_COPY}
+                    message={hockiaAiCopy.connectionError}
                     suggestedActions={last ? [TRY_AGAIN_CHIP] : []}
-                    onAction={() => send(t.question)}
+                    onAction={() => send(turn.question)}
                   />
                 )}
                 {a?.kind === 'answer' && (
                   <div data-testid="refine-answer">
-                    <p className="whitespace-pre-line text-body leading-[22px] text-ink-1">{a.message || REFINE_NO_MATCH}</p>
+                    <p className="whitespace-pre-line text-body leading-[22px] text-ink-1">{a.message || suggestsCopy.refineNoMatch}</p>
                     {matches.length > 0 && (
                       <div className="pt-2">
                         {matches.map((s) => {
@@ -122,7 +121,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
                               <button type="button" onClick={() => navigate(`/players/id/${s.player_id}`, { state: { from: location.pathname } })} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                                 <EntityAvatar src={avatar} name={s.full_name} role="player" size={52} className="shrink-0 self-start" />
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{s.full_name || 'Player'}</span>
+                                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{s.full_name || t('suggestRefine.playerFallback')}</span>
                                   {facts && <span className="block truncate text-[14px] leading-[19px] text-ink-2">{facts}</span>}
                                   <span className="flex items-center gap-2 pt-[3px]">
                                     <span className="shrink-0 empty:hidden"><FitBadge state={s.fit_state} /></span>
@@ -145,7 +144,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
                     )}
                     <p className="pt-2 text-caption leading-4 text-ink-3" data-testid="refine-caption">{refineCaption(suggestions.length)}</p>
                     {last && a.chips.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Suggested next questions">
+                      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t('suggestRefine.chipsLabel')}>
                         {a.chips.map((c) => <Chip key={c} label={c} onClick={() => send(c)} data-testid="refine-chip" />)}
                       </div>
                     )}
@@ -164,11 +163,11 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
       <div className="shrink-0 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
         <form className="flex items-end gap-2 px-4 py-2" onSubmit={(e) => { e.preventDefault(); send(input) }}>
           <label className="min-w-0 flex-1">
-            <span className="sr-only">Ask Hockia AI</span>
+            <span className="sr-only">{t('suggestRefine.composerLabel')}</span>
             <input
               value={input}
               onChange={(e) => { if (e.target.value.length <= COMPOSER_MAX_LENGTH) setInput(e.target.value) }}
-              placeholder={REFINE_COMPOSER_PLACEHOLDER}
+              placeholder={suggestsCopy.refinePlaceholder}
               enterKeyHint="send"
               className="block h-11 w-full rounded-[22px] bg-surface-grouped px-4 text-row text-ink-1 placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
               data-testid="refine-composer"
@@ -177,7 +176,7 @@ export default function SuggestRefineScreen({ roleId }: { roleId: string }) {
           <button
             type="submit"
             disabled={!input.trim() || pending}
-            aria-label="Send"
+            aria-label={t('suggestRefine.send')}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white disabled:opacity-40"
             data-testid="refine-send"
           >

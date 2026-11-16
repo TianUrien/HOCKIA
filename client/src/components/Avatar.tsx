@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { getImageUrl, AVATAR_SIZE_MAP } from '@/lib/imageUrl'
 import { useProfileImagePreview } from './ProfileImagePreviewProvider'
 import RolePlaceholder from './RolePlaceholder'
+import { tCommon } from '@/i18n/ns/common'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 
 interface AvatarProps {
@@ -98,7 +99,7 @@ export default function Avatar({
           tabIndex: 0,
           onClick: handlePreviewClick,
           onKeyDown: handlePreviewKey,
-          'aria-label': previewTitle || alt || 'Open profile image preview',
+          'aria-label': previewTitle || alt || tCommon('avatar.openPreview'),
         }
     : {}
 
@@ -122,7 +123,7 @@ export default function Avatar({
           )}
           <img
             src={optimizedSrc ?? undefined}
-            alt={alt || 'Avatar'}
+            alt={alt || tCommon('avatar.alt')}
             className={cn(
               'absolute inset-0 h-full w-full object-cover transition-opacity duration-200',
               imageLoaded ? "opacity-100" : "opacity-0"

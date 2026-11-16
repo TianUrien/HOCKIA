@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { chipTone } from '@/components/ui/chipClasses'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useClubT } from '@/i18n/ns/club'
 import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill } from '@/lib/opportunityCopy'
 
 /**
@@ -10,17 +11,18 @@ import { CATEGORY_DOT_CLASSES, categoryFamily, genderPill } from '@/lib/opportun
  * "a short form with the Post a role step-1 criteria").
  */
 export function HardnessPill({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
+  const t = useClubT()
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
-      aria-label={`${label}: ${on ? 'must have' : 'nice to have'}`}
+      aria-label={on ? t('roleForm.mustHaveAria', { label }) : t('roleForm.niceToHaveAria', { label })}
       onClick={onToggle}
       className={cn('flex h-6 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium', on ? 'bg-hockia-soft text-hockia-primary' : 'bg-surface-grouped text-ink-2')}
     >
       {on && <Check className="h-3.5 w-3.5" strokeWidth={2.4} />}
-      {on ? 'Must have' : 'Nice to have'}
+      {on ? t('roleForm.mustHave') : t('roleForm.niceToHave')}
     </button>
   )
 }

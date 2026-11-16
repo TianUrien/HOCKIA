@@ -3,6 +3,7 @@ import type { DiscoverCta, OpportunityResultItem, SuggestedAction } from '@/hook
 import { fromOpenRolesCaption, OPEN_ROLES_CHIP } from '@/lib/hockiaAi'
 import ActionChipRow from './ActionChipRow'
 import RoleResultRow from './RoleResultRow'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface OpportunityResultsResponseProps {
   message: string
@@ -34,6 +35,7 @@ export default function OpportunityResultsResponse({
   suggestedActions = [],
   onAction,
 }: OpportunityResultsResponseProps) {
+  const t = useHockiaAiT()
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? opportunities : opportunities.slice(0, COLLAPSED_COUNT)
   const hiddenCount = opportunities.length - COLLAPSED_COUNT
@@ -63,7 +65,7 @@ export default function OpportunityResultsResponse({
               onClick={() => setExpanded(e => !e)}
               className="mt-1 flex h-11 w-full items-center justify-center rounded-[12px] text-secondary font-semibold text-hockia-primary"
             >
-              {expanded ? 'Show fewer' : `Show all ${opportunities.length} opportunities`}
+              {expanded ? t('discover.showFewer') : t('discover.showAllOpportunities', { count: opportunities.length })}
             </button>
           )}
         </div>

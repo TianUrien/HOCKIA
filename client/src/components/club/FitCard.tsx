@@ -2,6 +2,7 @@ import { Check, Minus } from 'lucide-react'
 import { FitBadge } from '@/components/ui/FitBadge'
 import type { FitRow, FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * "Fit for this role" (Figma 04 Club · Applicant review 327:563, D2.1 club
@@ -9,11 +10,12 @@ import { cn } from '@/lib/utils'
  * The four compute_club_fit components as plain checks; Level names the
  * missing side instead of ever showing a number.
  */
-export function FitCard({ state, rows, className, title = 'Fit for this opportunity' }: { state: FitState | null | undefined; rows: FitRow[]; className?: string; title?: string }) {
+export function FitCard({ state, rows, className, title }: { state: FitState | null | undefined; rows: FitRow[]; className?: string; title?: string }) {
+  const t = useRecruitingT()
   return (
     <div className={cn('flex flex-col gap-3 rounded-2xl bg-surface-grouped p-4', className)} data-testid="fit-card">
       <div className="flex items-center justify-between gap-3">
-        <span className="min-w-0 truncate text-row font-semibold text-ink-1" data-testid="fit-card-title">{title}</span>
+        <span className="min-w-0 truncate text-row font-semibold text-ink-1" data-testid="fit-card-title">{title ?? t('fitCard.title')}</span>
         <FitBadge state={state} />
       </div>
       {rows.map((r) => (
@@ -27,7 +29,7 @@ export function FitCard({ state, rows, className, title = 'Fit for this opportun
           </span>
         </div>
       ))}
-      <p className="text-caption text-ink-3">Only clubs &amp; recruiting coaches see fit. It reads the profile and nothing else.</p>
+      <p className="text-caption text-ink-3">{t('fitCard.footer')}</p>
     </div>
   )
 }

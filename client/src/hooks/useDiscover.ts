@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
+import { currentLanguage } from '@/i18n'
 import { allDone, applyStep, streamNlSearch, type AiStep } from '@/lib/aiStream'
 import { chatKind, chatSummary, chatTitle, forStorage, loadChat, saveChat } from '@/lib/aiChats'
 
@@ -12,7 +13,9 @@ import { chatKind, chatSummary, chatTitle, forStorage, loadChat, saveChat } from
  *  function's getUser() returns 401. Refreshing + retrying self-heals it instead
  *  of surfacing "I had trouble connecting". A genuinely dead session (refresh
  *  throws) falls through to the normal error path. */
-export async function invokeNlSearch(body: Record<string, unknown>) {
+export async function invokeNlSearch(input: Record<string, unknown>) {
+  // The member's interface language: Hockia AI answers in it.
+  const body = { ...input, locale: currentLanguage() }
   let res = await supabase.functions.invoke('nl-search', { body })
   const status = (res.error as { context?: Response } | null)?.context?.status
   if (res.error && status === 401) {

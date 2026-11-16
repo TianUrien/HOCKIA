@@ -1,5 +1,8 @@
 import type { FitState } from '@/lib/clubRecruiting'
 import { toEvidence, type SuggestionEvidence, type SuggestionRoleContext } from '@/lib/suggestionReasons'
+import en from '@/locales/en/hockiaAi.json'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
+import { lazyTextRecord } from '@/lib/opportunityLazyText'
 
 /**
  * D5 · Hockia suggests (Figma "New-Hockia" D5.1 398:83, D5.2 398:291) — copy
@@ -9,37 +12,54 @@ import { toEvidence, type SuggestionEvidence, type SuggestionRoleContext } from 
  * see a suggestion, a rank or a fit.
  */
 
-export const SUGGESTS_TITLE = 'Hockia suggests'
-export const SUGGESTS_FOOTNOTE = 'Only players who are open to play and over 18. Players never see where they rank.'
-export const SUGGESTS_EMPTY = 'No players fit this opportunity yet. Hockia checks again tonight.'
-export const SUGGESTS_COMPOSER_PLACEHOLDER = 'Ask Hockia: EU passport, start in January…'
-export const SUGGESTS_LOAD_ERROR = 'Couldn’t load suggestions. Pull to try again.'
-export const REFINE_TITLE = 'Hockia AI'
-export const REFINE_BACK = 'Suggested'
-export const REFINE_COMPOSER_PLACEHOLDER = 'Ask about players for this opportunity'
-export const REFINE_NO_MATCH = 'None of the suggestions match that on their profiles.'
+/**
+ * English copy for callers that still read a constant (they cannot follow the
+ * interface language). New code reads `suggestsCopy`, which does.
+ */
+export const SUGGESTS_TITLE = en.suggests.title
+export const SUGGESTS_FOOTNOTE = en.suggests.footnote
+export const SUGGESTS_EMPTY = en.suggests.empty
+export const SUGGESTS_COMPOSER_PLACEHOLDER = en.suggests.composerPlaceholder
+export const SUGGESTS_LOAD_ERROR = en.suggests.loadError
+export const REFINE_TITLE = en.suggests.refineTitle
+export const REFINE_BACK = en.suggests.refineBack
+export const REFINE_COMPOSER_PLACEHOLDER = en.suggests.refinePlaceholder
+export const REFINE_NO_MATCH = en.suggests.refineNoMatch
 
-const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five']
+/** The same copy in the interface language, read on every use. */
+export const suggestsCopy = /* @__PURE__ */ lazyTextRecord({
+  title: () => tHockiaAi('suggests.title'),
+  footnote: () => tHockiaAi('suggests.footnote'),
+  empty: () => tHockiaAi('suggests.empty'),
+  composerPlaceholder: () => tHockiaAi('suggests.composerPlaceholder'),
+  loadError: () => tHockiaAi('suggests.loadError'),
+  refineTitle: () => tHockiaAi('suggests.refineTitle'),
+  refineBack: () => tHockiaAi('suggests.refineBack'),
+  refinePlaceholder: () => tHockiaAi('suggests.refinePlaceholder'),
+  refineNoMatch: () => tHockiaAi('suggests.refineNoMatch'),
+})
+
+const INTRO_KEYS = ['suggests.intro0', 'suggests.intro1', 'suggests.intro2', 'suggests.intro3', 'suggests.intro4', 'suggests.intro5'] as const
+const INTRO_ROLE_KEYS = ['suggests.introRole0', 'suggests.introRole1', 'suggests.introRole2', 'suggests.introRole3', 'suggests.introRole4', 'suggests.introRole5'] as const
 
 /** "For Midfielder. Five players who fit and haven't applied, ranked by fit, then by what they've shown." */
 export function suggestsIntro(roleTitle: string | null | undefined, count: number): string {
   const n = Math.max(0, Math.min(5, Math.floor(count)))
-  const who = n === 1 ? 'One player who fits and hasn’t applied' : `${COUNT_WORDS[n]} players who fit and haven’t applied`
-  const lead = roleTitle?.trim() ? `For ${roleTitle.trim()}. ` : ''
-  return n === 0 ? `${lead}Players who fit and haven’t applied, ranked by fit, then by what they’ve shown.` : `${lead}${who}, ranked by fit, then by what they’ve shown.`
+  const role = roleTitle?.trim()
+  return role ? tHockiaAi(INTRO_ROLE_KEYS[n], { role }) : tHockiaAi(INTRO_KEYS[n])
 }
 
 /** Entry row on the club's role: "Hockia suggests · 5 players" / "None yet" (no count when 0). */
 export function suggestsEntryDetail(count: number | null | undefined): string | null {
   if (count === null || count === undefined) return null
-  if (count <= 0) return 'None yet'
-  return `${count} player${count === 1 ? '' : 's'}`
+  if (count <= 0) return tHockiaAi('suggests.noneYet')
+  return tHockiaAi('suggests.players', { count })
 }
 
 /** D5.2 caption under the matches. */
 export function refineCaption(pool: number): string {
   const n = Math.max(0, Math.floor(pool))
-  return `From Hockia’s ${n} suggestion${n === 1 ? '' : 's'} for this opportunity · only facts from their profiles`
+  return tHockiaAi('suggests.refineCaption', { count: n })
 }
 
 export interface RoleSuggestion {

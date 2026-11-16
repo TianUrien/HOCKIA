@@ -18,7 +18,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { useRoleSuggestions } from '@/hooks/useRoleSuggestions'
-import { SUGGESTS_TITLE, suggestsEntryDetail } from '@/lib/roleSuggestions'
+import { suggestsCopy, suggestsEntryDetail } from '@/lib/roleSuggestions'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { shortDayOf } from '@/lib/signing'
@@ -27,6 +27,7 @@ import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing
 import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Applicants of one role (Figma 04 Club · Applicants — club v2, 324:411;
@@ -49,6 +50,7 @@ type Chip = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 export default function ApplicantsScreen({ roleId }: { roleId: string }) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const owner = useAuthStore((s) => s.profile)
@@ -90,21 +92,21 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const pill = role ? genderPill(role.gender) : null
   const family = role ? categoryFamily(role.gender) : null
   const chips: { id: Chip; label: string }[] = [
-    { id: 'pending', label: p.toReview ? `To review · ${p.toReview}` : 'To review' },
-    { id: 'shortlisted', label: 'Shortlisted' },
-    { id: 'maybe', label: 'Maybe' },
-    { id: 'rejected', label: 'Not a fit' },
-    { id: 'no_response', label: p.closed ? `Closed · ${p.closed}` : 'Closed' },
+    { id: 'pending', label: p.toReview ? t('applicantsScreen.chips.toReviewCount', { count: p.toReview }) : t('applicantsScreen.chips.toReview') },
+    { id: 'shortlisted', label: t('applicantsScreen.chips.shortlisted') },
+    { id: 'maybe', label: t('applicantsScreen.chips.maybe') },
+    { id: 'rejected', label: t('applicantsScreen.chips.notAFit') },
+    { id: 'no_response', label: p.closed ? t('applicantsScreen.chips.closedCount', { count: p.closed }) : t('applicantsScreen.chips.closed') },
   ]
   const caption = chip === 'pending'
-    ? `Oldest first · each closes ${data.expiryDays} days after it arrives`
-    : chip === 'no_response' ? `Closed without a reply after ${data.expiryDays} days, filled, or withdrawn by the applicant` : 'Most recent decision first'
+    ? t('applicantsScreen.caption.pending', { days: data.expiryDays })
+    : chip === 'no_response' ? t('applicantsScreen.caption.closed', { days: data.expiryDays }) : t('applicantsScreen.caption.recent')
   const emptyCopy: Record<Chip, string> = {
-    pending: 'Nobody waiting. New applicants show up here.',
-    shortlisted: 'No one shortlisted yet.',
-    maybe: 'No one on maybe.',
-    rejected: 'No one declined.',
-    no_response: 'None closed yet.',
+    pending: t('applicantsScreen.empty.pending'),
+    shortlisted: t('applicantsScreen.empty.shortlisted'),
+    maybe: t('applicantsScreen.empty.maybe'),
+    rejected: t('applicantsScreen.empty.rejected'),
+    no_response: t('applicantsScreen.empty.closed'),
   }
   const flagFor = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
@@ -116,9 +118,9 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="applicants-screen">
       {selecting ? (
         <div className="flex min-h-[52px] items-center justify-between pl-2 pr-3" data-testid="select-bar-top">
-          <button type="button" onClick={endSelect} className="flex min-h-11 items-center px-2 text-body text-brand-primary">Cancel</button>
+          <button type="button" onClick={endSelect} className="flex min-h-11 items-center px-2 text-body text-brand-primary">{t('applicantsScreen.cancel')}</button>
           <button type="button" onClick={() => setSelected(allPicked ? new Set() : new Set(list.map((a) => a.applicationId)))} className="flex min-h-11 items-center px-2 text-body text-brand-primary" data-testid="select-all">
-            {allPicked ? 'Deselect all' : 'Select all'}
+            {allPicked ? t('applicantsScreen.deselectAll') : t('applicantsScreen.selectAll')}
           </button>
         </div>
       ) : (
@@ -140,7 +142,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
       )}
       {role && (
         <div className="flex items-start gap-3 px-4 pb-4 pt-0.5" data-testid="applicants-role-header">
-          <CrestTile src={cover.crestUrl} name={cover.clubName ?? 'Club'} size={48} radius={14} className="mt-1" />
+          <CrestTile src={cover.crestUrl} name={cover.clubName ?? t('applicantsScreen.clubFallback')} size={48} radius={14} className="mt-1" />
           <div className="min-w-0 flex-1">
             <h1 className="text-title-xl text-ink-1">{roleTitle(role)}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -166,7 +168,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-brand-primary"><Sparkles className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /></span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[16px] font-semibold leading-[21px] text-brand-primary">{SUGGESTS_TITLE}</span>
+              <span className="block truncate text-[16px] font-semibold leading-[21px] text-brand-primary">{suggestsCopy.title}</span>
               {suggestsDetail && <span className="block truncate text-secondary text-ink-2" data-testid="suggests-entry-detail">{suggestsDetail}</span>}
             </span>
             <ChevronRight className="h-[18px] w-[18px] shrink-0 text-brand-primary" strokeWidth={2} aria-hidden="true" />
@@ -174,16 +176,16 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
         </div>
       )}
 
-      <div className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Application status">
+      <div className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t('applicantsScreen.statusTabsLabel')}>
         {chips.map((c) => (
           // ui/Chip: selected = soft purple (Chip ruling 2026-10-04); tab semantics kept. Figma O6 draws an ink pill here — raised in the PR.
           <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => changeChip(c.id)} />
         ))}
       </div>
       <div className="flex items-center gap-3 px-4 pb-2.5 pt-3.5">
-        <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? 'Select applicants to answer them together' : caption}</p>
+        <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? t('applicantsScreen.selectHint') : caption}</p>
         {!selecting && selectable && list.length > 0 && (
-          <button type="button" onClick={() => setSelecting(true)} className="-my-2 flex min-h-11 shrink-0 items-center text-secondary font-semibold text-brand-primary" data-testid="applicants-select">Select</button>
+          <button type="button" onClick={() => setSelecting(true)} className="-my-2 flex min-h-11 shrink-0 items-center text-secondary font-semibold text-brand-primary" data-testid="applicants-select">{t('applicantsScreen.select')}</button>
         )}
       </div>
 
@@ -224,14 +226,14 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
               )}
               <span className="relative shrink-0">
                 <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={48} />
-                {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label="New" />}
+                {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label={t('applicantsScreen.newLabel')} />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
                   <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{a.person.fullName}</span>
                   {a.invited
-                    ? <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="applicant-invited-tag">Invited</span>
-                    : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">New</span>}
+                    ? <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="applicant-invited-tag">{t('applicantsScreen.invitedTag')}</span>
+                    : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">{t('applicantsScreen.newTag')}</span>}
                   {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                 </span>
                 <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), country].filter(Boolean).join(' · ')}</span>
@@ -248,7 +250,9 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           <div className="flex items-start gap-2.5 rounded-[12px] bg-surface-subtle p-3.5">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
             <p className="text-secondary leading-[18px] text-ink-2">
-              Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? `. ${toReviewClosedNote(p)}` : ''}.
+              {toReviewClosedNote(p)
+                ? t('applicantsScreen.footerWithNote', { days: data.expiryDays, note: toReviewClosedNote(p) })
+                : t('applicantsScreen.footer', { days: data.expiryDays })}
             </p>
           </div>
         </div>
@@ -257,12 +261,12 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
       {selecting && (
         // Figma CS4 204:6272: "N selected" · Maybe · Decline N, over the tab bar while selecting.
         <div className="fixed inset-x-0 bottom-0 z-50 flex items-center gap-3 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3" data-testid="selection-bar">
-          <p className="min-w-0 flex-1 text-[16px] font-semibold leading-[21px] text-ink-1">{picked.length} selected</p>
+          <p className="min-w-0 flex-1 text-[16px] font-semibold leading-[21px] text-ink-1">{t('applicantsScreen.selectedCount', { count: picked.length })}</p>
           {chip === 'pending' && (
-            <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-5 text-[16px] font-semibold text-ink-1 disabled:opacity-40" data-testid="bulk-maybe">Maybe</button>
+            <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-5 text-[16px] font-semibold text-ink-1 disabled:opacity-40" data-testid="bulk-maybe">{t('applicantsScreen.bulkMaybe')}</button>
           )}
           <button type="button" disabled={picked.length === 0} onClick={() => setBulkDeclining(true)} className="flex h-12 items-center rounded-full bg-hockia-primary px-5 text-[16px] font-semibold text-white disabled:opacity-40" data-testid="bulk-decline">
-            {picked.length ? `Not a fit · ${picked.length}` : 'Not a fit'}
+            {picked.length ? t('applicantsScreen.bulkDeclineCount', { count: picked.length }) : t('applicantsScreen.bulkDecline')}
           </button>
         </div>
       )}

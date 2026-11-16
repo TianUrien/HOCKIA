@@ -3,6 +3,9 @@ import { genderPill } from '@/lib/opportunityCopy'
 import { buildPlayerKeyFacts, type LeagueInput, type PassportInput } from '@/lib/keyFacts'
 import { fitTarget, type FitState } from '@/lib/clubRecruiting'
 import { shortDayOf } from '@/lib/signing'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { tRecruiting } from '@/i18n/ns/recruiting'
+import { tProfile } from '@/i18n/ns/profile'
 
 /**
  * Find players + Shortlist (Figma 04 Club · D1.9 332:318 / D1.10 332:539;
@@ -13,11 +16,12 @@ import { shortDayOf } from '@/lib/signing'
 
 export type FindFilter = 'open' | 'full_match' | 'eu' | 'not_applied'
 
+/** Chip labels are read through getters, so they follow the interface language. */
 export const FIND_FILTERS: { id: FindFilter; label: string }[] = [
-  { id: 'open', label: 'Open to play' },
-  { id: 'full_match', label: 'Full match' },
-  { id: 'eu', label: 'EU passport' },
-  { id: 'not_applied', label: 'Not applied' },
+  withLazyText({ id: 'open' as FindFilter }, { label: () => tRecruiting('findPlayers.filterOpen') }),
+  withLazyText({ id: 'full_match' as FindFilter }, { label: () => tRecruiting('findPlayers.filterFullMatch') }),
+  withLazyText({ id: 'eu' as FindFilter }, { label: () => tRecruiting('findPlayers.filterEu') }),
+  withLazyText({ id: 'not_applied' as FindFilter }, { label: () => tRecruiting('findPlayers.filterNotApplied') }),
 ]
 
 /** A player row as the pool RPC (community_search_members) returns it, plus the extras we join. */
@@ -73,9 +77,9 @@ function daysAgo(iso: string | null | undefined, now: Date): number | null {
 export function activeLine(lastActiveAt: string | null | undefined, now = new Date()): string | null {
   const d = daysAgo(lastActiveAt, now)
   if (d === null) return null
-  if (d === 0) return 'Active today'
-  if (d === 1) return 'Active yesterday'
-  return `Active ${d} days ago`
+  if (d === 0) return tRecruiting('findPlayers.activeToday')
+  if (d === 1) return tRecruiting('findPlayers.activeYesterday')
+  return tRecruiting('findPlayers.activeDaysAgo', { count: d })
 }
 
 /**
@@ -85,10 +89,10 @@ export function activeLine(lastActiveAt: string | null | undefined, now = new Da
  */
 export function evidenceLine(e: { fullMatches: number; highlights: number; career: number; lastActiveAt: string | null }, now = new Date()): { kind: 'video' | 'career' | 'active'; text: string } | null {
   const parts: string[] = []
-  if (e.fullMatches > 0) parts.push(e.fullMatches === 1 ? '1 full match' : `${e.fullMatches} full matches`)
-  if (e.highlights > 0) parts.push(e.highlights === 1 ? '1 highlight' : `${e.highlights} highlights`)
+  if (e.fullMatches > 0) parts.push(tRecruiting('findPlayers.fullMatches', { count: e.fullMatches }))
+  if (e.highlights > 0) parts.push(tRecruiting('findPlayers.highlights', { count: e.highlights }))
   if (e.career > 0) {
-    parts.push(parts.length === 0 ? (e.career === 1 ? '1 career entry' : `${e.career} career entries`) : `${e.career} career`)
+    parts.push(parts.length === 0 ? tRecruiting('findPlayers.careerEntries', { count: e.career }) : tRecruiting('findPlayers.careerShort', { count: e.career }))
   }
   if (parts.length) return { kind: e.fullMatches > 0 || e.highlights > 0 ? 'video' : 'career', text: parts.join(' · ') }
   void now
@@ -184,13 +188,15 @@ export function rowFactsLine(input: {
     if (playsAt.detail && !playsAt.detailMissing && playsAt.detail !== playsAt.value) parts.push(playsAt.detail)
   }
   const age = by('age')
-  if (age && !age.missing) parts.push(`Age\u00a0${age.value}`)
+  if (age && !age.missing) parts.push(tRecruiting('findPlayers.age', { age: age.value }))
   const passport = by('passport')
-  if (passport && !passport.missing && passport.detail === 'EU passport') parts.push('EU passport')
+  if (passport && !passport.missing && passport.detail === tProfile('keyFacts.euPassport')) parts.push(tRecruiting('findPlayers.euPassport'))
   const available = by('available')
   if (input.openToPlay && available && !available.missing) {
     const when = available.detail && !available.detailMissing ? available.detail : available.value
-    if (when) parts.push(when === 'Available now' ? when : when.startsWith('From ') ? `Available ${when.charAt(0).toLowerCase()}${when.slice(1)}` : when)
+    // keyFacts writes "Available now" or "From 2 Oct"; the row reads "Available from 2 Oct".
+    const fromPrefix = tProfile('keyFacts.fromDay', { day: '' })
+    if (when) parts.push(when === tProfile('keyFacts.availableNow') ? when : fromPrefix && when.startsWith(fromPrefix) ? tRecruiting('findPlayers.availableFrom', { day: when.slice(fromPrefix.length) }) : when)
   }
   return parts.length ? parts.join(' · ') : null
 }
@@ -210,7 +216,7 @@ export interface ContextLike {
 
 /** A saved context's name; else "Midfielder · Men's" (position + team); else the label. */
 export function contextPillLabel(ctx: ContextLike | null): string {
-  if (!ctx) return 'No context'
+  if (!ctx) return tRecruiting('findPlayers.noContext')
   // A saved context's own name wins (the form says "Shown in Recruiting
   // for"); unnamed ones — and role contexts — keep "Position · Team".
   const name = ctx.type !== 'opportunity' ? ctx.label?.trim() : null
@@ -218,7 +224,7 @@ export function contextPillLabel(ctx: ContextLike | null): string {
   const pos = ctx.target_position ? positionLabel(ctx.target_position) : null
   const team = genderPill(ctx.target_category)?.label ?? null
   const joined = [pos, team].filter(Boolean).join(' · ')
-  return joined || ctx.label?.trim() || 'Custom search'
+  return joined || ctx.label?.trim() || tRecruiting('findPlayers.customSearch')
 }
 
 /** Only contexts that rank PLAYERS: open player roles and saved (custom) searches — plus the active saved search. */
@@ -262,15 +268,16 @@ export function shortlistSourceLine(e: { applied: boolean; position: string | nu
   if (e.applied) {
     const pos = e.position ? positionLabel(e.position) : null
     const when = monthDay(e.shortlistedAt)
-    return [pos ? `Applied to ${pos}` : 'Applied', when ? `shortlisted ${when}` : 'shortlisted'].join(' · ')
+    if (pos) return when ? tRecruiting('findPlayers.sourceAppliedToOn', { position: pos, day: when }) : tRecruiting('findPlayers.sourceAppliedTo', { position: pos })
+    return when ? tRecruiting('findPlayers.sourceAppliedOn', { day: when }) : tRecruiting('findPlayers.sourceApplied')
   }
   const when = monthDay(e.savedAt)
-  return when ? `Scouted · saved ${when}` : 'Scouted'
+  return when ? tRecruiting('findPlayers.sourceScoutedOn', { day: when }) : tRecruiting('findPlayers.sourceScouted')
 }
 
 /** Header line under "Shortlist". */
 export function shortlistHeaderLine(count: number): string {
-  return `${count === 1 ? '1 player' : `${count} players`} · only your club sees this`
+  return tRecruiting('findPlayers.shortlistHeader', { count })
 }
 
 /**

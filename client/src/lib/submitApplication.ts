@@ -5,6 +5,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackApplicationSubmit } from '@/lib/analytics'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { extractErrorMessage } from '@/lib/utils'
+import { tClub } from '@/i18n/ns/club'
 
 /**
  * Send an application — the one write shared by the Apply sheet and Hockia
@@ -24,7 +25,7 @@ export async function submitApplication(
   note: string,
   opts: { viewerRole?: string | null; source?: string; via?: 'apply_sheet' | 'hockia_ai' } = {},
 ): Promise<SubmitResult> {
-  if (vacancy.club_id === userId) return { ok: false, message: 'You can’t apply to your own opportunity.' }
+  if (vacancy.club_id === userId) return { ok: false, message: tClub('submitApplication.ownOpportunity') }
   Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id, via: opts.via ?? 'apply_sheet' }, level: 'info' })
   const trimmed = note.trim()
   const { error } = await supabase
@@ -47,15 +48,15 @@ export async function submitApplication(
     return {
       ok: false,
       message: vacancy.opportunity_type === 'coach'
-        ? 'Only coaches can apply to coach opportunities.'
+        ? tClub('submitApplication.coachesOnly')
         : vacancy.opportunity_type === 'player'
-          ? 'Only players can apply to player opportunities.'
-          : 'You cannot apply to this opportunity due to role restrictions.',
+          ? tClub('submitApplication.playersOnly')
+          : tClub('submitApplication.roleRestricted'),
     }
   }
   // check_application_eligibility rejected it — the message is user-facing.
-  if (error.code === 'P0001') return { ok: false, message: error.message || 'You are not eligible to apply to this opportunity.' }
+  if (error.code === 'P0001') return { ok: false, message: error.message || tClub('submitApplication.notEligible') }
   logger.error('Error applying to vacancy:', error)
   reportSupabaseError('vacancies.apply_error', error, { vacancyId: vacancy.id, viewerRole: opts.viewerRole ?? null }, { feature: 'vacancies', operation: 'apply_vacancy' })
-  return { ok: false, message: extractErrorMessage(error, 'Failed to submit application. Please try again.') }
+  return { ok: false, message: extractErrorMessage(error, tClub('submitApplication.failed')) }
 }

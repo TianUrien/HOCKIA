@@ -9,25 +9,17 @@ import { Store, ExternalLink, CheckCircle } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
 import { dayFirst } from '@/lib/dayFirst'
 import type { Brand } from '@/hooks/useBrands'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { tBrands } from '@/i18n/ns/brands'
 
 interface BrandCardProps {
   brand: Brand
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  equipment: 'Equipment',
-  apparel: 'Apparel',
-  accessories: 'Accessories',
-  nutrition: 'Nutrition',
-  technology: 'Technology',
-  coaching: 'Coaching & Training',
-  recruiting: 'Recruiting',
-  media: 'Media',
-  services: 'Services',
-  other: 'Other',
-}
+const CATEGORIES = new Set(['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'])
 
 export function BrandCard({ brand }: BrandCardProps) {
+  const tEnum = useEnumsT()
   return (
     <Link
       to={`/brands/${brand.slug}`}
@@ -63,7 +55,7 @@ export function BrandCard({ brand }: BrandCardProps) {
               {brand.name}
             </h3>
             <p className="text-sm text-gray-500 capitalize">
-              {CATEGORY_LABELS[brand.category] || brand.category}
+              {CATEGORIES.has(brand.category) ? tEnum(`brandCategory.${brand.category}`) : brand.category}
             </p>
           </div>
           {brand.website_url && (
@@ -94,13 +86,13 @@ function formatActivity(dateString: string | undefined | null): string {
   if (isNaN(date.getTime())) return ''
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
-  if (seconds < 3600) return 'Active just now'
-  if (seconds < 86400) return 'Active today'
-  if (seconds < 172800) return 'Active yesterday'
-  if (seconds < 604800) return `Active ${Math.floor(seconds / 86400)}d ago`
+  if (seconds < 3600) return tBrands('brandCard.activeNow')
+  if (seconds < 86400) return tBrands('brandCard.activeToday')
+  if (seconds < 172800) return tBrands('brandCard.activeYesterday')
+  if (seconds < 604800) return tBrands('brandCard.activeDaysAgo', { count: Math.floor(seconds / 86400) })
 
   // "Active 3 Oct" — day first (lib/dayFirst).
-  return `Active ${dayFirst(date)}`
+  return tBrands('brandCard.activeOn', { date: dayFirst(date) })
 }
 
 export default BrandCard

@@ -323,7 +323,7 @@ describe('phone Opportunities: Open counts published roles only', () => {
   it('drafts are listed but not counted', () => {
     const src = read('../components/club/ClubOpportunitiesScreen.tsx')
     expect(src).toContain("const publishedOpen = data.open.filter((r) => r.status === 'open').length")
-    expect(src).toContain("{ value: 'open', label: 'Open', count: publishedOpen }")
+    expect(src).toContain("{ value: 'open', label: t('clubRoles.segment.open'), count: publishedOpen }")
   })
 })
 

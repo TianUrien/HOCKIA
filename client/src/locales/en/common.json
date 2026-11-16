@@ -251,7 +251,8 @@
     "conversation": "Loading conversation",
     "applicants": "Loading applicants",
     "backToConversations": "Back to conversations",
-    "page": "Loading..."
+    "page": "Loading...",
+    "launch": "Loading Hockia"
   },
   "storeBadges": {
     "appStore": "Download Hockia on the App Store",
@@ -284,7 +285,9 @@
     "showHelp": "Show keyboard shortcuts"
   },
   "errors": {
-    "recruiterMinor": "This member can't be contacted by clubs or coaches."
+    "recruiterMinor": "This member can't be contacted by clubs or coaches.",
+    "saveFailed": "Could not save that. Please try again.",
+    "feedLoadFailed": "Failed to load feed"
   },
   "upload": {
     "errors": {
@@ -309,5 +312,65 @@
       "imageTypes": "Only JPG/JPEG or PNG images are allowed.",
       "imageTooLarge": "Please upload an image smaller than {{maxMb}} MB."
     }
+  },
+  "avatar": {
+    "openPreview": "Open profile image preview",
+    "alt": "Avatar"
+  },
+  "socials": {
+    "follow": "Follow Hockia on social media",
+    "link": "Hockia on {{network}} (opens in a new tab)"
+  },
+  "savedLists": {
+    "contextsLoadFailed": "Could not load recruiting contexts",
+    "contextSwitchFailed": "Could not switch context",
+    "contextClearFailed": "Could not clear recruiting context",
+    "contextSaveFailed": "Could not save context",
+    "contextScopeFailed": "Could not scope to this opportunity",
+    "contextUpdateFailed": "Could not update context",
+    "contextDeleteFailed": "Could not delete context",
+    "signInToSave": "Sign in to save profiles",
+    "removeSavedFailed": "Could not remove from saved",
+    "createSavedListFailed": "Could not create your saved list",
+    "saveProfileFailed": "Could not save profile",
+    "savedToast": "Saved. See your saved list in the dashboard",
+    "savedLoadFailed": "Could not load saved players",
+    "shortlistsLoadFailed": "Could not load shortlists",
+    "shortlistNameRequired": "Name your shortlist",
+    "shortlistCreateFailed": "Could not create shortlist",
+    "shortlistRenameFailed": "Could not rename shortlist",
+    "shortlistDefaultFirst": "Promote another list to default before deleting this one",
+    "shortlistDeleteFailed": "Could not delete shortlist",
+    "shortlistDefaultFailed": "Could not change default list",
+    "itemsLoadFailed": "Could not load items",
+    "itemAddFailed": "Could not add to shortlist",
+    "itemRemoveFailed": "Could not remove item",
+    "itemStatusFailed": "Could not update status",
+    "markedUnsorted": "Marked Unsorted",
+    "markedTopPick": "Marked Top pick",
+    "markedMaybe": "Marked Maybe",
+    "markedNotAFit": "Marked Not a fit",
+    "noteSaveFailed": "Could not save note",
+    "noteCleared": "Note cleared",
+    "noteSaved": "Note saved",
+    "itemAlreadyThere": "That player is already in the destination list",
+    "itemMoveFailed": "Could not move item",
+    "movedOther": "Moved to other list",
+    "movedTo": "Moved to {{name}}"
+  },
+  "clubInvite": {
+    "accepted": "You joined the club.",
+    "declined": "Club invitation declined.",
+    "unavailable": "This invitation is no longer available.",
+    "error": "Could not update the club invitation. Please try again."
+  },
+  "getReady": {
+    "aria": "Get ready for {{where}}",
+    "sent": "Application sent to {{club}}",
+    "title": "Get ready for {{where}}",
+    "body": "Things players sort out before moving. Only if they help you.",
+    "offerSuffix": " · Offer for members",
+    "seeAll": "See everything for {{where}}",
+    "notNow": "Not now"
   }
 }

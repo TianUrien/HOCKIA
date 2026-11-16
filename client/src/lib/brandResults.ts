@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase'
+import { tBrands } from '@/i18n/ns/brands'
+import { brandCount } from '@/lib/brandOffers'
 
 /**
  * Brand Results (Figma 08 · Brands P3 / R1; built 2026-11-07). One read,
@@ -37,27 +39,31 @@ export async function fetchBrandResults(days: ResultPeriod): Promise<BrandResult
 /** "4 more than before" / "2 fewer than before" / "Same as before" / null when both are 0. */
 export function changeLine(now: number, before: number): string | null {
   if (now === 0 && before === 0) return null
-  if (now === before) return 'Same as before'
+  if (now === before) return tBrands('results.change.same')
   const d = Math.abs(now - before)
-  return now > before ? `${d} more than before` : `${d} fewer than before`
+  return now > before ? tBrands('results.change.more', { count: d, n: brandCount(d) }) : tBrands('results.change.fewer', { count: d, n: brandCount(d) })
 }
 
 /** "2 days ago", "today" — the oldest message waiting for a reply. */
 export function agoLine(iso: string | null, now: Date = new Date()): string {
   if (!iso) return ''
   const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000)
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  return `${days} days ago`
+  if (days <= 0) return tBrands('results.ago.today')
+  if (days === 1) return tBrands('results.ago.yesterday')
+  return tBrands('results.ago.days', { count: days })
 }
 
-const SURFACE_LABEL: Record<string, string> = {
-  home: 'Home', home_rail: 'Home', hockia_ai: 'Hockia AI', marketplace: 'Brands tab', brands_tab: 'Brands tab',
-  need_page: 'Brands tab', offer_detail: 'Shared link', moment_sheet: 'Home', other: 'Other',
+const SURFACE_KEY: Record<string, 'home' | 'hockiaAi' | 'brandsTab' | 'sharedLink' | 'other'> = {
+  home: 'home', home_rail: 'home', hockia_ai: 'hockiaAi', marketplace: 'brandsTab', brands_tab: 'brandsTab',
+  need_page: 'brandsTab', offer_detail: 'sharedLink', moment_sheet: 'home', other: 'other',
 }
-export const surfaceLabel = (s: string) => SURFACE_LABEL[s] ?? 'Other'
-const ROLE_LABEL: Record<string, string> = { player: 'Players', coach: 'Coaches', club: 'Clubs', umpire: 'Umpires' }
-export const roleLabel = (r: string) => ROLE_LABEL[r] ?? r
+export const surfaceLabel = (s: string) => tBrands(`results.surface.${SURFACE_KEY[s] ?? 'other'}`)
+type ResultRole = 'player' | 'coach' | 'club' | 'umpire'
+const ROLE_KEYS = new Set<string>(['player', 'coach', 'club', 'umpire'])
+/** "Players" for a role token (the table's plural heading). */
+export const roleLabel = (r: string) => (ROLE_KEYS.has(r) ? tBrands(`results.roles.${r as ResultRole}`) : r)
+/** "Player" for a role token (one person's row). */
+export const roleLabelOne = (r: string) => (ROLE_KEYS.has(r) ? tBrands(`results.roleOne.${r as ResultRole}`) : r)
 
 export interface NextStep { text: string; action: string; to: string }
 
@@ -68,15 +74,15 @@ export interface NextStep { text: string; action: string; to: string }
  */
 export function nextStep(r: BrandResults, countryName: (id: number) => string | null): NextStep | null {
   const live = r.offers.filter((o) => o.status === 'live')
-  if (live.length === 0) return { text: 'You have no live offers. Members only see brands with an offer for them.', action: 'Create an offer', to: '/dashboard/offers/new' }
+  if (live.length === 0) return { text: tBrands('results.next.noLive'), action: tBrands('results.next.noLiveAction'), to: '/dashboard/offers/new' }
   const missed = r.market.find((m) => !m.covered && m.n != null)
   if (missed) {
     const name = countryName(missed.country_id)
-    if (name) return { text: `${missed.n} members live in ${name} and none of your offers reach them.`, action: 'Add it to an offer', to: '/dashboard/offers' }
+    if (name) return { text: tBrands('results.next.missed', { count: missed.n ?? 0, n: brandCount(missed.n ?? 0), country: name }), action: tBrands('results.next.missedAction'), to: '/dashboard/offers' }
   }
   const unopened = live.find((o) => o.shown >= 20 && o.opened === 0)
-  if (unopened) return { text: `“${unopened.title}” was shown to ${unopened.shown} members and nobody opened it. A photo and a perk usually help.`, action: 'Edit offer', to: `/dashboard/offers/${unopened.id}/edit` }
+  if (unopened) return { text: tBrands('results.next.unopened', { title: unopened.title, count: unopened.shown, n: brandCount(unopened.shown) }), action: tBrands('results.next.unopenedAction'), to: `/dashboard/offers/${unopened.id}/edit` }
   const missing = live.find((o) => o.not_useful > Math.max(o.opened, 2))
-  if (missing) return { text: `“${missing.title}” is marked “not useful” more than it is opened. Check who it is for.`, action: 'Edit audience', to: `/dashboard/offers/${missing.id}/edit` }
+  if (missing) return { text: tBrands('results.next.notUseful', { title: missing.title }), action: tBrands('results.next.notUsefulAction'), to: `/dashboard/offers/${missing.id}/edit` }
   return null
 }

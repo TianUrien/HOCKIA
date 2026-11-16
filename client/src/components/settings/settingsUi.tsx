@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { CONTACT_EMAIL_SWITCH_HELP, CONTACT_EMAIL_SWITCH_LABEL } from '@/lib/clubSettingsCopy'
+import { contactEmailSwitchHelp, contactEmailSwitchLabel } from '@/lib/clubSettingsCopy'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 import { useSettingsT } from '@/i18n/ns/settings'
 
@@ -79,9 +79,9 @@ export function ContactEmailPublicRow({ checked, disabled, onChange }: { checked
   return (
     <div className="overflow-hidden rounded-card bg-surface-grouped" data-testid="contact-email-public-row">
       <SettingsRow
-        title={CONTACT_EMAIL_SWITCH_LABEL}
-        subtitle={CONTACT_EMAIL_SWITCH_HELP}
-        trailing={<SettingsSwitch label={CONTACT_EMAIL_SWITCH_LABEL} checked={checked} disabled={disabled} onChange={onChange} />}
+        title={contactEmailSwitchLabel()}
+        subtitle={contactEmailSwitchHelp()}
+        trailing={<SettingsSwitch label={contactEmailSwitchLabel()} checked={checked} disabled={disabled} onChange={onChange} />}
       />
     </div>
   )

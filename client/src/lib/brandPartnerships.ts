@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase'
+import { tBrands } from '@/i18n/ns/brands'
+import { isEnglish } from '@/i18n/format'
 
 /**
  * Brand partnerships (Figma 08 · Brands P4; built 2026-11-07). A player opts in
@@ -48,7 +50,9 @@ export async function fetchCandidates(countryId: number | null): Promise<Ambassa
 export function followersLabel(n: number | null | undefined): string | null {
   if (n == null) return null
   const v = n >= 1_000_000 ? `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k` : String(n)
-  return `${v.replace('.0', '')} followers (declared)`
+  const short = v.replace('.0', '')
+  // Spanish writes the decimal with a comma ("1,2k").
+  return tBrands('partnerships.followers', { count: n, n: isEnglish() ? short : short.replace('.', ',') })
 }
 
 /** The Instagram handle from the profile's social links, for the opt-in form. */

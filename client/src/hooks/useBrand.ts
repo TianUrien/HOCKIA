@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Brand } from './useBrands'
+import { tBrands } from '@/i18n/ns/brands'
 
 export interface BrandDetail extends Brand {
   profile_id: string
@@ -54,7 +55,7 @@ export function useBrand(slug: string | undefined): UseBrandResult {
       setBrand(data as BrandDetail | null)
     } catch (err) {
       logger.error('[useBrand] Error fetching brand:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load brand')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.brandLoad'))
       setBrand(null)
     } finally {
       setIsLoading(false)

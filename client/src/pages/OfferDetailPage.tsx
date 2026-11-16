@@ -29,6 +29,9 @@ import { useReportAction } from '@/components/safety/useReportAction'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import { Button } from '@/components/ui/Button'
 import { BrandLogo, OfferHero } from '@/components/offers/OfferVisuals'
+import { useBrandsT } from '@/i18n/ns/brands'
+import { isEnglish } from '@/i18n/format'
+import { dayFirst } from '@/lib/dayFirst'
 
 /**
  * Offer detail (Figma "08 · Brands", P2: OD1 phone full screen, OD2 desktop).
@@ -39,6 +42,7 @@ import { BrandLogo, OfferHero } from '@/components/offers/OfferVisuals'
  * the request.
  */
 export default function OfferDetailPage() {
+  const t = useBrandsT()
   const { offerId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,9 +70,9 @@ export default function OfferDetailPage() {
   if (isError || !offer) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-surface-subtle px-6 text-center" data-testid="offer-detail-missing">
-        <p className="text-title text-ink-1">This offer isn&rsquo;t available</p>
-        <p className="text-row text-ink-2">It may have ended, or the brand paused it.</p>
-        <Button variant="tonal" className="rounded-full" onClick={() => navigate('/home')}>Back to Home</Button>
+        <p className="text-title text-ink-1">{t('offerDetail.missingTitle')}</p>
+        <p className="text-row text-ink-2">{t('offerDetail.missingBody')}</p>
+        <Button variant="tonal" className="rounded-full" onClick={() => navigate('/home')}>{t('offerDetail.backHome')}</Button>
       </div>
     )
   }
@@ -98,7 +102,7 @@ export default function OfferDetailPage() {
       navigate(route, { state: { returnTo: location.pathname, messageOrigin: 'Profile' } })
     } catch (err) {
       logger.error('[OfferDetail] open conversation failed', err)
-      addToast('Could not open the conversation. Please try again.', 'error')
+      addToast(t('offerDetail.openFailed'), 'error')
     }
   }
 
@@ -106,11 +110,11 @@ export default function OfferDetailPage() {
     try {
       await hideBrandOffers(offer.brand_id)
       trackOffer('brand_offer_dismiss', offer.id, 'offer_detail', { reason: 'hide_brand' })
-      addToast(`You won't see offers from ${offer.brand_name}.`, 'success')
+      addToast(t('offerDetail.brandHidden', { brand: offer.brand_name }), 'success')
       close()
     } catch (err) {
       logger.error('[OfferDetail] hide brand failed', err)
-      addToast('Could not hide this brand. Please try again.', 'error')
+      addToast(t('offerDetail.hideFailed'), 'error')
     }
   }
 
@@ -124,12 +128,12 @@ export default function OfferDetailPage() {
 
   const menu = (
     <MoreMenu
-      label="Offer actions"
+      label={t('offerDetail.actionsLabel')}
       testId="offer-detail-more"
       triggerClassName="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
       items={[
-        { key: 'hide', label: 'Hide this brand', icon: <EyeOff className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void hideBrand() },
-        { ...report.item, label: 'Report offer' },
+        { key: 'hide', label: t('offerDetail.hideBrand'), icon: <EyeOff className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void hideBrand() },
+        { ...report.item, label: t('offerDetail.report') },
       ]}
     />
   )
@@ -151,7 +155,7 @@ export default function OfferDetailPage() {
             className="h-9 shrink-0 rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary disabled:opacity-60"
             data-testid="offer-detail-follow"
           >
-            {follow.isFollowing ? 'Following' : 'Follow'}
+            {follow.isFollowing ? t('offerDetail.following') : t('offerDetail.follow')}
           </button>
         ) : null}
       </div>
@@ -162,10 +166,10 @@ export default function OfferDetailPage() {
       {offer.promo_code ? <PromoCode code={offer.promo_code} onCopied={() => trackOffer('brand_offer_code_copy', offer.id, surface)} /> : null}
 
       <dl className="mt-5 grid grid-cols-[72px_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[20px] bg-white p-4 text-row shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
-        <dt className="text-ink-2">For</dt>
+        <dt className="text-ink-2">{t('offerDetail.forLabel')}</dt>
         <dd className="text-ink-1">{offerForLine(offer.roles, countries, { everywhere: offer.everywhere, regions: offer.regions })}{offer.area ? ` (${offer.area})` : ''}</dd>
-        {offer.ends_at ? (<><dt className="text-ink-2">Until</dt><dd className="text-ink-1">{shortDate(offer.ends_at)} {new Date(offer.ends_at).getUTCFullYear()}</dd></>) : null}
-        {link ? (<><dt className="text-ink-2">Store</dt><dd className="min-w-0 break-all text-ink-1">{storeLabel(link)}</dd></>) : null}
+        {offer.ends_at ? (<><dt className="text-ink-2">{t('offerDetail.untilLabel')}</dt><dd className="text-ink-1">{isEnglish() ? `${shortDate(offer.ends_at)} ${new Date(offer.ends_at).getUTCFullYear()}` : dayFirst(offer.ends_at, { year: 'always' })}</dd></>) : null}
+        {link ? (<><dt className="text-ink-2">{t('offerDetail.storeLabel')}</dt><dd className="min-w-0 break-all text-ink-1">{storeLabel(link)}</dd></>) : null}
       </dl>
 
       {reasonLine ? (
@@ -177,14 +181,14 @@ export default function OfferDetailPage() {
 
       {showAmbassador ? (
         <div className="mt-5 rounded-[24px] bg-brand-soft p-4" data-testid="offer-detail-ambassador">
-          <p className="text-body font-semibold text-brand-primary">{offer.brand_name} is looking for ambassadors</p>
-          <p className="mt-1 text-row text-brand-primary/90">Applying sends a message to the brand from your profile.</p>
+          <p className="text-body font-semibold text-brand-primary">{t('offerDetail.ambassadorTitle', { brand: offer.brand_name })}</p>
+          <p className="mt-1 text-row text-brand-primary/90">{t('offerDetail.ambassadorBody')}</p>
           <button
             type="button"
-            onClick={() => void message(`I'd like to be an ambassador for ${offer.brand_name}.`)}
+            onClick={() => void message(t('offerDetail.ambassadorDraft', { brand: offer.brand_name }))}
             className="mt-3 inline-flex h-11 items-center rounded-full bg-white px-5 text-body font-semibold text-brand-primary"
           >
-            Apply as ambassador
+            {t('offerDetail.ambassadorApply')}
           </button>
         </div>
       ) : null}
@@ -200,14 +204,14 @@ export default function OfferDetailPage() {
             <div className={cn('relative', offer.image_url ? 'h-[280px]' : 'h-[180px]')}>
               <OfferHero url={offer.image_url} className="absolute inset-0 h-full w-full" />
               {noPhotoLogo}
-              <button type="button" onClick={close} aria-label="Close" className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={close} aria-label={t('offerDetail.close')} className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
               <div className="absolute right-4 top-4">{menu}</div>
             </div>
             <div className="p-8">
               {body}
               <div className="mt-6 flex gap-3">
-                {link ? <Button className="rounded-full" onClick={() => void goToStore()} data-testid="offer-detail-store">Go to store</Button> : null}
-                <Button variant="tonal" className="rounded-full" onClick={() => void message(`About: ${offer.title}\n`)} data-testid="offer-detail-message">Message {offer.brand_name}</Button>
+                {link ? <Button className="rounded-full" onClick={() => void goToStore()} data-testid="offer-detail-store">{t('offerDetail.goToStore')}</Button> : null}
+                <Button variant="tonal" className="rounded-full" onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)} data-testid="offer-detail-message">{t('offerDetail.messageBrand', { brand: offer.brand_name })}</Button>
               </div>
             </div>
           </div>
@@ -223,7 +227,7 @@ export default function OfferDetailPage() {
         <OfferHero url={offer.image_url} className="absolute inset-0 h-full w-full" />
         {noPhotoLogo}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
-          <button type="button" onClick={close} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={close} aria-label={t('offerDetail.close')} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"><X className="h-5 w-5" /></button>
           {menu}
         </div>
       </div>
@@ -231,8 +235,8 @@ export default function OfferDetailPage() {
       <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-line bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
         <button
           type="button"
-          onClick={() => void message(`About: ${offer.title}\n`)}
-          aria-label={`Message ${offer.brand_name}`}
+          onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)}
+          aria-label={t('offerDetail.messageBrand', { brand: offer.brand_name })}
           className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-primary"
           data-testid="offer-detail-message"
         >
@@ -240,7 +244,7 @@ export default function OfferDetailPage() {
         </button>
         {link ? (
           <button type="button" onClick={() => void goToStore()} className={cn('flex h-[52px] flex-1 items-center justify-center rounded-full bg-brand-primary text-body font-semibold text-white')} data-testid="offer-detail-store">
-            Go to store
+            {t('offerDetail.goToStore')}
           </button>
         ) : null}
       </div>
@@ -251,6 +255,7 @@ export default function OfferDetailPage() {
 
 /** The offer's code: one tap copies it; "Use it at checkout on <store>" (2026-11-07). */
 function PromoCode({ code, onCopied }: { code: string; onCopied: () => void }) {
+  const t = useBrandsT()
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     try {
@@ -265,12 +270,12 @@ function PromoCode({ code, onCopied }: { code: string; onCopied: () => void }) {
   return (
     <div className="mt-5 flex items-center gap-3 rounded-[20px] border border-dashed border-brand-primary/40 bg-brand-soft/60 p-4" data-testid="offer-detail-code">
       <div className="min-w-0 flex-1">
-        <p className="text-secondary text-ink-2">Your code</p>
+        <p className="text-secondary text-ink-2">{t('offerDetail.yourCode')}</p>
         <p className="truncate font-mono text-title tracking-wide text-ink-1 select-all">{code}</p>
       </div>
       <button type="button" onClick={() => void copy()} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-row font-semibold text-brand-primary" data-testid="offer-detail-copy-code">
         {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? t('offerDetail.copied') : t('offerDetail.copy')}
       </button>
     </div>
   )

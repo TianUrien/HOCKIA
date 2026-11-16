@@ -4,6 +4,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { closeRoleNote, markSignedBody } from '@/lib/signing'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * D4.4 · Mark as signed (Figma 390:647; DEV NOTE 391:36). After the player
@@ -29,17 +30,18 @@ interface Props {
 }
 
 export default function MarkSignedSheet({ open, firstName, playerAvatar, playerName, clubAvatar, clubName, publisherIsClub, roleLabel, waiting, busy, onClose, onConfirm }: Props) {
+  const t = useRecruitingT()
   const [closeRole, setCloseRole] = useState(true)
   useEffect(() => { if (open) setCloseRole(true) }, [open])
 
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel={`Mark ${firstName} as signed`}>
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('markSignedSheet.ariaLabel', { name: firstName })}>
       <div className="px-5 pb-2 pt-2 text-center" data-testid="mark-signed-sheet">
         <div className="flex justify-center">
           <span className="rounded-full ring-2 ring-white"><EntityAvatar src={clubAvatar} name={clubName} role="club" size={56} /></span>
           <span className="-ml-3 rounded-full ring-2 ring-white"><EntityAvatar src={playerAvatar} name={playerName} role="player" size={56} /></span>
         </div>
-        <h2 className="mt-3 text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">Mark {firstName} as signed?</h2>
+        <h2 className="mt-3 text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{t('markSignedSheet.title', { name: firstName })}</h2>
         <p className="mt-2 text-[15px] leading-[21px] text-ink-2" data-testid="mark-signed-body">{markSignedBody(firstName, publisherIsClub, clubName)}</p>
 
         <button
@@ -54,16 +56,16 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
             {closeRole && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold leading-5 text-ink-1">Close {roleLabel}</span>
-            <span className="block text-secondary leading-[18px] text-ink-2">{closeRole ? closeRoleNote(waiting) : 'The opportunity stays open, for signing more players.'}</span>
+            <span className="block text-[15px] font-semibold leading-5 text-ink-1">{t('markSignedSheet.closeRole', { role: roleLabel })}</span>
+            <span className="block text-secondary leading-[18px] text-ink-2">{closeRole ? closeRoleNote(waiting) : t('markSignedSheet.staysOpen')}</span>
           </span>
         </button>
 
         <button type="button" onClick={() => onConfirm(closeRole)} disabled={busy} className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="mark-signed-confirm">
-          {busy ? 'Saving…' : 'Mark as signed'}
+          {busy ? t('markSignedSheet.saving') : t('markSignedSheet.confirm')}
         </button>
         <button type="button" onClick={onClose} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">
-          Not yet
+          {t('markSignedSheet.notYet')}
         </button>
       </div>
     </BottomSheet>

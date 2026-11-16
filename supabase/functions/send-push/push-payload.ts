@@ -8,6 +8,7 @@ import {
   reminderCopyFromMetadata,
   reminderRouteFromMetadata,
 } from '../_shared/club-reminders.ts'
+import { spanishPositionLabel } from '../_shared/member-language.ts'
 
 export interface PushPayload {
   title: string
@@ -143,8 +144,11 @@ export function unnamedActor(lang: PushLanguage): string {
  * Spanish follows the client catalogs' rules (client/src/locales/glossary.md):
  * neutral Latin American Spanish, no second-person verb forms, no gendered
  * words for people. English is unchanged. Text the server stored on the
- * notification (recruiting_update and club reminder titles, announcements)
- * is shown as stored.
+ * notification (club reminder titles, announcements) is shown as stored: club
+ * reminders are already written in the publisher's language. A
+ * recruiting_update title is rebuilt in Spanish from its event when the stored
+ * English title is recognised (recruitingTitleEs); its summary (the role
+ * title) is data and stays as stored.
  */
 export function buildPushPayload(
   kind: string,
@@ -427,7 +431,7 @@ export function buildPushPayload(
       // Grouped push from club-reminders (20261021160000): one per publisher
       // per hour; the server wrote the copy and the tap target.
       if (metadata?.batched === true) {
-        const copy = newApplicationsCopyFromMetadata(metadata)
+        const copy = newApplicationsCopyFromMetadata(metadata, lang)
         return {
           title: copy.title,
           body: copy.body,
@@ -467,7 +471,10 @@ export function buildPushPayload(
         : null
       const titleParts = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/) : []
       const titleHead = titleParts.length >= 2 ? (titleParts[0]?.trim() || null) : null
-      const position = humanPos ?? titleHead ?? (es ? 'la oportunidad' : 'the opportunity')
+      // Spanish shows the agreed position word ("Volante"); the English one is
+      // still what the generated-headline check below compares against.
+      const displayPos = es && positionEnum ? (spanishPositionLabel(positionEnum) ?? humanPos) : humanPos
+      const position = displayPos ?? titleHead ?? (es ? 'la oportunidad' : 'the opportunity')
       // Shortlisted names the role by its title (QA 2 Oct: "considered for
       // Midfielder" named no role), falling back to the position. A role
       // posted without a typed title is stored under its generated headline
@@ -479,8 +486,6 @@ export function buildPushPayload(
       let title: string
       let body: string
       if (es) {
-        // The position enum stays as written in English here ("Midfielder"):
-        // the server has no position catalog yet (Stage 3, with the club side).
         switch (status) {
           case 'shortlisted':
             title = `${club} te sumó a su preselección`
@@ -496,7 +501,7 @@ export function buildPushPayload(
             break
           case 'filled':
             title = `${club} cubrió la oportunidad`
-            body = `${typedTitle ?? humanPos ?? 'La oportunidad'} ya se cubrió. Gracias por postularte. Hay nuevas oportunidades abiertas.`
+            body = `${typedTitle ?? displayPos ?? 'La oportunidad'} ya se cubrió. Gracias por postularte. Hay nuevas oportunidades abiertas.`
             break
           default:
             title = `${club} actualizó tu postulación`
@@ -538,8 +543,12 @@ export function buildPushPayload(
     case 'recruiting_update': {
       const targetUrl = getString(metadata, 'target_url')
       const event = getString(metadata, 'event')
+      const storedTitle = getString(metadata, 'title')
+      // Spanish: rebuilt from the event and the name the SQL wrote into the
+      // stored English title; anything unrecognised is shown as stored.
+      const spanishTitle = es ? recruitingTitleEs(event, storedTitle) : null
       return {
-        title: getString(metadata, 'title') || (es ? 'Novedad de incorporación' : 'Recruiting update'),
+        title: spanishTitle || storedTitle || (es ? 'Novedad de incorporación' : 'Recruiting update'),
         body: getString(metadata, 'summary') || (es ? 'Los cambios están en HOCKIA.' : 'Open HOCKIA to see what changed.'),
         url: safeInternalPath(targetUrl) ?? '/messages',
         tag: event ? `recruiting-${event}` : 'recruiting',
@@ -571,7 +580,7 @@ export function buildPushPayload(
     // role), else Opportunities. Mirrors client config.ts.
     case 'applicant_last_call':
     case 'applicants_closing_soon': {
-      const copy = reminderCopyFromMetadata(kind, metadata)
+      const copy = reminderCopyFromMetadata(kind, metadata, lang)
       return {
         title: copy.title,
         body: copy.body,
@@ -624,4 +633,48 @@ export function buildPushPayload(
         url: '/home',
       }
   }
+}
+
+// ── recruiting_update in Spanish (Stage 3) ──────────────────────────────────
+// The SQL functions (migrations 20260928120000_recruiting_server_functions.sql
+// and later redefinitions) store an English title built as
+// format('<pattern>', <name>). The name is read back out of that title with
+// the same pattern and the Spanish line rebuilt; the SQL is unchanged.
+
+/** The English fallbacks the SQL uses when a name is missing. */
+const FALLBACK_NAME_ES: Record<string, string> = {
+  'A club': 'Un club',
+  'The club': 'El club',
+  'the club': 'el club',
+  'A player': 'Una persona',
+  'The player': 'La persona',
+}
+
+const RECRUITING_TITLES: Record<string, { re: RegExp; es: (name: string) => string }[]> = {
+  invite_received: [{ re: /^(.+) invited you to apply$/, es: (n) => `${n} te invitó a postularte` }],
+  invite_declined: [{ re: /^(.+) passed on your invite$/, es: (n) => `${n} no aceptó tu invitación` }],
+  offer_received: [
+    { re: /^(.+) sent you an offer$/, es: (n) => `${n} te envió una oferta` },
+    { re: /^(.+) updated its offer$/, es: (n) => `${n} actualizó su oferta` },
+  ],
+  offer_withdrawn: [{ re: /^(.+) withdrew its offer$/, es: (n) => `${n} retiró su oferta` }],
+  offer_accepted: [{ re: /^(.+) accepted your offer$/, es: (n) => `${n} aceptó tu oferta` }],
+  offer_declined: [{ re: /^(.+) declined your offer$/, es: (n) => `${n} no aceptó tu oferta` }],
+  application_withdrawn: [{ re: /^(.+) withdrew their application$/, es: (n) => `${n} retiró su postulación` }],
+  signing_marked: [{ re: /^Confirm your signing with (.+)$/, es: (n) => `Confirmar la incorporación con ${n}` }],
+  signing_undone: [{ re: /^(.+) undid the signing$/, es: (n) => `${n} deshizo la incorporación` }],
+  signing_confirmed: [{ re: /^(.+) confirmed the signing$/, es: (n) => `${n} confirmó la incorporación` }],
+}
+
+/** The Spanish recruiting_update title, or null when the stored one is not recognised. */
+export function recruitingTitleEs(event: string | null, storedTitle: string | null): string | null {
+  if (!event || !storedTitle) return null
+  for (const t of RECRUITING_TITLES[event] ?? []) {
+    const m = storedTitle.trim().match(t.re)
+    if (m && m[1].trim()) {
+      const name = m[1].trim()
+      return t.es(FALLBACK_NAME_ES[name] ?? name)
+    }
+  }
+  return null
 }

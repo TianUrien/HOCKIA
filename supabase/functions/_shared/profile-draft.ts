@@ -168,12 +168,51 @@ export function normalizeClub(name: string): string {
 }
 
 /** "2019 – 2022", "May 2021 – Present", "2023" — the career row's years line. */
-export function yearsLabel(c: CareerProposal): string {
-  const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+export function yearsLabel(c: CareerProposal, lang: 'en' | 'es' = 'en'): string {
+  const M = lang === 'es'
+    ? ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic']
+    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const part = (y: number | null, m: number | null) => (y ? (m ? `${M[m - 1]} ${y}` : `${y}`) : '')
   const from = part(c.start_year, c.start_month)
-  const to = c.current ? 'Present' : part(c.end_year, c.end_month)
+  const to = c.current ? (lang === 'es' ? 'Actualidad' : 'Present') : part(c.end_year, c.end_month)
   return from && to ? `${from} – ${to}` : from || to
+}
+
+/** What the builder did, in the member's language (the "steps" list under the draft). */
+export interface BuilderStepCounts {
+  found: number
+  proposed: number
+  matched: number
+  duplicates: number
+  cv: boolean
+  videos: number
+  pagesRead: number
+  unreadPages: number
+  photos: number
+}
+
+export function builderSteps(n: BuilderStepCounts, lang: 'en' | 'es' = 'en'): string[] {
+  const steps: string[] = []
+  if (lang !== 'es') {
+    if (n.found) steps.push(`Found ${n.found} ${n.found === 1 ? 'club' : 'clubs'} in what you sent`)
+    if (n.proposed) steps.push(`Matched ${n.matched} of ${n.proposed} to the club directory`)
+    if (n.duplicates) steps.push(`${n.duplicates} already on your profile`)
+    if (n.cv) steps.push('Read your CV')
+    if (n.videos) steps.push(`Found ${n.videos === 1 ? 'a video' : `${n.videos} videos`}`)
+    if (n.pagesRead) steps.push(`Read ${n.pagesRead === 1 ? 'the page' : `${n.pagesRead} pages`} you linked`)
+    if (n.unreadPages) steps.push(`Couldn’t open ${n.unreadPages === 1 ? 'one link' : `${n.unreadPages} links`}`)
+    if (n.photos) steps.push(`Checked ${n.photos === 1 ? 'the photo' : `the ${n.photos} photos`}`)
+    return steps
+  }
+  if (n.found) steps.push(n.found === 1 ? '1 club encontrado en lo que se envió' : `${n.found} clubes encontrados en lo que se envió`)
+  if (n.proposed) steps.push(`${n.matched} de ${n.proposed} con coincidencia en el directorio de clubes`)
+  if (n.duplicates) steps.push(n.duplicates === 1 ? '1 ya figura en tu perfil' : `${n.duplicates} ya figuran en tu perfil`)
+  if (n.cv) steps.push('CV leído')
+  if (n.videos) steps.push(n.videos === 1 ? '1 video encontrado' : `${n.videos} videos encontrados`)
+  if (n.pagesRead) steps.push(n.pagesRead === 1 ? 'Página enlazada leída' : `${n.pagesRead} páginas enlazadas leídas`)
+  if (n.unreadPages) steps.push(n.unreadPages === 1 ? 'No se pudo abrir un enlace' : `No se pudieron abrir ${n.unreadPages} enlaces`)
+  if (n.photos) steps.push(n.photos === 1 ? 'Foto revisada' : `${n.photos} fotos revisadas`)
+  return steps
 }
 
 /** Season dates for career_history (first of the month; January when only a year). */

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tBrands } from '@/i18n/ns/brands'
 
 export interface BrandAmbassador {
   id: string
@@ -51,14 +52,14 @@ export function useBrandAmbassadors(brandId: string | null | undefined) {
       setTotal(result.total)
     } catch (err) {
       logger.error('[useBrandAmbassadors] Error fetching:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load ambassadors')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.ambassadorsLoad'))
     } finally {
       setIsLoading(false)
     }
   }, [brandId])
 
   const addAmbassador = useCallback(async (playerId: string) => {
-    if (!brandId) return { success: false, error: 'No brand ID' }
+    if (!brandId) return { success: false, error: tBrands('hookErrors.ambassadorsNoBrand') }
 
     try {
        
@@ -79,12 +80,12 @@ export function useBrandAmbassadors(brandId: string | null | undefined) {
       return { success: true }
     } catch (err) {
       logger.error('[useBrandAmbassadors] Error adding:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to add ambassador' }
+      return { success: false, error: err instanceof Error ? err.message : tBrands('hookErrors.ambassadorAdd') }
     }
   }, [brandId, fetchAmbassadors])
 
   const removeAmbassador = useCallback(async (playerId: string) => {
-    if (!brandId) return { success: false, error: 'No brand ID' }
+    if (!brandId) return { success: false, error: tBrands('hookErrors.ambassadorsNoBrand') }
 
     try {
        
@@ -105,7 +106,7 @@ export function useBrandAmbassadors(brandId: string | null | undefined) {
       return { success: true }
     } catch (err) {
       logger.error('[useBrandAmbassadors] Error removing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to remove ambassador' }
+      return { success: false, error: err instanceof Error ? err.message : tBrands('hookErrors.ambassadorRemove') }
     }
   }, [brandId])
 

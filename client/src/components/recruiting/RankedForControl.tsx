@@ -6,6 +6,7 @@ import { contextKind } from '@/hooks/useRecruitingContext'
 import { contextPillLabel, playerContexts, type ContextLike } from '@/lib/findPlayers'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { useAuthStore } from '@/lib/auth'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * "Ranked for" pill + sheet wired to the recruiting-context store — the one
@@ -15,6 +16,7 @@ import { useAuthStore } from '@/lib/auth'
  * the Coaches tab lists coach ones (round-6 kind rules). Recruiters only.
  */
 export function RankedForControl({ kind = 'player', className }: { kind?: 'player' | 'coach'; className?: string }) {
+  const t = useRecruitingT()
   const viewer = useAuthStore((s) => s.profile)
   const scouting = useScoutingContext()
   // Same store as everywhere (useScoutingContext reads useRecruitingContext).
@@ -30,9 +32,9 @@ export function RankedForControl({ kind = 'player', className }: { kind?: 'playe
   const roles = useMemo(() => {
     if (kind === 'player') return scouting.roles
     const m = new Map<string, { title: string; toReview: number }>()
-    for (const c of contexts) if (c.opportunity_id) m.set(c.opportunity_id, { title: c.label ?? 'Coaching opportunity', toReview: 0 })
+    for (const c of contexts) if (c.opportunity_id) m.set(c.opportunity_id, { title: c.label ?? t('rankedForControl.coachingFallback'), toReview: 0 })
     return m
-  }, [kind, scouting.roles, contexts])
+  }, [kind, scouting.roles, contexts, t])
 
   if (!isRecruitingViewer(viewer)) return null
   const pick = (c: ContextLike | null) => {

@@ -8,6 +8,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tBrands } from '@/i18n/ns/brands'
 
 export type BrandCategory =
   | 'equipment'
@@ -106,7 +107,7 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
       setTotal(result.total)
     } catch (err) {
       logger.error('[useBrands] Error fetching brands:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load brands')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.brandsLoad'))
     } finally {
       setIsLoading(false)
     }

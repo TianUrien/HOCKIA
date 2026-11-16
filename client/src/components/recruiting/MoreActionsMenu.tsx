@@ -26,6 +26,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { markSavedProfileId } from '@/hooks/useSavedProfiles'
 import MoveToShortlistMenu from './MoveToShortlistMenu'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface MoreActionsMenuProps {
   playerId: string
@@ -62,6 +63,7 @@ export default function MoreActionsMenu({
   playerId,
   playerName,
 }: MoreActionsMenuProps) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [moveMenuOpen, setMoveMenuOpen] = useState(false)
@@ -91,7 +93,7 @@ export default function MoreActionsMenu({
       <button
         type="button"
         onClick={() => setOverflowOpen((v) => !v)}
-        aria-label="More actions"
+        aria-label={t('moreActions.moreActions')}
         aria-haspopup="menu"
         aria-expanded={overflowOpen}
         className={[
@@ -120,7 +122,7 @@ export default function MoreActionsMenu({
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
           >
             <FolderInput className="w-4 h-4 text-gray-500" />
-            Move to list…
+            {t('moreActions.moveToList')}
           </button>
           <button
             type="button"
@@ -132,7 +134,7 @@ export default function MoreActionsMenu({
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
           >
             <Pencil className="w-4 h-4 text-gray-500" />
-            Add note in list
+            {t('moreActions.addNoteInList')}
           </button>
         </div>
       )}
@@ -160,6 +162,7 @@ interface MoveToAddMenuProps {
  * call site small.
  */
 function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuProps) {
+  const t = useRecruitingT()
   const { profile: viewer } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -177,11 +180,11 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
       // IS saved, so keep the co-rendered card "Saved" heart in sync.
       if (error.code === '23505') {
         markSavedProfileId(viewer.id, playerId)
-        addToast(`${playerName} is already in ${shortlistName}`, 'success')
+        addToast(t('moreActions.alreadyInList', { name: playerName, list: shortlistName }), 'success')
         return
       }
       reportSupabaseError('MoreActionsMenu.moveToAdd', error)
-      addToast('Could not add to that list', 'error')
+      addToast(t('moreActions.addFailed'), 'error')
       return
     }
     // Card "Saved" heart reads the shared saved-ids set — mark it filled.
@@ -190,15 +193,15 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
       player_id: playerId,
       source: 'more_actions_menu',
     })
-    addToast(`${playerName} added to ${shortlistName}`, 'success')
-  }, [viewer?.id, playerId, playerName, addToast])
+    addToast(t('moreActions.added', { name: playerName, list: shortlistName }), 'success')
+  }, [viewer?.id, playerId, playerName, addToast, t])
 
   return (
     <MoveToShortlistMenu
       open={open}
       onClose={onClose}
       onPick={handlePick}
-      title="Add to list…"
+      title={t('moreActions.addToListTitle')}
     />
   )
 }
