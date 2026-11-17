@@ -349,6 +349,8 @@ Each has a recommendation; none is assumed.
 
 **Decided by the founder on 2026-11-15 (in the planning session): D1 = A, D2 = A, D3 = A, D4 = A.** So: neutral Latin American Spanish with Argentine hockey vocabulary; device language plus a switch; emails and pushes follow the member's language while store listings and landing pages stay English; opt-in beta released stage by stage. **Still open: D5, D6, D7, D8.** D7 is best answered with the Stage 0 measurements.
 
+**Update 2026-11-17 (founder, after reading the Spanish on staging):** device-language following is switched on (`AUTO_DETECT_DEVICE_LANGUAGE` in `client/src/i18n/languages.ts`). A saved or stored choice still wins. Known gap: a member who gets Spanish from the device and never uses the switch has `profiles.ui_language` NULL, so their emails and pushes stay in English until they choose a language.
+
 **D1. Which Spanish?**
 - A. Neutral Latin American Spanish, hockey words as used in Argentina, phrased to avoid "vos / tú" (recommended). One catalog serves everyone; a regional overlay can be added later.
 - B. Rioplatense with voseo. Closest to the largest group of members and to the founder's voice; reads as foreign in Spain and Mexico.
