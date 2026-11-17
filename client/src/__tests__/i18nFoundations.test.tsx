@@ -137,4 +137,10 @@ describe('check-locales', () => {
     expect(checkLocales(locales({ a: 'A' }, { a: ' ' }))).toEqual(['es/x.json: "a" is empty'])
     expect(checkLocales(locales({ a: 'Hi {{name}}' }, { a: 'Hola {{nombre}}' }))[0]).toContain('different variables')
   })
+
+  it('lets a singular form say the number in words, but nowhere else', () => {
+    const en = { d_one: 'In the last {{count}} day', d_other: 'In the last {{count}} days' }
+    expect(checkLocales(locales(en, { d_one: 'En el último día', d_many: 'En los últimos {{count}} días', d_other: 'En los últimos {{count}} días' }))).toEqual([])
+    expect(checkLocales(locales(en, { d_one: 'En el último día', d_many: 'En los últimos días', d_other: 'En los últimos {{count}} días' }))[0]).toContain('different variables')
+  })
 })

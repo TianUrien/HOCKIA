@@ -27,7 +27,7 @@
     "friendRequestAccepted": {
       "badge": "Conexión aceptada",
       "title": "{{name}} aceptó tu solicitud de conexión",
-      "description": "Ahora pueden ver mutuamente su actividad."
+      "description": "Ahora cada quien puede ver la actividad de la otra persona."
     },
     "profileCommentCreated": {
       "badge": "Comentario en el perfil",
@@ -170,7 +170,7 @@
     "clubInvitationAccepted": {
       "badge": "Novedad del club",
       "title": "{{name}} se unió a tu club",
-      "description": "Ya aparece en los integrantes de tu club."
+      "description": "Ya aparece entre quienes integran tu club."
     },
     "profileViewed": {
       "badge": "Visitas al perfil",

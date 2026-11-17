@@ -193,7 +193,7 @@
     },
     "contacted": {
       "label": "Integrantes que te contactaron",
-      "period_one": "Desde tus ofertas, último {{count}} día",
+      "period_one": "Desde tus ofertas, último día",
       "period_other": "Desde tus ofertas, últimos {{count}} días",
       "period_many": "Desde tus ofertas, últimos {{count}} días"
     },
@@ -224,7 +224,7 @@
       "fromOffer": "Desde {{title}}",
       "fromAnOffer": "Desde una oferta",
       "message": "Mensaje",
-      "empty_one": "Nadie escribió desde una oferta en el último {{count}} día.",
+      "empty_one": "Nadie escribió desde una oferta en el último día.",
       "empty_other": "Nadie escribió desde una oferta en los últimos {{count}} días.",
       "empty_many": "Nadie escribió desde una oferta en los últimos {{count}} días."
     },
