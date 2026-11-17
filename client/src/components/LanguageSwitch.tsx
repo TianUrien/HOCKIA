@@ -7,13 +7,13 @@ import type { UiLanguage } from '@/i18n/languages'
 import { cn } from '@/lib/utils'
 
 /**
- * English / Español (beta). Switches the interface at once, remembers the
- * choice on this device and saves it on the profile when signed in. The note
- * under it says Spanish is not complete yet (opt-in beta, founder decision
- * 2026-11-15). Language names are shown in their own language on purpose, so
- * the switch can be found without reading the current one.
+ * English / Español. Switches the interface at once, remembers the choice
+ * on this device and saves it on the profile when signed in. Language names
+ * are shown in their own language on purpose, so the switch can be found
+ * without reading the current one. (The "beta" label and note were removed
+ * on 2026-11-17, founder decision, once the app was translated.)
  */
-export function LanguageSwitch({ className, showNote = true, variant = 'segmented' }: { className?: string; showNote?: boolean; variant?: 'segmented' | 'pill' }) {
+export function LanguageSwitch({ className, variant = 'segmented' }: { className?: string; variant?: 'segmented' | 'pill' }) {
   const t = useCommonT()
   const [value, setValue] = useState<UiLanguage>(currentLanguage())
 
@@ -40,18 +40,16 @@ export function LanguageSwitch({ className, showNote = true, variant = 'segmente
   }
 
   return (
-    <div className={cn('flex flex-col gap-2', className)} data-testid="language-switch">
+    <div className={className} data-testid="language-switch">
       <SegmentedControl<UiLanguage>
         ariaLabel={t('language.label')}
         value={value}
         onChange={onChange}
         options={[
           { value: 'en', label: t('language.english') },
-          // "(beta)" did not fit at 320 px; the note below says it in both languages.
-          { value: 'es', label: t('language.spanishShort') },
+          { value: 'es', label: t('language.spanish') },
         ]}
       />
-      {showNote && <p className="text-caption leading-[16px] text-ink-3">{t('language.betaNote')}</p>}
     </div>
   )
 }

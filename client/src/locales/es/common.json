@@ -14,9 +14,7 @@
   "language": {
     "label": "Idioma",
     "english": "English",
-    "spanish": "Español (beta)",
-    "spanishShort": "Español",
-    "betaNote": "El español está en beta: algunas pantallas siguen en inglés."
+    "spanish": "Español"
   },
   "nav": {
     "home": "Inicio",
