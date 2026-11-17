@@ -8,6 +8,7 @@ import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import { getImageUrl } from '@/lib/imageUrl'
 import { Trans } from 'react-i18next'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface RoleCardProps {
   vacancy: Vacancy
@@ -46,7 +47,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
   const family = categoryFamily(vacancy.gender)
   const youth = vacancy.gender === 'Girls' || vacancy.gender === 'Boys'
   const headline = roleHeadline(vacancy)
-  const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
+  const city = vacancy.location_city?.trim() || countryLabel(vacancy.location_country?.trim()) || ''
   const subline = [clubName, countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
   const packageChips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label), ...(vacancy.custom_benefits ?? [])]
   const shown = packageChips.slice(0, MAX_PACKAGE_CHIPS)

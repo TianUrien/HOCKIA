@@ -4,6 +4,7 @@ import DashboardCard from './DashboardCard'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { Profile } from '@/lib/supabase'
 import { useHomeT } from '@/i18n/ns/home'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * ClubBasicInfoCard — Club-only Bento card. Mirrors the player/coach
@@ -88,7 +89,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
         </Row>
 
         <Row label={t('clubInfo.baseLocation')}>
-          {profile.base_location ? <span>{profile.base_location}</span> : <Empty />}
+          {profile.base_location ? <span>{placeText(profile.base_location)}</span> : <Empty />}
         </Row>
 
         <Row label={t('clubInfo.yearFounded')}>

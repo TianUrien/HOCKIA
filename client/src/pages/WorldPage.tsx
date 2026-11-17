@@ -14,6 +14,7 @@ import WorldSearchDropdown from '@/components/WorldSearchDropdown'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface CountryWithStats {
   country_id: number
@@ -93,7 +94,7 @@ export default function WorldPage() {
   }, [fetchCountries])
 
   const filteredCountries = countries.filter(country =>
-    country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
+    [country.country_name, countryLabel(country.country_name)].some((n) => n.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   // Get the correct flag URL based on country code (e.g. "GB-ENG" → "gb-eng")
@@ -192,7 +193,7 @@ export default function WorldPage() {
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{country.country_name}</span>
+                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{countryLabel(country.country_name)}</span>
                     <span className="block truncate text-secondary text-ink-2">
                       {t('worldPage.countsLine', { clubs: t('worldPage.clubCount', { count: country.total_clubs }), leagues: t('worldPage.leagueCount', { count: country.league_count }) })}
                     </span>

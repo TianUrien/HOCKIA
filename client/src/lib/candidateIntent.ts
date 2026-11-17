@@ -7,6 +7,7 @@
 import { tRecruiting } from '@/i18n/ns/recruiting'
 import { intlLocale, isEnglish } from '@/i18n/format'
 import { lazyTextRecord } from './opportunityLazyText'
+import { countryLabel } from '@/i18n/countryNames'
 
 // Labels are read through getters, so each read follows the interface language.
 export const RELOCATION_LABEL: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
@@ -101,10 +102,10 @@ export function summarizeCandidateIntent(
     })
   }
 
-  const open = (p.relocation_countries_open ?? []).map(countryName).filter((n): n is string => Boolean(n))
+  const open = (p.relocation_countries_open ?? []).map(countryName).filter((n): n is string => Boolean(n)).map((n) => countryLabel(n))
   if (open.length > 0) rows.push({ key: 'open', label: tRecruiting('candidateIntent.rows.openCountries'), value: open.join(', ') })
 
-  const excluded = (p.relocation_countries_excluded ?? []).map(countryName).filter((n): n is string => Boolean(n))
+  const excluded = (p.relocation_countries_excluded ?? []).map(countryName).filter((n): n is string => Boolean(n)).map((n) => countryLabel(n))
   if (excluded.length > 0) rows.push({ key: 'excluded', label: tRecruiting('candidateIntent.rows.excludedCountries'), value: excluded.join(', ') })
 
   return { rows, hasAny: rows.length > 0 }

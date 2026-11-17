@@ -39,6 +39,7 @@ import { CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, Section, type Gri
 import { useProfileT } from '@/i18n/ns/profile'
 import { useEnumsT } from '@/i18n/ns/enums'
 import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — umpire, phone (Figma PR23 137:1000 · PR25 empty 141:1056).
@@ -77,7 +78,7 @@ function monthYear(date: string | null): string | null {
 }
 
 function AppointmentRow({ a, flag }: { a: UmpireAppointment; flag: string | null }) {
-  const where = [flag, a.location_city?.trim() || a.location_country?.trim() || null].filter(Boolean).join(' ')
+  const where = [flag, a.location_city?.trim() || countryLabel(a.location_country?.trim()) || null].filter(Boolean).join(' ')
   const sub = [a.organizer?.trim() || null, where || null].filter(Boolean).join(' · ')
   const tags = [a.match_level ? humanizeToken(a.match_level) : null, a.match_format ? humanizeToken(a.match_format) : null].filter(Boolean).join(' · ')
   return (

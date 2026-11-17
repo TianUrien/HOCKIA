@@ -6,6 +6,7 @@ import { shortDayOf } from '@/lib/signing'
 import { withLazyText } from '@/lib/opportunityLazyText'
 import { tRecruiting } from '@/i18n/ns/recruiting'
 import { tProfile } from '@/i18n/ns/profile'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Find players + Shortlist (Figma 04 Club · D1.9 332:318 / D1.10 332:539;
@@ -149,7 +150,7 @@ export function nationalityLine(ids: (number | null | undefined)[], countries: C
     .slice(0, 2)
   if (!list.length) return null
   const flags = list.map((c) => c.flag_emoji).filter(Boolean).join(' ')
-  const names = list.map((c) => c.common_name || c.name).join(' · ')
+  const names = list.map((c) => countryLabel(c.common_name || c.name)).join(' · ')
   return flags ? `${flags} ${names}` : names
 }
 

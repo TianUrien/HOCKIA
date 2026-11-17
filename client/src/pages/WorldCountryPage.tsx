@@ -12,6 +12,7 @@ import { Header } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { tWorld, useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface Province {
   province_id: number | null
@@ -335,7 +336,7 @@ export default function WorldCountryPage() {
         }
         setCountry(countryData)
         setHasRegions(data.has_regions ?? false)
-        document.title = tWorld('country.documentTitle', { country: countryData.name })
+        document.title = tWorld('country.documentTitle', { country: countryLabel(countryData.name) })
 
         if (data.has_regions) {
           const { data: provinceData, error: provinceError } = await supabase
@@ -646,7 +647,7 @@ export default function WorldCountryPage() {
             <div className="w-16 h-16 rounded-full overflow-hidden shadow-md border border-gray-200">
               <img
                 src={flagUrl}
-                alt={t('country.flagAlt', { country: country.name })}
+                alt={t('country.flagAlt', { country: countryLabel(country.name) })}
                 loading="lazy"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -665,9 +666,9 @@ export default function WorldCountryPage() {
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
                 <Link to="/world" className="hover:text-gray-700">{t('country.breadcrumbWorld')}</Link>
                 <span>/</span>
-                <span className="text-hockia-primary">{country.name}</span>
+                <span className="text-hockia-primary">{countryLabel(country.name)}</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">{country.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{countryLabel(country.name)}</h1>
             </div>
           </div>
         </div>
@@ -681,7 +682,7 @@ export default function WorldCountryPage() {
             <div className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('country.regions')}</h2>
               <p className="text-gray-600 mb-6">
-                {t('country.regionsBody', { country: country.name })}
+                {t('country.regionsBody', { country: countryLabel(country.name) })}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -719,9 +720,9 @@ export default function WorldCountryPage() {
                   <MapPin className="w-5 h-5 text-brand-text" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{t('country.structureTitle', { country: country.name })}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">{t('country.structureTitle', { country: countryLabel(country.name) })}</h3>
                   <p className="text-sm text-gray-600">
-                    {t('country.structureBody', { country: country.name })}
+                    {t('country.structureBody', { country: countryLabel(country.name) })}
                   </p>
                 </div>
               </div>
@@ -730,7 +731,7 @@ export default function WorldCountryPage() {
             {/* Community clubs not yet placed in any league — without this
                 section they'd be unreachable through the region drill-down. */}
             <CommunityClubsSection
-              title={t('country.moreClubs', { country: country.name })}
+              title={t('country.moreClubs', { country: countryLabel(country.name) })}
               clubs={communityClubs}
               highlightClubId={highlightClubId}
               onClubClick={handleClubClick}
@@ -827,7 +828,7 @@ export default function WorldCountryPage() {
                 club-only countries; a secondary section under the league
                 tabs everywhere else. */}
             <CommunityClubsSection
-              title={leagues.length > 0 ? t('country.moreClubs', { country: country.name }) : t('country.clubsIn', { country: country.name })}
+              title={leagues.length > 0 ? t('country.moreClubs', { country: countryLabel(country.name) }) : t('country.clubsIn', { country: countryLabel(country.name) })}
               clubs={communityClubs}
               highlightClubId={highlightClubId}
               onClubClick={handleClubClick}
@@ -837,7 +838,7 @@ export default function WorldCountryPage() {
             {leagues.length === 0 && communityClubs.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-500">{t('country.noClubsInCountry', { country: country.name })}</p>
+                <p className="text-gray-500">{t('country.noClubsInCountry', { country: countryLabel(country.name) })}</p>
                 <p className="text-sm text-gray-400 mt-1">
                   {t('country.noClubsHint')}
                 </p>

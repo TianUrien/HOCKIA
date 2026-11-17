@@ -15,6 +15,7 @@ import { Header } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { tWorld, useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface League {
   id: number
@@ -148,7 +149,7 @@ export default function WorldProvincePage() {
 
         if (!provinceError && provinceData) {
           setProvince(provinceData)
-          document.title = tWorld('province.documentTitle', { province: provinceData.name, country: countryData.name })
+          document.title = tWorld('province.documentTitle', { province: provinceData.name, country: countryLabel(countryData.name) })
           await fetchLeaguesAndClubData(provinceData.id)
         } else {
           navigate(`/world/${countrySlug}`, { replace: true })
@@ -377,7 +378,7 @@ export default function WorldProvincePage() {
             <div className="w-16 h-16 rounded-full border-2 border-line overflow-hidden">
               <img
                 src={flagUrl}
-                alt={t('province.flagAlt', { country: country.name })}
+                alt={t('province.flagAlt', { country: countryLabel(country.name) })}
                 loading="lazy"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -397,7 +398,7 @@ export default function WorldProvincePage() {
                 <Link to="/world" className="hover:text-gray-700">{t('province.breadcrumbWorld')}</Link>
                 <span>/</span>
                 <Link to={`/world/${countrySlug}`} className="text-hockia-primary hover:underline">
-                  {country.name}
+                  {countryLabel(country.name)}
                 </Link>
                 <span>/</span>
                 <span className="text-hockia-primary">{province.name}</span>

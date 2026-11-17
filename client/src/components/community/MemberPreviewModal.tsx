@@ -58,6 +58,7 @@ import type { Profile } from './PeopleListView'
 import { MemberPreviewSheet } from './MemberPreviewSheet'
 import { useCommunityT } from '@/i18n/ns/community'
 import { useEnumsT } from '@/i18n/ns/enums'
+import { placeText } from '@/i18n/countryNames'
 
 const BRAND_CATEGORIES = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
 type BrandCategory = (typeof BRAND_CATEGORIES)[number]
@@ -461,7 +462,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {member.base_location && (
                 <div className="flex items-center gap-2 text-gray-700">
                   <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span>{member.base_location}</span>
+                  <span>{placeText(member.base_location)}</span>
                 </div>
               )}
 

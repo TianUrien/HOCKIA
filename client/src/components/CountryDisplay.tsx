@@ -1,5 +1,6 @@
 import Flag from '@/components/Flag'
 import { useCountries } from '@/hooks/useCountries'
+import { countryLabel, nationalityLabel } from '@/i18n/countryNames'
 
 interface CountryDisplayProps {
   /** The country ID from a normalized *_country_id column (e.g., nationality_country_id). */
@@ -41,7 +42,7 @@ export default function CountryDisplay({
     }
 
     if (country) {
-      const displayText = showNationality ? country.nationality_name : country.name
+      const displayText = showNationality ? nationalityLabel(country.nationality_name) : countryLabel(country.name)
 
       if (flagOnly) {
         return (
@@ -62,7 +63,7 @@ export default function CountryDisplay({
 
   // Fallback to legacy text if no country ID
   if (fallbackText) {
-    return <span className={className}>{fallbackText}</span>
+    return <span className={className}>{nationalityLabel(fallbackText)}</span>
   }
 
   // Nothing to display

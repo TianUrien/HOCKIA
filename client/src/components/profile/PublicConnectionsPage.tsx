@@ -10,6 +10,7 @@ import { profilePath } from '@/lib/profileNavigation'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { useProfileT } from '@/i18n/ns/profile'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * PublicConnectionsPage — the dedicated visitor Connections screen behind
@@ -178,7 +179,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
           <ul className="space-y-2">
             {rows.map((row) => {
               const path = profilePath(row.role, row.username, row.id)
-              const subtitle = row.current_club || row.base_location || null
+              const subtitle = row.current_club || placeText(row.base_location) || null
               return (
                 <li key={row.id}>
                   <button

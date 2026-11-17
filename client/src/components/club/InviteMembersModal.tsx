@@ -14,6 +14,7 @@ import {
 import { inviteErrorMessage } from '@/lib/clubSquadCopy'
 import { positionLabel } from '@/lib/identity'
 import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { placeText } from '@/i18n/countryNames'
 
 interface InviteMembersModalProps {
   isOpen: boolean
@@ -225,7 +226,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 <ul className="divide-y divide-line">
                   {results.map((m) => {
                     const isInvited = invited.has(m.id)
-                    const meta = [positionLabel(m.position), m.current_club || m.base_location].filter(Boolean).join(' · ')
+                    const meta = [positionLabel(m.position), m.current_club || placeText(m.base_location)].filter(Boolean).join(' · ')
                     return (
                       <li key={m.id} className="flex items-center gap-3 py-2.5">
                         <Avatar src={m.avatar_url} alt={m.full_name ?? ''} initials={m.full_name ? m.full_name.split(' ').map((n) => n[0]).join('') : '?'} size="md" role={m.role} />

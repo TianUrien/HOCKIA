@@ -23,6 +23,7 @@ import {
   type GoalRole,
 } from '@/lib/memberGoals'
 import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * "What's your goal?" at the top of today's Home (Figma page 02, YG: G1–G5;
@@ -57,7 +58,7 @@ export function GoalCard() {
   if (!isSet) return null
 
   const c = profile?.base_country_id != null ? getCountryById(profile.base_country_id) : undefined
-  const rows = goalRows(role, goal, actions.data ?? {}, c ? (c.common_name || c.name) : null)
+  const rows = goalRows(role, goal, actions.data ?? {}, c ? countryLabel(c.common_name || c.name) : null)
   return <SetCard role={role} title={goalTitle(role, goal)} rows={rows} onChange={() => setEditing(true)} />
 }
 

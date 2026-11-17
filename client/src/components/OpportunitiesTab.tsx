@@ -25,6 +25,7 @@ import { dayFirst } from '@/lib/dayFirst'
 import { positionLabel } from '@/lib/identity'
 import { tOpportunities, useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -821,7 +822,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       {vacancies.length > 0 && (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {vacancies.filter(v => statusFilter === 'all' || v.status === statusFilter).map((vacancy) => {
-            const locationLabel = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
+            const locationLabel = [vacancy.location_city, countryLabel(vacancy.location_country)].filter(Boolean).join(', ')
 
             // Compound badge: "Player · Men's · Forward" / "Coach · Girls · Head Coach".
             // The team shows on coach roles too.

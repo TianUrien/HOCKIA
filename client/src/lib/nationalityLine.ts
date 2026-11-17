@@ -1,3 +1,4 @@
+import { countryLabel, nationalityLabel } from '@/i18n/countryNames'
 /**
  * Nationalities are always ONE line (Figma redesign rule, 2026-09-21):
  * flags first, then the names joined with " · " — "🇦🇺 🏴 Australian ·
@@ -15,7 +16,7 @@ export function nationalityLine(
   const flags = countries.map((c) => c.flag_emoji).filter(Boolean).join(' ')
   const names = countries
     .map((c) => {
-      const base = options.label === 'demonym' ? c.nationality_name?.trim() || c.name : c.name
+      const base = options.label === 'demonym' ? nationalityLabel(c.nationality_name?.trim() || c.name) : countryLabel(c.name)
       const extra = options.suffix?.(c)
       return extra ? `${base} ${extra}` : base
     })

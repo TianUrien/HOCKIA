@@ -47,6 +47,7 @@ import { intlLocale, isEnglish } from '@/i18n/format'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { daysUntil, isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface OpportunityDetailMobileProps {
   vacancy: Vacancy
@@ -114,7 +115,7 @@ export function OpportunityDetailMobile({
   const headline = roleHeadline(vacancy)
   const positionText = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || ''
-  const country = vacancy.location_country?.trim() || ''
+  const country = countryLabel(vacancy.location_country?.trim()) || ''
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
   const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)

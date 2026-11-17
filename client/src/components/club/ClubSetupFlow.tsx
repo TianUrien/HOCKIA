@@ -20,6 +20,7 @@ import { CLUB_NAME_MAX, foundedYears } from '@/lib/clubEdit'
 import { clubSetupReady, type ClubSetupDraft } from '@/lib/clubSetup'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { useClubT } from '@/i18n/ns/club'
+import { countryLabel as countryLabelText } from '@/i18n/countryNames'
 
 const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 
@@ -73,7 +74,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
   if (!user) return null
   const country = draft.countryId ? getCountryById(draft.countryId) : undefined
-  const countryLabel = country ? [country.flag_emoji, country.common_name || country.name].filter(Boolean).join(' ') : null
+  const countryLabel = country ? [country.flag_emoji, countryLabelText(country.common_name || country.name)].filter(Boolean).join(' ') : null
   const cityLabel = draft.city || draft.location || null
   const ready = clubSetupReady(draft)
   const crest = profile?.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-lg') ?? profile.avatar_url : null

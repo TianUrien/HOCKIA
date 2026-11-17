@@ -58,6 +58,7 @@ import type { ChecklistKey } from '@/lib/openToPlayScreen'
 import PlayerProfileV2 from '@/components/profile/v2/PlayerProfileV2'
 import { roleTitle } from '@/lib/homeEngagement'
 import { useProfileT } from '@/i18n/ns/profile'
+import { countryLabel } from '@/i18n/countryNames'
 
 // D2 owner leaves — lazy so they stay out of the profile chunk until opened.
 const PassportsPermitsScreen = lazy(() => import('@/components/profile/mobile/PassportsPermitsScreen'))
@@ -822,7 +823,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 return (
                   <PermitAttentionRow
                     key={permit.id}
-                    permit={{ id: permit.id, type: permit.type, expires_on: permit.expires_on, status: permit.status, countryName: c ? c.common_name || c.name : t('playerDashboard.keyFacts.permitFallbackOwner'), flag: c?.flag_emoji ?? null }}
+                    permit={{ id: permit.id, type: permit.type, expires_on: permit.expires_on, status: permit.status, countryName: c ? countryLabel(c.common_name || c.name) : t('playerDashboard.keyFacts.permitFallbackOwner'), flag: c?.flag_emoji ?? null }}
                     onClick={() => openOwnerLeaf('passports')}
                   />
                 )

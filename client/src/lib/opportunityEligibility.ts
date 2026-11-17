@@ -4,6 +4,7 @@ import { computeInterest } from './interestFit'
 import { specialistSkillLabel } from './specialistSkills'
 import { tOpportunities } from '@/i18n/ns/opportunities'
 import { intlLocale } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Whether a user may submit an application to an opportunity, and — when
@@ -174,7 +175,7 @@ export function opportunityMustHaveWarnings(
     warnings.push(compensationWarning(vacancy.compensation))
   }
   if (vacancy.location_required && computeInterest(interestCandidate, { ...baseOpts, locationRequired: true }).hardFail) {
-    warnings.push(tOpportunities('mustHave.location', { country: vacancy.location_country }))
+    warnings.push(tOpportunities('mustHave.location', { country: countryLabel(vacancy.location_country) }))
   }
   if (vacancy.availability_required && computeInterest(interestCandidate, { ...baseOpts, availabilityRequired: true }).hardFail) {
     warnings.push(vacancy.start_date

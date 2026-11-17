@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { fieldInput } from '@/components/ui/fieldClasses'
 import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 const SNOOZE_DAYS = 14
 const snoozeKey = (id: string) => `hockia-country-confirm-snooze-${id}`
@@ -80,7 +81,7 @@ export function CountryConfirmCard() {
     try { localStorage.setItem(snoozeKey(profile.id), String(Date.now() + SNOOZE_DAYS * 86_400_000)) } catch { /* private mode: hide for this visit only */ }
     setHidden(true)
   }
-  const place = profile.base_location?.trim()
+  const place = placeText(profile.base_location?.trim())
 
   return (
     <section className="mx-4 mt-3 rounded-[20px] border border-line bg-white p-4" aria-labelledby="country-confirm-title" data-testid="country-confirm">
@@ -91,7 +92,7 @@ export function CountryConfirmCard() {
         <div className="min-w-0 flex-1">
           <h2 id="country-confirm-title" className="text-body font-semibold text-ink-1">{t('countryConfirm.title')}</h2>
           <p className="mt-0.5 text-row text-ink-2">
-            {place ? t('countryConfirm.bodyWithPlace', { place }) : connectionGuess ? t('countryConfirm.bodyWithGuess', { country: connectionGuess.common_name || connectionGuess.name }) : t('countryConfirm.body')}
+            {place ? t('countryConfirm.bodyWithPlace', { place }) : connectionGuess ? t('countryConfirm.bodyWithGuess', { country: countryLabel(connectionGuess.common_name || connectionGuess.name) }) : t('countryConfirm.body')}
           </p>
         </div>
       </div>
@@ -99,7 +100,7 @@ export function CountryConfirmCard() {
       <div className="mt-3 flex flex-wrap gap-2">
         {guess ? (
           <Button size="small" loading={saving && !picking} onClick={() => void save(guess.id)} data-testid="country-confirm-yes">
-            {t('countryConfirm.yes', { country: guess.common_name || guess.name })}
+            {t('countryConfirm.yes', { country: countryLabel(guess.common_name || guess.name) })}
           </Button>
         ) : null}
         <Button size="small" variant={guess ? 'secondary' : 'primary'} onClick={() => setPicking(true)} data-testid="country-confirm-choose">
@@ -120,7 +121,7 @@ export function CountryConfirmCard() {
           {results.map((c) => (
             <li key={c.id}>
               <button type="button" disabled={saving} onClick={() => void save(c.id)} className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted">
-                {c.common_name || c.name}
+                {countryLabel(c.common_name || c.name)}
               </button>
             </li>
           ))}

@@ -7,6 +7,7 @@ import { roleStatus } from '@/lib/opportunityRails'
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface FeaturedRoleCardProps {
   vacancy: Vacancy
@@ -35,7 +36,7 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
   const status = roleStatus(vacancy, now)
-  const city = vacancy.location_city?.trim() || vacancy.location_country?.trim() || ''
+  const city = vacancy.location_city?.trim() || countryLabel(vacancy.location_country?.trim()) || ''
   const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
   const chips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
   // The "New" tag (tone 'brand') is not repeated in the eyebrow; a deadline is.

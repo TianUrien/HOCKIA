@@ -6,6 +6,7 @@ import { navState } from '@/lib/navSource'
 import { RoleCoverCard } from '../RoleCoverCard'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Opportunity (Figma 60:380): cover + crest card, OPEN ROLE chip. No button
@@ -23,7 +24,7 @@ export function OpportunityCard({ item }: { item: OpportunityPostedFeedItem }) {
   const clubName = item.world_club_name || item.club_name || t('feedV1.opportunity.clubFallback')
   const crest = item.world_club_avatar || item.club_logo
   const country = countries.find((c) => c.name === item.location_country || c.common_name === item.location_country)
-  const where = [clubName, [country?.flag_emoji, item.location_country].filter(Boolean).join(' ') || item.location_city].filter(Boolean).join(' · ')
+  const where = [clubName, [country?.flag_emoji, countryLabel(item.location_country)].filter(Boolean).join(' ') || item.location_city].filter(Boolean).join(' · ')
 
   return (
     <article className="p-4" data-testid="home-opportunity-card">

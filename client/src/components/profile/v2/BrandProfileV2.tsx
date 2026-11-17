@@ -41,6 +41,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { useBrandsT } from '@/i18n/ns/brands'
 import { formatNumber, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -169,7 +170,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   }, [owner, brand.id])
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
-  const countryName = country ? (country.common_name ?? country.name) : null
+  const countryName = country ? countryLabel(country.common_name || country.name) : null
   const placeLine = countryName ? [country?.flag_emoji, countryName].filter(Boolean).join(' ') : null
   const category = categoryLabel(brand.category)
   const cover = brand.cover_url ?? null

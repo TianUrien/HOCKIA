@@ -25,6 +25,7 @@ import { signingDetail } from '@/lib/homeEngagement'
 import { seasonLabel } from '@/lib/signing'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 interface PostComposerModalProps {
   isOpen: boolean
@@ -1068,7 +1069,7 @@ export function PostComposerModal({
                                   <RoleBadge role={person.role} />
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {[positionLabel(person.position), person.current_club, person.base_location].filter(Boolean).join(' · ')}
+                                  {[positionLabel(person.position), person.current_club, placeText(person.base_location)].filter(Boolean).join(' · ')}
                                 </p>
                               </div>
                             </button>
@@ -1190,7 +1191,7 @@ export function PostComposerModal({
                                     className="w-3.5 h-2.5 object-cover rounded-sm"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                                   />
-                                  <span className="text-xs text-gray-500">{club.country_name}</span>
+                                  <span className="text-xs text-gray-500">{countryLabel(club.country_name)}</span>
                                 </div>
                               </div>
                               {club.is_claimed && (
@@ -1245,7 +1246,7 @@ export function PostComposerModal({
                           className="w-3.5 h-2.5 object-cover rounded-sm"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
-                        <span className="text-xs text-gray-500">{selectedClub.country_name}</span>
+                        <span className="text-xs text-gray-500">{countryLabel(selectedClub.country_name)}</span>
                       </div>
                     </div>
                     <button

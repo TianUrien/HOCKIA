@@ -9,6 +9,7 @@ import { getInitials } from '@/lib/utils'
 import { tCommunity } from '@/i18n/ns/community'
 import { tEnums } from '@/i18n/ns/enums'
 import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 export type CommunityRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -124,7 +125,7 @@ export function displayPlace(location: string | null | undefined, countryId: num
     // "kisumu" → "Kisumu": only a city typed all lowercase is touched.
     if (city && city === city.toLowerCase()) city = city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase())
   }
-  return { city, country: country ? country.common_name || country.name : null, flag: country?.flag_emoji ?? null }
+  return { city, country: country ? countryLabel(country.common_name || country.name) : null, flag: country?.flag_emoji ?? null }
 }
 
 /** "🇮🇹 Rome" — or "🇮🇹 Italy" with no city; null when nothing is known. */

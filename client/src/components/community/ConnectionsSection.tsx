@@ -12,6 +12,7 @@ import ConfirmActionModal from '../ConfirmActionModal'
 import type { Database } from '@/lib/database.types'
 import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
 import { tCommunity, useCommunityT } from '@/i18n/ns/community'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * ConnectionsSection — segmented Connections / Requests / Sent panel.
@@ -444,7 +445,7 @@ function ConnectionRow({
             {friend?.base_location && (
               <>
                 <MapPin className="h-3 w-3" />
-                <span>{friend.base_location}</span>
+                <span>{placeText(friend.base_location)}</span>
               </>
             )}
           </p>

@@ -12,9 +12,14 @@
 // containing the query. Stable alphabetical ordering inside each tier.
 
 import type { Country } from '@/hooks/useCountries'
+import { countryLabel } from '@/i18n/countryNames'
 
 const lower = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase()
+
+/** Lower case without accents, so "peru" finds "Perú". */
+const plain = (value: string | null | undefined): string =>
+  lower(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 /** Returns a relevance score for `country` against `query`. Higher = better.
  * Returns -1 when the country does not match at all (caller filters it out). */
@@ -27,6 +32,14 @@ export function scoreCountryMatch(country: Country, query: string): number {
   const nationality = lower(country.nationality_name)
   const code = lower(country.code)
   const alpha3 = lower(country.code_alpha3)
+  // The name as shown in the interface language ("Alemania"): members type
+  // what they read. Ranked like the English name; accents are optional.
+  const shown = plain(countryLabel(country.name))
+  const typed = plain(q)
+  if (shown !== name) {
+    if (typed === shown) return 70
+    if (shown.startsWith(typed)) return 50
+  }
 
   // Tier 1 — exact match on a short identifier the user likely typed.
   if (q === code) return 100
@@ -42,6 +55,7 @@ export function scoreCountryMatch(country: Country, query: string): number {
 
   // Tier 3 — substring match anywhere. Better than nothing, but ranked last.
   if (
+    shown.includes(typed) ||
     name.includes(q) ||
     nationality.includes(q) ||
     code.includes(q) ||
@@ -68,7 +82,7 @@ export function searchCountries(countries: Country[], query: string): Country[] 
 
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
-    return a.country.name.localeCompare(b.country.name)
+    return countryLabel(a.country.name).localeCompare(countryLabel(b.country.name))
   })
 
   return scored.map((entry) => entry.country)

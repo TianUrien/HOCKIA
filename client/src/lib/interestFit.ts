@@ -31,6 +31,7 @@
 import { formatAvailableFrom } from './candidateIntent'
 import { tRecruiting } from '@/i18n/ns/recruiting'
 import { LEVEL_RANK, bandToLevelRank, candidateLevelRank, levelSoughtLabel } from './opportunityIntent'
+import { countryLabel } from '@/i18n/countryNames'
 
 export type InterestLevel = 'strong' | 'possible' | 'low'
 
@@ -189,8 +190,8 @@ export function computeInterest(
 
     if (oppNorm && excludedNorms.includes(oppNorm)) {
       mobility = 0
-      add(tRecruiting('interestFit.mobility.excluded', { country: oppRaw }), 'caveat')
-      if (options.locationRequired) hardFailReasons.push(tRecruiting('interestFit.hardFail.excluded', { country: oppRaw }))
+      add(tRecruiting('interestFit.mobility.excluded', { country: countryLabel(oppRaw) }), 'caveat')
+      if (options.locationRequired) hardFailReasons.push(tRecruiting('interestFit.hardFail.excluded', { country: countryLabel(oppRaw) }))
     } else if (willingness === 'home_only') {
       if (homeNorm && oppNorm) {
         if (homeNorm === oppNorm) {
@@ -198,9 +199,9 @@ export function computeInterest(
           add(tRecruiting('interestFit.mobility.homeCountry'), 'positive')
         } else {
           mobility = 0
-          add(homeName ? tRecruiting('interestFit.mobility.homeOnlyNamed', { country: homeName }) : tRecruiting('interestFit.mobility.homeOnly'), 'caveat')
+          add(homeName ? tRecruiting('interestFit.mobility.homeOnlyNamed', { country: countryLabel(homeName) }) : tRecruiting('interestFit.mobility.homeOnly'), 'caveat')
           if (options.locationRequired) {
-            hardFailReasons.push(homeName ? tRecruiting('interestFit.hardFail.homeOnlyNamed', { country: oppRaw, home: homeName }) : tRecruiting('interestFit.hardFail.homeOnly', { country: oppRaw }))
+            hardFailReasons.push(homeName ? tRecruiting('interestFit.hardFail.homeOnlyNamed', { country: countryLabel(oppRaw), home: countryLabel(homeName) }) : tRecruiting('interestFit.hardFail.homeOnly', { country: countryLabel(oppRaw) }))
           }
         }
       } else {
@@ -212,10 +213,10 @@ export function computeInterest(
       if (openNorms.length > 0) {
         if (oppNorm && openNorms.includes(oppNorm)) {
           mobility = base
-          add(tRecruiting('interestFit.mobility.relocateTo', { country: oppRaw }), 'positive')
+          add(tRecruiting('interestFit.mobility.relocateTo', { country: countryLabel(oppRaw) }), 'positive')
         } else {
           mobility = base * 0.5
-          add(tRecruiting('interestFit.mobility.relocateNotListed', { country: oppRaw }))
+          add(tRecruiting('interestFit.mobility.relocateNotListed', { country: countryLabel(oppRaw) }))
         }
       } else {
         mobility = base
@@ -225,13 +226,13 @@ export function computeInterest(
       // Countries listed but no explicit willingness pill.
       if (oppNorm && openNorms.includes(oppNorm)) {
         mobility = 0.85
-        add(tRecruiting('interestFit.mobility.listed', { country: oppRaw }), 'positive')
+        add(tRecruiting('interestFit.mobility.listed', { country: countryLabel(oppRaw) }), 'positive')
       } else if (openNorms.length > 0) {
         mobility = 0.4
-        add(tRecruiting('interestFit.mobility.notListed', { country: oppRaw }), 'caveat')
+        add(tRecruiting('interestFit.mobility.notListed', { country: countryLabel(oppRaw) }), 'caveat')
       } else {
         mobility = 0.6
-        add(tRecruiting('interestFit.mobility.notExcluded', { country: oppRaw }))
+        add(tRecruiting('interestFit.mobility.notExcluded', { country: countryLabel(oppRaw) }))
       }
     }
     measured.push({ score: clamp01(mobility), weight: WEIGHTS.mobility })

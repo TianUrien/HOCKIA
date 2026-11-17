@@ -3,6 +3,7 @@ import { Briefcase, MapPin } from 'lucide-react'
 import { positionLabel } from '@/lib/identity'
 import type { SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
 import { useEnumsT } from '@/i18n/ns/enums'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** Separator between facts; punctuation, not copy. */
 const DOT = '·'
@@ -12,7 +13,7 @@ interface SearchOpportunityResultProps {
 }
 
 export function SearchOpportunityResult({ result }: SearchOpportunityResultProps) {
-  const location = [result.location_city, result.location_country]
+  const location = [result.location_city, countryLabel(result.location_country)]
     .filter(Boolean)
     .join(', ')
 

@@ -24,6 +24,7 @@ import { logger } from '@/lib/logger'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import { useHomeT } from '@/i18n/ns/home'
+import { placeText } from '@/i18n/countryNames'
 
 interface HeroIdentityCardProps {
   profile: PlayerProfileShape
@@ -350,7 +351,7 @@ export default function HeroIdentityCard({
           {profile.base_location && (
             <span className="inline-flex min-w-0 items-center gap-1 text-ink-2">
               <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.6} />
-              <span className="truncate">{profile.base_location}</span>
+              <span className="truncate">{placeText(profile.base_location)}</span>
             </span>
           )}
         </p>

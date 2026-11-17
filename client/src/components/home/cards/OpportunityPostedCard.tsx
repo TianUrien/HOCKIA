@@ -8,6 +8,7 @@ import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
@@ -74,7 +75,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             {(item.location_city || item.location_country) && (
               <span className="flex items-center gap-1 text-[13px] text-gray-500">
                 <MapPin className="h-3.5 w-3.5" />
-                {[item.location_city, item.location_country].filter(Boolean).join(', ')}
+                {[item.location_city, countryLabel(item.location_country)].filter(Boolean).join(', ')}
               </span>
             )}
           </div>

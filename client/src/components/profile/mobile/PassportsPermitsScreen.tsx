@@ -26,6 +26,7 @@ import {
 } from '@/lib/workPermits'
 import { cn } from '@/lib/utils'
 import { tProfileEdit, useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel as countryLabelText } from '@/i18n/countryNames'
 
 /**
  * Passports & permits (Figma D2.3 395:563). Up to two passports (the two
@@ -126,7 +127,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   const hasEu = passportInputs(heldPassports, countries).some((p) => p.isEu)
   const countryLabel = (id: number | null) => {
     const c = getCountryById(id)
-    return c ? [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ') : t('passports.screen.chooseCountry')
+    return c ? [c.flag_emoji, countryLabelText(c.common_name || c.name)].filter(Boolean).join(' ') : t('passports.screen.chooseCountry')
   }
   const attention = draftPermits
     .map((p) => ({ p, status: workPermitStatus(p.valid_from || null, p.expires_on || null, today) }))
@@ -235,7 +236,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
           return (
             <PermitAttentionRow
               key={p.key}
-              permit={{ id: p.key, type: p.type ?? '', expires_on: p.expires_on || null, status, countryName: c ? c.common_name || c.name : t('passports.screen.unknownCountry'), flag: c?.flag_emoji ?? null }}
+              permit={{ id: p.key, type: p.type ?? '', expires_on: p.expires_on || null, status, countryName: c ? countryLabelText(c.common_name || c.name) : t('passports.screen.unknownCountry'), flag: c?.flag_emoji ?? null }}
               onClick={() => openPermit(p)}
             />
           )

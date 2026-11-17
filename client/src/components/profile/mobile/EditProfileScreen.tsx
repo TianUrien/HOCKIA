@@ -37,6 +37,7 @@ import { cleanSocialLinks, validateSocialLinks, type SocialLinks } from '@/lib/s
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import { intlLocale, isEnglish } from '@/i18n/format'
 import { dayFirst } from '@/lib/dayFirst'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * Edit profile (Figma 101:585): everything the profile shows, as one grouped
@@ -328,7 +329,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
         <Group label={t('mobileEdit.screen.passportsBase')}>
           <Row label={t('mobileEdit.rows.passports')} value={passports ? (held.length === 1 ? t('mobileEdit.rows.addSecond', { passports }) : passports) : null} onClick={onOpenPassports ?? (() => setEditing('passports'))} />
-          <Row label={t('mobileEdit.rows.base')} value={p.base_location?.trim() || null} onClick={() => setEditing('base')} />
+          <Row label={t('mobileEdit.rows.base')} value={placeText(p.base_location?.trim()) || null} onClick={() => setEditing('base')} />
         </Group>
 
         <Group label={t('mobileEdit.screen.hockey')}>

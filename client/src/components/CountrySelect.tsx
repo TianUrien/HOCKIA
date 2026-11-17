@@ -6,6 +6,7 @@ import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel, nationalityLabel } from '@/i18n/countryNames'
 
 interface CountrySelectProps {
   label?: string
@@ -238,11 +239,11 @@ export default function CountrySelect({
               size="lg"
             />
             <span className="text-sm text-gray-900">
-              {showNationality ? country.nationality_name : country.name}
+              {showNationality ? nationalityLabel(country.nationality_name) : countryLabel(country.name)}
             </span>
-            {showNationality && country.name !== country.nationality_name && (
+            {showNationality && countryLabel(country.name) !== nationalityLabel(country.nationality_name) && (
               <span className="text-xs text-gray-400">
-                ({country.name})
+                ({countryLabel(country.name)})
               </span>
             )}
           </span>
@@ -312,7 +313,7 @@ export default function CountrySelect({
                   fallbackEmoji={selectedCountry.flag_emoji}
                 />
                 <span className="truncate">
-                  {showNationality ? selectedCountry.nationality_name : selectedCountry.name}
+                  {showNationality ? nationalityLabel(selectedCountry.nationality_name) : countryLabel(selectedCountry.name)}
                 </span>
               </>
             ) : (

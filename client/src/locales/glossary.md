@@ -85,6 +85,15 @@ Lead decisions on wording, 2026-11-16 (the founder may still revise them on stag
 
 Search keeps accepting every regional synonym whatever word the interface shows.
 
+## Countries and nationalities
+
+Added 2026-11-17 (Claude Code; source: founder request the same day, engineering-lead session).
+
+- Country names are shown in Spanish, in neutral Latin American usage: "Países Bajos", "Estados Unidos", "Reino Unido", "Inglaterra", "República Checa", "Costa de Marfil", "Arabia Saudita", "Catar", "Kenia". The list is `client/src/i18n/countryNamesEs.ts` (one row per country in the `countries` table).
+- **Nationality is shown as the country name** ("🇦🇷 Argentina", "Nacionalidad: Países Bajos"), not as a demonym. Lead decision 2026-11-17 (the founder may revise it): "argentino/a" would need a gendered form for every country, and the glossary rules out the generic masculine.
+- The database keeps English names; they are translated only when shown (`client/src/i18n/countryNames.ts`). City names and anything a member typed stay as written.
+- The country search accepts the Spanish name (with or without accents), the English name and the code.
+
 ## Decided, and wording still to confirm with the founder (Stage 1, 2026-11-16)
 
 - Decided 2026-11-16 (founder): the Hockia AI intro "Your field hockey teammate" is "Tu asistente de hockey sobre césped".

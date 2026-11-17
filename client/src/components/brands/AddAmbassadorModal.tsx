@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { PLAYING_CATEGORIES, CATEGORY_LABELS, type PlayingCategory } from '@/lib/hockeyCategories'
 import { useBrandsT } from '@/i18n/ns/brands'
+import { placeText } from '@/i18n/countryNames'
 
 interface PlayerResult {
   id: string
@@ -240,7 +241,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
               </div>
             ) : (
               results.map((player) => {
-                const subtitle = [player.position, player.current_club, player.base_location]
+                const subtitle = [player.position, player.current_club, placeText(player.base_location)]
                   .filter(Boolean)
                   .join(' \u00B7 ')
                 const isAdding = addingId === player.id

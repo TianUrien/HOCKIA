@@ -19,6 +19,7 @@ import type { ApplyTarget } from './hockiaAiSheetStore'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import { getDateFnsLocale } from '@/i18n/format'
 import { dayFirst } from '@/lib/dayFirst'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * "Prepare my application" (handoff A4 175:222 → A5 175:313). Hockia AI
@@ -74,7 +75,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
   }, [vacancy, profile, countries])
   const passports = useMemo(() => [profile?.nationality_country_id, profile?.nationality2_country_id]
     .map((id) => countries.find((c) => c.id === id)).filter(Boolean)
-    .map((c) => (isEuCountryCode(c!.code) ? t('apply.euSuffix', { country: c!.common_name || c!.name }) : c!.common_name || c!.name)), [profile, countries, t])
+    .map((c) => (isEuCountryCode(c!.code) ? t('apply.euSuffix', { country: countryLabel(c!.common_name || c!.name) }) : countryLabel(c!.common_name || c!.name))), [profile, countries, t])
   const available = (() => {
     const from = profile?.available_from ? new Date(profile.available_from) : null
     const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMMM yyyy', { locale: getDateFnsLocale() }) : null

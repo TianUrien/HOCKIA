@@ -57,6 +57,7 @@ import type { Profile } from '../PeopleListView'
 // Recruiters' "Why this fit" on the desktop deck: its own chunk (verdict + Hockia AI opinion).
 const RecruiterFitExplain = lazy(() => import('@/components/recruiting/RecruiterFitExplain'))
 import { FitBadge } from '@/components/ui/FitBadge'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Member preview, full screen (Figma Community P7–P12, P16, P22–P24). Opens
@@ -113,7 +114,7 @@ function ageFromDob(dob: string | null | undefined, now = new Date()): number | 
 /** Every nationality, named ("🇦🇷 Argentina · 🇮🇹 Italy"), + EU when either passport is EU. */
 function passportText(passports: Country[]): string | null {
   if (passports.length === 0) return null
-  const names = passports.map((c) => [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ')).join(' · ')
+  const names = passports.map((c) => [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ')).join(' · ')
   return passports.some((c) => isEuCountryCode(c.code)) ? tCommunity('fullPreview.passportWithEu', { names }) : names
 }
 
