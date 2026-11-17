@@ -28,6 +28,7 @@ import type { UserPostFeedItem } from '@/types/homeFeed'
 import { VideoLockBadge } from './VideoLockBadge'
 import { useProfileT } from '@/i18n/ns/profile'
 import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Phone profile long scroll under the identity block and the six key facts
@@ -163,7 +164,7 @@ export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: S
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)
   const metaFlag = locationFlag ?? entry.worldClub?.flag ?? flag
-  const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
+  const metaText = [entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null, span].filter(Boolean).join(' · ')
   const meta = [metaFlag, metaText].filter(Boolean).join(' ')
   const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('profileLongScroll.representativeTeam') : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
   const crest = entry.worldClub?.avatar_url ? getImageUrl(entry.worldClub.avatar_url, 'avatar-sm') ?? entry.worldClub.avatar_url : null

@@ -20,6 +20,7 @@ import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useWorldT } from '@/i18n/ns/world'
 import type { SearchResult, SearchPostResult, SearchPersonResult, SearchClubResult, SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 /** Separator between facts; punctuation, not copy. */
 const DOT = '·'
@@ -37,7 +38,7 @@ function getFlagUrl(countryCode: string): string {
 
 function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; onSelect: () => void }) {
   const t = useWorldT()
-  const subtitle = [result.position, result.base_location, result.current_club]
+  const subtitle = [result.position, placeText(result.base_location), result.current_club]
     .filter(Boolean)
     .join(' · ')
 
@@ -93,7 +94,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
             className="w-3.5 h-2.5 object-cover rounded-sm"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
-          <span className="text-xs text-gray-500">{result.country_name}</span>
+          <span className="text-xs text-gray-500">{countryLabel(result.country_name)}</span>
         </div>
       </div>
       {result.is_claimed && (
@@ -139,7 +140,7 @@ function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSele
 }
 
 function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunityResultType; onSelect: () => void }) {
-  const location = [result.location_city, result.location_country].filter(Boolean).join(', ')
+  const location = [result.location_city, countryLabel(result.location_country)].filter(Boolean).join(', ')
 
   return (
     <button

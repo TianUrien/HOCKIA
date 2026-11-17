@@ -11,6 +11,7 @@ import { useAuthStore } from '@/lib/auth'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import { hasEnumsKey, useEnumsT } from '@/i18n/ns/enums'
+import { countryLabel, nationalityLabel, placeText } from '@/i18n/countryNames'
 
 interface DiscoverResultCardProps {
   result: DiscoverResult
@@ -112,14 +113,14 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   // Secondary line under the name: position(s) for a player, specialization
   // for a coach, league/region for a World-directory club.
   const positionLine = isWorldClub
-    ? [result.league_name, result.province_name, result.base_country_name].filter(Boolean).join(' · ')
+    ? [result.league_name, result.province_name, countryLabel(result.base_country_name)].filter(Boolean).join(' · ')
     : specializationLabel
       || [result.position, result.secondary_position].filter(Boolean).map(s => (hasEnumsKey(`position.${s}`) ? te(`position.${s}` as never) : cap(s as string))).join(' · ')
       || null
 
-  const nationality = !isWorldClub ? result.nationality_name : null
+  const nationality = !isWorldClub ? nationalityLabel(result.nationality_name) : null
   const nationality2 = !isWorldClub ? result.nationality2_name : null
-  const baseLine = result.base_location || result.base_country_name
+  const baseLine = placeText(result.base_location) || countryLabel(result.base_country_name)
   const club = !isWorldClub ? result.current_club : null
 
   const fitPreset = showFit && result.fit_level ? FIT_LEVEL_PRESET[result.fit_level] : null

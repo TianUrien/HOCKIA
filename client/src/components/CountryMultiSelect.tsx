@@ -5,6 +5,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface CountryMultiSelectProps {
   label?: string
@@ -82,7 +83,7 @@ export default function CountryMultiSelect({
               className="inline-flex items-center gap-1 rounded-full bg-hockia-primary/10 text-[#5b16b8] text-xs font-medium pl-1.5 pr-1 py-0.5"
             >
               <Flag code={c.code} countryName={c.name} size="sm" />
-              {c.name}
+              {countryLabel(c.name)}
               <button
                 type="button"
                 onClick={() => remove(c.id)}
@@ -139,7 +140,7 @@ export default function CountryMultiSelect({
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
                     >
                       <Flag code={c.code} countryName={c.name} size="sm" />
-                      <span className="flex-1 text-gray-800">{c.name}</span>
+                      <span className="flex-1 text-gray-800">{countryLabel(c.name)}</span>
                       <Check className="w-4 h-4 text-transparent" />
                     </button>
                   </li>

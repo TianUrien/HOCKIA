@@ -7,6 +7,7 @@ import { positionLabel } from '@/lib/identity'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { intlLocale, isEnglish } from '@/i18n/format'
 import { getInitials, getTimeAgo } from '@/lib/utils'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface WorldClubInfo {
   id: string
@@ -135,7 +136,7 @@ export default function OpportunityCard({
   // Identity — club cards lead with the club; coach cards lead with the coach.
   const publisherName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
   const publisherLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
-  const locationText = [vacancy.location_city, vacancy.location_country]
+  const locationText = [vacancy.location_city, countryLabel(vacancy.location_country)]
     .map((part) => part?.trim())
     .filter(Boolean)
     .join(', ')
@@ -156,7 +157,7 @@ export default function OpportunityCard({
           {vacancy.location_country && (
             <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-100 bg-gray-50 py-1 pl-2 pr-1 text-[12px] font-medium text-gray-600">
               {countryFlag && <span aria-hidden="true">{countryFlag}</span>}
-              <span className="max-w-[110px] truncate">{vacancy.location_country}</span>
+              <span className="max-w-[110px] truncate">{countryLabel(vacancy.location_country)}</span>
               <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
             </span>
           )}

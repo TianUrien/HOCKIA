@@ -76,6 +76,7 @@ import { getUmpireActivity } from '@/lib/umpireActivity'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { useProfileT } from '@/i18n/ns/profile'
+import { placeText } from '@/i18n/countryNames'
 
 export type UmpireProfileShape =
   Partial<Profile> &
@@ -493,7 +494,7 @@ export default function UmpireDashboard({
                 {profile.base_location && (
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    {profile.base_location}
+                    {placeText(profile.base_location)}
                   </span>
                 )}
                 {dobDisplay && (

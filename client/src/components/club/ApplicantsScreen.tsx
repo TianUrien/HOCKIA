@@ -28,6 +28,7 @@ import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
 import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Applicants of one role (Figma 04 Club · Applicants — club v2, 324:411;
@@ -110,7 +111,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   }
   const flagFor = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
-    return c ? [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ') : null
+    return c ? [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ') : null
   }
   const open = (a: Applicant) => navigate(`/dashboard/opportunities/${roleId}/applicants/${a.applicationId}`, { state: { from: location.pathname } })
 

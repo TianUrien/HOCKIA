@@ -29,6 +29,7 @@ import { positionLabel } from '@/lib/identity'
 import { tNotifications } from '@/i18n/ns/notifications'
 import { currentLanguage } from '@/i18n'
 import { recruitingTitle } from '@/lib/recruitingTitles'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** The content_removed notice names a comment, a post or a video. */
 const removedTitle = (type: string | null): string =>
@@ -327,7 +328,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
       const position = getMetadataString(notification, 'position')
       const city = getMetadataString(notification, 'location_city')
       const country = getMetadataString(notification, 'location_country')
-      const location = [city, country].filter(Boolean).join(', ')
+      const location = [city, countryLabel(country)].filter(Boolean).join(', ')
       // positionLabel covers player positions and coach roles ('head_coach'
       // → 'Head coach'), so the raw enum never reaches the row.
       const parts = [positionLabel(position), location || null].filter(Boolean)

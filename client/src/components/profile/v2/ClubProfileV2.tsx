@@ -34,6 +34,7 @@ import { useWorldT } from '@/i18n/ns/world'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — club, phone (Figma PR6 public 106:255 / PR7 own 107:302).
@@ -121,7 +122,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const women = profile.womens_league_division?.trim() || null
   const leagueLine = [women ? t('club.profile.womensLeague', { league: women }) : null, men ? t('club.profile.mensLeague', { league: men }) : null].filter(Boolean).join(' · ') || null
   const flag = countries.find((c) => c.id === profile.nationality_country_id)?.flag_emoji ?? null
-  const base = profile.base_location?.trim() || null
+  const base = placeText(profile.base_location?.trim()) || null
   const founded = profile.year_founded ?? null
   const placeLine = [base ? [flag, base].filter(Boolean).join(' ') : null, founded ? t('club.profile.founded', { year: founded }) : null].filter(Boolean).join(' · ') || null
   const openRoles = data.openRoles

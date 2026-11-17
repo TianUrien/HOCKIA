@@ -19,6 +19,7 @@ import { useQueuedToggle } from '@/hooks/useQueuedToggle'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { useBrandsT } from '@/i18n/ns/brands'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Edit profile — brand, phone (Figma PR22 130:1226). Logo and one cover at
@@ -151,7 +152,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
 
   const title = (f: Field) => ({ name: t('brandEdit.fieldName'), category: t('brandEdit.fieldCategory'), country: t('brandEdit.fieldCountry'), bio: t('brandEdit.fieldBio'), website: t('brandEdit.fieldWebsite'), instagram: t('brandEdit.fieldInstagram') })[f]
   const country = brand.country_id ? getCountryById(brand.country_id) : undefined
-  const countryValue = country ? [country.flag_emoji, country.common_name ?? country.name].filter(Boolean).join(' ') : null
+  const countryValue = country ? [country.flag_emoji, countryLabel(country.common_name || country.name)].filter(Boolean).join(' ') : null
   const categoryLabel = BRAND_CATEGORY_OPTIONS.find((c) => c.value === brand.category)?.label ?? null
   const host = (u: string | null) => (u ? u.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : null)
   const igHandle = instagramHandleOf(brand.instagram_url)

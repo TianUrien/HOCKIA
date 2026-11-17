@@ -53,6 +53,7 @@ import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Se
 import { safeVideoHref } from '@/lib/videoUrlValidator'
 import { useProfileT } from '@/i18n/ns/profile'
 import { useEnumsT } from '@/i18n/ns/enums'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — player, phone (Figma t24oVt… PR1 public 97:4 · PR2 own 101:46 ·
@@ -608,7 +609,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             {data.career.map((e) => {
               const now = isCurrentEntry(e)
               const flag = flagForCountryName(countries, e.locationCountry) ?? e.worldClub?.flag ?? null
-              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || e.locationCountry?.trim() || null].filter(Boolean).join(' ') || null].filter(Boolean).join(' · ')
+              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || countryLabel(e.locationCountry?.trim()) || null].filter(Boolean).join(' ') || null].filter(Boolean).join(' · ')
               return (
                 <div key={e.id} className="flex items-start gap-3 py-2.5" data-testid="career-row">
                   <EntityAvatar src={e.worldClub?.avatar_url ?? null} name={e.clubName} role="club" size={40} />

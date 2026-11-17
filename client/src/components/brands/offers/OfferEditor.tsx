@@ -31,6 +31,7 @@ import { NeedPicker } from '@/components/marketplace/NeedPicker'
 import type { Need } from '@/lib/marketplace'
 import { offerRegionLabel } from '@/lib/memberOffers'
 import { useBrandsT } from '@/i18n/ns/brands'
+import { countryLabel } from '@/i18n/countryNames'
 
 const BUCKET = 'brand-products'
 const MAX_COUNTRIES = 30
@@ -444,7 +445,7 @@ function PlaceField({ everywhere, regions, countryIds, names, onEverywhere, onRe
                 onClick={() => { onCountries([...countryIds, c.id]); close() }}
                 className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
               >
-                {c.common_name || c.name}
+                {countryLabel(c.common_name || c.name)}
               </button>
             </li>
           ))}

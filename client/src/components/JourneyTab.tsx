@@ -35,6 +35,7 @@ import CountrySelect from './CountrySelect'
 import { useCountries } from '@/hooks/useCountries'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import { monthLong, monthShort } from '@/lib/careerCopy'
+import { countryLabel } from '@/i18n/countryNames'
 
 type EditableJourneyEntry = Omit<
   CareerHistory,
@@ -1327,7 +1328,7 @@ export default function JourneyTab({
                 const durationLabel = formatDuration(entry.start_date, entry.end_date)
                 // world_club comes from the Supabase join and isn't in the base type
                 const worldClub = (entry as Record<string, unknown>).world_club as { avatar_url?: string | null } | null | undefined
-                const location = [entry.location_city, entry.location_country]
+                const location = [entry.location_city, countryLabel(entry.location_country)]
                   .filter(Boolean)
                   .join(', ')
                 const isEditingEntry = activeFormType === entry.id && Boolean(activeEntryDraft)
@@ -1418,7 +1419,7 @@ export default function JourneyTab({
                                 return (
                                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm leading-normal text-gray-600">
                                     <span aria-hidden="true">{c.flag_emoji}</span>
-                                    <span>{c.name}</span>
+                                    <span>{countryLabel(c.name)}</span>
                                     {levelLabel && (
                                       <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
                                         {levelLabel}

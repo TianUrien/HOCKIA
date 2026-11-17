@@ -2,6 +2,7 @@ import { useCountries, type Country } from '@/hooks/useCountries'
 import Flag from '@/components/Flag'
 import { useCommonT } from '@/i18n/ns/common'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { nationalityLabel } from '@/i18n/countryNames'
 
 interface DualNationalityDisplayProps {
   /** Primary nationality country ID */
@@ -74,7 +75,7 @@ export default function DualNationalityDisplay({
         <span className="flex shrink-0 items-center gap-1">
           {held.map((c) => <Flag key={c.id} code={c.code} countryName={c.name} fallbackEmoji={c.flag_emoji} />)}
         </span>
-        <span className="min-w-0 truncate">{held.map((c) => c.nationality_name).join(' · ')}</span>
+        <span className="min-w-0 truncate">{held.map((c) => nationalityLabel(c.nationality_name)).join(' · ')}</span>
       </span>
     )
   }
@@ -165,7 +166,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
         return (
           <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap min-w-0">
             <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
-            <span>{country.nationality_name}</span>
+            <span>{nationalityLabel(country.nationality_name)}</span>
             {isEu && (
               <span className="ml-0.5 text-[10px] font-semibold text-eu-ink uppercase tracking-wide">
                 {tc('nationality.euBadge')}
@@ -203,7 +204,7 @@ function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
               fallbackEmoji={country.flag_emoji}
               size="sm"
             />
-            <span className="truncate">{country.nationality_name}</span>
+            <span className="truncate">{nationalityLabel(country.nationality_name)}</span>
             {isEu && (
               <span className="inline-flex items-center rounded bg-eu-soft px-1.5 py-px text-[10px] font-semibold text-eu-ink">
                 {tc('nationality.euBadge')}
@@ -342,7 +343,7 @@ function FullDisplay({
       {primaryCountry && (
         <div className="flex items-center gap-1.5">
           <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
-          <span className="font-medium">{primaryCountry.nationality_name}</span>
+          <span className="font-medium">{nationalityLabel(primaryCountry.nationality_name)}</span>
           {primaryIsEu && (
             <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
               {tc('nationality.euBadge')}
@@ -355,7 +356,7 @@ function FullDisplay({
       {secondaryCountry && (
         <div className="flex items-center gap-1.5">
           <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
-          <span className="font-medium">{secondaryCountry.nationality_name}</span>
+          <span className="font-medium">{nationalityLabel(secondaryCountry.nationality_name)}</span>
           {secondaryIsEu && (
             <span className="text-xs bg-eu-soft text-eu-ink px-1.5 py-0.5 rounded font-medium">
               {tc('nationality.euBadge')}

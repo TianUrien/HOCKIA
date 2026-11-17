@@ -13,6 +13,7 @@ import { dismissOffer, hideBrandOffers } from '@/lib/memberOffers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useBrandsT } from '@/i18n/ns/brands'
 import { suggestBrand, trackItemImpression, trackMarket, type MarketItem, type MarketSurface } from '@/lib/marketplace'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** Shared pieces of the Marketplace (Figma 08 · Brands P6: MK1–MK4). */
 
@@ -151,7 +152,7 @@ export function CountryChip({ label, countryId, tone = 'outline', onChange }: { 
         className={cn('inline-flex h-11 items-center gap-1 rounded-full px-4 text-row font-semibold', tone === 'soft' ? 'bg-brand-soft text-brand-primary' : 'border border-line bg-white text-ink-1')}
         data-testid="market-country-chip"
       >
-        {current ? (current.common_name || current.name) : t('marketParts.chooseCountry')}
+        {current ? countryLabel(current.common_name || current.name) : t('marketParts.chooseCountry')}
         <ChevronDown className="h-4 w-4" aria-hidden="true" />
       </button>
       <BottomSheet open={open} onClose={() => { setOpen(false); setQ('') }} ariaLabel={t('marketParts.countrySheetAria')}>
@@ -166,7 +167,7 @@ export function CountryChip({ label, countryId, tone = 'outline', onChange }: { 
           {results.map((c) => (
             <li key={c.id}>
               <button type="button" onClick={() => { onChange(c.id); setOpen(false); setQ('') }} className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted">
-                {c.common_name || c.name}
+                {countryLabel(c.common_name || c.name)}
               </button>
             </li>
           ))}

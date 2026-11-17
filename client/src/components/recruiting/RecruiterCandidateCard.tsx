@@ -29,6 +29,7 @@ import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import { useRecruitingT } from '@/i18n/ns/recruiting'
 import { useEnumsT } from '@/i18n/ns/enums'
+import { placeText } from '@/i18n/countryNames'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -188,10 +189,10 @@ function locationLine(member: RecruiterCardMember): string | null {
     case 'coach':
       return member.current_club?.trim() || null
     case 'umpire':
-      return member.federation?.trim() || member.base_location?.trim() || null
+      return member.federation?.trim() || placeText(member.base_location?.trim()) || null
     case 'club':
     case 'brand':
-      return member.base_location?.trim() || null
+      return placeText(member.base_location?.trim()) || null
     default:
       return null
   }

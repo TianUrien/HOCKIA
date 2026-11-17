@@ -16,6 +16,7 @@ import {
 import { humanizeToken } from '@/lib/identity'
 import { tProfile } from '@/i18n/ns/profile'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Everything the six key-fact tiles need, assembled from the profile row, the
@@ -53,13 +54,13 @@ export function passportInputs(ids: (number | null | undefined)[], countries: Co
     .filter((id, i, all) => all.indexOf(id) === i)
     .map((id) => countries.find((c) => c.id === id))
     .filter((c): c is Country => Boolean(c))
-    .map((c) => ({ name: c.common_name || c.name, flag: c.flag_emoji, isEu: isEuCountryCode(c.code) }))
+    .map((c) => ({ name: countryLabel(c.common_name || c.name), flag: c.flag_emoji, isEu: isEuCountryCode(c.code) }))
 }
 
 export function permitInputs(permits: WorkPermitWithStatus[], countries: Country[]): PermitInput[] {
   return permits.map((p) => {
     const c = countries.find((x) => x.id === p.country_id)
-    return { countryName: c ? c.common_name || c.name : tProfile('useProfileKeyFacts.unknownCountry'), flag: c?.flag_emoji ?? null, type: p.type, validFrom: p.valid_from, expiresOn: p.expires_on }
+    return { countryName: c ? countryLabel(c.common_name || c.name) : tProfile('useProfileKeyFacts.unknownCountry'), flag: c?.flag_emoji ?? null, type: p.type, validFrom: p.valid_from, expiresOn: p.expires_on }
   })
 }
 

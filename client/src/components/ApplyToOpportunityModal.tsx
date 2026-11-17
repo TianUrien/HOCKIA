@@ -30,6 +30,7 @@ import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
 import { requestPushAsk } from '@/lib/pushAsk'
 import { maybeShowGetReady } from '@/components/marketplace/getReadyStore'
+import { nationalityLabel } from '@/i18n/countryNames'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -92,8 +93,8 @@ export default function ApplyToVacancyModal({
   }, [countries, profile?.nationality_country_id, profile?.nationality2_country_id])
   const passportText =
     nationalityLine(passports, { suffix: (c) => (isEuCountryCode((c as { code?: string }).code) ? '(EU)' : null) }) ??
-    (profile?.nationality?.trim() || t('apply.addNationality'))
-  const nationalityWord = passports[0]?.nationality_name ?? profile?.nationality ?? null
+    (nationalityLabel(profile?.nationality?.trim()) || t('apply.addNationality'))
+  const nationalityWord = nationalityLabel(passports[0]?.nationality_name ?? profile?.nationality ?? null)
 
   // Same rules, same order, same missing-data leniency as the DB trigger.
   const eligibility = useMemo(() => checkOpportunityEligibility(vacancy, profile, countries), [vacancy, profile, countries])

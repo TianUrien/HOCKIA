@@ -20,6 +20,7 @@ import type { Profile } from '@/lib/supabase'
 import type { SocialLinks } from '@/lib/socialLinks'
 import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { useHomeT } from '@/i18n/ns/home'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * ClubHeroCard — the Club dashboard's identity hero. Mirrors the
@@ -273,7 +274,7 @@ export default function ClubHeroCard({
               {profile.base_location && (
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-gray-400" />
-                  <span>{profile.base_location}</span>
+                  <span>{placeText(profile.base_location)}</span>
                 </span>
               )}
               {profile.base_location && profile.year_founded && <MetaBullet />}

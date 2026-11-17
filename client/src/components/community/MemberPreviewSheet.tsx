@@ -27,6 +27,7 @@ import { logger } from '@/lib/logger'
 import type { Profile } from './PeopleListView'
 import { useCommunityT } from '@/i18n/ns/community'
 import { useEnumsT } from '@/i18n/ns/enums'
+import { placeText } from '@/i18n/countryNames'
 
 interface MemberPreviewSheetProps {
   member: Profile
@@ -103,7 +104,7 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
   if ((member.role === 'player' || member.role === 'coach') && member.current_club) rows.push({ label: t('previewSheet.rows.club'), value: member.current_club })
   if (member.role === 'club' && member.year_founded) rows.push({ label: t('previewSheet.rows.founded'), value: String(member.year_founded) })
   if (member.role === 'umpire' && member.federation) rows.push({ label: t('previewSheet.rows.federation'), value: member.federation })
-  if (member.base_location) rows.push({ label: t('previewSheet.rows.based'), value: member.base_location })
+  if (member.base_location) rows.push({ label: t('previewSheet.rows.based'), value: placeText(member.base_location) })
   const commonText = inCommonLabel(inCommon.people)
   if (commonText) rows.push({ label: t('previewSheet.rows.inCommon'), value: commonText })
   if (member.role === 'brand' && member.brand_website_url) rows.push({ label: t('previewSheet.rows.website'), value: member.brand_website_url.replace(/^https?:\/\//, '') })

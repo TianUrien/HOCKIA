@@ -45,6 +45,7 @@ import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { coachingRolesOpenLine, isCandidateCoach, isRecruitingCoach } from '@/lib/coachRoles'
 import { isActiveApplication } from '@/hooks/useMyApplicationsAll'
 import { tOpportunities, useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { countryLabel, nationalityLabel } from '@/i18n/countryNames'
 
 // Coach v2 · My roles (recruiting coaches, phones): the Club v2 panel in its
 // own chunk, so players and candidate coaches never download it.
@@ -532,7 +533,7 @@ export default function OpportunitiesPage() {
   }
   const coachHistory = useCoachingRolesHistory({ enabled: coachEmpty && isPhone, includeTestAccounts: Boolean(isStaging) || isCurrentUserTestAccount })
   const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
-  const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
+  const nationalityWord = nationalityLabel(countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null)
   const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
   const passportHint = profile?.role === 'player' && nationalityWord ? t('filters.passportHint', { nationality: nationalityWord, eligible: eligibleCount, total: vacancies.length }) : null
 
@@ -901,7 +902,7 @@ export default function OpportunitiesPage() {
                 <RoleRail key={rail.key} title={rail.title} subtitle={rail.subtitle} onSeeAll={() => seeAll(rail.key)} testId={`rail-${rail.key}`}>
                   {rail.roles.map((v) => {
                     const d = describeRole(v)
-                    return <RailCard key={v.id} data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
+                    return <RailCard key={v.id} data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={countryLabel(v.location_country?.trim()) || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
                   })}
                 </RoleRail>
               ))}
@@ -954,7 +955,7 @@ export default function OpportunitiesPage() {
                     testId={`rail-${rail.key}`}
                     cards={rail.roles.map((v) => {
                       const d = describeRole(v)
-                      return <RailCard key={v.id} fluid data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={v.location_country?.trim() || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
+                      return <RailCard key={v.id} fluid data={{ vacancy: v, clubName: d.identity.displayName, clubLogo: d.identity.displayLogo, palette: d.palette }} countryName={countryLabel(v.location_country?.trim()) || null} onOpen={() => navigate(`/opportunities/${v.id}`, navState('opportunities'))} />
                     })}
                   />
                 ))}

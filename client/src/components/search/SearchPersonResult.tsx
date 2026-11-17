@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Avatar, RoleBadge } from '@/components'
 import type { SearchPersonResult as SearchPersonResultType } from '@/hooks/useSearch'
+import { placeText } from '@/i18n/countryNames'
 
 interface SearchPersonResultProps {
   result: SearchPersonResultType
@@ -16,7 +17,7 @@ export function SearchPersonResult({ result }: SearchPersonResultProps) {
         ? `/umpires/id/${result.profile_id}?ref=search`
         : `/players/id/${result.profile_id}?ref=search`
 
-  const subtitle = [result.position, result.base_location, result.current_club]
+  const subtitle = [result.position, placeText(result.base_location), result.current_club]
     .filter(Boolean)
     .join(' · ')
 

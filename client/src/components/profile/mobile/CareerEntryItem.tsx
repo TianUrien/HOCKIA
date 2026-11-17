@@ -7,6 +7,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { humanizeToken } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * List item / Career entry (Figma "03 · Components" 558:12773): crest 40 with
@@ -37,7 +38,7 @@ export function CareerEntryItem({ entry, last, flag, locationFlag = null, onOpen
   const span = careerSpan(entry)
   // The entry's own country first; the linked world club's can disagree with the club profile (QA 2 Oct).
   const metaFlag = locationFlag ?? entry.clubFlag ?? flag
-  const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
+  const metaText = [entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null, span].filter(Boolean).join(' · ')
   const meta = [metaFlag, metaText].filter(Boolean).join(' ')
   const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('career.item.representative') : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
   const crest = entry.crestUrl ? getImageUrl(entry.crestUrl, 'avatar-sm') ?? entry.crestUrl : null

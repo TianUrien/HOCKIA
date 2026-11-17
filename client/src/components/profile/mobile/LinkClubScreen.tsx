@@ -17,6 +17,7 @@ import { BackGlyph } from '@/components/ui/BackGlyph'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
 import { Trans } from 'react-i18next'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel as countryLabelText } from '@/i18n/countryNames'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -70,8 +71,8 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
   const [error, setError] = useState<string | null>(null)
 
   const country = useMemo(() => countries.find((c) => c.id === countryId) ?? null, [countries, countryId])
-  const countryLabel = country ? [country.flag_emoji, country.common_name || country.name].filter(Boolean).join(' ') : t('linkClub.search.chooseCountry')
-  const countryName = country?.common_name || country?.name || ''
+  const countryLabel = country ? [country.flag_emoji, countryLabelText(country.common_name || country.name)].filter(Boolean).join(' ') : t('linkClub.search.chooseCountry')
+  const countryName = countryLabelText(country?.common_name || country?.name || '')
   const q = query.trim()
 
   // Directory search, within the chosen country.

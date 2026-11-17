@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Shield } from 'lucide-react'
 import type { SearchClubResult as SearchClubResultType } from '@/hooks/useSearch'
 import { useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface SearchClubResultProps {
   result: SearchClubResultType
@@ -35,7 +36,7 @@ export function SearchClubResult({ result }: SearchClubResultProps) {
             className="w-4 h-3 object-cover rounded-sm"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
-          <span className="text-xs text-gray-500">{result.country_name}</span>
+          <span className="text-xs text-gray-500">{countryLabel(result.country_name)}</span>
         </div>
       </div>
       {result.is_claimed && (

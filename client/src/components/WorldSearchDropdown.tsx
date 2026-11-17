@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import Flag from './Flag'
 import type { WorldClubSearchResult } from './WorldClubSearch'
 import { useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface CountryItem {
   country_id: number
@@ -40,7 +41,7 @@ export default function WorldSearchDropdown({
 
   // Client-side country filtering (instant)
   const matchedCountries = query.trim().length > 0
-    ? countries.filter(c => c.country_name.toLowerCase().includes(query.toLowerCase())).slice(0, 5)
+    ? countries.filter(c => [c.country_name, countryLabel(c.country_name)].some((n) => n.toLowerCase().includes(query.toLowerCase()))).slice(0, 5)
     : []
 
   // Combined items for keyboard nav
@@ -215,7 +216,7 @@ export default function WorldSearchDropdown({
                       className="w-7 h-5 rounded object-cover flex-shrink-0"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
-                    <span className="font-medium text-gray-900 text-sm">{country.country_name}</span>
+                    <span className="font-medium text-gray-900 text-sm">{countryLabel(country.country_name)}</span>
                     <span className="text-xs text-gray-400 ml-auto">{t('worldSearch.clubCount', { count: country.total_clubs })}</span>
                   </button>
                 ))}
@@ -260,7 +261,7 @@ export default function WorldSearchDropdown({
                         <p className="text-xs text-gray-400 truncate inline-flex items-center gap-1">
                           <Flag code={club.country_code} countryName={club.country_name} fallbackEmoji={club.flag_emoji} size="sm" />
                           <span className="truncate">
-                            {club.country_name}
+                            {countryLabel(club.country_name)}
                             {club.province_name && ` · ${club.province_name}`}
                             {leagueName && ` · ${leagueName}`}
                           </span>

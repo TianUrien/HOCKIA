@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { fetchMarketplace, type MarketItem } from '@/lib/marketplace'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * "Get ready for <Country>" (Figma 08 · Brands P6, MK4): once per destination
@@ -34,7 +35,7 @@ async function countryIdByName(name: string): Promise<{ id: number; name: string
   if (error || !data) return null
   const want = name.trim().toLowerCase()
   const c = data.find((x) => x.name.toLowerCase() === want || (x.common_name ?? '').toLowerCase() === want)
-  return c ? { id: c.id, name: c.common_name || c.name } : null
+  return c ? { id: c.id, name: countryLabel(c.common_name || c.name) } : null
 }
 
 /**

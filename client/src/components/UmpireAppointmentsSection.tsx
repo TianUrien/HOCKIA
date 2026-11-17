@@ -37,6 +37,7 @@ import { deleteStorageObject } from '@/lib/storage'
 import { dayFirst } from '@/lib/dayFirst'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import UmpireAppointmentEditor from './UmpireAppointmentEditor'
+import { countryLabel } from '@/i18n/countryNames'
 
 const JOURNEY_BUCKET = 'journey'
 
@@ -122,7 +123,7 @@ function formatDateRange(start: string | null, end: string | null): string | nul
 }
 
 function formatLocation(city: string | null, country: string | null): string | null {
-  const parts = [city?.trim(), country?.trim()].filter((v): v is string => Boolean(v))
+  const parts = [city?.trim(), countryLabel(country?.trim())].filter((v): v is string => Boolean(v))
   return parts.length ? parts.join(', ') : null
 }
 

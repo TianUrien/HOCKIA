@@ -15,6 +15,7 @@ import { initReactI18next } from 'react-i18next'
 import { logger } from '@/lib/logger'
 import enCommon from '@/locales/en/common.json'
 import { loadDateFnsLocale } from './format'
+import { setCountryNamesLanguage } from './countryNames'
 import { pseudoCatalog, type Catalog } from './pseudo'
 import {
   DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, isUiLanguage, resolveLanguage, type UiLanguage,
@@ -134,6 +135,8 @@ export async function setLanguage(language: UiLanguage, options: { remember?: bo
     // screen opened later is then Spanish on its first frame.
     await Promise.all([...Object.keys(SPANISH_URLS).map(loadSpanishNamespace), loadDateFnsLocale(language).catch(() => undefined)])
   }
+  // Country names follow the language; a failed load leaves them in English.
+  await setCountryNamesLanguage(language).catch((error) => logger.warn('[i18n] could not load country names', error))
   await i18n.changeLanguage(language)
   if (typeof document !== 'undefined') document.documentElement.lang = language
   if (options.remember) {

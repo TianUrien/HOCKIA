@@ -41,6 +41,7 @@ import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
 import { BenefitItem, Fact } from '@/components/opportunities/OpportunityDetailMobile'
 import { roleDates, shareRole, useOwnApplicationRow } from '@/components/opportunities/roleDetailShared'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface OpportunityDetailDesktopProps {
   vacancy: Vacancy
@@ -98,7 +99,7 @@ export function OpportunityDetailDesktop({
   const headline = roleHeadline(vacancy)
   const positionText = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || ''
-  const country = vacancy.location_country?.trim() || ''
+  const country = countryLabel(vacancy.location_country?.trim()) || ''
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
   const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)

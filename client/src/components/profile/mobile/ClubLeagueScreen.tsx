@@ -14,6 +14,7 @@ import type { ClubProfileShape } from '@/pages/ClubDashboard'
 import { leagueBandNote } from '@/lib/clubProfileCopy'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import { formatDayMonth, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -143,7 +144,7 @@ export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack,
 
   const crest = club?.crestUrl ?? profile.avatar_url ?? null
   const crestSrc = crest ? getImageUrl(crest, 'avatar-sm') ?? crest : null
-  const linkedLine = club ? [[club.country?.flag, club.country?.name].filter(Boolean).join(' ') || null, club.claimedAt ? t('leagueClub.linkedOn', { date: monthDay(club.claimedAt) }) : null].filter(Boolean).join(' · ') : null
+  const linkedLine = club ? [[club.country?.flag, countryLabel(club.country?.name)].filter(Boolean).join(' ') || null, club.claimedAt ? t('leagueClub.linkedOn', { date: monthDay(club.claimedAt) }) : null].filter(Boolean).join(' · ') : null
 
   const storedName = (side: Side) => (side === 'men' ? profile.mens_league_division : profile.womens_league_division)?.trim() || null
   // Same-named leagues carry their province on the row too ("Premier League · Victoria").
@@ -227,8 +228,8 @@ export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack,
         <div className="px-5 pb-6 pt-2">
           <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">{picker === 'women' ? t('leagueClub.womenTeams') : t('leagueClub.menTeams')}</h2>
           <p className="mt-1 text-secondary text-ink-2">{picker === 'women'
-            ? (club?.country ? t('leagueClub.pickerWomenIn', { country: club.country.name }) : t('leagueClub.pickerWomen'))
-            : (club?.country ? t('leagueClub.pickerMenIn', { country: club.country.name }) : t('leagueClub.pickerMen'))}</p>
+            ? (club?.country ? t('leagueClub.pickerWomenIn', { country: countryLabel(club.country.name) }) : t('leagueClub.pickerWomen'))
+            : (club?.country ? t('leagueClub.pickerMenIn', { country: countryLabel(club.country.name) }) : t('leagueClub.pickerMen'))}</p>
           <div className="mt-4 divide-y divide-line rounded-card bg-surface-grouped">
             {[...leagues.map((l) => ({ id: l.id as number | null, name: l.name, tier: l.tier, province: l.province })), { id: null, name: t('leagueClub.notSet'), tier: null, province: null }].map((opt) => {
               // Two leagues can share a name across provinces ("Premier League"

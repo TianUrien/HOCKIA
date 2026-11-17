@@ -4,6 +4,7 @@ import { CATEGORY_LABELS } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 import { tCommunity } from '@/i18n/ns/community'
 import { tEnums } from '@/i18n/ns/enums'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * One removable active-filter chip shown below the Community search bar. Role is
@@ -60,7 +61,7 @@ export function getActiveFilterChips(
   { canUseEvidence = false }: { canUseEvidence?: boolean } = {},
 ): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = []
-  const countryName = (id: number) => countries.find((c) => c.id === id)?.name ?? `#${id}`
+  const countryName = (id: number) => countryLabel(countries.find((c) => c.id === id)?.name) ?? `#${id}`
 
   for (const pos of filters.position) {
     chips.push({ id: `position:${pos}`, label: positionChip(pos), onRemove: () => update('position', filters.position.filter((p) => p !== pos)) })

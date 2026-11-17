@@ -47,6 +47,7 @@ import { FitBadge } from '@/components/ui/FitBadge'
 import { EuBadge } from '@/components/ui/NationalityBadges'
 import type { Json } from '@/lib/database.types'
 import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 // D4.2 / D4.4 sheets: their own chunks, loaded when the club opens one.
 const OfferSheet = lazy(() => import('./OfferSheet'))
@@ -287,7 +288,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
 
   const countryRow = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
-    return c ? [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ') : null
+    return c ? [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ') : null
   }
   const passports = [countryRow(p?.nationality_country_id ?? null), countryRow(p?.nationality2_country_id ?? null)].filter((x): x is string => Boolean(x))
   const days = review?.status === 'pending' ? daysLeftToReply(review.appliedAt, review.expiryDays) : null
@@ -541,7 +542,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
               <div className="overflow-hidden self-start rounded-2xl border border-line bg-white">
                 {[
                   ...(review.age ? [{ k: t('applicantReview.facts.age'), v: String(review.age) }] : []),
-                  ...(p.base_location ? [{ k: t('applicantReview.facts.basedIn'), v: p.base_location }] : []),
+                  ...(p.base_location ? [{ k: t('applicantReview.facts.basedIn'), v: placeText(p.base_location) }] : []),
                   ...(review.playerClub ? [{ k: t('applicantReview.facts.club'), v: review.playerClub.name }] : []),
                 ].map((row, i) => (
                   <div key={row.k}>
@@ -773,7 +774,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 {[
                   ...passports.map((v, i) => ({ k: i === 0 ? t('applicantReview.facts.passport', { count: passports.length }) : '', v })),
                   ...(review.age ? [{ k: t('applicantReview.facts.age'), v: String(review.age) }] : []),
-                  ...(p.base_location ? [{ k: t('applicantReview.facts.basedIn'), v: p.base_location }] : []),
+                  ...(p.base_location ? [{ k: t('applicantReview.facts.basedIn'), v: placeText(p.base_location) }] : []),
                 ].map((row, i) => (
                   <div key={`${row.k}-${i}`}>
                     {i > 0 && <div className="ml-3.5 h-[0.5px] bg-line" />}

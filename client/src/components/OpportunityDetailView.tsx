@@ -24,6 +24,7 @@ import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
 import { positionLabel } from '@/lib/identity'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -367,7 +368,7 @@ export default function VacancyDetailView({
               <div className="flex items-center gap-x-5 flex-wrap">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span>{vacancy.location_city}{vacancy.location_country ? `, ${vacancy.location_country}` : ''}</span>
+                  <span>{vacancy.location_city}{vacancy.location_country ? `, ${countryLabel(vacancy.location_country)}` : ''}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 flex-shrink-0" />

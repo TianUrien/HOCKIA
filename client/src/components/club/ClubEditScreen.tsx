@@ -27,6 +27,7 @@ import {
   CLUB_BIO_MAX, CLUB_NAME_MAX, clubLeagueRowValue, contactRowValue, foundedYears, isValidWebsite,
   photosRowValue, websiteLabel, yearFoundedError,
 } from '@/lib/clubEdit'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 /**
  * Edit club profile (Figma 04 Club D1.27, DEV NOTE 368:1103): Edit profile in
@@ -234,7 +235,7 @@ export default function ClubEditScreen() {
   }
 
   const country = typeof profile.nationality_country_id === 'number' ? getCountryById(profile.nationality_country_id) : undefined
-  const countryValue = country ? [country.flag_emoji, country.common_name ?? country.name].filter(Boolean).join(' ') : null
+  const countryValue = country ? [country.flag_emoji, countryLabel(country.common_name || country.name)].filter(Boolean).join(' ') : null
   const links = Object.entries((profile.social_links ?? {}) as Record<string, string>).filter(([, v]) => Boolean(v)).map(([k]) => humanizeToken(k))
   const name = profile.full_name?.trim() || t('clubEdit.fallbackName')
   const bioLeft = CLUB_BIO_MAX - (d<string>('club_bio') ?? '').length
@@ -263,7 +264,7 @@ export default function ClubEditScreen() {
 
         <Group label={t('clubEdit.groups.location')}>
           <Row label={t('clubEdit.rows.country')} value={countryValue} onClick={() => setEditing('country')} />
-          <Row label={t('clubEdit.rows.city')} value={profile.base_city?.trim() || profile.base_location?.trim() || null} onClick={() => setEditing('city')} />
+          <Row label={t('clubEdit.rows.city')} value={profile.base_city?.trim() || placeText(profile.base_location?.trim()) || null} onClick={() => setEditing('city')} />
         </Group>
 
         <Group label={t('clubEdit.groups.hockey')}>

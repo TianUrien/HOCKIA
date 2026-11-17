@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Flag — single source of truth for country flag rendering.
@@ -74,7 +75,7 @@ export default function Flag({
     return (
       <img
         src={`https://flagcdn.com/${widthVariant}/${lowerCode}.png`}
-        alt={countryName ?? lowerCode.toUpperCase()}
+        alt={countryLabel(countryName) ?? lowerCode.toUpperCase()}
         // Inline-block so the flag aligns with surrounding text.
         // rounded-[2px] gives the PNG a tiny corner so it doesn't look
         // like a sharp-edged screenshot. Object-contain preserves aspect.
@@ -89,7 +90,7 @@ export default function Flag({
   // No code, or image load failed → fallback to emoji or unknown glyph.
   // Span keeps inline flow.
   return (
-    <span className={`inline-block ${className}`} aria-label={countryName ?? 'Country'}>
+    <span className={`inline-block ${className}`} aria-label={countryLabel(countryName) ?? 'Country'}>
       {fallbackEmoji || '🏳️'}
     </span>
   )

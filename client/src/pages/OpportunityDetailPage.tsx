@@ -23,6 +23,7 @@ import { loadRoleDetail } from '@/lib/roleDetail'
 import { isNetworkFailureError } from '@/lib/sentryHelpers'
 import { RoleDetailSkeleton } from '@/components/ScreenSkeletons'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** The app's failed-load words (sign-in, Community): the connection, not the member. */
 
@@ -262,7 +263,7 @@ export default function OpportunityDetailPage() {
       : t('detailPage.tabTitleNoClub', { title: opportunity.title })
 
     // Build meta description
-    const location = [opportunity.location_city, opportunity.location_country].filter(Boolean).join(', ')
+    const location = [opportunity.location_city, countryLabel(opportunity.location_country)].filter(Boolean).join(', ')
     const metaDescription = `${opportunity.title} opportunity at ${club.full_name || 'a club'}${location ? ` in ${location}` : ''}. ${opportunity.description?.slice(0, 120) || 'Apply now on Hockia - the field hockey community platform.'}`
 
     // Update or create meta description

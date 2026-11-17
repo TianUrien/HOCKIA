@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { Header, Avatar, VerifiedBadge, PendingVerificationBadge } from '@/components'
 import { tWorld, useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** Separator between place names; punctuation, not copy. */
 const DOT = '·'
@@ -102,7 +103,7 @@ export default function WorldClubPage() {
             .maybeSingle()
           if (cancelled) return
           setCountry(data as CountryRow | null)
-          if (data?.name) document.title = tWorld('worldClub.documentTitleCountry', { club: clubData.club_name, country: data.name })
+          if (data?.name) document.title = tWorld('worldClub.documentTitleCountry', { club: clubData.club_name, country: countryLabel(data.name) })
         }
         if (clubData.province_id) {
           const { data } = await supabase
@@ -264,7 +265,7 @@ export default function WorldClubPage() {
                       )}
                       {province?.name && country && <span>{DOT}</span>}
                       {country?.name && (
-                        <span>{country.flag_emoji ? `${country.flag_emoji} ` : ''}{country.name}</span>
+                        <span>{country.flag_emoji ? `${country.flag_emoji} ` : ''}{countryLabel(country.name)}</span>
                       )}
                     </span>
                   )}

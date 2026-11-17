@@ -7,6 +7,7 @@ import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput } from '@/components/ui/fieldClasses'
 import { cn } from '@/lib/utils'
 import { useCommunityT } from '@/i18n/ns/community'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * A country filter inside the Community Filters sheet (founder 2026-11-09):
@@ -29,7 +30,7 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
   const [q, setQ] = useState('')
   const results = useMemo(() => searchCountries(countries, q).filter((c) => !value.includes(c.id)).slice(0, 60), [countries, q, value])
   const close = () => { setOpen(false); setQ('') }
-  const name = (id: number) => { const c = getCountryById(id); return c ? c.common_name || c.name : t('countryFilter.fallbackName') }
+  const name = (id: number) => { const c = getCountryById(id); return c ? countryLabel(c.common_name || c.name) : t('countryFilter.fallbackName') }
 
   return (
     <section className="flex flex-col gap-2.5" data-testid={testId}>
@@ -76,7 +77,7 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
                   className="flex h-11 w-full items-center gap-2 rounded-[10px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
                 >
                   {withFlags ? <Flag code={c.code} fallbackEmoji={c.flag_emoji} /> : null}
-                  {c.common_name || c.name}
+                  {countryLabel(c.common_name || c.name)}
                 </button>
               </li>
             ))}
