@@ -1,17 +1,17 @@
 /**
  * Interface languages (docs/engineering/spanish-localization-plan.md).
  *
- * English is the source language and the fallback. Spanish is opt-in while
- * it is being translated: a member gets it only by choosing it, never from
- * the device language, until AUTO_DETECT_DEVICE_LANGUAGE is switched on
- * (founder decision 2026-11-15: device language + a switch, device-following
- * turned on once the app is almost fully translated).
+ * English is the source language and the fallback. A member's own choice
+ * always wins; without one, the app follows the device language
+ * (AUTO_DETECT_DEVICE_LANGUAGE, on since 2026-11-17: founder decision
+ * 2026-11-15, device language + a switch, device-following turned on once
+ * the app was translated).
  */
 export const UI_LANGUAGES = ['en', 'es'] as const
 export type UiLanguage = (typeof UI_LANGUAGES)[number]
 
 export const DEFAULT_LANGUAGE: UiLanguage = 'en'
-export const AUTO_DETECT_DEVICE_LANGUAGE = false
+export const AUTO_DETECT_DEVICE_LANGUAGE = true
 
 /** Where a choice made before signing in is kept (copied to the profile later). */
 export const LANGUAGE_STORAGE_KEY = 'hockia.uiLanguage'
@@ -39,7 +39,7 @@ export interface ResolveLanguageInput {
 
 /**
  * First match wins: saved profile choice, choice stored on this device,
- * device language (only when auto-detect is on), English.
+ * device language (most preferred first, unless auto-detect is off), English.
  */
 export function resolveLanguage(input: ResolveLanguageInput): UiLanguage {
   const explicit = matchUiLanguage(input.profileChoice) ?? matchUiLanguage(input.storedChoice)

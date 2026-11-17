@@ -31,13 +31,20 @@ describe('resolveLanguage', () => {
     expect(resolveLanguage({ profileChoice: null, storedChoice: 'es' })).toBe('es')
   })
 
-  it('ignores the device language while auto-detect is off (opt-in beta)', () => {
-    expect(resolveLanguage({ deviceLanguages: ['es-AR', 'en'] })).toBe('en')
+  it('follows the device language by default, most preferred first', () => {
+    expect(resolveLanguage({ deviceLanguages: ['es-AR', 'en'] })).toBe('es')
+    expect(resolveLanguage({ deviceLanguages: ['en-US', 'es-AR'] })).toBe('en')
+    expect(resolveLanguage({ deviceLanguages: ['pt-BR', 'es-AR', 'en'] })).toBe('es')
+    expect(resolveLanguage({ deviceLanguages: ['de-DE'] })).toBe('en')
   })
 
-  it('follows the device language once auto-detect is on', () => {
-    expect(resolveLanguage({ deviceLanguages: ['pt-BR', 'es-AR', 'en'], autoDetect: true })).toBe('es')
-    expect(resolveLanguage({ deviceLanguages: ['de-DE'], autoDetect: true })).toBe('en')
+  it('lets a saved or stored choice win over the device language', () => {
+    expect(resolveLanguage({ profileChoice: 'en', deviceLanguages: ['es-AR'] })).toBe('en')
+    expect(resolveLanguage({ storedChoice: 'en', deviceLanguages: ['es-AR'] })).toBe('en')
+  })
+
+  it('ignores the device language when auto-detect is off', () => {
+    expect(resolveLanguage({ deviceLanguages: ['es-AR', 'en'], autoDetect: false })).toBe('en')
   })
 
   it('falls back to English for anything it does not support', () => {
