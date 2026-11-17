@@ -142,3 +142,15 @@ Deno.test('an over-long label is capped, not passed through', () => {
   const msg = describeSoftening('worldwide', { noun: 'clubs', count: 1, cityLabel: 'x'.repeat(200) })
   assertEquals(msg.includes('x'.repeat(41)), false)
 })
+
+Deno.test('Spanish copy names the country and the region in Spanish', () => {
+  const region = describeSoftening('region', {
+    noun: 'clubes', count: 6, countryLabel: 'England', regionLabel: 'Europe',
+  }, 'es')
+  assertStringIncludes(region, 'en Inglaterra')
+  assertStringIncludes(region, 'en otra parte de Europa')
+  const world = describeSoftening('worldwide', { noun: 'clubes', count: 24, countryLabel: 'Germany' }, 'es')
+  assertStringIncludes(world, 'en Alemania')
+  // English copy is unchanged.
+  assertStringIncludes(describeSoftening('region', { noun: 'clubs', count: 6, countryLabel: 'England', regionLabel: 'Europe' }, 'en'), 'elsewhere in Europe')
+})

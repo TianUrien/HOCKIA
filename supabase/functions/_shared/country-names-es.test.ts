@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
-import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName } from './country-names-es.ts'
+import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName, spanishPlaceName } from './country-names-es.ts'
 
 Deno.test('matches the table the app shows', async () => {
   const src = await Deno.readTextFile(new URL('../../../client/src/i18n/countryNamesEs.ts', import.meta.url))
@@ -16,4 +16,9 @@ Deno.test('names a country in Spanish and compares without accents', () => {
   assertEquals(spanishCountryName('England'), 'Inglaterra')
   assertEquals(spanishCountryName('Argentina'), 'Argentina')
   assertEquals(plainText('Países Bajos'), 'paises bajos')
+  assertEquals(spanishPlaceName('Europe'), 'Europa')
+  assertEquals(spanishPlaceName('South America'), 'América del Sur')
+  assertEquals(spanishPlaceName('Spain, Germany'), 'España, Alemania')
+  assertEquals(spanishPlaceName('Inglaterra'), 'Inglaterra')
+  assertEquals(spanishPlaceName('Atlantis'), 'Atlantis')
 })

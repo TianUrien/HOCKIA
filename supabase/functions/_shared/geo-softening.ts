@@ -27,6 +27,7 @@
  */
 
 import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+import { spanishPlaceName } from './country-names-es.ts'
 
 export type GeoSofteningStep = 'city' | 'region' | 'worldwide'
 
@@ -180,8 +181,11 @@ export function describeSoftening(step: GeoSofteningStep, o: SofteningCopyInput,
 /** Spanish copy (Stage 3); `noun` / `nounSingular` arrive already in Spanish. */
 function describeSofteningEs(step: GeoSofteningStep, o: SofteningCopyInput): string {
   const city = safeLabel(o.cityLabel)
-  const country = safeLabel(o.countryLabel)
-  const region = safeLabel(o.regionLabel)
+  // Countries and regions arrive as the table stores them (English).
+  const countryRaw = safeLabel(o.countryLabel)
+  const regionRaw = safeLabel(o.regionLabel)
+  const country = countryRaw ? spanishPlaceName(countryRaw) : countryRaw
+  const region = regionRaw ? spanishPlaceName(regionRaw) : regionRaw
   const noun = o.count === 1 ? (o.nounSingular ?? o.noun) : o.noun
   const found = `hay ${o.count} ${noun}`
   const asked = city ?? country ?? 'esa zona'
