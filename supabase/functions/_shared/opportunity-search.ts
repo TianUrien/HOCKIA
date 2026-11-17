@@ -20,7 +20,7 @@
 import { labelFor, labelForInline } from './display-labels.ts'
 import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
 import { spanishList } from './member-language.ts'
-import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName } from './country-names-es.ts'
+import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName, spanishPlaceName } from './country-names-es.ts'
 
 export type OpportunityType = 'player' | 'coach'
 export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
@@ -246,8 +246,8 @@ const COUNTRY_ALIASES: Record<string, string[]> = {
 
 const REGION_ALIASES: Record<string, string[]> = {
   europe: ['europe', 'european', 'europa'],
-  'south america': ['south america', 'latin america', 'sudamerica', 'sudamérica'],
-  'north america': ['north america'],
+  'south america': ['south america', 'latin america', 'sudamerica', 'america del sur', 'latinoamerica', 'america latina'],
+  'north america': ['north america', 'norteamerica', 'america del norte'],
   oceania: ['oceania'],
   asia: ['asia'],
   africa: ['africa'],
@@ -325,7 +325,8 @@ export function parseOpportunityQuery(
   // Region named directly ("in Europe").
   let regionLabel: string | null = null
   for (const [region, aliases] of Object.entries(REGION_ALIASES)) {
-    if (aliases.some(a => wordIn(q, a))) {
+    // Compared without accents: "África", "Oceanía", "Sudamérica".
+    if (aliases.some(a => wordIn(qPlain, a))) {
       const canonical = countries.find(c => (c.region ?? '').toLowerCase() === region)?.region
       regionLabel = canonical ?? region.replace(/\b\w/g, ch => ch.toUpperCase())
       break
@@ -559,7 +560,7 @@ export function buildOpportunityMessage(count: number, criteria: OpportunityCrit
   if (lang === 'es') {
     const noun = describeRoleNounEs(criteria)
     const n = count === 1 ? noun.singular : noun.plural
-    const where = geoLabel ? ` en ${geoLabel}` : ''
+    const where = geoLabel ? ` en ${spanishPlaceName(geoLabel)}` : ''
     return `Encontré ${count} ${n}${where}${benefitsPhraseEs(criteria)} a ${count === 1 ? 'la' : 'las'} que puedes postularte.`
   }
   const noun = describeRoleNoun(criteria)
@@ -572,7 +573,7 @@ export function buildOpportunityMessage(count: number, criteria: OpportunityCrit
 export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLabel: string | null, lang: MemberLanguage = currentAiLanguage()): string {
   if (lang === 'es') {
     const noun = describeRoleNounEs(criteria)
-    const where = geoLabel ? ` en ${geoLabel}` : ''
+    const where = geoLabel ? ` en ${spanishPlaceName(geoLabel)}` : ''
     const narrowed = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
     return narrowed
       ? `Por ahora no hay ${noun.plural}${where}${benefitsPhraseEs(criteria)} a las que puedas postularte. Se publican oportunidades nuevas todo el tiempo. Puedes ampliar la búsqueda o ver todas las oportunidades abiertas.`
@@ -601,11 +602,11 @@ export function buildIneligibleMessage(
 ): string {
   if (lang === 'es') {
     const noun = describeRoleNounEs(criteria)
-    const where = askedLabel ? ` en ${askedLabel}` : ' en Hockia'
+    const where = askedLabel ? ` en ${spanishPlaceName(askedLabel)}` : ' en Hockia'
     const head = `Hay ${noun.plural}${where}${benefitsPhraseEs(criteria)}, pero por ahora no puedes postularte a ninguna`
     if (!widened || widened.count === 0) return `${head}.`
     const n = widened.count === 1 ? `1 ${noun.singular}` : `${widened.count} ${noun.plural}`
-    const elsewhere = widened.region ? `en otra parte de ${widened.region}` : 'en otras partes del mundo'
+    const elsewhere = widened.region ? `en otra parte de ${spanishPlaceName(widened.region)}` : 'en otras partes del mundo'
     return `${head}. Hay ${n} ${elsewhere} a ${widened.count === 1 ? 'la' : 'las'} que puedes postularte.`
   }
   const noun = describeRoleNoun(criteria)

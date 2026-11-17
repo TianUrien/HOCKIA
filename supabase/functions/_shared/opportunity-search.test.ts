@@ -344,3 +344,18 @@ Deno.test('Spanish: team categories are understood', () => {
   assertEquals(parseOpportunityQuery('equipos de caballeros', viewer, COUNTRIES, 'es').genders, ['Men'])
   assertEquals(parseOpportunityQuery('un plantel mixto', viewer, COUNTRIES, 'es').genders, ['Mixed'])
 })
+
+Deno.test('Spanish: regions are understood and named in Spanish', () => {
+  const viewer: Viewer = { role: 'player', gender: 'women', euEligible: true, position: null, secondaryPosition: null }
+  assertEquals(parseOpportunityQuery('oportunidades en Europa', viewer, COUNTRIES, 'es').regionLabel, 'Europe')
+  assertEquals(parseOpportunityQuery('oportunidades en Sudamérica', viewer, COUNTRIES, 'es').regionLabel, 'South America')
+  assertEquals(parseOpportunityQuery('oportunidades en América del Sur', viewer, COUNTRIES, 'es').regionLabel, 'South America')
+  assertEquals(parseOpportunityQuery('oportunidades en Oceanía', viewer, COUNTRIES, 'es').regionLabel, 'Oceania')
+  assertEquals(parseOpportunityQuery('roles in Europe', viewer, COUNTRIES, 'en').regionLabel, 'Europe')
+
+  const criteria = parseOpportunityQuery('oportunidades en Europa', viewer, COUNTRIES, 'es')
+  assert(buildOpportunityMessage(2, criteria, 'Europe', 'es').includes('en Europa'))
+  assert(buildNoOpportunitiesMessage(criteria, 'Europe', 'es').includes('en Europa'))
+  assert(buildIneligibleMessage(criteria, 'Inglaterra', { count: 1, region: 'Europe' }, 'es').includes('en otra parte de Europa'))
+  assert(buildOpportunityMessage(2, criteria, 'Europe', 'en').includes('in Europe'))
+})

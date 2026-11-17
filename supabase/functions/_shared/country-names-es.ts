@@ -139,6 +139,28 @@ export function plainText(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
 
+/** Spanish names of the regions in `countries.region` (lower case keys). */
+export const SPANISH_REGION_NAMES: Record<string, string> = {
+  africa: 'África',
+  asia: 'Asia',
+  caribbean: 'el Caribe',
+  'central america': 'América Central',
+  europe: 'Europa',
+  'north america': 'América del Norte',
+  oceania: 'Oceanía',
+  'south america': 'América del Sur',
+}
+
+/**
+ * A place label for Spanish copy: a region ("Europe" → "Europa"), a country
+ * ("Germany" → "Alemania") or a list of countries ("Spain, Germany").
+ * Anything unknown, or already Spanish, is returned as it came.
+ */
+export function spanishPlaceName(label: string): string {
+  const one = (part: string) => SPANISH_REGION_NAMES[part.trim().toLowerCase()] ?? spanishCountryName(part.trim())
+  return label.split(',').map(one).join(', ')
+}
+
 /** The country as a Spanish reader names it; the English name when unknown. */
 export function spanishCountryName(english: string): string {
   return SPANISH_COUNTRY_NAMES[english.trim().toLowerCase()] ?? english
