@@ -20,6 +20,7 @@
 import { labelFor, labelForInline } from './display-labels.ts'
 import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
 import { spanishList } from './member-language.ts'
+import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName } from './country-names-es.ts'
 
 export type OpportunityType = 'player' | 'coach'
 export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
@@ -229,11 +230,11 @@ const BENEFIT_PATTERNS: Array<[string, RegExp]> = [
 ]
 
 const GENDER_PATTERNS: Array<[OpportunityGender[], RegExp]> = [
-  [['Women'], /\b(?:women'?s?|womens|ladies|female)\b/i],
-  [['Men'], /\b(?:men'?s?|mens|male)\b/i],
+  [['Women'], /\b(?:women'?s?|womens|ladies|female|damas?|femenin[oa]s?|mujeres)\b/i],
+  [['Men'], /\b(?:men'?s?|mens|male|caballeros?|masculin[oa]s?|varones|hombres)\b/i],
   [['Girls'], /\bgirls?\b/i],
   [['Boys'], /\bboys?\b/i],
-  [['Mixed'], /\bmixed\b/i],
+  [['Mixed'], /\b(?:mixed|mixt[oa]s?)\b/i],
 ]
 
 /** Aliases the countries table spells differently from how people type. */
@@ -267,6 +268,28 @@ function namesFor(c: CountryRef): string[] {
   return Array.from(new Set([...base, ...extra]))
 }
 
+/** Extra Spanish ways to name a country, by its English name. */
+const SPANISH_COUNTRY_ALIASES: Record<string, string[]> = {
+  'united kingdom': ['gran bretana'],
+  'united states': ['eeuu', 'ee. uu.', 'estados unidos de america'],
+  netherlands: ['holanda'],
+}
+
+/**
+ * The same names as a Spanish speaker types them ("Inglaterra", "Países
+ * Bajos", "Holanda"), lower case and without accents: compare them with
+ * `plainText(query)`. Names spelled the same in English are left out.
+ */
+function spanishNamesFor(c: CountryRef): string[] {
+  const out = new Set<string>()
+  for (const n of namesFor(c)) {
+    const es = SPANISH_COUNTRY_NAMES[n]
+    if (es) out.add(plainText(es))
+    for (const alias of SPANISH_COUNTRY_ALIASES[n] ?? []) out.add(alias)
+  }
+  return Array.from(out)
+}
+
 /**
  * Parse a candidate's role query. `countries` is the countries table
  * (name, common_name, region) so geography stays data-driven.
@@ -275,8 +298,10 @@ export function parseOpportunityQuery(
   query: string,
   viewer: Viewer,
   countries: CountryRef[],
+  lang: MemberLanguage = currentAiLanguage(),
 ): OpportunityCriteria {
   const q = query ?? ''
+  const qPlain = plainText(q)
   const opportunityType: OpportunityType = viewer.role === 'coach' ? 'coach' : 'player'
   const positionPatterns = opportunityType === 'coach' ? COACH_POSITION_PATTERNS : PLAYER_POSITION_PATTERNS
   // Strip coach phrases before reading player positions so "goalkeeper coach"
@@ -318,12 +343,18 @@ export function parseOpportunityQuery(
   for (const c of countries) {
     const names = namesFor(c)
     const matches = (n: string) => n.length <= 2 ? new RegExp(`\\b${n.toUpperCase()}\\b`).test(q) : wordIn(q, n)
-    const hit = names.some(matches)
+    // Spanish names are read whatever the member's language: a question
+    // typed in Spanish on an English interface means the same country.
+    const spanish = spanishNamesFor(c)
+    const matchesSpanish = (n: string) => wordIn(qPlain, n)
+    const hit = names.some(matches) || spanish.some(matchesSpanish)
     if (hit) {
       countryNames.push(...names)
       const own = [c.name, c.common_name].filter((n): n is string => !!n).map(n => n.toLowerCase())
-      if (own.some(matches)) named.push(c.common_name || c.name)
-      else viaAlias.push(c.common_name || c.name)
+      const ownSpanish = own.map(n => SPANISH_COUNTRY_NAMES[n]).filter((n): n is string => !!n).map(plainText)
+      const label = lang === 'es' ? spanishCountryName(c.common_name || c.name) : c.common_name || c.name
+      if (own.some(matches) || ownSpanish.some(matchesSpanish)) named.push(label)
+      else viaAlias.push(label)
     }
   }
   const labelParts = named.length ? named : viaAlias
@@ -620,7 +651,7 @@ export function runOpportunitySearch(
 ): OpportunitySearchOutcome {
   const criteria = parseOpportunityQuery(query, viewer, countries)
   // "for my position" → the viewer's own position(s).
-  if (!criteria.positions.length && /\bmy (?:position|role)s?\b/i.test(query) && viewer.position) {
+  if (!criteria.positions.length && /\b(?:my (?:position|role)s?|mi posici[oó]n)\b/i.test(query) && viewer.position) {
     criteria.positions = [viewer.position, viewer.secondaryPosition].filter((p): p is string => !!p)
   }
 

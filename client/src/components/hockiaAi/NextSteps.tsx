@@ -42,7 +42,7 @@ interface Props {
   facts: ProfileFacts | null
   steps: NextStep[]
   onStep: (key: StepKey) => void
-  onAsk: (text: string) => void
+  onAsk: (text: string, shown?: string) => void
   onClose: () => void
 }
 
@@ -86,7 +86,7 @@ export function NextSteps({ step, facts, steps, onStep, onAsk, onClose }: Props)
                     { value: 'roles', label: t('steps.findFit'), description: t('steps.findFitSub'), recommended: true },
                     { value: 'later', label: t('steps.notNow'), description: t('steps.notNowSub') },
                   ]}
-                  onPick={(c) => (c.value === 'roles' ? onAsk(t('chips.openRoles', { lng: 'en' })) : onClose())}
+                  onPick={(c) => (c.value === 'roles' ? onAsk(t('chips.openRoles', { lng: 'en' }), t('chips.openRoles')) : onClose())}
                   onOther={onAsk}
                   testId="ai-after-steps"
                 />

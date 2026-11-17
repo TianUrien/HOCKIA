@@ -152,11 +152,14 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, close, moreOpen, feedbackOpen])
 
-  const send = useCallback((text: string) => {
+  const send = useCallback((text: string, shown?: string) => {
     const t = text.trim()
     if (!t || isPending) return
     // Opened on a role (handoff B4): questions are about that role.
-    sendMessage(t, roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined, roleContext ? { roleLabel: roleContext.label } : undefined)
+    // A prepared prompt goes to Hockia AI in English; the bubble shows it as the member read it.
+    const shownText = shown && shown.trim() !== t ? shown.trim() : undefined
+    const meta = roleContext ? { roleLabel: roleContext.label, ...(shownText ? { shown: shownText } : {}) } : shownText ? { shown: shownText } : undefined
+    sendMessage(t, roleContext ? { mode: 'role_ask', opportunity_id: roleContext.id } : undefined, meta)
     setInput('')
     setDetent('large')
   }, [isPending, sendMessage, setDetent, roleContext])
@@ -191,7 +194,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
 
   if (!open && !leaving) return null
   const large = panel || detent === 'large'
-  const askFromPlan = (text: string) => { setMode('chat'); setTimeout(() => send(text), 0) }
+  const askFromPlan = (text: string, shown?: string) => { setMode('chat'); setTimeout(() => send(text, shown), 0) }
   const planCard = plan ? <NextStepPlan steps={plan} question={t('sheet.planQuestion')} onPick={startStep} onOther={askFromPlan} /> : null
   const canSend = input.trim().length > 0 && !isPending
   const buildChip = canBuild ? (
@@ -207,9 +210,9 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   // Figma B4 178:603: three suggestions for the open role. The prompts Hockia AI reads stay English.
   const city = roleContext?.city
   const roleSuggestions: { eyebrow: RoleOption['eyebrow']; label: string; run: () => void }[] = roleContext ? [
-    { eyebrow: 'ASK', label: checkProfileAgainstRole(), run: () => send(checkProfileAgainstRole({ lng: 'en' })) },
+    { eyebrow: 'ASK', label: checkProfileAgainstRole(), run: () => send(checkProfileAgainstRole({ lng: 'en' }), checkProfileAgainstRole()) },
     ...(canBuild && !applyRoleMismatch(roleContext.opportunityType, profile?.role) ? [{ eyebrow: 'DO IT FOR ME' as const, label: t('sheet.rolePrepare'), run: () => prepareApplication(roleContext) }] : []),
-    { eyebrow: 'LEARN', label: city ? t('sheet.roleLifeIn', { city }) : t('sheet.roleAskClub'), run: () => send(city ? t('sheet.roleLifeIn', { city, lng: 'en' }) : t('sheet.roleAskClubQuery', { lng: 'en' })) },
+    { eyebrow: 'LEARN', label: city ? t('sheet.roleLifeIn', { city }) : t('sheet.roleAskClub'), run: () => send(city ? t('sheet.roleLifeIn', { city, lng: 'en' }) : t('sheet.roleAskClubQuery', { lng: 'en' }), city ? t('sheet.roleLifeIn', { city }) : t('sheet.roleAskClubQuery')) },
   ] : []
   const roleChip = roleContext ? (
     <span className="mx-auto flex max-w-full items-center gap-2 rounded-full bg-white py-1 pl-1.5 pr-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-role-chip">
@@ -239,7 +242,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     </button>
   )
   const suggestion = ({ label: q, query }: { label: string; query: string }, i: number) => (
-    <button key={q} type="button" onClick={() => { void hapticSelection(); send(query) }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-suggestion" data-index={i}>
+    <button key={q} type="button" onClick={() => { void hapticSelection(); send(query, q) }} className="flex min-h-[48px] w-full items-center gap-3 rounded-[16px] border border-line bg-white px-4 py-3 text-left transition-colors hover:bg-surface-subtle" data-testid="hockia-ai-suggestion" data-index={i}>
       <span className="shrink-0 text-caption font-semibold tracking-[0.04em] text-ink-3">{eyebrowLabel(eyebrowFor(query))}</span>
       <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{q}</span>
       <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
@@ -247,7 +250,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   )
 
   const runOption = (o: RoleOption) => {
-    if (o.action.type === 'ask') send(o.action.query)
+    if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
     else { close(); navigate(o.action.to) }
   }
@@ -363,7 +366,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
             target={applyTarget}
             onClose={close}
             onAddVideo={() => setMode('builder')}
-            onFindSimilar={(q) => { setMode('chat'); setTimeout(() => send(q), 0) }}
+            onFindSimilar={(q, shown) => { setMode('chat'); setTimeout(() => send(q, shown), 0) }}
           />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
@@ -414,7 +417,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
               {!roleContext && optionRows && <div className={cn('flex w-full flex-col gap-2.5 text-left', planCard ? 'mt-2.5' : 'mt-5')} data-testid="hockia-ai-options">{optionRows.map(optionRow)}</div>}
               <div className={cn('grid w-full grid-cols-2 gap-2.5', (roleContext || optionRows) && 'hidden', buildChip ? 'mt-2.5' : 'mt-5')}>
                 {examples.slice(0, 4).map(({ label: q, query }, i, all) => (
-                  <button key={q} type="button" onClick={() => { void hapticSelection(); send(query) }} className={cn('flex min-h-[96px] flex-col items-start rounded-[16px] border border-line bg-white p-3.5 text-left transition-colors hover:bg-surface-subtle', all.length % 2 === 1 && i === all.length - 1 && 'col-span-2')} data-testid="hockia-ai-card">
+                  <button key={q} type="button" onClick={() => { void hapticSelection(); send(query, q) }} className={cn('flex min-h-[96px] flex-col items-start rounded-[16px] border border-line bg-white p-3.5 text-left transition-colors hover:bg-surface-subtle', all.length % 2 === 1 && i === all.length - 1 && 'col-span-2')} data-testid="hockia-ai-card">
                     <span className="text-caption font-semibold tracking-[0.04em] text-ink-3">{eyebrowLabel(eyebrowFor(query))}</span>
                     <span className="mt-1 text-[15px] font-semibold leading-5 text-ink-1">{q}</span>
                   </button>
