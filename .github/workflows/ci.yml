@@ -103,8 +103,13 @@ jobs:
         working-directory: ./client
         run: npx eslint . --max-warnings=0
 
+      # tsc -b peaked at Node's default 2 GB heap and ran out of memory on a
+      # staging push (2026-11-17); the same commit passed on a re-run. The
+      # runner has the memory, so give the type check a 4 GB heap.
       - name: Run TypeScript type check
         working-directory: ./client
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run typecheck
 
       # Dead code and dependency hygiene (Knip, added 2026-10-23; blocking since
