@@ -425,7 +425,8 @@ export default function PostRoleScreen({ draftId }: Props) {
               <span className="text-caption text-ink-3">{aiMode ? t('postRole.aiBadge') : t('postRole.againBadge')}</span>
             </span>
           ) : (
-            <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? t('postRole.editTitle') : t('postRole.newTitle')}</span>
+            // One line between the side buttons: "Nueva oportunidad" wrapped at 320 px; a step smaller below 360 px.
+            <span className="pointer-events-none absolute inset-x-[5.5rem] truncate whitespace-nowrap text-center text-body font-semibold text-ink-1 max-[359px]:text-[15px]">{editing ? t('postRole.editTitle') : t('postRole.newTitle')}</span>
           )}
           {editing ? <span aria-hidden="true" /> : (
             <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} aria-label={t('postRole.saveDraft')} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
