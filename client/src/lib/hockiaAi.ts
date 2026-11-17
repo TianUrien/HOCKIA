@@ -17,6 +17,7 @@ import type { OpportunityResultItem, SuggestedAction } from '@/hooks/useDiscover
 import en from '@/locales/en/hockiaAi.json'
 import { tHockiaAi } from '@/i18n/ns/hockiaAi'
 import { lazyTextRecord, withLazyText } from '@/lib/opportunityLazyText'
+import { placeText } from '@/i18n/countryNames'
 
 export const HOCKIA_AI_TITLE = 'Hockia AI'
 export const COMPOSER_MAX_LENGTH = 500
@@ -122,7 +123,7 @@ const CANDIDATE_COACH_EXAMPLES = ['examples.coach1', 'examples.coach2', 'example
 type AiViewer = { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined
 
 /** What a role option does: ask Hockia AI, open the profile builder, or open the screen where it happens. */
-export type RoleOptionAction = { type: 'ask'; query: string } | { type: 'builder' } | { type: 'go'; to: string }
+export type RoleOptionAction = { type: 'ask'; query: string; /** The same prompt in the member's language, for their chat bubble. */ shown: string } | { type: 'builder' } | { type: 'go'; to: string }
 export interface RoleOption {
   /** FIND / LEARN / ASK: Hockia AI answers. DO IT FOR ME: the builder. OPEN: a screen, no AI answer. Translate with `eyebrowLabel`. */
   eyebrow: 'FIND' | 'LEARN' | 'ASK' | 'DO IT FOR ME' | 'OPEN'
@@ -140,7 +141,7 @@ export function eyebrowLabel(eyebrow: RoleOption['eyebrow']): string {
 
 /** `labelKey` is shown; the query (English) is what Hockia AI reads. */
 const ask = (eyebrow: RoleOption['eyebrow'], labelKey: string, vars: Record<string, unknown> = {}, queryKey = labelKey): RoleOption => ({
-  eyebrow, label: tx(labelKey, vars), action: { type: 'ask', query: tx(queryKey, { ...vars, lng: 'en' }) },
+  eyebrow, label: tx(labelKey, vars), action: { type: 'ask', query: tx(queryKey, { ...vars, lng: 'en' }), shown: tx(queryKey, vars) },
 })
 const go = (labelKey: string, to: string): RoleOption => ({ eyebrow: 'OPEN', label: tx(labelKey), action: { type: 'go', to } })
 /** Checking a profile or preparing an application needs an opportunity: pick one first. */
@@ -259,7 +260,8 @@ export function roleResultTitle(o: Pick<OpportunityResultItem, 'organization' | 
 export function roleResultMeta(
   o: Pick<OpportunityResultItem, 'league_label' | 'location_label' | 'benefit_labels'>,
 ): string | null {
-  const first = o.league_label || o.location_label || null
+  // "Berlin, Germany" arrives in English; the country is shown in the member's language.
+  const first = o.league_label || placeText(o.location_label) || null
   const pkg = (o.benefit_labels ?? []).slice(0, 2).join(', ')
   const parts = [first, pkg || null].filter((p): p is string => !!p)
   return parts.length > 0 ? parts.join(' · ') : null

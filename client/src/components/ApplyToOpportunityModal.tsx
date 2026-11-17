@@ -25,7 +25,7 @@ import { hapticSuccess } from '@/lib/haptics'
 import { Check } from 'lucide-react'
 import { CloseIcon, VideoIcon } from '@/components/icons/HockiaIcons'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
-import { positionLabel } from '@/lib/identity'
+import { positionLabel, roleLabel } from '@/lib/identity'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { submitApplication } from '@/lib/submitApplication'
 import { requestPushAsk } from '@/lib/pushAsk'
@@ -330,7 +330,7 @@ export default function ApplyToVacancyModal({
           <div className="min-w-0 flex-1">
             <p className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{profile?.full_name || t('apply.yourProfile')}</p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              {profile?.role && <span className={`rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-[0.04em] ${getRoleBadgeClasses(profile.role)}`}>{profile.role}</span>}
+              {profile?.role && <span className={`rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-[0.04em] ${getRoleBadgeClasses(profile.role)}`}>{roleLabel(profile.role)}</span>}
               {profile?.position && <span className="rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary">{positionLabel(profile.position)}</span>}
             </div>
           </div>

@@ -49,8 +49,8 @@ export default function NoResultsCard({
     ? suggestedActions
     : [
         // The query is the English prompt Hockia AI reads; the label follows the language.
-        { label: t('discover.chipFindOpportunities'), intent: { type: 'free_text', query: t('discover.chipFindOpportunitiesQuery', { lng: 'en' }) } },
-        { label: t('discover.chipBrowseMarketplace'), intent: { type: 'free_text', query: t('discover.chipBrowseMarketplaceQuery', { lng: 'en' }) } },
+        { label: t('discover.chipFindOpportunities'), intent: { type: 'free_text', query: t('discover.chipFindOpportunitiesQuery', { lng: 'en' }), shown: t('discover.chipFindOpportunitiesQuery') } },
+        { label: t('discover.chipBrowseMarketplace'), intent: { type: 'free_text', query: t('discover.chipBrowseMarketplaceQuery', { lng: 'en' }), shown: t('discover.chipBrowseMarketplaceQuery') } },
       ]
 
   return (

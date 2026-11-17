@@ -41,7 +41,7 @@ function Turn({ children, glow = false }: { children: React.ReactNode; glow?: bo
   )
 }
 
-export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { target: ApplyTarget; onFindSimilar: (q: string) => void; onAddVideo: () => void; onClose: () => void }) {
+export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { target: ApplyTarget; onFindSimilar: (q: string, shown?: string) => void; onAddVideo: () => void; onClose: () => void }) {
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
   const user = useAuthStore((s) => s.user)
@@ -170,7 +170,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
             <p className="mt-2.5 text-[16px] leading-[22px] text-ink-1">{profile?.highlight_video_url ? t('apply.afterSimilar') : t('apply.afterVideo')}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {!profile?.highlight_video_url && <button type="button" onClick={onAddVideo} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-video">{t('apply.addVideo')}</button>}
-              <button type="button" onClick={() => onFindSimilar(t('apply.findSimilarQuery', { role: roleLine, lng: 'en' }))} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-similar">{t('apply.findSimilar')}</button>
+              <button type="button" onClick={() => onFindSimilar(t('apply.findSimilarQuery', { role: roleLine, lng: 'en' }), t('apply.findSimilarQuery', { role: roleLine }))} className="h-9 rounded-full border border-line px-3.5 text-secondary font-semibold text-ink-1" data-testid="apply-chip-similar">{t('apply.findSimilar')}</button>
             </div>
           </Turn>
         )}
