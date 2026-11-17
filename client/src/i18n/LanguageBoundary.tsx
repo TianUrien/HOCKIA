@@ -1,8 +1,9 @@
 import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/lib/auth'
-import { applyResolvedLanguage, storedLanguage } from '@/i18n'
-import { chooseLanguage } from './saveLanguage'
+import { applyResolvedLanguage, currentLanguage, storedLanguage } from '@/i18n'
+import { DEFAULT_LANGUAGE } from './languages'
+import { chooseLanguage, saveLanguageOnAccount } from './saveLanguage'
 
 /**
  * Keeps the interface language in step with the signed-in member's saved
@@ -21,7 +22,13 @@ export function LanguageBoundary({ children }: { children: ReactNode }) {
     if (profileChoice) { void applyResolvedLanguage(profileChoice); return }
     // Chosen on this device before signing in: copy it to the profile.
     const stored = storedLanguage()
-    if (signedIn && stored) void chooseLanguage(stored)
+    if (!signedIn) return
+    if (stored) { void chooseLanguage(stored); return }
+    // No choice anywhere and the device put the app in another language:
+    // save it, so emails and pushes match what the member reads. English
+    // needs no write (NULL already reads as English on the server).
+    const detected = currentLanguage()
+    if (detected !== DEFAULT_LANGUAGE) void saveLanguageOnAccount(detected)
   }, [profileChoice, signedIn])
 
   return <div key={i18n.language} className="contents">{children}</div>

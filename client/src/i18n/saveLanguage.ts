@@ -15,6 +15,17 @@ import type { UiLanguage } from './languages'
  */
 export async function chooseLanguage(language: UiLanguage): Promise<void> {
   await setLanguage(language, { remember: true })
+  await saveLanguageOnAccount(language)
+}
+
+/**
+ * Writes the language on the signed-in member's profile and account without
+ * touching the interface or this device's stored choice. Also used for a
+ * language that came from the device (LanguageBoundary): the server writes
+ * emails and pushes from the profile, so a member who reads Hockia in
+ * Spanish because of their phone must not get them in English.
+ */
+export async function saveLanguageOnAccount(language: UiLanguage): Promise<void> {
   const [{ useAuthStore }, { supabase }] = await Promise.all([import('@/lib/auth'), import('@/lib/supabase')])
   const { user, profile } = useAuthStore.getState()
   if (!user) return
