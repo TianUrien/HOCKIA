@@ -21,14 +21,14 @@
   "account": {
     "loginEmail": "Email de acceso",
     "verified": "Verificado",
-    "emailSent": "Enviamos la confirmación al nuevo email. El cambio se confirma desde las dos casillas.",
+    "emailSent": "Enviamos la confirmación a tu nuevo email. Revisa las dos casillas para confirmar el cambio.",
     "newEmailPlaceholder": "Nuevo email",
     "changeEmail": "Cambiar",
     "changePassword": "Cambiar contraseña",
     "currentPassword": "Contraseña actual",
     "newPassword": "Nueva contraseña",
     "confirmPassword": "Confirmar",
-    "passwordUpdated": "Contraseña actualizada. Se cerraron todas las demás sesiones.",
+    "passwordUpdated": "Contraseña actualizada. Cerramos todas tus otras sesiones.",
     "updating": "Actualizando...",
     "updatePassword": "Actualizar contraseña",
     "deleteAccount": "Eliminar cuenta"
@@ -37,42 +37,42 @@
     "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
     "passwordWeak": "La contraseña debe incluir mayúsculas, minúsculas y un número",
     "passwordMismatch": "Las contraseñas no coinciden",
-    "currentPasswordMissing": "Falta la contraseña actual",
+    "currentPasswordMissing": "Ingresa tu contraseña actual",
     "currentPasswordWrong": "La contraseña actual no es correcta",
     "passwordFailed": "No se pudo actualizar la contraseña",
-    "emailSame": "El email debe ser distinto del actual",
+    "emailSame": "Ingresa un email distinto del actual",
     "emailFailed": "No se pudo actualizar el email",
-    "pushFailedDesktop": "No se pudieron actualizar las notificaciones push. Se puede volver a intentar. Si sigue fallando, conviene revisar las notificaciones de Hockia en los ajustes de iOS.",
-    "pushFailed": "No se pudieron actualizar las notificaciones push. Si sigue fallando, conviene revisar las notificaciones de Hockia en los ajustes del teléfono.",
-    "saveFailed": "No se pudo guardar. Se puede volver a intentar.",
-    "contactEmailInvalid": "El email debe tener un formato como nombre@club.com, o quedar vacío."
+    "pushFailedDesktop": "No se pudieron actualizar las notificaciones push. Intenta de nuevo. Si sigue fallando, revisa las notificaciones de Hockia en los ajustes de iOS.",
+    "pushFailed": "No se pudieron actualizar las notificaciones push. Si sigue fallando, revisa las notificaciones de Hockia en los ajustes de tu teléfono.",
+    "saveFailed": "No se pudo guardar. Intenta de nuevo.",
+    "contactEmailInvalid": "Ingresa un email como nombre@club.com o déjalo vacío."
   },
   "emails": {
     "opportunitiesTitle": "Avisos de oportunidades",
     "opportunitiesBody": "Email cuando se publican nuevas oportunidades",
     "applicationsTitle": "Avisos de postulaciones",
-    "applicationsBody": "Email cuando alguien se postula a las oportunidades del club",
-    "friendsTitle": "Emails de solicitudes de amistad",
-    "friendsBody": "Email cuando llega una solicitud de amistad",
+    "applicationsBody": "Email cuando alguien se postula a tus oportunidades",
+    "friendsTitle": "Emails de solicitudes de conexión",
+    "friendsBody": "Email cuando alguien te envía una solicitud de conexión",
     "referencesTitle": "Emails de pedidos de referencia",
-    "referencesBody": "Email cuando alguien pide una referencia",
+    "referencesBody": "Email cuando alguien te pide una referencia",
     "messagesTitle": "Resúmenes de mensajes por email",
     "messagesBody": "Resumen por email de los mensajes sin leer (como máximo una vez cada 6 horas)",
     "pushTitle": "Notificaciones push",
     "pushUnsupported": "No disponibles en este dispositivo",
-    "pushBlocked": "Bloqueadas. Se activan desde los ajustes del dispositivo",
+    "pushBlocked": "Bloqueadas. Actívalas en los ajustes de tu dispositivo",
     "pushBody": "Notificaciones incluso con la app cerrada",
     "profileViewsTitle": "Emails de visitas al perfil",
-    "profileViewsBody": "Resumen diario por email de quién visitó el perfil",
+    "profileViewsBody": "Resumen diario por email de quién visitó tu perfil",
     "updated": "Preferencias actualizadas"
   },
   "privacy": {
     "anonymousTitle": "Navegación anónima",
-    "anonymousBody": "Con esta opción activada, las visitas a otros perfiles no aparecen en sus listas de “Quién vio tu perfil”",
+    "anonymousBody": "Con esta opción activada, no apareces en las listas de “Quién vio tu perfil” de otras personas",
     "anonymousOn": "Navegación anónima: activada",
     "anonymousOff": "Navegación anónima: desactivada",
     "lastActiveTitle": "Mostrar última actividad",
-    "lastActiveBody": "Con esta opción activada, en el encabezado de cada conversación aparece “Activo hoy”. Al desactivarla deja de mostrarse.",
+    "lastActiveBody": "Con esta opción activada, las personas con las que chateas ven “con actividad hoy” en el encabezado de la conversación. Desactívala para ocultarlo.",
     "lastActiveOn": "Mostrar última actividad: activado",
     "lastActiveOff": "Mostrar última actividad: desactivado",
     "blockedTitle": "Cuentas bloqueadas"
@@ -81,11 +81,11 @@
     "contactSupport": "Contactar a soporte",
     "privacyPolicy": "Política de privacidad",
     "terms": "Términos del servicio",
-    "developers": "Para desarrolladores"
+    "developers": "Para desarrolladores/as"
   },
   "fullMatch": {
-    "title": "Quién puede ver los partidos completos",
-    "body": "Vale para todos los partidos completos. Cada video se puede cambiar por separado desde los medios del perfil.",
+    "title": "Quién puede ver tus partidos completos",
+    "body": "Vale para todos tus partidos completos. Puedes cambiar cada video por separado desde Multimedia, en tu perfil.",
     "recruitersTitle": "Clubes y entrenadores/as",
     "recruitersBody": "Clubes y entrenadores/as que reclutan. Los highlights y los reels siguen siendo públicos.",
     "publicTitle": "Toda la comunidad de Hockia",
@@ -99,10 +99,10 @@
   "hub": {
     "parent": "Perfil",
     "title": "Ajustes",
-    "fallbackName": "Mi perfil",
+    "fallbackName": "Tu perfil",
     "signedInWith": "Sesión iniciada con {{provider}}",
     "clubAdmin": "Club · admin",
-    "roleSignedIn": "{{role}} · ingreso con {{provider}}",
+    "roleSignedIn": "{{role}} · sesión iniciada con {{provider}}",
     "providerEmail": "email",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
@@ -121,19 +121,19 @@
   },
   "availability": {
     "label": "Disponibilidad",
-    "footer": "Los clubes filtran por esto. Cada tanto, el resumen semanal pide confirmarlo.",
+    "footer": "Los clubes filtran por esto. Cada tanto, “Tu semana” te pide confirmarlo.",
     "openToPlay": "Disponible para jugar",
-    "openToPlayBody": "Se muestra en el perfil y en Comunidad.",
+    "openToPlayBody": "Se muestra en tu perfil y en Comunidad.",
     "on": "Sí",
     "off": "No",
     "openToCoach": "Disponible para entrenar",
-    "openToCoachBody": "Se muestra en el perfil y en Comunidad.",
+    "openToCoachBody": "Se muestra en tu perfil y en Comunidad.",
     "openToOpportunities": "Disponible para oportunidades",
-    "openToOpportunitiesBody": "Clubes y entrenadores/as pueden escribir por oportunidades.",
+    "openToOpportunitiesBody": "Clubes y entrenadores/as pueden escribirte por oportunidades.",
     "lookingFor": "Tipo de oportunidad",
     "notSet": "Sin definir",
-    "brandPartnerships": "Acuerdos con marcas",
-    "brandPartnershipsBody": "Las marcas pueden encontrar el perfil y enviar invitaciones para ser embajador/a."
+    "brandPartnerships": "Alianzas con marcas",
+    "brandPartnershipsBody": "Las marcas pueden encontrarte e invitarte como embajador/a."
   },
   "lookingFor": {
     "title": "Tipo de oportunidad",
@@ -153,8 +153,8 @@
   },
   "accountGroup": {
     "label": "Cuenta",
-    "dobFooterPlayer": "Se usa para mostrar la edad en el perfil y para que la búsqueda de los clubes sea solo de mayores de 18. Se muestra la edad, nunca la fecha.",
-    "dobFooter": "Se usa para mostrar la edad en el perfil. Se muestra la edad, nunca la fecha.",
+    "dobFooterPlayer": "Se usa para mostrar tu edad en tu perfil y para que la búsqueda de los clubes sea solo de mayores de 18. Solo se muestra tu edad, nunca la fecha.",
+    "dobFooter": "Se usa para mostrar tu edad en tu perfil. Solo se muestra tu edad, nunca la fecha.",
     "emailSignIn": "Email e inicio de sesión",
     "emailValue": "Email",
     "dob": "Fecha de nacimiento",
@@ -176,11 +176,11 @@
     "parent": "Ajustes",
     "title": "Notificaciones",
     "channels": "Canales",
-    "channelsFooter": "Con push desactivado, nada de lo de abajo llega por esa vía. Las notificaciones dentro de la app siguen siempre activas.",
-    "channelsFooterEmail": "Con push desactivado, nada de lo de abajo llega por esa vía. Las notificaciones dentro de la app siguen siempre activas. Los emails llegan a {{email}}. Abajo se elige qué llega, tipo por tipo.",
+    "channelsFooter": "Si desactivas push, nada de lo de abajo llega por esa vía. Las notificaciones dentro de la app siguen siempre activas.",
+    "channelsFooterEmail": "Si desactivas push, nada de lo de abajo llega por esa vía. Las notificaciones dentro de la app siguen siempre activas. Los emails llegan a {{email}}. Abajo eliges qué llega, tipo por tipo.",
     "pushTitle": "Notificaciones push",
     "pushUnsupported": "No disponibles en este dispositivo",
-    "pushBlocked": "Bloqueadas en los ajustes del teléfono",
+    "pushBlocked": "Bloqueadas en los ajustes de tu teléfono",
     "pushOnDevice": "En este dispositivo",
     "tellMe": "Quiero enterarme de",
     "colPush": "Push",
@@ -191,36 +191,36 @@
   },
   "kinds": {
     "messagesTitle": "Mensajes",
-    "messagesBody": "De clubes, entrenadores/as y amistades.",
+    "messagesBody": "De clubes, entrenadores/as y conexiones.",
     "applicationsTitle": "Mis postulaciones",
-    "applicationsBody": "Un club respondió, hubo una preselección o se cerró una oportunidad.",
+    "applicationsBody": "Un club respondió, te preseleccionó o se cerró una oportunidad.",
     "opportunitiesTitle": "Nuevas oportunidades",
-    "opportunitiesBody": "Nuevas oportunidades según posición, equipo y pasaportes.",
-    "friendsTitle": "Solicitudes de amistad",
+    "opportunitiesBody": "Nuevas oportunidades según tu posición, equipo y pasaportes.",
+    "friendsTitle": "Solicitudes de conexión",
     "friendsBody": "Solicitudes nuevas y aceptadas.",
     "referencesTitle": "Referencias",
-    "referencesBody": "Alguien pide una referencia o escribe una.",
+    "referencesBody": "Una conexión te pide una referencia o te escribe una.",
     "profileViewsTitle": "Visitas al perfil",
-    "profileViewsBody": "Resumen semanal de quién visitó el perfil."
+    "profileViewsBody": "Resumen semanal de quién visitó tu perfil."
   },
   "mobilePrivacy": {
     "parent": "Ajustes",
     "title": "Privacidad",
-    "fullMatchLabel": "Quién puede ver los partidos completos",
-    "fullMatchFooter": "Vale para todos los partidos completos. Cada video se puede cambiar por separado en Administrar medios.",
+    "fullMatchLabel": "Quién puede ver tus partidos completos",
+    "fullMatchFooter": "Vale para todos tus partidos completos. Puedes cambiar cada video por separado en Multimedia.",
     "recruitersTitle": "Clubes y entrenadores/as",
     "recruitersBody": "Clubes y entrenadores/as que reclutan. Los highlights y los reels siguen siendo públicos.",
     "publicTitle": "Toda la comunidad de Hockia",
     "publicBody": "Cualquier integrante de Hockia puede verlos.",
     "visibility": "Visibilidad",
     "anonymous": "Navegar de forma anónima",
-    "anonymousBody": "Los clubes no ven las visitas a sus perfiles, y tampoco se ve quién visitó el perfil propio.",
+    "anonymousBody": "Los clubes no ven que visitaste su perfil, y tú tampoco ves quién visitó el tuyo.",
     "lastActive": "Mostrar mi última actividad",
-    "lastActiveBody": "“Activo hoy” en el chat.",
+    "lastActiveBody": "“Con actividad hoy” en el chat.",
     "contactEmail": "Mostrar mi email de contacto",
-    "contactEmailBody": "Desactivado: los clubes lo ven recién al responder una postulación.",
+    "contactEmailBody": "Desactivado: los clubes lo ven solo cuando responden tu postulación.",
     "safety": "Seguridad",
-    "safetyFooter": "Las cuentas bloqueadas no pueden enviar mensajes, ver el perfil ni encontrarlo en Comunidad.",
+    "safetyFooter": "Las cuentas bloqueadas no pueden enviarte mensajes, ver tu perfil ni encontrarte en Comunidad.",
     "blocked": "Cuentas bloqueadas",
     "none": "Ninguna"
   },
@@ -240,37 +240,37 @@
   "deleteAccount": {
     "confirmWord": "ELIMINAR",
     "close": "Cerrar ventana",
-    "title": "¿Eliminar la cuenta?",
-    "body": "Esta acción es <strong>irreversible</strong>. Todos los datos del perfil, los mensajes y los archivos subidos se van a eliminar de forma permanente.",
-    "loseAccess": "⚠️ Se pierde el acceso a:",
-    "loseProfile": "• El perfil y toda la información personal",
+    "title": "¿Eliminar tu cuenta?",
+    "body": "Esta acción es <strong>irreversible</strong>. Todos los datos de tu perfil, tus mensajes y tus archivos subidos se van a eliminar de forma permanente.",
+    "loseAccess": "⚠️ Vas a perder el acceso a:",
+    "loseProfile": "• Tu perfil y toda tu información personal",
     "loseMessages": "• Todos los mensajes y conversaciones",
     "loseMedia": "• Todas las fotos y archivos subidos",
     "loseApplications": "• Postulaciones y oportunidades",
     "loseCareer": "• Trayectoria y registros",
-    "typeToConfirm": "Escribir <word>{{word}}</word> para confirmar:",
-    "placeholder": "Escribir {{word}}",
+    "typeToConfirm": "Escribe <word>{{word}}</word> para confirmar:",
+    "placeholder": "Escribe {{word}}",
     "cancel": "Cancelar",
     "deleting": "Eliminando...",
     "confirm": "Eliminar de forma permanente",
     "signedInAs": "Sesión iniciada como: <email>{{email}}</email>",
-    "deleted": "La cuenta se eliminó",
+    "deleted": "Tu cuenta se eliminó",
     "errors": {
-      "noSession": "No hay una sesión activa. Hay que iniciar sesión de nuevo.",
-      "server": "Error del servidor ({{status}}). Intentar de nuevo.",
+      "noSession": "No hay una sesión activa. Inicia sesión de nuevo.",
+      "server": "Error del servidor ({{status}}). Intenta de nuevo.",
       "failedStatus": "Error (estado {{status}})",
       "failed": "No se pudo eliminar la cuenta",
-      "failedRetry": "No se pudo eliminar la cuenta. Intentar de nuevo."
+      "failedRetry": "No se pudo eliminar la cuenta. Intenta de nuevo."
     }
   },
   "feedbackModal": {
     "title": "Enviar comentarios",
-    "subtitle": "Para mejorar Hockia. Leemos cada mensaje.",
+    "subtitle": "Ayúdanos a mejorar Hockia. Leemos cada mensaje.",
     "close": "Cerrar comentarios",
     "successTitle": "Gracias, lo recibimos.",
-    "successBody": "Si tenemos preguntas, nos vamos a poner en contacto.",
+    "successBody": "Si tenemos preguntas, te vamos a contactar.",
     "done": "Listo",
-    "categoryQuestion": "¿Sobre qué es?",
+    "categoryQuestion": "¿De qué se trata?",
     "categories": {
       "bug": {
         "label": "Algo no funciona",
@@ -294,54 +294,54 @@
       }
     },
     "bodyLabel": "Más detalles",
-    "bodyPlaceholder": "Qué pasó, qué se esperaba, cualquier cosa que ayude a entenderlo…",
+    "bodyPlaceholder": "Qué pasó, qué esperabas, cualquier cosa que nos ayude a entenderlo…",
     "charsNeeded_one": "Falta {{count}} carácter",
     "charsNeeded_other": "Faltan {{count}} caracteres",
     "charsNeeded_many": "Faltan {{count}} caracteres",
     "charCount": "{{length}}/{{max}}",
     "urgentLabel": "Es urgente (afecta mi trabajo)",
-    "urgentHint": "Usarlo con moderación para que la etiqueta de urgente siga sirviendo.",
-    "disclosure": "Con el mensaje incluimos: el rol, la página abierta y la hora. <strong>No</strong> tomamos capturas de pantalla ni datos de la consola.",
+    "urgentHint": "Úsalo con moderación para que la etiqueta de urgente siga sirviendo.",
+    "disclosure": "Con tu mensaje incluimos: tu rol, la página en la que estás y la hora. <strong>No</strong> tomamos capturas de pantalla ni datos de la consola.",
     "cancel": "Cancelar",
     "sending": "Enviando…",
     "send": "Enviar comentarios",
-    "rateLimited": "Se enviaron muchos comentarios en poco tiempo. Intentar de nuevo en una hora.",
-    "sendFailed": "No se pudieron enviar los comentarios. Intentar de nuevo."
+    "rateLimited": "Enviaste muchos comentarios en poco tiempo. Intenta de nuevo en una hora.",
+    "sendFailed": "No se pudieron enviar tus comentarios. Intenta de nuevo."
   },
   "ratingPrompt": {
     "dismiss": "Descartar",
     "thanksTitle": "¡Gracias!",
-    "thanksBody": "Los comentarios nos ayudan a mejorar Hockia.",
-    "title": "¿Qué tal Hockia?",
-    "body": "Los comentarios nos ayudan a mejorar la comunidad del hockey sobre césped.",
+    "thanksBody": "Tus comentarios nos ayudan a mejorar Hockia.",
+    "title": "¿Te gusta Hockia?",
+    "body": "Tus comentarios nos ayudan a mejorar la comunidad del hockey sobre césped.",
     "starsLabel": "Calificar Hockia de 1 a 5 estrellas",
     "star_one": "{{count}} estrella",
     "star_other": "{{count}} estrellas",
     "star_many": "{{count}} estrellas",
-    "positiveQuestion": "¡Gracias! 🎉 ¿Algo que guste mucho o que se quiera ver más?",
-    "negativeQuestion": "Gracias por la sinceridad. ¿Qué se puede mejorar?",
+    "positiveQuestion": "¡Gracias! 🎉 ¿Qué es lo que más te gusta, o de qué te gustaría ver más?",
+    "negativeQuestion": "Gracias por tu sinceridad. ¿Qué podemos mejorar?",
     "optional": " (opcional)",
-    "positivePlaceholder": "¿Qué fue lo que más llamó la atención?",
-    "negativePlaceholder": "Qué haría que fuera mejor…",
+    "positivePlaceholder": "¿Qué fue lo que más te llamó la atención?",
+    "negativePlaceholder": "Cuéntanos qué lo haría mejor…",
     "submitting": "Enviando…",
     "submit": "Enviar comentarios",
     "notNow": "Ahora no",
     "notNowEarly": "Ahora no",
-    "failed": "No se pudieron enviar los comentarios. Intentar de nuevo."
+    "failed": "No se pudieron enviar tus comentarios. Intenta de nuevo."
   },
   "emailAction": {
-    "renewing": "Renovando la oportunidad…",
-    "recording": "Registrando la respuesta…",
-    "checking": "Revisando el enlace…",
+    "renewing": "Renovando tu oportunidad…",
+    "recording": "Registrando tu respuesta…",
+    "checking": "Revisando tu enlace…",
     "confirmReject": {
       "title": "¿Marcar a {{name}} como No encaja?",
       "titleNoName": "¿Marcar esta postulación como No encaja?",
-      "body": "Para {{title}}. Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
-      "bodyNoTitle": "Para tu oportunidad. Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
+      "body": "Para {{title}}. Le vamos a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
+      "bodyNoTitle": "Para tu oportunidad. Le vamos a avisar con honestidad. Una respuesta clara es mejor que el silencio.",
       "confirm": "Sí, marcar como No encaja",
       "review": "Revisar en Hockia"
     },
-    "applicantFallback": "La persona postulada",
+    "applicantFallback": "Postulante",
     "reviewApplicants": "Revisar postulaciones en Hockia",
     "openIn": "Abrir en Hockia",
     "openHockia": "Abrir Hockia",
@@ -354,21 +354,21 @@
     },
     "closed": {
       "title": "Esta oportunidad sigue cerrada",
-      "body": "{{title}} se cerró desde la app, así que este enlace no cambió nada. Se puede volver a abrir en cualquier momento desde el panel.",
-      "bodyNoTitle": "Esta oportunidad se cerró desde la app, así que este enlace no cambió nada. Se puede volver a abrir en cualquier momento desde el panel."
+      "body": "{{title}} se cerró desde la app, así que este enlace no cambió nada. Puedes volver a abrirla en cualquier momento desde tu panel.",
+      "bodyNoTitle": "Esta oportunidad se cerró desde la app, así que este enlace no cambió nada. Puedes volver a abrirla en cualquier momento desde tu panel."
     },
     "shortlisted": {
-      "title": "{{name}} pasó a la preselección",
-      "body": "Va a ver que está en la preselección de {{title}}.",
-      "bodyNoTitle": "Va a ver que está en la preselección de tu oportunidad."
+      "title": "{{name}} pasó a tu preselección",
+      "body": "Va a ver que está en tu preselección de {{title}}.",
+      "bodyNoTitle": "Va a ver que está en tu preselección de tu oportunidad."
     },
     "maybe": {
       "title": "{{name}} quedó como Tal vez",
-      "body": "Se puede revisar de nuevo en cualquier momento. La postulación figura como en revisión."
+      "body": "Puedes volver a revisarla en cualquier momento. Quien se postuló ve su postulación como en revisión."
     },
     "rejected": {
       "title": "{{name}} quedó como No encaja",
-      "body": "Se le va a avisar con honestidad. Una respuesta clara es mejor que el silencio."
+      "body": "Le vamos a avisar con honestidad. Una respuesta clara es mejor que el silencio."
     },
     "alreadyHandled": {
       "title": "Esta postulación ya tuvo respuesta",
@@ -377,23 +377,23 @@
     "used": {
       "title": "Este enlace ya se usó",
       "bodyRenew": "Esta oportunidad ya se renovó con este enlace. No se cambió nada.",
-      "body": "La respuesta quedó registrada la primera vez. No se cambió nada."
+      "body": "Tu respuesta quedó registrada la primera vez. No se cambió nada."
     },
     "expired": {
       "title": "Este enlace venció",
-      "body": "Los enlaces de acción duran 14 días. Todavía se puede responder desde el panel."
+      "body": "Los enlaces de acción duran 14 días. Todavía puedes responder desde tu panel."
     },
     "rateLimited": {
       "title": "Demasiadas solicitudes",
-      "body": "Esperar un minuto y volver a abrir el enlace."
+      "body": "Espera un minuto y vuelve a abrir el enlace."
     },
     "error": {
       "title": "Algo salió mal",
-      "body": "La respuesta no se registró. Volver a abrir el enlace o responder desde el panel."
+      "body": "Tu respuesta no se registró. Vuelve a abrir el enlace o responde desde tu panel."
     },
     "invalid": {
       "title": "Este enlace no es válido",
-      "body": "Puede que el programa de email lo haya cortado. Se puede responder desde el panel."
+      "body": "Puede que tu programa de email lo haya cortado. Puedes responder desde tu panel."
     }
   }
 }

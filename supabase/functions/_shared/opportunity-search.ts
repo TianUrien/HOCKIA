@@ -19,6 +19,7 @@
 
 import { labelFor, labelForInline } from './display-labels.ts'
 import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+import { spanishList } from './member-language.ts'
 
 export type OpportunityType = 'player' | 'coach'
 export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
@@ -512,8 +513,7 @@ function describeRoleNounEs(criteria: OpportunityCriteria): { plural: string; si
 function benefitsPhraseEs(criteria: OpportunityCriteria): string {
   if (!criteria.benefits.length) return ''
   const labels = criteria.benefits.map(b => (BENEFIT_LABELS_ES[b] ?? b).toLowerCase())
-  const joined = labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`
-  return ` con ${joined}`
+  return ` con ${spanishList(labels)}`
 }
 
 function benefitsPhrase(criteria: OpportunityCriteria): string {
@@ -529,7 +529,7 @@ export function buildOpportunityMessage(count: number, criteria: OpportunityCrit
     const noun = describeRoleNounEs(criteria)
     const n = count === 1 ? noun.singular : noun.plural
     const where = geoLabel ? ` en ${geoLabel}` : ''
-    return `Hay ${count} ${n}${where}${benefitsPhraseEs(criteria)} a ${count === 1 ? 'la' : 'las'} que es posible postularse.`
+    return `Encontré ${count} ${n}${where}${benefitsPhraseEs(criteria)} a ${count === 1 ? 'la' : 'las'} que puedes postularte.`
   }
   const noun = describeRoleNoun(criteria)
   const n = count === 1 ? noun.singular : noun.plural
@@ -544,8 +544,8 @@ export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLa
     const where = geoLabel ? ` en ${geoLabel}` : ''
     const narrowed = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
     return narrowed
-      ? `Por ahora no hay ${noun.plural}${where}${benefitsPhraseEs(criteria)} a las que sea posible postularse. Se publican oportunidades nuevas todo el tiempo. Se puede ampliar la búsqueda o ver todas las oportunidades abiertas.`
-      : `Por ahora no hay oportunidades abiertas${where} a las que sea posible postularse. Se publican oportunidades nuevas todo el tiempo. Mantener el perfil al día también ayuda a que los clubes te encuentren.`
+      ? `Por ahora no hay ${noun.plural}${where}${benefitsPhraseEs(criteria)} a las que puedas postularte. Se publican oportunidades nuevas todo el tiempo. Puedes ampliar la búsqueda o ver todas las oportunidades abiertas.`
+      : `Por ahora no hay oportunidades abiertas${where} a las que puedas postularte. Se publican oportunidades nuevas todo el tiempo. Mantén tu perfil al día para que los clubes también puedan encontrarte.`
   }
   const noun = describeRoleNoun(criteria)
   const where = geoLabel ? ` in ${geoLabel}` : ''
@@ -570,12 +570,12 @@ export function buildIneligibleMessage(
 ): string {
   if (lang === 'es') {
     const noun = describeRoleNounEs(criteria)
-    const where = askedLabel ? ` en ${askedLabel}` : ' en HOCKIA'
-    const head = `Hay ${noun.plural}${where}${benefitsPhraseEs(criteria)}, pero por ahora ninguna admite tu postulación`
+    const where = askedLabel ? ` en ${askedLabel}` : ' en Hockia'
+    const head = `Hay ${noun.plural}${where}${benefitsPhraseEs(criteria)}, pero por ahora no puedes postularte a ninguna`
     if (!widened || widened.count === 0) return `${head}.`
     const n = widened.count === 1 ? `1 ${noun.singular}` : `${widened.count} ${noun.plural}`
     const elsewhere = widened.region ? `en otra parte de ${widened.region}` : 'en otras partes del mundo'
-    return `${head}. Hay ${n} ${elsewhere} a ${widened.count === 1 ? 'la' : 'las'} que es posible postularse.`
+    return `${head}. Hay ${n} ${elsewhere} a ${widened.count === 1 ? 'la' : 'las'} que puedes postularte.`
   }
   const noun = describeRoleNoun(criteria)
   const where = askedLabel ? ` in ${askedLabel}` : ' on HOCKIA'

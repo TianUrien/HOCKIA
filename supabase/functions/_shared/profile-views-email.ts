@@ -183,8 +183,8 @@ export function composeTrendLine(
   if (language === 'es') {
     const vistas = totalViews === 1 ? '1 visita al perfil' : `${totalViews} visitas al perfil`
     if (viewsPrior7d === 0) return `${vistas} esta semana.`
-    if (totalViews > viewsPrior7d) return `${vistas} esta semana, más que las ${viewsPrior7d} de la semana anterior.`
-    if (totalViews < viewsPrior7d) return `${vistas} esta semana, menos que las ${viewsPrior7d} de la semana anterior.`
+    if (totalViews > viewsPrior7d) return `${vistas} esta semana, más que la semana anterior (${viewsPrior7d}).`
+    if (totalViews < viewsPrior7d) return `${vistas} esta semana, menos que la semana anterior (${viewsPrior7d}).`
     return `${vistas} esta semana, igual que la semana anterior.`
   }
   const views = totalViews === 1 ? '1 profile view' : `${totalViews} profile views`
@@ -236,7 +236,7 @@ export function generateEmailHtml(
 
     <p style="color: #0e0b1a; margin: 0 0 16px 0; font-size: 16px;">${viewCountText}</p>
 
-    ${breakdownHtml}${trendHtml}<p style="color: #6b6878; margin: 0 0 24px 0; font-size: 15px;">${es ? 'Al iniciar sesión se puede ver quién visitó tu perfil.' : 'Log in to see who viewed your profile.'}</p>
+    ${breakdownHtml}${trendHtml}<p style="color: #6b6878; margin: 0 0 24px 0; font-size: 15px;">${es ? 'Inicia sesión para ver quién visitó tu perfil.' : 'Log in to see who viewed your profile.'}</p>
 
     <p style="margin: 0;">
       <a href="${ctaUrl}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${profileViewsCtaLabel(language)} &rarr;</a>
@@ -278,14 +278,14 @@ export function generateEmailText(
     ...(stats.trendLine ? [stats.trendLine] : []),
     '',
     es
-      ? 'Al iniciar sesión se puede ver quién pasó por tu perfil y qué le llamó la atención.'
+      ? 'Inicia sesión para ver quién pasó por tu perfil y qué le llamó la atención.'
       : "Log in to see who's been looking and what caught their attention.",
     '',
     `${profileViewsCtaLabel(language)}:`,
     ctaUrl,
     '',
     es
-      ? 'Consejo: un perfil al día muestra todo lo que hay para ofrecer.'
+      ? 'Consejo: mantén tu perfil al día para mostrar todo lo que tienes para ofrecer.'
       : 'Tip: Keep your profile up to date so others can see everything you have to offer.',
     '',
     '---',

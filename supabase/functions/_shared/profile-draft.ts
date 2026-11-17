@@ -204,13 +204,13 @@ export function builderSteps(n: BuilderStepCounts, lang: 'en' | 'es' = 'en'): st
     if (n.photos) steps.push(`Checked ${n.photos === 1 ? 'the photo' : `the ${n.photos} photos`}`)
     return steps
   }
-  if (n.found) steps.push(n.found === 1 ? '1 club encontrado en lo que se envió' : `${n.found} clubes encontrados en lo que se envió`)
+  if (n.found) steps.push(n.found === 1 ? '1 club encontrado en lo que enviaste' : `${n.found} clubes encontrados en lo que enviaste`)
   if (n.proposed) steps.push(`${n.matched} de ${n.proposed} con coincidencia en el directorio de clubes`)
   if (n.duplicates) steps.push(n.duplicates === 1 ? '1 ya figura en tu perfil' : `${n.duplicates} ya figuran en tu perfil`)
   if (n.cv) steps.push('CV leído')
   if (n.videos) steps.push(n.videos === 1 ? '1 video encontrado' : `${n.videos} videos encontrados`)
   if (n.pagesRead) steps.push(n.pagesRead === 1 ? 'Página enlazada leída' : `${n.pagesRead} páginas enlazadas leídas`)
-  if (n.unreadPages) steps.push(n.unreadPages === 1 ? 'No se pudo abrir un enlace' : `No se pudieron abrir ${n.unreadPages} enlaces`)
+  if (n.unreadPages) steps.push(n.unreadPages === 1 ? 'No pude abrir un enlace' : `No pude abrir ${n.unreadPages} enlaces`)
   if (n.photos) steps.push(n.photos === 1 ? 'Foto revisada' : `${n.photos} fotos revisadas`)
   return steps
 }

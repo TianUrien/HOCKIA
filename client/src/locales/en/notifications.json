@@ -265,6 +265,21 @@
       "aPlayer": "A player",
       "aPlayerLower": "a player",
       "thePlayer": "The player"
+    },
+    "noName": {
+      "inviteReceived": "You were invited to apply",
+      "inviteDeclined": "Your invite was declined",
+      "offerSent": "You received an offer",
+      "offerUpdated": "Your offer was updated",
+      "offerWithdrawn": "The offer was withdrawn",
+      "offerAccepted": "Your offer was accepted",
+      "offerDeclined": "Your offer was declined",
+      "offerExpired": "Your offer expired",
+      "applicationWithdrawn": "An application was withdrawn",
+      "signingMarked": "Confirm your signing",
+      "signingUndone": "The signing was undone",
+      "signingConfirmed": "The signing was confirmed",
+      "signingExpired": "The signing wasn’t confirmed in 14 days"
     }
   }
 }

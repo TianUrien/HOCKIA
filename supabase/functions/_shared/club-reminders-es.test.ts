@@ -89,7 +89,9 @@ Deno.test('Spanish dates and weekdays come from Intl', () => {
   assertEquals(closesPhrase(0, { weekday: 5, day: 9, month: 10 }, 'es'), 'hoy')
   assertEquals(closesPhrase(1, { weekday: 6, day: 10, month: 10 }, 'es'), 'mañana')
   assertEquals(closesPhrase(4, { weekday: 2, day: 13, month: 10 }, 'es'), 'el martes')
-  assertEquals(closesPhrase(9, { weekday: 0, day: 18, month: 10 }, 'es'), 'el 18 oct')
+  assertEquals(closesPhrase(9, { weekday: 0, day: 18, month: 10 }, 'es'), 'el 18 de octubre')
+  // Chips keep the short date.
+  assertEquals(closesChip(9, { weekday: 0, day: 18, month: 10 }, 'es'), 'Cierra el 18 oct')
   assertEquals(closesChip(4, { weekday: 2, day: 13, month: 10 }, 'es'), 'Cierra el martes')
   // English unchanged.
   assertEquals(weekdayName({ weekday: 5 }), 'Friday')
@@ -99,6 +101,12 @@ Deno.test('Spanish dates and weekdays come from Intl', () => {
 Deno.test('Spanish subjects, lines and names', () => {
   assertEquals(namesPhrase(['Ana', 'Ben', 'Caro'], 'es'), 'Ana y 2 más')
   assertEquals(namesPhrase(['Ana', 'Ben'], 'es'), 'Ana y Ben')
+  // "y" becomes "e" before the sound i (not before "hie"/"hia").
+  assertEquals(namesPhrase(['Ana', 'Inés'], 'es'), 'Ana e Inés')
+  assertEquals(namesPhrase(['Juan', 'Ignacio'], 'es'), 'Juan e Ignacio')
+  assertEquals(namesPhrase(['Ana', 'Hilda'], 'es'), 'Ana e Hilda')
+  assertEquals(namesPhrase(['Ana', 'Iara'], 'es'), 'Ana y Iara')
+  assertEquals(namesPhrase(['Ana', 'Hielo'], 'es'), 'Ana y Hielo')
   assertEquals(namesPhrase([null], 'es'), 'una persona')
   assertEquals(lastCallSubject([{ firstName: 'Ana' }], 'es'), 'Último día para responder a Ana')
   assertEquals(waitingLine(3, true, 'es'), '3 jugadores/as esperan tu respuesta')
@@ -111,7 +119,7 @@ Deno.test('Spanish subjects, lines and names', () => {
   const pending = toItems([row({ closes_at: '2026-10-13T08:00:00Z' })], TZ, AR_9AM, 'es')
   assertEquals(closingSoonSubject(pending, true, 'es'), 'La postulación de Ana cierra el martes')
   const body = lastCallBody({ firstName: 'Ana', daysLeft: 1, appliedLocal: { weekday: 2, day: 29, month: 9 } as never }, 'es')
-  assertStringIncludes(body, 'Ana se postuló el 29 sept')
+  assertStringIncludes(body, 'Ana se postuló el 29 de septiembre')
   for (const t of [body, closingSoonSubject(pending, true, 'es'), waitingLine(3, true, 'es')]) noEnglish(t, 'line')
 })
 
@@ -139,9 +147,9 @@ Deno.test('Spanish grouped new-applications push', () => {
   assertEquals(p.title, '3 postulaciones nuevas para Primera división, volante')
   assertEquals(p.summary, 'Ana y 2 más se postularon.')
   const one = buildNewApplicationsPush(PUB, items.slice(0, 1), 'es')
-  assertEquals(one.summary, 'Tocar para revisar la postulación.')
+  assertEquals(one.summary, 'Toca para revisar la postulación.')
   assertEquals(p.record.kind, 'vacancy_application_received')
-  assertEquals(newApplicationsCopyFromMetadata({}, 'es'), { title: 'Postulaciones nuevas', body: 'Hay postulaciones nuevas esperando.' })
+  assertEquals(newApplicationsCopyFromMetadata({}, 'es'), { title: 'Postulaciones nuevas', body: 'Tienes postulaciones nuevas esperando.' })
   assertEquals(reminderCopyFromMetadata('applicant_last_call', {}, 'es').body, 'Una postulación cierra mañana.')
   assertEquals(reminderCopyFromMetadata('applicant_last_call', {}).body, 'An application closes tomorrow.')
 })
@@ -158,7 +166,7 @@ Deno.test('Spanish emails: subject, body and footer in Spanish, html lang="es"',
   assertEquals(e1.subject, '2 postulaciones nuevas para Primera división, volante')
   assertStringIncludes(e1.html, '<html lang="es">')
   assertStringIncludes(e1.html, 'Encaje alto')
-  assertStringIncludes(e1.text, 'Los emails se cambian en Ajustes → Notificaciones.')
+  assertStringIncludes(e1.text, 'Elige qué emails recibes en Ajustes → Notificaciones.')
   const text1 = e1.text.replace(/https?:\/\/\S+/g, '').replace(/Primera división, volante|Club Atlético Rosario|Ana Pérez|Ben Ruiz/g, '')
   noEnglish(text1, 'new applications email')
 
@@ -183,12 +191,12 @@ Deno.test('Spanish emails: subject, body and footer in Spanish, html lang="es"',
 
 Deno.test('send-push: the application status names the Spanish position', () => {
   const es = buildPushPayload('vacancy_application_status', { status: 'rejected', club_name: 'CASI', position: 'midfielder' }, 'X', null, 'es')
-  assertEquals(es.body, 'Esta vez no para Volante.')
+  assertEquals(es.body, 'Esta vez no: tu postulación para Volante no avanzó.')
   const gk = buildPushPayload('vacancy_application_status', { status: 'maybe', club_name: 'CASI', position: 'goalkeeper' }, 'X', null, 'es')
   assertStringIncludes(gk.body, 'Arquero/a')
   // A generated headline ("Men's midfielder") still falls back to the position.
   const sl = buildPushPayload('vacancy_application_status', { status: 'shortlisted', club_name: 'CASI', position: 'midfielder', vacancy_title: "Men's midfielder" }, 'X', null, 'es')
-  assertEquals(sl.body, 'Tu perfil está en consideración para Volante.')
+  assertEquals(sl.body, 'Estás en consideración para Volante.')
   const en = buildPushPayload('vacancy_application_status', { status: 'rejected', club_name: 'CASI', position: 'head_coach' }, 'X')
   assertEquals(en.body, 'Not this time for Head Coach.')
 })
@@ -201,12 +209,14 @@ Deno.test('send-push: recruiting_update rebuilt in Spanish from the stored Engli
     ['offer_received', 'CASI updated its offer', 'CASI actualizó su oferta'],
     ['offer_withdrawn', 'The club withdrew its offer', 'El club retiró su oferta'],
     ['offer_accepted', 'Ana accepted your offer', 'Ana aceptó tu oferta'],
-    ['offer_declined', 'The player declined your offer', 'La persona no aceptó tu oferta'],
+    ['offer_declined', 'The player declined your offer', 'No aceptaron tu oferta'],
+    ['invite_received', 'A player invited you to apply', 'Te invitaron a postularte'],
     ['application_withdrawn', 'Ana withdrew their application', 'Ana retiró su postulación'],
-    ['signing_marked', 'Confirm your signing with CASI', 'Confirmar la incorporación con CASI'],
+    ['signing_marked', 'Confirm your signing with CASI', 'Confirma tu incorporación con CASI'],
     ['signing_undone', 'CASI undid the signing', 'CASI deshizo la incorporación'],
     ['signing_confirmed', 'Ana confirmed the signing', 'Ana confirmó la incorporación'],
-    ['offer_expired', 'Your offer to a player expired', 'Venció tu oferta a una persona'],
+    ['offer_expired', 'Your offer to a player expired', 'Venció tu oferta'],
+    ['offer_expired', 'Your offer to Ana expired', 'Venció tu oferta a Ana'],
     ['signing_expired', 'Ana didn\'t confirm the signing in 14 days', 'Ana no confirmó la incorporación en 14 días'],
   ]
   for (const [event, stored, expected] of cases) {
@@ -217,7 +227,8 @@ Deno.test('send-push: recruiting_update rebuilt in Spanish from the stored Engli
     // English keeps the stored text.
     assertEquals(buildPushPayload('recruiting_update', { event, title: stored, summary: 's' }, 'X').title, stored)
   }
-  // Unknown event or unrecognised title → shown as stored.
+  // Unknown event or unrecognised title → the generic Spanish title (never English); English keeps it as stored.
   assertEquals(recruitingTitleEs('something_new', 'CASI did a thing'), null)
-  assertEquals(buildPushPayload('recruiting_update', { event: 'offer_received', title: 'Custom text' }, 'X', null, 'es').title, 'Custom text')
+  assertEquals(buildPushPayload('recruiting_update', { event: 'offer_received', title: 'Custom text' }, 'X', null, 'es').title, 'Novedad de incorporación')
+  assertEquals(buildPushPayload('recruiting_update', { event: 'offer_received', title: 'Custom text' }, 'X').title, 'Custom text')
 })

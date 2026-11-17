@@ -61,7 +61,7 @@ function escapeHtml(s: string): string {
 }
 
 const RENEWAL_DONE_ES =
-  '¿La búsqueda ya terminó? No hace falta hacer nada: sigue cerrada, y las postulaciones en espera se cierran solas para que nadie quede sin respuesta.'
+  '¿La búsqueda ya terminó? No tienes que hacer nada: sigue cerrada, y las postulaciones en espera se cierran solas para que nadie quede sin respuesta.'
 
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
@@ -193,7 +193,7 @@ Deno.serve(async (req: Request) => {
     // ── Compose ──
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const renewUrl = `${HOCKIA_BASE_URL}/email-action?t=${raw}`
-    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
+    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
     const subject = es
       ? `Tu oportunidad "${opp.title}" llegó a su fecha límite`
       : `Your opportunity "${opp.title}" reached its deadline`
@@ -215,7 +215,7 @@ Deno.serve(async (req: Request) => {
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? (firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:') : `Hi ${escapeHtml(firstName)},`}</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.55;">
           ${es
             ? `Tu oportunidad <strong>${escapeHtml(opp.title)}</strong> llegó a su fecha límite de postulación y ahora está cerrada en Hockia.`
@@ -223,7 +223,7 @@ Deno.serve(async (req: Request) => {
           ${waitingLine ? `<br/><strong>${waitingLine}</strong>` : ''}
         </p>
         <p style="font-size:14px;color:#3f3c4d;line-height:1.55;">
-          ${es ? '¿La búsqueda sigue abierta? Con un clic se reabre con una nueva fecha límite de 30 días:' : 'Still recruiting for this role? One click reopens it with a fresh 30-day deadline:'}
+          ${es ? '¿La búsqueda sigue abierta? Con un clic la reabres con una nueva fecha límite de 30 días:' : 'Still recruiting for this role? One click reopens it with a fresh 30-day deadline:'}
         </p>
         <div style="margin-top:16px;">
           <a href="${renewUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Renovar por 30 días' : 'Renew for 30 days'}</a>
@@ -233,7 +233,7 @@ Deno.serve(async (req: Request) => {
         </p>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
           ${es
-            ? `Esta oportunidad también se puede gestionar <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">en la app</a>.`
+            ? `También puedes gestionar esta oportunidad <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">en la app</a>.`
             : `You can also manage this opportunity <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">in the app</a>.`}
         </p>
       </td></tr>
@@ -243,12 +243,12 @@ Deno.serve(async (req: Request) => {
 
     const text = es
       ? [
-        `Hola, ${firstName}:`,
+        firstName ? `Hola, ${firstName}:` : 'Hola:',
         '',
         `Tu oportunidad "${opp.title}" llegó a su fecha límite de postulación y ahora está cerrada en Hockia.`,
         ...(waitingLine ? [waitingLine] : []),
         '',
-        '¿La búsqueda sigue abierta? Se puede renovar con una nueva fecha límite de 30 días en un clic:',
+        '¿La búsqueda sigue abierta? Puedes renovarla con una nueva fecha límite de 30 días en un clic:',
         renewUrl,
         '',
         RENEWAL_DONE_ES,

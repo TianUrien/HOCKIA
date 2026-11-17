@@ -12,7 +12,7 @@
  * pattern as send-push/index.ts.
  *
  * Spanish follows client/src/locales/glossary.md: neutral Latin American
- * Spanish, no second-person verb forms, no generic masculine for people,
+ * Spanish, tú to the member, no generic masculine for people,
  * doublets only for role names.
  *
  * Pure apart from the two read helpers; unit-tested in member-language.test.ts.
@@ -101,7 +101,7 @@ const POSITION_ES: Record<string, string> = {
   assistant_coach: 'Entrenador/a asistente',
   youth_coach: 'Entrenador/a de juveniles',
   goalkeeper_coach: 'Entrenador/a de arqueros/as',
-  strength_conditioning: 'Preparación física',
+  strength_conditioning: 'Preparador/a físico/a',
   performance_analyst: 'Analista de rendimiento',
   sports_scientist: 'Especialista en ciencias del deporte',
   other_coach: 'Entrenador/a',
@@ -113,14 +113,14 @@ const POSITION_ES: Record<string, string> = {
  */
 const RELATIONSHIP_ES: Record<string, string> = {
   'academy coach': 'Entrenador/a de academia',
-  'assistant coach i worked with': 'Entrenador/a asistente (trabajo conjunto)',
+  'assistant coach i worked with': 'Entrenador/a asistente con quien trabajé',
   'assistant coach': 'Entrenador/a asistente',
   'athlete i coached': 'Deportista que entrené',
   'clinic / academy host': 'Sede de clínica o academia',
-  'club captain': 'Capitán/a del club',
+  'club captain': 'Capitán o capitana del club',
   'club coach': 'Entrenador/a del club',
   'club director': 'Dirección del club',
-  'club i regularly officiated for': 'Club donde arbitro seguido',
+  'club i regularly officiated for': 'Club donde arbitro habitualmente',
   'club member': 'Integrante del club',
   'club umpire': 'Árbitro/a del club',
   'club': 'Club',
@@ -130,8 +130,8 @@ const RELATIONSHIP_ES: Record<string, string> = {
   'equipment partner': 'Marca de equipamiento',
   'fellow coach': 'Colega del cuerpo técnico',
   'fellow umpire': 'Colega de arbitraje',
-  'former athlete': 'Ex deportista a cargo',
-  'former captain': 'Ex capitán/a',
+  'former athlete': 'Deportista que entrené antes',
+  'former captain': 'Ex capitán o capitana',
   'former club': 'Ex club',
   'former coach': 'Ex entrenador/a',
   'former colleague': 'Ex colega',
@@ -148,8 +148,8 @@ const RELATIONSHIP_ES: Record<string, string> = {
   'senior national player': 'Jugador/a de selección mayor',
   'senior umpire': 'Árbitro/a sénior',
   'sponsor': 'Sponsor',
-  'team captain i officiated': 'Capitán/a de equipo en partidos que arbitré',
-  'team captain': 'Capitán/a del equipo',
+  'team captain i officiated': 'Capitán o capitana de equipo en partidos que arbitré',
+  'team captain': 'Capitán o capitana del equipo',
   'teammate': 'Compañero/a de equipo',
   'tournament coach': 'Entrenador/a de torneo',
   'tournament host club': 'Club sede del torneo',
@@ -171,6 +171,18 @@ const ROLE_ES: Record<string, string> = {
 
 function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+/** Spanish "and": "e" before a word that starts with the sound i ("Ana e Inés", "e Hilario"), else "y" ("y Hielo", "y Iara"). */
+export function spanishAnd(next: string): string {
+  return /^h?[ií](?![aeouáéóú])/i.test(next.trim()) ? 'e' : 'y'
+}
+
+/** "a, b y c" with the y/e rule; one item as is. */
+export function spanishList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? ''
+  const last = items[items.length - 1]
+  return `${items.slice(0, -1).join(', ')} ${spanishAnd(last)} ${last}`
 }
 
 /** The agreed Spanish word for a position token, or null when there is none. */

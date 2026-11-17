@@ -1,18 +1,25 @@
 # Spanish glossary and style
 
-Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder review**; the style rules below are decided. Review (founder decision 2026-11-16): the founder checks the key screens of each stage on staging. Variant decided by the founder on 2026-11-15: neutral Latin American Spanish, hockey vocabulary as used in Argentina, phrased so the "vos or tú" choice rarely arises.
+Added 2026-11-16 (Claude Code). Variant decided by the founder on 2026-11-15: neutral Latin American Spanish, hockey vocabulary as used in Argentina. Review (founder decision 2026-11-16): the founder checks the key screens of each stage on staging. Quality pass 2026-11-16 (source: Spanish review of all catalogs and server copy, engineering-lead session).
 
 ## Style
 
-- Buttons and menu items in the infinitive: "Enviar postulación", "Completar perfil", "Reintentar".
-- Statements over commands. "Lo que ya cargó se puede seguir leyendo", not "Podés seguir leyendo".
-- When a second person cannot be avoided, rewrite the sentence before choosing "vos" or "tú". If it still cannot be avoided, flag it in the PR for the founder.
-- No "usted". Warm and direct.
-- Sentence case. Opening "¿" and "¡" always.
-- Never promise outcomes. "May" is "puede", never "va a". Do not strengthen or soften a claim while translating.
-- Gender (founder decision 2026-11-16): rephrase around the person ("Perfil verificado", "Quienes se postularon"), prefer words without gender ("deportista", "integrante", "plantel"), and use a doublet ("Jugador/a") only for role names. No generic masculine, no "x", "@" or "e" endings. Never pick a form from a member's data.
-- No middle dot or decorative dots added in Spanish copy beyond what the English has.
-- Product and feature names stay as they are: Hockia, Hockia AI.
+Founder decisions, 2026-11-16 (they replace the earlier "no second-person verbs" rule):
+
+- **Tú.** The app speaks to the member with neutral "tú", the way Instagram or WhatsApp do: "Intenta de nuevo.", "¿Olvidaste tu contraseña?", "Revisa tu email.". No voseo ("podés", "revisá"), no "usted".
+- Buttons, menu items, tabs and chips stay in the **infinitive**: "Enviar postulación", "Completar perfil", "Reintentar".
+- Body text, questions, hints, errors, empty states, emails and pushes **speak to the member directly** in tú. Not impersonal stand-ins: no "se puede…", "conviene…", "hay que…" or a bare infinitive sentence where the English addresses "you". "Puedes editarlo cuando quieras.", not "Se puede editar en cualquier momento.".
+- Use **"tu" / "te"** for the member's own things: "tu perfil", "tu cuenta", "te avisamos". Not "el perfil", "la cuenta", "el perfil propio".
+- **Clubs** are a member too: "tú". When a plural is unavoidable, "ustedes".
+- **Hockia AI** speaks in the first person ("Encontré…", "¿Busco…?") and addresses the member with tú.
+
+Lead decisions on wording, 2026-11-16 (the founder may still revise them on staging):
+
+- One retry sentence everywhere: **"Intenta de nuevo."** Never "Por favor, + infinitive", "Volver a intentar." or "Probar de nuevo." in running text (the button stays "Reintentar").
+- Feature and button names inside a sentence go in **quotation marks**: «¿Desactivar "Disponible para jugar"?».
+- Email greeting without a name: **"Hola:"**. With a name: "Hola, {{name}}:".
+- Kept from before: sentence case; opening "¿" and "¡" always; never promise outcomes ("may" is "puede", never "va a"); do not strengthen or soften a claim while translating; no middle dot or decorative dots beyond what the English has; product names stay as they are (Hockia, Hockia AI).
+- **Gender** (founder decision 2026-11-16, unchanged): no generic masculine, no "x", "@" or "e" endings, never pick a form from a member's data. Rephrase around the action ("Quienes se postularon"), use words without gender ("deportista", "integrante", "plantel"), and keep doublets for role names ("Jugador/a", "entrenadores/as"). Never at the price of non-Spanish: no "persona embajadora", "la persona jugadora", "una persona colega". Rephrase instead.
 
 ## Terms
 
@@ -46,7 +53,7 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Women's / Men's (team) | Damas / Caballeros | Girls / Boys: "Juveniles damas" / "Juveniles caballeros" |
 | Signing | Incorporación | Not "fichaje" (Spain). The feed artwork says "NUEVO REFUERZO" because the long word does not fit |
 | Transfer | Pase | |
-| Friends | Amistades | Avoids the generic masculine "amigos" |
+| Friends, friend request, add friend | Conexiones, solicitud de conexión, agregar conexión | Founder decision 2026-11-16: "Conexiones" everywhere; never "amistad", "amistades" or "amigos" |
 | Report (content, a member) | Reportar | |
 | Open to play / Open to coach | Disponible para jugar / Disponible para entrenar | |
 | Paid | Pago, paga | "Oportunidades pagas" |
@@ -57,7 +64,7 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Here | Acá | |
 | Outdoor (hockey) | Césped | "Césped e indoor" for both. Added in Stage 2 |
 | Connections | Conexiones | |
-| Coaches (as a group, not the role name) | Cuerpos técnicos | Avoids "entrenadores" alone; the role name stays "Entrenador/a" |
+| Coaches | Cuerpos técnicos / entrenadores/as | Lead decision 2026-11-16: "cuerpos técnicos" only for an audience as a group ("para clubes y cuerpos técnicos"); "entrenador/a", "entrenadores/as" whenever individuals act or are listed |
 | Endorse, vouch | Avalar, aval | |
 | Career history | Trayectoria | |
 | Media (photos and videos) | Multimedia | |
@@ -70,31 +77,30 @@ Added 2026-11-16 (Claude Code). Status: **terms are a draft, awaiting founder re
 | Marketplace | Marketplace | Kept in English |
 | Near you | En la zona | |
 | Junior / Senior (level) | Juveniles / Mayores | "Mayores" still to confirm |
+| Claim (a club page) | Registrar, registro | Lead decision 2026-11-16: never "reclamar" / "reclamo" (reads as a complaint) |
+| Highlight video, highlights | Video de highlights, highlights | Lead decision 2026-11-16: the single term |
+| Just now | Hace un momento | Lead decision 2026-11-16 |
+| You: (own message preview) | Tú: | Lead decision 2026-11-16 |
+| Captain | Capitán / capitana | Not "Capitán/a"; rephrase or write both |
 
 Search keeps accepting every regional synonym whatever word the interface shows.
 
-## Wording still to confirm with the founder (Stage 1, 2026-11-16)
+## Decided, and wording still to confirm with the founder (Stage 1, 2026-11-16)
 
+- Decided 2026-11-16 (founder): the Hockia AI intro "Your field hockey teammate" is "Tu asistente de hockey sobre césped".
 - Decided 2026-11-16 (founder): the brand tagline "Where field hockey sticks together." stays in English in the Spanish interface.
 - Headings in the infinitive ("Revisar la bandeja de entrada") read a little stiff; an alternative is a noun phrase ("Enlace enviado").
-- "Claim a club" is "Reclamar"; "registrar" is the alternative.
 - Application tags: "Postulación enviada" (Applied), "En preselección" (Shortlisted), "Con respuesta" (Replied), "Esta vez no" (Not this time).
 - "Senior" team level is "Mayores"; "Primera" or "Plantel superior" are alternatives.
-- The possessive "tu" and the pronoun "te" are used (same in every variant); no second-person verb forms are.
 
 ## Wording still to confirm with the founder (Stage 2, 2026-11-16)
 
-- Message previews start with "Tú: {{text}}" for the member's own message ("You:"). "Vos:" is the alternative; the prefix cannot avoid a pronoun.
 - "Recruiting" (a club looking for people): "Incorporando" on cards, "Buscando incorporaciones" on the club header.
-- "Just now": "Recién" (Rioplatense) or "Hace un momento" (more neutral).
 - Delete account: Spanish members type "ELIMINAR" to confirm (English "DELETE").
 - Umpire level suggestions ("National", "Regional", "Club") stay English because the chosen word is saved on the profile and shown to everyone.
-- Emails: fallback greeting "Hola, integrante:" when there is no name; footer "Este email te llega por tu cuenta en Hockia."
-- Safety copy (block, report, removed accounts) was rewritten without second-person verbs; please read it for meaning.
 
 ## Wording still to confirm with the founder (Stage 3, 2026-11-16)
 
-- Hockia AI speaks in the first person ("No encontré…", "Puedo ayudar…", "Filtré por tu categoría"). Decided 2026-11-16 (founder): the Hockia AI intro "Your field hockey teammate" is "Tu asistente de hockey sobre césped".
 - Group nouns in Hockia AI chips and club pushes use doublets ("jugadores/as", "entrenadores/as"); "deportistas" and "cuerpos técnicos" are the alternatives.
 - Hockia AI chat history summaries ("3 players found") are saved in English, so they show in English in a Spanish chat list.
 - Tapping a suggested question in Spanish sends the English prompt, so the member's own bubble shows English.

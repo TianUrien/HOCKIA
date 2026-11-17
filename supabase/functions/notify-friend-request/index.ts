@@ -245,7 +245,7 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(requester as RequesterData, language)
       emailText = generateEmailText(requester as RequesterData, language)
       subject = language === 'es'
-        ? `${requesterName} te envió una solicitud de amistad en Hockia`
+        ? `${requesterName} te envió una solicitud de conexión en Hockia`
         : `${requesterName} sent you a friend request on Hockia`
       logger.info('Falling back to hardcoded template', { language })
     }

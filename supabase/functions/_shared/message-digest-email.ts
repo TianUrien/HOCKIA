@@ -183,7 +183,7 @@ export function generateEmailHtml(
   <div style="padding: 0 0 24px 0;">
 
     <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? `Hola, ${escapeHtml(firstName)}. Hay mensajes sin leer en Hockia.` : `Hi ${escapeHtml(firstName)}, you have unread messages on Hockia.`}</p>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? `Hola, ${escapeHtml(firstName)}. Tienes mensajes sin leer en Hockia.` : `Hi ${escapeHtml(firstName)}, you have unread messages on Hockia.`}</p>
 
     <div style="margin-bottom: 24px;">
       ${conversationCards}

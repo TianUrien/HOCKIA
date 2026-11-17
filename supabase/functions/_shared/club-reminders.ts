@@ -22,7 +22,9 @@
  * language (client/src/locales/glossary.md); dates and weekdays via Intl.
  */
 
-import { spanishPositionLabel } from './member-language.ts'
+import { spanishAnd, spanishPositionLabel } from './member-language.ts'
+
+export { spanishAnd }
 
 /** The publisher's interface language (member-language.ts MemberLanguage). */
 export type ReminderLanguage = 'en' | 'es'
@@ -499,13 +501,21 @@ export function shortDate(local: Pick<LocalParts, 'day' | 'month'>, lang: Remind
   return `${local.day} ${MONTHS[local.month - 1] ?? ''}`.trim()
 }
 
-/** "today" · "tomorrow" · "on Friday" · "on 14 Oct". Spanish: "hoy" · "mañana" · "el viernes" · "el 14 oct". */
+/** Spanish date inside a sentence: "2 de octubre" (chips keep shortDate's "2 oct"). */
+export function longDateEs(local: Pick<LocalParts, 'day' | 'month'>): string {
+  if (!(local.month >= 1 && local.month <= 12)) return `${local.day}`
+  const month = new Intl.DateTimeFormat('es', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, local.month - 1, 1)))
+  return `${local.day} de ${month}`
+}
+
+
+/** "today" · "tomorrow" · "on Friday" · "on 14 Oct". Spanish: "hoy" · "mañana" · "el viernes" · "el 14 de octubre". */
 export function closesPhrase(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>, lang: ReminderLanguage = 'en'): string {
   if (lang === 'es') {
     if (daysLeft <= 0) return 'hoy'
     if (daysLeft === 1) return 'mañana'
     if (daysLeft <= 6) return `el ${weekdayName(closesLocal, 'es')}`
-    return `el ${shortDate(closesLocal, 'es')}`
+    return `el ${longDateEs(closesLocal)}`
   }
   if (daysLeft <= 0) return 'today'
   if (daysLeft === 1) return 'tomorrow'
@@ -515,7 +525,7 @@ export function closesPhrase(daysLeft: number, closesLocal: Pick<LocalParts, 'we
 
 /** Chip text: "Closes today" · "Closes tomorrow" · "Closes Friday" · "Closes 14 Oct". */
 export function closesChip(daysLeft: number, closesLocal: Pick<LocalParts, 'weekday' | 'day' | 'month'>, lang: ReminderLanguage = 'en'): string {
-  if (lang === 'es') return `Cierra ${closesPhrase(daysLeft, closesLocal, 'es')}`
+  if (lang === 'es') return `Cierra ${daysLeft > 6 ? `el ${shortDate(closesLocal, 'es')}` : closesPhrase(daysLeft, closesLocal, 'es')}`
   const p = closesPhrase(daysLeft, closesLocal)
   return `Closes ${p.startsWith('on ') ? p.slice(3) : p}`
 }
@@ -540,7 +550,10 @@ export function namesPhrase(firstNames: (string | null)[], lang: ReminderLanguag
   if (lang === 'es') {
     const first = names[0] ?? 'una persona'
     if (names.length <= 1) return first
-    if (names.length === 2) return `${first} y ${names[1] ?? '1 más'}`
+    if (names.length === 2) {
+      const second = names[1] ?? '1 más'
+      return `${first} ${spanishAnd(second)} ${second}`
+    }
     return `${first} y ${names.length - 1} más`
   }
   const first = names[0] ?? 'an applicant'
@@ -561,7 +574,7 @@ export function lastCallBody(item: Pick<ReminderItem, 'firstName' | 'daysLeft' |
     const name = item.firstName ?? 'Esta persona'
     const who = item.firstName ?? 'la persona'
     const when = item.daysLeft <= 0 ? 'Hoy' : 'Mañana'
-    return `${name} se postuló el ${shortDate(item.appliedLocal, 'es')}. ${when} la postulación se cierra sola y ${who} recibe el aviso de que no hubo respuesta. Una respuesta breve, en un sentido u otro, es mejor que ninguna.`
+    return `${name} se postuló el ${longDateEs(item.appliedLocal)}. ${when} la postulación se cierra sola y ${who} recibe el aviso de que no respondiste. Una respuesta breve, en un sentido u otro, es mejor que ninguna.`
   }
   const name = item.firstName ?? 'This applicant'
   const who = item.firstName ?? 'the applicant'
@@ -599,8 +612,8 @@ export function waitingLine(n: number, allPlayers = true, lang: ReminderLanguage
 
 export const DECLINE_HINT = 'Not the right fit? Marking it "Not a fit" takes one tap, and Hockia AI drafts a kind note you can edit.'
 export const SETTINGS_FOOTER = 'Change emails in Settings → Notifications.'
-export const DECLINE_HINT_ES = '¿No encaja? Marcarla como "No encaja" lleva un toque, y Hockia AI redacta una nota amable para editar.'
-export const SETTINGS_FOOTER_ES = 'Los emails se cambian en Ajustes → Notificaciones.'
+export const DECLINE_HINT_ES = '¿No encaja? Marcar la postulación como "No encaja" lleva un solo toque, y Hockia AI redacta una nota amable que puedes editar.'
+export const SETTINGS_FOOTER_ES = 'Elige qué emails recibes en Ajustes → Notificaciones.'
 /** The footer opens the Notifications screen itself, not the settings hub. */
 export const SETTINGS_FOOTER_PATH = '/settings/notifications'
 
@@ -675,7 +688,7 @@ export function buildReminderNotification(
     const today = first && first.daysLeft <= 0
     const when = es ? (today ? 'hoy' : 'mañana') : today ? 'today' : 'tomorrow'
     const summary = es
-      ? (single ? `La postulación a ${first.roleTitle} cierra ${when}.` : `Sus postulaciones cierran ${when}.`)
+      ? (single ? `La postulación a ${first.roleTitle} cierra ${when}.` : `Esas postulaciones cierran ${when}.`)
       : single
         ? `The application to ${first.roleTitle} closes ${when}.`
         : `Their applications close ${when}.`
@@ -792,7 +805,7 @@ export function buildNewApplicationsPush(publisherId: string, items: ApplicantIt
   const title = newApplicationsSubject(items, lang)
   const summary = lang === 'es'
     ? (items.length === 1
-      ? 'Tocar para revisar la postulación.'
+      ? 'Toca para revisar la postulación.'
       : `${capitalise(namesPhrase(items.map((i) => i.firstName), 'es'))} se postularon.`)
     : items.length === 1
       ? 'Tap to review the application.'
@@ -843,7 +856,7 @@ export function pushStandsDownForBatch(
 export function newApplicationsCopyFromMetadata(metadata: Record<string, unknown> | null | undefined, lang: ReminderLanguage = 'en'): { title: string; body: string } {
   const title = typeof metadata?.title === 'string' && metadata.title.trim() ? metadata.title : null
   const body = typeof metadata?.summary === 'string' && metadata.summary.trim() ? metadata.summary : null
-  if (lang === 'es') return { title: title ?? 'Postulaciones nuevas', body: body ?? 'Hay postulaciones nuevas esperando.' }
+  if (lang === 'es') return { title: title ?? 'Postulaciones nuevas', body: body ?? 'Tienes postulaciones nuevas esperando.' }
   return { title: title ?? 'New applicants', body: body ?? 'New applications are waiting for you.' }
 }
 

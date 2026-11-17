@@ -95,7 +95,7 @@ const role: RoleFacts = { club: 'Club Atlético Rosario', title: 'Volante de Pri
 
 Deno.test('apply-draft template in Spanish', () => {
   const t = templateNoteEs(member, role)
-  assertEquals(t, 'Hola, Club Atlético Rosario: Mi puesto: Volante (CASI). Me interesa postularme a Volante de Primera. Tengo pasaporte de la UE (Italia). Tengo disponibilidad desde enero de 2027. Con gusto comparto más sobre mi hockey.')
+  assertEquals(t, 'Hola, Club Atlético Rosario: Juego de volante en CASI y me interesa postularme a Volante de Primera. Tengo pasaporte de la UE (Italia). Tengo disponibilidad desde enero de 2027. Con gusto cuento más sobre mi trayectoria.')
   assertEquals(templateNoteFor(member, role, 'en'), templateNote(member, role))
   noEnglish(t.replace(/Club Atlético Rosario|CASI|Volante de Primera|Italia/g, ''), 'apply template')
 })
@@ -103,7 +103,7 @@ Deno.test('apply-draft template in Spanish', () => {
 Deno.test('role-description template in Spanish', () => {
   const a = { type: 'player', position: 'midfielder', team: "Women's", city: 'Rosario', start: '2027-01-01', duration: 'Full season', package: ['housing', 'flights'] }
   const t = templateEs(a, 'Club Atlético Rosario')
-  assertEquals(t, 'Club Atlético Rosario busca volante para el equipo de Damas, con base en Rosario. La oportunidad es desde 2027-01-01 por toda la temporada. Ofrecemos alojamiento, pasajes. Nos interesa conocer tu temporada hasta ahora y tu disponibilidad.')
+  assertEquals(t, 'Club Atlético Rosario busca volante para el equipo de Damas, con base en Rosario. Comienza el 1 de enero de 2027 y es por toda la temporada. Ofrecemos alojamiento y pasajes. Nos interesa saber cómo viene tu temporada y cuál es tu disponibilidad.')
   assertEquals(templateFor(a, 'X', 'en'), template(a, 'X'))
   noEnglish(t.replace('Club Atlético Rosario', ''), 'role template')
   const coach = templateEs({ type: 'coach', position: 'head_coach', duration: '3 months' }, 'CASI')
@@ -173,7 +173,7 @@ Deno.test('opportunity and softening messages in Spanish', () => {
     describeSoftening('worldwide', { noun: 'clubes', count: 1, nounSingular: 'club', countryLabel: 'Chile' }),
     describeSoftening('city', { noun: 'clubes', count: 4, cityLabel: 'Rosario', countryLabel: 'Argentina' }),
   ])
-  assertEquals(msgs[0], 'Hay 3 oportunidades de volante en Damas en España con alojamiento a las que es posible postularse.')
+  assertEquals(msgs[0], 'Encontré 3 oportunidades de volante en Damas en España con alojamiento a las que puedes postularte.')
   for (const m of msgs) noEnglish(m.replace(/España|Europa|Chile|Sudamérica|Rosario|Argentina/g, ''), 'opportunity message')
   assertEquals(describeRoleNoun(crit, 'en').plural, "women's midfielder roles")
   assertEquals(buildOpportunityMessage(3, crit, 'Spain'), "I found 3 women's midfielder roles in Spain with housing you can apply to.")
@@ -220,7 +220,7 @@ Deno.test('clarifying options are covered and round-trip', () => {
   for (const role of ['player', 'coach', 'club', 'brand', null]) {
     const c = detectClarifyingNeed('Find people', role)!
     const body = localizeNlBody({ ai_message: c.message, clarifying_options: c.options }) as { ai_message: string; clarifying_options: { label: string; routed_query: string; description?: string }[] }
-    assertEquals(body.ai_message, '¿A quién buscar?')
+    assertEquals(body.ai_message, '¿A quién quieres buscar?')
     body.clarifying_options.forEach((o, i) => {
       noEnglish(o.label, 'clarifying label')
       noEnglish(o.routed_query, 'clarifying query')
@@ -247,7 +247,7 @@ Deno.test('localizeNlBody swaps fixed strings only; model text, ids and kinds un
   const out = localizeNlBody(body) as typeof body
   assertEquals(out.kind, 'soft_error')
   assertEquals(out.data, body.data)
-  assertEquals(out.ai_message, 'No se pudo completar la búsqueda. Se puede reintentar o ampliarla.')
+  assertEquals(out.ai_message, 'No pude completar la búsqueda. ¿Quieres intentarlo de nuevo o ampliarla?')
   assertEquals(out.summary, '3 coincidencias por palabra clave.')
   assertEquals(out.suggested_actions[0], { label: 'Reintentar', intent: { type: 'retry' } })
   assertEquals(out.suggested_actions[1], { label: 'Ver clubes sin filtros', intent: { type: 'free_text', query: 'Ver clubes sin filtros' } })

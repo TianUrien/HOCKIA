@@ -7,7 +7,7 @@
     "heading": "Tu perfil",
     "completeEyebrow": "Perfil completo",
     "completeTitle": "Tu perfil está completo",
-    "completeBody": "Conviene mantenerlo al día a medida que cambia la temporada.",
+    "completeBody": "Mantenlo al día a medida que cambia la temporada.",
     "nextEyebrow": "Próximo paso",
     "cta": "Empezar"
   },
@@ -26,7 +26,7 @@
     "edit": "Editar",
     "viewMore": "Ver más",
     "emptyVisitor": "Todavía no hay una bio.",
-    "emptyOwner": "Un espacio para contar el estilo de juego, las ambiciones y qué tipo de club se busca."
+    "emptyOwner": "Cuenta tu estilo de juego, tus ambiciones y qué buscas en un club."
   },
   "clubInfo": {
     "title": "Información del club",
@@ -41,7 +41,7 @@
     "leagueWomen": "Damas: {{division}}",
     "leagueMen": "Caballeros: {{division}}",
     "aboutHeading": "Sobre el club",
-    "aboutEmpty": "Un espacio para describir el club: su identidad, sus ambiciones y cómo es jugar acá.",
+    "aboutEmpty": "Describe tu club: su identidad, sus ambiciones y cómo es jugar acá.",
     "historyHeading": "Historia del club"
   },
   "completionArc": {
@@ -82,24 +82,24 @@
     "editProfileShort": "Editar",
     "founded": "Fundado en {{year}}",
     "nextStep": "Siguiente: {{label}}",
-    "allComplete": "El perfil del club tiene todas las secciones completas",
+    "allComplete": "Tu perfil de club tiene todas las secciones completas",
     "fullChecklist": "Lista completa",
     "completed": "Completado"
   },
   "hero": {
-    "openToCoach": "Disponible para dirigir",
+    "openToCoach": "Disponible para entrenar",
     "openToPlay": "Disponible para jugar",
-    "recruiting": "Reclutando",
+    "recruiting": "Incorporando",
     "shareTitle": "Perfil de Hockia",
     "linkCopied": "Enlace copiado",
     "friend": {
-      "friends": "Amistades",
+      "friends": "Conexión",
       "requested": "Solicitud enviada",
       "accept": "Aceptar",
-      "add": "Agregar a amistades",
-      "menuSent": "Solicitud de amistad enviada",
-      "menuAccept": "Aceptar solicitud de amistad",
-      "menuAdd": "Agregar a amistades"
+      "add": "Agregar conexión",
+      "menuSent": "Solicitud de conexión enviada",
+      "menuAccept": "Aceptar solicitud de conexión",
+      "menuAdd": "Agregar conexión"
     },
     "changeCover": "Cambiar foto de portada",
     "back": "Volver",
@@ -120,13 +120,13 @@
     "openingMessage": "Abriendo…",
     "message": "Mensaje",
     "stats": {
-      "friends": "Amistades",
+      "friends": "Conexiones",
       "references": "Referencias",
       "career": "Trayectoria",
       "videos": "Videos",
-      "friendsAria_one": "{{count}} amistad",
-      "friendsAria_other": "{{count}} amistades",
-      "friendsAria_many": "{{count}} amistades",
+      "friendsAria_one": "{{count}} conexión",
+      "friendsAria_other": "{{count}} conexiones",
+      "friendsAria_many": "{{count}} conexiones",
       "referencesAria_one": "{{count}} referencia",
       "referencesAria_other": "{{count}} referencias",
       "referencesAria_many": "{{count}} referencias",
@@ -137,30 +137,30 @@
       "videosAria_other": "{{count}} videos",
       "videosAria_many": "{{count}} videos"
     },
-    "signInTitle": "Iniciar sesión para agregar amistades"
+    "signInTitle": "Iniciar sesión para agregar conexiones"
   },
   "checkIn": {
     "player": {
-      "question": "¿Sigue en pie la disponibilidad para jugar?",
-      "rationale": "Confirmar cada semana mantiene el perfil al día. Los clubes confían en perfiles activos."
+      "question": "¿Sigues disponible para jugar?",
+      "rationale": "Confirmar cada semana mantiene tu perfil al día. Los clubes confían en perfiles activos."
     },
     "coachRecruiting": {
-      "question": "¿Sigue la búsqueda de jugadores/as?",
-      "rationale": "Un chequeo semanal mantiene las búsquedas al día."
+      "question": "¿Sigues buscando jugadores/as?",
+      "rationale": "Un chequeo semanal mantiene tus búsquedas al día."
     },
     "coach": {
-      "question": "¿Sigue en pie la disponibilidad para dirigir?",
-      "rationale": "Confirmar cada semana mantiene el perfil al día. Los clubes confían en perfiles activos."
+      "question": "¿Sigues disponible para entrenar?",
+      "rationale": "Confirmar cada semana mantiene tu perfil al día. Los clubes confían en perfiles activos."
     },
     "umpire": {
-      "question": "¿Sigue la actividad como árbitro/a?",
-      "rationale": "Una confirmación semanal mantiene los partidos y las referencias al día."
+      "question": "¿Sigues en actividad como árbitro/a?",
+      "rationale": "Una confirmación semanal mantiene tus partidos y tus referencias al día."
     },
     "confirmedTitle": "Confirmado. Gracias por avisar.",
-    "confirmedBody": "El perfil sigue al día por 60 días más.",
+    "confirmedBody": "Tu perfil sigue al día por 60 días más.",
     "dismiss": "Descartar",
     "eyebrow": "Chequeo semanal",
-    "confirm": "Sí, sigue en pie",
+    "confirm": "Sí, sigo disponible",
     "notNow": "Por ahora no"
   },
   "brandSummary": {
@@ -171,20 +171,20 @@
     "oldestWrote": "El mensaje más antiguo llegó {{ago}}",
     "reply": "Responder",
     "offersTitle": "Tus ofertas, últimos 30 días",
-    "market_one": "{{count}} integrante vive donde vende la marca",
-    "market_other": "{{count}} integrantes viven donde vende la marca",
-    "market_many": "{{count}} integrantes viven donde vende la marca",
-    "marketUnknown": "Ver a quiénes podría llegar la marca",
+    "market_one": "{{count}} integrante vive donde vendes",
+    "market_other": "{{count}} integrantes viven donde vendes",
+    "market_many": "{{count}} integrantes viven donde vendes",
+    "marketUnknown": "Ver a quiénes podrías llegar",
     "shownTo": "Se mostró a",
     "storeVisits": "A la tienda",
     "contacted": "Contactos"
   },
   "countryConfirm": {
-    "title": "¿En qué país está tu base?",
-    "bodyWithPlace": "El perfil dice {{place}}. Con el país cargado, las oportunidades, los clubes y las ofertas cercanas pueden encontrarte.",
-    "bodyWithGuess": "Parece que la conexión es desde {{country}}. Con el país cargado, las oportunidades, los clubes y las ofertas cercanas pueden encontrarte.",
-    "body": "Con el país cargado, las oportunidades, los clubes y las ofertas cercanas pueden encontrarte.",
-    "saveFailed": "No se pudo guardar. Conviene revisar la conexión y reintentar.",
+    "title": "¿En qué país vives?",
+    "bodyWithPlace": "Tu perfil dice {{place}}. Agrega tu país para que las oportunidades, los clubes y las ofertas cercanas puedan encontrarte.",
+    "bodyWithGuess": "Parece que estás en {{country}}. Agrega tu país para que las oportunidades, los clubes y las ofertas cercanas puedan encontrarte.",
+    "body": "Agrega tu país para que las oportunidades, los clubes y las ofertas cercanas puedan encontrarte.",
+    "saveFailed": "No se pudo guardar. Revisa tu conexión e intenta de nuevo.",
     "yes": "Sí, {{country}}",
     "chooseAnother": "Elegir otro",
     "choose": "Elegir país",
@@ -202,24 +202,24 @@
     "goToImage": "Ir a la imagen {{number}}"
   },
   "referenceAsk": {
-    "bodyNamed": "{{name}} puede respaldar tu perfil con una referencia. Las referencias de conexiones generan confianza rápido.",
-    "body": "Tu nueva conexión puede respaldar tu perfil con una referencia. Las referencias de conexiones generan confianza rápido.",
+    "bodyNamed": "{{name}} puede avalar tu perfil con una referencia. Las referencias de conexiones generan confianza rápido.",
+    "body": "Tu nueva conexión puede avalar tu perfil con una referencia. Las referencias de conexiones generan confianza rápido.",
     "dismiss": "Descartar",
     "eyebrow": "Nueva conexión",
     "titleNamed": "¿Pedirle una referencia a {{name}}?",
     "title": "¿Pedirle una referencia a tu nueva conexión?",
-    "cta": "Pedir referencia"
+    "cta": "Pedir aval"
   },
   "fullMatchNotice": {
-    "madePublicToast": "Los partidos completos ahora son públicos.",
-    "saveFailedToast": "No se pudo guardar. Se puede reintentar.",
-    "title": "Los partidos completos ahora son para clubes y entrenadores/as",
-    "body": "Solo los clubes y entrenadores/as que reclutan pueden ver los partidos completos. Los highlights siguen siendo públicos. Se puede cambiar en cualquier momento desde Ajustes → Privacidad.",
+    "madePublicToast": "Tus partidos completos ahora son públicos.",
+    "saveFailedToast": "No se pudo guardar. Intenta de nuevo.",
+    "title": "Tus partidos completos ahora son para clubes y entrenadores/as",
+    "body": "Solo los clubes y entrenadores/as que reclutan pueden ver tus partidos completos. Los highlights siguen siendo públicos. Puedes cambiarlo cuando quieras desde Ajustes → Privacidad.",
     "keep": "Dejarlo así",
     "makePublic": "Hacerlos públicos",
-    "confirmAria": "Hacer públicos los partidos completos",
-    "confirmTitle": "¿Hacer públicos los partidos completos?",
-    "confirmBody": "Cualquier persona en Hockia podrá ver los partidos completos. Se puede volver atrás en cualquier momento desde Ajustes → Privacidad.",
+    "confirmAria": "Hacer públicos tus partidos completos",
+    "confirmTitle": "¿Hacer públicos tus partidos completos?",
+    "confirmBody": "Cualquier persona en Hockia podrá ver tus partidos completos. Puedes volver atrás cuando quieras desde Ajustes → Privacidad.",
     "saving": "Guardando…",
     "confirmCta": "Hacerlos públicos",
     "cancel": "Cancelar"
@@ -232,15 +232,15 @@
     "retry": "Reintentar",
     "empty": {
       "title": "Te damos la bienvenida a tu feed",
-      "body": "El feed se llena a medida que crece la comunidad. Mientras tanto, hay mucho para explorar:",
+      "body": "Tu feed se llena a medida que crece la comunidad. Mientras tanto, empieza a explorar:",
       "opportunitiesTitle": "Ver oportunidades",
-      "opportunitiesBody": "Para encontrar el próximo paso",
+      "opportunitiesBody": "Encuentra tu próximo paso",
       "communityTitle": "Sumarse a la comunidad",
-      "communityBody": "Preguntas y conocimiento compartido",
+      "communityBody": "Haz preguntas y comparte lo que sabes",
       "clubsTitle": "Explorar clubes",
       "clubsBody": "Clubes de 8 países",
       "peopleTitle": "Buscar personas",
-      "peopleBody": "Para conectar con jugadores/as y entrenadores/as"
+      "peopleBody": "Conecta con jugadores/as y entrenadores/as"
     }
   },
   "comments": {
@@ -322,25 +322,25 @@
     "coaches_one": "{{count}} entrenador/a vio tu perfil esta semana",
     "coaches_other": "{{count}} entrenadores/as vieron tu perfil esta semana",
     "coaches_many": "{{count}} entrenadores/as vieron tu perfil esta semana",
-    "subtitle": "Tocar para ver quiénes son y qué les llamó la atención.",
+    "subtitle": "Toca para ver quiénes son y qué les llamó la atención.",
     "dismiss": "Descartar",
     "eyebrow": "Esta semana",
-    "cta": "Ver quiénes"
+    "cta": "Ver visitas"
   },
   "pulseSection": {
-    "ariaLabel": "Pulse: novedades desde la última visita",
-    "title": "Desde la última visita",
+    "ariaLabel": "Pulse: novedades desde tu última visita",
+    "title": "Desde tu última visita",
     "empty": "Todo al día."
   },
   "celebration": {
     "reference": {
       "title": "Primera referencia aceptada",
-      "bodyNamed": "{{name}} respaldó tu perfil. Quienes reclutan ya pueden verlo.",
-      "body": "Alguien del hockey respaldó tu perfil. Quienes reclutan ya pueden verlo."
+      "bodyNamed": "{{name}} avaló tu perfil. Quienes reclutan ya pueden verlo.",
+      "body": "Alguien del hockey avaló tu perfil. Quienes reclutan ya pueden verlo."
     },
     "highlight": {
       "title": "Video de highlights agregado",
-      "body": "El perfil ahora muestra tu juego real a quienes reclutan."
+      "body": "Tu perfil ahora muestra tu juego real a quienes reclutan."
     },
     "career": {
       "title": "Primera etapa de trayectoria agregada",
@@ -362,10 +362,10 @@
     "viewsLabel_one": "visita al perfil",
     "viewsLabel_other": "visitas al perfil",
     "viewsLabel_many": "visitas al perfil",
-    "repliesLabel_one": "respuesta de clubes",
+    "repliesLabel_one": "respuesta de un club",
     "repliesLabel_other": "respuestas de clubes",
     "repliesLabel_many": "respuestas de clubes",
-    "fitLabel": "coinciden con la búsqueda",
+    "fitLabel": "en línea con tu búsqueda",
     "applicantsLabel_one": "postulación nueva",
     "applicantsLabel_other": "postulaciones nuevas",
     "applicantsLabel_many": "postulaciones nuevas",
@@ -377,12 +377,12 @@
     "unnamedAuthor": "Integrante",
     "sentToast": "Se envió a {{name}}",
     "sendFailed": "No se pudo enviar la publicación",
-    "shareFailed": "No se pudo compartir la publicación. Se puede reintentar.",
+    "shareFailed": "No se pudo compartir la publicación. Intenta de nuevo.",
     "linkCopied": "Enlace copiado",
     "systemShareFailed": "No se pudo abrir el menú para compartir",
     "title": "Compartir esta publicación",
     "unnamedMember": "Integrante de Hockia",
-    "sendToFriend": "Enviar a un contacto",
+    "sendToFriend": "Enviar a una conexión",
     "sentAria": "Se envió a {{name}}",
     "sendAria": "Enviar a {{name}}",
     "copyLink": "Copiar enlace",
@@ -421,12 +421,12 @@
       "imageUpload": "No se pudo subir la imagen",
       "logoUpload": "No se pudo subir el logo del club",
       "transferRole": "Los anuncios de pase solo están disponibles para jugadores/as, entrenadores/as y clubes.",
-      "personRequired": "Falta elegir a quién se incorpora",
+      "personRequired": "Elige un/a jugador/a o un/a entrenador/a",
       "blockedFallback": "El contenido no cumple las normas de la comunidad.",
       "signingFailed": "No se pudo publicar la incorporación",
-      "clubRequired": "Falta elegir o escribir el nombre de un club",
+      "clubRequired": "Elige un club o escribe su nombre",
       "transferFailed": "No se pudo publicar el pase",
-      "empty": "Para publicar hace falta texto, una foto o un video.",
+      "empty": "Agrega texto, una foto o un video para publicar.",
       "tooLong": "El texto supera el límite de {{max}} caracteres",
       "updateFailed": "No se pudo actualizar la publicación",
       "createFailed": "No se pudo crear la publicación",
@@ -462,10 +462,10 @@
     "signing": {
       "personSearch": "Buscar jugador/a o entrenador/a...",
       "personEmpty": "No se encontraron jugadores/as ni entrenadores/as",
-      "taggedAria": "Se etiquetó a {{name}}. Tocar para cambiar",
+      "taggedAria": "Se etiquetó a {{name}}. Toca para cambiar",
       "personLabel": "Incorporación (etiquetar integrante)",
-      "roleLabel": "Puesto",
-      "rolePlaceholder": "Primera femenina",
+      "roleLabel": "Rol",
+      "rolePlaceholder": "Primera de damas",
       "seasonLabel": "Temporada",
       "preview": "Vista previa",
       "clubFallback": "Tu club"
@@ -542,7 +542,7 @@
     "reference": {
       "unknownReferee": "Alguien",
       "unknownMember": "esta persona",
-      "vouched": "<name>{{referee}}</name><rest> dio una referencia sobre {{member}}</rest>",
+      "vouched": "<name>{{referee}}</name><rest> avaló a {{member}}</rest>",
       "caption": "Recibió una referencia",
       "viewProfile": "Ver perfil"
     },
@@ -611,11 +611,11 @@
       "change": "Cambiar"
     },
     "ask": {
-      "saveFailed": "No se pudo guardar el objetivo. Se puede reintentar.",
+      "saveFailed": "No se pudo guardar tu objetivo. Intenta de nuevo.",
       "ariaLabel": "¿Cuál es tu objetivo?",
       "eyebrow": "Tu objetivo",
       "title": "¿Cuál es tu objetivo?",
-      "body": "Hasta tres opciones, o en tus propias palabras. Sirve para mostrarte lo que ayuda. Nadie más lo ve.",
+      "body": "Elige hasta tres, o dilo con tus palabras. Lo usamos para mostrarte lo que te sirve. Nadie más lo ve.",
       "other": "Otro…",
       "save": "Ese es mi objetivo · {{picked}} de {{max}}",
       "cancel": "Cancelar",
@@ -630,9 +630,9 @@
     }
   },
   "aiScout": {
-    "placeholder": "Preguntarle al scout con IA: \"defensores/as disponibles con pasaporte europeo\"",
-    "inputAria": "Preguntarle al scout con IA",
-    "submitAria": "Buscar con el scout con IA"
+    "placeholder": "Preguntarle al scout de IA: \"defensores/as disponibles con pasaporte de la UE\"",
+    "inputAria": "Preguntarle al scout de IA",
+    "submitAria": "Buscar con el scout de IA"
   },
   "applicantsReview": {
     "title_one": "{{count}} postulación espera respuesta",
@@ -641,7 +641,7 @@
     "newBadge_one": "{{count}} nueva",
     "newBadge_other": "{{count}} nuevas",
     "newBadge_many": "{{count}} nuevas",
-    "hint": "Conviene responder todas las postulaciones."
+    "hint": "Responde a cada postulación."
   },
   "yourApplications": {
     "title": "Tus postulaciones",
@@ -652,13 +652,13 @@
   "playerHero": {
     "player": {
       "emptyHeadline": "Esta semana, que los clubes te encuentren.",
-      "emptySub": "Los clubes están más activos los lunes. Conviene marcar la disponibilidad para jugar y tener el perfil al día. Los perfiles activos se ven mucho más.",
-      "emptySubWhenOpen": "Los clubes están más activos los lunes. Conviene tener el perfil al día. Los perfiles activos se ven mucho más."
+      "emptySub": "Los clubes están más activos los lunes. Marca que estás disponible para jugar y mantén tu perfil al día. Los perfiles activos se ven mucho más.",
+      "emptySubWhenOpen": "Los clubes están más activos los lunes. Mantén tu perfil al día. Los perfiles activos se ven mucho más."
     },
     "coach": {
       "emptyHeadline": "Esta semana, que los clubes te encuentren.",
-      "emptySub": "Los clubes están más activos los lunes. Conviene tener el perfil de entrenador/a y la disponibilidad al día.",
-      "emptySubWhenOpen": "Los clubes están más activos los lunes. Conviene tener el perfil de entrenador/a y la disponibilidad al día."
+      "emptySub": "Los clubes están más activos los lunes. Mantén al día tu perfil de entrenador/a y tu disponibilidad.",
+      "emptySubWhenOpen": "Los clubes están más activos los lunes. Mantén al día tu perfil de entrenador/a y tu disponibilidad."
     },
     "label": "Tu semana en Hockia",
     "streak": "Racha de {{days}} días",
@@ -690,7 +690,7 @@
     "linkCopied": "Enlace copiado",
     "copyFailed": "No se pudo copiar el enlace",
     "blockedToast": "Se bloqueó a {{name}}",
-    "blockFailed": "No se pudo bloquear. Se puede reintentar.",
+    "blockFailed": "No se pudo bloquear. Intenta de nuevo.",
     "share": "Compartir publicación",
     "copyLink": "Copiar enlace",
     "removeTag": "Quitar mi etiqueta",
@@ -699,7 +699,7 @@
     "block": "Bloquear a {{name}}",
     "menuLabel": "Opciones de la publicación",
     "blockTitle": "¿Bloquear a {{name}}?",
-    "blockBody": "Dejan de verse mutuamente las publicaciones, los comentarios y el perfil, y esa persona no puede enviarte mensajes. No recibe ningún aviso.",
+    "blockBody": "Ya no verás sus publicaciones, comentarios ni perfil, ni esa persona los tuyos, y no podrá enviarte mensajes. No recibe ningún aviso.",
     "blockConfirm": "Bloquear"
   },
   "signingArt": {
@@ -720,7 +720,7 @@
     "pymk": {
       "title": "Personas que quizás conozcas",
       "deckTitle": "Personas que quizás conozcas",
-      "faceAria": "{{name}}, quizás se conozcan"
+      "faceAria": "{{name}}, quizás conozcas a esta persona"
     },
     "seeAll": "Ver todo",
     "unnamedMember": "Integrante"
@@ -741,8 +741,8 @@
       "cta": "Agregar"
     },
     "checkIn": {
-      "titleCoach": "¿Sigue la disponibilidad para dirigir?",
-      "titlePlayer": "¿Sigue la disponibilidad para jugar?",
+      "titleCoach": "¿Sigues disponible para entrenar?",
+      "titlePlayer": "¿Sigues disponible para jugar?",
       "subtitle": "Los clubes lo ven en tu perfil",
       "cta": "Sí"
     },
@@ -767,11 +767,11 @@
     },
     "career": {
       "title": "Agregar tus clubes",
-      "subtitle": "Desde el CV o con unas líneas",
+      "subtitle": "Desde tu CV o con unas líneas",
       "cta": "Empezar"
     },
     "complete": {
-      "title": "Completar el perfil",
+      "title": "Completar tu perfil",
       "subtitle": "{{percent}}% listo · los clubes filtran por esto",
       "cta": "Editar"
     },
@@ -783,24 +783,24 @@
     },
     "quiet": {
       "title": "{{title}} todavía no tiene postulaciones",
-      "subtitle": "Para compartir con tu red",
+      "subtitle": "Compártela con tu red",
       "cta": "Abrir"
     },
     "available": {
       "title_one": "{{count}} jugador/a disponible",
       "title_other": "{{count}} jugadores/as disponibles",
       "title_many": "{{count}} jugadores/as disponibles",
-      "subtitle": "Disponibles · afines al equipo",
+      "subtitle": "Disponibles · encajan con tu equipo",
       "cta": "Ver"
     },
     "crest": {
-      "title": "Agregar el escudo del club",
-      "subtitle": "Es lo primero que se busca",
+      "title": "Agregar el escudo de tu club",
+      "subtitle": "Es lo primero que buscan jugadores/as",
       "cta": "Agregar"
     },
     "logo": {
-      "title": "Agregar el logo",
-      "subtitle": "Así se reconoce a las marcas",
+      "title": "Agregar tu logo",
+      "subtitle": "Deportistas reconocen tu marca por él",
       "cta": "Agregar"
     },
     "brand": {
@@ -809,7 +809,7 @@
       "subtitleSearches_many": "Esta semana · en {{count}} búsquedas"
     },
     "umpire": {
-      "title": "Agregar el nivel de arbitraje",
+      "title": "Agregar tu nivel de arbitraje",
       "subtitle": "Clubes y ligas lo buscan",
       "cta": "Agregar"
     },
@@ -823,7 +823,7 @@
     "postFailed": "No se pudo publicar la incorporación",
     "postedToast": "Incorporación publicada",
     "title": "Incorporación confirmada",
-    "body": "¿Compartirla con la comunidad? {{name}} queda con etiqueta y recibe una notificación.",
+    "body": "¿Compartirla con la comunidad? Se etiqueta a {{name}}, que recibe una notificación.",
     "clubFallback": "Tu club",
     "post": "Publicar nueva incorporación",
     "notNow": "Ahora no"
@@ -840,7 +840,7 @@
     "count_many": "{{count}} comentarios",
     "loading": "Cargando comentarios",
     "loadFailed": "No se pudieron cargar los comentarios.",
-    "empty": "Todavía no hay comentarios. Buen momento para dejar el primero.",
+    "empty": "Todavía no hay comentarios. Deja el primero.",
     "emptyDisabled": "Sin comentarios.",
     "viewProfileAria": "{{name}} — ver perfil",
     "unnamedAuthor": "Integrante",
@@ -875,12 +875,12 @@
     "congrats": {
       "label": "Felicitar",
       "failed": "No se pudo enviar la felicitación",
-      "you": "Felicitaste",
-      "youAndOthers": "Felicitaste + {{others}}",
-      "sentAria": "Felicitación enviada. Tocar para deshacer.",
-      "sentAriaWithOthers_one": "Felicitación enviada, junto con {{count}} más. Tocar para deshacer.",
-      "sentAriaWithOthers_other": "Felicitación enviada, junto con {{count}} más. Tocar para deshacer.",
-      "sentAriaWithOthers_many": "Felicitación enviada, junto con {{count}} más. Tocar para deshacer.",
+      "you": "Tú",
+      "youAndOthers": "Tú + {{others}}",
+      "sentAria": "Felicitación enviada. Toca para deshacer.",
+      "sentAriaWithOthers_one": "Felicitación enviada, junto con {{count}} más. Toca para deshacer.",
+      "sentAriaWithOthers_other": "Felicitación enviada, junto con {{count}} más. Toca para deshacer.",
+      "sentAriaWithOthers_many": "Felicitación enviada, junto con {{count}} más. Toca para deshacer.",
       "labelAriaWithCount_one": "{{label}}, {{count}} felicitación",
       "labelAriaWithCount_other": "{{label}}, {{count}} felicitaciones",
       "labelAriaWithCount_many": "{{label}}, {{count}} felicitaciones"
@@ -889,7 +889,7 @@
   "feedV1": {
     "deckFailed": "No se pudieron abrir estos perfiles",
     "errorTitle": "No se pudo cargar el feed",
-    "errorBody": "Se puede deslizar hacia abajo o reintentar.",
+    "errorBody": "Desliza hacia abajo o intenta de nuevo.",
     "retry": "Reintentar",
     "loadingMore": "Cargando más",
     "opportunity": {
@@ -958,7 +958,7 @@
     }
   },
   "engagement": {
-    "congratsFailed": "No se pudieron enviar las felicitaciones",
+    "congratsFailed": "No se pudo enviar la felicitación",
     "commentFailed": "No se pudo publicar el comentario",
     "deleteCommentFailed": "No se pudo eliminar el comentario",
     "commentsToggleFailed": "No se pudieron cambiar los comentarios",
@@ -967,7 +967,7 @@
   "aiNextSteps": {
     "photo": {
       "label": "Agregar una foto de perfil",
-      "fromGallery": "Elegir una de tus fotos o subir una nueva",
+      "fromGallery": "Elige una de tus fotos o sube una nueva",
       "description": "Los clubes miran primero la foto",
       "invalidFile": "La foto tiene que ser JPG o PNG"
     },
@@ -978,15 +978,15 @@
     },
     "bio": {
       "label": "Escribir mi bio",
-      "description": "La redacto a partir de tu perfil; la elección y la edición quedan de tu lado"
+      "description": "La redacto a partir de tu perfil; tú eliges y editas"
     },
     "improveBio": {
       "label": "Mejorar mi bio",
       "description": "La actual es corta; sugiero una más completa"
     },
     "video": {
-      "label": "Agregar un video de jugadas",
-      "description": "Pegar un enlace de YouTube o Vimeo"
+      "label": "Agregar un video de highlights",
+      "description": "Pega un enlace de YouTube o Vimeo"
     },
     "career": {
       "label": "Agregar mis clubes",
@@ -1003,25 +1003,25 @@
   },
   "goalOptions": {
     "play_abroad": "Jugar en el exterior",
-    "move_up": "Subir de categoría",
+    "move_up": "Subir de división",
     "club_near_me": "Encontrar un club donde vivo",
     "get_sponsor": "Conseguir un sponsor",
     "keep_playing": "Seguir jugando bien",
     "coach_abroad": "Entrenar en el exterior",
     "coach_higher": "Entrenar en un nivel más alto",
-    "recruit_players": "Sumar jugadoras y jugadores a mi equipo",
+    "recruit_players": "Sumar jugadores/as a mi equipo",
     "grow_coach": "Crecer como entrenador/a",
     "fill_role": "Cubrir un lugar esta temporada",
     "sign_abroad": "Incorporar deportistas del exterior",
     "find_coach": "Encontrar entrenador/a",
     "find_sponsors": "Encontrar sponsors",
     "grow_club": "Hacer crecer nuestro club",
-    "find_ambassadors": "Encontrar embajadoras y embajadores",
+    "find_ambassadors": "Encontrar embajadores/as",
     "reach_new_countries": "Llegar a deportistas de otros países",
     "reach_clubs": "Llegar a clubes",
     "umpire_higher": "Arbitrar en un nivel más alto",
     "umpire_abroad": "Arbitrar en el exterior",
-    "build_record": "Sumar antecedentes"
+    "build_record": "Sumar experiencia"
   },
   "goalRows": {
     "abroad_one": "{{count}} oportunidad abierta en el exterior",

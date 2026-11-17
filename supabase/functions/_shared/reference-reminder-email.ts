@@ -56,7 +56,21 @@ export function recipientFirstName(
 
 /** Subject (and heading) of the reminder. */
 export function reminderSubject(language: MemberLanguage = 'en'): string {
-  return language === 'es' ? 'Sumar confianza a tu perfil de Hockia' : 'Add trust to your Hockia profile'
+  return language === 'es' ? 'Más confianza para tu perfil de Hockia' : 'Add trust to your Hockia profile'
+}
+
+/** Spanish line about the suggested connection; without a name it never starts with a lower-case fallback. */
+function connectionLineEs(friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>, name: string): string {
+  const named = Boolean(friend.full_name?.trim() || friend.username?.trim())
+  return named
+    ? `${name} es una de tus conexiones en Hockia y podría avalar tu juego.`
+    : 'Una de tus conexiones en Hockia podría avalar tu juego.'
+}
+
+/** Spanish greeting: "Hola, Ana" or, with no name, "Hola" (glossary: "Hola:"). */
+function greetingEs(recipient: Pick<ReminderRecipient, 'full_name' | 'username'>): string {
+  const name = recipient.full_name?.split(' ')[0]?.trim() || recipient.username?.trim()
+  return name ? `Hola, ${name}` : 'Hola'
 }
 
 /**
@@ -95,9 +109,9 @@ export function friendFirstName(
  * avoids URL drift between in-app and email surfaces.
  */
 const REMINDER_BODY_ES =
-  'Las referencias son avales breves de cuerpos técnicos, compañeros/as de equipo y clubes con quienes hay conexión en Hockia. Aparecen en tu perfil y dan más confianza sobre tu trayectoria a los clubes y cuerpos técnicos que buscan talento en Hockia.'
-const REMINDER_ONE_ES = 'Una sola referencia suele marcar la diferencia, y pedirla lleva más o menos un minuto.'
-const REMINDER_FOOTER_ES = 'Este email te llega porque los avisos por email de referencias están activados en tu cuenta de Hockia.'
+  'Las referencias son avales breves de entrenadores/as, compañeros/as de equipo y clubes con los que te conectaste en Hockia. Aparecen en tu perfil y dan más confianza sobre tu trayectoria a los clubes y cuerpos técnicos que buscan talento en Hockia.'
+const REMINDER_ONE_ES = 'Una sola referencia suele marcar la diferencia, y pedirla te lleva más o menos un minuto.'
+const REMINDER_FOOTER_ES = 'Este email te llega porque tienes activados los avisos por email de referencias en Hockia.'
 
 export function buildReminderCtaUrl(
   baseUrl: string,
@@ -140,7 +154,7 @@ export function generateReminderEmailHtml(
 
     <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${reminderSubject(language)}</h1>
     <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es
-      ? `Hola, ${escapeHtml(firstName)}. ${escapeHtml(friendFirst)} es parte de tus conexiones en Hockia y puede dar una referencia sobre tu juego.`
+      ? `${escapeHtml(greetingEs(recipient))}. ${escapeHtml(connectionLineEs(friend, friendFirst))}`
       : `Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on Hockia. They could vouch for your hockey.`}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
@@ -200,9 +214,9 @@ export function generateReminderEmailText(
     return [
       reminderSubject(language),
       '',
-      `Hola, ${firstName}:`,
+      `${greetingEs(recipient)}:`,
       '',
-      `${friendName} es parte de tus conexiones en Hockia y puede dar una referencia sobre tu juego.`,
+      connectionLineEs(friend, friendName),
       '',
       REMINDER_BODY_ES,
       '',

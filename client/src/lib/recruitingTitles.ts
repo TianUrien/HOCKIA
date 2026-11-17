@@ -39,6 +39,9 @@ const FALLBACK_NAMES: Record<string, string> = {
   'The player': 'thePlayer',
 }
 
+const PLAYER_FALLBACKS = new Set(['A player', 'a player', 'The player'])
+const isPlayerFallback = (raw: string) => PLAYER_FALLBACKS.has(raw.trim())
+
 /** A stored name, or the catalog word for the SQL's English fallback ("The player"). */
 function nameOf(raw: string): string {
   const fallback = FALLBACK_NAMES[raw]
@@ -51,6 +54,8 @@ export function recruitingTitle(event: string | null, stored: string): string {
     const m = stored.trim().match(p.re)
     const raw = m?.[1]?.trim()
     if (raw) {
+      // No member name (the SQL's "A player" / "The player"): a line without one reads better than "La persona…".
+      if (isPlayerFallback(raw)) return tNotifications(`recruitingTitles.noName.${p.key}` as 'recruitingTitles.noName.offerSent')
       return tNotifications(`recruitingTitles.${p.key}` as 'recruitingTitles.offerSent', { name: nameOf(raw) })
     }
   }
@@ -73,22 +78,30 @@ function dayOf(raw: string): string {
 
 const role = (raw: string) => (raw.trim() === 'your role' ? tInbox('signing.serverLines.yourRole') : raw.trim())
 
+/** One step line; the nameless wording when the SQL wrote its player fallback. */
+function serverLine(key: string, rawName: string, vars: Record<string, string>): string {
+  // Keys are built from the pattern table, so the typed key union can't follow them.
+  const t = tInbox as unknown as (key: string, options: Record<string, string>) => string
+  if (isPlayerFallback(rawName)) return t(`signing.serverLinesNoName.${key}`, vars)
+  return t(`signing.serverLines.${key}`, { name: nameOf(rawName), ...vars })
+}
+
 const SERVER_LINES: { re: RegExp; line: (m: RegExpExecArray) => string }[] = [
-  { re: /^(.+?) marked you as signed for (.+?)\. Confirm it on Hockia/, line: (m) => tInbox('signing.serverLines.markedYou', { name: nameOf(m[1]), role: role(m[2]) }) },
+  { re: /^(.+?) marked you as signed for (.+?)\. Confirm it on Hockia/, line: (m) => serverLine('markedYou', m[1], { role: role(m[2]) }) },
   {
     re: /^(.+?) (sent you an offer|updated its offer) for (.+?), open until (.+?)\. Open Hockia/,
-    line: (m) => tInbox(m[2] === 'updated its offer' ? 'signing.serverLines.offerUpdated' : 'signing.serverLines.offerSent', { name: nameOf(m[1]), role: role(m[3]), day: dayOf(m[4]) }),
+    line: (m) => serverLine(m[2] === 'updated its offer' ? 'offerUpdated' : 'offerSent', m[1], { role: role(m[3]), day: dayOf(m[4]) }),
   },
   // The invite card adds the club's note and how to answer after its first line; the line alone is translated.
-  { re: /^(.+?) invited you to apply for (.+?)\.(?:\n|$)/, line: (m) => tInbox('signing.serverLines.inviteFirstLine', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) confirmed the signing for (.+)\. Signed through Hockia\.$/, line: (m) => tInbox('signing.serverLines.signingConfirmed', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) undid the signing for (.+)\.$/, line: (m) => tInbox('signing.serverLines.signingUndone', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) withdrew its offer for (.+)\.$/, line: (m) => tInbox('signing.serverLines.offerWithdrawn', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) withdrew their application for (.+)\.$/, line: (m) => tInbox('signing.serverLines.applicationWithdrawn', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) accepted the offer for (.+)\.$/, line: (m) => tInbox('signing.serverLines.offerAccepted', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) declined the offer for (.+)\.$/, line: (m) => tInbox('signing.serverLines.offerDeclined', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) applied for (.+)\.$/, line: (m) => tInbox('signing.serverLines.applied', { name: nameOf(m[1]), role: role(m[2]) }) },
-  { re: /^(.+?) passed on (.+)\.$/, line: (m) => tInbox('signing.serverLines.passedOn', { name: nameOf(m[1]), role: role(m[2]) }) },
+  { re: /^(.+?) invited you to apply for (.+?)\.(?:\n|$)/, line: (m) => serverLine('inviteFirstLine', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) confirmed the signing for (.+)\. Signed through Hockia\.$/, line: (m) => serverLine('signingConfirmed', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) undid the signing for (.+)\.$/, line: (m) => serverLine('signingUndone', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) withdrew its offer for (.+)\.$/, line: (m) => serverLine('offerWithdrawn', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) withdrew their application for (.+)\.$/, line: (m) => serverLine('applicationWithdrawn', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) accepted the offer for (.+)\.$/, line: (m) => serverLine('offerAccepted', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) declined the offer for (.+)\.$/, line: (m) => serverLine('offerDeclined', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) applied for (.+)\.$/, line: (m) => serverLine('applied', m[1], { role: role(m[2]) }) },
+  { re: /^(.+?) passed on (.+)\.$/, line: (m) => serverLine('passedOn', m[1], { role: role(m[2]) }) },
 ]
 
 /** A recruiting step line in the active language; English and unrecognised lines as stored. */

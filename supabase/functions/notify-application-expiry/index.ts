@@ -30,7 +30,7 @@ import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 const EXPIRY_EXPLAINER_EN =
   "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:"
 const EXPIRY_EXPLAINER_ES =
-  'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nadie quede esperando. Algunas conversaciones simplemente siguen por otro lado. Esto es lo que está abierto ahora:'
+  'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nunca te quedes esperando. Algunas conversaciones simplemente siguen por otro lado. Esto es lo que está abierto ahora:'
 
 interface QueueRecord {
   id: string
@@ -168,7 +168,7 @@ Deno.serve(async (req: Request) => {
     const suggestions = await fetchSuggestions(supabase, player.id, opportunityIds, 3)
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
+    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
     const single = entries.length === 1
 
     const subject = es
@@ -189,7 +189,7 @@ Deno.serve(async (req: Request) => {
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? (firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:') : `Hi ${escapeHtml(firstName)},`}</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.55;">
           ${es
             ? single
@@ -217,14 +217,14 @@ Deno.serve(async (req: Request) => {
 
     const text = es
       ? [
-        `Hola, ${firstName}:`,
+        firstName ? `Hola, ${firstName}:` : 'Hola:',
         '',
         single
           ? `Tu postulación a "${entries[0].title}" ya no está activa en Hockia.`
           : `Estas postulaciones ya no están activas en Hockia:`,
         ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
         '',
-        'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nadie quede esperando. Algunas conversaciones simplemente siguen por otro lado.',
+        'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nunca te quedes esperando. Algunas conversaciones simplemente siguen por otro lado.',
         suggestionsText(suggestions, HOCKIA_BASE_URL, language),
         '',
         `Ver oportunidades abiertas: ${HOCKIA_BASE_URL}/opportunities`,

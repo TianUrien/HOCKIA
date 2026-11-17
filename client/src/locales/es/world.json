@@ -2,7 +2,7 @@
   "club": {
     "media": {
       "title": "Galería de fotos",
-      "description": "Gestionar las fotos del club",
+      "description": "Gestiona las fotos de tu club",
       "empty": "Todavía no hay fotos",
       "add": "Agregar fotos"
     },
@@ -11,7 +11,7 @@
       "menThenWomen": "{{men}} · caballeros, {{women}} · damas",
       "men": "{{league}} · caballeros",
       "women": "{{league}} · damas",
-      "bandNote": "Hockia todavía no tiene un nivel para {{list}}. Hasta que lo tenga, el encaje con tus oportunidades no puede comparar niveles."
+      "bandNote": "Hockia todavía no tiene un nivel para {{list}}. Hasta entonces, el encaje no puede comparar niveles en tus oportunidades."
     },
     "openRole": {
       "label": "Oportunidad abierta",
@@ -20,56 +20,56 @@
     "strength": {
       "logo": {
         "label": "Escudo del club",
-        "hint": "Subir el escudo del club",
-        "unlock": "Un escudo reconocible hace que el club se destaque en las búsquedas.",
+        "hint": "Sube el escudo de tu club",
+        "unlock": "Un escudo reconocible hace que tu club se destaque en las búsquedas.",
         "action": "Agregar escudo"
       },
       "about": {
         "label": "Sobre el club",
-        "hint": "Agregar una descripción del club",
-        "unlock": "Las y los deportistas conocen la historia del club y lo que representa.",
+        "hint": "Agrega una descripción de tu club",
+        "unlock": "Quienes juegan conocen la historia de tu club y lo que representa.",
         "action": "Agregar descripción"
       },
       "location": {
-        "label": "Agregar la ciudad",
-        "hint": "Indicar dónde tiene su sede el club",
-        "unlock": "Al buscar club, se filtra por ubicación.",
+        "label": "Agregar tu ciudad",
+        "hint": "Indica dónde tiene su sede tu club",
+        "unlock": "Quienes juegan filtran por ubicación al buscar club.",
         "action": "Agregar ubicación"
       },
       "country": {
-        "label": "Agregar el país",
-        "hint": "Indicar el país del club",
-        "unlock": "Ayuda a que deportistas del país encuentren el club.",
+        "label": "Agregar tu país",
+        "hint": "Indica el país de tu club",
+        "unlock": "Ayuda a que deportistas de tu país encuentren tu club.",
         "action": "Agregar país"
       },
       "yearFounded": {
         "label": "Agregar el año de fundación",
         "hint": "¿Cuándo se fundó el club?",
-        "unlock": "Suma credibilidad e historia al perfil.",
+        "unlock": "Suma credibilidad e historia a tu perfil.",
         "action": "Agregar año"
       },
       "contact": {
         "label": "Agregar un medio de contacto",
-        "hint": "Agregar un email de contacto público o un sitio web",
+        "hint": "Agrega un email de contacto público o un sitio web",
         "unlock": "Permite que deportistas y quienes reclutan se comuniquen por oportunidades.",
         "action": "Agregar contacto"
       },
       "gallery": {
         "label": "Galería de fotos",
-        "hint": "Subir al menos una foto a la galería",
-        "unlock": "Mostrar la cancha, los entrenamientos y los días de partido.",
+        "hint": "Sube al menos una foto a tu galería",
+        "unlock": "Muestra tu cancha, tus entrenamientos y tus días de partido.",
         "action": "Agregar fotos"
       },
       "posts": {
-        "label": "Compartir la primera publicación",
-        "hint": "Publicar una novedad en el feed del club",
-        "unlock": "Un feed activo muestra que el club está en movimiento y sumando gente.",
+        "label": "Compartir tu primera publicación",
+        "hint": "Publica una novedad en el feed de tu club",
+        "unlock": "Un feed activo les muestra a quienes juegan que tu club está en movimiento y sumando gente.",
         "action": "Crear publicación"
       },
       "friends": {
-        "label": "Hacer la primera conexión",
-        "hint": "Conectar con jugadores/as o entrenadores/as",
-        "unlock": "Construye la red del club en Hockia.",
+        "label": "Hacer tu primera conexión",
+        "hint": "Conecta con jugadores/as o entrenadores/as",
+        "unlock": "Hace crecer la red de tu club en Hockia.",
         "action": "Agregar conexión"
       }
     },
@@ -78,7 +78,7 @@
       "thisPlayer": "esta persona",
       "fitFor": "Encaje para {{title}}",
       "shortlistLabel": "Preseleccionar para una oportunidad",
-      "shortlistTitle": "¿Para qué oportunidad preseleccionar?",
+      "shortlistTitle": "¿Para qué oportunidad es la preselección?",
       "shortlistBody": "Cada oportunidad tiene su propia preselección.",
       "appliedHere": "Se postuló a esta oportunidad"
     },
@@ -102,10 +102,10 @@
       "mensLeague": "Caballeros: {{league}}",
       "founded": "Fundado en {{year}}",
       "linkCopied": "Enlace copiado",
-      "friends": "Amistades",
-      "requested": "Solicitado",
+      "friends": "Conexión",
+      "requested": "Solicitud enviada",
       "accept": "Aceptar",
-      "addFriend": "Agregar a amistades",
+      "addFriend": "Agregar conexión",
       "opening": "Abriendo…",
       "message": "Mensaje",
       "memberCount_one": "{{count}} integrante",
@@ -113,15 +113,15 @@
       "memberCount_many": "{{count}} integrantes",
       "previewLabel": "Alguien en Hockia",
       "previewDetail": "Lo que ven jugadores/as y entrenadores/as",
-      "viewsLine_one": "visita al perfil esta semana · <lock/> solo visible para el club",
-      "viewsLine_other": "visitas al perfil esta semana · <lock/> solo visible para el club",
-      "viewsLine_many": "visitas al perfil esta semana · <lock/> solo visible para el club",
+      "viewsLine_one": "visita al perfil esta semana · <lock/> solo lo ves tú",
+      "viewsLine_other": "visitas al perfil esta semana · <lock/> solo lo ves tú",
+      "viewsLine_many": "visitas al perfil esta semana · <lock/> solo lo ves tú",
       "seeWho": "Ver quiénes",
       "openRolesWithCount": "Oportunidades abiertas · {{count}}",
       "openRoles": "Oportunidades abiertas",
       "postRole": "+ Publicar una oportunidad",
       "seeAllRoles": "Ver todas",
-      "seeAllRolesCount_one": "Ver la {{count}} oportunidad",
+      "seeAllRolesCount_one": "Ver {{count}} oportunidad",
       "seeAllRolesCount_other": "Ver las {{count}} oportunidades",
       "seeAllRolesCount_many": "Ver las {{count}} oportunidades",
       "noOpenRoles": "No hay oportunidades abiertas por ahora.",
@@ -147,18 +147,18 @@
       "contactLabel": "Contacto",
       "addContactEmail": "Agregar email de contacto",
       "messageClub": "Enviar mensaje al club",
-      "signInTitle": "Iniciar sesión para conectar con este club",
+      "signInTitle": "Inicia sesión para conectar con este club",
       "viewsSheet": "Visitas al perfil"
     },
     "public": {
       "invalidUrl": "La dirección del perfil no es válida",
       "notFound": "No se encontró el perfil del club.",
       "unavailable": "Este perfil no está disponible.",
-      "loadFailed": "No se pudo cargar el perfil del club. Intentar de nuevo."
+      "loadFailed": "No se pudo cargar el perfil del club. Intenta de nuevo."
     },
     "members": {
-      "loadFailed": "No se pudieron cargar las y los integrantes. Intentar de nuevo.",
-      "loadMoreFailed": "No se pudieron cargar más integrantes. Intentar de nuevo.",
+      "loadFailed": "No se pudo cargar la lista de integrantes. Intenta de nuevo.",
+      "loadMoreFailed": "No se pudieron cargar más integrantes. Intenta de nuevo.",
       "removed": "{{name}} ya no forma parte del club.",
       "removedNoName": "La persona ya no forma parte del club.",
       "removeFailed": "No se pudo quitar a la persona del club.",
@@ -166,8 +166,8 @@
       "title": "Integrantes",
       "invite": "Invitar",
       "removeTitle": "¿Quitar a esta persona del club?",
-      "removeBody": "{{name}} va a salir del plantel del club.",
-      "removeBodyNoName": "Esta persona va a salir del plantel del club.",
+      "removeBody": "{{name}} va a salir del plantel de tu club.",
+      "removeBodyNoName": "Esta persona va a salir del plantel de tu club.",
       "removeConfirm": "Quitar",
       "pendingTitle": "Invitaciones pendientes",
       "pending": "Invitación pendiente",
@@ -175,7 +175,7 @@
       "cancelInvite": "Cancelar",
       "tryAgain": "Reintentar",
       "emptyTitle": "Todavía no hay integrantes",
-      "emptyOwner": "Invitar a jugadores/as y entrenadores/as para armar el plantel del club. Van a aparecer acá cuando acepten.",
+      "emptyOwner": "Invita a jugadores/as y entrenadores/as para armar el plantel de tu club. Van a aparecer acá cuando acepten.",
       "emptyVisitor": "Las personas que se sumen a este club van a aparecer acá.",
       "inviteMembers": "Invitar integrantes",
       "removeLabel": "Quitar a {{name}}",
@@ -191,8 +191,8 @@
     "noMembers": "No hay integrantes que coincidan con “{{query}}”",
     "seeOneMember": "Ver 1 integrante en Comunidad",
     "seeAllMembers_one": "Ver {{count}} integrante",
-    "seeAllMembers_other": "Ver los {{count}} integrantes",
-    "seeAllMembers_many": "Ver los {{count}} integrantes"
+    "seeAllMembers_other": "Ver {{count}} integrantes",
+    "seeAllMembers_many": "Ver {{count}} integrantes"
   },
   "searchBar": {
     "placeholder": "Buscar publicaciones, personas, clubes...",
@@ -235,11 +235,11 @@
       "opportunities": "Oport."
     },
     "noResults": "No hay resultados",
-    "noResultsHint": "Probar con otras palabras o revisar la ortografía",
+    "noResultsHint": "Prueba con otras palabras o revisa la ortografía",
     "seeAll": "Ver todos los resultados para “{{query}}”",
     "recent": "Búsquedas recientes",
     "clearRecent": "Borrar",
-    "startTyping": "Escribir para buscar deportistas, clubes y publicaciones"
+    "startTyping": "Escribe para buscar deportistas, clubes y publicaciones"
   },
   "searchPage": {
     "tabs": {
@@ -250,9 +250,9 @@
       "brands": "Marcas",
       "opportunities": "Oportunidades"
     },
-    "minChars": "Escribir al menos 2 caracteres para buscar",
+    "minChars": "Escribe al menos 2 caracteres para buscar",
     "noResults": "No hay resultados",
-    "noResultsHint": "Probar con otras palabras o revisar la ortografía",
+    "noResultsHint": "Prueba con otras palabras o revisa la ortografía",
     "loadMore": "Cargar más"
   },
   "worldPage": {
@@ -260,7 +260,7 @@
     "title": "Explorar clubes y ligas",
     "subtitle": "Todos los clubes y ligas que conocemos, por país.",
     "loadFailed": "No se pudieron cargar los países",
-    "loadFailedHint": "Revisar la conexión e intentar de nuevo",
+    "loadFailedHint": "Revisa tu conexión e intenta de nuevo",
     "retry": "Reintentar",
     "noMatch": "Ningún país coincide con la búsqueda",
     "noCountries": "Todavía no hay países disponibles",
@@ -287,7 +287,7 @@
     "optional": "Opcional",
     "unlink": "Desvincular club",
     "linked": "Vinculado",
-    "tip": "Consejo: elegir una sugerencia o usar <b>Agregar club nuevo</b> para que el escudo y los enlaces del club funcionen.",
+    "tip": "Consejo: elige una sugerencia o usa <b>Agregar club nuevo</b> para que el escudo y los enlaces de tu club funcionen.",
     "tier": "N{{tier}}",
     "noMatch": "Ningún club coincide con “{{query}}”",
     "addToDirectory": "Agregar “{{name}}” al directorio",
@@ -304,7 +304,7 @@
   "province": {
     "documentTitle": "{{province}} | {{country}} | Hockia",
     "loadFailed": "No se pudieron cargar los datos de la región",
-    "loadFailedHint": "Revisar la conexión e intentar de nuevo",
+    "loadFailedHint": "Revisa tu conexión e intenta de nuevo",
     "backToCountry": "Volver al país",
     "retry": "Reintentar",
     "notFound": "No se encontró la región",
@@ -322,18 +322,18 @@
     "noClubs": "Todavía no hay clubes en esta liga",
     "noClubsHint": "Los clubes van a aparecer acá cuando se sumen a la plataforma",
     "active": "Activo",
-    "unclaimed": "Sin reclamar"
+    "unclaimed": "Sin registrar"
   },
   "country": {
     "verifiedClub": "Club verificado",
     "active": "Activo",
-    "unclaimed": "Sin reclamar",
+    "unclaimed": "Sin registrar",
     "communityNote": "Agregados por la comunidad, todavía sin liga",
     "documentTitle": "Clubes de hockey sobre césped en {{country}} – Ligas y clubes | Hockia",
     "notFound": "No se encontró el país",
     "loadFailed": "No se pudieron cargar los datos del país",
-    "notFoundBody": "No encontramos ningún país que coincida con \"{{slug}}\". Se puede buscar en el directorio.",
-    "loadFailedHint": "Revisar la conexión e intentar de nuevo",
+    "notFoundBody": "No encontramos ningún país que coincida con \"{{slug}}\". Busca en el directorio.",
+    "loadFailedHint": "Revisa tu conexión e intenta de nuevo",
     "backToWorld": "Volver a Mundo",
     "retry": "Reintentar",
     "notInDirectoryTitle": "{{country}} todavía no está en nuestro directorio",
@@ -342,7 +342,7 @@
     "flagAlt": "Bandera de {{country}}",
     "breadcrumbWorld": "Mundo",
     "regions": "Regiones",
-    "regionsBody": "Elegir una región para explorar ligas y clubes en {{country}}",
+    "regionsBody": "Elige una región para explorar ligas y clubes en {{country}}",
     "leagueCount_one": "{{count}} liga",
     "leagueCount_other": "{{count}} ligas",
     "leagueCount_many": "{{count}} ligas",
@@ -364,18 +364,18 @@
     "documentTitleCountry": "{{club}} – Club de hockey sobre césped en {{country}} | Hockia",
     "loading": "Cargando club",
     "loadFailed": "No se pudo cargar este club",
-    "loadFailedBody": "Algo salió mal al conectar con el directorio. Revisar la conexión e intentar de nuevo.",
+    "loadFailedBody": "Algo salió mal al conectar con el directorio. Revisa tu conexión e intenta de nuevo.",
     "tryAgain": "Reintentar",
     "backToWorld": "Volver a Mundo",
     "notFound": "No se encontró el club",
-    "notFoundBody": "Puede que este club se haya quitado del directorio. En Mundo se pueden buscar clubes por país y provincia.",
+    "notFoundBody": "Puede que este club se haya quitado del directorio. En Mundo puedes buscar clubes por país y provincia.",
     "goToWorld": "Ir a Mundo",
     "back": "Volver",
     "menLeague": "Caballeros: {{league}}",
     "womenLeague": "Damas: {{league}}",
-    "claimed": "Reclamado en Hockia",
+    "claimed": "Registrado en Hockia",
     "claimedFallback": "Ver el perfil completo del club, sus oportunidades y sus integrantes.",
     "viewProfile": "Ver perfil",
-    "notClaimed": "Este club todavía no se reclamó en Hockia."
+    "notClaimed": "Este club todavía no se registró en Hockia."
   }
 }

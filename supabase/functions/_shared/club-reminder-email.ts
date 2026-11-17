@@ -93,8 +93,9 @@ const COPY = {
     possibleFit: 'Encaje posible',
     moreWaiting: (n: number) => `+ ${n} más ${n === 1 ? 'espera' : 'esperan'} en Hockia.`,
     review: 'Revisar',
-    reviewName: (name: string | null) => (name ? `Revisar a ${name}` : 'Revisar la postulación'),
-    reviewMany: (n: number, noun: string) => `Revisar ${n} ${noun}`,
+    reviewName: (name: string | null) => (name ? `Ver la postulación de ${name}` : 'Ver la postulación'),
+    // You review applications, not people: the noun is not used in Spanish.
+    reviewMany: (n: number, _noun: string) => `Revisar ${n} postulaciones`,
     newOne: (name: string | null, role: string) => `${name ?? 'Una persona'} se postuló a ${role}.`,
     newOneRole: (n: number, role: string) => `${n} personas se postularon a ${role} desde el último email.`,
     newManyRoles: (n: number) => `${n} personas se postularon a tus oportunidades desde el último email.`,

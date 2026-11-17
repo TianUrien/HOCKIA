@@ -137,13 +137,13 @@ export function pushLanguageOf(value: unknown): PushLanguage {
 
 /** Fallback actor name when the actor has no name (send-push/index.ts). */
 export function unnamedActor(lang: PushLanguage): string {
-  return lang === 'es' ? 'Alguien de HOCKIA' : 'A HOCKIA member'
+  return lang === 'es' ? 'Alguien de Hockia' : 'A HOCKIA member'
 }
 
 /**
  * Spanish follows the client catalogs' rules (client/src/locales/glossary.md):
- * neutral Latin American Spanish, no second-person verb forms, no gendered
- * words for people. English is unchanged. Text the server stored on the
+ * neutral Latin American Spanish that speaks to the member in tú (founder
+ * decision 2026-11-16), no generic masculine for people. English is unchanged. Text the server stored on the
  * notification (club reminder titles, announcements) is shown as stored: club
  * reminders are already written in the publisher's language. A
  * recruiting_update title is rebuilt in Spanish from its event when the stored
@@ -162,8 +162,8 @@ export function buildPushPayload(
     // ── Friends ──
     case 'friend_request_received':
       return {
-        title: es ? 'Solicitud de amistad' : 'Friend Request',
-        body: es ? `${actorName} quiere conectar` : `${actorName} wants to connect`,
+        title: es ? 'Solicitud de conexión' : 'Friend Request',
+        body: es ? `${actorName} te envió una solicitud de conexión` : `${actorName} wants to connect`,
         // section=incoming scrolls to the incoming-requests block in
         // FriendsTab. section=requests was the old name (removed 2026-05-09)
         // and silently no-ops, leaving the user at the top of the Friends
@@ -173,8 +173,8 @@ export function buildPushPayload(
       }
     case 'friend_request_accepted':
       return {
-        title: es ? 'Solicitud aceptada' : 'Friend Accepted',
-        body: es ? `${actorName} aceptó tu solicitud de amistad` : `${actorName} accepted your friend request`,
+        title: es ? 'Conexión aceptada' : 'Friend Accepted',
+        body: es ? `${actorName} aceptó tu solicitud de conexión` : `${actorName} accepted your friend request`,
         url: '/dashboard/profile?tab=friends',
         tag: 'friend-accepted',
       }
@@ -182,15 +182,15 @@ export function buildPushPayload(
     // ── References ──
     case 'reference_request_received':
       return {
-        title: es ? 'Pedido de referencia' : 'Reference Request',
-        body: es ? `${actorName} pidió una referencia` : `${actorName} requested a reference`,
+        title: es ? 'Solicitud de referencia' : 'Reference Request',
+        body: es ? `${actorName} te pidió una referencia` : `${actorName} requested a reference`,
         url: REFERENCES_ROUTE,
         tag: 'reference-request',
       }
     case 'reference_request_accepted':
       return {
         title: es ? 'Referencia aceptada' : 'Reference Accepted',
-        body: es ? `${actorName} aceptó tu pedido de referencia` : `${actorName} accepted your reference request`,
+        body: es ? `${actorName} aceptó tu solicitud de referencia` : `${actorName} accepted your reference request`,
         // Reference responses live on the dedicated References tab
         // (config.ts referenceAcceptedRoute).
         url: `${REFERENCES_ROUTE}&section=accepted`,
@@ -206,7 +206,7 @@ export function buildPushPayload(
     case 'reference_request_rejected':
       return {
         title: es ? 'Novedad de referencia' : 'Reference Update',
-        body: es ? `${actorName} rechazó tu pedido de referencia` : `${actorName} declined your reference request`,
+        body: es ? `${actorName} no aceptó tu solicitud de referencia` : `${actorName} declined your reference request`,
         url: REFERENCES_ROUTE,
         tag: 'reference-rejected',
       }
@@ -215,7 +215,7 @@ export function buildPushPayload(
     case 'ambassador_request_received': {
       const brandName = getString(metadata, 'brand_name')
       return {
-        title: es ? 'Invitación de embajada' : 'Ambassador Invite',
+        title: es ? 'Invitación para ser embajador/a' : 'Ambassador Invite',
         body: es
           ? `${brandName ?? actorName} te invitó a ser embajador/a de la marca`
           : brandName
@@ -228,7 +228,7 @@ export function buildPushPayload(
     case 'ambassador_request_accepted':
       return {
         title: es ? 'Invitación aceptada' : 'Ambassador Accepted',
-        body: es ? `${actorName} aceptó tu invitación de embajada` : `${actorName} accepted your ambassador invitation`,
+        body: es ? `${actorName} aceptó tu invitación para ser embajador/a` : `${actorName} accepted your ambassador invitation`,
         url: '/dashboard/profile?tab=ambassadors',
         tag: 'ambassador-accepted',
       }
@@ -241,7 +241,7 @@ export function buildPushPayload(
           ? (metadata?.change === true ? 'Tus cambios ya están publicados' : 'Tu oferta ya está publicada')
           : (metadata?.change === true ? 'Your changes are live' : 'Your offer is live'),
         body: es
-          ? (offerTitle ? `${offerTitle} ya se muestra a los miembros de Hockia.` : 'Tu oferta ya se muestra a los miembros de Hockia.')
+          ? (offerTitle ? `${offerTitle} ya está visible para integrantes de Hockia.` : 'Tu oferta ya está visible para integrantes de Hockia.')
           : (offerTitle ? `${offerTitle} is now shown to members.` : 'Your offer is now shown to members.'),
         url: '/dashboard/offers',
         tag: 'brand-offer-review',
@@ -255,7 +255,7 @@ export function buildPushPayload(
           ? (takedown ? 'Tu oferta se dio de baja' : 'Tu oferta necesita un cambio')
           : (takedown ? 'Your offer was taken down' : 'Your offer needs a change'),
         body: es
-          ? (offerTitle ? `${offerTitle}: el motivo está en la oferta; después de editarla se puede publicar de nuevo.` : 'El motivo está en la oferta; después de editarla se puede publicar de nuevo.')
+          ? (offerTitle ? `${offerTitle}: revisa el motivo, edita tu oferta y publícala de nuevo.` : 'Revisa el motivo, edita tu oferta y publícala de nuevo.')
           : (offerTitle ? `${offerTitle}: see the reason, then edit and publish again.` : 'See the reason, then edit and publish again.'),
         url: '/dashboard/offers',
         tag: 'brand-offer-review',
@@ -306,13 +306,13 @@ export function buildPushPayload(
     case 'profile_comment_reply':
       return {
         title: es ? 'Respuesta a un comentario' : 'Comment Reply',
-        body: es ? `${actorName} respondió a un comentario del perfil` : `${actorName} replied to a profile comment`,
+        body: es ? `${actorName} respondió a un comentario de tu perfil` : `${actorName} replied to a profile comment`,
         url: '/dashboard/profile?tab=comments',
         tag: 'comment-reply',
       }
     case 'profile_comment_like':
       return {
-        title: es ? 'Comentario con me gusta' : 'Comment Liked',
+        title: es ? 'Me gusta en tu comentario' : 'Comment Liked',
         body: es ? `A ${actorName} le gustó tu comentario` : `${actorName} liked your comment`,
         url: '/dashboard/profile?tab=comments',
         tag: 'comment-like',
@@ -392,7 +392,7 @@ export function buildPushPayload(
       return {
         title: es ? 'Nuevo mensaje' : 'New Message',
         body: count > 1
-          ? es ? `${actorName} envió ${count} mensajes nuevos` : `${actorName} sent ${count} new messages`
+          ? es ? `${actorName} te envió ${count} mensajes nuevos` : `${actorName} sent ${count} new messages`
           : snippet
             ? `${actorName}: ${snippet}`
             : es ? `${actorName} te envió un mensaje` : `${actorName} sent you a message`,
@@ -489,15 +489,15 @@ export function buildPushPayload(
         switch (status) {
           case 'shortlisted':
             title = `${club} te sumó a su preselección`
-            body = `Tu perfil está en consideración para ${role}.`
+            body = `Estás en consideración para ${role}.`
             break
           case 'maybe':
             title = `${club} respondió tu postulación`
-            body = `La novedad de tu postulación para ${position} está en la app.`
+            body = `Hay una novedad en tu postulación para ${position}. Ábrela para verla.`
             break
           case 'rejected':
             title = `${club} actualizó tu postulación`
-            body = `Esta vez no para ${position}.`
+            body = `Esta vez no: tu postulación para ${position} no avanzó.`
             break
           case 'filled':
             title = `${club} cubrió la oportunidad`
@@ -545,11 +545,12 @@ export function buildPushPayload(
       const event = getString(metadata, 'event')
       const storedTitle = getString(metadata, 'title')
       // Spanish: rebuilt from the event and the name the SQL wrote into the
-      // stored English title; anything unrecognised is shown as stored.
+      // stored English title; anything unrecognised gets the generic Spanish title
+      // (an unrecognised English title must not reach a Spanish member).
       const spanishTitle = es ? recruitingTitleEs(event, storedTitle) : null
       return {
-        title: spanishTitle || storedTitle || (es ? 'Novedad de incorporación' : 'Recruiting update'),
-        body: getString(metadata, 'summary') || (es ? 'Los cambios están en HOCKIA.' : 'Open HOCKIA to see what changed.'),
+        title: es ? (spanishTitle || 'Novedad de incorporación') : (storedTitle || 'Recruiting update'),
+        body: getString(metadata, 'summary') || (es ? 'Abre Hockia para ver qué cambió.' : 'Open HOCKIA to see what changed.'),
         url: safeInternalPath(targetUrl) ?? '/messages',
         tag: event ? `recruiting-${event}` : 'recruiting',
       }
@@ -563,8 +564,8 @@ export function buildPushPayload(
         // Neutral about the club (teams often answer off-platform).
         body: es
           ? (count === 1
-            ? 'Una postulación ya no está activa en HOCKIA. Hay nuevas oportunidades abiertas.'
-            : `${count} postulaciones ya no están activas en HOCKIA. Hay nuevas oportunidades abiertas.`)
+            ? 'Una de tus postulaciones ya no está activa en Hockia. Hay nuevas oportunidades abiertas.'
+            : `${count} de tus postulaciones ya no están activas en Hockia. Hay nuevas oportunidades abiertas.`)
           : count === 1
             ? 'An application is no longer active on HOCKIA. Fresh opportunities are open.'
             : `${count} applications are no longer active on HOCKIA. Fresh opportunities are open.`,
@@ -594,14 +595,14 @@ export function buildPushPayload(
     case 'profile_completed':
       return {
         title: es ? 'Perfil completo' : 'Profile Complete',
-        body: es ? '¡Buen trabajo! Mantenerlo al día ayuda a que te encuentren.' : 'Great work! Keep it fresh so scouts can find you.',
+        body: es ? '¡Buen trabajo! Mantenlo al día para que quienes buscan talento puedan encontrarte.' : 'Great work! Keep it fresh so scouts can find you.',
         url: '/dashboard/profile',
         tag: 'profile-complete',
       }
     case 'account_verified':
       return {
         title: es ? 'Cuenta verificada' : 'Account Verified',
-        body: es ? 'La cuenta ya tiene acceso completo a HOCKIA.' : 'You now have full access to HOCKIA.',
+        body: es ? 'Ya tienes acceso completo a Hockia.' : 'You now have full access to HOCKIA.',
         url: '/settings',
         tag: 'verified',
       }
@@ -613,14 +614,14 @@ export function buildPushPayload(
       if (getString(metadata, 'notice') === 'removed_account') {
         return {
           title: getString(metadata, 'title') || (es ? 'Un mensaje sobre tu seguridad' : 'A message about your safety'),
-          body: getString(metadata, 'summary') || (es ? 'El mensaje completo está en HOCKIA.' : 'Open HOCKIA to read it.'),
+          body: getString(metadata, 'summary') || (es ? 'Abre Hockia para leerlo.' : 'Open HOCKIA to read it.'),
           url: '/notifications',
           tag: 'safety-notice',
         }
       }
       return {
-        title: getString(metadata, 'title') || (es ? 'Novedad de HOCKIA' : 'HOCKIA Update'),
-        body: getString(metadata, 'summary') || (es ? 'Hay una novedad nueva' : 'You have a new update'),
+        title: getString(metadata, 'title') || (es ? 'Novedad de Hockia' : 'HOCKIA Update'),
+        body: getString(metadata, 'summary') || (es ? 'Tienes una novedad' : 'You have a new update'),
         url: '/home',
         tag: 'announcement',
       }
@@ -628,8 +629,8 @@ export function buildPushPayload(
     // ── Fallback ──
     default:
       return {
-        title: 'HOCKIA',
-        body: es ? 'Hay una notificación nueva' : 'You have a new notification',
+        title: es ? 'Hockia' : 'HOCKIA',
+        body: es ? 'Tienes una notificación nueva' : 'You have a new notification',
         url: '/home',
       }
   }
@@ -646,27 +647,27 @@ const FALLBACK_NAME_ES: Record<string, string> = {
   'A club': 'Un club',
   'The club': 'El club',
   'the club': 'el club',
-  'A player': 'Una persona',
-  'a player': 'una persona',
-  'The player': 'La persona',
 }
 
-const RECRUITING_TITLES: Record<string, { re: RegExp; es: (name: string) => string }[]> = {
-  invite_received: [{ re: /^(.+) invited you to apply$/, es: (n) => `${n} te invitó a postularte` }],
-  invite_declined: [{ re: /^(.+) passed on your invite$/, es: (n) => `${n} no aceptó tu invitación` }],
+/** The SQL's player fallbacks: a nameless Spanish title is used instead of "La persona …" (mirrors client lib/recruitingTitles.ts). */
+const PLAYER_FALLBACK_NAMES = new Set(['A player', 'a player', 'The player'])
+
+const RECRUITING_TITLES: Record<string, { re: RegExp; es: (name: string) => string; nameless: string }[]> = {
+  invite_received: [{ re: /^(.+) invited you to apply$/, es: (n) => `${n} te invitó a postularte`, nameless: 'Te invitaron a postularte' }],
+  invite_declined: [{ re: /^(.+) passed on your invite$/, es: (n) => `${n} no aceptó tu invitación`, nameless: 'No aceptaron tu invitación' }],
   offer_received: [
-    { re: /^(.+) sent you an offer$/, es: (n) => `${n} te envió una oferta` },
-    { re: /^(.+) updated its offer$/, es: (n) => `${n} actualizó su oferta` },
+    { re: /^(.+) sent you an offer$/, es: (n) => `${n} te envió una oferta`, nameless: 'Recibiste una oferta' },
+    { re: /^(.+) updated its offer$/, es: (n) => `${n} actualizó su oferta`, nameless: 'Se actualizó la oferta que recibiste' },
   ],
-  offer_withdrawn: [{ re: /^(.+) withdrew its offer$/, es: (n) => `${n} retiró su oferta` }],
-  offer_accepted: [{ re: /^(.+) accepted your offer$/, es: (n) => `${n} aceptó tu oferta` }],
-  offer_declined: [{ re: /^(.+) declined your offer$/, es: (n) => `${n} no aceptó tu oferta` }],
-  application_withdrawn: [{ re: /^(.+) withdrew their application$/, es: (n) => `${n} retiró su postulación` }],
-  signing_marked: [{ re: /^Confirm your signing with (.+)$/, es: (n) => `Confirmar la incorporación con ${n}` }],
-  signing_undone: [{ re: /^(.+) undid the signing$/, es: (n) => `${n} deshizo la incorporación` }],
-  signing_confirmed: [{ re: /^(.+) confirmed the signing$/, es: (n) => `${n} confirmó la incorporación` }],
-  offer_expired: [{ re: /^Your offer to (.+) expired$/, es: (n) => `Venció tu oferta a ${n}` }],
-  signing_expired: [{ re: /^(.+) didn[’']t confirm the signing in 14 days$/, es: (n) => `${n} no confirmó la incorporación en 14 días` }],
+  offer_withdrawn: [{ re: /^(.+) withdrew its offer$/, es: (n) => `${n} retiró su oferta`, nameless: 'Se retiró la oferta' }],
+  offer_accepted: [{ re: /^(.+) accepted your offer$/, es: (n) => `${n} aceptó tu oferta`, nameless: 'Aceptaron tu oferta' }],
+  offer_declined: [{ re: /^(.+) declined your offer$/, es: (n) => `${n} no aceptó tu oferta`, nameless: 'No aceptaron tu oferta' }],
+  application_withdrawn: [{ re: /^(.+) withdrew their application$/, es: (n) => `${n} retiró su postulación`, nameless: 'Se retiró una postulación' }],
+  signing_marked: [{ re: /^Confirm your signing with (.+)$/, es: (n) => `Confirma tu incorporación con ${n}`, nameless: 'Confirma tu incorporación' }],
+  signing_undone: [{ re: /^(.+) undid the signing$/, es: (n) => `${n} deshizo la incorporación`, nameless: 'Se deshizo la incorporación' }],
+  signing_confirmed: [{ re: /^(.+) confirmed the signing$/, es: (n) => `${n} confirmó la incorporación`, nameless: 'Se confirmó la incorporación' }],
+  offer_expired: [{ re: /^Your offer to (.+) expired$/, es: (n) => `Venció tu oferta a ${n}`, nameless: 'Venció tu oferta' }],
+  signing_expired: [{ re: /^(.+) didn[’']t confirm the signing in 14 days$/, es: (n) => `${n} no confirmó la incorporación en 14 días`, nameless: 'La incorporación no se confirmó en 14 días' }],
 }
 
 /** The Spanish recruiting_update title, or null when the stored one is not recognised. */
@@ -676,6 +677,7 @@ export function recruitingTitleEs(event: string | null, storedTitle: string | nu
     const m = storedTitle.trim().match(t.re)
     if (m && m[1].trim()) {
       const name = m[1].trim()
+      if (PLAYER_FALLBACK_NAMES.has(name)) return t.nameless
       return t.es(FALLBACK_NAME_ES[name] ?? name)
     }
   }

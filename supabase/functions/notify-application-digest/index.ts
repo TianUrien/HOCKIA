@@ -233,12 +233,14 @@ Deno.serve(async (req: Request) => {
 
     // ── Compose ──
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
+    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
+    // Spanish greeting without a name is "Hola:" (glossary).
+    const greetingEs = firstName ? `Hola, ${firstName}:` : 'Hola:'
     const oldest = rows[0].days_waiting
     const subject = es
       ? rows.length === 1
-        ? 'Hay 1 postulación esperando respuesta en Hockia'
-        : `Hay ${rows.length} postulaciones esperando respuesta en Hockia`
+        ? 'Tienes 1 postulación esperando tu respuesta en Hockia'
+        : `Tienes ${rows.length} postulaciones esperando tu respuesta en Hockia`
       : rows.length === 1
       ? '1 applicant is waiting for your response on Hockia'
       : `${rows.length} applicants are waiting for your response on Hockia`
@@ -298,11 +300,11 @@ Deno.serve(async (req: Request) => {
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? escapeHtml(greetingEs) : `Hi ${escapeHtml(firstName)},`}</div>
         ${es ? `<p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
-          Hay <strong>${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'}</strong> esperando respuesta.
+          Tienes <strong>${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'}</strong> esperando tu respuesta.
           La más antigua espera hace <strong>${dayWord(oldest)}</strong>.
-          Al abrir una se puede responder: marcarla como &ldquo;No encaja&rdquo; lleva un toque, y Hockia AI redacta una nota amable que se puede editar.
+          Abre una para responder: marcarla como &ldquo;No encaja&rdquo; lleva un solo toque, y Hockia AI redacta una nota amable que puedes editar.
         </p>` : `<p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
           You have <strong>${rows.length} application${rows.length === 1 ? '' : 's'}</strong> waiting for your response.
           The oldest has been waiting <strong>${oldest} day${oldest === 1 ? '' : 's'}</strong>.
@@ -314,9 +316,9 @@ Deno.serve(async (req: Request) => {
           <a href="${dashboardUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Revisar en Hockia' : 'Review in Hockia'}</a>
         </div>
         ${es ? `<p style="font-size:12px;color:#73707c;margin-top:24px;">
-          Cada respuesta le llega a quien se postuló. Una respuesta rápida, aunque sea un no, es mejor que el silencio.
-          Este resumen semanal llega solo mientras haya postulaciones esperando.
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Los emails se cambian en Ajustes &rarr; Notificaciones.</a>
+          Quienes se postularon reciben un aviso cuando respondes. Una respuesta rápida, aunque sea un no, es mejor que el silencio.
+          Recibes este resumen semanal solo mientras haya postulaciones esperando.
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Elige qué emails recibes en Ajustes &rarr; Notificaciones.</a>
         </p>` : `<p style="font-size:12px;color:#73707c;margin-top:24px;">
           Applicants are notified when you respond. A quick answer, even a no, beats silence.
           You receive this weekly summary only while applications are waiting.
@@ -329,9 +331,9 @@ Deno.serve(async (req: Request) => {
 
     const fallbackText = es
       ? [
-        `Hola, ${firstName}:`,
+        greetingEs,
         '',
-        `Hay ${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'} esperando respuesta (la más antigua: ${dayWord(oldest)}).`,
+        `Tienes ${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'} esperando tu respuesta (la más antigua: ${dayWord(oldest)}).`,
         '',
         ...shown.map((r) =>
           `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} · ${r.opportunity_title} · esperando hace ${dayWord(r.days_waiting)}`

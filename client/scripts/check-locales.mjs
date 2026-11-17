@@ -10,7 +10,8 @@
  *   - has a key English does not have,
  *   - has an empty value,
  *   - a start-up file uses a key that is not in its namespace's core file, or
- *   - uses different {{variables}} or <tags> than English.
+ *   - uses different {{variables}} or <tags> than English ({{count}} may be
+ *     left out of a _zero/_one/_two form that says the number in words).
  *
  * Usage: node scripts/check-locales.mjs [localesDir]
  */
@@ -82,7 +83,10 @@ export function checkLocales(localesDir) {
         if (!sourceBases.has(base)) { problems.push(`${where}: "${key}" does not exist in English`); continue }
         if (typeof value !== 'string' || !value.trim()) { problems.push(`${where}: "${key}" is empty`); continue }
         const english = source.get(key) ?? source.get(`${base}_other`) ?? sourceBases.get(base).value
-        if (placeholders(english) !== placeholders(value)) {
+        // A singular-like form may name the number in words ("en el último día"): {{count}} is optional there.
+        const countOptional = /_(zero|one|two)$/.test(key) && !value.includes('{{count}}')
+        const withoutCount = (text) => placeholders(String(text).replaceAll('{{count}}', ''))
+        if (countOptional ? withoutCount(english) !== withoutCount(value) : placeholders(english) !== placeholders(value)) {
           problems.push(`${where}: "${key}" uses different variables or tags than English (${placeholders(english) || 'none'} vs ${placeholders(value) || 'none'})`)
         }
       }
