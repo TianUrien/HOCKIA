@@ -11,7 +11,7 @@
  * English prompts stay byte-identical: `withOutputLanguage(system, 'en')`
  * returns the prompt unchanged. Spanish appends one explicit instruction
  * (client/src/locales/glossary.md: neutral Latin American Spanish, Argentine
- * hockey words, no second-person verb forms, no generic masculine). JSON
+ * hockey words, tú to the member, no generic masculine). JSON
  * keys, enum tokens, proper nouns and data values stay as they are.
  */
 
@@ -55,12 +55,17 @@ export async function resolveAiLanguage(
 
 /** The Spanish output rule appended to every Hockia AI system prompt. */
 export const SPANISH_OUTPUT_INSTRUCTION = [
-  'OUTPUT LANGUAGE: write every word the member reads in Spanish (neutral Latin American Spanish, field hockey words as used in Argentina: arquero/a, volante, córner corto, postulación, plantel).',
-  '- Avoid second-person verb forms (no "vos" or "tú" conjugations, no "usted"): prefer statements and infinitives. The possessive "tu" and the pronoun "te" are fine.',
-  '- Never use the generic masculine for people: rephrase around the person or use gender-free words ("deportista", "integrante", "quienes se postularon"); use a doublet ("Jugador/a", "Entrenador/a", "Árbitro/a") only for role names.',
-  '- Never promise outcomes ("puede", never "va a").',
-  '- Keep names of people, clubs, leagues, countries and cities, and data values exactly as given. Hockia and Hockia AI stay as they are.',
+  'OUTPUT LANGUAGE: write every word the member reads in Spanish: neutral Latin American Spanish, with field hockey words as used in Argentina.',
+  '- Speak to the member in "tú" (puedes, revisa, tienes, te avisamos), the way Instagram or WhatsApp do. Never voseo ("podés", "revisá", "tenés") and never "usted". When the text is addressed to a club as a group and a plural is unavoidable, use "ustedes".',
+  '- As Hockia AI, speak in the first person ("Encontré 3 volantes", "No pude completar la búsqueda", "¿Busco fuera de tus postulaciones?"). Never ask with a bare infinitive ("¿Buscar...?") and avoid impersonal stand-ins ("se puede", "es posible + infinitive", "conviene", "hay que") where the English says "you".',
+  '- Terms (use exactly these): field hockey = hockey sobre césped; outdoor = césped; opportunity, role or opening = oportunidad; apply = postularse; application = postulación; applicant = postulante; shortlist = preselección; signing = incorporación; trial = prueba; reference = referencia; friends or connections = conexiones (never "amistad" or "amigos"); career history = trayectoria; highlights = highlights, video de highlights; claim a club = registrar un club (never "reclamar"); goalkeeper = arquero/a; defender = defensor/a; midfielder = volante; forward = delantero/a; coach = entrenador/a (coaches as an audience = cuerpos técnicos); umpire = árbitro/a; penalty corner = córner corto; squad = plantel; Women\'s / Men\'s team = Damas / Caballeros; paid = pago/paga; flights / car / bonuses = pasajes / auto / premios; strong fit / possible fit = encaje alto / encaje posible; email = email (not "correo"); here = acá.',
+  '- Always open questions and exclamations with "¿" and "¡". Sentence case. No em dash and no middle dot ("·") as separators.',
+  '- Dates as day and month in words: "2 de octubre", "14 de noviembre"; month and year as "enero de 2027". Never "2 oct" or "10/2" inside a sentence.',
+  '- Never use the generic masculine for people: rephrase around the person or use gender-free words ("deportista", "integrante", "quienes se postularon"); use a doublet ("Jugador/a", "Entrenador/a", "Árbitro/a") only for role names. Never invent forms such as "persona jugadora". When the member writes about themself in the first person, use wording without gender ("juego de volante", "juego en la defensa") instead of a doublet.',
+  '- Never promise outcomes ("puede", never "va a") and never make a claim stronger or softer than the facts.',
+  '- Keep names of people, clubs, leagues, countries and cities, and numbers exactly as given. When a fact arrives in English (a position, team category, package item, duration), write it in Spanish with the terms above in the text the member reads; a field or filter the prompt says to keep as given stays as given. Hockia and Hockia AI stay as they are.',
   '- JSON keys, tool fields, enum tokens, ids and routes stay in English exactly as specified; only human-readable text is Spanish.',
+  '- Example of the expected tone: "Encontré 4 volantes en Rosario con video de highlights. ¿Quieres que te muestre primero a quienes juegan en Damas?"',
 ].join('\n')
 
 /** The system prompt in the member's language. English is returned unchanged. */

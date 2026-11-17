@@ -44,11 +44,18 @@ export const APPLY_NOTE_SYSTEM = [
 /** The system prompt in the member's language; English is APPLY_NOTE_SYSTEM unchanged. */
 export function applyNoteSystem(lang: MemberLanguage = 'en'): string {
   if (lang !== 'es') return APPLY_NOTE_SYSTEM
-  return withOutputLanguage(
+  return `${withOutputLanguage(
     APPLY_NOTE_SYSTEM.replace('Start with "Hi <club>," using the club name given.', 'Start with "Hola, <club>:" using the club name given.'),
     'es',
-  )
+  )}\n${APPLY_NOTE_SPANISH_RULE}`
 }
+
+/** Spanish only: the note is the member writing about themself to a club. */
+const APPLY_NOTE_SPANISH_RULE = [
+  '- The member writes about themself in the first person: never use a doublet for the writer ("Soy defensor/a"). Say "Juego en el arco", "Juego en la defensa", "Juego de volante", "Juego en la delantera"; a coach says "Trabajo como entrenador/a principal" (the doublet only when no other wording exists).',
+  '- The note speaks to a club: "tú" forms or, when the club is clearly a group, "ustedes" ("su plantel", "les escribo") are fine. Never voseo.',
+  '- Example: "Hola, Club Atlético: Juego de volante en CASI y me interesa postularme a Volante de Primera. Tengo pasaporte de la UE (Italia) y disponibilidad desde enero de 2027. Con gusto cuento más sobre mi trayectoria."',
+].join('\n')
 
 const POSITION: Record<string, string> = { goalkeeper: 'goalkeeper', defender: 'defender', midfielder: 'midfielder', forward: 'forward' }
 const human = (v: string | null) => (v ? POSITION[v] ?? v.replace(/_/g, ' ') : null)
@@ -81,17 +88,29 @@ export function templateNote(m: ApplyFacts, r: RoleFacts): string {
   return parts.join(' ').slice(0, NOTE_MAX)
 }
 
+const PLAYS_ES: Record<string, string> = {
+  goalkeeper: 'Juego en el arco',
+  defender: 'Juego en la defensa',
+  midfielder: 'Juego de volante',
+  forward: 'Juego en la delantera',
+}
+
 /** The Spanish template (same facts, same shape as templateNote). */
 export function templateNoteEs(m: ApplyFacts, r: RoleFacts): string {
   const parts: string[] = [`Hola, ${r.club}:`]
   const pos = m.position ? spanishPositionLabel(m.position) ?? m.position.replace(/_/g, ' ') : null
   const where = m.currentClub ?? m.career[0]?.club ?? null
-  if (pos) parts.push(`${m.role === 'coach' ? 'Mi rol' : 'Mi puesto'}: ${pos}${where ? ` (${where})` : ''}.`)
-  parts.push(`Me interesa postularme a ${r.title}.`)
+  // First person without a doublet for the writer ("Juego de volante", not "Soy volante/a").
+  const lead = !pos ? null
+    : m.role === 'coach' ? `Trabajo como ${pos.charAt(0).toLowerCase()}${pos.slice(1)}`
+      : PLAYS_ES[m.position ?? ''] ?? `Juego de ${pos.toLowerCase()}`
+  parts.push(lead
+    ? `${lead}${where ? ` en ${where}` : ''} y me interesa postularme a ${r.title}.`
+    : `Me interesa postularme a ${r.title}.`)
   const eu = m.passports.find((p) => p.eu)
   if (r.euRequired && eu) parts.push(`Tengo pasaporte de la UE (${eu.name}).`)
   if (m.availableFrom) parts.push(`Tengo disponibilidad desde ${m.availableFrom}.`)
-  parts.push('Con gusto comparto más sobre mi hockey.')
+  parts.push('Con gusto cuento más sobre mi trayectoria.')
   return parts.join(' ').slice(0, NOTE_MAX)
 }
 

@@ -8,7 +8,7 @@
     "warning": "Atención: se va a eliminar de forma definitiva:",
     "listOpportunity": "La oportunidad \"<strong>{{title}}</strong>\"",
     "listApplications": "Todas las postulaciones a esta oportunidad",
-    "listMedia": "Todo el contenido multimedia o archivo adjunto relacionado",
+    "listMedia": "Todo el contenido multimedia y los archivos adjuntos relacionados",
     "confirmBody": "¿Eliminar esta oportunidad de forma definitiva? Esta acción no se puede deshacer.",
     "cancel": "Cancelar",
     "deleting": "Eliminando...",
@@ -17,16 +17,16 @@
   "roleViewerGate": {
     "coachOnPlayerRole": "Esta oportunidad es para jugadores/as. Las oportunidades para entrenar están en Oportunidades.",
     "playerOnCoachRole": "Esta oportunidad es para entrenadores/as. Las oportunidades para jugar están en Oportunidades.",
-    "umpireBrowse": "Acá se pueden ver las oportunidades. Las oportunidades y evaluaciones de arbitraje estarán acá cuando se habiliten.",
-    "brandBrowse": "Acá se pueden ver las oportunidades. Postularse es para jugadores/as y entrenadores/as."
+    "umpireBrowse": "Acá puedes ver las oportunidades. Las oportunidades y evaluaciones de arbitraje van a estar acá cuando las habilitemos.",
+    "brandBrowse": "Acá puedes ver las oportunidades. Postularse es para jugadores/as y entrenadores/as."
   },
   "submitApplication": {
-    "ownOpportunity": "No es posible postularse a una oportunidad propia.",
+    "ownOpportunity": "No puedes postularte a tu propia oportunidad.",
     "coachesOnly": "Solo entrenadores/as pueden postularse a oportunidades para entrenar.",
     "playersOnly": "Solo jugadores/as pueden postularse a oportunidades para jugar.",
     "roleRestricted": "Esta oportunidad no admite postulaciones de tu tipo de perfil.",
-    "notEligible": "Tu perfil no cumple los requisitos para postularse a esta oportunidad.",
-    "failed": "No se pudo enviar la postulación. Se puede volver a intentar."
+    "notEligible": "No cumples los requisitos para postularte a esta oportunidad.",
+    "failed": "No se pudo enviar la postulación. Intenta de nuevo."
   },
   "postRoleLib": {
     "otherCoach": "Otro rol",
@@ -65,30 +65,30 @@
       "permanent": "Permanente"
     },
     "problems": {
-      "position": "Falta elegir una posición.",
-      "role": "Falta elegir el rol.",
-      "team": "Falta elegir el equipo.",
+      "position": "Elige una posición.",
+      "role": "Elige el rol.",
+      "team": "Elige el equipo.",
       "titleLength": "El título puede tener hasta {{max}} caracteres.",
-      "skill": "Falta elegir una especialidad, o marcarla como deseable.",
-      "location": "Falta indicar dónde es la oportunidad.",
+      "skill": "Elige una especialidad o márcala como deseable.",
+      "location": "Indica dónde es la oportunidad.",
       "descriptionLength": "“Sobre la oportunidad” puede tener hasta {{max}} caracteres."
     },
     "check": {
-      "subPlayer": "Paso 3 de 3 · Cómo la ven jugadores y jugadoras",
-      "subCoach": "Paso 3 de 3 · Cómo la ven los cuerpos técnicos",
-      "titlePlayer": "Lo primero que preguntan jugadores y jugadoras",
-      "titleCoach": "Lo primero que preguntan los cuerpos técnicos"
+      "subPlayer": "Paso 3 de 3 · Cómo la ve cada deportista",
+      "subCoach": "Paso 3 de 3 · Cómo la ve cada entrenador/a",
+      "titlePlayer": "Lo primero que pregunta cada deportista",
+      "titleCoach": "Lo primero que pregunta cada entrenador/a"
     },
     "levelHint": {
-      "player": "Sirve para ordenar las postulaciones. Jugadores y jugadoras no lo ven.",
-      "coach": "Sirve para ordenar las postulaciones. Los cuerpos técnicos no lo ven."
+      "player": "Sirve para ordenar las postulaciones. Quienes se postulan no lo ven.",
+      "coach": "Sirve para ordenar las postulaciones. Quienes se postulan no lo ven."
     },
     "offer": {
-      "whenPlayer": "Cada deportista marca cuándo está disponible y lo cruzamos con la fecha de inicio.",
-      "packagePlayer": "Vivienda y pasajes es lo primero que preguntan quienes se mudan para jugar.",
+      "whenPlayer": "Cada deportista marca cuándo está disponible y lo cruzamos con tu fecha de inicio.",
+      "packagePlayer": "Vivienda y pasajes son lo primero que preguntan quienes se mudan para jugar.",
       "euPassportPlayer": "Solo pueden postularse deportistas con pasaporte de la UE.",
-      "whenCoach": "Cada entrenador/a marca cuándo está disponible y lo cruzamos con la fecha de inicio.",
-      "packageCoach": "Vivienda y ayuda con la visa es lo primero que preguntan quienes se mudan para entrenar.",
+      "whenCoach": "Cada entrenador/a marca cuándo está disponible y lo cruzamos con tu fecha de inicio.",
+      "packageCoach": "Vivienda y ayuda con la visa son lo primero que preguntan quienes se mudan para entrenar.",
       "euPassportCoach": "Solo pueden postularse entrenadores/as con pasaporte de la UE."
     },
     "checklist": {
@@ -106,26 +106,26 @@
       "basedIn": "residencia en {{city}}",
       "team": "equipo {{team}}",
       "euPassport": "pasaporte de la UE",
-      "mustHave": "Requisitos: {{items}}.",
+      "mustHave": "Imprescindible: {{items}}.",
       "alwaysRequired": "Siempre obligatorio: {{items}}.",
-      "restRanksPlayers": "Todo lo demás ordena a jugadores y jugadoras, no los deja afuera.",
-      "restRanksCoaches": "Todo lo demás ordena a los cuerpos técnicos, no los deja afuera.",
-      "nothingBlocksPlayers": "Nada deja afuera a jugadores y jugadoras; todo esto sirve para ordenar.",
-      "nothingBlocksCoaches": "Nada deja afuera a los cuerpos técnicos; todo esto sirve para ordenar."
+      "restRanksPlayers": "Todo lo demás sirve para ordenar; no deja a nadie afuera.",
+      "restRanksCoaches": "Todo lo demás sirve para ordenar; no deja a nadie afuera.",
+      "nothingBlocksPlayers": "Nada deja a nadie afuera; todo esto sirve para ordenar.",
+      "nothingBlocksCoaches": "Nada deja a nadie afuera; todo esto sirve para ordenar."
     },
     "posted": {
       "title": "{{position}}: oportunidad publicada",
-      "titleFallback": "La oportunidad ya está publicada",
-      "bodyPlayer": "Quienes encajan ya pueden encontrarla en Oportunidades. Cada postulación llega a Por revisar, con aviso.",
-      "bodyCoach": "Los cuerpos técnicos que encajan ya pueden encontrarla en Oportunidades. Cada postulación llega a Por revisar, con aviso.",
+      "titleFallback": "Tu oportunidad ya está publicada",
+      "bodyPlayer": "Quienes encajan ya pueden encontrarla en Oportunidades. Cada postulación llega a Por revisar y te avisamos.",
+      "bodyCoach": "Quienes encajan ya pueden encontrarla en Oportunidades. Cada postulación llega a Por revisar y te avisamos.",
       "findPlayers": "Buscar jugadores/as para esta oportunidad",
       "findCoaches": "Buscar entrenadores/as para esta oportunidad",
       "pushPlayers": "Recibir aviso cuando se postulen",
       "pushCoaches": "Recibir aviso cuando se postulen"
     },
-    "replyWindow_one": "Cada postulación se responde dentro de {{count}} día. Después, se cierra sola.",
-    "replyWindow_other": "Cada postulación se responde dentro de {{count}} días. Después, se cierra sola.",
-    "replyWindow_many": "Cada postulación se responde dentro de {{count}} días. Después, se cierra sola."
+    "replyWindow_one": "Responde cada postulación dentro de {{count}} día. Después, se cierra sola.",
+    "replyWindow_other": "Responde cada postulación dentro de {{count}} días. Después, se cierra sola.",
+    "replyWindow_many": "Responde cada postulación dentro de {{count}} días. Después, se cierra sola."
   },
   "createOpportunity": {
     "mustHave": {
@@ -140,10 +140,10 @@
     },
     "toasts": {
       "draftRestored": "Se recuperó el borrador de la oportunidad.",
-      "draftUpdated": "Borrador actualizado. Se publica cuando esté lista para salir.",
+      "draftUpdated": "Borrador actualizado. Publícalo cuando esté listo.",
       "updated": "Oportunidad actualizada.",
       "published": "Oportunidad publicada. Ya recibe postulaciones.",
-      "draftSaved": "Borrador guardado. Se publica cuando esté lista para salir."
+      "draftSaved": "Borrador guardado. Publícalo cuando esté listo."
     },
     "errors": {
       "title": "El título es obligatorio",
@@ -152,20 +152,20 @@
       "city": "La ciudad es obligatoria",
       "country": "El país es obligatorio",
       "location": "El lugar es obligatorio",
-      "levelMustHave": "Falta elegir un nivel para marcarlo como imprescindible.",
-      "compensationMustHave": "Falta elegir una compensación para marcarla como imprescindible.",
-      "startDateMustHave": "Falta una fecha de inicio para marcarla como imprescindible.",
-      "specialistsMustHave": "Falta agregar una especialidad para marcarla como imprescindible.",
-      "signedOut": "Hace falta iniciar sesión para gestionar oportunidades.",
-      "fixFields": "Hay campos marcados para corregir antes de guardar.",
+      "levelMustHave": "Elige un nivel antes de marcarlo como imprescindible.",
+      "compensationMustHave": "Elige una compensación antes de marcarla como imprescindible.",
+      "startDateMustHave": "Indica una fecha de inicio antes de marcarla como imprescindible.",
+      "specialistsMustHave": "Agrega una especialidad antes de marcarla como imprescindible.",
+      "signedOut": "Tienes que iniciar sesión para gestionar oportunidades.",
+      "fixFields": "Corrige los campos marcados antes de guardar.",
       "saveFailedDetail": "No se pudo guardar la oportunidad: {{detail}}",
-      "saveFailed": "No se pudo guardar la oportunidad. Se puede volver a intentar."
+      "saveFailed": "No se pudo guardar la oportunidad. Intenta de nuevo."
     },
     "header": {
       "edit": "Editar oportunidad",
-      "postAgain": "Publicar de nuevo",
+      "postAgain": "Volver a publicar",
       "create": "Crear oportunidad",
-      "editSubtitle": "Actualizar los datos de la oportunidad",
+      "editSubtitle": "Actualiza los datos de tu oportunidad",
       "postAgainSubtitle": "Una oportunidad nueva con los mismos datos. Las fechas y las postulaciones empiezan de cero.",
       "createPlayerSubtitle": "Crear una oportunidad para jugador/a",
       "createCoachSubtitle": "Crear una oportunidad para entrenador/a"
@@ -193,19 +193,19 @@
       "category": "Categoría",
       "categorySelect": "Elegir categoría",
       "specialists": "Especialidades buscadas",
-      "specialistsHint": "Opcional. La especialidad que más hace falta. Hockia destaca a quienes coinciden.",
+      "specialistsHint": "Opcional. La especialidad que más necesitas. Hockia destaca a quienes coinciden.",
       "description": "Descripción",
-      "descriptionPlaceholderPlayer": "Descripción de la oportunidad, el entorno de entrenamiento y el camino de desarrollo...",
-      "descriptionPlaceholderCoach": "Descripción de la oportunidad, las responsabilidades y el entorno del equipo..."
+      "descriptionPlaceholderPlayer": "Describe la oportunidad, el entorno de entrenamiento y el camino de desarrollo...",
+      "descriptionPlaceholderCoach": "Describe la oportunidad, las responsabilidades y el entorno del equipo..."
     },
     "intent": {
-      "heading": "Qué se busca",
-      "problem": "¿Qué hace falta resolver esta temporada?",
+      "heading": "Qué buscas",
+      "problem": "¿Qué necesitas resolver esta temporada?",
       "problemAria": "Necesidad de la búsqueda",
       "optional": "Opcional",
       "level": "Nivel buscado",
       "compensation": "Compensación",
-      "footnote": "El nivel se completa con el nivel de tu club. Se puede cambiar si la búsqueda apunta más arriba o más abajo. Cualquier criterio marcado como “Imprescindible” pasa a ser requisito. Quienes no lo cumplan aparecen como “Fuera de tu contexto”.",
+      "footnote": "El nivel se completa con el nivel de tu club. Puedes cambiarlo si buscas más arriba o más abajo. Marca cualquier criterio como “Imprescindible” para exigirlo. Quienes no lo cumplan aparecen como “Fuera de tu contexto”.",
       "selectPlaceholder": "Elegir"
     },
     "location": {
@@ -260,7 +260,7 @@
     "strength": {
       "heading": "Solidez de la publicación",
       "complete": "Publicación completa. Así se ve una oportunidad sólida.",
-      "consider": "Las publicaciones completas reciben más postulaciones. Se puede agregar:"
+      "consider": "Las publicaciones completas reciben más postulaciones. Puedes agregar:"
     },
     "footer": {
       "cancel": "Cancelar",
@@ -290,9 +290,9 @@
   },
   "newContext": {
     "problems": {
-      "position": "Falta elegir una posición.",
-      "role": "Falta elegir un rol.",
-      "team": "Falta elegir un equipo."
+      "position": "Elige una posición.",
+      "role": "Elige un rol.",
+      "team": "Elige un equipo."
     }
   },
   "clubMedia": {
@@ -307,15 +307,15 @@
     "photos_many": "{{count}} fotos"
   },
   "clubSettings": {
-    "groupFooter": "La liga y el escudo se muestran en tus oportunidades y en el perfil. La búsqueda de incorporaciones está en Oportunidades.",
-    "notLinked": "Sin vincular · vincular el club",
+    "groupFooter": "Tu liga y tu escudo se muestran en tus oportunidades y en tu perfil. La búsqueda de incorporaciones está en Oportunidades.",
+    "notLinked": "Sin vincular · vincula tu club",
     "linkedLeague": "Vinculado · {{league}}",
     "linkedNoLeague": "Vinculado · liga sin definir",
-    "contactIntro": "Para que deportistas y cuerpos técnicos puedan contactar al club directamente. El email de inicio de sesión nunca se muestra.",
-    "contactSwitchLabel": "Mostrar en el perfil",
-    "contactSwitchHelp": "Desactivado: las personas escriben al club por Hockia.",
-    "contactEmpty": "Privado · mensajes por Hockia",
-    "contactShown": "Visible en el perfil · {{email}}",
+    "contactIntro": "Para que jugadores/as y entrenadores/as puedan contactar a tu club directamente. Tu email de inicio de sesión nunca se muestra.",
+    "contactSwitchLabel": "Mostrar en tu perfil",
+    "contactSwitchHelp": "Desactivado: te escriben por Hockia.",
+    "contactEmpty": "Privado · te escriben por Hockia",
+    "contactShown": "Visible en tu perfil · {{email}}",
     "contactPrivate": "Privado · {{email}}"
   },
   "manageMedia": {
@@ -324,17 +324,17 @@
     "cancel": "Cancelar",
     "done": "Listo",
     "reorder": "Reordenar",
-    "emptyTitle": "Agregar fotos del club",
-    "emptyBody": "La cancha, los equipos, los días de partido. La primera foto es la portada del perfil.",
+    "emptyTitle": "Agregar fotos de tu club",
+    "emptyBody": "Tu cancha, tus equipos, los días de partido. La primera foto es la portada de tu perfil.",
     "photoAria": "Foto {{number}}",
     "moveEarlier": "Mover antes",
     "moveLater": "Mover después",
     "deletePhoto": "Eliminar foto",
     "addPhotos": "Agregar fotos",
-    "reorderHint": "Las flechas cambian el orden; la primera foto es la portada. Con Listo se guarda; con Cancelar todo queda como estaba.",
-    "reorderHintRemove_one": "Las flechas cambian el orden; la primera foto es la portada. Con Listo se guarda y se quita 1 foto; con Cancelar todo queda como estaba.",
-    "reorderHintRemove_other": "Las flechas cambian el orden; la primera foto es la portada. Con Listo se guarda y se quitan {{count}} fotos; con Cancelar todo queda como estaba.",
-    "reorderHintRemove_many": "Las flechas cambian el orden; la primera foto es la portada. Con Listo se guarda y se quitan {{count}} fotos; con Cancelar todo queda como estaba.",
+    "reorderHint": "Usa las flechas para ordenar; la primera foto es tu portada. Toca \"Listo\" para guardar o \"Cancelar\" para dejar todo como estaba.",
+    "reorderHintRemove_one": "Usa las flechas para ordenar; la primera foto es tu portada. Toca \"Listo\" para guardar y quitar 1 foto, o \"Cancelar\" para dejar todo como estaba.",
+    "reorderHintRemove_other": "Usa las flechas para ordenar; la primera foto es tu portada. Toca \"Listo\" para guardar y quitar {{count}} fotos, o \"Cancelar\" para dejar todo como estaba.",
+    "reorderHintRemove_many": "Usa las flechas para ordenar; la primera foto es tu portada. Toca \"Listo\" para guardar y quitar {{count}} fotos, o \"Cancelar\" para dejar todo como estaba.",
     "toasts": {
       "added_one": "Foto agregada.",
       "added_other": "{{count}} fotos agregadas.",
@@ -352,7 +352,7 @@
       "title_one": "¿Quitar 1 foto?",
       "title_other": "¿Quitar {{count}} fotos?",
       "title_many": "¿Quitar {{count}} fotos?",
-      "body": "Dejan de verse en el perfil del club. No se puede deshacer.",
+      "body": "Dejan de verse en el perfil de tu club. No se puede deshacer.",
       "remove": "Quitar"
     }
   },
@@ -372,11 +372,11 @@
       "contact": "Email de contacto"
     },
     "errors": {
-      "saveFailed": "No se pudo guardar. Se puede volver a intentar.",
+      "saveFailed": "No se pudo guardar. Intenta de nuevo.",
       "nameRequired": "El nombre del club es obligatorio.",
       "nameTooLong": "El nombre tiene que tener menos de {{max}} caracteres.",
-      "countryRequired": "Falta elegir un país.",
-      "cityRequired": "Falta elegir la ciudad del club.",
+      "countryRequired": "Elige un país.",
+      "cityRequired": "Elige la ciudad del club.",
       "aboutTooLong": "El texto tiene que tener menos de {{max}} caracteres.",
       "websiteInvalid": "Ese sitio web no parece correcto (por ejemplo, tuclub.com).",
       "linksInvalid": "Uno de esos enlaces no parece correcto.",
@@ -384,12 +384,12 @@
     },
     "crest": {
       "invalidImage": "Imagen no válida",
-      "uploadFailed": "No se pudo subir la imagen. Se aceptan PNG o JPG de hasta 5 MB.",
-      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Conviene revisar los permisos de la app.",
+      "uploadFailed": "No se pudo subir la imagen. Usa PNG o JPG de hasta 5 MB.",
+      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Revisa los permisos de la app.",
       "label": "Escudo del club",
       "uploading": "Subiendo…",
       "change": "Cambiar escudo",
-      "add": "Agregar el escudo"
+      "add": "Agregar tu escudo"
     },
     "nav": {
       "settings": "Ajustes",
@@ -426,7 +426,7 @@
       "country": "País",
       "city": "Ciudad",
       "about": "Acerca del club",
-      "aboutPlaceholder": "El club, los equipos y la liga en la que juegan.",
+      "aboutPlaceholder": "Tu club, tus equipos y la liga en la que juegan.",
       "website": "Sitio web",
       "websitePlaceholder": "tuclub.com",
       "contact": "Email de contacto",
@@ -434,26 +434,26 @@
     }
   },
   "clubSetup": {
-    "title": "Sobre el club",
-    "subtitle": "Paso 1 de 2 · lo que cada deportista ve junto a cada oportunidad.",
-    "attest": "Soy mayor de 18 años y tengo autorización para buscar incorporaciones para este club.",
+    "title": "Sobre tu club",
+    "subtitle": "Paso 1 de 2 · lo que ven jugadores/as junto a cada oportunidad.",
+    "attest": "Tengo 18 años o más y tengo autorización para buscar incorporaciones para este club.",
     "saving": "Guardando…",
     "continue": "Continuar",
     "crest": {
       "invalidImage": "Imagen no válida",
-      "uploadFailed": "No se pudo subir la imagen. Se aceptan PNG o JPG de hasta 5 MB.",
-      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Conviene revisar los permisos de la app.",
+      "uploadFailed": "No se pudo subir la imagen. Usa PNG o JPG de hasta 5 MB.",
+      "pickerFailed": "No se pudo acceder a la cámara ni a las fotos. Revisa los permisos de la app.",
       "change": "Cambiar escudo",
-      "add": "Agregar el escudo",
+      "add": "Agregar tu escudo",
       "hint": "Un escudo cuadrado se ve mejor en tamaños chicos."
     },
     "errors": {
-      "saveFailed": "No se pudo guardar el club. Se puede volver a intentar.",
-      "finishFailed": "No se pudo terminar la configuración. Se puede volver a intentar."
+      "saveFailed": "No se pudo guardar el club. Intenta de nuevo.",
+      "finishFailed": "No se pudo terminar la configuración. Intenta de nuevo."
     },
     "fields": {
       "name": "Nombre del club",
-      "namePlaceholder": "El nombre del club",
+      "namePlaceholder": "El nombre de tu club",
       "country": "País",
       "countryAria": "País: {{value}}",
       "countryAriaEmpty": "País: elegir",
@@ -472,10 +472,10 @@
     }
   },
   "closeRole": {
-    "failed": "No se pudo cerrar la oportunidad. Se puede volver a intentar.",
+    "failed": "No se pudo cerrar la oportunidad. Intenta de nuevo.",
     "sheetAria": "Cerrar esta oportunidad",
     "title": "¿Cerrar {{title}}?",
-    "outcomeAria": "¿Se cubrió?",
+    "outcomeAria": "¿Cubriste la oportunidad?",
     "filled": "Cubierta",
     "filledSub": "Encontramos a alguien",
     "notFilled": "Sin cubrir",
@@ -498,12 +498,12 @@
   "postRoleStart": {
     "title": "Publicar una oportunidad",
     "aiTitle": "Empezar con Hockia AI",
-    "aiSub": "Beta · contado con tus palabras",
+    "aiSub": "Beta · con tus propias palabras",
     "aiPlaceholder": "Lateral izquierdo para la primera de caballeros, pago, con vivienda, desde enero",
-    "aiAria": "Descripción de la oportunidad con tus palabras",
-    "drafting": "Armando la oportunidad…",
+    "aiAria": "Describe la oportunidad con tus palabras",
+    "drafting": "Armando tu oportunidad…",
     "draft": "Armar mi oportunidad",
-    "aiNote": "Hockia AI completa la oportunidad, la oferta y la descripción. No se publica nada hasta revisarlo.",
+    "aiNote": "Hockia AI completa la oportunidad, la oferta y la descripción. No se publica nada hasta que lo revises.",
     "postAgain": "Volver a publicar",
     "againRow": "{{title}} · equipo {{team}}",
     "scratch": "Empezar desde cero",
@@ -516,32 +516,32 @@
     "done": "Listo"
   },
   "roleForm": {
-    "mustHaveAria": "{{label}}: requisito",
+    "mustHaveAria": "{{label}}: imprescindible",
     "niceToHaveAria": "{{label}}: deseable",
-    "mustHave": "Requisito",
+    "mustHave": "Imprescindible",
     "niceToHave": "Deseable"
   },
   "newContextSheet": {
-    "saved": "Contexto guardado. Ya se ordena según este contexto.",
-    "saveFailed": "No se pudo guardar el contexto. Se puede volver a intentar.",
+    "saved": "Contexto guardado. Ya ordenamos según este contexto.",
+    "saveFailed": "No se pudo guardar el contexto. Intenta de nuevo.",
     "title": "Nuevo contexto",
-    "intro": "Una búsqueda guardada para observar talento sin publicar una oportunidad. Solo la ve tu club.",
+    "intro": "Una búsqueda guardada para observar talento sin publicar una oportunidad. Solo tú la ves.",
     "close": "Cerrar",
     "position": "Posición",
     "role": "Rol",
-    "positionMust": "Requisito: quienes juegan en esta posición aparecen primero.",
+    "positionMust": "Imprescindible: quienes juegan en esta posición aparecen primero.",
     "positionNice": "Deseable: sirve para ordenar, nunca oculta a nadie.",
     "team": "Equipo",
     "required": "Obligatorio",
     "teamHint": "El encaje se mide con este equipo.",
     "name": "Nombre",
     "optional": "Opcional",
-    "nameHint": "Aparece en Buscando para. Sin nombre, se usan la posición y el equipo.",
+    "nameHint": "Aparece en \"Ranking para\". Sin nombre, se usan la posición y el equipo.",
     "namePlaceholderPlayer": "Volante para la próxima temporada",
     "namePlaceholderCoach": "Entrenador/a para la próxima temporada",
     "level": "Nivel",
     "skills": "Especialidades",
-    "skillsHint": "Elegir las que importen.",
+    "skillsHint": "Elige las que importen.",
     "region": "Región",
     "regionHint": "Una ciudad o región para mostrar primero a quienes están cerca.",
     "regionPlaceholder": "Buenos Aires",
@@ -550,37 +550,37 @@
   },
   "postRole": {
     "steps": {
-      "title1": "¿Qué se busca?",
+      "title1": "¿Qué buscas?",
       "sub1": "Paso 1 de 3 · La oportunidad",
       "part1": "La posición",
-      "title2": "¿Qué se ofrece?",
+      "title2": "¿Qué ofreces?",
       "sub2": "Paso 2 de 3 · La oferta",
       "back2": "La oportunidad",
       "part2": "La oferta",
       "title3": "Revisar y publicar",
-      "sub3": "Paso 3 de 3 · Cómo la ven jugadores y jugadoras",
+      "sub3": "Paso 3 de 3 · Cómo la ve cada deportista",
       "back3": "La oferta",
       "title3Edit": "Revisar y guardar"
     },
     "cover": {
-      "invalid": "La foto tiene que ser JPG, PNG o WebP de hasta 10 MB.",
-      "uploadFailed": "No se pudo subir esta foto. Tiene que ser JPG, PNG o WebP de hasta 10 MB.",
+      "invalid": "Usa una foto JPG, PNG o WebP de hasta 10 MB.",
+      "uploadFailed": "No se pudo subir esta foto. Usa una JPG, PNG o WebP de hasta 10 MB.",
       "label": "Portada · opcional",
       "uploading": "Subiendo…",
       "change": "Cambiar",
       "add": "Agregar foto",
       "hasPhoto": "Queda muy bien. Agregamos una sombra suave abajo para que el título siempre se lea.",
       "remove": "Quitar foto",
-      "noPhotoCoach": "¿Sin foto? Armamos una portada, y ya se ve terminada.",
-      "noPhotoClub": "¿Sin foto? Armamos una portada con el escudo y los colores del club, y ya se ve terminada."
+      "noPhotoCoach": "¿Sin foto? Armamos una portada por ti, y ya se ve terminada.",
+      "noPhotoClub": "¿Sin foto? Armamos una portada con tu escudo y los colores de tu club, y ya se ve terminada."
     },
     "toasts": {
       "draftSaved": "Borrador guardado",
-      "draftFailed": "No se pudo guardar el borrador. Se puede volver a intentar.",
+      "draftFailed": "No se pudo guardar el borrador. Intenta de nuevo.",
       "changesSaved": "Cambios guardados.",
-      "changesFailed": "No se pudieron guardar los cambios. Se puede volver a intentar.",
-      "postFailed": "No se pudo publicar la oportunidad. Se puede volver a intentar.",
-      "aiFailed": "No se pudo redactar en este momento. Conviene escribir unas líneas."
+      "changesFailed": "No se pudieron guardar los cambios. Intenta de nuevo.",
+      "postFailed": "No se pudo publicar la oportunidad. Intenta de nuevo.",
+      "aiFailed": "No se pudo redactar en este momento. Escribe unas líneas."
     },
     "preview": {
       "titlePlayer": "Tu oportunidad",
@@ -588,13 +588,13 @@
       "club": "Tu club",
       "label": "Vista previa",
       "live": "Vista previa en vivo",
-      "howPlayers": "Cómo la ven jugadores y jugadoras",
-      "howCoaches": "Cómo la ven los cuerpos técnicos"
+      "howPlayers": "Cómo la ve cada deportista",
+      "howCoaches": "Cómo la ve cada entrenador/a"
     },
     "backTo": "Volver a {{step}}",
     "back": "Volver",
     "cancel": "Cancelar",
-    "checkTitle": "Revisar la oportunidad",
+    "checkTitle": "Revisar tu oportunidad",
     "aiBadge": "Redactada por Hockia AI · Beta",
     "againBadge": "Publicada de nuevo · mismos detalles",
     "editTitle": "Editar oportunidad",
@@ -610,22 +610,22 @@
       "typeCoach": "Entrenador/a",
       "position": "Posición",
       "role": "Rol",
-      "positionMust": "Requisito: quienes juegan en esta posición aparecen primero.",
+      "positionMust": "Imprescindible: quienes juegan en esta posición aparecen primero.",
       "positionNice": "Deseable: sirve para ordenar, nunca deja a nadie afuera.",
       "team": "Equipo",
       "alwaysRequired": "Siempre obligatorio",
-      "teamHint": "Quienes no son de este equipo no pueden postularse.",
+      "teamHint": "Quienes juegan en otra categoría no pueden postularse.",
       "title": "Título",
       "optional": "Opcional",
       "titleHint": "El titular de la oportunidad, arriba de la posición. Hasta {{max}} caracteres.",
       "titlePlaceholderPlayer": "Jugador/a para la primera de caballeros",
       "titlePlaceholderCoach": "Entrenador/a principal, primer equipo",
       "onBehalf": "En nombre de",
-      "onBehalfHint": "El club o la academia para la que se busca. Aparece en la tarjeta para que se sepa quién incorpora.",
+      "onBehalfHint": "El club o la academia para la que buscas. Aparece en la tarjeta para que quienes se postulen sepan quién busca.",
       "onBehalfPlaceholder": "p. ej., Club Atlético San Isidro",
       "level": "Nivel",
       "skills": "Especialidades",
-      "skillsHint": "Elegir las que importen para esta oportunidad.",
+      "skillsHint": "Elige las que importen para esta oportunidad.",
       "when": "Cuándo",
       "start": "Inicio",
       "immediately": "De inmediato",
@@ -634,17 +634,17 @@
       "choose": "Elegir",
       "notSet": "Sin definir",
       "where": "Dónde",
-      "fromClub": "Tomado del perfil del club.",
+      "fromClub": "Tomado del perfil de tu club.",
       "addCity": "Agregar una ciudad",
       "pay": "Pago",
-      "package": "Paquete",
+      "package": "Beneficios",
       "euPassport": "Se requiere pasaporte de la UE",
       "about": "Sobre la oportunidad",
-      "aboutPlaceholder": "Quiénes son, días de entrenamiento, la ciudad, cómo es la temporada…"
+      "aboutPlaceholder": "Tu club, los días de entrenamiento, la ciudad, cómo es la temporada…"
     },
     "check": {
-      "aiNote": "Completé esto con lo que se escribió. Conviene revisar cada parte y después publicar. Todavía no hay nada publicado.",
-      "againNote": "Mismos detalles que la oportunidad cerrada. Las fechas y las postulaciones empiezan de cero. Si hay fecha de inicio, se puede agregar y después publicar. Todavía no hay nada publicado.",
+      "aiNote": "Completé esto con lo que escribiste. Revisa cada parte y después publica. Todavía no hay nada publicado.",
+      "againNote": "Mismos detalles que tu oportunidad cerrada. Las fechas y las postulaciones empiezan de cero. Si tienes fecha de inicio, agrégala y después publica. Todavía no hay nada publicado.",
       "editAria": "Editar {{section}}",
       "done": "Listo",
       "edit": "Editar",
@@ -670,7 +670,7 @@
     },
     "saveAsDraft": {
       "title": "¿Guardar como borrador?",
-      "body": "Lo escrito se guarda y la oportunidad se puede terminar más tarde desde Oportunidades."
+      "body": "Lo que escribiste se guarda y puedes terminar la oportunidad más tarde desde Oportunidades."
     }
   },
   "recruitingCopy": {
@@ -700,10 +700,10 @@
     "waitingTitle_one": "{{count}} postulación espera respuesta",
     "waitingTitle_many": "{{count}} postulaciones esperan respuesta",
     "waitingTitle_other": "{{count}} postulaciones esperan respuesta",
-    "oldestClosesToday": "La más antigua se cierra hoy si no tiene respuesta.",
-    "oldestClosesIn_one": "La más antigua se cierra en {{count}} día si no tiene respuesta.",
-    "oldestClosesIn_many": "La más antigua se cierra en {{count}} días si no tiene respuesta.",
-    "oldestClosesIn_other": "La más antigua se cierra en {{count}} días si no tiene respuesta.",
+    "oldestClosesToday": "La más antigua se cierra hoy si no respondes.",
+    "oldestClosesIn_one": "La más antigua se cierra en {{count}} día si no respondes.",
+    "oldestClosesIn_many": "La más antigua se cierra en {{count}} días si no respondes.",
+    "oldestClosesIn_other": "La más antigua se cierra en {{count}} días si no respondes.",
     "fitStrong": "Encaja muy bien",
     "fitPossible": "Puede encajar",
     "positionOther": "Otro",
@@ -742,10 +742,10 @@
       "girls": "Juveniles damas"
     },
     "declineReason": {
-      "positionFilled": "Posición cubierta",
+      "positionFilled": "Puesto cubierto",
       "differentPosition": "Otra posición",
       "differentLevel": "Otro nivel",
-      "timing": "Momento",
+      "timing": "Fechas",
       "location": "Ubicación",
       "eligibility": "Requisitos",
       "profileIncomplete": "Perfil incompleto",
@@ -759,25 +759,25 @@
     }
   },
   "inviteLanding": {
-    "toastAlreadyMember": "Tu perfil ya es integrante.",
-    "toastJoined": "Tu perfil ya es parte de {{clubName}}.",
-    "toastJoinedNoName": "Tu perfil ya es parte del club.",
-    "toastJoinFailed": "No se pudo entrar al club.",
+    "toastAlreadyMember": "Ya eres integrante.",
+    "toastJoined": "Te sumaste a {{clubName}}.",
+    "toastJoinedNoName": "Te sumaste al club.",
+    "toastJoinFailed": "No fue posible sumarte al club.",
     "loading": "Cargando invitación…",
     "unavailableTitle": "Invitación no disponible",
-    "unavailableBody": "Este enlace de invitación ya no es válido. El club puede enviar uno nuevo.",
+    "unavailableBody": "Este enlace de invitación ya no es válido. Pídele uno nuevo al club.",
     "goHome": "Ir a Hockia",
     "aClub": "Un club",
     "eyebrow": "Invitación de club",
     "title": "{{clubName}} te invitó a sumarte a su plantel",
-    "signedOutBody": "Con una sesión iniciada o un perfil nuevo en Hockia se puede entrar a este club.",
+    "signedOutBody": "Inicia sesión o crea tu perfil de Hockia para sumarte a este club.",
     "createProfile": "Crear mi perfil",
     "haveAccount": "Ya tengo una cuenta",
-    "alreadyMember": "Tu perfil ya es integrante de {{clubName}}.",
+    "alreadyMember": "Ya eres integrante de {{clubName}}.",
     "viewClub": "Ver club",
     "ineligible": "Solo jugadores/as y entrenadores/as pueden sumarse a un club como integrantes.",
-    "joinBody": "Al sumarse a {{clubName}} como integrante, el perfil aparece en su plantel.",
-    "joining": "Sumándose…",
+    "joinBody": "Súmate a {{clubName}} como integrante. Tu perfil va a aparecer en su plantel.",
+    "joining": "Sumándote…",
     "join": "Sumarse al club"
   },
   "applicantCard": {
@@ -788,7 +788,7 @@
     "references_many": "{{count}} referencias",
     "references_other": "{{count}} referencias",
     "tier": {
-      "topPick": "Favorita",
+      "topPick": "Primera opción",
       "maybe": "Tal vez",
       "notFit": "No encaja"
     },
@@ -810,7 +810,7 @@
     },
     "draft": "Borrador",
     "continue": "Continuar",
-    "draftHint": "Solo tu cuenta lo ve. Se publica cuando esté lista.",
+    "draftHint": "Solo tú la ves. Publícala cuando esté lista.",
     "posted": "Publicada el {{date}}",
     "closedOn": "Cerrada el {{date}}",
     "review_one": "Revisar {{count}} postulación",
@@ -825,10 +825,10 @@
       "notFit": "No encaja"
     },
     "firstRun": {
-      "title": "Publicar la primera oportunidad",
-      "body": "La oportunidad se describe una sola vez. Quienes encajan la encuentran en Oportunidades y se postulan directo, y acá se revisan todas las postulaciones.",
+      "title": "Publicar tu primera oportunidad",
+      "body": "Describe la oportunidad una sola vez. Quienes encajan la encuentran en Oportunidades y se postulan directo, y acá revisas todas las postulaciones.",
       "post": "Publicar una oportunidad",
-      "notReady": "¿Todavía no hay nada para publicar? Se puede buscar jugadores/as y armar una preselección primero.",
+      "notReady": "¿Todavía no tienes nada para publicar? Primero busca jugadores/as y arma una preselección.",
       "findPlayers": "Buscar jugadores/as ahora"
     },
     "opportunities": "Oportunidades",
@@ -859,10 +859,10 @@
       "visitor": "{{name}} · {{section}}"
     },
     "toast": {
-      "complete": "¡El perfil del club está completo! Jugadores/as y entrenadores/as ven primero los clubes con perfil completo.",
-      "strengthUp": "Fuerza del perfil +{{increase}}%. ¡A seguir así!",
-      "messageSelf": "No se puede enviar un mensaje a tu propio perfil.",
-      "messageFailed": "No se pudo iniciar la conversación. Se puede volver a intentar."
+      "complete": "¡El perfil de tu club está completo! Jugadores/as y entrenadores/as ven primero los clubes con perfil completo.",
+      "strengthUp": "Tu perfil está un {{increase}}% más completo. ¡Sigue así!",
+      "messageSelf": "No puedes enviar un mensaje a tu propio perfil.",
+      "messageFailed": "No se pudo iniciar la conversación. Intenta de nuevo."
     },
     "parent": {
       "editProfile": "Editar perfil",
@@ -882,10 +882,10 @@
     },
     "signIn": {
       "title": "Iniciar sesión para enviar mensajes",
-      "message": "Con una sesión iniciada se puede escribir y seguir a este club."
+      "message": "Inicia sesión para escribir a este club y seguirlo."
     },
-    "signInConnections": "Iniciar sesión para ver las conexiones de {{clubName}}.",
-    "signInConnectionsNoName": "Iniciar sesión para ver las conexiones de este club.",
+    "signInConnections": "Inicia sesión para ver las conexiones de {{clubName}}.",
+    "signInConnectionsNoName": "Inicia sesión para ver las conexiones de este club.",
     "signInButton": "Iniciar sesión"
   }
 }

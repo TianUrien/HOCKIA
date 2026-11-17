@@ -61,7 +61,7 @@
     "recruitingFor": "Búsqueda para {{clubName}}",
     "homeMine": "Mis oportunidades",
     "homeAll": "Oportunidades",
-    "signingNeedsClub": "Para marcar una incorporación hace falta agregar el club al perfil."
+    "signingNeedsClub": "Para marcar una incorporación, agrega tu club a tu perfil."
   },
   "coachSpecializationOption": {
     "head_coach": {
@@ -70,14 +70,14 @@
     },
     "assistant_coach": {
       "label": "Entrenador/a asistente",
-      "description": "Apoyo al cuerpo técnico principal, dictado de entrenamientos"
+      "description": "Apoyo al cuerpo técnico principal, conducción de entrenamientos"
     },
     "goalkeeper_coach": {
       "label": "Entrenador/a de arqueros/as",
       "description": "Entrenamiento y desarrollo específico de arqueros/as"
     },
     "youth_coach": {
-      "label": "Entrenador/a de juveniles / formación",
+      "label": "Entrenador/a de juveniles o formativas",
       "description": "Categorías formativas, desarrollo de talentos"
     },
     "strength_conditioning": {

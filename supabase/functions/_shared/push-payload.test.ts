@@ -174,5 +174,5 @@ Deno.test('Spanish push: application status reads naturally', () => {
     status: 'shortlisted', club_name: 'Club Atlético', vacancy_title: 'Arquera para Primera',
   }, 'x', null, 'es')
   assertEquals(p.title, 'Club Atlético te sumó a su preselección')
-  assertEquals(p.body, 'Tu perfil está en consideración para Arquera para Primera.')
+  assertEquals(p.body, 'Estás en consideración para Arquera para Primera.')
 })

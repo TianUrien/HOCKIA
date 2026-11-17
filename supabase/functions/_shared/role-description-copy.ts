@@ -2,7 +2,7 @@
 // Kept here, not in the function's index.ts, so the deno test suite in
 // _shared covers the grammar and the no-placeholder rule.
 
-import { spanishPositionLabel } from './member-language.ts'
+import { spanishList, spanishPositionLabel } from './member-language.ts'
 import { withOutputLanguage, type MemberLanguage } from './ai-language.ts'
 
 export type Answers = {
@@ -202,19 +202,31 @@ export function durationEs(value: string): string {
   return v
 }
 
+const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+/** "el 1 de enero de 2027" (ISO date), "en enero de 2027" (ISO month), else "en <as given>". */
+export function startEs(value: string): string {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (d && MONTHS_ES[Number(d[2]) - 1]) return `el ${Number(d[3])} de ${MONTHS_ES[Number(d[2]) - 1]} de ${d[1]}`
+  const m = /^(\d{4})-(\d{2})$/.exec(value)
+  if (m && MONTHS_ES[Number(m[2]) - 1]) return `en ${MONTHS_ES[Number(m[2]) - 1]} de ${m[1]}`
+  return `en ${value}`
+}
+
 /** The Spanish template (same facts and shape as template). */
 export function templateEs(a: Answers, clubName: string): string {
   const place = clean(a.city) || clean(a.country)
   const lines = [`${clubName} busca ${lookingForEs(a)}${place ? `, con base en ${place}` : ''}.`]
   const start = clean(a.start)
   const duration = clean(a.duration)
-  const when = [start && `desde ${start}`, duration && `por ${durationEs(duration)}`].filter(Boolean).join(' ')
-  if (when) lines.push(`La oportunidad es ${when}.`)
+  if (start && duration) lines.push(`Comienza ${startEs(start)} y es por ${durationEs(duration)}.`)
+  else if (start) lines.push(`Comienza ${startEs(start)}.`)
+  else if (duration) lines.push(`Es por ${durationEs(duration)}.`)
   const pkg = (a.package ?? []).map((s) => clean(s)).filter(Boolean).map((s) => PACKAGE_ES[s.toLowerCase()] ?? human(s))
-  if (pkg.length) lines.push(`Ofrecemos ${pkg.join(', ')}.`)
+  if (pkg.length) lines.push(`Ofrecemos ${spanishList(pkg)}.`)
   lines.push(a.type === 'coach'
     ? 'Nos interesa conocer tu experiencia como entrenador/a y tu disponibilidad.'
-    : 'Nos interesa conocer tu temporada hasta ahora y tu disponibilidad.')
+    : 'Nos interesa saber cómo viene tu temporada y cuál es tu disponibilidad.')
   return lines.join(' ')
 }
 

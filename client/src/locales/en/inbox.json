@@ -318,6 +318,20 @@
       "signingUndone": "{{name}} undid the signing for {{role}}.",
       "signingConfirmed": "{{name}} confirmed the signing for {{role}}. Signed through Hockia.",
       "yourRole": "your role"
+    },
+    "serverLinesNoName": {
+      "inviteFirstLine": "You were invited to apply for {{role}}.",
+      "markedYou": "You were marked as signed for {{role}}. Confirm it on Hockia to add the signing to your career.",
+      "offerSent": "You received an offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "offerUpdated": "Your offer for {{role}} was updated, open until {{day}}. Open Hockia to see the terms and answer.",
+      "applied": "A new application for {{role}}.",
+      "passedOn": "The invite for {{role}} was declined.",
+      "offerWithdrawn": "The offer for {{role}} was withdrawn.",
+      "applicationWithdrawn": "The application for {{role}} was withdrawn.",
+      "offerAccepted": "The offer for {{role}} was accepted.",
+      "offerDeclined": "The offer for {{role}} was declined.",
+      "signingUndone": "The signing for {{role}} was undone.",
+      "signingConfirmed": "The signing for {{role}} was confirmed. Signed through Hockia."
     }
   },
   "invites": {

@@ -49,11 +49,12 @@ describe('recruiting titles and chat lines', () => {
   it('rebuilds them in Spanish, keeping names and roles', async () => {
     await i18n.changeLanguage('es')
     expect(recruitingTitle('offer_expired', 'Your offer to Ana expired')).toBe('Venció tu oferta a Ana')
-    expect(recruitingTitle('signing_confirmed', 'The player confirmed the signing')).toBe('La persona confirmó la incorporación')
+    expect(recruitingTitle('signing_confirmed', 'The player confirmed the signing')).toBe('Se confirmó la incorporación')
     expect(recruitingTitle('offer_expired', 'Something new')).toBe('Something new')
+    expect(recruitingServerLine('The player applied for your role.')).toBe('Llegó una postulación para tu oportunidad.')
     expect(recruitingServerLine('E2E Test FC undid the signing for Midfielder.')).toBe('E2E Test FC deshizo la incorporación para Midfielder.')
     expect(recruitingPreview('Ana confirmed the signing for Midfielder. Signed through Hockia.', { isMine: false }))
-      .toEqual({ text: 'Ana confirmó la incorporación para Midfielder. Incorporación a través de Hockia.', system: true })
+      .toEqual({ text: 'Ana confirmó la incorporación para Midfielder, hecha a través de Hockia.', system: true })
     expect(recruitingPreview('Hola, ¿cómo va?', { isMine: false })).toEqual({ text: 'Hola, ¿cómo va?', system: false })
   })
 })
@@ -67,6 +68,6 @@ describe('application status notification', () => {
   it('names the position in the active language', async () => {
     expect(getNotificationConfig(rejected).getDescription?.(rejected)).toBe('Not this time for Midfielder.')
     await i18n.changeLanguage('es')
-    expect(getNotificationConfig(rejected).getDescription?.(rejected)).toBe('Esta vez no para Volante.')
+    expect(getNotificationConfig(rejected).getDescription?.(rejected)).toBe('Esta vez no se dio para Volante.')
   })
 })

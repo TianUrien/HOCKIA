@@ -69,28 +69,28 @@ const REMINDER_CONTENT: Record<number, ReminderContent> = {
   },
 }
 
-// Spanish (client/src/locales/glossary.md): no second-person verb forms,
+// Spanish (client/src/locales/glossary.md): tú to the member,
 // infinitive buttons, never promise outcomes.
 const REMINDER_CONTENT_ES: Record<number, ReminderContent> = {
   1: {
     subject: 'Falta poco para completar tu perfil de Hockia',
     heading: 'Tu perfil te espera',
     bodyText:
-      'Falta un solo paso para sumarte a la comunidad del hockey sobre césped. Con el perfil completo se pueden descubrir oportunidades, conectar con la comunidad y mostrar tu juego.',
+      'Te falta un solo paso para sumarte a la comunidad del hockey sobre césped. Completa tu perfil para descubrir oportunidades, conectarte con la comunidad y mostrar tu juego.',
     ctaLabel: 'Completar mi perfil',
   },
   2: {
     subject: 'Tu perfil de Hockia está casi listo',
-    heading: 'Retomar tu perfil',
+    heading: 'Retoma tu perfil donde lo dejaste',
     bodyText:
-      'Integrantes de toda la comunidad de Hockia ya están conectando y encontrando oportunidades. Para empezar, falta terminar de configurar tu perfil.',
+      'En toda la comunidad de Hockia ya hay integrantes que se conectan y encuentran oportunidades. Para empezar, solo te falta terminar de configurar tu perfil.',
     ctaLabel: 'Terminar la configuración',
   },
   3: {
     subject: 'Tu perfil de Hockia sigue incompleto',
     heading: 'Un recordatorio sobre tu perfil',
     bodyText:
-      'Tu perfil de Hockia todavía no está completo. Con el perfil completo pueden llegar avisos de oportunidades y se puede conectar con la comunidad.',
+      'Tu perfil de Hockia todavía no está completo. Complétalo para empezar a recibir avisos de oportunidades y conectarte con la comunidad.',
     ctaLabel: 'Completar perfil',
   },
 }
@@ -300,11 +300,11 @@ Deno.serve(async (req: Request) => {
           </p>
           <hr style="border: none; border-top: 1px solid #e6e3ee; margin: 30px 0;">
           <p style="font-size: 12px; color: #73707c;">
-            Si esta cuenta no es tuya, este email se puede ignorar.
+            Si esta cuenta no es tuya, puedes ignorar este email.
           </p>
         </div>
       `
-      emailText = `${content.heading}\n\nHola, ${firstName}:\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nSi esta cuenta no es tuya, este email se puede ignorar.`
+      emailText = `${content.heading}\n\nHola, ${firstName}:\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nSi esta cuenta no es tuya, puedes ignorar este email.`
       logger.info('Falling back to hardcoded template', { reminderNumber, language })
     } else {
       // Fallback: simple plain-text-ish email

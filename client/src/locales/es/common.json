@@ -8,7 +8,7 @@
   },
   "offline": {
     "title": "Sin conexión",
-    "body": "Lo que ya cargó se puede seguir leyendo. Los mensajes y las postulaciones se pueden enviar al recuperar la conexión.",
+    "body": "Puedes seguir leyendo lo que ya cargó. Envía mensajes o postulaciones cuando recuperes la conexión.",
     "retry": "Reintentar"
   },
   "language": {
@@ -27,7 +27,7 @@
     "search": "Buscar",
     "searchHint": "Buscar jugadores/as, clubes, oportunidades",
     "notifications": "Notificaciones",
-    "askHockiaAi": "Preguntar a Hockia AI",
+    "askHockiaAi": "Preguntarle a Hockia AI",
     "newPost": "Nueva publicación",
     "goHome": "Hockia, ir a Inicio",
     "unread": "Sin leer",
@@ -38,18 +38,18 @@
   "accountMenu": {
     "open": "Abrir el menú de la cuenta",
     "tabLabel": "Panel",
-    "fallbackName": "Mi cuenta",
-    "dashboard": "Mi panel",
+    "fallbackName": "Tu cuenta",
+    "dashboard": "Tu panel",
     "settings": "Ajustes",
     "signOut": "Cerrar sesión",
-    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+    "signOutFailed": "No se pudo cerrar la sesión. Intenta de nuevo."
   },
   "dashboardMenu": {
     "open": "Abrir el menú",
     "close": "Cerrar el menú",
     "settings": "Ajustes",
     "signOut": "Cerrar sesión",
-    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+    "signOutFailed": "No se pudo cerrar la sesión. Intenta de nuevo."
   },
   "breadcrumbs": {
     "label": "Ruta de navegación"
@@ -67,17 +67,17 @@
   },
   "cookies": {
     "label": "Consentimiento de cookies",
-    "body": "Usamos cookies y analíticas para mejorar la experiencia. <privacyLink>Política de privacidad</privacyLink>",
+    "body": "Usamos cookies y herramientas de análisis para mejorar tu experiencia. <privacyLink>Política de privacidad</privacyLink>",
     "decline": "Rechazar",
     "accept": "Aceptar"
   },
   "errorBoundary": {
     "title": "Algo salió mal",
-    "body": "Ocurrió algo inesperado. Recargar la página puede solucionarlo.",
+    "body": "Lo sentimos, ocurrió algo inesperado. Intenta recargar la página.",
     "reload": "Recargar la página",
     "retry": "Reintentar",
     "updatedTitle": "Hockia se acaba de actualizar",
-    "updatedBody": "Hay una nueva versión de la app. Para seguir usando Hockia hay que recargar la página.",
+    "updatedBody": "Hay una nueva versión de la app. Recarga la página para seguir usando Hockia.",
     "reloadApp": "Recargar Hockia",
     "details": "Detalles del error"
   },
@@ -86,18 +86,18 @@
     "privacy": "Política de privacidad",
     "terms": "Términos",
     "termsLabel": "Términos del servicio",
-    "developers": "Para desarrolladores",
-    "developersLabel": "Documentación y API para desarrolladores",
+    "developers": "Para desarrolladores/as",
+    "developersLabel": "Documentación y API para desarrolladores/as",
     "support": "Contactar a soporte",
     "supportLabel": "Contactar a soporte por email"
   },
   "install": {
     "dismiss": "Cerrar",
     "title": "Instalar Hockia",
-    "iosBody": "Agregar a la pantalla de inicio para la mejor experiencia",
-    "iosStepShare": "Tocar <icon/> Compartir",
-    "iosStepAdd": "Tocar <icon/> Agregar a inicio",
-    "body": "Acceso rápido desde la pantalla de inicio",
+    "iosBody": "Agrega Hockia a tu pantalla de inicio para una mejor experiencia",
+    "iosStepShare": "Toca <icon/> Compartir",
+    "iosStepAdd": "Toca <icon/> Agregar a inicio",
+    "body": "Acceso rápido desde tu pantalla de inicio",
     "button": "Instalar la app"
   },
   "bottomNav": {
@@ -117,7 +117,7 @@
   },
   "nativeUpdate": {
     "requiredTitle": "Actualización necesaria",
-    "requiredBody": "Para continuar hay que actualizar Hockia. Esta versión ya no tiene soporte.",
+    "requiredBody": "Actualiza Hockia para continuar. Esta versión ya no tiene soporte.",
     "updateApp": "Actualizar Hockia",
     "dismiss": "Cerrar",
     "availableTitle": "Actualización disponible",
@@ -140,7 +140,7 @@
   },
   "pushAsk": {
     "title": "Novedades al momento",
-    "body": "Avisos de mensajes, postulaciones y oportunidades, incluso con la app cerrada.",
+    "body": "Recibe avisos de mensajes, postulaciones y oportunidades, incluso con la app cerrada.",
     "enable": "Activar notificaciones",
     "notNow": "Ahora no"
   },
@@ -154,11 +154,11 @@
   },
   "settingsSheet": {
     "trigger": "Ajustes",
-    "fallbackName": "Mi cuenta",
+    "fallbackName": "Tu cuenta",
     "settings": "Ajustes",
     "feedback": "Enviar comentarios",
     "signOut": "Cerrar sesión",
-    "signOutFailed": "No se pudo cerrar la sesión. Se puede volver a intentar."
+    "signOutFailed": "No se pudo cerrar la sesión. Intenta de nuevo."
   },
   "actionSheet": {
     "label": "Acciones",
@@ -174,16 +174,16 @@
   "friendRow": {
     "ask": "Pedir referencia",
     "requested": "Solicitud enviada",
-    "friends": "Amistad",
+    "friends": "Conexión",
     "add": "Agregar",
     "addLabel": "{{action}} {{name}}",
-    "wroteYou": "Me escribió una referencia",
+    "wroteYou": "Te escribió una referencia",
     "wroteReference": "Escribió una referencia"
   },
   "nationality": {
     "euBadge": "UE",
-    "euBadgeLabel": "Pasaporte UE",
-    "euPassportTag": "Pasaporte UE",
+    "euBadgeLabel": "Pasaporte de la UE",
+    "euPassportTag": "Pasaporte de la UE",
     "tileTitle": "Nacionalidades, pasaportes y permisos",
     "notGiven": "Sin datos",
     "addPassport": "Agregar pasaporte",
@@ -212,7 +212,7 @@
     }
   },
   "timeAgo": {
-    "justNow": "Recién",
+    "justNow": "Hace un momento",
     "compactMinutes": "hace {{count}} min",
     "compactHours": "hace {{count}} h",
     "compactDays": "hace {{count}} d",
@@ -231,22 +231,22 @@
   },
   "technicalErrors": {
     "notAccepting": "Esta persona no acepta solicitudes.",
-    "permission": "No hay permiso para hacer esto.",
-    "duplicate": "Esto ya existe. Puede servir actualizar la página.",
-    "invalidData": "Algunos de los datos no son válidos. Revisarlos e intentar de nuevo.",
+    "permission": "No tienes permiso para hacer esto.",
+    "duplicate": "Esto ya existe. Intenta actualizar la página.",
+    "invalidData": "Algunos de los datos no son válidos. Revísalos e intenta de nuevo.",
     "missingRelated": "Falta un registro relacionado o se eliminó.",
     "notFound": "No se encontró el elemento. Puede que se haya eliminado.",
-    "rateLimit": "Demasiadas solicitudes. Esperar un momento e intentar de nuevo.",
-    "timeout": "La solicitud tardó demasiado. Intentar de nuevo.",
-    "network": "Error de red. Revisar la conexión e intentar de nuevo.",
-    "sessionExpired": "La sesión expiró. Hay que iniciar sesión de nuevo."
+    "rateLimit": "Demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+    "timeout": "La solicitud tardó demasiado. Intenta de nuevo.",
+    "network": "Error de red. Revisa tu conexión e intenta de nuevo.",
+    "sessionExpired": "Tu sesión venció. Inicia sesión de nuevo."
   },
   "inAppBrowser": {
-    "metaSteps": "Tocar {{menu}} arriba a la derecha y después “Abrir en el navegador externo”.",
-    "whatsappSteps": "Tocar {{menu}} arriba a la derecha y después “Abrir en el navegador”.",
-    "tiktokSteps": "Tocar ⋯ arriba a la derecha y después “Abrir en el navegador”.",
-    "linkedinSteps": "Tocar {{menu}} y después “Abrir en el navegador”.",
-    "genericSteps": "Abrir esta página en el navegador desde el menú de la app, o copiar el enlace y pegarlo en Safari o Chrome."
+    "metaSteps": "Toca {{menu}} arriba a la derecha y después “Abrir en el navegador externo”.",
+    "whatsappSteps": "Toca {{menu}} arriba a la derecha y después “Abrir en el navegador”.",
+    "tiktokSteps": "Toca ⋯ arriba a la derecha y después “Abrir en el navegador”.",
+    "linkedinSteps": "Toca {{menu}} y después “Abrir en el navegador”.",
+    "genericSteps": "Abre esta página en tu navegador desde el menú de la app, o copia el enlace y pégalo en Safari o Chrome."
   },
   "skeletons": {
     "opportunity": "Cargando oportunidad",
@@ -271,7 +271,7 @@
   },
   "shortcuts": {
     "title": "Atajos de teclado",
-    "subtitle": "Para moverse por Hockia más rápido con el teclado",
+    "subtitle": "Muévete por Hockia más rápido con el teclado",
     "then": "y después",
     "footer": "Los atajos no funcionan al escribir en un formulario ni con una ventana abierta",
     "groups": {
@@ -290,32 +290,32 @@
   },
   "errors": {
     "recruiterMinor": "Clubes y cuerpos técnicos no pueden contactar a este perfil.",
-    "saveFailed": "No se pudo guardar. Volver a intentarlo.",
+    "saveFailed": "No se pudo guardar. Intenta de nuevo.",
     "feedLoadFailed": "No se pudo cargar el inicio",
-    "contentBlocked": "El mensaje tiene lenguaje que no cumple las normas de la comunidad. Revisarlo e intentar de nuevo."
+    "contentBlocked": "Tu mensaje tiene lenguaje que no cumple las normas de la comunidad. Revísalo e intenta de nuevo."
   },
   "upload": {
     "errors": {
       "tooLarge100": "El archivo es demasiado pesado. Los videos tienen que pesar menos de 100 MB.",
-      "typeNotSupported": "Este tipo de archivo no es compatible. Formatos admitidos: MP4, MOV o WebM.",
-      "network": "Error de red. Revisar la conexión y volver a intentarlo.",
-      "unavailable": "La subida de videos no está disponible por el momento. Volver a intentarlo más tarde.",
-      "hourlyLimit": "Se iniciaron muchas subidas en la última hora. Volver a intentarlo un poco más tarde.",
+      "typeNotSupported": "Este tipo de archivo no es compatible. Usa MP4, MOV o WebM.",
+      "network": "Error de red. Revisa tu conexión e intenta de nuevo.",
+      "unavailable": "La subida de videos no está disponible por el momento. Intenta de nuevo más tarde.",
+      "hourlyLimit": "Iniciaste muchas subidas en la última hora. Intenta de nuevo un poco más tarde.",
       "invalidVideo": "Video no válido",
-      "couldNotStart": "No se pudo iniciar la subida. Volver a intentarlo.",
-      "stillProcessing": "Todavía se está procesando. Puede estar listo en unos minutos.",
-      "processingFailed": "Cloudflare no pudo procesar este video. Probar con otro archivo.",
+      "couldNotStart": "No se pudo iniciar la subida. Intenta de nuevo.",
+      "stillProcessing": "Todavía se está procesando. Vuelve a revisar en unos minutos.",
+      "processingFailed": "Cloudflare no pudo procesar este video. Intenta con otro archivo.",
       "failed": "La subida falló",
-      "nativeType": "El video tiene que ser MP4, MOV, WebM o M4V.",
-      "nativeTooLarge": "El video pesa más de 1 GB. Hay que recortarlo o comprimirlo antes de subirlo.",
-      "interrupted": "La subida se interrumpió. Volver a intentarlo.",
+      "nativeType": "Sube un video MP4, MOV, WebM o M4V.",
+      "nativeTooLarge": "El video pesa más de 1 GB. Recórtalo o comprímelo antes de subirlo.",
+      "interrupted": "La subida se interrumpió. Intenta de nuevo.",
       "invalidFileName": "Nombre de archivo no válido",
       "videoTypes": "Solo se admiten videos MP4, MOV o WebM.",
       "videoTooLarge": "El video es demasiado pesado. Máximo: {{maxMb}} MB.",
       "videoTooLong": "El video puede durar hasta {{maxMinutes}} minutos. Duración actual: {{seconds}} s.",
       "unreadableVideo": "No se pudieron leer los datos del video. Puede que el archivo esté dañado.",
       "imageTypes": "Solo se admiten imágenes JPG/JPEG o PNG.",
-      "imageTooLarge": "La imagen tiene que pesar menos de {{maxMb}} MB."
+      "imageTooLarge": "Sube una imagen de menos de {{maxMb}} MB."
     }
   },
   "avatar": {
@@ -334,27 +334,27 @@
     "contextScopeFailed": "No se pudo limitar a esta oportunidad",
     "contextUpdateFailed": "No se pudo actualizar el contexto",
     "contextDeleteFailed": "No se pudo eliminar el contexto",
-    "signInToSave": "Iniciar sesión para guardar perfiles",
+    "signInToSave": "Inicia sesión para guardar perfiles",
     "removeSavedFailed": "No se pudo quitar de guardados",
     "createSavedListFailed": "No se pudo crear tu lista de guardados",
     "saveProfileFailed": "No se pudo guardar el perfil",
-    "savedToast": "Guardado. La lista está en tu panel",
+    "savedToast": "Guardado. Tu lista de guardados está en tu panel",
     "savedLoadFailed": "No se pudieron cargar los perfiles guardados",
     "shortlistsLoadFailed": "No se pudieron cargar las preselecciones",
-    "shortlistNameRequired": "La preselección necesita un nombre",
+    "shortlistNameRequired": "Ponle un nombre a tu preselección",
     "shortlistCreateFailed": "No se pudo crear la preselección",
     "shortlistRenameFailed": "No se pudo cambiar el nombre de la preselección",
-    "shortlistDefaultFirst": "Antes de eliminar esta lista, elegir otra como principal",
+    "shortlistDefaultFirst": "Antes de eliminar esta lista, elige otra como principal",
     "shortlistDeleteFailed": "No se pudo eliminar la preselección",
     "shortlistDefaultFailed": "No se pudo cambiar la lista principal",
     "itemsLoadFailed": "No se pudieron cargar los perfiles",
     "itemAddFailed": "No se pudo agregar a la preselección",
     "itemRemoveFailed": "No se pudo quitar el perfil",
     "itemStatusFailed": "No se pudo actualizar el estado",
-    "markedUnsorted": "Marcado como sin clasificar",
-    "markedTopPick": "Marcado como primera opción",
-    "markedMaybe": "Marcado como tal vez",
-    "markedNotAFit": "Marcado como no encaja",
+    "markedUnsorted": "Marcado como Sin clasificar",
+    "markedTopPick": "Marcado como Primera opción",
+    "markedMaybe": "Marcado como Tal vez",
+    "markedNotAFit": "Marcado como No encaja",
     "noteSaveFailed": "No se pudo guardar la nota",
     "noteCleared": "Nota borrada",
     "noteSaved": "Nota guardada",
@@ -364,17 +364,17 @@
     "movedTo": "Movido a {{name}}"
   },
   "clubInvite": {
-    "accepted": "Invitación del club aceptada.",
+    "accepted": "Te uniste al club.",
     "declined": "Invitación del club rechazada.",
     "unavailable": "Esta invitación ya no está disponible.",
-    "error": "No se pudo actualizar la invitación del club. Se puede volver a intentar."
+    "error": "No se pudo actualizar la invitación del club. Intenta de nuevo."
   },
   "getReady": {
     "aria": "Preparación para {{where}}",
     "sent": "Postulación enviada a {{club}}",
     "title": "Preparación para {{where}}",
-    "body": "Lo que suele resolverse antes de mudarse. Solo si suma.",
-    "offerSuffix": " · Oferta para miembros",
+    "body": "Lo que suele resolverse antes de mudarse. Solo si te sirve.",
+    "offerSuffix": " · Oferta para integrantes",
     "seeAll": "Ver todo para {{where}}",
     "notNow": "Ahora no"
   }

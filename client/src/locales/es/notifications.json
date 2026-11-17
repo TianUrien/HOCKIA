@@ -7,9 +7,9 @@
     "shortlistedTitle": "{{club}} te sumó a su preselección",
     "shortlistedBody": "Tu perfil está en consideración para {{role}}.",
     "maybeTitle": "{{club}} respondió a tu postulación",
-    "maybeBody": "Hay una novedad en tu postulación para {{position}}.",
+    "maybeBody": "Abre tu postulación para {{position}} y mira la novedad.",
     "rejectedTitle": "{{club}} actualizó tu postulación",
-    "rejectedBody": "Esta vez no para {{position}}.",
+    "rejectedBody": "Esta vez no se dio para {{position}}.",
     "filledTitle": "{{club}} cubrió la oportunidad",
     "filledBody": "Ya se cubrió {{role}}. Gracias por postularte. Hay nuevas oportunidades abiertas.",
     "updatedTitle": "{{club}} actualizó tu postulación",
@@ -18,16 +18,16 @@
   "kinds": {
     "default": {
       "badge": "Notificación",
-      "title": "Hay una novedad"
+      "title": "Tienes una novedad"
     },
     "friendRequestReceived": {
-      "badge": "Solicitud de amistad",
-      "title": "{{name}} te envió una solicitud de amistad"
+      "badge": "Solicitud de conexión",
+      "title": "{{name}} te envió una solicitud de conexión"
     },
     "friendRequestAccepted": {
-      "badge": "Amistad",
-      "title": "{{name}} aceptó tu solicitud de amistad",
-      "description": "Desde ahora, cada perfil puede ver la actividad del otro."
+      "badge": "Conexión aceptada",
+      "title": "{{name}} aceptó tu solicitud de conexión",
+      "description": "Ahora pueden ver mutuamente su actividad."
     },
     "profileCommentCreated": {
       "badge": "Comentario en el perfil",
@@ -51,7 +51,7 @@
     "signingTagged": {
       "badge": "Nueva incorporación",
       "title": "{{name}} publicó tu incorporación 🎉",
-      "description": "La publicación se abre con un toque. La etiqueta se puede quitar desde su menú ⋯."
+      "description": "Toca para ver la publicación. Puedes quitar tu etiqueta desde su menú ⋯."
     },
     "contentRemoved": {
       "badge": "Normas de la comunidad",
@@ -129,17 +129,17 @@
     "profileCompleted": {
       "badge": "Hito del perfil",
       "title": "Tu perfil está completo",
-      "description": "Buen trabajo. Mantenerlo al día ayuda a que te encuentren las personas indicadas."
+      "description": "Buen trabajo. Mantenlo al día para que te encuentren las personas indicadas."
     },
     "accountVerified": {
       "badge": "Cuenta verificada",
       "title": "Tu cuenta fue verificada",
-      "description": "Tu cuenta ya tiene acceso completo a la plataforma Hockia."
+      "description": "Ya tienes acceso completo a la plataforma Hockia."
     },
     "ambassadorRequestReceived": {
       "badge": "Invitación como embajador/a",
       "title": "{{name}} te invitó a ser embajador/a de marca",
-      "description": "Invitación pendiente de revisión y respuesta."
+      "description": "Revisa la invitación y responde."
     },
     "ambassadorRequestAccepted": {
       "badge": "Novedad de embajador/a",
@@ -161,7 +161,7 @@
       "takedownHeadNoTitle": "Tu oferta fue retirada.",
       "rejectedHead": "\"{{title}}\" no fue aprobada.",
       "rejectedHeadNoTitle": "Tu oferta no fue aprobada.",
-      "withReason": "{{head}} Motivo: {{reason}}. Se puede editar y volver a publicar."
+      "withReason": "{{head}} Motivo: {{reason}}. Edítala y vuelve a publicarla."
     },
     "clubInvitationReceived": {
       "badge": "Invitación de club",
@@ -170,7 +170,7 @@
     "clubInvitationAccepted": {
       "badge": "Novedad del club",
       "title": "{{name}} se unió a tu club",
-      "description": "Ya aparece en Integrantes."
+      "description": "Ya aparece en los integrantes de tu club."
     },
     "profileViewed": {
       "badge": "Visitas al perfil",
@@ -192,7 +192,7 @@
     }
   },
   "store": {
-    "friendRequestFailed": "No se pudo actualizar la solicitud de amistad. Se puede volver a intentar."
+    "friendRequestFailed": "No se pudo actualizar la solicitud de conexión. Intenta de nuevo."
   },
   "badge": {
     "unread_one": "{{count}} notificación sin leer",
@@ -217,9 +217,9 @@
     "memberFallback": "Integrante de Hockia",
     "viewProfile": "Ver el perfil de {{name}}",
     "moreOptions": "Más opciones",
-    "emptyUnread": "No hay notificaciones nuevas por ahora.",
-    "emptySection": "Todo al día. Acá aparece cualquier novedad.",
-    "emptyAll": "Todo al día. Acá aparece cualquier novedad.",
+    "emptyUnread": "No tienes notificaciones nuevas por ahora.",
+    "emptySection": "Estás al día. Te avisamos cuando llegue algo nuevo.",
+    "emptyAll": "Estás al día. Te avisamos cuando pase algo.",
     "friendRequest": {
       "confirm": "Confirmar",
       "remove": "Eliminar"
@@ -233,10 +233,10 @@
       "decline": "Rechazar"
     },
     "toasts": {
-      "friendRequestFailed": "No se pudo actualizar la solicitud de amistad. Se puede volver a intentar.",
-      "friendRequestAccepted": "Solicitud de amistad aceptada.",
-      "friendRequestDeclined": "Solicitud de amistad rechazada.",
-      "ambassadorFailed": "No se pudo actualizar la solicitud de embajador/a. Se puede volver a intentar.",
+      "friendRequestFailed": "No se pudo actualizar la solicitud de conexión. Intenta de nuevo.",
+      "friendRequestAccepted": "Solicitud de conexión aceptada.",
+      "friendRequestDeclined": "Solicitud de conexión rechazada.",
+      "ambassadorFailed": "No se pudo actualizar la solicitud de embajador/a. Intenta de nuevo.",
       "ambassadorAccepted": "Invitación como embajador/a aceptada.",
       "ambassadorDeclined": "Invitación como embajador/a rechazada."
     }
@@ -263,7 +263,7 @@
     "offerDeclined": "{{name}} no aceptó tu oferta",
     "offerExpired": "Venció tu oferta a {{name}}",
     "applicationWithdrawn": "{{name}} retiró su postulación",
-    "signingMarked": "Confirmar la incorporación con {{name}}",
+    "signingMarked": "Confirma tu incorporación con {{name}}",
     "signingUndone": "{{name}} deshizo la incorporación",
     "signingConfirmed": "{{name}} confirmó la incorporación",
     "signingExpired": "{{name}} no confirmó la incorporación en 14 días",
@@ -274,6 +274,21 @@
       "aPlayer": "Una persona",
       "aPlayerLower": "una persona",
       "thePlayer": "La persona"
+    },
+    "noName": {
+      "inviteReceived": "Te invitaron a postularte",
+      "inviteDeclined": "No aceptaron tu invitación",
+      "offerSent": "Recibiste una oferta",
+      "offerUpdated": "Se actualizó la oferta que recibiste",
+      "offerWithdrawn": "Se retiró la oferta",
+      "offerAccepted": "Aceptaron tu oferta",
+      "offerDeclined": "No aceptaron tu oferta",
+      "offerExpired": "Venció tu oferta",
+      "applicationWithdrawn": "Se retiró una postulación",
+      "signingMarked": "Confirma tu incorporación",
+      "signingUndone": "Se deshizo la incorporación",
+      "signingConfirmed": "Se confirmó la incorporación",
+      "signingExpired": "La incorporación no se confirmó en 14 días"
     }
   }
 }

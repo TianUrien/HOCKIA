@@ -194,9 +194,9 @@ function describeSofteningEs(step: GeoSofteningStep, o: SofteningCopyInput): str
     }
     case 'region':
       return region
-        ? `Todavía no hay ${o.noun} en ${asked} en HOCKIA, pero ${found} en otra parte de ${region}.`
-        : `Todavía no hay ${o.noun} en ${asked} en HOCKIA, pero ${found} cerca.`
+        ? `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} en otra parte de ${region}.`
+        : `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} cerca.`
     case 'worldwide':
-      return `Todavía no hay ${o.noun} en ${asked} en HOCKIA, pero ${found} en otras partes del mundo.`
+      return `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} en otras partes del mundo.`
   }
 }

@@ -963,7 +963,7 @@
     "revokeFailed": "Could not revoke the link. Please try again.",
     "invitationCancelled": "Invitation cancelled",
     "memberRemoved": "{{name}} removed from your squad",
-    "memberRemovedNoName": "They removed from your squad",
+    "memberRemovedNoName": "Removed from your squad",
     "genericError": "Something went wrong. Please try again.",
     "linkTitle": "Invite link",
     "linkBody": "Anyone with it can ask to join. You approve each one.",

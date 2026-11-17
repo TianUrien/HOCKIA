@@ -79,15 +79,15 @@ const LABELS_ES: Record<string, string> = {
   assistant_coach: 'Entrenador/a asistente',
   youth_coach: 'Entrenador/a de juveniles',
   goalkeeper_coach: 'Entrenador/a de arqueros/as',
-  strength_conditioning: 'Preparación física',
+  strength_conditioning: 'Preparador/a físico/a',
   performance_analyst: 'Analista de rendimiento',
   sports_scientist: 'Especialista en ciencias del deporte',
   other_coach: 'Entrenador/a',
   unpaid_development: 'Desarrollo (no pago)',
   paid_contract: 'Contrato pago',
   eu_passport: 'Pasaporte de la UE',
-  strong_match: 'Muy buena coincidencia',
-  possible_match: 'Buena coincidencia',
+  strong_match: 'Encaje alto',
+  possible_match: 'Encaje posible',
   needs_more_info: 'Falta información',
 }
 

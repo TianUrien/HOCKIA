@@ -32,7 +32,7 @@ import { goalSummary } from '../_shared/member-goal.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { currentAiLanguage, inCurrentLanguage, resolveAiLanguage, runWithAiLanguage, setCurrentAiLanguage, type AiLanguageHolder } from '../_shared/ai-language.ts'
-import { buildRoleSummaryEs, canonicalQuery, entityPluralEs, entitySingularEs, localizeNlBody, stepLabelEs } from '../_shared/nl-search-es.ts'
+import { buildRoleSummaryEs, canonicalQuery, countryNameEs, entityPluralEs, entitySingularEs, localizeNlBody, positionPluralEs, positionSingularEs, stepLabelEs } from '../_shared/nl-search-es.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
@@ -854,6 +854,14 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
 
 // Spanish orientation (Stage 3). Triage words as the client's Applicants
 // screen (es/recruiting.json): En preselección, Tal vez, Por revisar, No encaja.
+/** The opening in Spanish running text ("volante", "entrenador/a principal"); never the English position. */
+function opportunityLabelEs(opp: { position: string | null; opportunity_type: string }): string {
+  const fromPosition = opp.position ? positionLabel(opp.position, 'es') : null
+  const label = fromPosition ?? positionSingularEs(opp.position) ?? positionSingularEs(opp.opportunity_type)
+    ?? (opp.opportunity_type === 'coach' ? 'entrenador/a' : 'jugador/a')
+  return label.charAt(0).toLowerCase() + label.slice(1)
+}
+
 function buildRecruitmentOrientationEs(opp: OwnerOpportunity): string {
   const b = opp.triage_breakdown
   const total = b.pending + b.shortlisted + b.maybe + b.rejected
@@ -863,18 +871,18 @@ function buildRecruitmentOrientationEs(opp: OwnerOpportunity): string {
   if (b.maybe > 0) parts.push(`${b.maybe} Tal vez`)
   if (b.pending > 0) parts.push(`${b.pending} Por revisar`)
   if (b.rejected > 0) parts.push(`${b.rejected} No encaja`)
-  const label = (opp.position ? positionLabel(opp.position, 'es') : null) ?? opportunityLabel(opp)
-  const headline = `Para tu oportunidad de ${label}, ${total === 1 ? 'hay 1 postulación' : `hay ${total} postulaciones`}: ${parts.join(', ')}.`
+  const label = opportunityLabelEs(opp)
+  const headline = `Para tu oportunidad de ${label}, ${total === 1 ? 'tienes 1 postulación' : `tienes ${total} postulaciones`}: ${parts.join(', ')}.`
   if (pool === 0) {
-    if (b.rejected > 0) return `${headline} Todas están marcadas como No encaja; no voy a cambiar eso. ¿Buscar fuera de tus postulaciones?`
+    if (b.rejected > 0) return `${headline} ${total === 1 ? 'Está marcada' : 'Todas están marcadas'} como "No encaja"; no voy a cambiar eso. ¿Busco fuera de tus postulaciones?`
     return headline
   }
-  return `${headline} Las recomendaciones salen de las ${pool} que no descartaste.`
+  return `${headline} Te recomiendo entre ${pool === 1 ? 'la única postulación que sigue' : `las ${pool} que siguen`} en evaluación.`
 }
 
 /** "I couldn't find any clubs…" for the world-club directory, in the reader's language. */
 function noClubsMessage(locationLabel: string | null | undefined): string {
-  if (currentAiLanguage() === 'es') return `No encontré clubes que coincidan en el directorio de HOCKIA${locationLabel ? ` para ${locationLabel}` : ''}.`
+  if (currentAiLanguage() === 'es') return `No encontré clubes que coincidan en el directorio de Hockia${locationLabel ? ` para ${locationLabel}` : ''}.`
   return `I couldn't find any clubs matching that in HOCKIA's directory${locationLabel ? ` for ${locationLabel}` : ''}.`
 }
 
@@ -1149,7 +1157,7 @@ async function handleOwnApplicantsIntent(params: {
       return respond({
         kind: 'recommendation' as ResponseKind,
         ai_message: currentAiLanguage() === 'es'
-          ? `Todavía no hay postulaciones para tu oportunidad de ${positionLabel(first.position, 'es') ?? formatPosition(first.position)}.`
+          ? `Todavía nadie se postuló a tu oportunidad de ${opportunityLabelEs(first)}. ¿Te sugiero ${positionPluralEs(noun) ?? 'perfiles'} con buen nivel para invitar?`
           : `No one has applied to your ${formatPosition(first.position)} opening yet. Want me to suggest strong ${noun}s you could invite?`,
         recommendations: [],
         suggested_actions: [
@@ -1333,12 +1341,12 @@ async function handleOwnApplicantsIntent(params: {
       const o = secondaryOpps[0].opp
       const n = secondaryOpps[0].pool.length
       secondary_note = currentAiLanguage() === 'es'
-        ? `También ${n === 1 ? 'hay 1 postulación' : `hay ${n} postulaciones`} en tu oportunidad de ${opportunityLabel(o)}. ¿Verlas a continuación?`
+        ? `También ${n === 1 ? 'tienes 1 postulación' : `tienes ${n} postulaciones`} en tu oportunidad de ${opportunityLabelEs(o)}. ¿${n === 1 ? 'Te la muestro' : 'Te las muestro'} a continuación?`
         : `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening. Want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
       const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
       secondary_note = currentAiLanguage() === 'es'
-        ? `También hay ${totalSec} postulaciones en otras ${secondaryOpps.length} oportunidades. ¿Revisarlas también?`
+        ? `También tienes ${totalSec} postulaciones en otras ${secondaryOpps.length} oportunidades. ¿Las reviso también?`
         : `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings. Want me to look at them too?`
     }
 
@@ -1369,7 +1377,7 @@ async function handleOwnApplicantsIntent(params: {
     // framing so the cards aren't misread as "top picks". Owner sees both
     // the headline (pool view) and what they're now looking at.
     const aiMessage = negativeIntent
-      ? `${buildRecruitmentOrientation(primary.opp)} ${currentAiLanguage() === 'es' ? 'La pregunta fue quién no encaja, así que primero van los puestos que no coinciden y los perfiles más flojos.' : "You asked who doesn't fit, so I'm leading with the position mismatches and weakest profiles."}${lowDataNote}`
+      ? `${buildRecruitmentOrientation(primary.opp)} ${currentAiLanguage() === 'es' ? 'Preguntaste quién no encaja, así que primero muestro las posiciones que no coinciden y los perfiles con menos encaje.' : "You asked who doesn't fit, so I'm leading with the position mismatches and weakest profiles."}${lowDataNote}`
       : buildRecruitmentOrientation(primary.opp) + lowDataNote
 
     return respond({
@@ -3384,13 +3392,18 @@ async function handleRequestInner(req: Request): Promise<Response> {
               countryLabel: wcSoftening.countryLabel ?? locationLabel,
               regionLabel: wcRegionPeers?.regionLabel ?? null,
             })
-          : es ? `Hay ${total} ${noun}${where}.` : `I found ${total} ${noun}${where}.`
+          : es ? `Encontré ${total} ${noun}${where}.` : `I found ${total} ${noun}${where}.`
         if (es) {
+          const one = claimedCount + unclaimedCount === 1
           wcAiMessage = claimedCount > 0 && unclaimedCount > 0
-            ? `${opening} ${claimedCount} ${claimedCount === 1 ? 'tiene' : 'tienen'} cuenta activa en HOCKIA, así que se les puede escribir directamente, y ${unclaimedCount} ${unclaimedCount === 1 ? 'figura' : 'figuran'} en el directorio sin reclamar todavía, así que puede hacer falta contactarlos por fuera.${topNote}`
+            ? `${opening} ${claimedCount} ${claimedCount === 1 ? 'tiene' : 'tienen'} cuenta activa en Hockia, así que puedes ${claimedCount === 1 ? 'escribirle' : 'escribirles'} directamente, y ${unclaimedCount} ${unclaimedCount === 1 ? 'figura' : 'figuran'} en el directorio sin registrar todavía, así que quizás tengas que ${unclaimedCount === 1 ? 'contactarlo' : 'contactarlos'} por fuera.${topNote}`
             : claimedCount > 0
-              ? `${opening} Todos tienen cuenta activa en HOCKIA, así que se les puede escribir directamente.${topNote}`
-              : `${opening} Ninguno está reclamado todavía, así que hace falta contactarlos por fuera, pero son clubes reales que vale la pena explorar.${topNote}`
+              ? (one
+                ? `${opening} Tiene cuenta activa en Hockia, así que puedes escribirle directamente.${topNote}`
+                : `${opening} Todos tienen cuenta activa en Hockia, así que puedes escribirles directamente.${topNote}`)
+              : (one
+                ? `${opening} Todavía no está registrado en Hockia, así que tendrás que contactarlo por fuera, pero es un club real que vale la pena explorar.${topNote}`
+                : `${opening} Ninguno está registrado todavía, así que tendrás que contactarlos por fuera, pero son clubes reales que vale la pena explorar.${topNote}`)
         } else if (claimedCount > 0 && unclaimedCount > 0) {
           wcAiMessage = `${opening} ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
         } else if (claimedCount > 0) {
@@ -3421,7 +3434,7 @@ async function handleRequestInner(req: Request): Promise<Response> {
             userContext,
           })
           wcNoResultsMeta = nrMeta
-          wcAiMessage = nrResult.ai_message?.trim() || (currentAiLanguage() === 'es' ? 'No encontré clubes que coincidan en el directorio de HOCKIA.' : `I couldn't find any clubs matching that in HOCKIA's directory.`)
+          wcAiMessage = nrResult.ai_message?.trim() || (currentAiLanguage() === 'es' ? 'No encontré clubes que coincidan en el directorio de Hockia.' : `I couldn't find any clubs matching that in HOCKIA's directory.`)
           if (nrResult.follow_up_query?.trim()) wcNoResultsFollowUp = nrResult.follow_up_query.trim()
         } catch (nrErr) {
           captureException(nrErr, { functionName: 'nl-search', correlationId, extra: { phase: 'compose_no_results_world_club' } })
@@ -3559,6 +3572,7 @@ async function handleRequestInner(req: Request): Promise<Response> {
     // (medium) would turn a provincial selection into national caps.
     let intlCountryIds: number[] | null = null
     let intlCountryLabel: string | null = null
+    let intlCountryCode: string | null = null
     let intlAliasPatterns: string[] = []
     let intlRestrictIds: string[] | null = null
     const intlProvenance = new Map<string, 'verified' | 'self_described'>()
@@ -3570,7 +3584,7 @@ async function handleRequestInner(req: Request): Promise<Response> {
         const orConditions = ie.countries.map(n =>
           `name.ilike.%${n}%,common_name.ilike.%${n}%,nationality_name.ilike.%${n}%`
         ).join(',')
-        const { data: cRows } = await adminClient.from('countries').select('id, name').or(orConditions)
+        const { data: cRows } = await adminClient.from('countries').select('id, name, code').or(orConditions)
         let ids = (cRows ?? []).map((c: any) => c.id as number)
         // Alias fallback for ES names / demonyms the countries table misses
         // ("España", "argentina" the adjective). Exact match, high confidence.
@@ -3582,6 +3596,7 @@ async function handleRequestInner(req: Request): Promise<Response> {
         if (ids.length) {
           intlCountryIds = ids
           intlCountryLabel = ((cRows ?? [])[0] as any)?.name ?? ie.countries[0]
+          intlCountryCode = ((cRows ?? [])[0] as any)?.code ?? null
           const { data: pRows } = await adminClient
             .from('country_text_aliases').select('alias_text')
             .in('country_id', ids).eq('confidence', 'high')
@@ -4412,7 +4427,7 @@ async function handleRequestInner(req: Request): Promise<Response> {
         ? ` I filtered by your category (${effectiveCategory.replace('_', ' ')}). Want me to broaden that?`
         : ''
       aiMessage = currentAiLanguage() === 'es'
-        ? `No encontré ${entityPluralEs(entityNoun)} que coincidan.${categorySource === 'context' && effectiveCategory ? ` Filtré por tu categoría (${labelForInline(effectiveCategory)}). Se puede ampliar.` : ''}`
+        ? `No encontré ${entityPluralEs(entityNoun)} que coincidan.${categorySource === 'context' && effectiveCategory ? ` Filtré por tu categoría (${labelForInline(effectiveCategory)}). ¿Quieres que amplíe ese filtro?` : ''}`
         : `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
       // Count the rows the user can actually see, not result.total (the
@@ -4457,8 +4472,8 @@ async function handleRequestInner(req: Request): Promise<Response> {
           })
         : esSearch
           ? (geoLabel
-            ? `Hay ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} con base en ${geoLabel}. Para ampliar, escribir "ampliar la ubicación".`
-            : `Hay ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} para tu búsqueda.`)
+            ? `Encontré ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} con base en ${geoLabel}. Si quieres ampliar la zona, escribe "ampliar la ubicación".`
+            : `Encontré ${shown} ${shown === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)} para tu búsqueda.`)
           : geoLabel
             ? `I found ${shown} ${noun} based in ${geoLabel}. Say "broaden the location" to widen this.`
             : `I found ${shown} ${noun} for you.`
@@ -4750,6 +4765,14 @@ async function handleRequestInner(req: Request): Promise<Response> {
     // from Argentina, searching for national team experience"), so for this
     // intent the message is assembled here and never delegated.
     if (intlActive && ie) {
+      // Spanish (Spanish quality pass 2026-11-16): the same honesty contract,
+      // composed in code too; the country in Spanish from its ISO code.
+      const esIntl = currentAiLanguage() === 'es'
+      const countryEs = intlCountryLabel ? countryNameEs(intlCountryCode, intlCountryLabel) : null
+      const tournamentsText = ie.tournaments?.length ? ie.tournaments.map((k) => k.replace(/_/g, ' ')).join(' / ') : null
+      const expEs = countryEs
+        ? `experiencia verificada en la selección de ${countryEs}`
+        : tournamentsText ? `experiencia verificada en ${tournamentsText}` : 'experiencia internacional verificada'
       const what = intlCountryLabel
         ? `${intlCountryLabel} national-team`
         : (ie.tournaments?.length
@@ -4759,10 +4782,15 @@ async function handleRequestInner(req: Request): Promise<Response> {
         const vShown = result.results.filter((r: any) => intlProvenance.get(r?.id) === 'verified').length
         const sShown = result.results.filter((r: any) => intlProvenance.get(r?.id) === 'self_described').length
         const parts: string[] = []
-        if (vShown > 0) parts.push(`${vShown} with verified ${what} experience in their career history`)
-        if (sShown > 0) parts.push(`${sShown} who mention it in their bio (not verified)`)
+        if (esIntl) {
+          if (vShown > 0) parts.push(`${vShown} con ${expEs} en su trayectoria`)
+          if (sShown > 0) parts.push(`${sShown} que ${sShown === 1 ? 'lo menciona' : 'lo mencionan'} en su biografía (sin verificar)`)
+        } else {
+          if (vShown > 0) parts.push(`${vShown} with verified ${what} experience in their career history`)
+          if (sShown > 0) parts.push(`${sShown} who mention it in their bio (not verified)`)
+        }
         aiMessage = parts.length
-          ? `Found ${parts.join(', and ')}.`
+          ? (esIntl ? `Encontré ${parts.join(' y ')}.` : `Found ${parts.join(', and ')}.`)
           : aiMessage
       } else {
         let pivot = ''
@@ -4779,16 +4807,26 @@ async function handleRequestInner(req: Request): Promise<Response> {
             } satisfies DiscoverProfilesParams as unknown as Database['public']['Functions']['discover_profiles']['Args']))
             const natTotal = (cntData as { total?: number } | null)?.total ?? 0
             if (natTotal > 0) {
-              pivot = ` ${natTotal} ${intlCountryLabel} ${entityNoun} (by nationality) ${natTotal === 1 ? 'is' : 'are'} on HOCKIA. Want to see them?`
-              const pivotAction: SuggestedAction = {
-                label: `Show ${intlCountryLabel} ${entityNoun}`,
-                intent: { type: 'free_text', query: `${entityNoun} from ${intlCountryLabel}` },
-              }
+              const nounEs = natTotal === 1 ? entitySingularEs(entityNoun) : entityPluralEs(entityNoun)
+              pivot = esIntl
+                ? ` En Hockia ${natTotal === 1 ? 'hay 1' : `hay ${natTotal}`} ${nounEs} de ${countryEs} (por nacionalidad). ¿Quieres ver esos perfiles?`
+                : ` ${natTotal} ${intlCountryLabel} ${entityNoun} (by nationality) ${natTotal === 1 ? 'is' : 'are'} on HOCKIA. Want to see them?`
+              const pivotAction: SuggestedAction = esIntl
+                ? {
+                  label: `Ver ${entityPluralEs(entityNoun)} de ${countryEs}`,
+                  intent: { type: 'free_text', query: `${entityPluralEs(entityNoun)} de ${countryEs}` },
+                }
+                : {
+                  label: `Show ${intlCountryLabel} ${entityNoun}`,
+                  intent: { type: 'free_text', query: `${entityNoun} from ${intlCountryLabel}` },
+                }
               suggestedActions = [pivotAction, ...suggestedActions].slice(0, 4)
             }
           } catch { /* pivot count is best-effort; the honest zero stands alone */ }
         }
-        aiMessage = `No ${entityNoun} with verified ${what} experience on HOCKIA yet.${pivot}`
+        aiMessage = esIntl
+          ? `Todavía no hay ${entityPluralEs(entityNoun)} con ${expEs} en Hockia.${pivot}`
+          : `No ${entityNoun} with verified ${what} experience on HOCKIA yet.${pivot}`
       }
     }
 

@@ -108,8 +108,8 @@ export function generateEmailHtml(requester: RequesterData, language: MemberLang
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${es ? 'Nueva solicitud de amistad' : 'New friend request'}</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Alguien quiere sumarte a sus amistades en Hockia.' : 'Someone wants to connect with you on Hockia.'}</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${es ? 'Nueva solicitud de conexión' : 'New friend request'}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Alguien quiere agregarte como conexión en Hockia.' : 'Someone wants to connect with you on Hockia.'}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -131,7 +131,7 @@ export function generateEmailHtml(requester: RequesterData, language: MemberLang
 
     <p style="color: #73707c; font-size: 14px; margin: 0;">
       ${es
-        ? `En <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">su perfil</a> hay más información.`
+        ? `Puedes ver más información en <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">su perfil</a>.`
         : `<a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View their profile</a> to learn more.`}
     </p>
   </div>
@@ -155,9 +155,9 @@ export function generateEmailText(requester: RequesterData, language: MemberLang
   const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const lines = [
-    es ? 'Nueva solicitud de amistad en Hockia' : 'New friend request on Hockia',
+    es ? 'Nueva solicitud de conexión en Hockia' : 'New friend request on Hockia',
     '',
-    es ? `${displayName} quiere sumarte a sus amistades en Hockia.` : `${displayName} wants to connect with you on Hockia.`,
+    es ? `${displayName} quiere agregarte como conexión en Hockia.` : `${displayName} wants to connect with you on Hockia.`,
   ]
 
   if (location) {

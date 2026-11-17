@@ -12,8 +12,10 @@
 // maps that text back to the English query the router and the regexes
 // expect, so routing is identical in both languages.
 //
-// Style: client/src/locales/glossary.md (neutral Latin American Spanish, no
-// second-person verb forms, no generic masculine, doublets only for roles).
+// Style: client/src/locales/glossary.md (neutral Latin American Spanish, tú to
+// the member, Hockia AI in the first person, no generic masculine, doublets
+// only for roles). Chips are the member's own words (infinitive or first
+// person: "¿Qué puedes hacer?").
 
 // ── Words ──────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,66 @@ export function entityPluralEs(noun: string): string {
 }
 export function entitySingularEs(noun: string): string {
   return ENTITY_ES[noun]?.singular ?? noun
+}
+
+/**
+ * Position nouns as nl-search builds them in English chips (formatPosition,
+ * lower-cased; opportunity_type as the fallback) → Spanish singular label and
+ * plural. Used for chips built from a template and their way back.
+ */
+const POSITION_NOUN_ES: Record<string, { singular: string; plural: string }> = {
+  goalkeeper: { singular: 'arquero/a', plural: 'arqueros/as' },
+  defender: { singular: 'defensor/a', plural: 'defensores/as' },
+  midfielder: { singular: 'volante', plural: 'volantes' },
+  forward: { singular: 'delantero/a', plural: 'delanteros/as' },
+  'head coach': { singular: 'entrenador/a principal', plural: 'entrenadores/as principales' },
+  'assistant coach': { singular: 'entrenador/a asistente', plural: 'entrenadores/as asistentes' },
+  'youth coach': { singular: 'entrenador/a de juveniles', plural: 'entrenadores/as de juveniles' },
+  'goalkeeper coach': { singular: 'entrenador/a de arqueros/as', plural: 'entrenadores/as de arqueros/as' },
+  'strength conditioning': { singular: 'preparador/a físico/a', plural: 'preparadores/as físicos/as' },
+  'performance analyst': { singular: 'analista de rendimiento', plural: 'analistas de rendimiento' },
+  'sports scientist': { singular: 'especialista en ciencias del deporte', plural: 'especialistas en ciencias del deporte' },
+  'other coach': { singular: 'entrenador/a', plural: 'entrenadores/as' },
+  player: { singular: 'jugador/a', plural: 'jugadores/as' },
+  coach: { singular: 'entrenador/a', plural: 'entrenadores/as' },
+}
+
+function positionNounKey(noun: string): string {
+  return noun.trim().toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' ')
+}
+
+/** "midfielder" / "Head Coach" / "head_coach" → "volantes" / "entrenadores/as principales"; null when unknown. */
+export function positionPluralEs(noun: string | null | undefined): string | null {
+  if (!noun) return null
+  return POSITION_NOUN_ES[positionNounKey(noun)]?.plural ?? null
+}
+
+/** "Midfielder" / "head_coach" → "volante" / "entrenador/a principal" (lower case, for running text); null when unknown. */
+export function positionSingularEs(noun: string | null | undefined): string | null {
+  if (!noun) return null
+  return POSITION_NOUN_ES[positionNounKey(noun)]?.singular ?? null
+}
+
+function positionNounFromPluralEs(pluralEs: string): string | null {
+  const k = pluralEs.trim().toLowerCase()
+  for (const [en, v] of Object.entries(POSITION_NOUN_ES)) if (v.plural === k) return en
+  return null
+}
+
+function positionNounFromSingularEs(singularEs: string): string | null {
+  const k = singularEs.trim().toLowerCase()
+  for (const [en, v] of Object.entries(POSITION_NOUN_ES)) if (v.singular === k) return en
+  return null
+}
+
+/** A country's Spanish name from its ISO code ("NL" → "Países Bajos"); the stored name when unknown. */
+export function countryNameEs(code: string | null | undefined, fallback: string): string {
+  if (!code || !/^[A-Za-z]{2}$/.test(code)) return fallback
+  try {
+    return new Intl.DisplayNames(['es'], { type: 'region' }).of(code.toUpperCase()) ?? fallback
+  } catch {
+    return fallback
+  }
 }
 
 /** Category display names (suggested-actions categoryDisplay). */
@@ -85,41 +147,41 @@ export const CHIP_ES: Record<string, string> = {
   'Try again': 'Intentar de nuevo',
   'Find clubs for me': 'Buscar clubes para mí',
   'Improve my profile': 'Mejorar mi perfil',
-  'Find clubs hiring': 'Buscar clubes que incorporan',
+  'Find clubs hiring': 'Buscar clubes con oportunidades abiertas',
   'Find players to recommend': 'Buscar jugadores/as para recomendar',
   'Find players for my team': 'Buscar jugadores/as para mi equipo',
-  'Improve my club profile': 'Mejorar el perfil del club',
+  'Improve my club profile': 'Mejorar el perfil de mi club',
   'Find ambassadors': 'Buscar embajadores/as',
-  'Improve my brand profile': 'Mejorar el perfil de la marca',
+  'Improve my brand profile': 'Mejorar el perfil de mi marca',
   'Find other officials': 'Buscar colegas de arbitraje',
   'Add an appointment': 'Agregar una designación',
   'Improve my umpire profile': 'Mejorar mi perfil de árbitro/a',
-  'What can you do?': '¿Qué puede hacer Hockia AI?',
+  'What can you do?': '¿Qué puedes hacer?',
   // nl-search inline chips
   'Post an opportunity': 'Publicar una oportunidad',
-  'how do I post an opportunity': '¿Cómo se publica una oportunidad?',
+  'how do I post an opportunity': '¿Cómo publico una oportunidad?',
   'Back to top applicants': 'Volver a las mejores postulaciones',
   'show my best applicants': 'Ver las mejores postulaciones',
   'Show all open roles': 'Ver todas las oportunidades abiertas',
-  'Show me all open coaching roles': 'Ver todas las oportunidades abiertas para cuerpos técnicos',
+  'Show me all open coaching roles': 'Ver todas las oportunidades abiertas para entrenadores/as',
   'Show me all open roles for me': 'Ver todas las oportunidades abiertas para mí',
   // clarifying.ts option labels
   'Opportunities': 'Oportunidades',
   'Clubs': 'Clubes',
   'Coaches': 'Entrenadores/as',
   'Brands': 'Marcas',
-  'Clubs hiring': 'Clubes que incorporan',
+  'Clubs hiring': 'Clubes con oportunidades abiertas',
   'Players': 'Jugadores/as',
   'Player ambassadors': 'Embajadores/as',
   'Marketplace': 'Marketplace',
   // clarifying.ts routed queries
-  'Find opportunities for my position': 'Buscar oportunidades para mi puesto',
-  'Find coaches in my position': 'Buscar entrenadores/as de mi puesto',
+  'Find opportunities for my position': 'Buscar oportunidades para mi posición',
+  'Find coaches in my position': 'Buscar entrenadores/as de mi posición',
   'Find brands': 'Buscar marcas',
-  'Find opportunities for coaches': 'Buscar oportunidades para cuerpos técnicos',
-  'Find clubs hiring head coaches': 'Buscar clubes que incorporan entrenador/a principal',
+  'Find opportunities for coaches': 'Buscar oportunidades para entrenadores/as',
+  'Find clubs hiring head coaches': 'Buscar clubes que buscan entrenador/a principal',
   'Find players for my staff': 'Buscar jugadores/as para mi plantel',
-  'Find coaches with head-coach experience': 'Buscar entrenadores/as con experiencia como principal',
+  'Find coaches with head-coach experience': 'Buscar entrenadores/as con experiencia como entrenador/a principal',
   'Find opportunities to post': 'Ayuda para publicar una oportunidad',
   'Find player ambassadors': 'Buscar embajadores/as entre jugadores/as',
   'Show me products': 'Ver productos',
@@ -128,19 +190,19 @@ export const CHIP_ES: Record<string, string> = {
 
 /** Clarifying option descriptions. */
 export const DESCRIPTION_ES: Record<string, string> = {
-  'Open roles that match your position': 'Oportunidades abiertas para tu puesto',
+  'Open roles that match your position': 'Oportunidades abiertas para tu posición',
   'Clubs that fit your level and category': 'Clubes acordes a tu nivel y categoría',
-  'Coaches who work with your position': 'Cuerpos técnicos que trabajan con tu puesto',
+  'Coaches who work with your position': 'Entrenadores/as que trabajan con tu posición',
   'Brands on Hockia': 'Marcas en Hockia',
-  'Open coaching roles': 'Oportunidades abiertas para cuerpos técnicos',
+  'Open coaching roles': 'Oportunidades abiertas para entrenadores/as',
   'Clubs looking for coaching staff': 'Clubes que buscan cuerpo técnico',
   'Players open to new teams': 'Jugadores/as disponibles para nuevos equipos',
   'Players open to joining a club': 'Jugadores/as disponibles para sumarse a un club',
-  'Coaches with head-coach experience': 'Cuerpos técnicos con experiencia como principal',
+  'Coaches with head-coach experience': 'Entrenadores/as con experiencia como entrenador/a principal',
   'Help posting a role': 'Ayuda para publicar una oportunidad',
-  'Players who could represent your brand': 'Jugadores/as que podrían representar a la marca',
+  'Players who could represent your brand': 'Jugadores/as que podrían representar a tu marca',
   'Clubs for sponsorships': 'Clubes para patrocinios',
-  'Coaches on Hockia': 'Cuerpos técnicos en Hockia',
+  'Coaches on Hockia': 'Entrenadores/as en Hockia',
   'Products on Hockia': 'Productos en Hockia',
 }
 
@@ -163,9 +225,33 @@ export const CTA_ES: Record<string, string> = {
 }
 
 /** Chip text whose English is built from a template. */
-const CHIP_PATTERNS: { re: RegExp; es: (m: RegExpMatchArray) => string }[] = [
+const CHIP_PATTERNS: { re: RegExp; es: (m: RegExpMatchArray) => string | null }[] = [
   { re: /^Show all (clubs|players|coaches|brands|umpires|profiles)$/, es: (m) => `Ver ${entityPluralEs(m[1])} sin filtros` },
   { re: /^Remove (Adult women|Adult men|Girls|Boys|Mixed) filter$/, es: (m) => `Quitar el filtro ${CATEGORY_DISPLAY_ES[m[1]]}` },
+  // nl-search recruitment chips built from the position (null → left as is).
+  { re: /^Find (.+?)s to invite$/, es: (m) => withPlural(m[1], (p) => `Buscar ${p} para invitar`) },
+  { re: /^find me (.+?)s$/, es: (m) => withPlural(m[1], (p) => `Buscar ${p} para invitar`) },
+  { re: /^Find (.+?)s outside this pipeline$/, es: (m) => withPlural(m[1], (p) => `Buscar ${p} fuera de estas postulaciones`) },
+  { re: /^find (.+?)s$/, es: (m) => withPlural(m[1], (p) => `Buscar ${p} fuera de estas postulaciones`) },
+  { re: /^Show (.+) applicants$/, es: (m) => withSingular(m[1], (s) => `Ver postulaciones de ${s}`) },
+  { re: /^Show me applicants for my (.+) opening$/, es: (m) => withSingular(m[1], (s) => `Ver las postulaciones de mi oportunidad de ${s}`) },
+]
+
+function withPlural(noun: string, f: (pluralEs: string) => string): string | null {
+  const p = positionPluralEs(noun)
+  return p ? f(p) : null
+}
+
+function withSingular(noun: string, f: (singularEs: string) => string): string | null {
+  const s = positionSingularEs(noun)
+  return s ? f(s) : null
+}
+
+/** Spanish text of the template chips → the English query nl-search routes on. */
+const CANONICAL_PATTERNS: { re: RegExp; en: (m: RegExpMatchArray) => string | null }[] = [
+  { re: /^Buscar (.+) para invitar$/i, en: (m) => { const n = positionNounFromPluralEs(m[1]); return n ? `find me ${n}s` : null } },
+  { re: /^Buscar (.+) fuera de estas postulaciones$/i, en: (m) => { const n = positionNounFromPluralEs(m[1]); return n ? `find ${n}s` : null } },
+  { re: /^Ver (?:las )?postulaciones de (?:mi oportunidad de )?(.+)$/i, en: (m) => { const n = positionNounFromSingularEs(m[1]); return n ? `Show me applicants for my ${n} opening` : null } },
 ]
 
 /** Spanish chip text → the English query the router expects. */
@@ -187,7 +273,15 @@ function norm(s: string): string {
 
 /** The English query for a Spanish chip text; anything else unchanged. */
 export function canonicalQuery(query: string): string {
-  return CANONICAL.get(norm(query)) ?? query
+  const hit = CANONICAL.get(norm(query))
+  if (hit) return hit
+  const q = query.trim().replace(/\s+/g, ' ')
+  for (const p of CANONICAL_PATTERNS) {
+    const m = q.match(p.re)
+    const en = m ? p.en(m) : null
+    if (en) return en
+  }
+  return query
 }
 
 /** A chip label or chip query in Spanish; unknown text unchanged. */
@@ -196,7 +290,8 @@ export function chipTextEs(text: string): string {
   if (hit) return hit
   for (const p of CHIP_PATTERNS) {
     const m = text.match(p.re)
-    if (m) return p.es(m)
+    const es = m ? p.es(m) : null
+    if (es) return es
   }
   return text
 }
@@ -204,27 +299,27 @@ export function chipTextEs(text: string): string {
 // ── Messages ───────────────────────────────────────────────────────────────
 
 export const MESSAGE_ES: Record<string, string> = {
-  "You've reached today's limit. Try again tomorrow.": 'Se alcanzó el límite de preguntas de hoy. Mañana se puede volver a preguntar.',
-  "That still didn't go through. Let's try a simpler path.": 'Todavía no funcionó. Conviene probar un camino más simple.',
-  'I had trouble completing that search. Want to try again or broaden it?': 'No se pudo completar la búsqueda. Se puede reintentar o ampliarla.',
-  "Let's try a different angle. Pick one of these to keep going:": 'Probemos otro enfoque. Estas opciones permiten seguir:',
-  "You don't have any open opportunities yet. Post one and applicants will start coming in.": 'Todavía no hay oportunidades abiertas publicadas. Al publicar una, empiezan a llegar postulaciones.',
-  'I had trouble pulling your recruitment data just now. Try again in a moment.': 'No se pudieron cargar los datos de reclutamiento. Conviene reintentar en un momento.',
-  'I had trouble loading open roles just now. Try again in a moment.': 'No se pudieron cargar las oportunidades abiertas. Conviene reintentar en un momento.',
-  "The AI search is busy right now and I couldn't find a quick keyword match. Try again in a moment, or rephrase your search.": 'La búsqueda con IA está ocupada en este momento y no hubo coincidencias rápidas por palabra clave. Conviene reintentar en un momento o reformular la búsqueda.',
-  'The AI search is busy right now. Here are some keyword matches in the meantime. Try again in a moment for the full AI response.': 'La búsqueda con IA está ocupada en este momento. Mientras tanto, estas son algunas coincidencias por palabra clave. En un momento se puede reintentar para la respuesta completa.',
-  "I couldn't complete the full AI response and didn't find a quick match either.": 'No se pudo completar la respuesta con IA y tampoco hubo coincidencias rápidas.',
-  "I couldn't complete the full AI response, but here are some relevant matches.": 'No se pudo completar la respuesta con IA, pero estas coincidencias pueden servir.',
-  'Who would you like to look for?': '¿A quién buscar?',
-  "Hey! I'm HOCKIA Assistant. I can help you discover players, coaches, clubs, and brands. Try asking something like 'Find U25 midfielders from the Netherlands'.": "¡Hola! Soy HOCKIA Assistant. Puedo ayudar a encontrar jugadores/as, entrenadores/as, clubes y marcas. Un ejemplo de pregunta: 'Buscar volantes sub-25 de Países Bajos'.",
-  "I couldn't generate an answer. Try rephrasing your question.": 'No pude generar una respuesta. Conviene reformular la pregunta.',
+  "You've reached today's limit. Try again tomorrow.": 'Llegaste al límite de preguntas de hoy. Intenta de nuevo mañana.',
+  "That still didn't go through. Let's try a simpler path.": 'Sigue sin funcionar. Probemos un camino más simple.',
+  'I had trouble completing that search. Want to try again or broaden it?': 'No pude completar la búsqueda. ¿Quieres intentarlo de nuevo o ampliarla?',
+  "Let's try a different angle. Pick one of these to keep going:": 'Probemos otro enfoque. Elige una de estas opciones para seguir:',
+  "You don't have any open opportunities yet. Post one and applicants will start coming in.": 'Todavía no tienes oportunidades abiertas. Cuando publiques una, pueden empezar a llegar postulaciones.',
+  'I had trouble pulling your recruitment data just now. Try again in a moment.': 'No pude cargar tus datos de reclutamiento. Intenta de nuevo en un momento.',
+  'I had trouble loading open roles just now. Try again in a moment.': 'No pude cargar las oportunidades abiertas. Intenta de nuevo en un momento.',
+  "The AI search is busy right now and I couldn't find a quick keyword match. Try again in a moment, or rephrase your search.": 'La búsqueda con IA está ocupada en este momento y no encontré coincidencias rápidas por palabra clave. Intenta de nuevo en un momento o reformula tu búsqueda.',
+  'The AI search is busy right now. Here are some keyword matches in the meantime. Try again in a moment for the full AI response.': 'La búsqueda con IA está ocupada en este momento. Mientras tanto, estas son algunas coincidencias por palabra clave. Intenta de nuevo en un momento para tener la respuesta completa.',
+  "I couldn't complete the full AI response and didn't find a quick match either.": 'No pude completar la respuesta con IA y tampoco encontré coincidencias rápidas.',
+  "I couldn't complete the full AI response, but here are some relevant matches.": 'No pude completar la respuesta con IA, pero estas coincidencias pueden servirte.',
+  'Who would you like to look for?': '¿A quién quieres buscar?',
+  "Hey! I'm HOCKIA Assistant. I can help you discover players, coaches, clubs, and brands. Try asking something like 'Find U25 midfielders from the Netherlands'.": '¡Hola! Soy Hockia AI. Puedo ayudarte a encontrar jugadores/as, entrenadores/as, clubes y marcas. Prueba con algo como "volantes sub-25 de Países Bajos".',
+  "I couldn't generate an answer. Try rephrasing your question.": 'No pude generar una respuesta. Intenta reformular tu pregunta.',
   'There are no suggestions for this role yet. Hockia checks again tonight.': 'Todavía no hay sugerencias para esta oportunidad. Hockia vuelve a revisar esta noche.',
-  'This role isn’t open any more, so I can’t answer about it. Ask me about other roles instead.': 'Esta oportunidad ya no está abierta, así que no puedo responder sobre ella. Se puede preguntar por otras oportunidades.',
-  'I can’t answer about this role right now. Try again in a moment.': 'Por ahora no puedo responder sobre esta oportunidad. Conviene reintentar en un momento.',
-  'I’m not sure about that one. The club can tell you best.': 'No tengo certeza sobre eso. El club puede responderlo mejor.',
+  'This role isn’t open any more, so I can’t answer about it. Ask me about other roles instead.': 'Esta oportunidad ya no está abierta, así que no puedo responder sobre ella. Pregúntame por otras oportunidades.',
+  'I can’t answer about this role right now. Try again in a moment.': 'Por ahora no puedo responder sobre esta oportunidad. Intenta de nuevo en un momento.',
+  'I’m not sure about that one. The club can tell you best.': 'No tengo certeza sobre eso. El club puede responderte mejor.',
   'Nobody is waiting for a reply.': 'No hay postulaciones esperando respuesta.',
   '1 applicant is waiting for your reply.': '1 postulación espera tu respuesta.',
-  'I can’t summarise right now. Try again in a moment.': 'Por ahora no puedo resumir. Conviene reintentar en un momento.',
+  'I can’t summarise right now. Try again in a moment.': 'Por ahora no puedo resumir. Intenta de nuevo en un momento.',
 }
 
 const MESSAGE_PATTERNS: { re: RegExp; es: (m: RegExpMatchArray) => string }[] = [
@@ -238,11 +333,11 @@ const MESSAGE_PATTERNS: { re: RegExp; es: (m: RegExpMatchArray) => string }[] = 
   },
   {
     re: /^Searching opportunities through Hockia AI is rolling out next\. For now you can browse all open opportunities at \/opportunities(\.|\. Switch the filter to coaching roles in the page header\.)$/,
-    es: (m) => `La búsqueda de oportunidades con Hockia AI llega pronto. Por ahora, todas las oportunidades abiertas están en /opportunities${m[1] === '.' ? '.' : '. El filtro de la parte superior permite ver las de cuerpos técnicos.'}`,
+    es: (m) => `La búsqueda de oportunidades con Hockia AI llega pronto. Por ahora, puedes ver todas las oportunidades abiertas en /opportunities${m[1] === '.' ? '.' : '. Cambia el filtro de la parte superior a oportunidades para entrenadores/as.'}`,
   },
   {
     re: /^Browsing products through Hockia AI is rolling out next\. For now visit the Marketplace at \/marketplace to see what brands have posted(\.|\. You can also add your own products from the brand dashboard\.)$/,
-    es: (m) => `La búsqueda de productos con Hockia AI llega pronto. Por ahora, lo que publican las marcas está en el Marketplace, en /marketplace${m[1] === '.' ? '.' : '. Los productos propios se agregan desde el panel de la marca.'}`,
+    es: (m) => `La búsqueda de productos con Hockia AI llega pronto. Por ahora, visita el Marketplace en /marketplace para ver lo que publicaron las marcas${m[1] === '.' ? '.' : '. También puedes agregar tus propios productos desde el panel de tu marca.'}`,
   },
   {
     re: /^Showing (\d+) keyword match(es)?\.$/,
@@ -264,9 +359,9 @@ export function messageEs(text: string): string {
 // ── Live step labels (Hockia AI sheet) ─────────────────────────────────────
 
 export const STEP_ES: Record<string, string> = {
-  'Understanding your question': 'Entendiendo la pregunta',
-  'Matching team, position and passport': 'Comparando equipo, puesto y pasaporte',
-  'Writing your answer': 'Escribiendo la respuesta',
+  'Understanding your question': 'Entendiendo tu pregunta',
+  'Matching team, position and passport': 'Comparando equipo, posición y pasaporte',
+  'Writing your answer': 'Escribiendo tu respuesta',
   'Reading this role': 'Leyendo esta oportunidad',
   'Read this role': 'Oportunidad leída',
   'Checking your profile': 'Revisando tu perfil',

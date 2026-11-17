@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
       .map((n: any) => ({
         status: n.metadata?.status,
         vacancy_title: n.metadata?.vacancy_title ?? (es ? 'la oportunidad' : 'your opportunity'),
-        club_name: n.metadata?.club_name ?? (es ? 'El equipo' : 'The team'),
+        club_name: n.metadata?.club_name ?? (es ? 'un club' : 'The team'),
         opportunity_id: n.metadata?.opportunity_id ?? null,
         application_id: n.metadata?.application_id ?? null,
         note: null,
@@ -200,7 +200,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? 'integrante' : 'there')
+    const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
     const rejected = entries.filter((e) => e.status === 'rejected')
     const shortlisted = entries.filter((e) => e.status === 'shortlisted')
 
@@ -219,7 +219,7 @@ Deno.serve(async (req: Request) => {
     const subject = es
       ? single
         ? (entries[0].status === 'shortlisted'
-            ? `Tu perfil está en la preselección de ${entries[0].club_name}`
+            ? `Estás en la preselección de ${entries[0].club_name}`
             : `Novedades sobre tu postulación a ${entries[0].vacancy_title}`)
         : 'Novedades sobre tus postulaciones'
       : single
@@ -230,15 +230,15 @@ Deno.serve(async (req: Request) => {
 
     const entryHtmlEs = (e: StatusEntry) => e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
-           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Tu perfil está en la preselección de ${escapeHtml(e.club_name)}</div>
-           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Es un buen momento para tener el perfil al día mientras revisan.</div>
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Estás en la preselección de ${escapeHtml(e.club_name)}</div>
+           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Mantén tu perfil al día mientras revisan.</div>
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver oportunidad →</a>` : ''}
          </td></tr>`
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">Esta vez no: ${escapeHtml(e.club_name)} eligió otra opción para ${escapeHtml(e.vacancy_title)}</div>
            ${e.note
              ? `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
-             : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y la oportunidad indicada está ahí afuera.</div>`}
+             : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y hay más oportunidades por delante.</div>`}
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver tu postulación →</a>` : ''}
          </td></tr>`
 
@@ -262,7 +262,7 @@ Deno.serve(async (req: Request) => {
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? `Hola, ${escapeHtml(firstName)}:` : `Hi ${escapeHtml(firstName)},`}</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? (firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:') : `Hi ${escapeHtml(firstName)},`}</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
           ${entries.map(entryHtml).join('')}
         </table>
@@ -280,9 +280,9 @@ Deno.serve(async (req: Request) => {
 
     const text = es
       ? [
-        `Hola, ${firstName}:`,
+        firstName ? `Hola, ${firstName}:` : 'Hola:',
         '',
-        ...shortlisted.map((e) => `⭐ Tu perfil está en la preselección de ${e.club_name} para ${e.vacancy_title}.`),
+        ...shortlisted.map((e) => `⭐ Estás en la preselección de ${e.club_name} para ${e.vacancy_title}.`),
         ...rejected.map((e) => e.note
           ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"`
           : `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Muchas veces depende del encaje, no del nivel.`),
