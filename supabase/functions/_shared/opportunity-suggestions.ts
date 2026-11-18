@@ -7,6 +7,7 @@
  */
 
 import { type MemberLanguage, spanishPositionLabel } from './member-language.ts'
+import { spanishCountryName } from './country-names-es.ts'
 
 export interface OpportunitySuggestion {
   opportunity_id: string
@@ -47,21 +48,25 @@ const GENDER_ES: Record<string, string> = {
   mixed: 'Mixto',
 }
 
+/** "Berlin (Germany)"; Spanish readers get the country's Spanish name. */
+function suggestionPlace(s: OpportunitySuggestion, language: MemberLanguage): string | null {
+  const city = s.location_city?.trim() || null
+  const rawCountry = s.location_country?.trim() || null
+  const country = rawCountry && language === 'es' ? spanishCountryName(rawCountry) : rawCountry
+  if (city && country) return `${city} (${country})`
+  return city ?? country
+}
+
+/** "Midfielder, Women, Berlin (Germany), Club Test": commas only, no dot separators. */
 function suggestionMeta(s: OpportunitySuggestion, language: MemberLanguage = 'en'): string {
-  if (language === 'es') {
-    return [
-      s.position_text ? spanishPositionLabel(s.position_text) ?? s.position_text.replace(/_/g, ' ') : null,
-      s.gender ? GENDER_ES[s.gender.trim().toLowerCase()] ?? s.gender : null,
-      [s.location_city, s.location_country].filter(Boolean).join(', ') || null,
-      s.publisher_name,
-    ].filter(Boolean).join(' · ')
-  }
-  return [
-    s.position_text ? s.position_text.replace(/_/g, ' ') : null,
-    s.gender,
-    [s.location_city, s.location_country].filter(Boolean).join(', ') || null,
-    s.publisher_name,
-  ].filter(Boolean).join(' · ')
+  const es = language === 'es'
+  const position = s.position_text
+    ? (es ? spanishPositionLabel(s.position_text) : null) ?? s.position_text.replace(/_/g, ' ')
+    : null
+  const category = s.gender
+    ? (es ? GENDER_ES[s.gender.trim().toLowerCase()] : null) ?? s.gender
+    : null
+  return [position, category, suggestionPlace(s, language), s.publisher_name].filter(Boolean).join(', ')
 }
 
 export function suggestionsHtml(

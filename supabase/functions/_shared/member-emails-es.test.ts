@@ -215,17 +215,25 @@ Deno.test('vacancy email: Spanish has no English, position in Spanish; English u
   assertStringIncludes(vc.generateEmailText(vacancy, 'HC'), 'Position: Midfielder')
 })
 
-Deno.test('opportunity suggestions: Spanish heading and labels; English unchanged', () => {
+Deno.test('opportunity suggestions: Spanish heading, labels and country; no dot separators', () => {
   const s = [{
     opportunity_id: 'o9', title: 'Delantera', position_text: 'forward', opportunity_type: 'player',
     gender: 'Women', location_city: 'Rosario', location_country: 'Argentina', publisher_name: 'HC',
   }]
   const text = sg.suggestionsText(s, 'https://h.test', 'es')
   assertStringIncludes(text, 'Oportunidades abiertas que pueden interesarte:')
-  assertStringIncludes(text, 'Delantero/a · Damas · Rosario, Argentina · HC')
+  assertStringIncludes(text, 'Delantero/a, Damas, Rosario (Argentina), HC')
   assertNoEnglish('suggestions html', sg.suggestionsHtml(s, 'https://h.test', 'es'))
   assertEquals(sg.suggestionsText(s, 'https://h.test'),
-    '\nOpen opportunities for you:\n- Delantera (forward · Women · Rosario, Argentina · HC): https://h.test/opportunities/o9')
+    '\nOpen opportunities for you:\n- Delantera (forward, Women, Rosario (Argentina), HC): https://h.test/opportunities/o9')
+  const berlin = [{ ...s[0], location_city: 'Berlin', location_country: 'Germany' }]
+  assertStringIncludes(sg.suggestionsText(berlin, 'https://h.test', 'es'), 'Berlin (Alemania)')
+  assertStringIncludes(sg.suggestionsText(berlin, 'https://h.test'), 'Berlin (Germany)')
+  const countryOnly = [{ ...s[0], location_city: null, location_country: 'Netherlands' }]
+  assertStringIncludes(sg.suggestionsText(countryOnly, 'https://h.test', 'es'), 'Damas, Países Bajos, HC')
+  for (const lang of ['en', 'es'] as const) {
+    assert(!sg.suggestionsHtml(berlin, 'https://h.test', lang).includes('·'), `no middle dot (${lang})`)
+  }
 })
 
 // ── 3. Renderer ────────────────────────────────────────────────────────────
