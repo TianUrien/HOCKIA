@@ -32,6 +32,7 @@ import {
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { type MemberLanguage, readMemberLanguages } from '../_shared/member-language.ts'
 import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
+import { pingIndexNow, roleVisibilityChange } from '../_shared/indexnow.ts'
 
 /**
  * ============================================================================
@@ -235,8 +236,22 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Check if vacancy was newly published using shared utility
     const vacancy = payload.record
+
+    // A role that became public or stopped being public: tell IndexNow its
+    // URL changed (the page itself decides what a crawler may read). Off
+    // unless INDEXNOW_KEY is set; a failed ping never fails the webhook.
+    const visibility = roleVisibilityChange(payload)
+    if (visibility && vacancy?.id) {
+      const ping = await pingIndexNow(
+        Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com',
+        [`/opportunities/${vacancy.id}`, '/opportunities'],
+        { key: Deno.env.get('INDEXNOW_KEY') },
+      )
+      logger.info('IndexNow', { change: visibility, ...ping })
+    }
+
+    // Check if vacancy was newly published using shared utility
     if (!isVacancyNewlyPublished(payload)) {
       logger.info('Ignoring - vacancy not newly published', { 
         type: payload.type,
