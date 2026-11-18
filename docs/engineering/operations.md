@@ -256,3 +256,11 @@ Resend, Sentry, Google Cloud (Maps/Places, GA4), PostHog, Apple App Store
 Connect, Google Play Console, GitHub. Credentials are held by the founder;
 agent tooling uses the connectors and the local secret files listed in
 security.md section 6.
+
+## Auth email templates are applied by hand (2026-11-18)
+
+`supabase/templates/confirmation.html`, `recovery.html` and their subjects in `supabase/config.toml` are the source of truth for the sign-up confirmation and password reset emails, but no deploy applies them to a hosted project. After changing them, copy the subject and body into the project's Authentication, Emails settings (dashboard, or the Management API's `mailer_subjects_*` and `mailer_templates_*_content` fields only). Staging was updated on 2026-11-18 and verified with a real reset email read in Resend; check production before a release.
+
+Never run `supabase config push` against a hosted project: `config.toml` holds local-development values, and the push would replace the hosted auth settings with them (site URL, redirect URLs, password rules, email confirmation, MFA, Apple sign-in). Source: its own diff against staging, 2026-11-18, declined before anything changed.
+
+The link in both emails lasts as long as the project's email OTP expiry (3600 seconds on staging), so the templates say one hour.
