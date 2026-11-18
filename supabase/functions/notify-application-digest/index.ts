@@ -6,7 +6,7 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
-import { readMemberLanguage, spanishPositionLabel } from '../_shared/member-language.ts'
+import { emailPositionLabel, readMemberLanguage, spanishPositionLabel } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -213,10 +213,10 @@ Deno.serve(async (req: Request) => {
         id: a.id,
         applicant_id: a.applicant?.id ?? null,
         opportunity_id: a.opportunity?.id ?? null,
-        applicant_name: a.applicant?.full_name?.trim() || (es ? 'Una persona' : 'An applicant'),
+        applicant_name: a.applicant?.full_name?.trim() || (es ? 'Postulante' : 'An applicant'),
         position: es && a.applicant?.position
-          ? spanishPositionLabel(a.applicant.position) ?? a.applicant.position
-          : a.applicant?.position ?? null,
+          ? spanishPositionLabel(a.applicant.position) ?? emailPositionLabel(a.applicant.position)
+          : a.applicant?.position ? emailPositionLabel(a.applicant.position) : null,
         opportunity_title: a.opportunity?.title ?? (es ? 'tu oportunidad' : 'your opportunity'),
         days_waiting: Math.max(0, Math.floor((nowMs - new Date(a.applied_at).getTime()) / 86_400_000)),
       }))
@@ -252,7 +252,7 @@ Deno.serve(async (req: Request) => {
       .map((r) => {
         const meta = [r.position, es ? `esperando hace ${dayWord(r.days_waiting)}` : `waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`]
           .filter(Boolean)
-          .join(' · ')
+          .join(', ')
         // Flow-investigation fixes (2026-07-14): recruiters won't triage an
         // applicant they can't SEE — the name + an explicit link open the
         // public profile (logged-out friendly, not AASA-claimed), and the
@@ -279,7 +279,8 @@ Deno.serve(async (req: Request) => {
                 ? ` &nbsp;<a href="${profileUrl}" style="font-size:13px;font-weight:600;color:#6c2bd9;text-decoration:none;">${es ? 'Ver perfil' : 'View profile'} &rarr;</a>`
                 : ''
             }</div>
-            <div style="font-size:13px;color:#6b6878;margin:2px 0 8px;">${escapeHtml(meta)} · ${titleHtml}</div>
+            <div style="font-size:13px;color:#6b6878;margin:2px 0 2px;">${escapeHtml(meta)}</div>
+            <div style="font-size:13px;color:#6b6878;margin:0 0 8px;">${titleHtml}</div>
             ${reviewUrl ? `<div>${btn(reviewUrl, es ? 'Revisar' : 'Review')}</div>` : ''}
           </td>
         </tr>`
@@ -295,7 +296,7 @@ Deno.serve(async (req: Request) => {
     // exactly the bounce this link was rewritten to avoid.
     const dashboardUrl = `${HOCKIA_BASE_URL}/home?tab=pulse`
     const fallbackHtml = `<!DOCTYPE html>
-<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
@@ -336,11 +337,15 @@ Deno.serve(async (req: Request) => {
         `Tienes ${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'} esperando tu respuesta (la más antigua: ${dayWord(oldest)}).`,
         '',
         ...shown.map((r) =>
-          `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} · ${r.opportunity_title} · esperando hace ${dayWord(r.days_waiting)}`
+          `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''}, ${r.opportunity_title}, esperando hace ${dayWord(r.days_waiting)}`
         ),
-        overflow > 0 ? `...y ${overflow} más.` : '',
+        overflow > 0 ? `+ ${overflow} más esperando en Hockia.` : '',
         '',
+        'Abre una para responder: marcarla como "No encaja" lleva un solo toque, y Hockia AI redacta una nota amable que puedes editar.',
         `Revisar en Hockia: ${dashboardUrl}`,
+        '---',
+        'Quienes se postularon reciben un aviso cuando respondes. Una respuesta rápida, aunque sea un no, es mejor que el silencio. Recibes este resumen semanal solo mientras haya postulaciones esperando.',
+        `Ajustes de notificaciones: ${HOCKIA_BASE_URL}/settings`,
       ].filter((l) => l !== '').join('\n')
       : [
       `Hi ${firstName},`,
@@ -348,11 +353,15 @@ Deno.serve(async (req: Request) => {
       `You have ${rows.length} application${rows.length === 1 ? '' : 's'} waiting for your response (oldest: ${oldest} day${oldest === 1 ? '' : 's'}).`,
       '',
       ...shown.map((r) =>
-        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} · ${r.opportunity_title} · waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
+        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''}, ${r.opportunity_title}, waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
       ),
-      overflow > 0 ? `...and ${overflow} more.` : '',
+      overflow > 0 ? `+ ${overflow} more waiting in Hockia.` : '',
       '',
+      'Open one to answer: marking it "Not a fit" takes one tap, and Hockia AI drafts a kind note you can edit.',
       `Review in Hockia: ${dashboardUrl}`,
+      '---',
+      'Applicants are notified when you respond. A quick answer, even a no, beats silence. You receive this weekly summary only while applications are waiting.',
+      `Notification settings: ${HOCKIA_BASE_URL}/settings`,
     ].filter((l) => l !== '').join('\n')
 
     // DB template can override the layout later without a redeploy; the

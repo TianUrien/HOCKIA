@@ -2,7 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML } from './email-brand.ts'
-import { type MemberLanguage, FOOTER_ES } from './member-language.ts'
+import { type MemberLanguage, FOOTER_ES, spanishList } from './member-language.ts'
 
 /**
  * Shared Email Template for Profile View Digest Notifications
@@ -155,15 +155,16 @@ export function composeStatsLine(
     buckets.set(key, (buckets.get(key) ?? 0) + n)
   }
   if (buckets.size === 0) return ''
-  return ROLE_ORDER.filter((role) => buckets.has(role))
+  const parts = ROLE_ORDER.filter((role) => buckets.has(role))
     .map((role) => {
       const n = buckets.get(role)!
       const [singular, plural] = language === 'es'
         ? ROLE_LABELS_ES[role] ?? ROLE_LABELS_ES.other
-        : ROLE_LABELS[role] ?? ['other', 'others']
+        : ROLE_LABELS[role] ?? ['other member', 'other members']
       return `${n} ${n === 1 ? singular : plural}`
     })
-    .join(' · ')
+  if (language === 'es') return spanishList(parts)
+  return parts.length <= 1 ? parts[0] ?? '' : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }
 
 /**

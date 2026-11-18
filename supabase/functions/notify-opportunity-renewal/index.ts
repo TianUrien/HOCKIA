@@ -7,7 +7,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { hashToken, mintRawToken } from '../_shared/action-tokens.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
-import { readMemberLanguage } from '../_shared/member-language.ts'
+import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -210,7 +210,7 @@ Deno.serve(async (req: Request) => {
       : ''
 
     const html = `<!DOCTYPE html>
-<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
@@ -235,6 +235,7 @@ Deno.serve(async (req: Request) => {
           ${es
             ? `También puedes gestionar esta oportunidad <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">en la app</a>.`
             : `You can also manage this opportunity <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">in the app</a>.`}
+          <br><a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
     </table>
@@ -248,10 +249,13 @@ Deno.serve(async (req: Request) => {
         `Tu oportunidad "${opp.title}" llegó a su fecha límite de postulación y ahora está cerrada en Hockia.`,
         ...(waitingLine ? [waitingLine] : []),
         '',
-        '¿La búsqueda sigue abierta? Puedes renovarla con una nueva fecha límite de 30 días en un clic:',
+        '¿La búsqueda sigue abierta? Con un clic la reabres con una nueva fecha límite de 30 días:',
         renewUrl,
         '',
         RENEWAL_DONE_ES,
+        '',
+        `También puedes gestionar esta oportunidad en la app: ${HOCKIA_BASE_URL}/opportunities/${opp.id}`,
+        `${FOOTER_ES.manage}${HOCKIA_BASE_URL}/settings`,
       ].join('\n')
       : [
       `Hi ${firstName},`,
@@ -259,10 +263,13 @@ Deno.serve(async (req: Request) => {
       `Your opportunity "${opp.title}" reached its application deadline and is now closed on Hockia.`,
       ...(waitingLine ? [waitingLine] : []),
       '',
-      `Still recruiting for this role? Renew it with a fresh 30-day deadline in one click:`,
+      'Still recruiting for this role? One click reopens it with a fresh 30-day deadline:',
       renewUrl,
       '',
       'Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.',
+      '',
+      `You can also manage this opportunity in the app: ${HOCKIA_BASE_URL}/opportunities/${opp.id}`,
+      `Notification settings: ${HOCKIA_BASE_URL}/settings`,
     ].join('\n')
 
     // Used only when it is in the publisher's language.

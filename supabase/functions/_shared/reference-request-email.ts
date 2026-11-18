@@ -98,7 +98,7 @@ export function generateEmailHtml(
 
   if (location) {
     detailItems.push(
-      `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
+      `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(location)}</span>`
     )
   }
 
@@ -146,7 +146,7 @@ export function generateEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Ver solicitud' : 'View request'} &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=references" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Ver solicitud' : 'View request'} &rarr;</a>
     </p>
 
     <p style="color: #73707c; font-size: 14px; margin: 0;">
@@ -198,7 +198,7 @@ export function generateEmailText(
   lines.push(
     '',
     es ? 'Ver solicitud:' : 'View the request:',
-    `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming`,
+    `${HOCKIA_BASE_URL}/dashboard/profile?tab=references`,
     '',
     es ? 'Ver perfil:' : 'View their profile:',
     profileUrl,

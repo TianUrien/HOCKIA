@@ -68,7 +68,7 @@ export function ageGateEmailEs(input: AgeGateEsInput): AgeGateEsEmail {
         'Por ahora, Hockia es solo para mayores de 18 años. Tu perfil está guardado, no eliminado. Todo lo que construiste te sigue esperando.',
         'Estamos creando Hockia Juniors, una versión con protecciones pensadas para deportistas jóvenes. ¿Quieres enterarte primero cuando abra?',
         waitlistUrl, '',
-        '¿Tienes preguntas o prefieres que eliminemos tus datos? Escribe a team@inhockia.com. Respondemos todos los mensajes.',
+        '¿Tienes preguntas o prefieres que eliminemos tus datos? Responde a este email o escribe a team@inhockia.com. Respondemos todos los mensajes.',
       ].join('\n'),
     }
   }
@@ -82,13 +82,13 @@ export function ageGateEmailEs(input: AgeGateEsInput): AgeGateEsEmail {
         <div style="${H}">${headingHtml} 🎉</div>
         <p style="${P}">
           Tu perfil de Hockia vuelve a estar activo, tal como lo dejaste. El hockey
-          siguió en movimiento mientras no estabas; esto es lo que está abierto ahora:
+          siguió en movimiento mientras no estabas.
         </p>
         ${input.suggestionsHtml ?? ''}
         ${button(`${baseUrl}/opportunities`, 'Ver oportunidades abiertas')}`,
       text: [
         heading, '',
-        'Tu perfil de Hockia vuelve a estar activo, tal como lo dejaste.',
+        'Tu perfil de Hockia vuelve a estar activo, tal como lo dejaste. El hockey siguió en movimiento mientras no estabas.',
         input.suggestionsText ?? '', '',
         `Ver oportunidades abiertas: ${baseUrl}/opportunities`,
       ].join('\n'),

@@ -90,7 +90,7 @@ export function generateEmailHtml(requester: RequesterData, language: MemberLang
   const avatarHtml = emailAvatarHtml(requester.avatar_url, displayName, requester.role)
 
   const locationHtml = location
-    ? `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-top: 8px;">\u{1F4CD} ${escapeHtml(location)}</span>`
+    ? `<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-top: 8px;">${escapeHtml(location)}</span>`
     : ''
 
   return `

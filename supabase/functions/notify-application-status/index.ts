@@ -165,8 +165,8 @@ Deno.serve(async (req: Request) => {
     const rawEntries: StatusEntry[] = notifications
       .map((n: any) => ({
         status: n.metadata?.status,
-        vacancy_title: n.metadata?.vacancy_title ?? (es ? 'la oportunidad' : 'your opportunity'),
-        club_name: n.metadata?.club_name ?? (es ? 'un club' : 'The team'),
+        vacancy_title: n.metadata?.vacancy_title ?? (es ? 'una oportunidad' : 'an opportunity'),
+        club_name: n.metadata?.club_name ?? (es ? 'un club' : 'a club'),
         opportunity_id: n.metadata?.opportunity_id ?? null,
         application_id: n.metadata?.application_id ?? null,
         note: null,
@@ -224,8 +224,8 @@ Deno.serve(async (req: Request) => {
         : 'Novedades sobre tus postulaciones'
       : single
       ? (entries[0].status === 'shortlisted'
-          ? `You're on ${entries[0].club_name}'s shortlist`
-          : `An update on your ${entries[0].vacancy_title} application`)
+          ? `You're on the shortlist of ${entries[0].club_name}`
+          : `An update on your application to ${entries[0].vacancy_title}`)
       : 'Updates on your applications'
 
     const entryHtmlEs = (e: StatusEntry) => e.status === 'shortlisted'
@@ -244,7 +244,7 @@ Deno.serve(async (req: Request) => {
 
     const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
-           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on the shortlist of ${escapeHtml(e.club_name)}</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
          </td></tr>`
@@ -257,7 +257,7 @@ Deno.serve(async (req: Request) => {
          </td></tr>`
 
     const html = `<!DOCTYPE html>
-<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
@@ -271,6 +271,7 @@ Deno.serve(async (req: Request) => {
           <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Abrir Hockia' : 'Open Hockia'}</a>
         </div>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
+          ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
           <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
@@ -278,28 +279,49 @@ Deno.serve(async (req: Request) => {
   </td></tr></table>
 </body></html>`
 
-    const text = es
+    // The text version carries the same sentences, links and footer as the HTML.
+    const linkLine = (label: string, e: StatusEntry) =>
+      e.opportunity_id ? [`${label}: ${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}`] : []
+    const textEntries = es
       ? [
-        firstName ? `Hola, ${firstName}:` : 'Hola:',
-        '',
-        ...shortlisted.map((e) => `⭐ Estás en la preselección de ${e.club_name} para ${e.vacancy_title}.`),
-        ...rejected.map((e) => e.note
-          ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"`
-          : `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Muchas veces depende del encaje, no del nivel.`),
-        suggestionsText(suggestions, HOCKIA_BASE_URL, language),
-        '',
-        `Abrir Hockia: ${HOCKIA_BASE_URL}/opportunities`,
-      ].join('\n')
+        ...shortlisted.flatMap((e) => [
+          `⭐ Estás en la preselección de ${e.club_name} para ${e.vacancy_title}. Mantén tu perfil al día mientras revisan.`,
+          ...linkLine('Ver oportunidad', e),
+          '',
+        ]),
+        ...rejected.flatMap((e) => [
+          e.note
+            ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"`
+            : `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y hay más oportunidades por delante.`,
+          ...linkLine('Ver tu postulación', e),
+          '',
+        ]),
+      ]
       : [
-      `Hi ${firstName},`,
+        ...shortlisted.flatMap((e) => [
+          `⭐ You're on the shortlist of ${e.club_name} for ${e.vacancy_title}. Keep your profile sharp while they review.`,
+          ...linkLine('View opportunity', e),
+          '',
+        ]),
+        ...rejected.flatMap((e) => [
+          e.note
+            ? `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. Their note: "${e.note}"`
+            : `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.`,
+          ...linkLine('See your application', e),
+          '',
+        ]),
+      ]
+    const suggestionLines = suggestionsText(suggestions, HOCKIA_BASE_URL, language).trim()
+    const text = [
+      es ? (firstName ? `Hola, ${firstName}:` : 'Hola:') : `Hi ${firstName},`,
       '',
-      ...shortlisted.map((e) => `⭐ You're on ${e.club_name}'s shortlist for ${e.vacancy_title}.`),
-      ...rejected.map((e) => e.note
-        ? `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. Their note: "${e.note}"`
-        : `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability.`),
-      suggestionsText(suggestions, HOCKIA_BASE_URL),
+      ...textEntries,
+      ...(suggestionLines ? [suggestionLines, ''] : []),
+      `${es ? 'Abrir Hockia' : 'Open Hockia'}: ${HOCKIA_BASE_URL}/opportunities`,
       '',
-      `Open Hockia: ${HOCKIA_BASE_URL}/opportunities`,
+      '---',
+      es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account.",
+      `${es ? FOOTER_ES.manage : 'Notification settings: '}${HOCKIA_BASE_URL}/settings`,
     ].join('\n')
 
     // A DB template is used only when it is in the member's language (no

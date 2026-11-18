@@ -166,7 +166,7 @@ Deno.test('Spanish push: English stays the default and unknown languages read as
   assertEquals(pushLanguageOf('es'), 'es')
   assertEquals(pushLanguageOf('fr'), 'en')
   assertEquals(pushLanguageOf(null), 'en')
-  assertEquals(unnamedActor('en'), 'A HOCKIA member')
+  assertEquals(unnamedActor('en'), 'A Hockia member')
 })
 
 Deno.test('Spanish push: application status reads naturally', () => {

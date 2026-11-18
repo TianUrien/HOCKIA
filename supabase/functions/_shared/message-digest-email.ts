@@ -92,7 +92,8 @@ export function messageDigestTemplateVars(
 ): Record<string, string> {
   const es = language === 'es'
   const totalMessages = conversations.reduce((sum, c) => sum + c.message_count, 0)
-  const firstName = fullName?.split(' ')[0]?.trim() || (es ? DIGEST_NAME_FALLBACK_ES : 'there')
+  // Spanish without a name: the template greeting drops it ("Hola."), see email-renderer namelessGreeting.
+  const firstName = fullName?.split(' ')[0]?.trim() || (es ? '' : 'there')
   const heading = conversations.length === 1
     ? (es ? `Nuevo mensaje de ${conversations[0].sender_name}` : `New message from ${conversations[0].sender_name}`)
     : es
